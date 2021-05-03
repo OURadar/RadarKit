@@ -78,7 +78,7 @@ void proc(UserParams *arg) {
     
     gettimeofday(&s, NULL);
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    RKWaveform *waveform = fileHeader->config.waveform;
+    RKWaveform *waveform = NULL;
     RKConfig *config = &fileHeader->config;
 
     FILE *fid = fopen(arg->filename, "r");
@@ -214,7 +214,7 @@ void proc(UserParams *arg) {
         RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
         RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
         RKLog(">config.waveformName = '%s'\n", config->waveformName);
-        if (fileHeader->buildNo > 5) {
+        if (fileHeader->buildNo >= 6) {
             RKWaveformSummary(waveform);
         }
     }

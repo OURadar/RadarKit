@@ -797,7 +797,7 @@ void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc
     size_t filterLength = 1 << (int)ceilf(log2f((float)engine->radarDescription->pulseCapacity));
     bytes = filterLength * sizeof(RKComplex);
     engine->state |= RKEngineStateMemoryChange;
-    for (int g = 0; g < RKMaximumFilterGroups; g++) {
+    for (int g = 0; g < RKMaximumWaveformCount; g++) {
         for (int i = 0; i < RKMaximumFilterCount; i++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[g][i], RKSIMDAlignSize, bytes))
             engine->memoryUsage += bytes;
@@ -866,7 +866,7 @@ int RKPulseEngineSetFilter(RKPulseEngine *engine, const RKComplex *filter, const
         RKLog("Warning. Pulse buffer has not been set.\n");
         return RKResultNoPulseBuffer;
     }
-    if (group >= RKMaximumFilterGroups) {
+    if (group >= RKMaximumWaveformCount) {
         RKLog("Error. Filter group %d is invalid.\n", group);
         return RKResultFailedToSetFilter;
     }

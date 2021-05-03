@@ -71,7 +71,7 @@
 #define RKBaseMomentCount                    10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
-#define RKMaximumFilterGroups                22                                // Maximum filter group count
+#define RKMaximumWaveformCount              22                                // Maximum waveform group count
 #define RKWorkerDutyCycleBufferDepth         1000                              //
 #define RKMaximumPulsesPerRay                2000                              //
 #define RKMaximumRaysPerSweep                1500                              // 1440 is 0.25-deg. This should be plenty
@@ -949,21 +949,21 @@ typedef struct rk_waveform {
     int                  depth;                                                // Maximum number of samples
     double               fc;                                                   // Carrier frequency (Hz)
     double               fs;                                                   // Sampling frequency (Hz)
-    uint8_t              filterCounts[RKMaximumFilterGroups];                  // Number of filters (see filterAnchors)
-    RKFilterAnchorGroup  filterAnchors[RKMaximumFilterGroups];                 // Filter anchors of each sub-waveform for de-multiplexing
-    RKComplex            *samples[RKMaximumFilterGroups];                      // Samples up to amplitude of 1.0
-    RKInt16C             *iSamples[RKMaximumFilterGroups];                     // 16-bit full-scale equivalence of the waveforms
+    uint8_t              filterCounts[RKMaximumWaveformCount];                  // Number of filters (see filterAnchors)
+    RKFilterAnchorGroup  filterAnchors[RKMaximumWaveformCount];                 // Filter anchors of each sub-waveform for de-multiplexing
+    RKComplex            *samples[RKMaximumWaveformCount];                      // Samples up to amplitude of 1.0
+    RKInt16C             *iSamples[RKMaximumWaveformCount];                     // 16-bit full-scale equivalence of the waveforms
 } RKWaveform;
 
 typedef union rk_wave_file_header {
     struct {
-        RKName          name;                                                  // Waveform name
         uint8_t         count;                                                 // Count of groups
         uint32_t        depth;                                                 // Waveform depth
         RKWaveformType  type;                                                  // Waveform type
+        RKName          name;                                                  // Waveform name
         double          fc;                                                    // Carrier frequency
         double          fs;                                                    // Sampling frequency
-        uint8_t         filterCounts[RKMaximumFilterGroups];                   // Number of filters (see filterAnchors)
+        uint8_t         filterCounts[RKMaximumWaveformCount];                  // Number of filters (see filterAnchors)
     };
     char bytes[512];
 } RKWaveFileGlobalHeader;

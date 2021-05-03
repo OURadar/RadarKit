@@ -202,9 +202,9 @@ static void *pulseRecorder(void *in) {
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
                 // 512-B wave header
                 strcpy(waveGlobalHeader->name, waveform->name);
-                waveGlobalHeader->type = waveform->type;
                 waveGlobalHeader->count = waveform->count;
                 waveGlobalHeader->depth = waveform->depth;
+                waveGlobalHeader->type = waveform->type;
                 waveGlobalHeader->fc = waveform->fc;
                 waveGlobalHeader->fs = waveform->fs;
                 for (i = 0; i < waveform->count; i++) {
@@ -213,7 +213,6 @@ static void *pulseRecorder(void *in) {
                 len += RKRawDataRecorderCacheWrite(engine, waveGlobalHeader, sizeof(RKWaveFileGlobalHeader));
                 for (i = 0; i < waveform->count; i++) {
                     // 32-B wave group header
-                    //len += RKRawDataRecorderCacheWrite(engine, &waveform->filterCounts[i], sizeof(uint32_t));
                     len += RKRawDataRecorderCacheWrite(engine, waveform->filterAnchors[i], waveform->filterCounts[i] * sizeof(RKFilterAnchor));
                     // Waveform samples (flexible size)
                     len += RKRawDataRecorderCacheWrite(engine, waveform->samples[i], waveform->depth * sizeof(RKComplex));
@@ -222,7 +221,6 @@ static void *pulseRecorder(void *in) {
             } else {
                 len = sizeof(RKFileHeader) + sizeof(RKWaveFileGlobalHeader);
                 for (i = 0; i < waveform->count; i++) {
-                    len += sizeof(uint32_t);
                     len += waveform->filterCounts[i] * sizeof(RKFilterAnchor);
                     len += waveform->depth * sizeof(RKComplex);
                     len += waveform->depth * sizeof(RKInt16C);

@@ -1,5 +1,7 @@
 #include <RadarKit.h>
 
+// Meant for waveform conversion going from those generated before 2021 to the new format with RadarKit v2.5
+
 #pragma pack(push, 1)
 
 typedef union rk_wave_file_header_v1 {
@@ -44,7 +46,7 @@ int main(int argc, const char * argv[]) {
         RKSetWantColor(false);
     }
 
-    FILE *fid = fopen("old-waveforms/ofm.rkwav", "r");
+    FILE *fid = fopen("/Users/boonleng/Developer/radarkit/old-waveforms/ofm.rkwav", "r");
     if (fid == NULL) {
         RKLog("Error. Unable to open file.\n");
     }
@@ -58,12 +60,14 @@ int main(int argc, const char * argv[]) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(fileHeader->count, fileHeader->depth);
     waveform->fc = fileHeader->fc;
     waveform->fs = fileHeader->fs;
+    waveform->count = 1;
     strncpy(waveform->name, fileHeader->name, RKNameLength);
 
     for (k = 0; k < fileHeader->count; k++) {
         fread(groupHeader, sizeof(RKWaveFileGroupHeaderV1), 1, fid);
         if (k == 0) {
             waveform->type = groupHeader->type;
+            RKLog("groupHeader->depth = %d   waveform->depth = %d\n", groupHeader->depth, waveform->depth);
         }
         waveform->filterCounts[k] = groupHeader->filterCount;
         r = fread(waveform->filterAnchors[k], sizeof(RKFilterAnchor), waveform->filterCounts[k], fid);
@@ -82,15 +86,14 @@ int main(int argc, const char * argv[]) {
         }
         fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
         fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
-        for (j = 0; j < waveform->depth; j++) {
-            printf("->x[%d] = %7.2f%+7.2f   %7d%+7d\n", j,
-                   waveform->samples[k][j].i, waveform->samples[k][j].q,
-                   waveform->iSamples[k][j].i, waveform->iSamples[k][j].q);
-        }
+//        for (j = 0; j < waveform->depth; j++) {
+//            printf("->x[%d] = %7.2f%+7.2f   %7d%+7d\n", j,
+//                   waveform->samples[k][j].i, waveform->samples[k][j].q,
+//                   waveform->iSamples[k][j].i, waveform->iSamples[k][j].q);
+//        }
     }
     long fpos = ftell(fid);
     printf("fpos = %s\n", RKIntegerToCommaStyleString(fpos));
-    
     fclose(fid);
 
     RKWaveformSummary(waveform);
@@ -98,9 +101,13 @@ int main(int argc, const char * argv[]) {
     free(groupHeader);
     free(fileHeader);
 
-    char filename[] = "waveforms/ofm.rkwav";
+    RKLog("Generating new file ...\n");
+
+    char filename[] = "/Users/boonleng/Developer/radarkit/waveforms/ofm.rkwav";
     RKWaveformWriteFile(waveform, filename);
     RKWaveformFree(waveform);
+
+    RKLog("Reading new file ...\n");
 
     fid = fopen(filename, "r");
     RKWaveform *newWaveform = RKWaveformReadFromReference(fid);
