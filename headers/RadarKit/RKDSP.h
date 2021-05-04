@@ -85,11 +85,11 @@ typedef struct rk_moment_scratch {
     RKFloat                          velocityFactor;                           // Velocity factor to multiply by atan2(R(1))
     RKFloat                          widthFactor;                              // Width factor to multiply by the ln(S/|R(1)|) :
     RKFloat                          KDPFactor;                                // Normalization factor of 1.0 / gateWidth in kilometers
-    RKFloat                          *dcal;                                    // Calibration offset to D
+    RKFloat                          *dcal;                                    // Calibration offset to D (dB)
     RKFloat                          *pcal;                                    // Calibration offset to P (radians)
-    RKFloat                          SNRThreshold;                             // SNR threshold for masking
+    RKFloat                          SNRThreshold;                             // SNR threshold for masking (dB)
     RKFloat                          SQIThreshold;                             // SQI threshold for masking
-    RKFloat                          *rcor[2];                                 // Reflectivity range correction factor
+    RKFloat                          *rcor[2];                                 // Reflectivity range correction factor (dB)
     RKFloat                          *S[2];                                    // Signal
     RKFloat                          *Z[2];                                    // Reflectivity in dB
     RKFloat                          *V[2];                                    // Velocity in same units as aliasing velocity
@@ -100,6 +100,10 @@ typedef struct rk_moment_scratch {
     RKFloat                          *PhiDP;                                   // Differential phase PhiDP
     RKFloat                          *RhoHV;                                   // Cross-correlation coefficient RhoHV
     RKFloat                          *KDP;                                     // Specific phase KDP
+    RKFloat                          *usr1;                                    // User space #1, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *usr2;                                    // User space #2, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *usr3;                                    // User space #3, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *usr4;                                    // User space #4, same storage length as ZDR, PhiDP, etc.
     uint8_t                          *mask;                                    // Mask for censoring
     RKFFTModule                      *fftModule;                               // A reference to the common FFT module
     fftwf_complex                    **inBuffer;                               //
