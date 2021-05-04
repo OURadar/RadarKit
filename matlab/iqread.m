@@ -1,7 +1,7 @@
 %IQREAD IQ Data Reader
 %   IQREAD(FILENAME) reads the I/Q data FILENAME produced by RadarKit framework
 %   into the MATLAB workspace. The returned output is a struct variable with at
-%   header and pulses.
+%   least header and pulses.
 %
 %   IQREAD(FILENAME, NUM) reads at most NUM pulses from the file.
 

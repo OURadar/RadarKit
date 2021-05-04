@@ -1,7 +1,7 @@
 % A script to list files in ~/Downloads and generate a bscope plot
 
 if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads/raxpol', '*.rk*'); end
-if ~exist('showAnimation', 'var'), showAnimation = false; end
+if ~exist('showAnimation', 'var'), showAnimation = true; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
 
 dat = iqread(filename);
@@ -32,11 +32,11 @@ ns = min(size(pulses, 2), 8000);
 
 % Compute dt sampling interval in us
 if dat.header.buildNo >= 4
-    if dat.header.dataType == 1
+    if strcmp(dat.header.dataType, 'raw')
         % Raw IQ straight from the transceiver
         dr = double(dat.header.config.pulseGateSize);
         dt = dr * 2 / 3.0e2;
-    elseif dat.header.dataType == 2
+    elseif strcmp(dat.header.dataType, 'compressed')
         % Compressed IQ
         dr = double(dat.header.desc.pulseToRayRatio) * double(dat.header.config.pulseGateSize);
         dt = dr * 2 / 3.0e2;
