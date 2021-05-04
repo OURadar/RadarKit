@@ -43,7 +43,6 @@ classdef iqread
             % Third component: (RKRawDataType dataType)
             if self.header.buildNo >= 5
                 self.header.dataType = fread(fid, 1, 'uint8');
-                fseek(fid, 123, 'cof');
             end
             
             % Radar description: (RKRadarDesc desc)
@@ -116,7 +115,8 @@ classdef iqread
                         'uint8',  [1 self.constants.RKName], 'name_raw'; ...
                         'uint8',  [1 self.constants.RKName], 'filePrefix_raw'; ...
                         'uint8',  [1 self.constants.RKMaximumPathLength], 'dataPath_raw'});
-
+            else
+                fprintf('buildNo = %d unexpected.\n', self.header.buildNo);
             end
             self.header.desc = h.data;
             self.header.desc.name = deblank(char(self.header.desc.name_raw));
@@ -261,14 +261,6 @@ classdef iqread
                     fseek(fid, offset, 'bof');
                     self.header.dataType = fread(fid, 1, 'uint8');
                 end
-                if self.header.dataType == 1
-                    str = 'raw';
-                elseif self.header.dataType == 2
-                    str = 'compressed';
-                else
-                    str = 'unknown';
-                end
-                self.header.dataType = str;
             elseif self.header.buildNo >= 2 && self.header.buildNo < 5
                 % (RKName) + (uint32_t) + (RKRadarDesc) --> RKConfigV1
                 offset = self.constants.RKName + 4 + self.constants.RKRadarDesc;
@@ -357,12 +349,13 @@ classdef iqread
                 self.header.dataType = 1;
             end
 
-            % Partially read the very first pulse
+            % Header is done at this point
             if self.header.buildNo <= 5
-                fseek(fid, self.constants.RKFileHeader + 28, 'bof');
-            else
-                fseek(fid, offset + 28, 'bof');
+                offset = self.constants.RKFileHeader;
             end
+
+            % Partially read the very first pulse
+            fseek(fid, offset + 28, 'bof');
             capacity = fread(fid, 1, 'uint32');
             gateCount = fread(fid, 1, 'uint32');
             downSampledGateCount = fread(fid, 1, 'uint32');
@@ -377,9 +370,6 @@ classdef iqread
             end
 
             % Pulses
-            if self.header.buildNo <= 5
-                offset = self.constants.RKFileHeader;
-            end
             if self.header.dataType == 2
                 fprintf('offset = %d\n', offset);
                 % Compressed I/Q
@@ -441,6 +431,21 @@ classdef iqread
                         'int16',  [2 gateCount 2], 'iq'});
             end
             self.pulses = m.Data;
+
+            % Convert dataType to string
+            if self.header.dataType == 1
+                str = 'raw';
+            elseif self.header.dataType == 2
+                str = 'compressed';
+            else
+                str = 'unknown';
+            end
+            self.header.dataType = str;
+
+            % Mark waveform 'not recorded' for older versions
+            if isempty(self.header.waveform)
+                self.header.waveform = 'not recorded';
+            end
         end
     end
 end
