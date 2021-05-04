@@ -1,3 +1,5 @@
+% Deprecated: This script should not be used beyond 2020
+
 % Run the script quiet.m to suppress all the debuggning and plot routines
 eval('quiet')
 
@@ -229,7 +231,7 @@ if (showPreview)
     a = 1.0 / 32.0e3 / sqrt(pulseWidthSampleCount);
 
     for ii = 1 : M * N
-        k = ii;
+        %k = ii;
         ix = rem(ii - 1, M);
         iy = N - 1 - floor((ii - 1) / M);
         FIG.ax(ii) = axes('Unit', 'Normalized', 'Position', [0.02 + ix / M * 0.97, 0.05 + iy / N * 0.94, 0.92 / M, 0.88 / N]);

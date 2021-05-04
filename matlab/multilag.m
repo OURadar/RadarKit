@@ -1,3 +1,8 @@
+% This is a validation calculation against RadarKit Utility multilag-N calculation
+%
+% Boonleng Cheong
+%
+
 N = 2;
 va = pi;
 

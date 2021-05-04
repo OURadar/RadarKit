@@ -1,3 +1,5 @@
+% Deprecated: This script should not be used beyond 2020
+
 % Run the script quiet.m to suppress all the debuggning and plot routines
 eval('quiet')
 

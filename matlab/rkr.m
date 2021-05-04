@@ -1,3 +1,5 @@
+% A script to list files in ~/Downloads and generate a bscope plot
+
 if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads/raxpol', '*.rk*'); end
 if ~exist('showAnimation', 'var'), showAnimation = false; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
