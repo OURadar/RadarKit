@@ -16,6 +16,7 @@ core.*
 __pycache__
 data
 waveforms
+waveforms-old
 
 # Programs, etc.
 radar
@@ -24,4 +25,5 @@ rknchead
 simple-emulator
 radarkit-fft-wisdom
 pgen
+owav2wav
 

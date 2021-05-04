@@ -69,7 +69,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192623.rkc"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192615.rkc"
