@@ -95,7 +95,7 @@ $(PROGS): %: %.c libradarkit.a
 ifeq ($(KERNEL), Darwin)
 	@echo "\033[38;5;45m$@\033[m"
 else
-	@echo $(ECHO_FLAG) "\033[38;5;203m$@\033[0m"
+	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
 endif
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 

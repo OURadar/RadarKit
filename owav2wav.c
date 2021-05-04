@@ -32,7 +32,7 @@ static RKResult convert(const char *name, int verbose) {
     int j, k;
     size_t r;
     char filename[RKMaximumPathLength];
-    sprintf(filename, "old-waveforms/%s.rkwav", name);
+    sprintf(filename, "waveforms-old/%s.rkwav", name);
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         RKLog("Error. Unable to open file.\n");

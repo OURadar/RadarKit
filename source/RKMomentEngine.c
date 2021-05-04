@@ -199,7 +199,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
         Qi++;
         Oi++;
     }
-    // Simple despecking: censor the current cell if the next cell is censored
+    // Simple despeckling: censor the current cell if the next cell is censored
     mask = space->mask;
     for (k = 0; k < MIN(space->capacity, space->gateCount) - 1; k++) {
         if (!(*(mask + 1) & RKCellMaskKeepH)) {

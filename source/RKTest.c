@@ -1658,7 +1658,7 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
 
 void RKTestPulseCompression(RKTestFlag flag) {
     SHOW_FUNCTION_NAME
-    int k;
+    int j, k;
     RKPulse *pulse;
     RKInt16C *X;
     RKComplex *F;
@@ -1724,19 +1724,19 @@ void RKTestPulseCompression(RKTestFlag flag) {
             usleep(1000);
         }
 
-        F = &radar->pulseEngine->filters[0][0][0];
+        F = radar->pulseEngine->filters[0][0];
         Y = RKGetComplexDataFromPulse(pulse, 0);
         Z = RKGetSplitComplexDataFromPulse(pulse, 0);
 
         if (flag & RKTestFlagShowResults) {
             printf("\033[4mTest %d:\n\033[24m", k);
             printf("X =               F =                    Y =                        Z =\n");
-            for (int k = 0; k < 8; k++) {
+            for (j = 0; j < 8; j++) {
                 printf("    [ %2d %s %2di ]      [ %5.2f %s %5.2fi ]      [ %6.2f %s %6.2fi ]      [ %6.2f %s %6.2fi ]\n",
-                       X[k].i, X[k].q < 0 ? "-" : "+", abs(X[k].q),
-                       F[k].i, F[k].q < 0.0f ? "-" : "+", fabs(F[k].q),
-                       Y[k].i, Y[k].q < 0.0f ? "-" : "+", fabs(Y[k].q),
-                       Z.i[k], Z.q[k] < 0.0f ? "-" : "+", fabs(Z.q[k]));
+                       X[j].i, X[j].q < 0 ? "-" : "+", abs(X[j].q),
+                       F[j].i, F[j].q < 0.0f ? "-" : "+", fabs(F[j].q),
+                       Y[j].i, Y[j].q < 0.0f ? "-" : "+", fabs(Y[j].q),
+                       Z.i[j], Z.q[j] < 0.0f ? "-" : "+", fabs(Z.q[j]));
             }
             printf("\n");
         }
