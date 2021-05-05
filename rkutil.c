@@ -773,7 +773,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeySQIThreshold, systemPreferences->SQIThreshold,
-                RKConfigKeyPulseRingFilterGateCount, systemPreferences->ringFilterGateCount,
+                RKConfigKeyRingFilterGateCount, systemPreferences->ringFilterGateCount,
                 RKConfigKeyTransitionGateCount, systemPreferences->transitionGateCount,
                 RKConfigKeyNull);
 

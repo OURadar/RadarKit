@@ -1624,9 +1624,9 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
     }
     if (gateCount) {
         RKConfig *config = RKGetLatestConfig(radar);
-        if (config->pulseRingFilterGateCount != gateCount) {
+        if (config->ringFilterGateCount != gateCount) {
             //RKLog("pulseRingFilterGateCount (%d) %d -> %d\n", config->i, config->pulseRingFilterGateCount, gateCount);
-            RKAddConfig(radar, RKConfigKeyPulseRingFilterGateCount, gateCount, RKConfigKeyNull);
+            RKAddConfig(radar, RKConfigKeyRingFilterGateCount, gateCount, RKConfigKeyNull);
         }
     }
     RKPulseRingFilterEngineSetFilter(radar->pulseRingFilterEngine, filter);
@@ -1708,7 +1708,8 @@ int RKGoLive(RKRadar *radar) {
                     RKConfigKeySystemPCal, 0.01,
                     RKConfigKeySNRThreshold, 0.0,
                     RKConfigKeySQIThreshold, 0.25,
-                    RKConfigKeyPulseRingFilterGateCount, 1000,
+                    RKConfigKeyRingFilterGateCount, 1000,
+                    RKConfigKeyTransitionGateCount, 5,
                     RKConfigKeyNull);
     }
 

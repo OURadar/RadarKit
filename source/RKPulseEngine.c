@@ -392,7 +392,6 @@ static void *pulseEngineCore(void *_in) {
         if (configIndex != pulse->header.configIndex) {
             configIndex = pulse->header.configIndex;
             scratch->config = &engine->configBuffer[configIndex];
-            RKLog("%s transitionGateCount = %d\n", engine->name, scratch->config->transitionGateCount);
         }
 
         #ifdef DEBUG_IQ

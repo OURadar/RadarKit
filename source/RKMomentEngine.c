@@ -178,8 +178,8 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
     float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);
     float SNRh, SNRv;
-    float SNRThreshold = powf(10.0f, 0.1f * space->SNRThreshold);
-    float SQIThreshold = space->SQIThreshold;
+    float SNRThreshold = powf(10.0f, 0.1f * space->config->SNRThreshold);
+    float SQIThreshold = space->config->SQIThreshold;
     uint8_t *mask = space->mask;
     // Masking based on SNR and SQI
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
@@ -717,6 +717,15 @@ static void *momentCore(void *in) {
 
         config = &engine->configBuffer[E->header.configIndex];
 
+        //
+        // Could have a ray-by-ray noise estimate here and store them in noise[0] and noise[1] for H & V, respectively
+        //
+        // space->noise[0] = ...
+        // space->noise[1] = ...
+        //
+        space->noise[0] = config->noise[0];
+        space->noise[1] = config->noise[1];
+
         // Compute the range correction factor if needed.
         if (ic != E->header.configIndex || ray->header.gateCount != space->gateCount) {
             ic = E->header.configIndex;
@@ -750,10 +759,6 @@ static void *momentCore(void *in) {
             }
             // The rest of the constants
             space->config = config;
-            space->noise[0] = config->noise[0];
-            space->noise[1] = config->noise[1];
-            space->SNRThreshold = config->SNRThreshold;
-            space->SQIThreshold = config->SQIThreshold;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength / config->prt[0] / M_PI;
             space->widthFactor = engine->radarDescription->wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;

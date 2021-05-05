@@ -645,7 +645,7 @@ enum RKConfigKey {
     RKConfigKeySNRThreshold,
     RKConfigKeySQIThreshold,
     RKConfigKeyVCPDefinition,
-    RKConfigKeyPulseRingFilterGateCount,
+    RKConfigKeyRingFilterGateCount,
     RKConfigKeyTransitionGateCount,
     RKConfigUserIntegerParameters,
     RKConfigUserFloatParameters,
@@ -1032,7 +1032,7 @@ typedef union rk_config {
         RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
         uint32_t             pulseGateCount;                                       // Number of range gates
         RKFloat              pulseGateSize;                                        // Size of range gate (m)
-        uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
+        uint32_t             ringFilterGateCount;                                  // Number of range gates to apply ring filter
         uint32_t             waveformId[RKMaximumFilterCount];                     // Transmit waveform
         RKFloat              noise[2];                                             // Noise floor (ADU)
         RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
@@ -1048,8 +1048,8 @@ typedef union rk_config {
         RKWaveform           *waveform;                                            // Reference to the waveform storage
         RKWaveform           *waveformDecimate;                                    // Reference to the waveform storage in Level-II sampling rate
         uint32_t             transitionGateCount;                                  // Transition gate count like the 1st km of the WSR-88D
-        uint32_t             userIntegerParameters[RKUserParameterCount];          // User integer parameters
-        float                userFloatParameters[RKUserParameterCount];            // User float parameters
+        uint32_t             userIntegerParameters[RKUserParameterCount];          // User integer parameters (not yet)
+        float                userFloatParameters[RKUserParameterCount];            // User float parameters (not yet)
     };
     RKByte               bytes[1600];
 } RKConfig;

@@ -89,8 +89,8 @@ typedef struct rk_moment_scratch {
     RKFloat                          KDPFactor;                                    // Normalization factor of 1.0 / gateWidth in kilometers
     RKFloat                          *dcal;                                        // Calibration offset to D (dB)
     RKFloat                          *pcal;                                        // Calibration offset to P (radians)
-    RKFloat                          SNRThreshold;                                 // SNR threshold for masking (dB) --- (deprecating)
-    RKFloat                          SQIThreshold;                                 // SQI threshold for masking --- (deprecating)
+//    RKFloat                          SNRThreshold;                                 // SNR threshold for masking (dB) --- (deprecated, use config->SNRThreshold)
+//    RKFloat                          SQIThreshold;                                 // SQI threshold for masking --- (deprecated, use config->SQIThreshold)
     RKFloat                          *rcor[2];                                     // Reflectivity range correction factor (dB)
     RKFloat                          *S[2];                                        // Signal
     RKFloat                          *Z[2];                                        // Reflectivity in dB

@@ -235,9 +235,9 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->SQIThreshold = (RKFloat)va_arg(args, double);
                 sprintf(stringBuffer[0], "SQIThreshold = %.2f", newConfig->SQIThreshold);
                 break;
-            case RKConfigKeyPulseRingFilterGateCount:
-                newConfig->pulseRingFilterGateCount = va_arg(args, uint32_t);
-                sprintf(stringBuffer[0], "PulseRingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->pulseRingFilterGateCount));
+            case RKConfigKeyRingFilterGateCount:
+                newConfig->ringFilterGateCount = va_arg(args, uint32_t);
+                sprintf(stringBuffer[0], "RingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->ringFilterGateCount));
                 break;
             case RKConfigKeyTransitionGateCount:
                 newConfig->transitionGateCount = va_arg(args, uint32_t);

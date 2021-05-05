@@ -411,7 +411,7 @@ static void *pulseRingWatcher(void *_in) {
     }
     
     RKConfig *config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
-    uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->pulseRingFilterGateCount);
+    uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->ringFilterGateCount);
     
     RKPulse *pulse;
     RKPulse *pulseToSkip;
@@ -557,8 +557,8 @@ static void *pulseRingWatcher(void *_in) {
         config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
 
         // Update processing region if necessary
-        if (gateCount != MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
-            gateCount = MIN(pulse->header.downSampledGateCount, config->pulseRingFilterGateCount);
+        if (gateCount != MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
+            gateCount = MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount);
             paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize / sizeof(RKFloat));
             RKLog("%s %s   %s", engine->name,
                   RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),

@@ -179,7 +179,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
 
         // Censoring
         for (g = 0; g < space->gateCount; g++) {
-            if (space->SNR[0][p] < space->SNRThreshold || space->SNR[1][p] < space->SNRThreshold) {
+            if (space->SNR[0][p] < space->config->SNRThreshold || space->SNR[1][p] < space->config->SNRThreshold) {
                 space->Z[p][g] = NAN;
                 space->V[p][g] = NAN;
             }
@@ -203,7 +203,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
     }
 
     for (g = 0; g < space->gateCount; g++) {
-        if (space->SNR[0][p] < space->SNRThreshold || space->SNR[1][p] < space->SNRThreshold) {
+        if (space->SNR[0][p] < space->config->SNRThreshold || space->SNR[1][p] < space->config->SNRThreshold) {
             space->ZDR[g] = NAN;
             space->PhiDP[g] = NAN;
             space->RhoHV[g] = NAN;

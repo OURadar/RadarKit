@@ -226,7 +226,16 @@ void proc(UserParams *arg) {
         sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
 
+    // Override some parameters with user supplied values
+    if (isfinite(arg->SNRThreshold)) {
+        config->SNRThreshold = arg->SNRThreshold;
+    }
+    if (isfinite(arg->SQIThreshold)) {
+        config->SQIThreshold = arg->SQIThreshold;
+    }
+
     // Propagate RKConfig parameters to scratch space
+    space->config = config;
     space->gateCount = rayCapacity;
     space->gateSizeMeters = fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio;
     // Because the pulse-compression engine uses unity noise gain filters, there is an inherent gain difference at different sampling rate
@@ -237,8 +246,6 @@ void proc(UserParams *arg) {
     // The rest of the constants
     space->noise[0] = config->noise[0];
     space->noise[1] = config->noise[1];
-    space->SNRThreshold = config->SNRThreshold;
-    space->SQIThreshold = config->SQIThreshold;
     space->velocityFactor = 0.25f * fileHeader->desc.wavelength / config->prt[0] / M_PI;
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
@@ -251,18 +258,11 @@ void proc(UserParams *arg) {
     }
     RKMarker marker = fileHeader->config.startMarker;
 
-    // Override some parameters with user supplied values
-    if (isfinite(arg->SNRThreshold)) {
-        space->SNRThreshold = arg->SNRThreshold;
-    }
-    if (isfinite(arg->SQIThreshold)) {
-        space->SQIThreshold = arg->SQIThreshold;
-    }
     if (arg->verbose) {
         RKLog("Processing Parameters:\n");
         RKLog(">space.noise = %.2f, %.2f ADU^2\n", space->noise[0], space->noise[1]);
-        RKLog(">space.SNRThreshold = %.2f dB%s\n", space->SNRThreshold, isfinite(arg->SNRThreshold) ? " (user)" : "");
-        RKLog(">space.SQIThreshold = %.2f%s\n", space->SQIThreshold, isfinite(arg->SQIThreshold) ? " (user)" : "");
+        RKLog(">space->config->SNRThreshold = %.2f dB%s\n", space->config->SNRThreshold, isfinite(arg->SNRThreshold) ? " (user)" : "");
+        RKLog(">space->config->SQIThreshold = %.2f%s\n", space->config->SQIThreshold, isfinite(arg->SQIThreshold) ? " (user)" : "");
         if (arg->verbose > 1) {
             RKLog("Initial marker = %04x / %04x\n", marker, RKMarkerScanTypePPI);
         }
