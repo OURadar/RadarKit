@@ -292,7 +292,7 @@ void proc(UserParams *arg) {
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
-    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth && more; k++) {
+    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         if (j == RKResultSuccess) {
@@ -461,6 +461,10 @@ void proc(UserParams *arg) {
             memcpy(pulses[0], pulse, sizeof(RKPulseHeader));
             p = 1;
         } // if (m) ...
+        if (!more) {
+            // Break here so k does not increase one more
+            break;
+        }
         usec = pulse->header.time.tv_usec;
     }
     if (arg->verbose) {
