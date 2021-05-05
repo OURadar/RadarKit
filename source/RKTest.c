@@ -1532,6 +1532,20 @@ void RKTestRamp(void) {
     }
     printf("\n");
 
+    printf("Linear:\n");
+    RKRampMake(ramp, RKRampTypeLinear, n);
+    for (k = 0; k < n; k++) {
+        printf("r[%d] = %.4f\n", k, ramp[k]);
+    }
+    printf("\n");
+
+    printf("Raised Cosine:\n");
+    RKRampMake(ramp, RKRampTypeRaisedCosine, n);
+    for (k = 0; k < n; k++) {
+        printf("r[%d] = %.4f\n", k, ramp[k]);
+    }
+    printf("\n");
+
     free(ramp);
 }
 

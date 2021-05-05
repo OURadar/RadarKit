@@ -9,12 +9,43 @@
 #include <RKRamp.h>
 
 //
-// Hann window
+// Ones
 //
-static void step(double *r, const int n, double x) {
+static void _ones(double *r, const int n) {
+    for (int i = 0; i < n; i++) {
+        r[i] = 1.0;
+    }
+}
+
+//
+// Step
+//
+static void _step(double *r, const int n, double x) {
     int s = (int)ceil(x * n);
     for (int i = s; i < n; i++) {
         r[i] = 1.0;
+    }
+}
+
+//
+// Linear
+//
+
+static void _linear(double *r, const int n) {
+    double slope = (double)1.0 / (n - 1);
+    for (int i = 0; i < n; i++) {
+        r[i] = slope * i;
+    }
+}
+
+//
+// Raised Cosine
+//
+
+static void _rcos(double *r, const int n) {
+    double omega = M_PI / (n - 1);
+    for (int i = 0; i < n; i++) {
+        r[i] = 0.5 * (1.0 - cos(omega * i));
     }
 }
 
@@ -41,18 +72,20 @@ void RKRampMake(RKFloat *buffer, RKRampType type, const int length, ...) {
     switch (type) {
         
         case RKRampTypeOnes:
-            for (k = 0; k < length; k++) {
-                ramp[k] = 1.0;
-            }
+            _ones(ramp, length);
             break;
         
         case RKRampTypeStep:
             param = va_arg(args, double);
-            step(ramp, length, param);
+            _step(ramp, length, param);
             break;
         
+        case RKRampTypeLinear:
+            _linear(ramp, length);
+            break;
+
         case RKRampTypeRaisedCosine:
-            param = va_arg(args, double);
+            _rcos(ramp, length);
             break;
 
         case RKRampTypeZeros:

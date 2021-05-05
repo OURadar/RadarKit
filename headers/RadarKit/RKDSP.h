@@ -59,7 +59,10 @@ typedef struct rk_compression_scratch {
     fftwf_complex                    *outBuffer;                               //
     RKIQZ                            *zi;                                      //
     RKIQZ                            *zo;                                      //
-    unsigned int                     planSize;                                 //
+    unsigned int                     planSize;                                 // DFT plan size
+    unsigned int                     padding;                                  // Padding
+    int                              userIntegerParameters[4];                 // User integer parameters, under prefernece file UserIntegerParameters
+    RKFloat                          userFloatParameters[4];                   // User float parameters, under preference file UserFloatParameters
 } RKCompressionScratch;
 
 //
@@ -101,15 +104,17 @@ typedef struct rk_moment_scratch {
     RKFloat                          *PhiDP;                                   // Differential phase PhiDP
     RKFloat                          *RhoHV;                                   // Cross-correlation coefficient RhoHV
     RKFloat                          *KDP;                                     // Specific phase KDP
-    RKFloat                          *usr1;                                    // User space #1, same storage length as ZDR, PhiDP, etc.
-    RKFloat                          *usr2;                                    // User space #2, same storage length as ZDR, PhiDP, etc.
-    RKFloat                          *usr3;                                    // User space #3, same storage length as ZDR, PhiDP, etc.
-    RKFloat                          *usr4;                                    // User space #4, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *userArray1;                              // User array #1, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *userArray2;                              // User array #2, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *userArray3;                              // User array #3, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *userArray4;                              // User array #4, same storage length as ZDR, PhiDP, etc.
     uint8_t                          *mask;                                    // Mask for censoring
     RKFFTModule                      *fftModule;                               // A reference to the common FFT module
     fftwf_complex                    **inBuffer;                               //
     fftwf_complex                    **outBuffer;                              //
     int8_t                           fftOrder;                                 // FFT order that was used to perform FFT. This will be copied over to rayHeader
+    int                              userIntegerParameters[4];                 // User integer parameters, under prefernece file UserIntegerParameters
+    RKFloat                          userFloatParameters[4];                   // User float parameters, under preference file UserFloatParameters
 } RKScratch;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);

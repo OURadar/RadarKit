@@ -125,14 +125,13 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 
 static void builtInCompressor(RKCompressionScratch *scratch) {
 
+    int i, p;
     RKPulse *pulse = scratch->pulse;
     RKComplex *filter = scratch->filter;
     RKFilterAnchor *filterAnchor = scratch->filterAnchor;
     fftwf_complex *in = scratch->inBuffer;
     fftwf_complex *out = scratch->outBuffer;
-
-    int i, p;
-    int inBound, outBound;
+    unsigned int inBound, outBound;
 
     inBound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
     outBound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
@@ -314,7 +313,7 @@ static void *pulseEngineCore(void *_in) {
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     mem += 2 * nfft * sizeof(RKFloat);
-    
+
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
