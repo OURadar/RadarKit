@@ -359,7 +359,8 @@ static void *pulseEngineCore(void *_in) {
     // [    t0 - t2     ]
     //
     uint64_t tic = me->tic;
-    uint16_t configIndex = 0;
+    uint16_t configIndex = -1;
+    scratch->config = &engine->configBuffer[0];
 
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
@@ -391,6 +392,7 @@ static void *pulseEngineCore(void *_in) {
         if (configIndex != pulse->header.configIndex) {
             configIndex = pulse->header.configIndex;
             scratch->config = &engine->configBuffer[configIndex];
+            RKLog("%s transitionGateCount = %d\n", engine->name, scratch->config->transitionGateCount);
         }
 
         #ifdef DEBUG_IQ
