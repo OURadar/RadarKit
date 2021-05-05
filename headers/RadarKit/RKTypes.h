@@ -93,6 +93,7 @@
 #define RKMaximumPrefixLength                8                                 // String length includes the terminating character!
 #define RKMaximumSymbolLength                8                                 // String length includes the terminating character!
 #define RKMaximumFileExtensionLength         8                                 // String length includes the terminating character!
+#define RKUserParameterCount                 8                                 //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -645,6 +646,9 @@ enum RKConfigKey {
     RKConfigKeySQIThreshold,
     RKConfigKeyVCPDefinition,
     RKConfigKeyPulseRingFilterGateCount,
+    RKConfigKeyTransitionGateCount,
+    RKConfigUserIntegerParameters,
+    RKConfigUserFloatParameters,
     RKConfigKeyTotalNumberOfKeys
 };
 
@@ -1016,32 +1020,38 @@ typedef struct rk_config_v1 {
 //
 // A running configuration buffer
 //
-typedef struct rk_config {
-    RKIdentifier         i;                                                    // Identity counter
-    float                sweepElevation;                                       // Sweep elevation angle (degrees)
-    float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
-    RKMarker             startMarker;                                          // Marker of the latest start ray
-    uint8_t              filterCount;                                          // Number of filters (redundant info of waveformDecimate)
-    RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level (redundant info of waveformDecimate)
-    RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
-    RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
-    uint32_t             pulseGateCount;                                       // Number of range gates
-    RKFloat              pulseGateSize;                                        // Size of range gate (m)
-    uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
-    uint32_t             waveformId[RKMaximumFilterCount];                     // Transmit waveform
-    RKFloat              noise[2];                                             // Noise floor (ADU)
-    RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
-    RKFloat              systemDCal;                                           // System-wide ZDR calibration (dB)
-    RKFloat              systemPCal;                                           // System-wide phase calibration (rad)
-    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Waveform Z calibration (dB)
-    RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
-    RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
-    RKFloat              SNRThreshold;                                         // Censor SNR (dB)
-    RKFloat              SQIThreshold;                                         // Censor SQI
-    RKName               waveformName;                                         // Waveform name
-    char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
-    RKWaveform           *waveform;                                            // Reference to the waveform storage
-    RKWaveform           *waveformDecimate;                                    // Reference to the waveform storage in Level-II sampling rate
+typedef union rk_config {
+    struct {
+        RKIdentifier         i;                                                    // Identity counter
+        float                sweepElevation;                                       // Sweep elevation angle (degrees)
+        float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
+        RKMarker             startMarker;                                          // Marker of the latest start ray
+        uint8_t              filterCount;                                          // Number of filters (redundant info of waveformDecimate)
+        RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level (redundant info of waveformDecimate)
+        RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
+        RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
+        uint32_t             pulseGateCount;                                       // Number of range gates
+        RKFloat              pulseGateSize;                                        // Size of range gate (m)
+        uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
+        uint32_t             waveformId[RKMaximumFilterCount];                     // Transmit waveform
+        RKFloat              noise[2];                                             // Noise floor (ADU)
+        RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
+        RKFloat              systemDCal;                                           // System-wide ZDR calibration (dB)
+        RKFloat              systemPCal;                                           // System-wide phase calibration (rad)
+        RKFloat              ZCal[RKMaximumFilterCount][2];                        // Waveform Z calibration (dB)
+        RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
+        RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
+        RKFloat              SNRThreshold;                                         // Censor SNR (dB)
+        RKFloat              SQIThreshold;                                         // Censor SQI
+        RKName               waveformName;                                         // Waveform name
+        char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
+        RKWaveform           *waveform;                                            // Reference to the waveform storage
+        RKWaveform           *waveformDecimate;                                    // Reference to the waveform storage in Level-II sampling rate
+        uint32_t             transitionGateCount;                                  // Transition gate count like the 1st km of the WSR-88D
+        uint32_t             userIntegerParameters[RKUserParameterCount];          // User integer parameters
+        float                userFloatParameters[RKUserParameterCount];            // User float parameters
+    };
+    RKByte               bytes[1600];
 } RKConfig;
 
 //
@@ -1245,8 +1255,8 @@ typedef union rk_file_header {
         uint32_t             buildNo;                                          //   4 B
         RKRawDataType        dataType;                                         //   1 B
         uint8_t              reserved[123];                                    // 123 B = 256 B
-        RKRadarDesc          desc;                                             //
-        RKConfig             config;                                           //
+        RKRadarDesc          desc;                                             //         1072 B
+        RKConfig             config;                                           //         1600 B
     };                                                                         //
     RKByte               bytes[4096];                                          //
 } RKFileHeader;

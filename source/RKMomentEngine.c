@@ -428,10 +428,10 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->PhiDP, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->RhoHV, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->KDP, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->usr1, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->usr2, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->usr3, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->usr4, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->userArray1, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->userArray2, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->userArray3, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->userArray4, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->dcal, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->pcal, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
     memset(space->dcal, 0, space->capacity * sizeof(RKFloat));
@@ -490,10 +490,10 @@ void RKScratchFree(RKScratch *space) {
     free(space->PhiDP);
     free(space->RhoHV);
     free(space->KDP);
-    free(space->usr1);
-    free(space->usr2);
-    free(space->usr3);
-    free(space->usr4);
+    free(space->userArray1);
+    free(space->userArray2);
+    free(space->userArray3);
+    free(space->userArray4);
     free(space->dcal);
     free(space->pcal);
     for (j = 0; j < 2 * space->lagCount - 1; j++) {
@@ -749,6 +749,7 @@ static void *momentCore(void *in) {
                 }
             }
             // The rest of the constants
+            space->config = config;
             space->noise[0] = config->noise[0];
             space->noise[1] = config->noise[1];
             space->SNRThreshold = config->SNRThreshold;

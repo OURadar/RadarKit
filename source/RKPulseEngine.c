@@ -359,6 +359,7 @@ static void *pulseEngineCore(void *_in) {
     // [    t0 - t2     ]
     //
     uint64_t tic = me->tic;
+    uint16_t configIndex = 0;
 
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
@@ -385,6 +386,12 @@ static void *pulseEngineCore(void *_in) {
         i0 = RKNextNModuloS(i0, engine->coreCount, engine->radarDescription->pulseBufferDepth);
 
         RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i0);
+
+        // Update configIndex when it no longer matches the latest pulse
+        if (configIndex != pulse->header.configIndex) {
+            configIndex = pulse->header.configIndex;
+            scratch->config = &engine->configBuffer[configIndex];
+        }
 
         #ifdef DEBUG_IQ
         RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
@@ -762,13 +769,13 @@ void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
 // size - number of slots in *pulses
 //
 void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc *desc,
-                                                   RKConfig *configBuffer, uint32_t *configIndex,
-                                                   RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
-    engine->radarDescription  = (RKRadarDesc *)desc;
-    engine->configBuffer      = configBuffer;
-    engine->configIndex       = configIndex;
-    engine->pulseBuffer       = pulseBuffer;
-    engine->pulseIndex        = pulseIndex;
+                                        RKConfig *configBuffer, uint32_t *configIndex,
+                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+    engine->radarDescription = (RKRadarDesc *)desc;
+    engine->configBuffer     = configBuffer;
+    engine->configIndex      = configIndex;
+    engine->pulseBuffer      = pulseBuffer;
+    engine->pulseIndex       = pulseIndex;
 
     size_t bytes;
 

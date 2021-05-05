@@ -89,10 +89,10 @@ int RKPulseEngineResetFilters(RKPulseEngine *);
 int RKPulseEngineSetFilterCountOfGroup(RKPulseEngine *, const int group, const int count);
 int RKPulseEngineSetFilterGroupCount(RKPulseEngine *, const int groupCount);
 int RKPulseEngineSetFilter(RKPulseEngine *,
-                                const RKComplex *filter,
-                                const RKFilterAnchor anchor,
-                                const int group,
-                                const int index);
+                           const RKComplex *filter,
+                           const RKFilterAnchor anchor,
+                           const int group,
+                           const int index);
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
 int RKPulseEngineSetFilterTo121(RKPulseEngine *);
 int RKPulseEngineSetFilterTo11(RKPulseEngine *);
