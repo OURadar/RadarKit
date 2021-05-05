@@ -65,9 +65,10 @@ char *RKTestByNumberDescription(const int indent) {
     "15 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
     "16 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
     "17 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
-    "18 - Write a netcdf file using RKProductFileWriterNC()\n"
+    "18 - Write a .nc file using RKProductFileWriterNC()\n"
     "19 - RKTestReviseLogicalValues()\n"
     "20 - Reading a .rkc file; -T20 FILENAME\n"
+    "21 - RKCommandQueue unit test\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -75,6 +76,7 @@ char *RKTestByNumberDescription(const int indent) {
     "33 - Hilbert transform\n"
     "34 - Optimize FFT performance and generate an fft-wisdom file\n"
     "35 - Show ring filter coefficients\n"
+    "36 - Show ramp types\n"
     "\n"
     "40 - Make a frequency hopping sequence\n"
     "41 - Make a TFM waveform\n"
@@ -206,6 +208,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 36:
             RKTestCommandQueue();
+            break;
+        case 37:
+            RKTestRamp();
             break;
         case 40:
             RKTestMakeHops();
@@ -1502,6 +1507,32 @@ void RKTestRingFilterShowCoefficients(void) {
     }
     free(string);
     free(filter);
+}
+
+void RKTestRamp(void) {
+    int k;
+    int n = 6;
+    double param;
+    RKFloat *ramp = (RKFloat *)malloc(n * sizeof(RKFloat));
+
+    printf("=================\nRamp Functions:\n=================\n\n");
+
+    printf("Zeros:\n");
+    RKRampMake(ramp, RKRampTypeZeros, n);
+    for (k = 0; k < n; k++) {
+        printf("r[%d] = %.4f\n", k, ramp[k]);
+    }
+    printf("\n");
+
+    param = 0.5;
+    printf("Step @ %.4f:\n", param);
+    RKRampMake(ramp, RKRampTypeStep, n, param);
+    for (k = 0; k < n; k++) {
+        printf("r[%d] = %.4f\n", k, ramp[k]);
+    }
+    printf("\n");
+
+    free(ramp);
 }
 
 #pragma mark - Waveform Tests
@@ -3612,6 +3643,7 @@ static void *pushLoop(void *in) {
         RKLog("%s Command '%s' pushed.\n", name, command);
         usleep(200000);
     }
+    RKLog("%s retiring ...\n", name);
     return NULL;
 }
 
@@ -3626,7 +3658,8 @@ static void *popLoop(void *in) {
         } else {
             usleep(10000);
         }
-    } while (queue->tic < 10);
+    } while (queue->toc < 10);
+    RKLog("%s retiring ...\n", name);
     return NULL;
 }
 
@@ -3637,6 +3670,7 @@ void RKTestCommandQueue(void) {
     pthread_create(&tidPop, NULL, popLoop, queue);
     pthread_join(tidPush, NULL);
     pthread_join(tidPop, NULL);
+    RKCommandQueueFree(queue);
 }
 
 void RKTestSingleCommand(void) {

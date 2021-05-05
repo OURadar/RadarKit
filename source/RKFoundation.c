@@ -1805,7 +1805,7 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
     return RKResultSuccess;
 }
 
-#pragma mark - Command queue
+#pragma mark - Command Queue
 
 RKCommandQueue *RKCommandQueueInit(const uint8_t depth, const bool nonblocking) {
     RKCommandQueue *queue = (RKCommandQueue *)malloc(sizeof(RKCommandQueue));
@@ -1840,6 +1840,7 @@ RKCommand *RKCommandQueuePop(RKCommandQueue *queue) {
     queue->tail = RKNextModuloS(queue->tail, queue->depth);
     pthread_mutex_lock(&queue->lock);
     queue->count--;
+    queue->toc++;
     pthread_mutex_unlock(&queue->lock);
     return command;
 }
@@ -1851,5 +1852,11 @@ int RKCommandQueuePush(RKCommandQueue *queue, RKCommand *command) {
     queue->count++;
     pthread_mutex_unlock(&queue->lock);
     queue->tic++;
+    return RKResultSuccess;
+}
+
+int RKCommandQueueFree(RKCommandQueue *queue) {
+    free(queue->buffer);
+    free(queue);
     return RKResultSuccess;
 }

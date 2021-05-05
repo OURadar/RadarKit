@@ -165,5 +165,6 @@ int RKSimpleEngineFree(RKSimpleEngine *);
 RKCommandQueue *RKCommandQueueInit(const uint8_t, const bool);
 RKCommand *RKCommandQueuePop(RKCommandQueue *);
 int RKCommandQueuePush(RKCommandQueue *, RKCommand *);
+int RKCommandQueueFree(RKCommandQueue *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

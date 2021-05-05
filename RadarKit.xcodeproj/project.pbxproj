@@ -7,14 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B50276A71E3CF20D002C46B1 /* RKHealth.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276A61E3CF20D002C46B1 /* RKHealth.h */; };
-		B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276AA1E3CFC19002C46B1 /* RKHealthRelayTweeta.h */; };
+		B50276A71E3CF20D002C46B1 /* RKHealth.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276A61E3CF20D002C46B1 /* RKHealth.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276AA1E3CFC19002C46B1 /* RKHealthRelayTweeta.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B508EA721FB3FC6500A6A83C /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
-		B508EA761FB7AABA00A6A83C /* RKPulseRingFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = B508EA751FB7AAB900A6A83C /* RKPulseRingFilter.h */; };
+		B508EA761FB7AABA00A6A83C /* RKPulseRingFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = B508EA751FB7AAB900A6A83C /* RKPulseRingFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B508EA781FB7AAD500A6A83C /* RKPulseRingFilter.c in Sources */ = {isa = PBXBuildFile; fileRef = B508EA771FB7AAD500A6A83C /* RKPulseRingFilter.c */; };
 		B525FEF41FB0B6A400C5195C /* RKMisc.c in Sources */ = {isa = PBXBuildFile; fileRef = B525FEF31FB0B6A400C5195C /* RKMisc.c */; };
 		B525FEF61FB0B6B800C5195C /* RadarKit.c in Sources */ = {isa = PBXBuildFile; fileRef = B525FEF51FB0B6B800C5195C /* RadarKit.c */; };
-		B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = B528D9611E74EE8100A7328F /* RKFileManager.h */; };
+		B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = B528D9611E74EE8100A7328F /* RKFileManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B52E45C31D91749C00FC1113 /* RKMomentEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B52E45C21D91749C00FC1113 /* RKMomentEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDA1AB8D9F100C00517 /* RKClient.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDB1AB8D9F100C00517 /* RKFoundation.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -22,25 +22,29 @@
 		B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDD1AB8D9F100C00517 /* RKRadar.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDE1AB8D9F100C00517 /* RKServer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = B5324DDF1AB8D9F100C00517 /* RKTypes.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = B5377DC52041C18C00972E41 /* RKHostMonitor.h */; };
+		B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = B5377DC52041C18C00972E41 /* RKHostMonitor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5377DC82041C1B900972E41 /* RKHostMonitor.c in Sources */ = {isa = PBXBuildFile; fileRef = B5377DC72041C1B900972E41 /* RKHostMonitor.c */; };
 		B53AE7ED1D88824400364467 /* RKMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = B53AE7EC1D88824400364467 /* RKMisc.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B548350F216B9E280066FA0D /* RKSpectralMoment.h */; };
+		B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */ = {isa = PBXBuildFile; fileRef = B548350F216B9E280066FA0D /* RKSpectralMoment.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5483512216B9E8F0066FA0D /* RKSpectralMoment.c in Sources */ = {isa = PBXBuildFile; fileRef = B5483511216B9E8F0066FA0D /* RKSpectralMoment.c */; };
 		B5592B55263F51680000CF04 /* owav2wav.c in Sources */ = {isa = PBXBuildFile; fileRef = B5592B4B263F50860000CF04 /* owav2wav.c */; };
-		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; };
-		B55F5F1A1E2C8F9600FA8B2E /* RKSweepEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweepEngine.h */; };
-		B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F261E2D206300FA8B2E /* RKConfig.h */; };
-		B565B5351E5A3838000C8503 /* RKPreference.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B5341E5A3838000C8503 /* RKPreference.h */; };
-		B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53C1E5A3988000C8503 /* RKTemplate.h */; };
-		B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53F1E5A3E23000C8503 /* RKWaveform.h */; };
+		B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */ = {isa = PBXBuildFile; fileRef = B55E437C1DB66682003C40CF /* RKSIMD.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B55F5F1A1E2C8F9600FA8B2E /* RKSweepEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F191E2C8F9600FA8B2E /* RKSweepEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = B55F5F261E2D206300FA8B2E /* RKConfig.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B565B5351E5A3838000C8503 /* RKPreference.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B5341E5A3838000C8503 /* RKPreference.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53C1E5A3988000C8503 /* RKTemplate.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53F1E5A3E23000C8503 /* RKWaveform.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B565B5451E5A4623000C8503 /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5441E5A4623000C8503 /* bessi.c */; };
 		B56A750B20BB01C500E8B6E9 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
+		B56BD9F12642DA3400113329 /* RKRamp.c in Sources */ = {isa = PBXBuildFile; fileRef = B56BD9F02642DA3400113329 /* RKRamp.c */; };
+		B56BD9F32642DA4D00113329 /* RKRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = B56BD9F22642DA4D00113329 /* RKRamp.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B56BD9F42642E06C00113329 /* RKProductFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EE832D20DFBC4F00681E29 /* RKProductFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B56BD9F52642E09400113329 /* RKCommandCenter.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKCommandCenter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; };
+		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B2058A20E43128007D48E0 /* RKSweepFile.c */; };
-		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; };
-		B5B675581EB0DFAB001BD68D /* RKHealthLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */; };
+		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5B675581EB0DFAB001BD68D /* RKHealthLogger.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B675571EB0DFAB001BD68D /* RKHealthLogger.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5BDBE7B26402E3200F421ED /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B5C1F3531AB9C917004F88CD /* RKPulseEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3501AB9C917004F88CD /* RKPulseEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3551AB9CB69004F88CD /* RKWindow.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -48,21 +52,21 @@
 		B5C1F3641AB9CD34004F88CD /* RKRawDataRecorder.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F3631AB9CD34004F88CD /* RKRawDataRecorder.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5DD4EE8261DF988004BACB9 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B5DD4EF0261DF9AB004BACB9 /* pgen.c in Sources */ = {isa = PBXBuildFile; fileRef = B5DD4ED7261DF94B004BACB9 /* pgen.c */; };
-		B5DD6F271E1F400E00FAE2E3 /* RKClock.h in Headers */ = {isa = PBXBuildFile; fileRef = B5DD6F261E1F400E00FAE2E3 /* RKClock.h */; };
-		B5DDE7E41E1AB57700C5D16D /* RKMultiLag.h in Headers */ = {isa = PBXBuildFile; fileRef = B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */; };
+		B5DD6F271E1F400E00FAE2E3 /* RKClock.h in Headers */ = {isa = PBXBuildFile; fileRef = B5DD6F261E1F400E00FAE2E3 /* RKClock.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5DDE7E41E1AB57700C5D16D /* RKMultiLag.h in Headers */ = {isa = PBXBuildFile; fileRef = B5DDE7E31E1AB57700C5D16D /* RKMultiLag.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5DFFDC1222DB43D005CF6B3 /* rknchead.c in Sources */ = {isa = PBXBuildFile; fileRef = B5DFFDB5222DB40E005CF6B3 /* rknchead.c */; };
 		B5DFFDC2222DB5FA005CF6B3 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
-		B5E6D94C1E1C4A1200DFBBA9 /* RKPositionEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D94B1E1C4A1200DFBBA9 /* RKPositionEngine.h */; };
-		B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */; };
+		B5E6D94C1E1C4A1200DFBBA9 /* RKPositionEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D94B1E1C4A1200DFBBA9 /* RKPositionEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */ = {isa = PBXBuildFile; fileRef = B5E6D9501E1C617A00DFBBA9 /* RKPedestalPedzy.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5E7CB12210A4AD100D381ED /* rkutil.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E7CB11210A4AD100D381ED /* rkutil.c */; };
 		B5E7CB14210A4AD800D381ED /* simple-emulator.c in Sources */ = {isa = PBXBuildFile; fileRef = B5E7CB13210A4AD800D381ED /* simple-emulator.c */; };
-		B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */; };
+		B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5EE832C20DFB9D400681E29 /* RKProductFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5EE832B20DFB9D400681E29 /* RKProductFile.c */; };
-		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; };
-		B5FA38EA26346214008C0454 /* RKCalibrator.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FA38E926346214008C0454 /* RKCalibrator.h */; };
+		B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */ = {isa = PBXBuildFile; fileRef = B5F5AE3A1DBF994200CF643F /* RKTest.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5FA38EA26346214008C0454 /* RKCalibrator.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FA38E926346214008C0454 /* RKCalibrator.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5FA38F126346299008C0454 /* RKCalibrator.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FA38F026346299008C0454 /* RKCalibrator.c */; };
-		B5FA3920263475D8008C0454 /* RKVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FA391F263475D8008C0454 /* RKVersion.h */; };
-		B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FAD8D120DE943B00E0A767 /* RKProduct.h */; };
+		B5FA3920263475D8008C0454 /* RKVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FA391F263475D8008C0454 /* RKVersion.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */ = {isa = PBXBuildFile; fileRef = B5FAD8D120DE943B00E0A767 /* RKProduct.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5FAD8D420DE945500E0A767 /* RKProduct.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FAD8D320DE945500E0A767 /* RKProduct.c */; };
 		B5FFD47B1FB0B5C600319453 /* RKRawDataRecorder.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FFD45E1FB0B5C200319453 /* RKRawDataRecorder.c */; };
 		B5FFD47C1FB0B5C600319453 /* RKMultiLag.c in Sources */ = {isa = PBXBuildFile; fileRef = B5FFD45F1FB0B5C200319453 /* RKMultiLag.c */; };
@@ -194,6 +198,8 @@
 		B565B5441E5A4623000C8503 /* bessi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bessi.c; path = source/bessi.c; sourceTree = "<group>"; };
 		B56AB0A520A732DC00E73AE9 /* pref.conf */ = {isa = PBXFileReference; lastKnownFileType = text; path = pref.conf; sourceTree = "<group>"; };
 		B56AB0AA20A8826900E73AE9 /* Simple Emulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Simple Emulator"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B56BD9F02642DA3400113329 /* RKRamp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKRamp.c; path = source/RKRamp.c; sourceTree = "<group>"; };
+		B56BD9F22642DA4D00113329 /* RKRamp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKRamp.h; path = headers/RadarKit/RKRamp.h; sourceTree = "<group>"; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B5B2058820E43117007D48E0 /* RKSweepFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepFile.h; path = headers/RadarKit/RKSweepFile.h; sourceTree = "<group>"; };
 		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
@@ -355,6 +361,7 @@
 				B55F5F261E2D206300FA8B2E /* RKConfig.h */,
 				B5324DDC1AB8D9F100C00517 /* RKNetwork.h */,
 				B5C1F3551AB9CB69004F88CD /* RKWindow.h */,
+				B56BD9F22642DA4D00113329 /* RKRamp.h */,
 				B5C1F35A1AB9CBAA004F88CD /* RKDSP.h */,
 				B565B53F1E5A3E23000C8503 /* RKWaveform.h */,
 				B5324DDA1AB8D9F100C00517 /* RKClient.h */,
@@ -427,6 +434,7 @@
 				B5FFD47A1FB0B5C600319453 /* RKConfig.c */,
 				B5FFD46D1FB0B5C400319453 /* RKNetwork.c */,
 				B5FFD4751FB0B5C600319453 /* RKWindow.c */,
+				B56BD9F02642DA3400113329 /* RKRamp.c */,
 				B5FFD46A1FB0B5C400319453 /* RKDSP.c */,
 				B5FFD4611FB0B5C200319453 /* RKWaveform.c */,
 				B5FFD4621FB0B5C300319453 /* RKClient.c */,
@@ -467,43 +475,46 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */,
-				B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */,
+				B5FA3920263475D8008C0454 /* RKVersion.h in Headers */,
+				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
+				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
+				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
 				B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */,
-				B5324DE31AB8DA0800C00517 /* RKNetwork.h in Headers */,
-				B5C1F3531AB9C917004F88CD /* RKPulseEngine.h in Headers */,
 				B5DD6F271E1F400E00FAE2E3 /* RKClock.h in Headers */,
+				B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */,
+				B5324DE31AB8DA0800C00517 /* RKNetwork.h in Headers */,
 				B5C1F3581AB9CB69004F88CD /* RKWindow.h in Headers */,
+				B56BD9F32642DA4D00113329 /* RKRamp.h in Headers */,
+				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
+				B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */,
+				B5324DE11AB8DA0800C00517 /* RKClient.h in Headers */,
+				B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */,
+				B5E6D94C1E1C4A1200DFBBA9 /* RKPositionEngine.h in Headers */,
+				B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */,
+				B5C1F3531AB9C917004F88CD /* RKPulseEngine.h in Headers */,
+				B508EA761FB7AABA00A6A83C /* RKPulseRingFilter.h in Headers */,
 				B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */,
+				B5DDE7E41E1AB57700C5D16D /* RKMultiLag.h in Headers */,
+				B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */,
+				B5FA38EA26346214008C0454 /* RKCalibrator.h in Headers */,
+				B52E45C31D91749C00FC1113 /* RKMomentEngine.h in Headers */,
+				B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */,
+				B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */,
+				B56BD9F42642E06C00113329 /* RKProductFile.h in Headers */,
+				B55F5F1A1E2C8F9600FA8B2E /* RKSweepEngine.h in Headers */,
 				B5C1F3641AB9CD34004F88CD /* RKRawDataRecorder.h in Headers */,
 				B50276A71E3CF20D002C46B1 /* RKHealth.h in Headers */,
-				B5C1F35D1AB9CBAA004F88CD /* RKDSP.h in Headers */,
-				B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */,
-				B5E6D9511E1C617A00DFBBA9 /* RKPedestalPedzy.h in Headers */,
-				B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */,
-				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
-				B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */,
-				B5FA38EA26346214008C0454 /* RKCalibrator.h in Headers */,
-				B5E6D94C1E1C4A1200DFBBA9 /* RKPositionEngine.h in Headers */,
-				B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */,
-				B5324DE51AB8DA0800C00517 /* RKServer.h in Headers */,
-				B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */,
-				B5DDE7E41E1AB57700C5D16D /* RKMultiLag.h in Headers */,
-				B52E45C31D91749C00FC1113 /* RKMomentEngine.h in Headers */,
-				B59471911D89B4D400EEE77C /* RadarKit.h in Headers */,
-				B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */,
-				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
-				B508EA761FB7AABA00A6A83C /* RKPulseRingFilter.h in Headers */,
-				B5483510216B9E280066FA0D /* RKSpectralMoment.h in Headers */,
 				B5B675581EB0DFAB001BD68D /* RKHealthLogger.h in Headers */,
-				B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */,
-				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
-				B55F5F271E2D206300FA8B2E /* RKConfig.h in Headers */,
-				B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */,
-				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
-				B55F5F1A1E2C8F9600FA8B2E /* RKSweepEngine.h in Headers */,
+				B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */,
 				B565B5351E5A3838000C8503 /* RKPreference.h in Headers */,
-				B5FA3920263475D8008C0454 /* RKVersion.h in Headers */,
+				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
+				B56BD9F52642E09400113329 /* RKCommandCenter.h in Headers */,
+				B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */,
+				B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */,
+				B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */,
+				B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */,
+				B59471911D89B4D400EEE77C /* RadarKit.h in Headers */,
+				B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -707,6 +718,7 @@
 				B5FFD48E1FB0B5C600319453 /* RKSIMD.c in Sources */,
 				B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */,
 				B5FFD4871FB0B5C600319453 /* RKDSP.c in Sources */,
+				B56BD9F12642DA3400113329 /* RKRamp.c in Sources */,
 				B5FFD47C1FB0B5C600319453 /* RKMultiLag.c in Sources */,
 				B5FFD4821FB0B5C600319453 /* RKServer.c in Sources */,
 				B5FAD8D420DE945500E0A767 /* RKProduct.c in Sources */,

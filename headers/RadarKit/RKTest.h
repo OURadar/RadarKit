@@ -130,6 +130,7 @@ void RKTestWindow(void);
 void RKTestHilbertTransform(void);
 void RKTestWriteFFTWisdom(void);
 void RKTestRingFilterShowCoefficients(void);
+void RKTestRamp(void);
 
 #pragma mark - Waveform Tests
 

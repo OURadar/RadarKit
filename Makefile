@@ -14,7 +14,7 @@ endif
 #CFLAGS += -DDEBUG_FILE_MANAGER
 
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
-CFLAGS += -I headers -I /usr/local/include -I /usr/include -fPIC
+CFLAGS += -I headers -I headers/RadarKit -I /usr/local/include -I /usr/include -fPIC
 
 ifeq ($(KERNEL), Darwin)
 	CFLAGS += -fms-extensions -Wno-microsoft
@@ -23,7 +23,7 @@ endif
 LDFLAGS = -L ./ -L /usr/local/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
-OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o
+OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
 OBJS += RKPreference.o
 OBJS += RKFileManager.o RKHostMonitor.o
 OBJS += RKConfig.o RKHealth.o

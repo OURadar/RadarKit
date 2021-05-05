@@ -66,7 +66,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-vs1"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-vs2"
@@ -101,8 +101,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-T61"
-            isEnabled = "NO">
+            argument = "-T37"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-r anastasia"

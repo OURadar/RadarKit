@@ -3,7 +3,7 @@
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 2/19/17.
-//  Copyright © Boonleng Cheong. All rights reserved.
+//  Copyright (c) Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKTemplate.h>

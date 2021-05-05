@@ -12,6 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKSIMD.h>
 #include <RadarKit/RKWindow.h>
+#include <RadarKit/RKRamp.h>
 
 #define RKCommonFFTPlanCount 18
 
