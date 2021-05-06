@@ -743,7 +743,6 @@ static void *momentCore(void *in) {
             previousConfig->prt[0] != config->prt[0] ||
             previousConfig->SNRThreshold != config->SNRThreshold ||
             previousConfig->SQIThreshold != config->SQIThreshold ||
-            previousConfig->filterCount != config->filterCount ||
             previousConfig->systemDCal != config->systemDCal ||
             previousConfig->systemPCal != config->systemPCal;
             for (p = 0; p < 2; p++) {
@@ -773,7 +772,7 @@ static void *momentCore(void *in) {
                       config->systemZCal[0], config->ZCal[0][0], filterAnchors[0].sensitivityGain, space->samplingAdjustment);
                 RKLog(">%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
                       engine->name, me->name,
-                      config->filterCount,
+                      config->waveform->count,
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
                 RKLog(">%s %s PRF = %s Hz -> Va = %.2f m/s/rad\n",
@@ -781,7 +780,7 @@ static void *momentCore(void *in) {
                       RKFloatToCommaStyleString(1.0f / config->prt[0]), space->velocityFactor);
                 if (engine->verbose > 1) {
                     for (p = 0; p < 2; p++) {
-                        for (k = 0; k < config->filterCount; k++) {
+                        for (k = 0; k < config->waveform->count; k++) {
                             RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
                                   engine->name, me->name, k,
                                   p == 0 ? "H" : (p == 1 ? "V" : "-"),

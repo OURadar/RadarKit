@@ -949,7 +949,7 @@ typedef struct rk_radar_desc {
 typedef struct rk_waveform {
     RKName               name;                                                 // Waveform name in plain string
     RKWaveformType       type;                                                 // Various type of waveforms
-    int                  count;                                                // Number of groups
+    uint8_t              count;                                                // Number of groups
     int                  depth;                                                // Maximum number of samples
     double               fc;                                                   // Carrier frequency (Hz)
     double               fs;                                                   // Sampling frequency (Hz)
@@ -1026,12 +1026,11 @@ typedef union rk_config {
         float                sweepElevation;                                   // Sweep elevation angle (degrees)
         float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
         RKMarker             startMarker;                                      // Marker of the latest start ray
-        uint8_t              filterCount;                                      // Number of filters (redundant info in waveform / waveformDecimate)
-        //RKFilterAnchor       filterAnchors[RKMaximumFilterCount];              // Filter anchors at ray level (redundant info of waveformDecimate)
         RKFloat              prt[RKMaximumFilterCount];                        // Pulse repetition time (s)
         RKFloat              pw[RKMaximumFilterCount];                         // Pulse width (s)
         uint32_t             pulseGateCount;                                   // Number of range gates
         RKFloat              pulseGateSize;                                    // Size of range gate (m)
+        uint32_t             transitionGateCount;                              // Transition gate count
         uint32_t             ringFilterGateCount;                              // Number of range gates to apply ring filter
         uint32_t             waveformId[RKMaximumFilterCount];                 // Transmit waveform
         RKFloat              noise[2];                                         // Noise floor (ADU)
@@ -1044,14 +1043,13 @@ typedef union rk_config {
         RKFloat              SNRThreshold;                                     // Censor SNR (dB)
         RKFloat              SQIThreshold;                                     // Censor SQI
         RKName               waveformName;                                     // Waveform name
-        char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
         RKWaveform           *waveform;                                        // Reference to the waveform storage
         RKWaveform           *waveformDecimate;                                // Reference to the waveform storage in Level-II sampling rate
-        uint32_t             transitionGateCount;                              // Transition gate count like the 1st km of the WSR-88D
         uint32_t             userIntegerParameters[RKUserParameterCount];      // User integer parameters (not yet)
         float                userFloatParameters[RKUserParameterCount];        // User float parameters (not yet)
+        char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
     };
-    RKByte               bytes[1600];
+    RKByte               bytes[1024];
 } RKConfig;
 
 //
@@ -1378,8 +1376,6 @@ typedef union rk_product_header {
         time_t               endTime;                                          // End time of the sweep
         bool                 isPPI;                                            // PPI indicator
         bool                 isRHI;                                            // RHI indicator
-        uint8_t              filterCount;                                      // Number of filters
-        RKFilterAnchor       filterAnchors[RKMaximumFilterCount];              // Filter anchors
         RKFloat              prt[RKMaximumFilterCount];                        // Pulse repetition time (s)
         RKFloat              pw[RKMaximumFilterCount];                         // Pulse width (s)
         RKFloat              noise[2];                                         // Noise floor (ADU)

@@ -193,7 +193,6 @@ void proc(UserParams *arg) {
         RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
         RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
         RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
-        RKLog(">config.filterCount = %d\n", config->filterCount);
         RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
               1.0e3f * config->prt[0],
               RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));

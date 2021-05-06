@@ -60,7 +60,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                         rkGlobalParameters.showColor ? RKDeepPinkColor : "",
                         RKMarkerScanTypeString(newConfig->startMarker),
                         rkGlobalParameters.showColor ? RKNoColor : "",
-                        RKVariableInString("filterCount", &newConfig->filterCount, RKValueTypeInt8));
+                        RKVariableInString("filterCount", &newConfig->waveform->count, RKValueTypeUInt8));
                 break;
             case RKConfigKeyPRT:
                 newConfig->prt[0] = (RKFloat)va_arg(args, double);
@@ -146,12 +146,11 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     return;
                 }
                 newConfig->waveformDecimate = waveform;
-                newConfig->filterCount = waveform->filterCounts[0];
                 sprintf(stringBuffer[0], "WaveformDecimate = '%s'", waveform->name);
                 break;
             case RKConfigKeyPulseWidth:
                 newConfig->pw[0] = (RKFloat)va_arg(args, double);
-                for (j = 1; j < newConfig->filterCount; j++) {
+                for (j = 1; j < RKMaximumFilterCount; j++) {
                     newConfig->pw[j] = newConfig->pw[0];
                 }
                 sprintf(stringBuffer[0], "PulseWidth = %s us", RKFloatToCommaStyleString(1.0e6 * newConfig->pw[0]));
@@ -164,12 +163,23 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
                 waveformCal = (RKWaveformCalibration *)va_arg(args, void *);
                 if (waveformCal == NULL) {
-                    for (j = 0; j < newConfig->filterCount; j++) {
-                        newConfig->ZCal[j][0] = 0.0f;
-                        newConfig->ZCal[j][1] = 0.0f;
-                        newConfig->DCal[j] = 0.0f;
-                        newConfig->PCal[j] = 0.0f;
-                        sprintf(stringBuffer[j], "WavCal[0/1] @ All zeroes");
+                    if (newConfig->waveform) {
+                        // Only use the first anchor count of the first tone, assume they are all the same
+                        for (j = 0; j < newConfig->waveform->filterCounts[0]; j++) {
+                            newConfig->ZCal[j][0] = 0.0f;
+                            newConfig->ZCal[j][1] = 0.0f;
+                            newConfig->DCal[j] = 0.0f;
+                            newConfig->PCal[j] = 0.0f;
+                            sprintf(stringBuffer[j], "WavCal[0/1] @ All zeroes");
+                        }
+                    } else {
+                        for (j = 0; j < RKMaximumFilterCount; j++) {
+                            newConfig->ZCal[j][0] = 0.0f;
+                            newConfig->ZCal[j][1] = 0.0f;
+                            newConfig->DCal[j] = 0.0f;
+                            newConfig->PCal[j] = 0.0f;
+                            sprintf(stringBuffer[j], "WavCal[0/1] @ All zeroes");
+                        }
                     }
                     break;
                 }

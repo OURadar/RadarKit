@@ -77,13 +77,12 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.endTime = sweep->header.endTime;
     product->header.isPPI = sweep->header.isPPI;
     product->header.isRHI = sweep->header.isRHI;
-    product->header.filterCount = sweep->header.config.filterCount;
     product->header.rayCount = sweep->header.rayCount;
     product->header.gateCount = sweep->header.gateCount;
     product->header.gateSizeMeters = sweep->header.gateSizeMeters;
     
     // Sweep header config
-    for (k = 0; k < product->header.filterCount; k++) {
+    for (k = 0; k < RKMaximumFilterCount; k++) {
         //memcpy(&product->header.filterAnchors[k], &sweep->header.config.filterAnchors[k], sizeof(RKFilterAnchor));
         product->header.pw[k] = sweep->header.config.pw[k];
         product->header.prt[k] = sweep->header.config.prt[k];
@@ -94,7 +93,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.systemZCal[1] = sweep->header.config.systemZCal[1];
     product->header.systemDCal = sweep->header.config.systemDCal;
     product->header.systemPCal = sweep->header.config.systemPCal;
-    for (k = 0; k < product->header.filterCount; k++) {
+    for (k = 0; k < RKMaximumFilterCount; k++) {
         product->header.ZCal[k][0] = sweep->header.config.ZCal[k][0];
         product->header.ZCal[k][1] = sweep->header.config.ZCal[k][1];
         product->header.DCal[k] = sweep->header.config.DCal[k];
