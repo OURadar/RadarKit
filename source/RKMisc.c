@@ -502,6 +502,7 @@ void RKPreparePath(const char *filename) {
         free(cmd);
     } else {
         if (closedir(dir)) {
+            dir = NULL;
             fprintf(stderr, "Error in closedir() for %s\n", path);
         }
     }

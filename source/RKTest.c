@@ -2254,7 +2254,6 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     char *c, string[RKMaximumStringLength];
     long fpos, fsize;
     long tic = 0;
-    double periodTotal;
     struct timeval t0, t1;
     bool even = true;
 
@@ -2477,7 +2476,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
               RKUIntegerToCommaStyleString(fsize));
         fclose(fid);
         
-        periodTotal = 0.0;
+        //periodTotal = 0.0;
         
         //k = RKNextModuloS(k, count);
         k++;
