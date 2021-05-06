@@ -52,6 +52,7 @@ classdef iqread
             self.header.preface = deblank(fread(fid, [1 self.constants.RKName], 'char=>char'));
             self.header.buildNo = fread(fid, 1, 'uint32');
             
+            fprintf('preface = %s   buildNo = %d\n', self.header.preface, self.header.buildNo);
             % Third component: (RKRawDataType dataType)
             if self.header.buildNo >= 5
                 self.header.dataType = fread(fid, 1, 'uint8');
@@ -142,6 +143,10 @@ classdef iqread
                 %
                 %  Read in new RKConfig
                 %
+
+                fprintf('Incomplete\n');
+                fprintf('Incomplete\n');
+                fprintf('Incomplete\n');
 
                 % Read in RKWaveFileGlobalHeader
                 offset = self.constants.RKFileHeader;
@@ -375,6 +380,7 @@ classdef iqread
             fprintf('gateCount = %d   capacity = %d   downSampledGateCount = %d\n', gateCount, capacity, downSampledGateCount);
             
             % Some dimensions
+            fprintf('data offset = %d\n', offset);
             if isfinite(maxPulse)
                 fprintf('Reading %d pulses ...\n', maxPulse);
             else
@@ -383,7 +389,6 @@ classdef iqread
 
             % Pulses
             if self.header.dataType == 2
-                fprintf('offset = %d\n', offset);
                 % Compressed I/Q
                 m = memmapfile(self.filename, ...
                     'Offset', offset, ...
