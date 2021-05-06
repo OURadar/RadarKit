@@ -1706,10 +1706,10 @@ int RKGoLive(RKRadar *radar) {
                     RKConfigKeySystemZCal, -27.0, -27.0,
                     RKConfigKeySystemDCal, -0.01,
                     RKConfigKeySystemPCal, 0.01,
-                    RKConfigKeySNRThreshold, 0.0,
-                    RKConfigKeySQIThreshold, 0.25,
-                    RKConfigKeyRingFilterGateCount, 1000,
+                    RKConfigKeySNRThreshold, 0.1,
+                    RKConfigKeySQIThreshold, 0.2,
                     RKConfigKeyTransitionGateCount, 5,
+                    RKConfigKeyRingFilterGateCount, 1000,
                     RKConfigKeyNull);
     }
 

@@ -813,7 +813,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w5 + 4,
                 w5 + 4);
     } else {
-        sprintf(format, ">Tone[%%%dd] Filter[%%%dd/%%%dd] (l:%%%ds i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   %%+6.3f rad/sam\n",
+        sprintf(format, ">Tone[%%%dd] Filter[%%%dd/%%%dd] l:%%%ds, i:%%%ds, o:%%%ds, d:%%%ds, s:%%+%d.2f dB, %%+6.3f rad/sam\n",
                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
                 waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
                 (int)log10f((float)waveform->filterCounts[0]) + 1,

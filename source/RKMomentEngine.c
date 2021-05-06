@@ -750,12 +750,13 @@ static void *momentCore(void *in) {
                 configHasChanged |=
                 previousConfig->noise[p] != config->noise[p] &&
                 previousConfig->systemZCal[p] != config->systemZCal[p];
-                for (k = 0; k < config->filterCount; k++) {
-                    configHasChanged |=
-                    previousConfig->filterAnchors[k].length != config->filterAnchors[k].length &&
-                    previousConfig->filterAnchors[k].inputOrigin != config->filterAnchors[k].inputOrigin &&
-                    previousConfig->filterAnchors[k].outputOrigin != config->filterAnchors[k].outputOrigin;
-                }
+//                for (k = 0; k < config->filterCount; k++) {
+//                    configHasChanged |=
+//                    previousConfig->filterAnchors[k].length != config->filterAnchors[k].length &&
+//                    previousConfig->filterAnchors[k].inputOrigin != config->filterAnchors[k].inputOrigin &&
+//                    previousConfig->filterAnchors[k].outputOrigin != config->filterAnchors[k].outputOrigin;
+//                }
+                configHasChanged |= previousConfig->waveformDecimate != config->waveformDecimate;
             }
             // The rest of the constants
             space->config = config;
@@ -765,9 +766,11 @@ static void *momentCore(void *in) {
             // Show the info only if config has changed
             if (engine->verbose && configHasChanged) {
                 pthread_mutex_lock(&engine->mutex);
-                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain = %.2f   samplingAdj = %.2f\n",
+                
+                RKFilterAnchor *filterAnchors = config->waveform->filterAnchors[0];
+                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain[0] = %.2f   samplingAdj = %.2f\n",
                       engine->name, me->name,
-                      config->systemZCal[0], config->ZCal[0][0], config->filterAnchors[0].sensitivityGain, space->samplingAdjustment);
+                      config->systemZCal[0], config->ZCal[0][0], filterAnchors[0].sensitivityGain, space->samplingAdjustment);
                 RKLog(">%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
                       engine->name, me->name,
                       config->filterCount,
@@ -784,10 +787,10 @@ static void *momentCore(void *in) {
                                   p == 0 ? "H" : (p == 1 ? "V" : "-"),
                                   config->systemZCal[p],
                                   config->ZCal[k][p],
-                                  config->filterAnchors[k].sensitivityGain,
+                                  filterAnchors[k].sensitivityGain,
                                   space->samplingAdjustment,
-                                  config->ZCal[k][p] + config->systemZCal[p] - config->filterAnchors[k].sensitivityGain - space->samplingAdjustment,
-                                  config->filterAnchors[k].outputOrigin, config->filterAnchors[k].outputOrigin + config->filterAnchors[k].maxDataLength);
+                                  config->ZCal[k][p] + config->systemZCal[p] - filterAnchors[k].sensitivityGain - space->samplingAdjustment,
+                                  filterAnchors[k].outputOrigin, filterAnchors[k].outputOrigin + filterAnchors[k].maxDataLength);
                         }
                     }
                 }

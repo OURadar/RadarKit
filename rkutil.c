@@ -339,8 +339,6 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
     
-    RKLog("*** RingFilterGateCount = %d   TransitionGateCount = %d\n", user->ringFilterGateCount, user->transitionGateCount);
-    
     // Shortcuts
     k = 0;
     memset(user->controls, 0, RKMaximumControlCount * sizeof(RKControl));
@@ -773,8 +771,8 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySystemPCal, systemPreferences->systemPCal,
                 RKConfigKeySNRThreshold, systemPreferences->SNRThreshold,
                 RKConfigKeySQIThreshold, systemPreferences->SQIThreshold,
-                RKConfigKeyRingFilterGateCount, systemPreferences->ringFilterGateCount,
                 RKConfigKeyTransitionGateCount, systemPreferences->transitionGateCount,
+                RKConfigKeyRingFilterGateCount, systemPreferences->ringFilterGateCount,
                 RKConfigKeyNull);
 
     // Force waveform reload to propagate the new waveform calibration values
@@ -936,10 +934,10 @@ int main(int argc, const char **argv) {
         RKLog("Setting a waveform ...\n");
         //RKExecuteCommand(myRadar, "t w x", NULL);
         //RKExecuteCommand(myRadar, "t w s01", NULL);
-        //RKExecuteCommand(myRadar, "t w ofm", NULL);
+        RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
         //RKExecuteCommand(myRadar, "t w q10", NULL);
-        RKExecuteCommand(myRadar, "t w h040502.5", NULL);
+        //RKExecuteCommand(myRadar, "t w h040502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
         //RKExecuteCommand(myRadar, "t w h200502.5", NULL);

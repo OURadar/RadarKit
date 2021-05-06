@@ -1065,7 +1065,7 @@ void RKPulseEngineFilterSummary(RKPulseEngine *engine) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   %%s%%+5.2f dB%%s   X @ (i:%%%ds, o:%%%ds, d:%%%ds)\n",
+        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   g:%%s%%+5.2f dB%%s, i:%%%ds, o:%%%ds, d:%%%ds\n",
                 (int)log10f((float)engine->filterGroupCount) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,
                 (int)log10f((float)engine->filterCounts[i]) + 1,

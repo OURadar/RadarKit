@@ -1026,8 +1026,8 @@ typedef union rk_config {
         float                sweepElevation;                                   // Sweep elevation angle (degrees)
         float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
         RKMarker             startMarker;                                      // Marker of the latest start ray
-        uint8_t              filterCount;                                      // Number of filters (redundant info of waveformDecimate)
-        RKFilterAnchor       filterAnchors[RKMaximumFilterCount];              // Filter anchors at ray level (redundant info of waveformDecimate)
+        uint8_t              filterCount;                                      // Number of filters (redundant info in waveform / waveformDecimate)
+        //RKFilterAnchor       filterAnchors[RKMaximumFilterCount];              // Filter anchors at ray level (redundant info of waveformDecimate)
         RKFloat              prt[RKMaximumFilterCount];                        // Pulse repetition time (s)
         RKFloat              pw[RKMaximumFilterCount];                         // Pulse width (s)
         uint32_t             pulseGateCount;                                   // Number of range gates
