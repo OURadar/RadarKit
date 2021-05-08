@@ -811,9 +811,6 @@ int main(int argc, const char **argv) {
         RKSetWantColor(false);
     }
 
-    // Show framework name & version
-    RKShowName();
-    
     // Initial a struct of user parameters
     UserParams *systemPreferences = systemPreferencesInit();
 
@@ -821,6 +818,9 @@ int main(int argc, const char **argv) {
     updateSystemPreferencesFromCommandLine(systemPreferences, argc, argv, true);
     updateSystemPreferencesFromControlFile(systemPreferences);
     updateSystemPreferencesFromCommandLine(systemPreferences, argc, argv, false);
+
+    // Show framework name & version
+    RKShowName();
 
     // Screen output based on verbosity level
     if (systemPreferences->verbose) {
@@ -943,7 +943,7 @@ int main(int argc, const char **argv) {
         RKExecuteCommand(myRadar, "t w h200502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
-        
+    
         RKLog("Starting a new PPI ...\n");
         if (systemPreferences->prf <= 20.0f) {
             RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
