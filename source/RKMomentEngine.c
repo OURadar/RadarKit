@@ -410,8 +410,8 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->W[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Q[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->SNR[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->rcor[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
-        memset(space->rcor[k], 0, space->capacity * sizeof(RKFloat));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S2Z[k], RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
+        memset(space->S2Z[k], 0, space->capacity * sizeof(RKFloat));
         bytes += 11;
         for (j = 0; j < space->lagCount; j++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKSIMDAlignSize, space->capacity * sizeof(RKFloat)));
@@ -475,7 +475,7 @@ void RKScratchFree(RKScratch *space) {
         free(space->W[k]);
         free(space->Q[k]);
         free(space->SNR[k]);
-        free(space->rcor[k]);
+        free(space->S2Z[k]);
         for (j = 0; j < space->lagCount; j++) {
             free(space->R[k][j].i);
             free(space->R[k][j].q);

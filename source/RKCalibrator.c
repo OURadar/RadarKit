@@ -17,7 +17,7 @@ void RKCalibratorSimple(RKScratch *space, RKConfig *config) {
         for (i = filterAnchors[k].inputOrigin; i < MIN(filterAnchors[k].outputOrigin + filterAnchors[k].maxDataLength, space->gateCount); i++) {
             r = (RKFloat)i * space->gateSizeMeters;
             for (p = 0; p < 2; p++) {
-                space->rcor[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - filterAnchors[k].sensitivityGain - space->samplingAdjustment;
+                space->S2Z[p][i] = 20.0f * log10f(r) + config->systemZCal[p] + config->ZCal[k][p] - filterAnchors[k].sensitivityGain - space->samplingAdjustment;
             }
             space->dcal[i] = config->systemDCal + config->DCal[k];
             space->pcal[i] = RKSingleWrapTo2PI(config->systemPCal + config->PCal[k]);

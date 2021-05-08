@@ -183,7 +183,7 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 					wsc = 1.0 / sqrtf(2.0f * 129.0f);
 					break;
 			}
-			space->Z[p][k] = 10.0f * log10f(space->S[p][k]) + space->rcor[p][k];
+			space->Z[p][k] = 10.0f * log10f(space->S[p][k]) + space->S2Z[p][k];
 			space->V[p][k] = space->velocityFactor * atan2f(space->R[p][1].q[k], space->R[p][1].i[k]);
 			if (num < den) {
 				space->W[p][k] = 0.0f;

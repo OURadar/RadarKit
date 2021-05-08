@@ -251,7 +251,7 @@ void proc(UserParams *arg) {
     
     if (arg->verbose > 1) {
         float *t;
-        t = space->rcor[0]; RKLog(">rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
+        t = space->S2Z[0];  RKLog(">S2Z = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
         t = space->dcal;    RKLog(">dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
         RKLog(">Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
     }
