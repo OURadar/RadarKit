@@ -477,6 +477,7 @@ bool RKFilenameExists(const char *filename) {
 }
 
 void RKPreparePath(const char *filename) {
+    DIR *dir;
     char *path = (char *)malloc(1024);
     if (path == NULL) {
         fprintf(stderr, "RKPreparePath() unable to continue.\n");
@@ -489,20 +490,29 @@ void RKPreparePath(const char *filename) {
         free(path);
         return;
     }
-    size_t n = 1023 - (size_t)(c - path);
-    memset(c, 0, n);
-    DIR *dir = opendir(path);
-    if (dir == NULL) {
-        char *cmd = (char *)malloc(1024);
-        sprintf(cmd, "mkdir -p %s", path);
-        int k = system(cmd);
-        if (k) {
-            fprintf(stderr, "Error in system() -> %d\n", k);
+    if ((dir = opendir(path)) == NULL) {
+        // Recursively create paths that do not exist
+        strncpy(path, filename, 1023);
+        c = path;
+        size_t n = strlen(path);
+        while ((c) && (size_t)(c - path) < n) {
+            if ((c = strchr(c, '/')) == NULL) {
+                break;
+            }
+            *c = '\0';
+            //printf("path = |%s|  n = %zu\n", path, (size_t)(c - path));
+            if ((dir = opendir(path)) == NULL) {
+                //printf("mkdir %s\n", path);
+                if (mkdir(path, 0755)) {
+                    fprintf(stderr, "Error creating directory %s\n", path);
+                }
+            } else {
+                closedir(dir);
+            }
+            *c++ = '/';
         }
-        free(cmd);
     } else {
         if (closedir(dir)) {
-            dir = NULL;
             fprintf(stderr, "Error in closedir() for %s\n", path);
         }
     }
