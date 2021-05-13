@@ -188,6 +188,9 @@ void RKTestByNumber(const int number, const void *arg) {
             }
             RKTestReadIQ((char *)arg);
             break;
+        case 21:
+            RKTestPreparePath();
+            break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
             break;
@@ -987,6 +990,22 @@ void RKTestReadIQ(const char *filename) {
         RKWaveformFree(waveform);
     }
     free(fileHeader);
+}
+
+void RKTestPreparePath(void) {
+    int k;
+    time_t tt;
+    char daystr[32], timestr[32];
+    char filename[1024];
+    time(&tt);
+    for (k = 0; k < 30; k++) {
+        strftime(daystr, 31, "%Y%m%d", localtime(&tt));
+        strftime(timestr, 31, "%H%M%S", localtime(&tt));
+        sprintf(filename, "data/iq/%s/PX-%s-%s-E1.0-Z.nc", daystr, daystr, timestr);
+        printf("tt = %zu  -->  %s %s -->  %s\n", tt, daystr, timestr, filename);
+        RKPreparePath(filename);
+        tt += 86400;
+    }
 }
 
 #pragma mark -
