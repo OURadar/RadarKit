@@ -501,19 +501,22 @@ void RKPreparePath(const char *filename) {
             }
             *c = '\0';
             //printf("path = |%s|  n = %zu\n", path, (size_t)(c - path));
-            if ((dir = opendir(path)) == NULL) {
-                //printf("mkdir %s\n", path);
-                if (mkdir(path, 0755)) {
-                    fprintf(stderr, "Error creating directory %s\n", path);
+            if (strlen(path)) {
+                if ((dir = opendir(path)) == NULL) {
+                    //printf("mkdir %s\n", path);
+                    if (mkdir(path, 0755)) {
+                        fprintf(stderr, "Error creating directory '%s'\n", path);
+                        fprintf(stderr, "Input filename '%s'\n", filename);
+                    }
+                } else {
+                    closedir(dir);
                 }
-            } else {
-                closedir(dir);
             }
             *c++ = '/';
         }
     } else {
         if (closedir(dir)) {
-            fprintf(stderr, "Error in closedir() for %s\n", path);
+            fprintf(stderr, "Error in closing '%s'\n", path);
         }
     }
     free(path);
