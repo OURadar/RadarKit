@@ -60,15 +60,16 @@ char *RKTestByNumberDescription(const int indent) {
     "10 - Internet monitor module - RKHostMonitorInit()\n"
     "11 - Initialize a simple radar system - RKRadarInit()\n"
     "12 - Convert a temperature reading to status\n"
-    "13 - Get a country name from position\n"
+    "13 - Get a country name from a position\n"
     "14 - Generating text for buffer overview\n"
-    "15 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
-    "16 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
-    "17 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
-    "18 - Write a .nc file using RKProductFileWriterNC()\n"
-    "19 - RKTestReviseLogicalValues()\n"
+    "15 - Generating text for health overview\n"
+    "16 - Write a .nc file using RKProductFileWriterNC()\n"
+    "17 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
+    "18 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
+    "19 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
     "20 - Reading a .rkc file; -T20 FILENAME\n"
-    "21 - RKCommandQueue unit test\n"
+    "21 - RKTestReviseLogicalValues()\n"
+    "22 - RKCommandQueue unit test\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -155,31 +156,31 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestBufferOverviewText((char *)arg);
             break;
         case 15:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKTestSweepRead((char *)arg);
+            RKTestHealthOverviewText((char *)arg);
             break;
         case 16:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKTestProductRead((char *)arg);
+            RKTestProductWrite();
             break;
         case 17:
             if (arg == NULL) {
                 RKLog("No filename given.\n");
                 exit(EXIT_FAILURE);
             }
-            RKProductCollectionInitWithFilename((char *)arg);
+            RKTestSweepRead((char *)arg);
             break;
         case 18:
-            RKTestProductWrite();
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKTestProductRead((char *)arg);
             break;
         case 19:
-            RKTestReviseLogicalValues();
+            if (arg == NULL) {
+                RKLog("No filename given.\n");
+                exit(EXIT_FAILURE);
+            }
+            RKProductCollectionInitWithFilename((char *)arg);
             break;
         case 20:
             if (arg == NULL) {
@@ -189,6 +190,9 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestReadIQ((char *)arg);
             break;
         case 21:
+            RKTestReviseLogicalValues();
+            break;
+        case 22:
             RKTestPreparePath();
             break;
         case 30:
@@ -741,10 +745,85 @@ void RKTestBufferOverviewText(const char *options) {
                  ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x40 ? "RKTextPreferencesWindowSize80x50" :
                   ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x25 ? "RKTextPreferencesWindowSize80x25" : ""))))));
     }
-    RKBufferOverview(radar, text, textPreferences);
+    RKBufferOverview(text, radar, textPreferences);
     printf("%s\n", text);
     RKFree(radar);
     free(text);
+}
+
+void RKTestHealthOverviewText(const char *options) {
+    SHOW_FUNCTION_NAME
+    char jsonString[] = "{"
+    "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal\":{\"Value\":True,\"Enum\":0}, "
+    "\"Health Relay\":{\"Value\":TRUE,\"Enum\":0}, "
+    "\"Network\":{\"Value\":false,\"Enum\":-1}, "
+    "\"Recorder\":{\"Value\":false,\"Enum\":1}, "
+    "\"10-MHz Clock\":{\"Value\":true,\"Enum\":0}, "
+    "\"DAC PLL\":{\"Value\":false,\"Enum\":-3}, "
+    "\"FPGA Temp\":{\"Value\":\"69.3degC\",\"Enum\":0}, "
+    "\"Core Volt\":{\"Value\":\"0.80 V\",\"Enum\":4}, "
+    "\"Aux. Volt\":{\"Value\":\"2.469 V\",\"Enum\":2}, "
+    "\"XMC Volt\":{\"Value\":\"11.649 V\",\"Enum\":0}, "
+    "\"XMC 3p3\":{\"Value\":\"3.250 V\",\"Enum\":0}, "
+    "\"PRF\":{\"Value\":\"5,008 Hz\",\"Enum\":0,\"Target\":\"5,000 Hz\"}, "
+    "\"Transmit H\":{\"Value\":\"69.706 dBm\",\"Enum\":0,\"MaxIndex\":2,\"Max\":\"-1.877 dBm\",\"Min\":\"-2.945 dBm\"}, "
+    "\"Transmit V\":{\"Value\":\"64.297 dBm\",\"Enum\":1,\"MaxIndex\":2,\"Max\":\"-2.225 dBm\",\"Min\":\"-3.076 dBm\"}, "
+    "\"DAC QI\":{\"Value\":\"0.913\",\"Enum\":0}, "
+    "\"Waveform\":{\"Value\":\"h4011\",\"Enum\":0}, "
+    "\"UnderOver\":[0,-897570], "
+    "\"Lags\":[-139171212,-139171220,-159052813], \"NULL\":[149970], "
+    "\"Pedestal AZ Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal EL Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"VCP Active\":{\"Value\":true,\"Enum\":0}, "
+    "\"Pedestal AZ Position\":{\"Value\":\"26.21 deg\",\"Enum\":0}, "
+    "\"Pedestal EL Position\":{\"Value\":\"2.97 deg\",\"Enum\":0}, "
+    "\"TWT Power\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Warmed Up\":{\"Value\":false,\"Enum\":1}, "
+    "\"TWT High Voltage\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Full Power\":{\"Value\":false,\"Enum\":1}, "
+    "\"TWT VSWR\":{\"Value\":false,\"Enum\":3}, "
+    "\"TWT Duty Cycle\":{\"Value\":true,\"Enum\":2}, "
+    "\"TWT Fans\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Interlock\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Faults Clear\":{\"Value\":true,\"Enum\":0}, "
+    "\"TWT Cathode Voltage\":{\"Value\":\"-21.54 kV\",\"Enum\":0}, "
+    "\"TWT Body Current\":{\"Value\":\"0.09 A\",\"Enum\":0}, "
+    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
+    "\"GPS Latitude\":{\"Value\":\"35.1812820\",\"Enum\":0}, "
+    "\"GPS Longitude\":{\"Value\":\"-97.4373016\",\"Enum\":0}, "
+    "\"GPS Heading\":{\"Value\":\"88.0 deg\", \"Enum\":0}, "
+    "\"Ground Speed\":{\"Value\":\"0.30 km/h\", \"Enum\":0}, "
+    "\"Platform Pitch\":{\"Value\":\"-0.23 deg\",\"Enum\":0}, "
+    "\"Platform Roll\":{\"Value\":\"0.04 deg\",\"Enum\":0}, "
+    "\"I2C Chip\":{\"Value\":\"30.50 degC\",\"Enum\":0}, "
+    "\"DC PSU 1\":{\"Value\":true,\"Enum\":0}, "
+    "\"DC PSU 2\":{\"Value\":false,\"Enum\":1}, "
+    "\"Event\":\"none\", \"Log Time\":1493410480"
+    "}";
+    printf("%s\n", jsonString);
+    char *destiny = (char *)malloc(8192);
+    RKTextPreferences textPreferences = RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize80x40;
+    if (options) {
+        textPreferences = (RKTextPreferences)strtol(options, NULL, 16);
+        RKLog("%s options = %s -> 0x%02x\n", __FUNCTION__, options, textPreferences);
+        RKLog(">%s %s %s\n",
+              textPreferences & RKTextPreferencesShowColor ? "RKTextPreferencesShowColor" : "",
+              textPreferences & RKTextPreferencesDrawBackground ? "RKTextPreferencesDrawBackground" : "",
+              ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize120x80 ? "RKTextPreferencesWindowSize120x80" :
+               ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize120x50 ? "RKTextPreferencesWindowSize120x50" :
+                ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x50 ? "RKTextPreferencesWindowSize80x50" :
+                 ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x40 ? "RKTextPreferencesWindowSize80x50" :
+                  ((textPreferences & RKTextPreferencesWindowSizeMask) == RKTextPreferencesWindowSize80x25 ? "RKTextPreferencesWindowSize80x25" : ""))))));
+    }
+    int m;
+    m = RKHealthOverview(destiny, jsonString, textPreferences);
+    printf("%s", destiny);
+    printf("-- %d / %d\n\n", (int)strlen(destiny), m);
+    m = RKHealthOverview(destiny, jsonString, 0);
+    printf("%s", destiny);
+    printf("-- %d / %d\n\n", (int)strlen(destiny), m);
+    free(destiny);
 }
 
 void RKTestSweepRead(const char *file) {

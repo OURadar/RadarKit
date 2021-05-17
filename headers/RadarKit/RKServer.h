@@ -134,4 +134,4 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
 //}
 //#endif
 
-#endif /* defined(___RadarKit_RKServer__) */
+#endif /* defined(___RadarKit_Server__) */

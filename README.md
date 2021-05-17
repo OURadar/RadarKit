@@ -40,7 +40,7 @@ Follow these steps to get the project
     yum install fftw-devel netcdf-devel
     ```
     
-    ##### macOS X #####
+    ##### macOS #####
     
     I use [Homebrew] as my package manager for macOS. I highly recommend it.
     
@@ -49,7 +49,7 @@ Follow these steps to get the project
     ```
     or
     
-    ```shell    
+    ```shell
     brew install netcdf
     ```
     
