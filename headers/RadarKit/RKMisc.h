@@ -153,6 +153,7 @@ int RKIndentCopy(char *dst, char *src, const int width);
 int RKStringCenterized(char *dst, const char *src, const int width);
 char *RKNextNoneWhite(const char *);
 char *RKLastLine(const char *);
+char *RKStripEscapeSequence(const char *line);
 
 float RKMinDiff(const float minuend, const float subtrahend);
 float RKUMinDiff(const float minuend, const float subtrahend);
@@ -162,5 +163,8 @@ long RKGetCPUIndex(void);
 long RKGetMemoryUsage(void);
 
 char *RKCountryFromPosition(const double latitude, const double longitude);
+
+char *RKGetNextKeyValue(char *json, char *key, char *value);
+int RKMergeColumns(char *, const char *, const char *, const int);
 
 #endif /* rk_misc_h */

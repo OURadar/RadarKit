@@ -767,6 +767,40 @@ char *RKLastLine(const char *lines) {
     return l2;
 }
 
+// Strip the tags \033[...[A-Z][a-z]
+char *RKStripEscapeSequence(const char *line) {
+    static char string[8192];
+    int n;
+    char *e;
+    char *d = string;
+    char *s = (char *)line;
+    while (*s != '\0') {
+        e = strchr(s, '\033');
+        if (e == NULL || *(e + 1) != '[') {
+            n = (int)strlen(s);
+            strncpy(d, s, n);
+            d += n;
+            break;
+        }
+        n = (int)(e - s);
+        if (n) {
+            strncpy(d, s, n);
+            d += n;
+        }
+        s = e + 1;
+        while (*s != '\0' && !((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z'))) {
+            s++;
+        }
+        if (*s == '\0') {
+            fprintf(stderr, "Error. Escape sequence not balanced.\n");
+            break;
+        }
+        s++;
+    }
+    *d = '\0';
+    return string;
+}
+
 #pragma mark - Math
 
 float RKMinDiff(const float m, const float s) {
@@ -1114,4 +1148,141 @@ char *RKCountryFromPosition(const double latitude, const double longitude) {
 	printf("Best index = %d --> %s (%.3f)\n", index, countries[index + 3], sqrt(minimum));
 	#endif
 	return country;
+}
+
+char *RKGetNextKeyValue(char *json, char *key, char *value) {
+    char *c = json;
+    char *e = c + strlen(c);
+    char *ks, *ke, *vs, *ve;
+    // Forward until the next non-space character
+    while (*c == ' ' && c < e) {
+        c++;
+    }
+    if (c == e) {
+        *key = '\0';
+        return NULL;
+    }
+    // Find the key
+    ks = c;
+    switch (*ks) {
+        case '"':
+            ks++;
+            ke = strchr(ks, '"');
+            break;
+        case '\'':
+            ks++;
+            ke = strchr(ks, '\'');
+            break;
+        default:
+            ke = strchr(ks, ':');
+            ke--;
+            break;
+    }
+    if (key) {
+        memcpy(key, ks, ke - ks);
+        key[ke - ks] = '\0';
+    }
+    // Find the delimiter ':'
+    c = strchr(ke, ':');
+    if (c == NULL) {
+        fprintf(stderr, "Incomplete string?\n");
+        return NULL;
+    }
+    c++;
+    // Forward until the next non-space character
+    while (*c == ' ' && c < e) {
+        c++;
+    }
+    if (c == e) {
+        *value = '\0';
+        return NULL;
+    }
+    // If this is bracketed piece, find the start and end
+    vs = c++;
+    switch (*vs) {
+        case '"':
+            ve = strchr(c, '"');
+            break;
+        case '[':
+            ve = strchr(c, ']');
+            break;
+        case '{':
+            ve = strchr(c, '}');
+            break;
+        case '\'':
+            ve = strchr(c, '\'');
+            break;
+        default:
+            ve = strchr(c, ',');
+            if (ve == NULL) {
+                ve = e;
+            }
+            ve--;
+            break;
+    }
+    if (value) {
+        memcpy(value, vs, ve - vs + 1);
+        value[ve - vs + 1] = '\0';
+    }
+    if (ve == e - 1) {
+        c = NULL;
+    } else {
+        c = ve + 1;
+        while (c < e && (*c == ',' || *c == ' ')) {
+            c++;
+        }
+    }
+    return c;
+}
+
+int RKMergeColumns(char *text, const char *left, const char *right, const int indent) {
+    const int u = 26; const int v = 38;
+    char *ls = (char *)left, *le = NULL;
+    char *rs = (char *)right, *re = NULL;
+    int w = 0, m = 0, n;
+    char format[indent + 4];
+    char *plain;
+    memset(format, ' ', indent);
+    sprintf(format + indent, "%%s");
+    //printf("%s--\n", right);
+    while (ls != NULL || rs != NULL) {
+        if (ls != NULL && (le = strchr(ls, '\n')) != NULL) {
+            *le = '\0';
+            plain = RKStripEscapeSequence(ls);
+            n = (int)strlen(plain);
+            //printf("%s (%d) -> %s (%d)\n", ls, (int)(le - ls), plain, n);
+            m += sprintf(text + m, format, ls);
+            memset(text + m, ' ', u - n);
+            m += (u - n);
+            ls = le + 1;
+            if (*ls == '\0') {
+                ls = NULL;
+            }
+        } else {
+            if (rs != NULL) {
+                memset(text + m, ' ', u + indent);
+                m += u + indent;
+            }
+        }
+        if (rs != NULL && (re = strchr(rs, '\n')) != NULL) {
+            *re = '\0';
+            plain = RKStripEscapeSequence(rs);
+            n = (int)strlen(plain);
+            w = MAX(w, n);
+            //printf("%s (%d) -> %s (%d) |%c|\n", rs, (int)(re - rs), plain, n, *(re + 1));
+            m += sprintf(text + m, "%s", rs);
+            memset(text + m, ' ', v - n);
+            m += (v - n);
+            rs = re + 1;
+            if (*rs == '\0') {
+                rs = NULL;
+            }
+        } else {
+            memset(text + m, ' ', v);
+            m += v;
+        }
+        m += sprintf(text + m, "\n");
+    }
+    w += u + indent;
+    return w;
 }
