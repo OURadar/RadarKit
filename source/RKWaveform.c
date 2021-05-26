@@ -801,7 +801,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
     w2 += (w2 / 3);
     w3 += (w3 / 3);
     if (waveform->type & RKWaveformTypeFrequencyHoppingChirp) {
-        sprintf(format, ">Chirp[%%%dd] Filter[%%%dd/%%%dd] (n:%%d l:%%%ds i:%%%ds, o:%%%ds, d:%%%ds)   %%+%d.2f dB   [ %%+%d.1f - %%+%d.1f ] MHz\n",
+        sprintf(format, ">Chirp[%%%dd] Filter[%%%dd/%%%dd] n:%%d l:%%%ds i:%%%ds, o:%%%ds, d:%%%ds, g:%%+.1f dB, s:%%+%d.2f dB  [ %%+%d.1f - %%+%d.1f ] MHz\n",
                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
                 waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0]) + 1,
                 (int)log10f((float)waveform->filterCounts[0]) + 1,
@@ -813,7 +813,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 w5 + 4,
                 w5 + 4);
     } else {
-        sprintf(format, ">Tone[%%%dd] Filter[%%%dd/%%%dd] l:%%%ds, i:%%%ds, o:%%%ds, d:%%%ds, s:%%+%d.2f dB, %%+6.3f rad/sam\n",
+        sprintf(format, ">Tone[%%%dd] Filter[%%%dd/%%%dd] l:%%%ds, i:%%%ds, o:%%%ds, d:%%%ds, g:%%+.1f dB, s:%%+%d.1f dB, f:%%+6.3f rad/sam\n",
                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
                 waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
                 (int)log10f((float)waveform->filterCounts[0]) + 1,
@@ -832,7 +832,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
           RKFloatToCommaStyleString(1.0e-6 * waveform->fc),
           RKFloatToCommaStyleString(1.0e-6 * waveform->fs),
           RKFloatToCommaStyleString(1.0e6 * waveform->depth / waveform->fs));
-
+    // Go through the tones
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKFloat g = 0.0;
@@ -853,6 +853,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
+                      waveform->filterAnchors[k][j].filterGain,
                       waveform->filterAnchors[k][j].sensitivityGain,
                       1.0e-6 * waveform->filterAnchors[k][j].lowerBoundFrequency,
                       1.0e-6 * waveform->filterAnchors[k][j].upperBoundFrequency
@@ -864,11 +865,13 @@ void RKWaveformSummary(RKWaveform *waveform) {
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].inputOrigin),
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].outputOrigin),
                       RKIntegerToCommaStyleString(waveform->filterAnchors[k][j].maxDataLength),
+                      waveform->filterAnchors[k][j].filterGain,
                       waveform->filterAnchors[k][j].sensitivityGain,
                       waveform->filterAnchors[k][j].subCarrierFrequency);
             }
         }
     }
+    
 }
 
 #pragma mark - File
