@@ -161,33 +161,33 @@ static int RKRadarRelayRead(RKClient *client) {
             productList = ray->header.baseMomentList;
             productCount = __builtin_popcount(productList);
             for (j = 0; j < productCount; j++) {
-                if (productList & RKBaseMomentListDisplayZ) {
-                    productList ^= RKBaseMomentListDisplayZ;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
-                } else if (productList & RKBaseMomentListDisplayV) {
-                    productList ^= RKBaseMomentListDisplayV;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexV);
-                } else if (productList & RKBaseMomentListDisplayW) {
-                    productList ^= RKBaseMomentListDisplayW;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexW);
-                } else if (productList & RKBaseMomentListDisplayD) {
-                    productList ^= RKBaseMomentListDisplayD;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexD);
-                } else if (productList & RKBaseMomentListDisplayP) {
-                    productList ^= RKBaseMomentListDisplayP;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexP);
-                } else if (productList & RKBaseMomentListDisplayR) {
-                    productList ^= RKBaseMomentListDisplayR;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexR);
-                } else if (productList & RKBaseMomentListDisplayK) {
-                    productList ^= RKBaseMomentListDisplayK;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexK);
-                } else if (productList & RKBaseMomentListDisplaySh) {
-                    productList ^= RKBaseMomentListDisplaySh;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexSh);
-                } else if (productList & RKBaseMomentListDisplaySv) {
-                    productList ^= RKBaseMomentListDisplaySv;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexSv);
+                if (productList & RKBaseProductListUInt8Z) {
+                    productList ^= RKBaseProductListUInt8Z;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+                } else if (productList & RKBaseProductListUInt8V) {
+                    productList ^= RKBaseProductListUInt8V;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
+                } else if (productList & RKBaseProductListUInt8W) {
+                    productList ^= RKBaseProductListUInt8W;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
+                } else if (productList & RKBaseProductListUInt8D) {
+                    productList ^= RKBaseProductListUInt8D;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
+                } else if (productList & RKBaseProductListUInt8P) {
+                    productList ^= RKBaseProductListUInt8P;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
+                } else if (productList & RKBaseProductListUInt8R) {
+                    productList ^= RKBaseProductListUInt8R;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexR);
+                } else if (productList & RKBaseProductListUInt8K) {
+                    productList ^= RKBaseProductListUInt8K;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
+                } else if (productList & RKBaseProductListUInt8Sh) {
+                    productList ^= RKBaseProductListUInt8Sh;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
+                } else if (productList & RKBaseProductListUInt8Sv) {
+                    productList ^= RKBaseProductListUInt8Sv;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
                 } else {
                     u8Data = NULL;
                 }

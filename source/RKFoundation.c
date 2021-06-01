@@ -764,7 +764,7 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
 //    RKComplex          Y[2][capacity];
 //    RKIQZ              Z[2];
 //
-size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
+size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
     size_t alignment = RKSIMDAlignSize / sizeof(RKFloat);
     if (capacity != (capacity / alignment) * alignment) {
         RKLog("Error. Pulse capacity must be multiple of %d!", alignment);
@@ -782,7 +782,7 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
         RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(pulseSize));
         return 0;
     }
-    size_t bytes = slots * pulseSize;
+    size_t bytes = count * pulseSize;
     if (posix_memalign((void **)mem, RKSIMDAlignSize, bytes)) {
         RKLog("Error. Unable to allocate pulse buffer.");
         exit(EXIT_FAILURE);
@@ -791,10 +791,10 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
     // Set the pulse capacity
     int i = 0;
     void *m = *mem;
-    while (i < slots) {
+    while (i < count) {
         RKPulse *pulse = (RKPulse *)m;
         pulse->header.capacity = capacity;
-        pulse->header.i = -(uint64_t)slots + i;
+        pulse->header.i = -(uint64_t)count + i;
         m += pulseSize;
         i++;
     }
@@ -836,11 +836,11 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *pulse, const uint32_t c) {
 }
 
 // Clear the pulse
-int RKClearPulseBuffer(RKBuffer buffer, const uint32_t slots) {
-    for (uint32_t k = 0; k < slots; k++) {
+int RKClearPulseBuffer(RKBuffer buffer, const uint32_t count) {
+    for (uint32_t k = 0; k < count; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(buffer, k);
         pulse->header.s = RKPulseStatusVacant;
-        pulse->header.i = -(uint64_t)slots + k;
+        pulse->header.i = -(uint64_t)count + k;
         pulse->header.gateCount = 0;
         memset(pulse->data, 0, 2 * pulse->header.capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat)));
     }
@@ -892,10 +892,11 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid) 
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    int8_t             idata[RKBaseMomentCount][capacity];
-//    float              fdata[RKBaseMomentCount][capacity];
+//    uint8_t            idata[RKBaseProductCount][capacity];
+//    float              fdata[RKBaseProductCount][capacity];
+//    int16_t            sdata[RKMomentCount][capacity];
 //
-size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t slots) {
+size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
     size_t alignment = RKSIMDAlignSize / sizeof(RKFloat);
     if (capacity != (capacity / alignment) * alignment) {
         RKLog("Error. Ray capacity must be a multiple of %d!", alignment);
@@ -907,12 +908,12 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
     if (raySize != (raySize / alignment) * alignment) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
     }
-    size_t bytes = slots * raySize;
+    size_t bytes = count * raySize;
     if (posix_memalign((void **)mem, RKSIMDAlignSize, bytes)) {
         RKLog("Error. Unable to allocate ray buffer.");
         exit(EXIT_FAILURE);
@@ -921,10 +922,10 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t s
     // Set the ray capacity
     int i = 0;
     void *m = *mem;
-    while (i < slots) {
+    while (i < count) {
         RKRay *ray = (RKRay *)m;
         ray->header.capacity = capacity;
-        ray->header.i = -(uint64_t)slots + i;
+        ray->header.i = -(uint64_t)count + i;
         m += raySize;
         i++;
     }
@@ -938,28 +939,28 @@ void RKRayBufferFree(RKBuffer mem) {
 // Get a ray from a ray buffer
 RKRay *RKGetRayFromBuffer(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
-    size_t raySize = RKRayHeaderPaddedSize + RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = RKRayHeaderPaddedSize + RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
 // Get the data in uint8_t from a ray
-uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseProductIndex m) {
     void *d = (void *)ray->data;
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
 // Get the data in float from a ray
-float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseMomentIndex m) {
+float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseProductIndex m) {
     void *d = (void *)ray->data;
     d += RKBaseMomentCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
-int RKClearRayBuffer(RKBuffer buffer, const uint32_t slots) {
-    for (uint32_t k = 0; k < slots; k++) {
+int RKClearRayBuffer(RKBuffer buffer, const uint32_t count) {
+    for (uint32_t k = 0; k < count; k++) {
         RKRay *ray = RKGetRayFromBuffer(buffer, k);
         ray->header.s = RKRayStatusVacant;
-        ray->header.i = -(uint64_t)slots + k;
+        ray->header.i = -(uint64_t)count + k;
         ray->header.gateCount = 0;
         memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
@@ -1242,8 +1243,8 @@ char *RKStringOfStream(RKStream stream) {
     return string;
 }
 
-//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *index, RKBaseMomentList *list) {
-RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
+//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseProductIndex *index, RKBaseProductList *list) {
+RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
     RKProductDesc desc;
     memset(&desc, 0, sizeof(RKProductDesc));
     if (list == NULL || *list == 0) {
@@ -1301,52 +1302,52 @@ RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
         "SQI",
         "-"
     };
-    RKBaseMomentList baseMoments[] = {
-        RKBaseMomentListProductZ,
-        RKBaseMomentListProductV,
-        RKBaseMomentListProductW,
-        RKBaseMomentListProductD,
-        RKBaseMomentListProductP,
-        RKBaseMomentListProductR,
-        RKBaseMomentListProductK,
-        RKBaseMomentListProductSh,
-        RKBaseMomentListProductSv,
-        RKBaseMomentListProductQ,
+    RKBaseProductList baseMoments[] = {
+        RKBaseProductListFloatZ,
+        RKBaseProductListFloatV,
+        RKBaseProductListFloatW,
+        RKBaseProductListFloatD,
+        RKBaseProductListFloatP,
+        RKBaseProductListFloatR,
+        RKBaseProductListFloatK,
+        RKBaseProductListFloatSh,
+        RKBaseProductListFloatSv,
+        RKBaseProductListFloatQ,
         0xFFFF
     };
-    RKBaseMomentIndex baseMomentIndices[] = {
-        RKBaseMomentIndexZ,
-        RKBaseMomentIndexV,
-        RKBaseMomentIndexW,
-        RKBaseMomentIndexD,
-        RKBaseMomentIndexP,
-        RKBaseMomentIndexR,
-        RKBaseMomentIndexK,
-        RKBaseMomentIndexSh,
-        RKBaseMomentIndexSv,
-        RKBaseMomentIndexQ,
+    RKBaseProductIndex baseMomentIndices[] = {
+        RKBaseProductIndexZ,
+        RKBaseProductIndexV,
+        RKBaseProductIndexW,
+        RKBaseProductIndexD,
+        RKBaseProductIndexP,
+        RKBaseProductIndexR,
+        RKBaseProductIndexK,
+        RKBaseProductIndexSh,
+        RKBaseProductIndexSv,
+        RKBaseProductIndexQ,
         0
     };
     int k = -1;
-    if (*list & RKBaseMomentListProductZ) {
+    if (*list & RKBaseProductListFloatZ) {
         k = 0;
-    } else if (*list & RKBaseMomentListProductV) {
+    } else if (*list & RKBaseProductListFloatV) {
         k = 1;
-    } else if (*list & RKBaseMomentListProductW) {
+    } else if (*list & RKBaseProductListFloatW) {
         k = 2;
-    } else if (*list & RKBaseMomentListProductD) {
+    } else if (*list & RKBaseProductListFloatD) {
         k = 3;
-    } else if (*list & RKBaseMomentListProductP) {
+    } else if (*list & RKBaseProductListFloatP) {
         k = 4;
-    } else if (*list & RKBaseMomentListProductR) {
+    } else if (*list & RKBaseProductListFloatR) {
         k = 5;
-    } else if (*list & RKBaseMomentListProductK) {
+    } else if (*list & RKBaseProductListFloatK) {
         k = 6;
-    } else if (*list & RKBaseMomentListProductSh) {
+    } else if (*list & RKBaseProductListFloatSh) {
         k = 7;
-    } else if (*list & RKBaseMomentListProductSv) {
+    } else if (*list & RKBaseProductListFloatSv) {
         k = 8;
-    } else if (*list & RKBaseMomentListProductQ) {
+    } else if (*list & RKBaseProductListFloatQ) {
         k = 9;
     }
     if (k < 0) {
@@ -1360,7 +1361,7 @@ RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
     desc.index = baseMomentIndices[k];
     // Special treatment for RhoHV: A three count piece-wise function
     RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    if (desc.index == RKBaseMomentIndexR) {
+    if (desc.index == RKBaseProductIndexR) {
         desc.pieceCount = 3;
         desc.w[0] = 1000.0f;
         desc.b[0] = -824.0f;
@@ -1375,22 +1376,22 @@ RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
         desc.maximumValue = 1.05f;
     } else {
         switch (desc.index) {
-            case RKBaseMomentIndexZ:
+            case RKBaseProductIndexZ:
                 RKZLHMAC
                 break;
-            case RKBaseMomentIndexV:
+            case RKBaseProductIndexV:
                 RKV2LHMAC
                 break;
-            case RKBaseMomentIndexW:
+            case RKBaseProductIndexW:
                 RKWLHMAC
                 break;
-            case RKBaseMomentIndexD:
+            case RKBaseProductIndexD:
                 RKDLHMAC
                 break;
-            case RKBaseMomentIndexP:
+            case RKBaseProductIndexP:
                 RKPLHMAC
                 break;
-            case RKBaseMomentIndexK:
+            case RKBaseProductIndexK:
                 RKKLHMAC
                 break;
             default:

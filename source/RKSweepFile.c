@@ -81,22 +81,22 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
         "KDP"
     };
     uint32_t products[] = {
-        RKBaseMomentListProductZ,
-        RKBaseMomentListProductV,
-        RKBaseMomentListProductW,
-        RKBaseMomentListProductD,
-        RKBaseMomentListProductP,
-        RKBaseMomentListProductR,
-        RKBaseMomentListProductK
+        RKBaseProductListFloatZ,
+        RKBaseProductListFloatV,
+        RKBaseProductListFloatW,
+        RKBaseProductListFloatD,
+        RKBaseProductListFloatP,
+        RKBaseProductListFloatR,
+        RKBaseProductListFloatK
     };
-    uint32_t productIndices[] = {
-        RKBaseMomentIndexZ,
-        RKBaseMomentIndexV,
-        RKBaseMomentIndexW,
-        RKBaseMomentIndexD,
-        RKBaseMomentIndexP,
-        RKBaseMomentIndexR,
-        RKBaseMomentIndexK
+    uint8_t productIndices[] = {
+        RKBaseProductIndexZ,
+        RKBaseProductIndexV,
+        RKBaseProductIndexW,
+        RKBaseProductIndexD,
+        RKBaseProductIndexP,
+        RKBaseProductIndexR,
+        RKBaseProductIndexK
     };
 
     // First part: go through all the symbols I know of, get the very first filename
@@ -374,13 +374,13 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
 
     /*
      RKLog("  -> %s%s%s%s%s%s%s\n",
-     productList & RKBaseMomentListProductZ ? "Z" : "",
-     productList & RKBaseMomentListProductV ? "V" : "",
-     productList & RKBaseMomentListProductW ? "W" : "",
-     productList & RKBaseMomentListProductD ? "D" : "",
-     productList & RKBaseMomentListProductP ? "P" : "",
-     productList & RKBaseMomentListProductR ? "R" : "",
-     productList & RKBaseMomentListProductK ? "K" : ""
+     productList & RKBaseProductListFloatZ ? "Z" : "",
+     productList & RKBaseProductListFloatV ? "V" : "",
+     productList & RKBaseProductListFloatW ? "W" : "",
+     productList & RKBaseProductListFloatD ? "D" : "",
+     productList & RKBaseProductListFloatP ? "P" : "",
+     productList & RKBaseProductListFloatR ? "R" : "",
+     productList & RKBaseProductListFloatK ? "K" : ""
      );
      */
 
