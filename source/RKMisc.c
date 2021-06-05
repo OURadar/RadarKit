@@ -226,19 +226,24 @@ void RKReplaceAllValuesOfKey(char *string, const char *key, int value) {
             e++;
         }
         if (*e == '\0') {
-            fprintf(stderr, "RKReplaceEnumOfKey() encountered an incomplete JSON string.\n");
+            fprintf(stderr, "RKReplaceAllValuesOfKey() encountered an incomplete JSON string.\n");
             return;
         }
         // Now value should be in between s & e
         k = sprintf(valueString, "%d", value);
+        if (k < 0) {
+            fprintf(stderr, "RKReplaceAllValuesOfKey() encountered an expected results from sprintf().\n");
+            return;
+        }
         if (e - s < k) {
             // Need to add another character
             l = strlen(e);
             memmove(e + k - 1, e, l);
             *(e + k + -1 + l) = '\0';
         }
+        memcpy(s, valueString, k);
         //strncpy(s, valueString, k);
-        snprintf(s, k, "%s", valueString) < 0 ? abort() : (void)0;
+        //snprintf(s, k, "%s", valueString) < 0 ? abort() : (void)0;
         s = strstr(e, key);
     }
 }
@@ -274,6 +279,9 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value) {
     }
     // Now value should be in between s & e
     k = sprintf(valueString, "%d", value);
+    if (k < 0) {
+        fprintf(stderr, "RKReplaceEnumOfKey() encountered an expected results from sprintf().\n");
+    }
     //printf("s = %p   e = %p   valueString = %s   k = %d ==? %d\n", s, e, valueString, (int)(e - s), k);
     if (e - s < k) {
         // Need to add another character
@@ -281,8 +289,7 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value) {
         memmove(e + k - 1, e, l);
         *(e + k + -1 + l) = '\0';
     }
-    //strncpy(s, valueString, k);
-    snprintf(s, k, "%s", valueString) < 0 ? abort() : (void)0;
+    memcpy(s, valueString, k);
 }
 
 void RKReviseLogicalValues(char *string) {
