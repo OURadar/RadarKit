@@ -563,60 +563,73 @@ enum RKInitFlag {
     RKInitFlagAllocEverythingQuiet      = 0x00037F00,
 };
 
-typedef uint32_t RKBaseMomentList;
-enum RKBaseMomentList {
-    RKBaseMomentListNone                = 0,                                   // None
-    RKBaseMomentListDisplayZ            = 1,                                   // Display Z - Reflectivity dBZ
-    RKBaseMomentListDisplayV            = (1 << 1),                            // Display V - Velocity
-    RKBaseMomentListDisplayW            = (1 << 2),                            // Display W - Width
-    RKBaseMomentListDisplayD            = (1 << 3),                            // Display D - Differential Reflectivity
-    RKBaseMomentListDisplayP            = (1 << 4),                            // Display P - PhiDP
-    RKBaseMomentListDisplayR            = (1 << 5),                            // Display R - RhoHV
-    RKBaseMomentListDisplayK            = (1 << 6),                            // Display K - KDP
-    RKBaseMomentListDisplaySh           = (1 << 7),                            // Display Sh - Signal from H channel
-    RKBaseMomentListDisplaySv           = (1 << 8),                            // Display Sv - Signal from V channel
-    RKBaseMomentListDisplayQ            = (1 << 9),                            // Display SQI - Signal Quality Index
-    RKBaseMomentListDisplayZVWDPR       = 0x0000003F,                          // Display All without K, Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRK      = 0x0000007F,                          // Display All without Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRKS     = 0x000001FF,                          // Display All without Sh, Sv and Q
-    RKBaseMomentListDisplayZVWDPRKSQ    = 0x000003FF,                          // Display All
-    RKBaseMomentListDisplayAll          = 0x000003FF,                          // Display All (same as above)
-    RKBaseMomentListProductZ            = (1 << 16),                           // Data of Z
-    RKBaseMomentListProductV            = (1 << 17),                           // Data of V
-    RKBaseMomentListProductW            = (1 << 18),                           // Data of W
-    RKBaseMomentListProductD            = (1 << 19),                           // Data of D
-    RKBaseMomentListProductP            = (1 << 20),                           // Data of P
-    RKBaseMomentListProductR            = (1 << 21),                           // Data of R
-    RKBaseMomentListProductK            = (1 << 22),                           // Data of K
-    RKBaseMomentListProductSh           = (1 << 23),                           // Data of Sh
-    RKBaseMomentListProductSv           = (1 << 24),                           // Data of Sv
-    RKBaseMomentListProductQ            = (1 << 25),                           // Data of Q
-    RKBaseMomentListProductZVWDPR       = 0x003F0000,                          // Base moment data without K, Sh, Sv and Q
-    RKBaseMomentListProductZVWDPRK      = 0x007F0000,                          // Base moment data without Sh, Sv and Q
-    RKBaseMomentListProductZVWDPRKS     = 0x01FF0000,                          // All data without Q
-    RKBaseMomentListProductZVWDPRKSQ    = 0x03FF0000,                          // All data
-    RKBaseMomentListProductAll          = 0x03FF0000                           // All data (same as above)
+// Used to be RKBaseMomentList; -boonleng 6/1/2021
+typedef uint32_t RKBaseProductList;
+enum RKBaseProductList {
+    RKBaseProductListNone                = 0,                                  // None
+    RKBaseProductListUInt8Z              = 1,                                  // Display Z - Reflectivity dBZ
+    RKBaseProductListUInt8V              = (1 << 1),                           // Display V - Velocity
+    RKBaseProductListUInt8W              = (1 << 2),                           // Display W - Width
+    RKBaseProductListUInt8D              = (1 << 3),                           // Display D - Differential Reflectivity
+    RKBaseProductListUInt8P              = (1 << 4),                           // Display P - PhiDP
+    RKBaseProductListUInt8R              = (1 << 5),                           // Display R - RhoHV
+    RKBaseProductListUInt8K              = (1 << 6),                           // Display K - KDP
+    RKBaseProductListUInt8Sh             = (1 << 7),                           // Display Sh - Signal from H channel
+    RKBaseProductListUInt8Sv             = (1 << 8),                           // Display Sv - Signal from V channel
+    RKBaseProductListUInt8Q              = (1 << 9),                           // Display SQI - Signal Quality Index
+    RKBaseProductListUInt8U6             = (1 << 10),                          //
+    RKBaseProductListUInt8U5             = (1 << 11),                          //
+    RKBaseProductListUInt8U4             = (1 << 12),                          //
+    RKBaseProductListUInt8U3             = (1 << 13),                          //
+    RKBaseProductListUInt8U2             = (1 << 14),                          //
+    RKBaseProductListUInt8U1             = (1 << 15),                          //
+    RKBaseProductListUInt8ZVWDPR         = 0x0000003F,                         // Display All without K, Sh, Sv and Q
+    RKBaseProductListUInt8ZVWDPRK        = 0x0000007F,                         // Display All without Sh, Sv and Q
+    RKBaseProductListUInt8ZVWDPRKS       = 0x000001FF,                         // Display All without Sh, Sv and Q
+    RKBaseProductListUInt8ZVWDPRKSQ      = 0x000003FF,                         // Display All
+    RKBaseProductListUInt8All            = 0x0000FFFF,                         // Display All (same as above)
+    RKBaseProductListFloatZ              = (1 << 16),                          // Data of Z
+    RKBaseProductListFloatV              = (1 << 17),                          // Data of V
+    RKBaseProductListFloatW              = (1 << 18),                          // Data of W
+    RKBaseProductListFloatD              = (1 << 19),                          // Data of D
+    RKBaseProductListFloatP              = (1 << 20),                          // Data of P
+    RKBaseProductListFloatR              = (1 << 21),                          // Data of R
+    RKBaseProductListFloatK              = (1 << 22),                          // Data of K
+    RKBaseProductListFloatSh             = (1 << 23),                          // Data of Sh
+    RKBaseProductListFloatSv             = (1 << 24),                          // Data of Sv
+    RKBaseProductListFloatQ              = (1 << 25),                          // Data of Q
+    RKBaseProductListFloatU6             = (1 << 26),                          //
+    RKBaseProductListFloatU5             = (1 << 27),                          //
+    RKBaseProductListFloatU4             = (1 << 28),                          //
+    RKBaseProductListFloatU3             = (1 << 29),                          //
+    RKBaseProductListFloatU2             = (1 << 30),                          //
+    RKBaseProductListFloatU1             = (1 << 31),                          //
+    RKBaseProductListFloatZVWDPR         = 0x003F0000,                         // Base moment data without K, Sh, Sv and Q
+    RKBaseProductListFloatZVWDPRK        = 0x007F0000,                         // Base moment data without Sh, Sv and Q
+    RKBaseProductListFloatZVWDPRKS       = 0x01FF0000,                         // All data without Q
+    RKBaseProductListFloatZVWDPRKSQ      = 0x03FF0000,                         // All data
+    RKBaseProductListFloatAll            = 0xFFFF0000                          // All data (same as above)
 };
 
-typedef uint32_t RKBaseMomentIndex;
-enum RKBaseMomentIndex {
-    RKBaseMomentIndexZ,
-    RKBaseMomentIndexV,
-    RKBaseMomentIndexW,
-    RKBaseMomentIndexD,
-    RKBaseMomentIndexP,
-    RKBaseMomentIndexR,
-    RKBaseMomentIndexK,
-    RKBaseMomentIndexSh,
-    RKBaseMomentIndexSv,
-    RKBaseMomentIndexQ,
-    RKBaseMomentIndexZv,                                                       // No longer used
-    RKBaseMomentIndexVv,                                                       // No longer used
-    RKBaseMomentIndexWv,                                                       // No longer used
-    RKBaseMomentIndexCount
+typedef uint8_t RKBaseProductIndex;
+enum RKBaseProductIndex {
+    RKBaseProductIndexZ,
+    RKBaseProductIndexV,
+    RKBaseProductIndexW,
+    RKBaseProductIndexD,
+    RKBaseProductIndexP,
+    RKBaseProductIndexR,
+    RKBaseProductIndexK,
+    RKBaseProductIndexSh,
+    RKBaseProductIndexSv,
+    RKBaseProductIndexQ,
+    RKBaseProductIndexZv,                                                      // No longer used
+    RKBaseProductIndexVv,                                                      // No longer used
+    RKBaseProductIndexWv,                                                      // No longer used
+    RKBaseProductIndexCount
 };
 
-typedef uint32_t RKProductType;
+typedef uint8_t RKProductType;
 enum RKProductType {
     RKProductTypeUnknown             = 0,                                      // Unspecified
     RKProductTypeCellMatch           = (1),                                    //
@@ -1175,7 +1188,7 @@ typedef struct rk_ray_header {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKBaseMomentList     baseMomentList;                                       // 16-bit MSB for products + 16-bit LSB for display
+    RKBaseProductList     baseMomentList;                                       // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            // Gate count of the ray
@@ -1218,7 +1231,7 @@ typedef struct rk_sweep_header {
     uint32_t             gateCount;                                            // Number of range gates
     time_t               startTime;                                            // Start time of the sweep
     time_t               endTime;                                              // End time of the sweep
-    RKBaseMomentList     baseMomentList;                                       // List of available products
+    RKBaseProductList     baseMomentList;                                       // List of available products
     float                gateSizeMeters;                                       // Gate size in meters
     bool                 isPPI;                                                //
     bool                 isRHI;                                                //
@@ -1351,7 +1364,7 @@ typedef union rk_product_desc {                                                /
         RKName               unit;                                             // Unit of the product
         RKName               colormap;                                         // Colormap of the product for the UI
         char                 symbol[8];                                        // Product symbol
-        RKBaseMomentIndex    index;                                            // Base moment index
+        RKBaseProductIndex    index;                                            // Base moment index
         RKProductType        type;                                             // RKProductType
         uint32_t             pieceCount;                                       // Count of piece-wise function that maps data to color index
         RKFloat              w[16];                                            // Data to color index weight (piece-wise function)

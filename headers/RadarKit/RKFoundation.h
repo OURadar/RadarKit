@@ -115,22 +115,22 @@ void RKZeroTailFloat(RKFloat *data, const uint32_t capacity, const uint32_t orig
 void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin);
 
 // Pulse
-size_t RKPulseBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t pulseCount);
+size_t RKPulseBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);
 void RKPulseBufferFree(RKBuffer);
 RKPulse *RKGetPulseFromBuffer(RKBuffer, const uint32_t pulseIndex);
-RKInt16C *RKGetInt16CDataFromPulse(RKPulse *, const uint32_t channelIndex);
-RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
-RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t channelIndex);
-int RKClearPulseBuffer(RKBuffer, const uint32_t pulseCount);
+RKInt16C *RKGetInt16CDataFromPulse(RKPulse *, const uint32_t);
+RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t);
+RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
+int RKClearPulseBuffer(RKBuffer, const uint32_t);
 int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid);
 
 // Ray
-size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t rayCount);
+size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);
 void RKRayBufferFree(RKBuffer);
-RKRay *RKGetRayFromBuffer(RKBuffer, const uint32_t rayIndex);
-uint8_t *RKGetUInt8DataFromRay(RKRay *, const uint32_t baseMomentIndex);
-float *RKGetFloatDataFromRay(RKRay *, const uint32_t baseMomentIndex);
-int RKClearRayBuffer(RKBuffer buffer, const uint32_t rayCount);
+RKRay *RKGetRayFromBuffer(RKBuffer, const uint32_t);
+uint8_t *RKGetUInt8DataFromRay(RKRay *, const RKBaseProductIndex);
+float *RKGetFloatDataFromRay(RKRay *, const RKBaseProductIndex);
+int RKClearRayBuffer(RKBuffer buffer, const uint32_t);
 
 // Standalone file monitor (one file per thread)
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *), void *);
@@ -140,8 +140,8 @@ int RKFileMonitorFree(RKFileMonitor *);
 RKStream RKStreamFromString(const char *);
 char *RKStringOfStream(RKStream);
 int RKStringFromStream(char *, RKStream);
-//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *, RKBaseMomentList *);
-RKProductDesc RKGetNextProductDescription(RKBaseMomentList *);
+//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseProductIndex *, RKBaseProductList *);
+RKProductDesc RKGetNextProductDescription(RKBaseProductList *);
 
 // Parser, enum, strings
 size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);

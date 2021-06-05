@@ -53,8 +53,8 @@ struct rk_sweep_engine {
     RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
     uint8_t                          scratchSpaceIndex;
     pthread_mutex_t                  productMutex;
-    RKBaseMomentList                 baseMomentList;
-    RKProductId                      baseMomentProductIds[RKBaseMomentIndexCount];
+    RKBaseProductList                baseProductList;
+    RKProductId                      baseMomentProductIds[RKBaseProductIndexCount];
 
     // Status / health
     uint32_t                         processedRayIndex;

@@ -130,7 +130,7 @@ void proc(UserParams *arg) {
     RKProduct *product;
     RKScratch *space;
 
-    const RKBaseMomentList momentList = RKBaseMomentListProductZVWDPR;
+    const RKBaseProductList momentList = RKBaseProductListFloatZVWDPR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
@@ -408,7 +408,7 @@ void proc(UserParams *arg) {
                 } else if (arg->verbose > 2) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
-                    float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
+                    float *data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
                     printf("p:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
                            k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
@@ -508,7 +508,7 @@ void proc(UserParams *arg) {
         RKRay *E = rays[k + r - 1];
 
         // Consolidate some other information and check consistencies
-        RKBaseMomentList overallMomentList = 0;
+        RKBaseProductList overallMomentList = 0;
         uint8_t gateCountWarningCount = 0;
         uint8_t gateSizeWarningCount = 0;
         for (i = k + 1; i < k  + r - 1; i++) {
@@ -570,7 +570,7 @@ void proc(UserParams *arg) {
         //RKLog("Output %s\n", sweep->header.filename);
 
         // Initialize a list based on desired moment list. This variable will become all zeros after the next for-loop
-        RKBaseMomentList list = sweep->header.baseMomentList & momentList;
+        RKBaseProductList list = sweep->header.baseMomentList & momentList;
 
         // Base products
         int productCount = __builtin_popcount(list);
