@@ -136,7 +136,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     return;
                 }
                 newConfig->waveform = waveform;
-                strncpy(newConfig->waveformName, waveform->name, RKNameLength - 1);
+                //strncpy(newConfig->waveformName, waveform->name, RKNameLength - 1);
+                snprintf(newConfig->waveformName, RKNameLength, "%s", waveform->name) < 0 ? abort() : (void)0;
                 sprintf(stringBuffer[0], "Waveform = '%s'", waveform->name);
                 break;
             case RKConfigKeyWaveformDecimate:

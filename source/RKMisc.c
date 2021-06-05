@@ -237,7 +237,8 @@ void RKReplaceAllValuesOfKey(char *string, const char *key, int value) {
             memmove(e + k - 1, e, l);
             *(e + k + -1 + l) = '\0';
         }
-        strncpy(s, valueString, k);
+        //strncpy(s, valueString, k);
+        snprintf(s, k, "%s", valueString) < 0 ? abort() : (void)0;
         s = strstr(e, key);
     }
 }
@@ -280,7 +281,8 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value) {
         memmove(e + k - 1, e, l);
         *(e + k + -1 + l) = '\0';
     }
-    strncpy(s, valueString, k);
+    //strncpy(s, valueString, k);
+    snprintf(s, k, "%s", valueString) < 0 ? abort() : (void)0;
 }
 
 void RKReviseLogicalValues(char *string) {
@@ -778,7 +780,8 @@ char *RKStripEscapeSequence(const char *line) {
         e = strchr(s, '\033');
         if (e == NULL || *(e + 1) != '[') {
             n = (int)strlen(s);
-            strncpy(d, s, n);
+            //strncpy(d, s, n);
+            snprintf(d, n, "%s", s) < 0 ? abort() : (void)0;
             d += n;
             break;
         }

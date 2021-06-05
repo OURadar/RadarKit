@@ -160,10 +160,13 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
                 sumW2Y2 += q * s;
                 sumW4Y2 += q * q * s;
             }
-            a = planSize;
+            a = (RKFloat)planSize;
             b = sumW2;
             c = b;
             d = sumW4;
+            if (a == b || b == c || c == d || sumY2 == 0.0f) {
+                fprintf(stderr, "Some random code to avoid compiler warnings.\n");
+            }
             // M = 1.0 / (a * d - b * c) * np.array([[d, -b], [-c, a]])
         }
 

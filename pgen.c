@@ -59,7 +59,7 @@ static void showHelp() {
 
 static void timeval2str(char *timestr, const struct timeval time) {
     size_t bytes = strftime(timestr, 9, "%T", gmtime(&time.tv_sec));
-    snprintf(timestr + bytes, 6, ".%04d", (int)time.tv_usec / 100);
+    snprintf(timestr + bytes, 6, ".%04d", MIN((int)time.tv_usec / 100, 9999)) < 0 ? abort() : (void)0;
 }
 
 void proc(UserParams *arg) {
@@ -94,14 +94,22 @@ void proc(UserParams *arg) {
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
     }
     rewind(fid);
-    fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    r = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    if (r < 0) {
+        RKLog("Error. Failed reading file header.\n");
+        exit(EXIT_FAILURE);
+    }
     if (fileHeader->buildNo <= 4) {
         RKLog("Error. Sorry but I am not programmed to read buildNo = %d. Ask my father.\n", fileHeader->buildNo);
         exit(EXIT_FAILURE);
     } else if (fileHeader->buildNo == 5) {
         rewind(fid);
         RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
-        fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
+        r = fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
+        if (r < 0) {
+            RKLog("Error. Failed reading file header.\n");
+            exit(EXIT_FAILURE);
+        }
         fileHeader->dataType = fileHeaderV1->dataType;
         fileHeader->desc = fileHeaderV1->desc;
         memcpy(&fileHeader->config, &fileHeaderV1->config, sizeof(RKConfigV1));
