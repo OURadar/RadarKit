@@ -50,7 +50,7 @@ char *RKTestByNumberDescription(const int indent) {
     " 0 - Show types\n"
     " 1 - Show colors\n"
     " 2 - Pretty strings\n"
-    " 3 - Modulo-math macros\n"
+    " 3 - Basic math tests\n"
     " 4 - Parse comma delimited values\n"
     " 5 - Parse values in a JSON string\n"
     " 6 - File manager - RKFileManagerInit()\n"
@@ -120,7 +120,7 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestPrettyStrings();
             break;
         case 3:
-            RKTestModuloMath();
+            RKTestBasicMath();
             break;
         case 4:
             RKTestParseCommaDelimitedValues();
@@ -341,7 +341,7 @@ void RKTestPrettyStrings(void) {
     printf("%s (len = %zu)\n", c, strlen(c));
 }
 
-void RKTestModuloMath(void) {
+void RKTestBasicMath(void) {
     SHOW_FUNCTION_NAME
     int k;
     const int N = 4;
@@ -364,10 +364,20 @@ void RKTestModuloMath(void) {
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
     gettimeofday(&t0, NULL);
     if (RKTimevalDiff(t0, t1) < 0.1) {
-        RKLog("First iteraction failed.\n");
+        RKLog("First iteration failed.\n");
     } else {
-        RKLog("First iteraction is as expected.\n");
+        RKLog("First iteration finished as expected.\n");
     }
+
+    printf("\n");
+
+    RKComplex a = {1.0, 1.0}, b = {-2.0, -1.0};
+    RKComplex c = RKComplexMultiply(a, b);
+
+    RKFloat d = RKComplexAbsSquare(RKComplexSubtract(c, (RKComplex){-1.0f, -3.0f}));
+    printf("%.1f%+.1fj * %.1f%+.1fj = %.1f%+.1fj  %s\n", a.i, a.q, b.i, b.q, c.i, c.q, d < 1.0e-4 ? "ok" : "failed");
+    printf("|%.1f%+.1fj|^2 = %.1f\n", a.i, a.q, RKComplexAbsSquare(a));
+    
 }
 
 void RKTestParseCommaDelimitedValues(void) {

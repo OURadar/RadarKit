@@ -8,6 +8,24 @@
 
 #include <RadarKit/RKFoundation.h>
 
+#pragma mark - Basic Arithmetics
+
+RKComplex RKComplexAdd(const RKComplex a, const RKComplex b) {
+    return (RKComplex){a.i + b.i, a.q + b.q};
+}
+
+RKComplex RKComplexSubtract(const RKComplex a, const RKComplex b) {
+    return (RKComplex){a.i - b.i, a.q - b.q};
+}
+
+RKComplex RKComplexMultiply(const RKComplex a, const RKComplex b) {
+    return (RKComplex){a.i * b.i - a.q * b.q, a.i * b.q + a.q * b.i};
+}
+
+RKFloat RKComplexAbsSquare(const RKComplex a) {
+    return (RKFloat)(a.i * a.i + a.q * a.q);
+}
+
 #pragma mark - Logger
 
 int RKLog(const char *whatever, ...) {

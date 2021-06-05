@@ -105,7 +105,7 @@ void RKTestByNumber(const int, const void *);
 
 void RKTestTerminalColors(void);
 void RKTestPrettyStrings(void);
-void RKTestModuloMath(void);
+void RKTestBasicMath(void);
 void RKTestParseCommaDelimitedValues(void);
 void RKTestParseJSONString(void);
 void RKTestFileManager(void);
