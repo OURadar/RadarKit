@@ -787,14 +787,13 @@ char *RKStripEscapeSequence(const char *line) {
         e = strchr(s, '\033');
         if (e == NULL || *(e + 1) != '[') {
             n = (int)strlen(s);
-            //strncpy(d, s, n);
-            snprintf(d, n, "%s", s) < 0 ? abort() : (void)0;
+            memcpy(d, s, n);
             d += n;
             break;
         }
         n = (int)(e - s);
         if (n) {
-            strncpy(d, s, n);
+            memcpy(d, s, n);
             d += n;
         }
         s = e + 1;
