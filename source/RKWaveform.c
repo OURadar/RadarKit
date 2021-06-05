@@ -879,7 +879,9 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 v++;
             }
             g = 10.0f * log10f(g);
-            RKLog("v -> %.1f dB\n", g);
+            if (g < 0.0f) {
+                RKLog("Warning. g = %.1f dB\n", g);
+            }
         }
     }
 }
