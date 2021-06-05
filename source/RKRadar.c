@@ -1822,8 +1822,11 @@ int RKWaitWhileActive(RKRadar *radar) {
     }
     while (radar->active) {
         if (isForeground) {
-            fgets(buffer, sizeof(buffer), stdin);
-            if (feof(stdin) && radar->tic > 2) {
+            if (fgets(buffer, sizeof(buffer), stdin)) {
+                // Some user input, don't do anything for now
+                continue;
+            } else if (feof(stdin) && radar->tic > 2) {
+                // User pressed Ctrl-D
                 fprintf(stderr, "\n");
                 if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                     RKLog("EOF (Ctrl-D) detected.\n");
@@ -2887,7 +2890,9 @@ void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *contr
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, control->label, RKNameLength - 1);
+    target->label[RKNameLength - 1] = '\0';
     strncpy(target->command, control->command, RKMaximumCommandLength - 1);
+    target->command[RKMaximumCommandLength - 1] = '\0';
 }
 
 void RKAddControl(RKRadar *radar, const RKControl *control) {
@@ -2907,7 +2912,9 @@ void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, label, RKNameLength - 1);
+    target->label[RKNameLength - 1] = '\0';
     strncpy(target->command, command, RKMaximumCommandLength - 1);
+    target->command[RKMaximumCommandLength - 1] = '\0';
 }
 
 void RKClearControls(RKRadar *radar) {

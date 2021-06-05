@@ -540,6 +540,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'p':
                 strncpy(user->pedzyHost, optarg, sizeof(user->pedzyHost));
+                user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'r':
                 user->simulate = false;
@@ -597,6 +598,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                     optind++;
                 }
                 strncpy(user->relayHost, optarg, sizeof(user->relayHost));
+                user->relayHost[sizeof(user->relayHost) - 1] = '\0';
                 break;
             case 's':
                 if (strlen(user->relayHost)) {
@@ -613,6 +615,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 't':
                 strncpy(user->tweetaHost, optarg, sizeof(user->tweetaHost));
+                user->tweetaHost[sizeof(user->tweetaHost) - 1] = '\0';
                 break;
             case 'u':
                 printf("Version %s\n", RKVersionString());
@@ -979,7 +982,8 @@ int main(int argc, const char **argv) {
         // Build a series of options for transceiver, only pass down the relevant parameters
         k = 0;
         if (strlen(systemPreferences->playbackFolder)) {
-            k += sprintf(cmd + k, " D %s", systemPreferences->playbackFolder);
+            k += snprintf(cmd + k, RKMaximumCommandLength - k, " D %s", systemPreferences->playbackFolder);
+            cmd[RKMaximumCommandLength - 1] = '\0';
         }
         if (k == 0 && cmd[0] != '\0') {
             RKLog("I could crash here at k = %d && cmd[0] = %c\n", k, cmd[0]);

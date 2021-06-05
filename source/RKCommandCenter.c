@@ -136,7 +136,9 @@ int socketCommandHandler(RKOperator *O) {
                     //
                     user->access |= RKStreamControl;
                     // Update some info
-                    strncpy(user->login, sval1, sizeof(user->login) - 1);
+                    //strncpy(user->login, sval1, sizeof(user->login));
+                    memcpy(user->login, sval1, sizeof(user->login));
+                    user->login[MIN(sizeof(user->login) - 1, strlen(sval1))] = '\0';
                     user->controlFirstUID = (uint32_t)-1;
                     break;
 
