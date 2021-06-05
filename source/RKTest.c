@@ -953,7 +953,11 @@ void RKTestReadIQ(const char *filename) {
     } else if (fileHeader->buildNo == 5) {
         rewind(fid);
         RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
-        fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
+        if (fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid) == 0) {
+            RKLog("Error. Failed reading file header.\n");
+            fclose(fid);
+            return;
+        }
         fileHeader->dataType = fileHeaderV1->dataType;
         fileHeader->desc = fileHeaderV1->desc;
         memcpy(&fileHeader->config, &fileHeaderV1->config, sizeof(RKConfigV1));
@@ -2474,7 +2478,10 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         j = 0;
         fpos = 0;
         rewind(fid);
-        fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+        if (fread(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
+            RKLog("Error. Failed reading file header.\n");
+            break;
+        }
         //RKLog("%s", transceiver->name);
 
         RKLog("%s Waveform %s", transceiver->name, fileHeader->config.waveform);
@@ -2526,11 +2533,20 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                 RKLog("%s Error. No vacant pulse for storage.\n", transceiver->name);
                 break;
             }
-            fread(pulseHeader, sizeof(RKPulseHeader), 1, fid);
+            if (fread(pulseHeader, sizeof(RKPulseHeader), 1, fid) == 0) {
+                RKLog("Error. Failed reading pulse header.\n");
+                break;
+            }
             gateCount = MIN(pulse->header.capacity, pulseHeader->gateCount);
-            fread(RKGetInt16CDataFromPulse(pulse, 0), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid);
+            if (fread(RKGetInt16CDataFromPulse(pulse, 0), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid) == 0) {
+                RKLog("Error. Failed reading pulse data in the RKInt16C buffer (H-pol).\n");
+                break;
+            }
             fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
-            fread(RKGetInt16CDataFromPulse(pulse, 1), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid);
+            if (fread(RKGetInt16CDataFromPulse(pulse, 1), sizeof(RKByte), gateCount * sizeof(RKInt16C), fid) == 0) {
+                RKLog("Error. Failed reading pulse data in the RKInt16C buffer (V-pol).\n");
+                break;
+            }
             fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
             
             pulse->header.gateSizeMeters = pulseHeader->gateSizeMeters;
@@ -3833,14 +3849,22 @@ void RKTestExperiment(void) {
         return;
     }
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    if (fread(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
+        RKLog("Error. Failed reading file header.\n");
+        fclose(fid);
+        return;
+    }
     
     RKLog("PRT = %.4e\n", fileHeader->config.prt[0]);
     RKLog("SNRThreshold = %.4f dB\n", fileHeader->config.SNRThreshold);
     RKLog("SQIThreshold = %.4f\n", fileHeader->config.SQIThreshold);
 
     RKPulseHeader *pulseHeader = (RKPulseHeader *)malloc(sizeof(RKPulseHeader));
-    fread(pulseHeader, sizeof(RKPulseHeader), 1, fid);
+    if (fread(pulseHeader, sizeof(RKPulseHeader), 1, fid) == 0) {
+        RKLog("Error. Failed reading pulse header.\n");
+        fclose(fid);
+        return;
+    }
     
     RKLog("RKPulse capacity / gateCount = %u / %u\n", pulseHeader->capacity, pulseHeader->gateCount);
     
@@ -3848,7 +3872,9 @@ void RKTestExperiment(void) {
     fileHeader->config.prt[0] = 1.0 / 1450.0;
     
     rewind(fid);
-    fwrite(fileHeader, sizeof(RKFileHeader), 1, fid);
+    if (fwrite(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
+        RKLog("Error. Failed writing file header.\n");
+    }
 
     // Forward to the end of file
     fseek(fid, 0L, SEEK_END);
