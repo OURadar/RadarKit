@@ -103,7 +103,9 @@
 #define RKWaveformFolder                     "waveforms"
 #define RKFFTWisdomFile                      "radarkit-fft-wisdom"
 
-#define RKNoColor                            "\033[0m"
+#define RKNoColor                            "\033[m"
+#define RKNoForegroundColor                  "\033[39m"
+#define RKNoBackgroundColor                  "\033[49m"
 #define RKBaseRedColor                       "\033[91m"
 #define RKBaseGreenColor                     "\033[92m"
 #define RKBaseYellowColor                    "\033[93m"
@@ -122,6 +124,7 @@
 #define RKDeepPinkColor                      "\033[38;5;197m"
 #define RKPinkColor                          "\033[38;5;213m"
 #define RKSalmonColor                        "\033[38;5;210m"
+#define RKGrayColor                          "\033[38;5;245m"
 #define RKPythonColor                        "\033[38;5;226;48;5;24m"
 #define RKRadarKitColor                      "\033[38;5;15;48;5;124m"
 #define RKMaximumStringLength                4096
@@ -767,23 +770,24 @@ enum RKFileType {
 typedef uint64_t RKStream;
 enum RKStream {
     RKStreamNull                                 = 0,                          //
-    RKStreamStatusMask                           = 0x07,                       // Values 0-7 in the lowest 4 bits (exclusive mode)
+    RKStreamStatusMask                           = 0x0F,                       // Values 0-15 in the lowest 4 bits (exclusive mode)
     RKStreamStatusPositions                      = 1,                          //
     RKStreamStatusPulses                         = 2,                          //
     RKStreamStatusRays                           = 3,                          //
     RKStreamStatusIngest                         = 4,                          // Ingest and processing lag
     RKStreamStatusEngines                        = 5,                          // State of Engines
     RKStreamStatusBuffers                        = 6,                          // Buffer overview
-    RKStreamStatusASCIIArt                       = 7,                          // Are you ascii me?
-    RKStreamControl                              = (1 << 3),                   // Controls
-    RKStreamStatusAll                            = 0xF7,                       //
+    RKStreamASCIIArtZ                            = 7,                          // Are you ASCII me?
+    RKStreamASCIIArtHealth                       = 8,                          // Health in ASCII art
+    RKStreamStatusAll                            = 0xFF,                       //
     RKStreamHealthInJSON                         = (1 << 5),                   // Health in JSON
-    RKStreamStatusEngineBinary                   = (1 << 6),                   //
-    RKStreamStatusProcessorStatus                = (1 << 7),                   // Consolidated binary from of the system status
+    RKStreamStatusEngineBinary                   = (1 << 6),                   // WIP: Status of various engines
+    RKStreamStatusProcessorStatus                = (1 << 7),                   // WIP: Consolidated binary from of the system status
     RKStreamDisplayIQ                            = (1 << 8),                   // Low rate IQ (sub-smpled)
     RKStreamDisplayIQFiltered                    = (1 << 9),                   // Filtered IQ (usually matched filter is applied)
     RKStreamProductIQ                            = (1 << 10),                  // Full rate IQ
     RKStreamProductIQFiltered                    = (1 << 11),                  // Full rate filtered IQ
+    RKStreamControl                              = (1 << 15),                  // Controls
     RKStreamScopeStuff                           = 0x0000000000000300ULL,      //
     RKStreamDisplayZ                             = (1 << 16),                  // Display: Z = 0x00010000
     RKStreamDisplayV                             = (1 << 17),                  //

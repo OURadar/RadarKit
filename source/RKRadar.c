@@ -1822,8 +1822,11 @@ int RKWaitWhileActive(RKRadar *radar) {
     }
     while (radar->active) {
         if (isForeground) {
-            fgets(buffer, sizeof(buffer), stdin);
-            if (feof(stdin) && radar->tic > 2) {
+            if (fgets(buffer, sizeof(buffer), stdin)) {
+                // Some user input, don't do anything for now
+                continue;
+            } else if (feof(stdin) && radar->tic > 2) {
+                // User pressed Ctrl-D
                 fprintf(stderr, "\n");
                 if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                     RKLog("EOF (Ctrl-D) detected.\n");
@@ -2233,6 +2236,8 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "\n"
                                 HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
                                 "\n"
+                                HIGHLIGHT("b") " - Button event, simulate push event from a physical hardware button\n"
+                                "\n"
                                 HIGHLIGHT("d") " [COMMAND] [PARAMETER] - DSP parameters,\n"
                                 "    where command can be one of the following:\n"
                                 "        f - ground clutter filter\n"
@@ -2245,14 +2250,21 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "                  by scaling the discrete filter frequency (omega) in rad/sample to\n"
                                 "                  filter velocity in m/s as:\n"
                                 "                  velocity = omega / (2 * PI) * va\n"
+                                "        n - override noise values or query noise values if PARAMETER is not set\n"
+                                "        N - same as n but values in dB\n"
                                 "        r - restart internal engines\n"
-                                "        t - threshold to censor using VALUE in dB\n"
+                                "        s - set SNR threshold to censor using PARAMETER (dB)\n"
+                                "        q - set SQI threshold to censor using PARAMETER\n"
                                 "\n"
                                 "    e.g.,\n"
                                 "        dr - restarts internal engines\n"
                                 "        dn 0.1 - overrides the noise with 0.1 ADU\n"
                                 "        dt 0 - sets the threshold to censor at 0 dB\n"
                                 "        df 1 - sets the ground clutter filter to Elliptical @ +/- 0.1 rad/sample\n"
+                                "\n"
+                                HIGHLIGHT("q") " - Quit the terminal. Radar will still be running.\n"
+                                "\n"
+                                HIGHLIGHT("r") " - Toggle in between start and stop recording I/Q data\n"
                                 "\n"
                                 HIGHLIGHT("s") " [VALUE] - Get various data streams\n"
                                 "    where [VALUE] can be one of the following:\n"
@@ -2262,8 +2274,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "        3 - Overall view of the system load\n"
                                 "        4 - Various engine states\n"
                                 "        5 - Buffer overview\n"
-                                "        6 - Range time plot of reflectivity\n"
-                                "            (Modes 0 - 6 are exclusive, i.e., one at a time),\n"
+                                "        6 - Range time plot of reflectivity in ASCII art\n"
+                                "        7 - Health status decoded\n"
+                                "            (Modes 0 - 7 are exclusive, i.e., one at a time),\n"
                                 "    or any combination of any of the following:\n"
                                 "        z - Display stream of Z reflectivity\n"
                                 "        v - Display stream of V velocity\n"
@@ -2280,13 +2293,9 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "        s 3 - streams the overall system status\n"
                                 "        s zvwd - streams Z, V, W and D\n"
                                 "\n"
-                                HIGHLIGHT("r") " - Toggle in between start and stop recording I/Q data\n"
-                                "\n"
                                 HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
                                 "    e.g.,\n"
                                 "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
-                                "\n"
-                                HIGHLIGHT("b") " - Simulate a push-button event from a physical hardware button\n"
                                 "\n"
                                 HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                                 "\n"
@@ -2881,7 +2890,9 @@ void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *contr
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, control->label, RKNameLength - 1);
+    target->label[RKNameLength - 1] = '\0';
     strncpy(target->command, control->command, RKMaximumCommandLength - 1);
+    target->command[RKMaximumCommandLength - 1] = '\0';
 }
 
 void RKAddControl(RKRadar *radar, const RKControl *control) {
@@ -2901,7 +2912,9 @@ void RKAddControlAsLabelAndCommand(RKRadar *radar, const char *label, const char
     }
     RKControl *target = &radar->controls[index];
     strncpy(target->label, label, RKNameLength - 1);
+    target->label[RKNameLength - 1] = '\0';
     strncpy(target->command, command, RKMaximumCommandLength - 1);
+    target->command[RKMaximumCommandLength - 1] = '\0';
 }
 
 void RKClearControls(RKRadar *radar) {
@@ -2958,7 +2971,7 @@ void RKShowOffsets(RKRadar *radar, char *text) {
     free(buffer);
 }
 
-int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
+int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     static int slice, positionStride = 1, pulseStride = 1, rayStride = 1, healthStride = 1;
     int i, j, k, m = 0, n = 0;
     char *c;
@@ -3376,7 +3389,153 @@ int RKBufferOverview(RKRadar *radar, char *text, const RKTextPreferences flag) {
     n++;
     c = RKIntegerToCommaStyleString(m);
     s = strlen(c);
-    m += sprintf(text + m, "\033[0m\033[%d;%dH== (%s) ==" RKEOL, n, (int)(terminalSize.ws_col - s - 7), c);
+    m += sprintf(text + m, "\033[m\033[%d;%dH== (%s) ==" RKEOL, n, (int)(terminalSize.ws_col - s - 7), c);
     *(text + m) = '\0';
+    return m;
+}
+
+int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag) {
+    int m = 0;
+    int nd = 0, nl = 0;
+    char *d, *s, *e;
+    
+    //static struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+
+    char key[RKNameLength];
+    char value[RKStatusStringLength];
+    char string[RKMaximumStringLength];
+    char dots[RKMaximumStringLength], labels[RKMaximumStringLength];
+    char prefix[RKNameLength], posfix[RKNameLength];
+    char state[4];
+    char symbol[] = "o";
+    RKStatusEnum u;
+    bool isLabel;
+
+    // Make a local copy for manipulation
+    strcpy(string, json);
+
+    // Skip the very first '{'
+    d = string;
+    e = d + strlen(d);
+    if (*d == '{') {
+        d++;
+    }
+    if (e > d) {
+        *(e - 1) = '\0';
+    }
+    // Collect status indicators: key-value pairs that have a dictionary as value
+    while (d != NULL) {
+        d = RKGetNextKeyValue(d, key, value);
+        //printf("key '%s'   value '%s'  c = %c\n", key, value, c == NULL ? 0 : *c);
+        if (*value == '{') {
+            e = RKGetNextKeyValue(value + 1, NULL, value);
+            RKGetNextKeyValue(e, NULL, state);
+            u = atoi(state);
+            isLabel = strcasecmp("true", value) && strcasecmp("false", value);
+            if (flag & RKTextPreferencesShowColor) {
+                strcpy(posfix, RKNoForegroundColor);
+                switch (u) {
+                    case RKStatusEnumNormal:
+                        strcpy(prefix, RKGreenColor);
+                        break;
+                    case RKStatusEnumStandby:
+                    case RKStatusEnumLow:
+                        strcpy(prefix, RKOrangeColor);
+                        break;
+                    case RKStatusEnumFault:
+                    case RKStatusEnumTooLow:
+                        strcpy(prefix, RKRedColor);
+                        break;
+                    case RKStatusEnumCritical:
+                        strcpy(prefix, RKHotPinkColor);
+                        break;
+                    case RKStatusEnumUnknown:
+                        strcpy(prefix, RKGrayColor);
+                        break;
+                    default:
+                        strcpy(prefix, RKGrayColor);
+                        break;
+                }
+            } else {
+                prefix[0] = '\0';
+                posfix[0] = '\0';
+                if (u == RKStatusEnumNormal) {
+                    strcpy(symbol, "o");
+                } else {
+                    strcpy(symbol, "-");
+                    if (isLabel) {
+                        switch (u) {
+                            case RKStatusEnumStandby:
+                            case RKStatusEnumLow:
+                                sprintf(posfix, " *");
+                                break;
+                            case RKStatusEnumFault:
+                            case RKStatusEnumTooLow:
+                                strcpy(posfix, " **");
+                                break;
+                            case RKStatusEnumCritical:
+                                strcpy(posfix, " ***");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            if (isLabel) {
+                e = value + strlen(value) - 1;
+                if ((*value == '"' && *e == '"') || (*value == '\'' && *e == '\'')) {
+                    *e = '\0';
+                    s = value + 1;
+                } else {
+                    s = value;
+                }
+                nl += sprintf(labels + nl, "%22s %s%s%s\n", key, prefix, s, posfix);
+            } else {
+                nd += sprintf(dots + nd, "%s%s%s %s\n", prefix, symbol, posfix, key);
+            }
+        }
+    }
+
+    #if defined(DEBUG_HEALTH_OVERVIEW)
+    m = sprintf(text, "%s\n\n", dots);
+    m += sprintf(text + m, "%s\n", labels);
+    printf("%s", text);
+    #endif
+
+    if (flag & RKTextPreferencesDrawBackground) {
+        int n = 0;
+        char temp[8196];
+        int w = RKMergeColumns(temp, dots, labels, 4);
+        // Another indent at the end and the two border chars
+        w += 4 + 2;
+
+        d = text;
+        // Clear screen, go to the origin
+        m = sprintf(text, "\033[1;1H\033[2J");
+        // Top border
+        *(d + m++) = '+';
+        memset(d + m, '-', w - 2); m += (w - 2);
+        *(d + m++) = '+';
+        *(d + m++) = '\n';
+        // Middle text
+        s = temp;
+        while (*s != '\0' && (e = strchr(s, '\n')) != NULL) {
+            *e = '\0';
+            m += sprintf(d + m, "|%s|\n", s);
+            s = e + 1;
+            n++;
+        }
+        // Bottom border
+        *(d + m++) = '+';
+        memset(d + m, '-', w - 2); m += (w - 2);
+        *(d + m++) = '+';
+        *(d + m++) = '\n';
+        *(d + m) = '\0';
+    } else {
+        RKMergeColumns(text, dots, labels, 0);
+        m = (int)strlen(text);
+    }
+
     return m;
 }

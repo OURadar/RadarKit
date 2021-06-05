@@ -42,6 +42,10 @@ static RKResult convert(const char *name, int verbose) {
     RKWaveFileGroupHeaderV1 *groupHeader = (RKWaveFileGroupHeaderV1 *)malloc(sizeof(RKWaveFileGroupHeaderV1));
     
     r = fread(fileHeader, sizeof(RKWaveFileGlobalHeaderV1), 1, fid);
+    if (r < 0) {
+        RKLog("Error. Failed reading global header.\n");
+        return EXIT_FAILURE;
+    }
     if (verbose) {
         RKLog("fileHeader->count = %s   fileHeader->depth = %s\n",
               RKIntegerToCommaStyleString(fileHeader->count),
@@ -51,10 +55,15 @@ static RKResult convert(const char *name, int verbose) {
     waveform->fc = fileHeader->fc;
     waveform->fs = fileHeader->fs;
     waveform->count = 1;
-    strncpy(waveform->name, fileHeader->name, RKNameLength);
+    //strncpy(waveform->name, fileHeader->name, RKNameLength);
+    snprintf(waveform->name, RKNameLength, "%s", fileHeader->name) < 0 ? abort() : (void)0;
 
     for (k = 0; k < fileHeader->count; k++) {
-        fread(groupHeader, sizeof(RKWaveFileGroupHeaderV1), 1, fid);
+        r = fread(groupHeader, sizeof(RKWaveFileGroupHeaderV1), 1, fid);
+        if (r < 0) {
+            RKLog("Error. Failed reading group header.\n");
+            return EXIT_FAILURE;
+        }
         if (k == 0) {
             waveform->type = groupHeader->type;
         }
@@ -73,8 +82,16 @@ static RKResult convert(const char *name, int verbose) {
                 return EXIT_FAILURE;
             }
         }
-        fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
-        fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+        r = fread(waveform->samples[k], sizeof(RKComplex), waveform->depth, fid);
+        if (r < 0) {
+            RKLog("Error. Failed reading RKComplex samples.\n");
+            return EXIT_FAILURE;
+        }
+        r = fread(waveform->iSamples[k], sizeof(RKInt16C), waveform->depth, fid);
+        if (r < 0) {
+            RKLog("Error. Failed reading RKInt16C samples.\n");
+            return EXIT_FAILURE;
+        }
         if (verbose > 2) {
             for (j = 0; j < waveform->depth; j++) {
                 printf("->x[%d] = %7.2f%+7.2f   %7d%+7d\n", j,

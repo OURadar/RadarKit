@@ -134,7 +134,11 @@ int RKLog(const char *whatever, ...) {
         logFileID = fopen(filename, "a");
     } else if (strlen(rkGlobalParameters.logfile)) {
         if (strlen(rkGlobalParameters.logFolder)) {
-            sprintf(filename, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
+            //sprintf(filename, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
+            i = snprintf(filename, RKMaximumPathLength, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
+            if (i < 0) {
+                fprintf(stderr, "Failed to generate filename.\n");
+            }
         } else {
             strcpy(filename, rkGlobalParameters.logfile);
         }
@@ -1019,6 +1023,7 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *), 
     engine->state = RKEngineStateAllocated | RKEngineStateProperlyWired | RKEngineStateActivating;
     engine->memoryUsage = sizeof(RKFileMonitor);
     strncpy(engine->filename, filename, RKMaximumPathLength);
+    engine->filename[RKMaximumPathLength - 1] = '\0';
     engine->callbackRoutine = routine;
     engine->userResource = userResource;
     RKLog("%s Starting ...\n", engine->name);
@@ -1065,7 +1070,10 @@ RKStream RKStreamFromString(const char * string) {
                 flag = (flag & !RKStreamStatusMask) | RKStreamStatusBuffers;
                 break;
             case '6':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusASCIIArt;
+                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtZ;
+                break;
+            case '7':
+                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtHealth;
                 break;
             case 'x':
                 flag |= RKStreamStatusTerminalChange;
@@ -1192,8 +1200,10 @@ int RKStringFromStream(char *string, RKStream stream) {
         j += sprintf(string + j, "4");
     } else if (stream & RKStreamStatusBuffers) {
         j += sprintf(string + j, "5");
-    } else if (stream & RKStreamStatusASCIIArt) {
+    } else if (stream & RKStreamASCIIArtZ) {
         j += sprintf(string + j, "6");
+    } else if (stream & RKStreamASCIIArtHealth) {
+        j += sprintf(string + j, "7");
     }
     if (stream & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
     if (stream & RKStreamHealthInJSON)          { j += sprintf(string + j, "h"); }
@@ -1237,7 +1247,6 @@ char *RKStringOfStream(RKStream stream) {
     return string;
 }
 
-//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseMomentIndex *index, RKBaseMomentList *list) {
 RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
     RKProductDesc desc;
     memset(&desc, 0, sizeof(RKProductDesc));
@@ -1348,10 +1357,10 @@ RKProductDesc RKGetNextProductDescription(RKBaseMomentList *list) {
         RKLog("Unable to get description for k = %d\n", k);
         return desc;
     }
-    strncpy(desc.name, names[k], sizeof(RKName));
-    strncpy(desc.unit, units[k], sizeof(RKName));
-    strncpy(desc.colormap, colormaps[k], sizeof(RKName));
-    strncpy(desc.symbol, symbols[k], 8);
+    snprintf(desc.name, RKNameLength, "%s", names[k]) < 0 ? abort() : (void)0;
+    snprintf(desc.unit, RKNameLength, "%s", units[k]) < 0 ? abort() : (void)0;
+    snprintf(desc.colormap, RKNameLength, "%s", colormaps[k]) < 0 ? abort() : (void)0;
+    snprintf(desc.symbol, sizeof(desc.symbol), "%s", symbols[k]) < 0 ? abort() : (void)0;
     desc.index = baseMomentIndices[k];
     // Special treatment for RhoHV: A three count piece-wise function
     RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};

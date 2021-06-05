@@ -66,7 +66,7 @@ static time_t timeFromFilename(const char *filename) {
 }
 
 static int listElementsInFolder(RKPathname *list, const int maximumCapacity, const char *path, uint8_t type) {
-    int k = 0;
+    int r, k = 0;
     struct dirent *dir;
     struct stat status;
     if (list == NULL) {
@@ -87,16 +87,23 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
             //sprintf(pathname, "%s/%s", path, dir->d_name);
             int r = sprintf(pathname, "%s/", path);
             strncpy(pathname + r, dir->d_name, RKMaximumPathLength - r - 1);
+            pathname[RKMaximumPathLength - 1] = '\0';
             lstat(pathname, &status);
             if ((type == DT_REG && S_ISREG(status.st_mode)) ||
                 (type == DT_DIR && S_ISDIR(status.st_mode))) {
-                //snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
-                strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
+                r = snprintf(list[k], RKFileManagerFilenameLength, "%s", dir->d_name);
+                if (r < 0) {
+                    RKLog("Error. listElementsInFolder() dir->d_name = %s\n", dir->d_name);
+                    continue;
+                }
                 k++;
             }
         } else if (dir->d_type == type && dir->d_name[0] != '.') {
-            //snprintf(list[k], RKFileManagerFilenameLength - 1, "%s", dir->d_name);
-            strncpy(list[k], dir->d_name, RKFileManagerFilenameLength - 1);
+            r = snprintf(list[k], RKFileManagerFilenameLength, "%s", dir->d_name);
+            if (r < 0) {
+                RKLog("Error. listElementsInFolder() dir->d_name = %s\n", dir->d_name);
+                continue;
+            }
             k++;
         }
     }
@@ -382,7 +389,12 @@ static void *fileRemover(void *in) {
                 sprintf(path, "%s/%s", me->path, parentFolder);
                 if (isFolderEmpty(path)) {
                     RKLog("%s %s Removing folder %s that is empty ...\n", engine->name, me->name, path);
-                    sprintf(command, "rm -rf %s", path);
+                    k = snprintf(command, RKMaximumCommandLength, "rm -rf %s", path);
+                    if (k < 0) {
+                        RKLog("%s %s Error. Failed generating system command.\n", engine->name, me->name);
+                        RKLog("%s %s Error. path = %s.\n", engine->name, me->name, path);
+                        break;
+                    }
                     k = system(command);
                     if (k) {
                         RKLog("Error. system(%s) -> %d   errno = %d\n", command, k, errno);
@@ -538,9 +550,11 @@ static void *folderWatcher(void *in) {
     char string[RKMaximumPathLength + 16];
     char logPath[RKMaximumPathLength + 16] = RKLogFolder;
     if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-        snprintf(logPath, RKMaximumPathLength + 15, "%s/" RKLogFolder, engine->radarDescription->dataPath);
+        snprintf(logPath, sizeof(logPath), "%s/" RKLogFolder, engine->radarDescription->dataPath);
+        logPath[sizeof(logPath) - 1] = '\0';
     } else if (strlen(engine->dataPath)) {
-        snprintf(logPath, RKMaximumPathLength + 15, "%s/" RKLogFolder, engine->dataPath);
+        snprintf(logPath, sizeof(logPath), "%s/" RKLogFolder, engine->dataPath);
+        logPath[sizeof(logPath) - 1] = '\0';
     }
     
     RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->state);
@@ -559,7 +573,12 @@ static void *folderWatcher(void *in) {
                 if (dir->d_name[0] == '.') {
                     continue;
                 }
-                snprintf(string, RKMaximumPathLength - 1, "%s/%s", logPath, dir->d_name);
+                k = snprintf(string, sizeof(string), "%s/%s", logPath, dir->d_name);
+                if (k < 0) {
+                    RKLog("%s Error. dir->d_name = %s.\n", engine->name, dir->d_name);
+                    continue;
+                }
+                string[sizeof(string) - 1] = '\0';
                 lstat(string, &fileStat);
                 if (!S_ISREG(fileStat.st_mode)) {
                     continue;
