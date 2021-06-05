@@ -1822,8 +1822,13 @@ int RKWaitWhileActive(RKRadar *radar) {
     }
     while (radar->active) {
         if (isForeground) {
-            fgets(buffer, sizeof(buffer), stdin);
-            if (feof(stdin) && radar->tic > 2) {
+            if (fgets(buffer, sizeof(buffer), stdin)) {
+                // Some user input, just do something silly for now
+                if (strcasestr(buffer, "hello")) {
+                    printf(RKGreenColor "Hello World!\n" RKNoColor);
+                }
+                continue;
+            } else if (feof(stdin) && radar->tic > 2) {
                 fprintf(stderr, "\n");
                 if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                     RKLog("EOF (Ctrl-D) detected.\n");

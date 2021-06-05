@@ -262,9 +262,14 @@ static void handleSignals(int signal) {
     if (myRadar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Caught a %s (%d)  radar->state = 0x%x\n", RKSignalString(signal), signal, myRadar->state);
     }
-    pthread_t t;
-    pthread_create(&t, NULL, exitAfterAWhile, NULL);
-    RKStop(myRadar);
+    bool isForeground = tcgetpgrp(STDIN_FILENO) == getpgrp();
+    if (isForeground) {
+        RKLog("Use control-D to exit when running in the foreground.\n");
+    } else {
+        pthread_t t;
+        pthread_create(&t, NULL, exitAfterAWhile, NULL);
+        RKStop(myRadar);
+    }
 }
 
 #pragma mark - User Parameters
@@ -850,7 +855,7 @@ int main(int argc, const char **argv) {
     // Update parameters for RadarKit
     updateRadarParameters(systemPreferences);
     
-    // Catch Ctrl-C and exit gracefully
+    // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
     signal(SIGKILL, handleSignals);
