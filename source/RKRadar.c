@@ -1823,7 +1823,10 @@ int RKWaitWhileActive(RKRadar *radar) {
     while (radar->active) {
         if (isForeground) {
             if (fgets(buffer, sizeof(buffer), stdin)) {
-                // Some user input, don't do anything for now
+                // Some user input, just do something silly for now
+                if (strcasestr(buffer, "hello")) {
+                    printf(RKGreenColor "Hello World!\n" RKNoColor);
+                }
                 continue;
             } else if (feof(stdin) && radar->tic > 2) {
                 // User pressed Ctrl-D
