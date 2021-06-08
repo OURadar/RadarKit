@@ -754,9 +754,9 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
     RKFloat gain;
     RKComplex *x;
     for (k = 0; k < waveform->count; k++) {
-        gain = 0.0;
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             x = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+            gain = 0.0f;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
                 gain += (x->i * x->i);
                 if (waveform->type & RKWaveformTypeIsComplex) {
@@ -770,7 +770,18 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
                 x->q /= gain;
                 x++;
             }
-            waveform->filterAnchors[k][j].filterGain = 1.0f;
+            waveform->filterAnchors[k][j].filterGain = 0.0f;
+            #if defined(DEBUG_WAVEFORM_NORMALIZATION)
+            gain = 0.0f;
+            x = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+            for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
+                gain += (x->i * x->i);
+                if (waveform->type & RKWaveformTypeIsComplex) {
+                    gain += (x->q * x->q);
+                }
+            }
+            RKLog("gain -> %.2f\n", 10.0f * log10f(gain));
+            #endif
         }
     }
 }
@@ -839,13 +850,16 @@ void RKWaveformSummary(RKWaveform *waveform) {
             RKFloat g = 0.0f;
             RKComplex *h = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-                g += (h->i * h->i + h->q * h->q);
+                g += (h->i * h->i);
+                if (waveform->type & RKWaveformTypeIsComplex) {
+                    g += (h->q * h->q);
+                }
                 h++;
             }
             g = 10.0f * log10f(g);
             if (waveform->filterAnchors[k][j].filterGain - g > +0.1f ||
                 waveform->filterAnchors[k][j].filterGain - g < -0.1f) {
-                RKLog(">Error. Filter gain is not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)", waveform->filterAnchors[k][j].filterGain, g);
+                RKLog(">Error. Filter gain not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)", waveform->filterAnchors[k][j].filterGain, g);
             }
             if (waveform->type & RKWaveformTypeFrequencyHoppingChirp) {
                 RKLog(format,

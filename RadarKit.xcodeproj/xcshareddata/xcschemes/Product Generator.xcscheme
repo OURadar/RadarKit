@@ -64,12 +64,12 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192607.rkc"
-            isEnabled = "NO">
+            argument = "/Users/boonleng/Downloads/PX-20210424-014638.rkc"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192623.rkc"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192615.rkc"
