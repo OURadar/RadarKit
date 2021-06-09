@@ -101,7 +101,7 @@ void proc(UserParams *arg) {
         RKLog("Error. Failed reading file header.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     if (fileHeader->buildNo <= 4) {
         RKLog("Error. Sorry but I am not programmed to read buildNo = %d. Ask my father.\n", fileHeader->buildNo);
         exit(EXIT_FAILURE);
@@ -112,6 +112,12 @@ void proc(UserParams *arg) {
         if (r < 0) {
             RKLog("Error. Failed reading file header.\n");
             exit(EXIT_FAILURE);
+        }
+        if (arg->verbose > 1) {
+            RKLog("fileHeaderV1->dataType = %d (%s)\n",
+                  fileHeaderV1->dataType,
+                  fileHeaderV1->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+                  (fileHeaderV1->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
         }
         fileHeader->dataType = fileHeaderV1->dataType;
         fileHeader->desc = fileHeaderV1->desc;
@@ -156,14 +162,15 @@ void proc(UserParams *arg) {
         fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
         RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
     }
-    if (arg->verbose || fileHeader->dataType == RKRawDataTypeNull) {
-        RKLog("fileHeader->buildNo = %d\n", fileHeader->buildNo);
-        RKLog("fileHeader->dataType = %d (%s)\n",
+    if (arg->verbose && fileHeader->dataType == RKRawDataTypeNull) {
+        RKLog("Info. fileHeader->preface = %s\n", fileHeader->preface);
+        RKLog("Info. fileHeader->buildNo = %d\n", fileHeader->buildNo);
+        RKLog("Info. fileHeader->dataType = %d (%s)\n",
               fileHeader->dataType,
               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
               (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
     }
-    if (fileHeader->dataType == 0) {
+    if (fileHeader->dataType != RKRawDataTypeAfterMatchedFilter && fileHeader->dataType != RKRawDataTypeFromTransceiver) {
         if ((c = strrchr(arg->filename, '.')) != NULL) {
             if (!strcasecmp(".rkc", c)) {
                 RKLog("Assuming compressed data based on file extension ...\n");
@@ -171,8 +178,16 @@ void proc(UserParams *arg) {
             } else if (!strcasestr(".rkr", c)) {
                 RKLog("Assuming raw data based on file extension ...\n");
                 fileHeader->dataType = RKRawDataTypeFromTransceiver;
+            } else {
+                fileHeader->dataType = RKRawDataTypeNull;
             }
+        } else {
+            fileHeader->dataType = RKRawDataTypeNull;
         }
+    }
+    if (fileHeader->dataType == RKRawDataTypeNull) {
+        RKLog("Warning. Sorry but I cannot handle this file. Ask my father.\n");
+        exit(EXIT_FAILURE);
     }
     
     RKBuffer pulseBuffer;
@@ -250,6 +265,7 @@ void proc(UserParams *arg) {
                fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
                (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
         RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
+        RKLog(">desc.filePrefix = %s\n", fileHeader->desc.filePrefix);
         RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
         RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
         RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
@@ -607,6 +623,7 @@ void proc(UserParams *arg) {
         // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
         k = sprintf(sweep->header.filename, "%s/", arg->directory);
         k += strftime(sweep->header.filename + k, 10, "%Y%m%d/", gmtime(&sweep->header.startTime));
+        k += sprintf(sweep->header.filename + k, "%s-", fileHeader->desc.filePrefix);
         k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
         if (sweep->header.isPPI) {
             k += snprintf(sweep->header.filename + k, 7, "-E%.1f", sweep->header.config.sweepElevation);
