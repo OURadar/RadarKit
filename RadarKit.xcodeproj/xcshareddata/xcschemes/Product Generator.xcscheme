@@ -56,8 +56,8 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-v"
-            isEnabled = "NO">
+            argument = "-n"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "/Users/boonleng/Developer/radarkit/data/iq/20210430/RK-20210430-140228.rkc"

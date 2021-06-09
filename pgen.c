@@ -642,6 +642,10 @@ void proc(UserParams *arg) {
         RKSweepFree(sweep);
     }
     
+    if (fileHeader->config.waveform) {
+        RKWaveformFree(fileHeader->config.waveform);
+        RKWaveformFree(fileHeader->config.waveformDecimate);
+    }
     RKPulseBufferFree(pulseBuffer);
     RKRayBufferFree(rayBuffer);
     RKProductBufferFree(product, 1);

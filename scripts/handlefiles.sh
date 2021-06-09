@@ -12,7 +12,7 @@ for folder in ${SEARCH_LOC[*]}; do
 	fi
 done
 
-if [ ${HAS_BLIB} ]; then
+if [ ${HAS_BLIB} -eq 1 ]; then
 	if [ -d "/data/log" ]; then
 		LOGFILE="/data/log/handlefiles-$(date +%Y%m%d).log"
 	elif [ -d "data/log" ]; then
@@ -44,6 +44,6 @@ eval $cmd
 # Go back to the previous folder
 cd - > /dev/null
 
-if [ ${HAS_BLIB} ]; then
+if [ ${HAS_BLIB} -eq 1 ]; then
 	log ${afile}
 fi
