@@ -55,7 +55,7 @@
 
 #pragma mark - Constants
 
-#define RKRawDataBuildNo                     6                                 //
+#define RKRawDataVersion                     6                                 //
 #define RKBufferSSlotCount                   10                                // Status
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   50                                // Health
@@ -1254,7 +1254,7 @@ typedef struct rk_sweep {
 // File header of raw I/Q data
 //
 typedef union rk_file_header_v1 {
-    struct {                                                                   // Up to buildNo 5
+    struct {                                                                   // Up to version (buildNo) 5
         RKName               preface;                                          //
         uint32_t             buildNo;                                          //
         RKRadarDesc          desc;                                             //
@@ -1267,7 +1267,7 @@ typedef union rk_file_header_v1 {
 typedef union rk_file_header {
     struct {
         RKName               preface;                                          // 128 B
-        uint32_t             buildNo;                                          //   4 B
+        uint32_t             version;                                          //   4 B
         RKRawDataType        dataType;                                         //   1 B
         uint8_t              reserved[123];                                    // 123 B = 256 B
         RKRadarDesc          desc;                                             //         1072 B

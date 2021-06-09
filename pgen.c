@@ -102,10 +102,10 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
 
-    if (fileHeader->buildNo <= 4) {
-        RKLog("Error. Sorry but I am not programmed to read buildNo = %d. Ask my father.\n", fileHeader->buildNo);
+    if (fileHeader->version <= 4) {
+        RKLog("Error. Sorry but I am not programmed to read version %d. Ask my father.\n", fileHeader->version);
         exit(EXIT_FAILURE);
-    } else if (fileHeader->buildNo == 5) {
+    } else if (fileHeader->version == 5) {
         rewind(fid);
         RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
         r = (unsigned int)fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
@@ -164,7 +164,7 @@ void proc(UserParams *arg) {
     }
     if (arg->verbose && fileHeader->dataType == RKRawDataTypeNull) {
         RKLog("Info. fileHeader->preface = %s\n", fileHeader->preface);
-        RKLog("Info. fileHeader->buildNo = %d\n", fileHeader->buildNo);
+        RKLog("Info. fileHeader->version = %d\n", fileHeader->version);
         RKLog("Info. fileHeader->dataType = %d (%s)\n",
               fileHeader->dataType,
               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
@@ -173,10 +173,10 @@ void proc(UserParams *arg) {
     if (fileHeader->dataType != RKRawDataTypeAfterMatchedFilter && fileHeader->dataType != RKRawDataTypeFromTransceiver) {
         if ((c = strrchr(arg->filename, '.')) != NULL) {
             if (!strcasecmp(".rkc", c)) {
-                RKLog("Assuming compressed data based on file extension ...\n");
+                RKLog("Info. Assuming compressed data based on file extension ...\n");
                 fileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
             } else if (!strcasestr(".rkr", c)) {
-                RKLog("Assuming raw data based on file extension ...\n");
+                RKLog("Info. Assuming raw data based on file extension ...\n");
                 fileHeader->dataType = RKRawDataTypeFromTransceiver;
             } else {
                 fileHeader->dataType = RKRawDataTypeNull;
@@ -260,7 +260,7 @@ void proc(UserParams *arg) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         fseek(fid, fpos, SEEK_SET);
-        RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+        RKLog(">fileHeader.preface = '%s'   version = %d\n", fileHeader->preface, fileHeader->version);
         RKLog(">fileHeader.dataType = '%s'\n",
                fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
                (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
@@ -293,7 +293,7 @@ void proc(UserParams *arg) {
         RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
         RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
         RKLog(">config.waveformName = '%s'\n", config->waveformName);
-        if (fileHeader->buildNo >= 5) {
+        if (fileHeader->version >= 5) {
             RKWaveformSummary(config->waveform);
         }
     }

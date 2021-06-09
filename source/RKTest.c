@@ -947,10 +947,10 @@ void RKTestReadIQ(const char *filename) {
     RKWaveform *waveform = NULL;
 
     readsize = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
-    if (fileHeader->buildNo <= 4) {
+    if (fileHeader->version <= 4) {
         RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
         return;
-    } else if (fileHeader->buildNo == 5) {
+    } else if (fileHeader->version == 5) {
         rewind(fid);
         RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
         if (fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid) == 0) {
@@ -970,7 +970,7 @@ void RKTestReadIQ(const char *filename) {
         fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
         RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
     }
-    RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+    RKLog(">fileHeader.preface = '%s'   version = %d\n", fileHeader->preface, fileHeader->version);
     RKLog(">fileHeader.dataType = '%s'\n",
            fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
            (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
