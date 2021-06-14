@@ -17,6 +17,22 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
+//  2.6    - 6/9/2021
+//         - Fixed bug in reading version 5 in pgen
+//         - Variable buildNo is now version
+//         - New RKConfig definition
+//         - Deprecated RKConfig->filterCount
+//         - A complete waveform is now stored in IQ files
+//         - Replaced mkdir system call in RKPreparePath()
+//         - Fixed compiler warnings about string in Ubuntu
+//
+//  2.5    - 5/3/2021
+//         - Waveform conversion tool owav2wav
+//         - Chirps are now called tones
+//         - MATLAB reader updated for build no 6
+//         - Revised MATLAB presentation
+//         - Added millisecond time to raw data filenames
+//
 //  2.4.1  - 5/1/2021
 //         - Added RKReadPulseFromFileReference()
 //         - Updated MATLAB iqread.m to support n-group waveforms

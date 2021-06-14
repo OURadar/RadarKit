@@ -114,7 +114,7 @@ static void *sweepManager(void *in) {
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
 
-    int productCount = __builtin_popcount(sweep->header.baseMomentList & engine->baseMomentList);
+    int productCount = __builtin_popcount(sweep->header.baseMomentList & engine->baseProductList);
 
     // Base products
     for (p = 0; p < productCount; p++) {
@@ -322,7 +322,7 @@ static void *rayGatherer(void *in) {
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
-    RKBaseMomentList momentList = engine->baseMomentList;
+    RKBaseProductList momentList = engine->baseProductList;
     const int productCount = __builtin_popcount(momentList);
     for (p = 0; p < productCount; p++) {
         RKProductDesc productDescription = RKGetNextProductDescription(&momentList);
@@ -513,7 +513,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;
-    engine->baseMomentList = RKBaseMomentListProductZVWDPR;
+    engine->baseProductList = RKBaseProductListFloatZVWDPR;
     engine->productRecorder = &RKProductFileWriterNC;
     pthread_mutex_init(&engine->productMutex, NULL);
     return engine;
@@ -725,7 +725,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
-    RKBaseMomentList overallMomentList = 0;
+    RKBaseProductList overallMomentList = 0;
 
     if (engine->verbose > 2) {
         RKLog(">%s n = %d   %p %p %p ... %p\n", engine->name, n, rays[0], rays[1], rays[2], rays[n - 1]);

@@ -79,7 +79,7 @@ typedef struct rk_moment_scratch {
     RKIQZ                            R[2][RKMaximumLagCount];                      // ACF up to RKMaximumLagCount - 1 for each polarization
     RKIQZ                            C[2 * RKMaximumLagCount - 1];                 // CCF in [ -RKMaximumLagCount + 1, ..., -1, 0, 1, ..., RKMaximumLagCount - 1 ]
     RKIQZ                            sC;                                           // Summation of Xh * Xv'
-    RKIQZ                            ts;                                           // Temporary scratch space
+    RKIQZ                            ts;                                           // Temporal scratch space
     RKFloat                          *aR[2][RKMaximumLagCount];                    // abs(ACF)
     RKFloat                          *aC[2 * RKMaximumLagCount - 1];               // abs(CCF)
     RKFloat                          *gC;                                          // Gaussian fitted CCF(0)  NOTE: Need to extend this to multi-multilag
@@ -89,9 +89,7 @@ typedef struct rk_moment_scratch {
     RKFloat                          KDPFactor;                                    // Normalization factor of 1.0 / gateWidth in kilometers
     RKFloat                          *dcal;                                        // Calibration offset to D (dB)
     RKFloat                          *pcal;                                        // Calibration offset to P (radians)
-//    RKFloat                          SNRThreshold;                                 // SNR threshold for masking (dB) --- (deprecated, use config->SNRThreshold)
-//    RKFloat                          SQIThreshold;                                 // SQI threshold for masking --- (deprecated, use config->SQIThreshold)
-    RKFloat                          *rcor[2];                                     // Reflectivity range correction factor (dB)
+    RKFloat                          *S2Z[2];                                      // Signal to reflectivity correction factor (dB)
     RKFloat                          *S[2];                                        // Signal
     RKFloat                          *Z[2];                                        // Reflectivity in dB
     RKFloat                          *V[2];                                        // Velocity in same units as aliasing velocity

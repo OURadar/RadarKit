@@ -123,7 +123,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
             space->S[p][g] = s / sGain - space->noise[p];
             space->SNR[p][g] = space->S[p][g] / space->noise[p];
             space->Q[p][g] = MIN(1.0f, space->SNR[p][g]);
-            space->Z[p][g] = 10.0f * log10f(space->S[p][g]) + space->rcor[p][g];
+            space->Z[p][g] = 10.0f * log10f(space->S[p][g]) + space->S2Z[p][g];
             space->V[p][g] = space->velocityFactor * omega;
             
             // Gaussian fitting around the new x-axis
@@ -283,8 +283,8 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
                 RKShowVecFloat(variable, space->aR[p][k], gateShown);
             }
             printf(RKEOL);
-            sprintf(variable, "  rcor = ");
-            RKShowVecFloat(variable, space->rcor[p], gateShown);
+            sprintf(variable, "  S2Z = ");
+            RKShowVecFloat(variable, space->S2Z[p], gateShown);
             printf(RKEOL);
             sprintf(variable, "    Z%s = ", p == 0 ? "h" : "v");
             RKShowVecFloat(variable, space->Z[p], gateShown);

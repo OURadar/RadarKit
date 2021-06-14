@@ -576,7 +576,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     k += sprintf(user->string + k, "%04d %5.2f %6.2f ", (int)(ray->header.i % 1000), ray->header.startElevation, ray->header.startAzimuth);
                     // Now we paint the ASCII art
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
                     j = -1;
                     for (s = 0; s < MIN(ray->header.gateCount / user->asciiArtStride, (user->terminalSize.ws_col - 20)); s++) {
                         // 20.0 dBZ --> (20.0) * 2 + 64 = 104 --> ((104) - 54) / 10 = 5.0 = 5
@@ -803,38 +803,38 @@ int socketStreamHandler(RKOperator *O) {
                 // Duplicate and send the header with only selected products
                 memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
                 // Gather the products to be sent
-                rayHeader.baseMomentList = RKBaseMomentListNone;
+                rayHeader.baseMomentList = RKBaseProductListNone;
                 if (user->streams & RKStreamProductZ) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductZ;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatZ;
                 }
                 if (user->streams & RKStreamProductV) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductV;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatV;
                 }
                 if (user->streams & RKStreamProductW) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductW;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatW;
                 }
                 if (user->streams & RKStreamProductD) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductD;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatD;
                 }
                 if (user->streams & RKStreamProductP) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductP;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatP;
                 }
                 if (user->streams & RKStreamProductR) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductR;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatR;
                 }
                 if (user->streams & RKStreamProductK) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductK;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatK;
                 }
                 if (user->streams & RKStreamProductQ) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductQ;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatQ;
                 }
                 if (user->streams & RKStreamProductSh) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductSh;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatSh;
                 }
                 if (user->streams & RKStreamProductSv) {
-                    rayHeader.baseMomentList |= RKBaseMomentListProductSv;
+                    rayHeader.baseMomentList |= RKBaseProductListFloatSv;
                 }
-                uint32_t productList = rayHeader.baseMomentList & RKBaseMomentListProductZVWDPRKSQ;
+                uint32_t productList = rayHeader.baseMomentList & RKBaseProductListFloatZVWDPRKSQ;
                 uint32_t productCount = __builtin_popcount(productList);
                 //RKLog("ProductCount = %d / %x\n", productCount, productList);
                 
@@ -846,36 +846,36 @@ int socketStreamHandler(RKOperator *O) {
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
                 
                 for (j = 0; j < productCount; j++) {
-                    if (productList & RKBaseMomentListProductZ) {
-                        productList ^= RKBaseMomentListProductZ;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-                    } else if (productList & RKBaseMomentListProductV) {
-                        productList ^= RKBaseMomentListProductV;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexV);
-                    } else if (productList & RKBaseMomentListProductW) {
-                        productList ^= RKBaseMomentListProductW;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexW);
-                    } else if (productList & RKBaseMomentListProductD) {
-                        productList ^= RKBaseMomentListProductD;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexD);
-                    } else if (productList & RKBaseMomentListProductP) {
-                        productList ^= RKBaseMomentListProductP;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexP);
-                    } else if (productList & RKBaseMomentListProductR) {
-                        productList ^= RKBaseMomentListProductR;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);
-                    } else if (productList & RKBaseMomentListProductK) {
-                        productList ^= RKBaseMomentListProductK;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
-                    } else if (productList & RKBaseMomentListProductQ) {
-                        productList ^= RKBaseMomentListProductK;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
-                    } else if (productList & RKBaseMomentListProductSh) {
-                        productList ^= RKBaseMomentListProductSh;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSh);
-                    } else if (productList & RKBaseMomentListProductSv) {
-                        productList ^= RKBaseMomentListProductSv;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSv);
+                    if (productList & RKBaseProductListFloatZ) {
+                        productList ^= RKBaseProductListFloatZ;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+                    } else if (productList & RKBaseProductListFloatV) {
+                        productList ^= RKBaseProductListFloatV;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
+                    } else if (productList & RKBaseProductListFloatW) {
+                        productList ^= RKBaseProductListFloatW;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
+                    } else if (productList & RKBaseProductListFloatD) {
+                        productList ^= RKBaseProductListFloatD;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
+                    } else if (productList & RKBaseProductListFloatP) {
+                        productList ^= RKBaseProductListFloatP;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
+                    } else if (productList & RKBaseProductListFloatR) {
+                        productList ^= RKBaseProductListFloatR;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
+                    } else if (productList & RKBaseProductListFloatK) {
+                        productList ^= RKBaseProductListFloatK;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
+                    } else if (productList & RKBaseProductListFloatQ) {
+                        productList ^= RKBaseProductListFloatK;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
+                    } else if (productList & RKBaseProductListFloatSh) {
+                        productList ^= RKBaseProductListFloatSh;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
+                    } else if (productList & RKBaseProductListFloatSv) {
+                        productList ^= RKBaseProductListFloatSv;
+                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
                     } else {
                         f32Data = NULL;
                     }
@@ -935,38 +935,38 @@ int socketStreamHandler(RKOperator *O) {
                 // Duplicate and send the header with only selected products
                 memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
                 // Gather the products to be sent
-                rayHeader.baseMomentList = RKBaseMomentListNone;
+                rayHeader.baseMomentList = RKBaseProductListNone;
                 if (user->streams & RKStreamDisplayZ) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayZ;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8Z;
                 }
                 if (user->streams & RKStreamDisplayV) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayV;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8V;
                 }
                 if (user->streams & RKStreamDisplayW) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayW;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8W;
                 }
                 if (user->streams & RKStreamDisplayD) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayD;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8D;
                 }
                 if (user->streams & RKStreamDisplayP) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayP;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8P;
                 }
                 if (user->streams & RKStreamDisplayR) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayR;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8R;
                 }
                 if (user->streams & RKStreamDisplayK) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayK;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8K;
                 }
                 if (user->streams & RKStreamDisplayQ) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplayQ;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8Q;
                 }
                 if (user->streams & RKStreamDisplaySh) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplaySh;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8Sh;
                 }
                 if (user->streams & RKStreamDisplaySv) {
-                    rayHeader.baseMomentList |= RKBaseMomentListDisplaySv;
+                    rayHeader.baseMomentList |= RKBaseProductListUInt8Sv;
                 }
-                uint32_t displayList = rayHeader.baseMomentList & RKBaseMomentListDisplayAll;
+                uint32_t displayList = rayHeader.baseMomentList & RKBaseProductListUInt8All;
                 uint32_t displayCount = __builtin_popcount(displayList);
                 //RKLog("displayCount = %d / %x\n", productCount, productList);
 
@@ -978,36 +978,36 @@ int socketStreamHandler(RKOperator *O) {
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
 
                 for (j = 0; j < displayCount; j++) {
-                    if (displayList & RKBaseMomentListDisplayZ) {
-                        displayList ^= RKBaseMomentListDisplayZ;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexZ);
-                    } else if (displayList & RKBaseMomentListDisplayV) {
-                        displayList ^= RKBaseMomentListDisplayV;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexV);
-                    } else if (displayList & RKBaseMomentListDisplayW) {
-                        displayList ^= RKBaseMomentListDisplayW;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexW);
-                    } else if (displayList & RKBaseMomentListDisplayD) {
-                        displayList ^= RKBaseMomentListDisplayD;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexD);
-                    } else if (displayList & RKBaseMomentListDisplayP) {
-                        displayList ^= RKBaseMomentListDisplayP;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexP);
-                    } else if (displayList & RKBaseMomentListDisplayR) {
-                        displayList ^= RKBaseMomentListDisplayR;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexR);
-                    } else if (displayList & RKBaseMomentListDisplayK) {
-                        displayList ^= RKBaseMomentListDisplayK;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexK);
-                    } else if (displayList & RKBaseMomentListDisplayQ) {
-                        displayList ^= RKBaseMomentListDisplayQ;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexQ);
-                    } else if (displayList & RKBaseMomentListDisplaySh) {
-                        displayList ^= RKBaseMomentListDisplaySh;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexSh);
-                    } else if (displayList & RKBaseMomentListDisplaySv) {
-                        displayList ^= RKBaseMomentListDisplaySv;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseMomentIndexSv);
+                    if (displayList & RKBaseProductListUInt8Z) {
+                        displayList ^= RKBaseProductListUInt8Z;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+                    } else if (displayList & RKBaseProductListUInt8V) {
+                        displayList ^= RKBaseProductListUInt8V;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
+                    } else if (displayList & RKBaseProductListUInt8W) {
+                        displayList ^= RKBaseProductListUInt8W;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
+                    } else if (displayList & RKBaseProductListUInt8D) {
+                        displayList ^= RKBaseProductListUInt8D;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
+                    } else if (displayList & RKBaseProductListUInt8P) {
+                        displayList ^= RKBaseProductListUInt8P;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
+                    } else if (displayList & RKBaseProductListUInt8R) {
+                        displayList ^= RKBaseProductListUInt8R;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexR);
+                    } else if (displayList & RKBaseProductListUInt8K) {
+                        displayList ^= RKBaseProductListUInt8K;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
+                    } else if (displayList & RKBaseProductListUInt8Q) {
+                        displayList ^= RKBaseProductListUInt8Q;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexQ);
+                    } else if (displayList & RKBaseProductListUInt8Sh) {
+                        displayList ^= RKBaseProductListUInt8Sh;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
+                    } else if (displayList & RKBaseProductListUInt8Sv) {
+                        displayList ^= RKBaseProductListUInt8Sv;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
                     } else {
                         u8Data = NULL;
                     }
@@ -1055,81 +1055,81 @@ int socketStreamHandler(RKOperator *O) {
                 // Mutate sweep so that header indicates the sweep to be transmitted
                 i = 0;
                 user->scratch[0] = '\0';
-                sweepHeader.baseMomentList = RKBaseMomentListNone;
-                if ((user->streams & RKStreamSweepZ) && (productList & RKBaseMomentListProductZ)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductZ;
+                sweepHeader.baseMomentList = RKBaseProductListNone;
+                if ((user->streams & RKStreamSweepZ) && (productList & RKBaseProductListFloatZ)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatZ;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " Z,");
                     }
                 }
-                if ((user->streams & RKStreamSweepV) && (productList & RKBaseMomentListProductV)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductV;
+                if ((user->streams & RKStreamSweepV) && (productList & RKBaseProductListFloatV)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatV;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " V,");
                     }
                 }
-                if ((user->streams & RKStreamSweepW) && (productList & RKBaseMomentListProductW)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductW;
+                if ((user->streams & RKStreamSweepW) && (productList & RKBaseProductListFloatW)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatW;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " W,");
                     }
                 }
-                if ((user->streams & RKStreamSweepD) && (productList & RKBaseMomentListProductD)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductD;
+                if ((user->streams & RKStreamSweepD) && (productList & RKBaseProductListFloatD)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatD;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " D,");
                     }
                 }
-                if ((user->streams & RKStreamSweepP) && (productList & RKBaseMomentListProductP)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductP;
+                if ((user->streams & RKStreamSweepP) && (productList & RKBaseProductListFloatP)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatP;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " P,");
                     }
                 }
-                if ((user->streams & RKStreamSweepR) && (productList & RKBaseMomentListProductR)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductR;
+                if ((user->streams & RKStreamSweepR) && (productList & RKBaseProductListFloatR)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatR;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " R,");
                     }
                 }
-                if ((user->streams & RKStreamSweepK) && (productList & RKBaseMomentListProductK)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductK;
+                if ((user->streams & RKStreamSweepK) && (productList & RKBaseProductListFloatK)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatK;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " K,");
                     }
                 }
-                if ((user->streams & RKStreamSweepQ) && (productList & RKBaseMomentListProductQ)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductQ;
+                if ((user->streams & RKStreamSweepQ) && (productList & RKBaseProductListFloatQ)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatQ;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " Q,");
                     }
                 }
-                if ((user->streams & RKStreamSweepSh) && (productList & RKBaseMomentListProductSh)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductSh;
+                if ((user->streams & RKStreamSweepSh) && (productList & RKBaseProductListFloatSh)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatSh;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " Sh,");
                     }
                 }
-                if ((user->streams & RKStreamSweepSv) && (productList & RKBaseMomentListProductSv)) {
-                    sweepHeader.baseMomentList |= RKBaseMomentListProductSv;
+                if ((user->streams & RKStreamSweepSv) && (productList & RKBaseProductListFloatSv)) {
+                    sweepHeader.baseMomentList |= RKBaseProductListFloatSv;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
                     } else {
@@ -1164,36 +1164,36 @@ int socketStreamHandler(RKOperator *O) {
                             RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
                         }
                         for (j = 0; j < baseMomentCount; j++) {
-                            if (productList & RKBaseMomentListProductZ) {
-                                productList ^= RKBaseMomentListProductZ;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
-                            } else if (productList & RKBaseMomentListProductV) {
-                                productList ^= RKBaseMomentListProductV;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexV);
-                            } else if (productList & RKBaseMomentListProductW) {
-                                productList ^= RKBaseMomentListProductW;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexW);
-                            } else if (productList & RKBaseMomentListProductD) {
-                                productList ^= RKBaseMomentListProductD;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexD);
-                            } else if (productList & RKBaseMomentListProductP) {
-                                productList ^= RKBaseMomentListProductP;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexP);
-                            } else if (productList & RKBaseMomentListProductR) {
-                                productList ^= RKBaseMomentListProductR;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexR);
-                            } else if (productList & RKBaseMomentListProductK) {
-                                productList ^= RKBaseMomentListProductK;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexK);
-                            } else if (productList & RKBaseMomentListProductSh) {
-                                productList ^= RKBaseMomentListProductSh;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSh);
-                            } else if (productList & RKBaseMomentListProductSv) {
-                                productList ^= RKBaseMomentListProductSv;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexSv);
-                            } else if (productList & RKBaseMomentListProductQ) {
-                                productList ^= RKBaseMomentListProductQ;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexQ);
+                            if (productList & RKBaseProductListFloatZ) {
+                                productList ^= RKBaseProductListFloatZ;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+                            } else if (productList & RKBaseProductListFloatV) {
+                                productList ^= RKBaseProductListFloatV;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
+                            } else if (productList & RKBaseProductListFloatW) {
+                                productList ^= RKBaseProductListFloatW;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
+                            } else if (productList & RKBaseProductListFloatD) {
+                                productList ^= RKBaseProductListFloatD;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
+                            } else if (productList & RKBaseProductListFloatP) {
+                                productList ^= RKBaseProductListFloatP;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
+                            } else if (productList & RKBaseProductListFloatR) {
+                                productList ^= RKBaseProductListFloatR;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
+                            } else if (productList & RKBaseProductListFloatK) {
+                                productList ^= RKBaseProductListFloatK;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
+                            } else if (productList & RKBaseProductListFloatSh) {
+                                productList ^= RKBaseProductListFloatSh;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
+                            } else if (productList & RKBaseProductListFloatSv) {
+                                productList ^= RKBaseProductListFloatSv;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
+                            } else if (productList & RKBaseProductListFloatQ) {
+                                productList ^= RKBaseProductListFloatQ;
+                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
                             } else {
                                 f32Data = NULL;
                             }

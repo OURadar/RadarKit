@@ -64,7 +64,7 @@ static void timeval2str(char *timestr, const struct timeval time) {
 
 void proc(UserParams *arg) {
     
-    int i = 0, j = 0, k = 0, p = 0, r = 0;
+    int i = 0, j = 0, k = 0, p = 0;
     uint32_t u32 = 0;
     char timestr[16];
     bool m = false;
@@ -74,6 +74,8 @@ void proc(UserParams *arg) {
     suseconds_t usec = 0;
     long filesize = 0;
     struct timeval s, e;
+    unsigned int r = 0;
+    char *c;
 
     RKLog("Opening file %s ...", arg->filename);
     
@@ -94,27 +96,65 @@ void proc(UserParams *arg) {
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
     }
     rewind(fid);
-    r = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    r = (unsigned int)fread(fileHeader, sizeof(RKFileHeader), 1, fid);
     if (r < 0) {
         RKLog("Error. Failed reading file header.\n");
         exit(EXIT_FAILURE);
     }
-    if (fileHeader->buildNo <= 4) {
-        RKLog("Error. Sorry but I am not programmed to read buildNo = %d. Ask my father.\n", fileHeader->buildNo);
+
+    if (fileHeader->version <= 4) {
+        RKLog("Error. Sorry but I am not programmed to read version %d. Ask my father.\n", fileHeader->version);
         exit(EXIT_FAILURE);
-    } else if (fileHeader->buildNo == 5) {
+    } else if (fileHeader->version == 5) {
         rewind(fid);
         RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
-        r = fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
+        r = (unsigned int)fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
         if (r < 0) {
             RKLog("Error. Failed reading file header.\n");
             exit(EXIT_FAILURE);
         }
+        if (arg->verbose > 1) {
+            RKLog("fileHeaderV1->dataType = %d (%s)\n",
+                  fileHeaderV1->dataType,
+                  fileHeaderV1->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+                  (fileHeaderV1->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+        }
         fileHeader->dataType = fileHeaderV1->dataType;
         fileHeader->desc = fileHeaderV1->desc;
-        memcpy(&fileHeader->config, &fileHeaderV1->config, sizeof(RKConfigV1));
-        fileHeader->config.waveform = NULL;
-        fileHeader->config.waveformDecimate = NULL;
+        fileHeader->config.i = fileHeaderV1->config.i;
+        fileHeader->config.sweepElevation = fileHeaderV1->config.sweepElevation;
+        fileHeader->config.sweepAzimuth = fileHeaderV1->config.sweepAzimuth;
+        fileHeader->config.startMarker = fileHeaderV1->config.startMarker;
+        fileHeader->config.prt[0] = fileHeaderV1->config.prt[0];
+        fileHeader->config.prt[1] = fileHeaderV1->config.prt[1];
+        fileHeader->config.pw[0] = fileHeaderV1->config.pw[0];
+        fileHeader->config.pw[1] = fileHeaderV1->config.prt[1];
+        fileHeader->config.pulseGateCount = fileHeaderV1->config.pulseGateCount;
+        fileHeader->config.pulseGateSize = fileHeaderV1->config.pulseGateSize;
+        fileHeader->config.ringFilterGateCount = fileHeaderV1->config.pulseRingFilterGateCount;
+        fileHeader->config.waveformId[0] = fileHeaderV1->config.waveformId[0];
+        memcpy(fileHeader->config.noise, fileHeaderV1->config.noise, (6 + 22 * 2 + 22 + 22 + 2) * sizeof(RKFloat));
+        strcpy(fileHeader->config.waveformName, fileHeaderV1->config.waveform);
+        strcat(fileHeader->config.waveformName, "-syn");
+        // Initialize a waveformDecimate that matches the original config->filterAnchors
+        u32 = 0;
+        for (k = 0; k < fileHeaderV1->config.filterCount; k++) {
+            u32 += fileHeaderV1->config.filterAnchors[k].length;
+        }
+        // No raw (uncompressed) data prior to this built. Talk to Boonleng if you managed to, and needed to, process one
+        RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, u32);
+        strcpy(waveform->name, fileHeaderV1->config.waveform);
+        waveform->fs = 0.5f * 3.0e8 / (fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio);
+        waveform->filterCounts[0] = fileHeaderV1->config.filterCount;
+        for (j = 0; j < waveform->filterCounts[0]; j++) {
+            memcpy(&waveform->filterAnchors[0][j], &fileHeaderV1->config.filterAnchors[j], sizeof(RKFilterAnchor));
+        }
+        // Fill one some dummy samples to get things going
+        RKWaveformOnes(waveform);
+        RKWaveformNormalizeNoiseGain(waveform);
+        fileHeader->config.waveform = waveform;
+        fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
+        RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
         free(fileHeaderV1);
     } else {
         waveform = RKWaveformReadFromReference(fid);
@@ -122,7 +162,34 @@ void proc(UserParams *arg) {
         fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
         RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
     }
-
+    if (arg->verbose && fileHeader->dataType == RKRawDataTypeNull) {
+        RKLog("Info. fileHeader->preface = %s\n", fileHeader->preface);
+        RKLog("Info. fileHeader->version = %d\n", fileHeader->version);
+        RKLog("Info. fileHeader->dataType = %d (%s)\n",
+              fileHeader->dataType,
+              fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
+              (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
+    }
+    if (fileHeader->dataType != RKRawDataTypeAfterMatchedFilter && fileHeader->dataType != RKRawDataTypeFromTransceiver) {
+        if ((c = strrchr(arg->filename, '.')) != NULL) {
+            if (!strcasecmp(".rkc", c)) {
+                RKLog("Info. Assuming compressed data based on file extension ...\n");
+                fileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
+            } else if (!strcasestr(".rkr", c)) {
+                RKLog("Info. Assuming raw data based on file extension ...\n");
+                fileHeader->dataType = RKRawDataTypeFromTransceiver;
+            } else {
+                fileHeader->dataType = RKRawDataTypeNull;
+            }
+        } else {
+            fileHeader->dataType = RKRawDataTypeNull;
+        }
+    }
+    if (fileHeader->dataType == RKRawDataTypeNull) {
+        RKLog("Warning. Sorry but I cannot handle this file. Ask my father.\n");
+        exit(EXIT_FAILURE);
+    }
+    
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
     RKPulse *pulses[RKMaximumPulsesPerRay];
@@ -130,7 +197,7 @@ void proc(UserParams *arg) {
     RKProduct *product;
     RKScratch *space;
 
-    const RKBaseMomentList momentList = RKBaseMomentListProductZVWDPR;
+    const RKBaseProductList momentList = RKBaseProductListFloatZVWDPR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
@@ -187,14 +254,18 @@ void proc(UserParams *arg) {
 
     if (arg->verbose) {
         long fpos = ftell(fid);
+        if (arg->verbose > 1) {
+            RKLog("fpos = %s\n", RKIntegerToCommaStyleString(fpos));
+        }
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         fseek(fid, fpos, SEEK_SET);
-        RKLog(">fileHeader.preface = '%s'   buildNo = %d\n", fileHeader->preface, fileHeader->buildNo);
+        RKLog(">fileHeader.preface = '%s'   version = %d\n", fileHeader->preface, fileHeader->version);
         RKLog(">fileHeader.dataType = '%s'\n",
                fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
                (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
         RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
+        RKLog(">desc.filePrefix = %s\n", fileHeader->desc.filePrefix);
         RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
         RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
         RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
@@ -222,8 +293,8 @@ void proc(UserParams *arg) {
         RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
         RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
         RKLog(">config.waveformName = '%s'\n", config->waveformName);
-        if (fileHeader->buildNo >= 6) {
-            RKWaveformSummary(waveform);
+        if (fileHeader->version >= 5) {
+            RKWaveformSummary(config->waveform);
         }
     }
 
@@ -259,7 +330,7 @@ void proc(UserParams *arg) {
     
     if (arg->verbose > 1) {
         float *t;
-        t = space->rcor[0]; RKLog(">rcor = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
+        t = space->S2Z[0];  RKLog(">S2Z = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
         t = space->dcal;    RKLog(">dcal = %.1f, %.1f, %.1f, %.1f, %.1f ...\n", t[0], t[10], t[50], t[100], t[250]);
         RKLog(">Memory usage = %s B\n", RKIntegerToCommaStyleString(mem));
     }
@@ -408,7 +479,7 @@ void proc(UserParams *arg) {
                 } else if (arg->verbose > 2) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
-                    float *data = RKGetFloatDataFromRay(ray, RKBaseMomentIndexZ);
+                    float *data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
                     printf("p:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
                            k, r, timestr,
                            config->sweepElevation, config->sweepAzimuth,
@@ -487,7 +558,6 @@ void proc(UserParams *arg) {
     }
 
     fclose(fid);
-    free(fileHeader);
 
     gettimeofday(&e, NULL);
     double dt = RKTimevalDiff(e, s);
@@ -508,7 +578,7 @@ void proc(UserParams *arg) {
         RKRay *E = rays[k + r - 1];
 
         // Consolidate some other information and check consistencies
-        RKBaseMomentList overallMomentList = 0;
+        RKBaseProductList overallMomentList = 0;
         uint8_t gateCountWarningCount = 0;
         uint8_t gateSizeWarningCount = 0;
         for (i = k + 1; i < k  + r - 1; i++) {
@@ -550,12 +620,9 @@ void proc(UserParams *arg) {
         memcpy(&sweep->header.config, config, sizeof(RKConfig));
         memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
         // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
-        if (arg->directory[0] == '\0') {
-            k = sprintf(sweep->header.filename, "%s%s%s/", fileHeader->desc.dataPath, fileHeader->desc.dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
-            k += strftime(sweep->header.filename + k, 10, "%Y%m%d/", gmtime(&sweep->header.startTime));
-        } else {
-            k = sprintf(sweep->header.filename, "%s/", arg->directory);
-        }
+        k = sprintf(sweep->header.filename, "%s/", arg->directory);
+        k += strftime(sweep->header.filename + k, 10, "%Y%m%d/", gmtime(&sweep->header.startTime));
+        k += sprintf(sweep->header.filename + k, "%s-", fileHeader->desc.filePrefix);
         k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
         if (sweep->header.isPPI) {
             k += snprintf(sweep->header.filename + k, 7, "-E%.1f", sweep->header.config.sweepElevation);
@@ -567,10 +634,13 @@ void proc(UserParams *arg) {
         if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
             RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
         }
-        //RKLog("Output %s\n", sweep->header.filename);
+        if (arg->verbose) {
+            RKLog("Output %s\n", sweep->header.filename);
+        }
+        RKPreparePath(sweep->header.filename);
 
         // Initialize a list based on desired moment list. This variable will become all zeros after the next for-loop
-        RKBaseMomentList list = sweep->header.baseMomentList & momentList;
+        RKBaseProductList list = sweep->header.baseMomentList & momentList;
 
         // Base products
         int productCount = __builtin_popcount(list);
@@ -588,10 +658,16 @@ void proc(UserParams *arg) {
         RKSweepFree(sweep);
     }
     
+    if (fileHeader->config.waveform) {
+        RKWaveformFree(fileHeader->config.waveform);
+        RKWaveformFree(fileHeader->config.waveformDecimate);
+    }
     RKPulseBufferFree(pulseBuffer);
     RKRayBufferFree(rayBuffer);
     RKProductBufferFree(product, 1);
     RKScratchFree(space);
+
+    free(fileHeader);
     
     return;
 }
@@ -687,6 +763,8 @@ int main(int argc, const char **argv) {
         if (c) {
             *c = '\0';
         }
+    } else {
+        sprintf(arg->directory, "data/moment");
     }
 
     if (arg->verbose > 1) {

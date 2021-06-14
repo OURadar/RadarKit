@@ -121,25 +121,25 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     }
     
     // Copy over the data if this is one of the base moments
-    RKBaseMomentIndex momentIndex = RKBaseMomentIndexCount;
+    RKBaseProductIndex momentIndex = RKBaseProductIndexCount;
     if (!strcmp(product->desc.symbol, "Z")) {
-        momentIndex = RKBaseMomentIndexZ;
+        momentIndex = RKBaseProductIndexZ;
     } else if (!strcmp(product->desc.symbol, "V")) {
-        momentIndex = RKBaseMomentIndexV;
+        momentIndex = RKBaseProductIndexV;
     } else if (!strcmp(product->desc.symbol, "W")) {
-        momentIndex = RKBaseMomentIndexW;
+        momentIndex = RKBaseProductIndexW;
     } else if (!strcmp(product->desc.symbol, "D")) {
-        momentIndex = RKBaseMomentIndexD;
+        momentIndex = RKBaseProductIndexD;
     } else if (!strcmp(product->desc.symbol, "P")) {
-        momentIndex = RKBaseMomentIndexP;
+        momentIndex = RKBaseProductIndexP;
     } else if (!strcmp(product->desc.symbol, "R")) {
-        momentIndex = RKBaseMomentIndexR;
+        momentIndex = RKBaseProductIndexR;
     } else if (!strcmp(product->desc.symbol, "K")) {
-        momentIndex = RKBaseMomentIndexK;
+        momentIndex = RKBaseProductIndexK;
     } else if (!strcmp(product->desc.symbol, "Sh")) {
-        momentIndex = RKBaseMomentIndexSh;
+        momentIndex = RKBaseProductIndexSh;
     }
-    if (momentIndex < RKBaseMomentIndexCount) {
+    if (momentIndex < RKBaseProductIndexCount) {
         RKFloat *x, *y = product->data;
         for (k = 0; k < product->header.rayCount; k++) {
             if (sweep->rays[k] == NULL) {
