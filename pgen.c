@@ -154,7 +154,6 @@ void proc(UserParams *arg) {
         RKWaveformNormalizeNoiseGain(waveform);
         fileHeader->config.waveform = waveform;
         fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
-        RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
         free(fileHeaderV1);
     } else {
         waveform = RKWaveformReadFromReference(fid);
@@ -295,6 +294,9 @@ void proc(UserParams *arg) {
         RKLog(">config.waveformName = '%s'\n", config->waveformName);
         if (fileHeader->version >= 5) {
             RKWaveformSummary(config->waveform);
+        }
+        if (fileHeader->version >= 6) {
+            RKWaveformSummary(config->waveformDecimate);
         }
     }
 
