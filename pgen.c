@@ -558,7 +558,6 @@ void proc(UserParams *arg) {
     }
 
     fclose(fid);
-    free(fileHeader);
 
     gettimeofday(&e, NULL);
     double dt = RKTimevalDiff(e, s);
@@ -667,6 +666,8 @@ void proc(UserParams *arg) {
     RKRayBufferFree(rayBuffer);
     RKProductBufferFree(product, 1);
     RKScratchFree(space);
+
+    free(fileHeader);
     
     return;
 }
