@@ -369,7 +369,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
         ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
         ray->header.i += sweep->header.rayCount;
         ray->header.s = RKRayStatusReady;
-        ray->header.baseMomentList = productList;
+        ray->header.baseProductList = productList;
     }
 
     /*

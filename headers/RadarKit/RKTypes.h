@@ -565,32 +565,29 @@ enum RKInitFlag {
 
 // The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021
 // Level 15 data type
-typedef uint32_t RKBaseMomentList;
-enum RKBaseMomentList {
-    RKBaseMomentListHMean                = 0,                                  //
-    RKBaseMomentListHR0a                 = 1,                                  // | Rh(0) |
-    RKBaseMomentListHR1i                 = (1 << 1),                           // Rh(1) real
-    RKBaseMomentListHR1q                 = (1 << 2),                           // Rh(1) imag
-    RKBaseMomentListHR2                  = (1 << 3),                           // | Rh(2) |
-    RKBaseMomentListHR3                  = (1 << 4),                           // | Rh(3) |
-    RKBaseMomentListHR4                  = (1 << 5),                           // | Rh(4) |
-    RKBaseMomentListVMean                = (1 << 6),                           //
-    RKBaseMomentListVR0a                 = (1 << 7),                           // | Rv(0) |
-    RKBaseMomentListVR1i                 = (1 << 8),                           // Rv(1) real
-    RKBaseMomentListVR1q                 = (1 << 9),                           // Rv(1) imag
-    RKBaseMomentListVR2                  = (1 << 10),                          // | Rv(2) |
-    RKBaseMomentListVR3                  = (1 << 11),                          // | Rv(3) |
-    RKBaseMomentListVR4                  = (1 << 12),                          // | Rv(4) |
-    RKBaseMomentListC0i                  = (1 << 13),                          // C(0) real
-    RKBaseMomentListC0q                  = (1 << 14),                          // C(0) imag
-    RKBaseMomentListCn1                  = (1 << 15),                          // | C(-1) |
-    RKBaseMomentListCp1                  = (1 << 16),                          // | C(+1) |
-    RKBaseMomentListCn2                  = (1 << 17),                          // | C(-2) |
-    RKBaseMomentListCp2                  = (1 << 18),                          // | C(+2) |
-    RKBaseMomentListCn3                  = (1 << 19),                          // | C(-3) |
-    RKBaseMomentListCp3                  = (1 << 20),                          // | C(+3) |
-    RKBaseMomentListCn4                  = (1 << 21),                          // | C(-4) |
-    RKBaseMomentListCp4                  = (1 << 22),                          // | C(+4) |
+typedef uint32_t RKMomentList;
+enum RKMomentList {
+    RKMomentListHMean                    = 0,                                  //   mH
+    RKMomentListHR0                      = 1,                                  // | Rh(0) |
+    RKMomentListHR1                      = (1 << 1),                           //   Rh(1)
+    RKMomentListHR2                      = (1 << 3),                           // | Rh(2) |
+    RKMomentListHR3                      = (1 << 4),                           // | Rh(3) |
+    RKMomentListHR4                      = (1 << 5),                           // | Rh(4) |
+    RKMomentListVMean                    = (1 << 6),                           //   mV
+    RKMomentListVR0                      = (1 << 7),                           // | Rv(0) |
+    RKMomentListVR1                      = (1 << 8),                           //   Rv(1)
+    RKMomentListVR2                      = (1 << 10),                          // | Rv(2) |
+    RKMomentListVR3                      = (1 << 11),                          // | Rv(3) |
+    RKMomentListVR4                      = (1 << 12),                          // | Rv(4) |
+    RKMomentListC0                       = (1 << 13),                          //   C(0)
+    RKMomentListCn1                      = (1 << 15),                          // | C(-1) |
+    RKMomentListCp1                      = (1 << 16),                          // | C(+1) |
+    RKMomentListCn2                      = (1 << 17),                          // | C(-2) |
+    RKMomentListCp2                      = (1 << 18),                          // | C(+2) |
+    RKMomentListCn3                      = (1 << 19),                          // | C(-3) |
+    RKMomentListCp3                      = (1 << 20),                          // | C(+3) |
+    RKMomentListCn4                      = (1 << 21),                          // | C(-4) |
+    RKMomentListCp4                      = (1 << 22),                          // | C(+4) |
 };
 
 // Used to be RKBaseMomentList; -boonleng 6/1/2021
@@ -1218,7 +1215,8 @@ typedef struct rk_ray_header {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKBaseProductList     baseMomentList;                                       // 16-bit MSB for products + 16-bit LSB for display
+    RKMomentList     baseMomentList;                                       // List of calculated moments
+    RKBaseProductList    baseProductList;                                      // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            // Gate count of the ray
@@ -1261,6 +1259,7 @@ typedef struct rk_sweep_header {
     uint32_t             gateCount;                                            // Number of range gates
     time_t               startTime;                                            // Start time of the sweep
     time_t               endTime;                                              // End time of the sweep
+    RKMomentList         momentList;                                           // List of calculated moments
     RKBaseProductList    baseProductList;                                      // List of available products
     float                gateSizeMeters;                                       // Gate size in meters
     bool                 isPPI;                                                //

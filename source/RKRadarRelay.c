@@ -158,7 +158,7 @@ static int RKRadarRelayRead(RKClient *client) {
             ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
             memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
 
-            productList = ray->header.baseMomentList;
+            productList = ray->header.baseProductList;
             productCount = __builtin_popcount(productList);
             for (j = 0; j < productCount; j++) {
                 if (productList & RKBaseProductListUInt8Z) {

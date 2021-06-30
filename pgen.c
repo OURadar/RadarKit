@@ -584,7 +584,7 @@ void proc(UserParams *arg) {
         uint8_t gateCountWarningCount = 0;
         uint8_t gateSizeWarningCount = 0;
         for (i = k + 1; i < k  + r - 1; i++) {
-            overallMomentList |= rays[i]->header.baseMomentList;
+            overallMomentList |= rays[i]->header.baseProductList;
             if (rays[i]->header.gateCount != S->header.gateCount) {
                 if (++gateCountWarningCount < 5) {
                     RKLog("Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",

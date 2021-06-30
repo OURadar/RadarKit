@@ -109,7 +109,8 @@ typedef struct rk_moment_scratch {
     fftwf_complex                    **inBuffer;                                   //
     fftwf_complex                    **outBuffer;                                  //
     int8_t                           fftOrder;                                     // FFT order that was used to perform FFT. This will be copied over to rayHeader
-    RKConfig                         *config;
+    RKConfig                         *config;                                      // A reference to the radar configuration
+    RKMomentList                     calculatedMoments;                            // Calculated momoents
 } RKScratch;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);

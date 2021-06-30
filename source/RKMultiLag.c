@@ -136,6 +136,27 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
         space->mask[k] = space->userLagChoice;
     }
 
+    // Mark the calculated moments
+    space->calculatedMoments = RKMomentListHMean
+                             | RKMomentListVMean
+                             | RKMomentListHR0
+                             | RKMomentListVR0
+                             | RKMomentListHR1
+                             | RKMomentListVR1
+                             | RKMomentListHR2
+                             | RKMomentListVR2
+                             | RKMomentListC0
+                             | RKMomentListCn1
+                             | RKMomentListCp1
+                             | RKMomentListCn2
+                             | RKMomentListCp2;
+    if (lagCount > 3) {
+        space->calculatedMoments |= RKMomentListCn3 | RKMomentListCp3;
+    }
+    if (lagCount > 4) {
+        space->calculatedMoments |= RKMomentListCn4 | RKMomentListCp4;
+    }
+
     //
     //  ACF & CCF to moments
     //

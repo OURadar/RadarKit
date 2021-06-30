@@ -114,6 +114,7 @@ static void *sweepManager(void *in) {
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
 
+    //int momentCount = __builtin_popcount(sweep->header.base & engine->baseProductList);
     int productCount = __builtin_popcount(sweep->header.baseProductList & engine->baseProductList);
 
     // Base products
@@ -725,7 +726,8 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
     RKConfig *config = &engine->configBuffer[S->header.configIndex];
-    RKBaseProductList overallMomentList = 0;
+    RKMomentList overallMomentList = 0;
+    RKBaseProductList overallBaseProductList = 0;
 
     if (engine->verbose > 2) {
         RKLog(">%s n = %d   %p %p %p ... %p\n", engine->name, n, rays[0], rays[1], rays[2], rays[n - 1]);
@@ -736,6 +738,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     uint8_t gateSizeWarningCount = 0;
     for (k = 0; k < n; k++) {
         overallMomentList |= rays[k]->header.baseMomentList;
+        overallBaseProductList |= rays[k]->header.baseProductList;
         if (rays[k]->header.gateCount != S->header.gateCount) {
             if (++gateCountWarningCount < 5) {
                 RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
@@ -757,11 +760,11 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     }
 
     if (engine->verbose > 1) {
-        RKLog("%s C%02d-%02d-%02d   M%02x-%02x-%02x   products = 0x%x   (%s x %d, %.1f km)\n",
+        RKLog("%s C%02d-%02d-%02d   M%02x-%02x-%02x   moments = 0x%x   products = 0x%x   (%s x %d, %.1f km)\n",
               engine->name,
               S->header.configIndex    , T->header.configIndex    , E->header.configIndex,
               S->header.marker & 0xFF  , T->header.marker & 0xFF  , E->header.marker & 0xFF,
-              overallMomentList,
+              overallMomentList, overallBaseProductList,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
@@ -815,7 +818,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     sweep->header.gateSizeMeters = S->header.gateSizeMeters;
     sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
     sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
-    sweep->header.baseProductList = overallMomentList;
+    sweep->header.baseProductList = overallBaseProductList;
     sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
     sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
     if (!sweep->header.isPPI && !sweep->header.isRHI) {

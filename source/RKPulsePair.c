@@ -394,6 +394,17 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     }
     RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
                   space->aR[1][0], 1.0f / (float)(count), gateCount);                                            // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
+    
+    // Mark the calculated moments
+    space->calculatedMoments = RKMomentListHMean
+                             | RKMomentListVMean
+                             | RKMomentListHR0
+                             | RKMomentListVR0
+                             | RKMomentListHR1
+                             | RKMomentListVR1
+                             | RKMomentListHR2
+                             | RKMomentListVR2
+                             | RKMomentListC0;
 
     //
     //  ACF & CCF to S Z V W D P R K
@@ -508,6 +519,15 @@ int RKPulsePairStaggeredPRT(RKScratch *space, RKPulse **pulses, const uint16_t c
     // Important tasks:
     //   - Calculate ACF (prt 1 & prt 2)
     //
+
+    // Mark the calculated moments
+    space->calculatedMoments = RKMomentListHMean
+                             | RKMomentListVMean
+                             | RKMomentListHR0
+                             | RKMomentListVR0
+                             | RKMomentListHR1
+                             | RKMomentListVR1
+                             | RKMomentListC0;
 
     return 0;
 }
@@ -646,6 +666,15 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     }
     RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
                   space->aR[1][0], 1.0f / (float)(j), gateCount);                                                // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
+
+    // Mark the calculated moments
+    space->calculatedMoments = RKMomentListHMean
+                             | RKMomentListVMean
+                             | RKMomentListHR0
+                             | RKMomentListVR0
+                             | RKMomentListHR1
+                             | RKMomentListVR1
+                             | RKMomentListC0;
 
     //
     //  ACF & CCF to S Z V W D P R K
