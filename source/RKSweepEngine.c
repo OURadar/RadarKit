@@ -114,7 +114,7 @@ static void *sweepManager(void *in) {
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
 
-    int productCount = __builtin_popcount(sweep->header.baseMomentList & engine->baseProductList);
+    int productCount = __builtin_popcount(sweep->header.baseProductList & engine->baseProductList);
 
     // Base products
     for (p = 0; p < productCount; p++) {
@@ -815,7 +815,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     sweep->header.gateSizeMeters = S->header.gateSizeMeters;
     sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
     sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
-    sweep->header.baseMomentList = overallMomentList;
+    sweep->header.baseProductList = overallMomentList;
     sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
     sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
     if (!sweep->header.isPPI && !sweep->header.isRHI) {

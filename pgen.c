@@ -614,7 +614,7 @@ void proc(UserParams *arg) {
         sweep->header.gateSizeMeters = S->header.gateSizeMeters;
         sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
         sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
-        sweep->header.baseMomentList = overallMomentList;
+        sweep->header.baseProductList = overallMomentList;
         sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
         sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
         sweep->header.external = true;
@@ -642,7 +642,7 @@ void proc(UserParams *arg) {
         RKPreparePath(sweep->header.filename);
 
         // Initialize a list based on desired moment list. This variable will become all zeros after the next for-loop
-        RKBaseProductList list = sweep->header.baseMomentList & momentList;
+        RKBaseProductList list = sweep->header.baseProductList & momentList;
 
         // Base products
         int productCount = __builtin_popcount(list);

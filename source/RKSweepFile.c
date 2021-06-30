@@ -363,7 +363,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
     sweep->header.rayCount = (uint32_t)rayCount;
     sweep->header.gateCount = (uint32_t)gateCount;
     sweep->header.gateSizeMeters = ray->header.gateSizeMeters;
-    sweep->header.baseMomentList = productList;
+    sweep->header.baseProductList = productList;
 
     for (j = 0; j < rayCount; j++) {
         ray = RKGetRayFromBuffer(sweep->rayBuffer, j);

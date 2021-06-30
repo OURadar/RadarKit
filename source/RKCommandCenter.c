@@ -1046,18 +1046,18 @@ int socketStreamHandler(RKOperator *O) {
                 if (engine->verbose > 1) {
                     RKLog("%s %s New sweep available   C%02d   S%lu.  <--  %x / %x\n",
                           engine->name, O->name,
-                          sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.baseMomentList, sweepHeader.baseMomentList);
+                          sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.baseProductList, sweepHeader.baseProductList);
                 }
 
                 // Store a copy of the original list of available products
-                uint32_t productList = sweepHeader.baseMomentList;
+                uint32_t productList = sweepHeader.baseProductList;
 
                 // Mutate sweep so that header indicates the sweep to be transmitted
                 i = 0;
                 user->scratch[0] = '\0';
-                sweepHeader.baseMomentList = RKBaseProductListNone;
+                sweepHeader.baseProductList = RKBaseProductListNone;
                 if ((user->streams & RKStreamSweepZ) && (productList & RKBaseProductListFloatZ)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatZ;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatZ;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
                     } else {
@@ -1065,7 +1065,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepV) && (productList & RKBaseProductListFloatV)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatV;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatV;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
                     } else {
@@ -1073,7 +1073,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepW) && (productList & RKBaseProductListFloatW)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatW;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatW;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
                     } else {
@@ -1081,7 +1081,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepD) && (productList & RKBaseProductListFloatD)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatD;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatD;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
                     } else {
@@ -1089,7 +1089,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepP) && (productList & RKBaseProductListFloatP)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatP;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatP;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
                     } else {
@@ -1097,7 +1097,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepR) && (productList & RKBaseProductListFloatR)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatR;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatR;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
                     } else {
@@ -1105,7 +1105,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepK) && (productList & RKBaseProductListFloatK)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatK;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatK;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
                     } else {
@@ -1113,7 +1113,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepQ) && (productList & RKBaseProductListFloatQ)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatQ;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatQ;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
                     } else {
@@ -1121,7 +1121,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepSh) && (productList & RKBaseProductListFloatSh)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatSh;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatSh;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
                     } else {
@@ -1129,7 +1129,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                 }
                 if ((user->streams & RKStreamSweepSv) && (productList & RKBaseProductListFloatSv)) {
-                    sweepHeader.baseMomentList |= RKBaseProductListFloatSv;
+                    sweepHeader.baseProductList |= RKBaseProductListFloatSv;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
                     } else {
@@ -1141,7 +1141,7 @@ int socketStreamHandler(RKOperator *O) {
                     user->scratch[i - 1] = '\0';
                 }
 
-                const uint32_t baseMomentCount = __builtin_popcount(sweepHeader.baseMomentList);
+                const uint32_t baseMomentCount = __builtin_popcount(sweepHeader.baseProductList);
 
                 if (baseMomentCount) {
                     size = 0;
@@ -1157,9 +1157,9 @@ int socketStreamHandler(RKOperator *O) {
                     for (k = 0; k < sweepHeader.rayCount; k++) {
                         ray = sweep->rays[k];
                         memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
-                        rayHeader.baseMomentList = sweepHeader.baseMomentList;
+                        rayHeader.baseMomentList = sweepHeader.baseProductList;
                         size += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
-                        productList = sweepHeader.baseMomentList;
+                        productList = sweepHeader.baseProductList;
                         if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
                             RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
                         }
