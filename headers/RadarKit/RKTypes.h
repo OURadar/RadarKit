@@ -67,8 +67,8 @@
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKSIMDAlignSize
 #define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
-
-#define RKBaseMomentCount                    10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
+#define RKMomentCount                        21                                // 32 to be the absolute max since momentList enum is 32-bit
+#define RKBaseProductCount                   10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaximumWaveformCount               22                                // Maximum waveform group count
@@ -569,17 +569,20 @@ typedef uint32_t RKMomentList;
 enum RKMomentList {
     RKMomentListHMean                    = 0,                                  //   mH
     RKMomentListHR0                      = 1,                                  // | Rh(0) |
-    RKMomentListHR1                      = (1 << 1),                           //   Rh(1)
+    RKMomentListHR1i                     = (1 << 1),                           //   Rh(1) i
+    RKMomentListHR1q                     = (1 << 2),                           //   Rh(1) q
     RKMomentListHR2                      = (1 << 3),                           // | Rh(2) |
     RKMomentListHR3                      = (1 << 4),                           // | Rh(3) |
     RKMomentListHR4                      = (1 << 5),                           // | Rh(4) |
     RKMomentListVMean                    = (1 << 6),                           //   mV
     RKMomentListVR0                      = (1 << 7),                           // | Rv(0) |
-    RKMomentListVR1                      = (1 << 8),                           //   Rv(1)
+    RKMomentListVR1i                     = (1 << 8),                           //   Rv(1) i
+    RKMomentListVR1q                     = (1 << 9),                           //   Rv(1) q
     RKMomentListVR2                      = (1 << 10),                          // | Rv(2) |
     RKMomentListVR3                      = (1 << 11),                          // | Rv(3) |
     RKMomentListVR4                      = (1 << 12),                          // | Rv(4) |
-    RKMomentListC0                       = (1 << 13),                          //   C(0)
+    RKMomentListC0i                      = (1 << 13),                          //   C(0) i
+    RKMomentListC0q                      = (1 << 13),                          //   C(0) q
     RKMomentListCn1                      = (1 << 15),                          // | C(-1) |
     RKMomentListCp1                      = (1 << 16),                          // | C(+1) |
     RKMomentListCn2                      = (1 << 17),                          // | C(-2) |
@@ -588,6 +591,35 @@ enum RKMomentList {
     RKMomentListCp3                      = (1 << 20),                          // | C(+3) |
     RKMomentListCn4                      = (1 << 21),                          // | C(-4) |
     RKMomentListCp4                      = (1 << 22),                          // | C(+4) |
+};
+
+typedef uint8_t RKMomentIndex;
+enum RKMomentIndex {
+    RKMomentIndexHMean,
+    RKMomentIndexHR0,
+    RKMomentIndexHR1i,
+    RKMomentIndexHR1q,
+    RKMomentIndexHR2,
+    RKMomentIndexHR3,
+    RKMomentIndexHR4,
+    RKMomentIndexVMean,
+    RKMomentIndexVR0,
+    RKMomentIndexVR1i,
+    RKMomentIndexVR1q,
+    RKMomentIndexVR2,
+    RKMomentIndexVR3,
+    RKMomentIndexVR4,
+    RKmomentIndexC0i,
+    RKmomentIndexC0q,
+    RKmomentIndexCn1,
+    RKmomentIndexCp1,
+    RKmomentIndexCn2,
+    RKmomentIndexCp2,
+    RKmomentIndexCn3,
+    RKmomentIndexCp3,
+    RKmomentIndexCn4,
+    RKmomentIndexCp4,
+    RKMomentIndexCount
 };
 
 // Used to be RKBaseMomentList; -boonleng 6/1/2021

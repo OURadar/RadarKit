@@ -166,17 +166,21 @@ int prepareScratch(RKScratch *space) {
 int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     int k;
     // Grab the data from scratch space.
-    float *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
-    float *Ti = space->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
-    float *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
-    float *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
-    float *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
-    float *Qi = space->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
-    float *Oi = space->Q[1];
-    float *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
-    float *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
-    float *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
-    float *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
+    RKFloat *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
+    RKFloat *Ti = space->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
+    RKFloat *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+    RKFloat *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
+    RKFloat *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
+    RKFloat *Qi = space->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
+    RKFloat *Oi = space->Q[1];
+    RKFloat *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
+    RKFloat *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
+    RKFloat *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
+    RKFloat *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
+    
+    RKFloat *R0hi = space->R[0][0].i;
+    RKFloat *R0hq = space->R[0][0].q;
+    
     float SNRh, SNRv;
     float SNRThreshold = powf(10.0f, 0.1f * space->config->SNRThreshold);
     float SQIThreshold = space->config->SQIThreshold;
@@ -353,13 +357,13 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
 }
 
 static void zeroOutRay(RKRay *ray) {
-    //memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+    //memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     RKFloat *f = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
-    for (int k = 0; k < RKBaseMomentCount * ray->header.capacity; k++) {
+    for (int k = 0; k < RKBaseProductCount * ray->header.capacity; k++) {
         *f++ = NAN;
     }
     uint8_t *u = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-    memset(u, 0, RKBaseMomentCount * sizeof(uint8_t));
+    memset(u, 0, RKBaseProductCount * sizeof(uint8_t));
 }
 
 #pragma mark - Scratch Space

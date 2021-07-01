@@ -930,7 +930,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t c
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = headerSize + RKBaseMomentCount * capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
+    size_t raySize = headerSize + RKBaseProductCount * capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
     if (raySize != (raySize / alignment) * alignment) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
@@ -961,7 +961,7 @@ void RKRayBufferFree(RKBuffer mem) {
 // Get a ray from a ray buffer
 RKRay *RKGetRayFromBuffer(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
-    size_t raySize = RKRayHeaderPaddedSize + RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
+    size_t raySize = RKRayHeaderPaddedSize + ray->header.capacity * (RKMomentCount * sizeof(int16_t) + RKBaseProductCount * (sizeof(uint8_t) + sizeof(float)));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
@@ -971,10 +971,18 @@ uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseProductIndex m) {
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
+// Get the data in int16_t from a ray
+uint8_t *RKGetInt16DataFromRay(RKRay *ray, const RKMomentIndex m) {
+    void *d = (void *)ray->data;
+    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
+    return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
+}
+
 // Get the data in float from a ray
 float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseProductIndex m) {
     void *d = (void *)ray->data;
-    d += RKBaseMomentCount * ray->header.capacity * sizeof(uint8_t);
+    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
+    d += RKMomentCount * ray->header.capacity * sizeof(int16_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
@@ -984,7 +992,7 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t count) {
         ray->header.s = RKRayStatusVacant;
         ray->header.i = -(uint64_t)count + k;
         ray->header.gateCount = 0;
-        memset(ray->data, 0, RKBaseMomentCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+        memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultSuccess;
 }
