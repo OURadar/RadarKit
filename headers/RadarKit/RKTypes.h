@@ -569,6 +569,7 @@ typedef uint32_t RKMomentList;
 enum RKMomentList {
     RKMomentListHMean                    = 0,                                  //   mH
     RKMomentListHR0                      = 1,                                  // | Rh(0) |
+    RKMomentListHR1                      = (1 << 1),                           //   Rh(1)    for redundancy
     RKMomentListHR1i                     = (1 << 1),                           //   Rh(1) i
     RKMomentListHR1q                     = (1 << 2),                           //   Rh(1) q
     RKMomentListHR2                      = (1 << 3),                           // | Rh(2) |
@@ -576,11 +577,13 @@ enum RKMomentList {
     RKMomentListHR4                      = (1 << 5),                           // | Rh(4) |
     RKMomentListVMean                    = (1 << 6),                           //   mV
     RKMomentListVR0                      = (1 << 7),                           // | Rv(0) |
+    RKMomentListVR1                      = (1 << 8),                           //   Rv(1)    for redundancy
     RKMomentListVR1i                     = (1 << 8),                           //   Rv(1) i
     RKMomentListVR1q                     = (1 << 9),                           //   Rv(1) q
     RKMomentListVR2                      = (1 << 10),                          // | Rv(2) |
     RKMomentListVR3                      = (1 << 11),                          // | Rv(3) |
     RKMomentListVR4                      = (1 << 12),                          // | Rv(4) |
+    RKMomentListC0                       = (1 << 13),                          //   C(0)     for redundancy
     RKMomentListC0i                      = (1 << 13),                          //   C(0) i
     RKMomentListC0q                      = (1 << 13),                          //   C(0) q
     RKMomentListCn1                      = (1 << 15),                          // | C(-1) |

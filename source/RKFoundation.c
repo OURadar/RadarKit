@@ -930,7 +930,8 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t c
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = headerSize + RKBaseProductCount * capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
+    //size_t raySize = headerSize + RKBaseProductCount * capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
+    size_t raySize = RKRayHeaderPaddedSize + capacity * (RKMomentCount * sizeof(int16_t) + RKBaseProductCount * (sizeof(uint8_t) + sizeof(float)));
     if (raySize != (raySize / alignment) * alignment) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
@@ -965,24 +966,24 @@ RKRay *RKGetRayFromBuffer(RKBuffer buffer, const uint32_t k) {
     return (RKRay *)((void *)ray + k * raySize);
 }
 
-// Get the data in uint8_t from a ray
+// Get the moment data in int16_t from a ray
+int16_t *RKGetInt16DataFromRay(RKRay *ray, const RKMomentIndex m) {
+    void *d = (void *)ray->data;
+    return (int16_t *)(d + m * ray->header.capacity * sizeof(int16_t));
+}
+
+// Get the product data in uint8_t from a ray
 uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseProductIndex m) {
     void *d = (void *)ray->data;
+    d += RKMomentCount * ray->header.capacity * sizeof(int16_t);
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
-// Get the data in int16_t from a ray
-uint8_t *RKGetInt16DataFromRay(RKRay *ray, const RKMomentIndex m) {
-    void *d = (void *)ray->data;
-    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
-    return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
-}
-
-// Get the data in float from a ray
+// Get the product data in float from a ray
 float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseProductIndex m) {
     void *d = (void *)ray->data;
-    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
     d += RKMomentCount * ray->header.capacity * sizeof(int16_t);
+    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 

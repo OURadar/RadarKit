@@ -134,6 +134,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid);
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);
 void RKRayBufferFree(RKBuffer);
 RKRay *RKGetRayFromBuffer(RKBuffer, const uint32_t);
+int16_t *RKGetInt16DataFromRay(RKRay *, const RKMomentIndex);
 uint8_t *RKGetUInt8DataFromRay(RKRay *, const RKBaseProductIndex);
 float *RKGetFloatDataFromRay(RKRay *, const RKBaseProductIndex);
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t);
