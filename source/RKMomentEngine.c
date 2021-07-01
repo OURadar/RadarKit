@@ -165,6 +165,32 @@ int prepareScratch(RKScratch *space) {
 // the display data for the front end
 int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     int k;
+    uint8_t *mask;
+    float SNRh, SNRv;
+    float SNRThreshold, SQIThreshold;
+
+    // Censor SNR < -20 dB
+    SNRThreshold = powf(10.0f, 0.1f * (-20.0f));
+
+    // Grab the relevant data from scratch space for float to 16-bit quantization
+    RKFloat *iHmXi = space->mX[0].i;     int16_t *oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
+    RKFloat *iHmXq = space->mX[0].q;     int16_t *oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
+    RKFloat *iHR0  = space->R[0][0].i;   int16_t *oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
+    RKFloat *iHR1i = space->R[0][1].i;   int16_t *oHR1i = RKGetInt16DataFromRay(ray, RKMomentIndexHR1i);
+    RKFloat *iHR1q = space->R[0][1].q;   int16_t *oHR1q = RKGetInt16DataFromRay(ray, RKMomentIndexHR1q);
+    RKFloat *iHR2  = space->aR[0][2];    int16_t *oHR2  = RKGetInt16DataFromRay(ray, RKMomentIndexHR2);
+    RKFloat *iHR3  = space->aR[0][3];    int16_t *oHR3  = RKGetInt16DataFromRay(ray, RKMomentIndexHR3);
+    RKFloat *iHR4  = space->aR[0][3];    int16_t *oHR4  = RKGetInt16DataFromRay(ray, RKMomentIndexHR4);
+    RKFloat *iVR0  = space->R[1][0].i;   int16_t *oVR0  = RKGetInt16DataFromRay(ray, RKMomentIndexVR0);
+    RKFloat *iVR1i = space->R[1][1].i;   int16_t *oVR1i = RKGetInt16DataFromRay(ray, RKMomentIndexVR1i);
+    RKFloat *iVR1q = space->R[1][1].q;   int16_t *oVR1q = RKGetInt16DataFromRay(ray, RKMomentIndexVR1q);
+    RKFloat *iVR2  = space->aR[1][2];    int16_t *oVR2  = RKGetInt16DataFromRay(ray, RKMomentIndexVR2);
+    RKFloat *iVR3  = space->aR[1][3];    int16_t *oVR3  = RKGetInt16DataFromRay(ray, RKMomentIndexVR3);
+    RKFloat *iVR4  = space->aR[1][3];    int16_t *oVR4  = RKGetInt16DataFromRay(ray, RKMomentIndexVR4);
+
+    // Convert float to 16-bit representation (-32768 - 32767) using ...
+
+    
     // Grab the data from scratch space.
     RKFloat *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
     RKFloat *Ti = space->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
@@ -178,13 +204,9 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     RKFloat *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
     RKFloat *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
     
-    RKFloat *R0hi = space->R[0][0].i;
-    RKFloat *R0hq = space->R[0][0].q;
-    
-    float SNRh, SNRv;
-    float SNRThreshold = powf(10.0f, 0.1f * space->config->SNRThreshold);
-    float SQIThreshold = space->config->SQIThreshold;
-    uint8_t *mask = space->mask;
+    SNRThreshold = powf(10.0f, 0.1f * space->config->SNRThreshold);
+    SQIThreshold = space->config->SQIThreshold;
+    mask = space->mask;
     // Masking based on SNR and SQI
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         SNRh = *Si / space->noise[0];
@@ -248,9 +270,10 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     }
     // Record down the down-sampled gate count
     ray->header.gateCount = k;
-    // Convert float to 8-bit (color) representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKFloat lhma[4];
-    int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    const int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+
+    // Convert float to 8-bit representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
     RKSLHMAC   RKVec sl = _rk_mm_set1_pf(lhma[0]);  RKVec sh = _rk_mm_set1_pf(lhma[1]);  RKVec sm = _rk_mm_set1_pf(lhma[2]);  RKVec sa = _rk_mm_set1_pf(lhma[3]);
     RKZLHMAC   RKVec zl = _rk_mm_set1_pf(lhma[0]);  RKVec zh = _rk_mm_set1_pf(lhma[1]);  RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
     RKV2LHMAC  RKVec vl = _rk_mm_set1_pf(lhma[0]);  RKVec vh = _rk_mm_set1_pf(lhma[1]);  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
@@ -260,8 +283,8 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     RKPLHMAC   RKVec pl = _rk_mm_set1_pf(lhma[0]);  RKVec ph = _rk_mm_set1_pf(lhma[1]);  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
     RKKLHMAC   RKVec kl = _rk_mm_set1_pf(lhma[0]);  RKVec kh = _rk_mm_set1_pf(lhma[1]);  RKVec km = _rk_mm_set1_pf(lhma[2]);  RKVec ka = _rk_mm_set1_pf(lhma[3]);
     RKRLHMAC   RKVec rl = _rk_mm_set1_pf(lhma[0]);  RKVec rh = _rk_mm_set1_pf(lhma[1]);
-    RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *So_pf = (RKVec *)space->S[0];
-    RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *To_pf = (RKVec *)space->S[1];
+    RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSh); RKVec *So_pf = (RKVec *)space->S[0];
+    RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSv); RKVec *To_pf = (RKVec *)space->S[1];
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
     RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
     RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];

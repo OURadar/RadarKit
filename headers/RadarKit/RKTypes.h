@@ -67,7 +67,7 @@
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKSIMDAlignSize
 #define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
-#define RKMomentCount                        21                                // 32 to be the absolute max since momentList enum is 32-bit
+#define RKMomentCount                        26                                // 32 to be the absolute max since momentList enum is 32-bit
 #define RKBaseProductCount                   10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
@@ -567,45 +567,52 @@ enum RKInitFlag {
 // Level 15 data type
 typedef uint32_t RKMomentList;
 enum RKMomentList {
-    RKMomentListHMean                    = 0,                                  //   mH
-    RKMomentListHR0                      = 1,                                  // | Rh(0) |
-    RKMomentListHR1                      = (1 << 1),                           //   Rh(1)    for redundancy
-    RKMomentListHR1i                     = (1 << 1),                           //   Rh(1) i
-    RKMomentListHR1q                     = (1 << 2),                           //   Rh(1) q
-    RKMomentListHR2                      = (1 << 3),                           // | Rh(2) |
-    RKMomentListHR3                      = (1 << 4),                           // | Rh(3) |
-    RKMomentListHR4                      = (1 << 5),                           // | Rh(4) |
-    RKMomentListVMean                    = (1 << 6),                           //   mV
-    RKMomentListVR0                      = (1 << 7),                           // | Rv(0) |
-    RKMomentListVR1                      = (1 << 8),                           //   Rv(1)    for redundancy
-    RKMomentListVR1i                     = (1 << 8),                           //   Rv(1) i
-    RKMomentListVR1q                     = (1 << 9),                           //   Rv(1) q
-    RKMomentListVR2                      = (1 << 10),                          // | Rv(2) |
-    RKMomentListVR3                      = (1 << 11),                          // | Rv(3) |
-    RKMomentListVR4                      = (1 << 12),                          // | Rv(4) |
-    RKMomentListC0                       = (1 << 13),                          //   C(0)     for redundancy
-    RKMomentListC0i                      = (1 << 13),                          //   C(0) i
-    RKMomentListC0q                      = (1 << 13),                          //   C(0) q
-    RKMomentListCn1                      = (1 << 15),                          // | C(-1) |
-    RKMomentListCp1                      = (1 << 16),                          // | C(+1) |
-    RKMomentListCn2                      = (1 << 17),                          // | C(-2) |
-    RKMomentListCp2                      = (1 << 18),                          // | C(+2) |
-    RKMomentListCn3                      = (1 << 19),                          // | C(-3) |
-    RKMomentListCp3                      = (1 << 20),                          // | C(+3) |
-    RKMomentListCn4                      = (1 << 21),                          // | C(-4) |
-    RKMomentListCp4                      = (1 << 22),                          // | C(+4) |
+    RKMomentListNull                     = 0,                                  //   none
+    RKMomentListHm                       = 1,                                  //   mXh      assume i
+    RKMomentListHmi                      = 1,                                  //   mXh i
+    RKMomentListHmq                      = (1 << 1),                           //   mXh q
+    RKMomentListHR0                      = (1 << 2),                           // | Rh(0) |
+    RKMomentListHR1                      = (1 << 3),                           //   Rh(1)    assume i
+    RKMomentListHR1i                     = (1 << 3),                           //   Rh(1) i
+    RKMomentListHR1q                     = (1 << 4),                           //   Rh(1) q
+    RKMomentListHR2                      = (1 << 5),                           // | Rh(2) |
+    RKMomentListHR3                      = (1 << 6),                           // | Rh(3) |
+    RKMomentListHR4                      = (1 << 7),                           // | Rh(4) |
+    RKMomentListVm                       = (1 << 8),                           //   mV       assume i
+    RKMomentListVmi                      = (1 << 8),                           //   mV i
+    RKMomentListVmq                      = (1 << 9),                           //   mV q
+    RKMomentListVR0                      = (1 << 10),                          // | Rv(0) |
+    RKMomentListVR1                      = (1 << 11),                          //   Rv(1)    assume i
+    RKMomentListVR1i                     = (1 << 11),                          //   Rv(1) i
+    RKMomentListVR1q                     = (1 << 12),                          //   Rv(1) q
+    RKMomentListVR2                      = (1 << 13),                          // | Rv(2) |
+    RKMomentListVR3                      = (1 << 14),                          // | Rv(3) |
+    RKMomentListVR4                      = (1 << 15),                          // | Rv(4) |
+    RKMomentListC0                       = (1 << 16),                          //   C(0)     assume i
+    RKMomentListC0i                      = (1 << 16),                          //   C(0) i
+    RKMomentListC0q                      = (1 << 17),                          //   C(0) q
+    RKMomentListCn1                      = (1 << 18),                          // | C(-1) |
+    RKMomentListCp1                      = (1 << 19),                          // | C(+1) |
+    RKMomentListCn2                      = (1 << 20),                          // | C(-2) |
+    RKMomentListCp2                      = (1 << 21),                          // | C(+2) |
+    RKMomentListCn3                      = (1 << 22),                          // | C(-3) |
+    RKMomentListCp3                      = (1 << 23),                          // | C(+3) |
+    RKMomentListCn4                      = (1 << 24),                          // | C(-4) |
+    RKMomentListCp4                      = (1 << 25),                          // | C(+4) |
 };
 
 typedef uint8_t RKMomentIndex;
 enum RKMomentIndex {
-    RKMomentIndexHMean,
+    RKMomentIndexHmi,
+    RKMomentIndexHmq,
     RKMomentIndexHR0,
     RKMomentIndexHR1i,
     RKMomentIndexHR1q,
     RKMomentIndexHR2,
     RKMomentIndexHR3,
     RKMomentIndexHR4,
-    RKMomentIndexVMean,
+    RKMomentIndexVmi,
+    RKMomentIndexVmq,
     RKMomentIndexVR0,
     RKMomentIndexVR1i,
     RKMomentIndexVR1q,
