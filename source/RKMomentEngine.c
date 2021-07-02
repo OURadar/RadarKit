@@ -194,20 +194,20 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         *oHmi++  = (int16_t)(*iHmi++);
         *oHmq++  = (int16_t)(*iHmq++);
-        *oHR0++  = (int16_t)10.0f * log2f(*iHR0++);
-        *oHR1i++ = (int16_t)10.0f * log2f(*iHR1i++);
-        *oHR1q++ = (int16_t)10.0f * log2f(*iHR1q++);
-        *oHR2++  = (int16_t)10.0f * log2f(*iHR2++);
-        *oHR3++  = (int16_t)10.0f * log2f(*iHR3++);
-        *oHR4++  = (int16_t)10.0f * log2f(*iHR4++);
+        *oHR0++  = (int16_t)1000.0f * log2f(*iHR0++);
+        *oHR1i++ = (int16_t)1000.0f * log2f(*iHR1i++);
+        *oHR1q++ = (int16_t)1000.0f * log2f(*iHR1q++);
+        *oHR2++  = (int16_t)1000.0f * log2f(*iHR2++);
+        *oHR3++  = (int16_t)1000.0f * log2f(*iHR3++);
+        *oHR4++  = (int16_t)1000.0f * log2f(*iHR4++);
         *oVmi++  = (int16_t)(*iVmi++);
         *oVmq++  = (int16_t)(*iVmq++);
-        *oVR0++  = (int16_t)10.0f * log2f(*iVR0++);
-        *oVR1i++ = (int16_t)10.0f * log2f(*iVR1i++);
-        *oVR1q++ = (int16_t)10.0f * log2f(*iVR1q++);
-        *oVR2++  = (int16_t)10.0f * log2f(*iVR2++);
-        *oVR3++  = (int16_t)10.0f * log2f(*iVR3++);
-        *oVR4++  = (int16_t)10.0f * log2f(*iVR4++);
+        *oVR0++  = (int16_t)1000.0f * log2f(*iVR0++);
+        *oVR1i++ = (int16_t)1000.0f * log2f(*iVR1i++);
+        *oVR1q++ = (int16_t)1000.0f * log2f(*iVR1q++);
+        *oVR2++  = (int16_t)1000.0f * log2f(*iVR2++);
+        *oVR3++  = (int16_t)1000.0f * log2f(*iVR3++);
+        *oVR4++  = (int16_t)1000.0f * log2f(*iVR4++);
     }
     // ? Recover the float from 16-bit so that output is the same as generating products from level 15 data?
     //#if defined(EMULATE_15)
@@ -230,20 +230,20 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         *iHmi++  = (RKFloat)(*oHmi++);
         *iHmq++  = (RKFloat)(*oHmq++);
-        *iHR0++  = powf(2.0f, 0.1f * (RKFloat)*oHR0++);
-        *iHR1i++ = powf(2.0f, 0.1f * (RKFloat)*oHR1i++);
-        *iHR1q++ = powf(2.0f, 0.1f * (RKFloat)*oHR1q++);
-        *iHR2++  = powf(2.0f, 0.1f * (RKFloat)*oHR2++);
-        *iHR3++  = powf(2.0f, 0.1f * (RKFloat)*oHR3++);
-        *iHR4++  = powf(2.0f, 0.1f * (RKFloat)*oHR4++);
+        *iHR0++  = powf(2.0f, 0.001f * (RKFloat)*oHR0++);
+        *iHR1i++ = powf(2.0f, 0.001f * (RKFloat)*oHR1i++);
+        *iHR1q++ = powf(2.0f, 0.001f * (RKFloat)*oHR1q++);
+        *iHR2++  = powf(2.0f, 0.001f * (RKFloat)*oHR2++);
+        *iHR3++  = powf(2.0f, 0.001f * (RKFloat)*oHR3++);
+        *iHR4++  = powf(2.0f, 0.001f * (RKFloat)*oHR4++);
         *iVmi++  = (RKFloat)(*oVmi++);
         *iVmq++  = (RKFloat)(*oVmq++);
-        *iVR0++  = powf(2.0f, 0.1f * (RKFloat)*oVR0++);
-        *iVR1i++ = powf(2.0f, 0.1f * (RKFloat)*oVR1i++);
-        *iVR1q++ = powf(2.0f, 0.1f * (RKFloat)*oVR1q++);
-        *iVR2++  = powf(2.0f, 0.1f * (RKFloat)*oVR2++);
-        *iVR3++  = powf(2.0f, 0.1f * (RKFloat)*oVR3++);
-        *iVR4++  = powf(2.0f, 0.1f * (RKFloat)*oVR4++);
+        *iVR0++  = powf(2.0f, 0.001f * (RKFloat)*oVR0++);
+        *iVR1i++ = powf(2.0f, 0.001f * (RKFloat)*oVR1i++);
+        *iVR1q++ = powf(2.0f, 0.001f * (RKFloat)*oVR1q++);
+        *iVR2++  = powf(2.0f, 0.001f * (RKFloat)*oVR2++);
+        *iVR3++  = powf(2.0f, 0.001f * (RKFloat)*oVR3++);
+        *iVR4++  = powf(2.0f, 0.001f * (RKFloat)*oVR4++);
     }
     //#endif
 

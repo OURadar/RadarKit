@@ -701,7 +701,7 @@ enum RKBaseProductIndex {
 typedef uint8_t RKProductType;
 enum RKProductType {
     RKProductTypeUnknown             = 0,                                      // Unspecified
-    RKProductTypeCellMatch           = (1),                                    //
+    RKProductTypeCellMatch           = 1,                                      //
     RKProductTypePPI                 = (1 << 1),                               //
     RKProductTypeCAPPI               = (1 << 2)                                //
 };
@@ -732,9 +732,9 @@ enum RKConfigKey {
     RKConfigKeyVCPDefinition,
     RKConfigKeyRingFilterGateCount,
     RKConfigKeyTransitionGateCount,
-    RKConfigUserIntegerParameters,
-    RKConfigUserFloatParameters,
-    RKConfigKeyTotalNumberOfKeys
+    RKConfigKeyUserIntegerParameters,
+    RKConfigKeyUserFloatParameters,
+    RKConfigKeyCount
 };
 
 typedef uint8_t RKHealthNode;
@@ -758,7 +758,7 @@ enum RKHealthNode {
 typedef uint8_t RKScriptProperty;
 enum RKScriptProperty {
     RKScriptPropertyNull            = 0,
-    RKScriptPropertyProduceZip      = (1),
+    RKScriptPropertyProduceZip      = 1,
     RKScriptPropertyProduceTgz      = (1 << 1),
     RKScriptPropertyProduceTarXz    = (1 << 2),
     RKScriptPropertyProduceArchive  = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz),

@@ -511,6 +511,13 @@ void RKShowTypeSizes(void) {
         printf(RKLimeColor "%-50s" RKPurpleColor "%2d" RKNoColor "\n", rkResultStrings[k], k);
         k++;
     }
+
+    printf("\n");
+
+    // Some constants
+    k = RKMomentIndexCount; printf("%s\n", RKVariableInString("RKMomentIndexCount", &k, RKValueTypeInt));
+    k = RKBaseProductIndexCount; printf("%s\n", RKVariableInString("RKBaseProductIndexCount", &k, RKValueTypeInt));
+
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
 }
