@@ -396,8 +396,8 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
                   space->aR[1][0], 1.0f / (float)(count), gateCount);                                            // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
     
     // Mark the calculated moments
-    space->calculatedMoments = RKMomentListHMean
-                             | RKMomentListVMean
+    space->calculatedMoments = RKMomentListHm
+                             | RKMomentListVm
                              | RKMomentListHR0
                              | RKMomentListVR0
                              | RKMomentListHR1
@@ -521,8 +521,8 @@ int RKPulsePairStaggeredPRT(RKScratch *space, RKPulse **pulses, const uint16_t c
     //
 
     // Mark the calculated moments
-    space->calculatedMoments = RKMomentListHMean
-                             | RKMomentListVMean
+    space->calculatedMoments = RKMomentListHm
+                             | RKMomentListVm
                              | RKMomentListHR0
                              | RKMomentListVR0
                              | RKMomentListHR1
@@ -668,8 +668,8 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
                   space->aR[1][0], 1.0f / (float)(j), gateCount);                                                // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
 
     // Mark the calculated moments
-    space->calculatedMoments = RKMomentListHMean
-                             | RKMomentListVMean
+    space->calculatedMoments = RKMomentListHm
+                             | RKMomentListVm
                              | RKMomentListHR0
                              | RKMomentListVR0
                              | RKMomentListHR1

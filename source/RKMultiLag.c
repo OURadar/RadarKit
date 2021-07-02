@@ -137,8 +137,8 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
     }
 
     // Mark the calculated moments
-    space->calculatedMoments = RKMomentListHMean
-                             | RKMomentListVMean
+    space->calculatedMoments = RKMomentListHm
+                             | RKMomentListVm
                              | RKMomentListHR0
                              | RKMomentListVR0
                              | RKMomentListHR1
