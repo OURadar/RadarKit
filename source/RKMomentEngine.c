@@ -173,24 +173,80 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     SNRThreshold = powf(10.0f, 0.1f * (-20.0f));
 
     // Grab the relevant data from scratch space for float to 16-bit quantization
-    RKFloat *iHmXi = space->mX[0].i;     int16_t *oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
-    RKFloat *iHmXq = space->mX[0].q;     int16_t *oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
-    RKFloat *iHR0  = space->R[0][0].i;   int16_t *oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
-    RKFloat *iHR1i = space->R[0][1].i;   int16_t *oHR1i = RKGetInt16DataFromRay(ray, RKMomentIndexHR1i);
-    RKFloat *iHR1q = space->R[0][1].q;   int16_t *oHR1q = RKGetInt16DataFromRay(ray, RKMomentIndexHR1q);
-    RKFloat *iHR2  = space->aR[0][2];    int16_t *oHR2  = RKGetInt16DataFromRay(ray, RKMomentIndexHR2);
-    RKFloat *iHR3  = space->aR[0][3];    int16_t *oHR3  = RKGetInt16DataFromRay(ray, RKMomentIndexHR3);
-    RKFloat *iHR4  = space->aR[0][3];    int16_t *oHR4  = RKGetInt16DataFromRay(ray, RKMomentIndexHR4);
-    RKFloat *iVR0  = space->R[1][0].i;   int16_t *oVR0  = RKGetInt16DataFromRay(ray, RKMomentIndexVR0);
-    RKFloat *iVR1i = space->R[1][1].i;   int16_t *oVR1i = RKGetInt16DataFromRay(ray, RKMomentIndexVR1i);
-    RKFloat *iVR1q = space->R[1][1].q;   int16_t *oVR1q = RKGetInt16DataFromRay(ray, RKMomentIndexVR1q);
-    RKFloat *iVR2  = space->aR[1][2];    int16_t *oVR2  = RKGetInt16DataFromRay(ray, RKMomentIndexVR2);
-    RKFloat *iVR3  = space->aR[1][3];    int16_t *oVR3  = RKGetInt16DataFromRay(ray, RKMomentIndexVR3);
-    RKFloat *iVR4  = space->aR[1][3];    int16_t *oVR4  = RKGetInt16DataFromRay(ray, RKMomentIndexVR4);
+    RKFloat *iHmi  = space->mX[0].i;      int16_t *oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
+    RKFloat *iHmq  = space->mX[0].q;      int16_t *oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
+    RKFloat *iHR0  = space->aR[0][0];     int16_t *oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
+    RKFloat *iHR1i = space->R[0][1].i;    int16_t *oHR1i = RKGetInt16DataFromRay(ray, RKMomentIndexHR1i);
+    RKFloat *iHR1q = space->R[0][1].q;    int16_t *oHR1q = RKGetInt16DataFromRay(ray, RKMomentIndexHR1q);
+    RKFloat *iHR2  = space->aR[0][2];     int16_t *oHR2  = RKGetInt16DataFromRay(ray, RKMomentIndexHR2);
+    RKFloat *iHR3  = space->aR[0][3];     int16_t *oHR3  = RKGetInt16DataFromRay(ray, RKMomentIndexHR3);
+    RKFloat *iHR4  = space->aR[0][3];     int16_t *oHR4  = RKGetInt16DataFromRay(ray, RKMomentIndexHR4);
+    RKFloat *iVmi  = space->mX[1].i;      int16_t *oVmi  = RKGetInt16DataFromRay(ray, RKMomentIndexVmi);
+    RKFloat *iVmq  = space->mX[1].q;      int16_t *oVmq  = RKGetInt16DataFromRay(ray, RKMomentIndexVmq);
+    RKFloat *iVR0  = space->aR[1][0];     int16_t *oVR0  = RKGetInt16DataFromRay(ray, RKMomentIndexVR0);
+    RKFloat *iVR1i = space->R[1][1].i;    int16_t *oVR1i = RKGetInt16DataFromRay(ray, RKMomentIndexVR1i);
+    RKFloat *iVR1q = space->R[1][1].q;    int16_t *oVR1q = RKGetInt16DataFromRay(ray, RKMomentIndexVR1q);
+    RKFloat *iVR2  = space->aR[1][2];     int16_t *oVR2  = RKGetInt16DataFromRay(ray, RKMomentIndexVR2);
+    RKFloat *iVR3  = space->aR[1][3];     int16_t *oVR3  = RKGetInt16DataFromRay(ray, RKMomentIndexVR3);
+    RKFloat *iVR4  = space->aR[1][3];     int16_t *oVR4  = RKGetInt16DataFromRay(ray, RKMomentIndexVR4);
 
     // Convert float to 16-bit representation (-32768 - 32767) using ...
+    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
+        *oHmi++  = (int16_t)(*iHmi++);
+        *oHmq++  = (int16_t)(*iHmq++);
+        *oHR0++  = (int16_t)10.0f * log2f(*iHR0++);
+        *oHR1i++ = (int16_t)10.0f * log2f(*iHR1i++);
+        *oHR1q++ = (int16_t)10.0f * log2f(*iHR1q++);
+        *oHR2++  = (int16_t)10.0f * log2f(*iHR2++);
+        *oHR3++  = (int16_t)10.0f * log2f(*iHR3++);
+        *oHR4++  = (int16_t)10.0f * log2f(*iHR4++);
+        *oVmi++  = (int16_t)(*iVmi++);
+        *oVmq++  = (int16_t)(*iVmq++);
+        *oVR0++  = (int16_t)10.0f * log2f(*iVR0++);
+        *oVR1i++ = (int16_t)10.0f * log2f(*iVR1i++);
+        *oVR1q++ = (int16_t)10.0f * log2f(*iVR1q++);
+        *oVR2++  = (int16_t)10.0f * log2f(*iVR2++);
+        *oVR3++  = (int16_t)10.0f * log2f(*iVR3++);
+        *oVR4++  = (int16_t)10.0f * log2f(*iVR4++);
+    }
+    // ? Recover the float from 16-bit so that output is the same as generating products from level 15 data?
+    //#if defined(EMULATE_15)
+    iHmi  = space->mX[0].i;      oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
+    iHmq  = space->mX[0].q;      oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
+    iHR0  = space->aR[0][0];     oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
+    iHR1i = space->R[0][1].i;    oHR1i = RKGetInt16DataFromRay(ray, RKMomentIndexHR1i);
+    iHR1q = space->R[0][1].q;    oHR1q = RKGetInt16DataFromRay(ray, RKMomentIndexHR1q);
+    iHR2  = space->aR[0][2];     oHR2  = RKGetInt16DataFromRay(ray, RKMomentIndexHR2);
+    iHR3  = space->aR[0][3];     oHR3  = RKGetInt16DataFromRay(ray, RKMomentIndexHR3);
+    iHR4  = space->aR[0][3];     oHR4  = RKGetInt16DataFromRay(ray, RKMomentIndexHR4);
+    iVmi  = space->mX[1].i;      oVmi  = RKGetInt16DataFromRay(ray, RKMomentIndexVmi);
+    iVmq  = space->mX[1].q;      oVmq  = RKGetInt16DataFromRay(ray, RKMomentIndexVmq);
+    iVR0  = space->aR[1][0];     oVR0  = RKGetInt16DataFromRay(ray, RKMomentIndexVR0);
+    iVR1i = space->R[1][1].i;    oVR1i = RKGetInt16DataFromRay(ray, RKMomentIndexVR1i);
+    iVR1q = space->R[1][1].q;    oVR1q = RKGetInt16DataFromRay(ray, RKMomentIndexVR1q);
+    iVR2  = space->aR[1][2];     oVR2  = RKGetInt16DataFromRay(ray, RKMomentIndexVR2);
+    iVR3  = space->aR[1][3];     oVR3  = RKGetInt16DataFromRay(ray, RKMomentIndexVR3);
+    iVR4  = space->aR[1][3];     oVR4  = RKGetInt16DataFromRay(ray, RKMomentIndexVR4);
+    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
+        *iHmi++  = (RKFloat)(*oHmi++);
+        *iHmq++  = (RKFloat)(*oHmq++);
+        *iHR0++  = powf(2.0f, 0.1f * (RKFloat)*oHR0++);
+        *iHR1i++ = powf(2.0f, 0.1f * (RKFloat)*oHR1i++);
+        *iHR1q++ = powf(2.0f, 0.1f * (RKFloat)*oHR1q++);
+        *iHR2++  = powf(2.0f, 0.1f * (RKFloat)*oHR2++);
+        *iHR3++  = powf(2.0f, 0.1f * (RKFloat)*oHR3++);
+        *iHR4++  = powf(2.0f, 0.1f * (RKFloat)*oHR4++);
+        *iVmi++  = (RKFloat)(*oVmi++);
+        *iVmq++  = (RKFloat)(*oVmq++);
+        *iVR0++  = powf(2.0f, 0.1f * (RKFloat)*oVR0++);
+        *iVR1i++ = powf(2.0f, 0.1f * (RKFloat)*oVR1i++);
+        *iVR1q++ = powf(2.0f, 0.1f * (RKFloat)*oVR1q++);
+        *iVR2++  = powf(2.0f, 0.1f * (RKFloat)*oVR2++);
+        *iVR3++  = powf(2.0f, 0.1f * (RKFloat)*oVR3++);
+        *iVR4++  = powf(2.0f, 0.1f * (RKFloat)*oVR4++);
+    }
+    //#endif
 
-    
     // Grab the data from scratch space.
     RKFloat *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
     RKFloat *Ti = space->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
