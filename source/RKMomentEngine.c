@@ -210,7 +210,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
         *oVR4++  = (int16_t)1000.0f * log2f(*iVR4++);
     }
     // ? Recover the float from 16-bit so that output is the same as generating products from level 15 data?
-    //#if defined(EMULATE_15)
+    #if defined(EMULATE_15)
     iHmi  = space->mX[0].i;      oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
     iHmq  = space->mX[0].q;      oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
     iHR0  = space->aR[0][0];     oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
@@ -245,7 +245,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
         *iVR3++  = powf(2.0f, 0.001f * (RKFloat)*oVR3++);
         *iVR4++  = powf(2.0f, 0.001f * (RKFloat)*oVR4++);
     }
-    //#endif
+    #endif
 
     // Grab the data from scratch space.
     RKFloat *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);

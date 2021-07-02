@@ -406,52 +406,52 @@ enum RKValueType {
 
 typedef uint32_t RKPositionFlagV1;
 enum RKPositionFlagV1 {
-    RKPositionFlagV1Vacant             = 0,
-    RKPositionFlagV1AzimuthEnabled     = 1,            //  0 - EN
-    RKPositionFlagV1AzimuthSafety      = (1 << 1),     //  1
-    RKPositionFlagV1AzimuthError       = (1 << 2),     //  2
-    RKPositionFlagV1AzimuthSweep       = (1 << 8),     //  8
-    RKPositionFlagV1AzimuthPoint       = (1 << 9),     //  9
-    RKPositionFlagV1AzimuthComplete    = (1 << 10),    // 10
-    RKPositionFlagV1ElevationEnabled   = (1 << 16),    //  0 - EN
-    RKPositionFlagV1ElevationSafety    = (1 << 17),    //  1
-    RKPositionFlagV1ElevationError     = (1 << 18),    //  2
-    RKPositionFlagV1ElevationSweep     = (1 << 24),    //  8
-    RKPositionFlagV1ElevationPoint     = (1 << 25),    //  9
-    RKPositionFlagV1ElevationComplete  = (1 << 26),    // 10
-    RKPositionFlagV1ScanActive         = (1 << 28),
-    RKPositionFlagV1VCPActive          = (1 << 29),
-    RKPositionFlagV1HardwareMask       = 0x3FFFFFFF,
-    RKPositionFlagV1Used               = (1 << 30),
-    RKPositionFlagV1Ready              = (1 << 31),
-    RKPositionFlagV1AzimuthModeMask    = (RKPositionFlagV1AzimuthSweep | RKPositionFlagV1AzimuthPoint),
-    RKPositionFlagV1ElevationModeMask  = (RKPositionFlagV1ElevationSweep | RKPositionFlagV1ElevationPoint),
-    RKPositionFlagV1ScanModeMask       = (RKPositionFlagV1AzimuthModeMask | RKPositionFlagV1ElevationModeMask)
+    RKPositionFlagV1Vacant                       = 0,
+    RKPositionFlagV1AzimuthEnabled               = 1,                          //  0 - EN
+    RKPositionFlagV1AzimuthSafety                = (1 << 1),                   //  1
+    RKPositionFlagV1AzimuthError                 = (1 << 2),                   //  2
+    RKPositionFlagV1AzimuthSweep                 = (1 << 8),                   //  8
+    RKPositionFlagV1AzimuthPoint                 = (1 << 9),                   //  9
+    RKPositionFlagV1AzimuthComplete              = (1 << 10),                  // 10
+    RKPositionFlagV1ElevationEnabled             = (1 << 16),                  //  0 - EN
+    RKPositionFlagV1ElevationSafety              = (1 << 17),                  //  1
+    RKPositionFlagV1ElevationError               = (1 << 18),                  //  2
+    RKPositionFlagV1ElevationSweep               = (1 << 24),                  //  8
+    RKPositionFlagV1ElevationPoint               = (1 << 25),                  //  9
+    RKPositionFlagV1ElevationComplete            = (1 << 26),                  // 10
+    RKPositionFlagV1ScanActive                   = (1 << 28),
+    RKPositionFlagV1VCPActive                    = (1 << 29),
+    RKPositionFlagV1HardwareMask                 = 0x3FFFFFFF,
+    RKPositionFlagV1Used                         = (1 << 30),
+    RKPositionFlagV1Ready                        = (1 << 31),
+    RKPositionFlagV1AzimuthModeMask              = (RKPositionFlagV1AzimuthSweep | RKPositionFlagV1AzimuthPoint),
+    RKPositionFlagV1ElevationModeMask            = (RKPositionFlagV1ElevationSweep | RKPositionFlagV1ElevationPoint),
+    RKPositionFlagV1ScanModeMask                 = (RKPositionFlagV1AzimuthModeMask | RKPositionFlagV1ElevationModeMask)
 };
 
 typedef uint32_t RKPositionFlag;
 enum RKPositionFlag {
-    RKPositionFlagVacant             = 0,
-    RKPositionFlagAzimuthEnabled     = 1,            //  0 - EN
-    RKPositionFlagAzimuthSafety      = (1 << 1),     //  1
-    RKPositionFlagAzimuthError       = (1 << 2),     //  2
-    RKPositionFlagAzimuthSweep       = (1 << 8),     //  8
-    RKPositionFlagAzimuthPoint       = (1 << 9),     //  9
-    RKPositionFlagAzimuthComplete    = (1 << 10),    // 10
-    RKPositionFlagElevationEnabled   = (1 << 16),    //  0 - EN
-    RKPositionFlagElevationSafety    = (1 << 17),    //  1
-    RKPositionFlagElevationError     = (1 << 18),    //  2
-    RKPositionFlagElevationSweep     = (1 << 24),    //  8
-    RKPositionFlagElevationPoint     = (1 << 25),    //  9
-    RKPositionFlagElevationComplete  = (1 << 26),    // 10
-    RKPositionFlagScanActive         = (1 << 28),
-    RKPositionFlagVCPActive          = (1 << 29),
-    RKPositionFlagHardwareMask       = 0x3FFFFFFF,
-    RKPositionFlagUsed               = (1 << 30),
-    RKPositionFlagReady              = (1 << 31),
-    RKPositionFlagAzimuthModeMask    = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
-    RKPositionFlagElevationModeMask  = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
-    RKPositionFlagScanModeMask       = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)
+    RKPositionFlagVacant                         = 0,
+    RKPositionFlagAzimuthEnabled                 = 1,                          //  0 - EN
+    RKPositionFlagAzimuthSafety                  = (1 << 1),                   //  1
+    RKPositionFlagAzimuthError                   = (1 << 2),                   //  2
+    RKPositionFlagAzimuthSweep                   = (1 << 8),                   //  8
+    RKPositionFlagAzimuthPoint                   = (1 << 9),                   //  9
+    RKPositionFlagAzimuthComplete                = (1 << 10),                  // 10
+    RKPositionFlagElevationEnabled               = (1 << 16),                  //  0 - EN
+    RKPositionFlagElevationSafety                = (1 << 17),                  //  1
+    RKPositionFlagElevationError                 = (1 << 18),                  //  2
+    RKPositionFlagElevationSweep                 = (1 << 24),                  //  8
+    RKPositionFlagElevationPoint                 = (1 << 25),                  //  9
+    RKPositionFlagElevationComplete              = (1 << 26),                  // 10
+    RKPositionFlagScanActive                     = (1 << 28),
+    RKPositionFlagVCPActive                      = (1 << 29),
+    RKPositionFlagHardwareMask                   = 0x3FFFFFFF,
+    RKPositionFlagUsed                           = (1 << 30),
+    RKPositionFlagReady                          = (1 << 31),
+    RKPositionFlagAzimuthModeMask                = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
+    RKPositionFlagElevationModeMask              = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
+    RKPositionFlagScanModeMask                   = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)
 };
 
 typedef uint32_t RKHeadingType;
@@ -464,31 +464,31 @@ enum RKHeadingType {
 
 typedef uint32_t RKStatusFlag;
 enum RKStatusFlag {
-    RKStatusFlagVacant               = 0,
-    RKStatusFlagReady                = 1
+    RKStatusFlagVacant                           = 0,
+    RKStatusFlagReady                            = 1
 };
 
 typedef uint32_t RKHealthFlag;
 enum RKHealthFlag {
-    RKHealthFlagVacant               = 0,
-    RKHealthFlagReady                = 1,
-    RKHealthFlagUsed                 = (1 << 1)
+    RKHealthFlagVacant                           = 0,
+    RKHealthFlagReady                            = 1,
+    RKHealthFlagUsed                             = (1 << 1)
 };
 
 typedef uint32_t RKMarker;
 enum RKMarker {
-    RKMarkerNull                     = 0,
-    RKMarkerSweepMiddle              = 1,                                      //
-    RKMarkerSweepBegin               = (1 << 1),                               //  0000 0010
-    RKMarkerSweepEnd                 = (1 << 2),                               //  0000 0100
-    RKMarkerVolumeBegin              = (1 << 3),                               //  0000 1000
-    RKMarkerVolumeEnd                = (1 << 4),                               //  0001 0000
-    RKMarkerScanTypeMask             = 0x60,                                   //  0110 0000
-    RKMarkerScanTypeUnknown          = (0 << 5),                               //  .00. ....
-    RKMarkerScanTypePPI              = (1 << 5),                               //  .01. ....
-    RKMarkerScanTypeRHI              = (2 << 5),                               //  .10. ....
-    RKMarkerScanTytpePoint           = (3 << 5),                               //  .11. ....
-    RKMarkerMemoryManagement         = (1 << 7)                                //  1000 0000
+    RKMarkerNull                                 = 0,
+    RKMarkerSweepMiddle                          = 1,                          //
+    RKMarkerSweepBegin                           = (1 << 1),                   //  0000 0010
+    RKMarkerSweepEnd                             = (1 << 2),                   //  0000 0100
+    RKMarkerVolumeBegin                          = (1 << 3),                   //  0000 1000
+    RKMarkerVolumeEnd                            = (1 << 4),                   //  0001 0000
+    RKMarkerScanTypeMask                         = 0x60,                       //  0110 0000
+    RKMarkerScanTypeUnknown                      = (0 << 5),                   //  .00. ....
+    RKMarkerScanTypePPI                          = (1 << 5),                   //  .01. ....
+    RKMarkerScanTypeRHI                          = (2 << 5),                   //  .10. ....
+    RKMarkerScanTytpePoint                       = (3 << 5),                   //  .11. ....
+    RKMarkerMemoryManagement                     = (1 << 7)                    //  1000 0000
 };
 
 //
@@ -508,97 +508,97 @@ enum RKMarker {
 //
 typedef uint32_t RKPulseStatus;
 enum RKPulseStatus {
-    RKPulseStatusVacant              = 0,
-    RKPulseStatusHasIQData           = 1,                                      // 0x01
-    RKPulseStatusHasPosition         = (1 << 1),                               // 0x02
-    RKPulseStatusInspected           = (1 << 2),                               // 0x04
-    RKPulseStatusCompressed          = (1 << 3),                               // 0x08
-    RKPulseStatusSkipped             = (1 << 4),                               // 0x10
-    RKPulseStatusDownSampled         = (1 << 5),                               // 0x20
-    RKPulseStatusProcessed           = (1 << 6),                               // 0x40
-    RKPulseStatusRingInspected       = (1 << 7),                               // 0x80
-    RKPulseStatusRingFiltered        = (1 << 8),
-    RKPulseStatusRingSkipped         = (1 << 9),
-    RKPulseStatusRingProcessed       = (1 << 10),
-    RKPulseStatusReadyForMoments     = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
-    RKPulseStatusUsedForMoments      = (1 << 11),
-    RKPulseStatusRecorded            = (1 << 12)
+    RKPulseStatusVacant                          = 0,
+    RKPulseStatusHasIQData                       = 1,                          // 0x01
+    RKPulseStatusHasPosition                     = (1 << 1),                   // 0x02
+    RKPulseStatusInspected                       = (1 << 2),                   // 0x04
+    RKPulseStatusCompressed                      = (1 << 3),                   // 0x08
+    RKPulseStatusSkipped                         = (1 << 4),                   // 0x10
+    RKPulseStatusDownSampled                     = (1 << 5),                   // 0x20
+    RKPulseStatusProcessed                       = (1 << 6),                   // 0x40
+    RKPulseStatusRingInspected                   = (1 << 7),                   // 0x80
+    RKPulseStatusRingFiltered                    = (1 << 8),
+    RKPulseStatusRingSkipped                     = (1 << 9),
+    RKPulseStatusRingProcessed                   = (1 << 10),
+    RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
+    RKPulseStatusUsedForMoments                  = (1 << 11),
+    RKPulseStatusRecorded                        = (1 << 12)
 };
 
 typedef uint32_t RKRayStatus;
 enum RKRayStatus {
-    RKRayStatusVacant                = 0,
-    RKRayStatusProcessing            = 1,
-    RKRayStatusProcessed             = (1 << 1),
-    RKRayStatusSkipped               = (1 << 2),
-    RKRayStatusReady                 = (1 << 3),
-    RKRayStatusStreamed              = (1 << 4),
-    RKRayStatusBeingConsumed         = (1 << 5)
+    RKRayStatusVacant                            = 0,
+    RKRayStatusProcessing                        = 1,
+    RKRayStatusProcessed                         = (1 << 1),
+    RKRayStatusSkipped                           = (1 << 2),
+    RKRayStatusReady                             = (1 << 3),
+    RKRayStatusStreamed                          = (1 << 4),
+    RKRayStatusBeingConsumed                     = (1 << 5)
 };
 
 typedef uint32_t RKInitFlag;
 enum RKInitFlag {
-    RKInitFlagNone                       = 0,
-    RKInitFlagVerbose                    = 0x00000001,
-    RKInitFlagVeryVerbose                = 0x00000002,
-    RKInitFlagVeryVeryVerbose            = 0x00000004,
-    RKInitFlagShowClockOffset            = 0x00000008,
-    RKInitFlagManuallyAssignCPU          = 0x00000010,
-    RKInitFlagIgnoreGPS                  = 0x00000020,
-    RKInitFlagIgnoreHeading              = 0x00000040,
-    RKInitFlagReserved4                  = 0x00000080,
-    RKInitFlagAllocStatusBuffer          = 0x00000100,                         // 1 << 8
-    RKInitFlagAllocConfigBuffer          = 0x00000200,                         // 1 << 9
-    RKInitFlagAllocRawIQBuffer           = 0x00000400,                         // 1 << 10
-    RKInitFlagAllocPositionBuffer        = 0x00000800,                         // 1 << 11
-    RKInitFlagAllocMomentBuffer          = 0x00001000,                         // 1 << 12
-    RKInitFlagAllocHealthBuffer          = 0x00002000,                         // 1 << 13
-    RKInitFlagAllocHealthNodes           = 0x00004000,                         // 1 << 14
-    RKInitFlagReserved1                  = 0x00008000,                         // 1 << 15
-    RKInitFlagPulsePositionCombiner      = 0x00010000,                         // 1 << 16
-    RKInitFlagSignalProcessor            = 0x00020000,                         // 1 << 17
-    RKInitFlagRelay                      = 0x00007703,                         // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
-    RKInitFlagIQPlayback                 = 0x00027701,                         // 37F00(All) - 800(Pos) - 100000(PPC)
-    RKInitFlagAllocEverything            = 0x00037F01,
-    RKInitFlagAllocEverythingQuiet       = 0x00037F00,
+    RKInitFlagNone                               = 0,
+    RKInitFlagVerbose                            = 0x00000001,
+    RKInitFlagVeryVerbose                        = 0x00000002,
+    RKInitFlagVeryVeryVerbose                    = 0x00000004,
+    RKInitFlagShowClockOffset                    = 0x00000008,
+    RKInitFlagManuallyAssignCPU                  = 0x00000010,
+    RKInitFlagIgnoreGPS                          = 0x00000020,
+    RKInitFlagIgnoreHeading                      = 0x00000040,
+    RKInitFlagReserved4                          = 0x00000080,
+    RKInitFlagAllocStatusBuffer                  = 0x00000100,                 // 1 << 8
+    RKInitFlagAllocConfigBuffer                  = 0x00000200,                 // 1 << 9
+    RKInitFlagAllocRawIQBuffer                   = 0x00000400,                 // 1 << 10
+    RKInitFlagAllocPositionBuffer                = 0x00000800,                 // 1 << 11
+    RKInitFlagAllocMomentBuffer                  = 0x00001000,                 // 1 << 12
+    RKInitFlagAllocHealthBuffer                  = 0x00002000,                 // 1 << 13
+    RKInitFlagAllocHealthNodes                   = 0x00004000,                 // 1 << 14
+    RKInitFlagReserved1                          = 0x00008000,                 // 1 << 15
+    RKInitFlagPulsePositionCombiner              = 0x00010000,                 // 1 << 16
+    RKInitFlagSignalProcessor                    = 0x00020000,                 // 1 << 17
+    RKInitFlagRelay                              = 0x00007703,                 // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
+    RKInitFlagIQPlayback                         = 0x00027701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
+    RKInitFlagAllocEverything                    = 0x00037F01,
+    RKInitFlagAllocEverythingQuiet               = 0x00037F00,
 };
 
 // The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021
 // Level 15 data type
 typedef uint32_t RKMomentList;
 enum RKMomentList {
-    RKMomentListNull                     = 0,                                  //   none
-    RKMomentListHm                       = 1,                                  //   mXh      assume i
-    RKMomentListHmi                      = 1,                                  //   mXh i
-    RKMomentListHmq                      = (1 << 1),                           //   mXh q
-    RKMomentListHR0                      = (1 << 2),                           // | Rh(0) |
-    RKMomentListHR1                      = (1 << 3),                           //   Rh(1)    assume i
-    RKMomentListHR1i                     = (1 << 3),                           //   Rh(1) i
-    RKMomentListHR1q                     = (1 << 4),                           //   Rh(1) q
-    RKMomentListHR2                      = (1 << 5),                           // | Rh(2) |
-    RKMomentListHR3                      = (1 << 6),                           // | Rh(3) |
-    RKMomentListHR4                      = (1 << 7),                           // | Rh(4) |
-    RKMomentListVm                       = (1 << 8),                           //   mV       assume i
-    RKMomentListVmi                      = (1 << 8),                           //   mV i
-    RKMomentListVmq                      = (1 << 9),                           //   mV q
-    RKMomentListVR0                      = (1 << 10),                          // | Rv(0) |
-    RKMomentListVR1                      = (1 << 11),                          //   Rv(1)    assume i
-    RKMomentListVR1i                     = (1 << 11),                          //   Rv(1) i
-    RKMomentListVR1q                     = (1 << 12),                          //   Rv(1) q
-    RKMomentListVR2                      = (1 << 13),                          // | Rv(2) |
-    RKMomentListVR3                      = (1 << 14),                          // | Rv(3) |
-    RKMomentListVR4                      = (1 << 15),                          // | Rv(4) |
-    RKMomentListC0                       = (1 << 16),                          //   C(0)     assume i
-    RKMomentListC0i                      = (1 << 16),                          //   C(0) i
-    RKMomentListC0q                      = (1 << 17),                          //   C(0) q
-    RKMomentListCn1                      = (1 << 18),                          // | C(-1) |
-    RKMomentListCp1                      = (1 << 19),                          // | C(+1) |
-    RKMomentListCn2                      = (1 << 20),                          // | C(-2) |
-    RKMomentListCp2                      = (1 << 21),                          // | C(+2) |
-    RKMomentListCn3                      = (1 << 22),                          // | C(-3) |
-    RKMomentListCp3                      = (1 << 23),                          // | C(+3) |
-    RKMomentListCn4                      = (1 << 24),                          // | C(-4) |
-    RKMomentListCp4                      = (1 << 25),                          // | C(+4) |
+    RKMomentListNull                             = 0,                          //   none
+    RKMomentListHm                               = 1,                          //   mXh      assume i
+    RKMomentListHmi                              = 1,                          //   mXh i
+    RKMomentListHmq                              = (1 << 1),                   //   mXh q
+    RKMomentListHR0                              = (1 << 2),                   // | Rh(0) |
+    RKMomentListHR1                              = (1 << 3),                   //   Rh(1)    assume i
+    RKMomentListHR1i                             = (1 << 3),                   //   Rh(1) i
+    RKMomentListHR1q                             = (1 << 4),                   //   Rh(1) q
+    RKMomentListHR2                              = (1 << 5),                   // | Rh(2) |
+    RKMomentListHR3                              = (1 << 6),                   // | Rh(3) |
+    RKMomentListHR4                              = (1 << 7),                   // | Rh(4) |
+    RKMomentListVm                               = (1 << 8),                   //   mV       assume i
+    RKMomentListVmi                              = (1 << 8),                   //   mV i
+    RKMomentListVmq                              = (1 << 9),                   //   mV q
+    RKMomentListVR0                              = (1 << 10),                  // | Rv(0) |
+    RKMomentListVR1                              = (1 << 11),                  //   Rv(1)    assume i
+    RKMomentListVR1i                             = (1 << 11),                  //   Rv(1) i
+    RKMomentListVR1q                             = (1 << 12),                  //   Rv(1) q
+    RKMomentListVR2                              = (1 << 13),                  // | Rv(2) |
+    RKMomentListVR3                              = (1 << 14),                  // | Rv(3) |
+    RKMomentListVR4                              = (1 << 15),                  // | Rv(4) |
+    RKMomentListC0                               = (1 << 16),                  //   C(0)     assume i
+    RKMomentListC0i                              = (1 << 16),                  //   C(0) i
+    RKMomentListC0q                              = (1 << 17),                  //   C(0) q
+    RKMomentListCn1                              = (1 << 18),                  // | C(-1) |
+    RKMomentListCp1                              = (1 << 19),                  // | C(+1) |
+    RKMomentListCn2                              = (1 << 20),                  // | C(-2) |
+    RKMomentListCp2                              = (1 << 21),                  // | C(+2) |
+    RKMomentListCn3                              = (1 << 22),                  // | C(-3) |
+    RKMomentListCp3                              = (1 << 23),                  // | C(+3) |
+    RKMomentListCn4                              = (1 << 24),                  // | C(-4) |
+    RKMomentListCp4                              = (1 << 25),                  // | C(+4) |
 };
 
 typedef uint8_t RKMomentIndex;
@@ -635,49 +635,49 @@ enum RKMomentIndex {
 // Used to be RKBaseMomentList; -boonleng 6/1/2021
 typedef uint32_t RKBaseProductList;
 enum RKBaseProductList {
-    RKBaseProductListNone                = 0,                                  // None
-    RKBaseProductListUInt8Z              = 1,                                  // Display Z - Reflectivity dBZ
-    RKBaseProductListUInt8V              = (1 << 1),                           // Display V - Velocity
-    RKBaseProductListUInt8W              = (1 << 2),                           // Display W - Width
-    RKBaseProductListUInt8D              = (1 << 3),                           // Display D - Differential Reflectivity
-    RKBaseProductListUInt8P              = (1 << 4),                           // Display P - PhiDP
-    RKBaseProductListUInt8R              = (1 << 5),                           // Display R - RhoHV
-    RKBaseProductListUInt8K              = (1 << 6),                           // Display K - KDP
-    RKBaseProductListUInt8Sh             = (1 << 7),                           // Display Sh - Signal from H channel
-    RKBaseProductListUInt8Sv             = (1 << 8),                           // Display Sv - Signal from V channel
-    RKBaseProductListUInt8Q              = (1 << 9),                           // Display SQI - Signal Quality Index
-    RKBaseProductListUInt8U6             = (1 << 10),                          //
-    RKBaseProductListUInt8U5             = (1 << 11),                          //
-    RKBaseProductListUInt8U4             = (1 << 12),                          //
-    RKBaseProductListUInt8U3             = (1 << 13),                          //
-    RKBaseProductListUInt8U2             = (1 << 14),                          //
-    RKBaseProductListUInt8U1             = (1 << 15),                          //
-    RKBaseProductListUInt8ZVWDPR         = 0x0000003F,                         // Display All without K, Sh, Sv and Q
-    RKBaseProductListUInt8ZVWDPRK        = 0x0000007F,                         // Display All without Sh, Sv and Q
-    RKBaseProductListUInt8ZVWDPRKS       = 0x000001FF,                         // Display All without Sh, Sv and Q
-    RKBaseProductListUInt8ZVWDPRKSQ      = 0x000003FF,                         // Display All
-    RKBaseProductListUInt8All            = 0x0000FFFF,                         // Display All (same as above)
-    RKBaseProductListFloatZ              = (1 << 16),                          // Data of Z
-    RKBaseProductListFloatV              = (1 << 17),                          // Data of V
-    RKBaseProductListFloatW              = (1 << 18),                          // Data of W
-    RKBaseProductListFloatD              = (1 << 19),                          // Data of D
-    RKBaseProductListFloatP              = (1 << 20),                          // Data of P
-    RKBaseProductListFloatR              = (1 << 21),                          // Data of R
-    RKBaseProductListFloatK              = (1 << 22),                          // Data of K
-    RKBaseProductListFloatSh             = (1 << 23),                          // Data of Sh
-    RKBaseProductListFloatSv             = (1 << 24),                          // Data of Sv
-    RKBaseProductListFloatQ              = (1 << 25),                          // Data of Q
-    RKBaseProductListFloatU6             = (1 << 26),                          //
-    RKBaseProductListFloatU5             = (1 << 27),                          //
-    RKBaseProductListFloatU4             = (1 << 28),                          //
-    RKBaseProductListFloatU3             = (1 << 29),                          //
-    RKBaseProductListFloatU2             = (1 << 30),                          //
-    RKBaseProductListFloatU1             = (1 << 31),                          //
-    RKBaseProductListFloatZVWDPR         = 0x003F0000,                         // Base moment data without K, Sh, Sv and Q
-    RKBaseProductListFloatZVWDPRK        = 0x007F0000,                         // Base moment data without Sh, Sv and Q
-    RKBaseProductListFloatZVWDPRKS       = 0x01FF0000,                         // All data without Q
-    RKBaseProductListFloatZVWDPRKSQ      = 0x03FF0000,                         // All data
-    RKBaseProductListFloatAll            = 0xFFFF0000                          // All data (same as above)
+    RKBaseProductListNone                        = 0,                          // None
+    RKBaseProductListUInt8Z                      = 1,                          // Display Z - Reflectivity dBZ
+    RKBaseProductListUInt8V                      = (1 << 1),                   // Display V - Velocity
+    RKBaseProductListUInt8W                      = (1 << 2),                   // Display W - Width
+    RKBaseProductListUInt8D                      = (1 << 3),                   // Display D - Differential Reflectivity
+    RKBaseProductListUInt8P                      = (1 << 4),                   // Display P - PhiDP
+    RKBaseProductListUInt8R                      = (1 << 5),                   // Display R - RhoHV
+    RKBaseProductListUInt8K                      = (1 << 6),                   // Display K - KDP
+    RKBaseProductListUInt8Sh                     = (1 << 7),                   // Display Sh - Signal from H channel
+    RKBaseProductListUInt8Sv                     = (1 << 8),                   // Display Sv - Signal from V channel
+    RKBaseProductListUInt8Q                      = (1 << 9),                   // Display SQI - Signal Quality Index
+    RKBaseProductListUInt8U6                     = (1 << 10),                  //
+    RKBaseProductListUInt8U5                     = (1 << 11),                  //
+    RKBaseProductListUInt8U4                     = (1 << 12),                  //
+    RKBaseProductListUInt8U3                     = (1 << 13),                  //
+    RKBaseProductListUInt8U2                     = (1 << 14),                  //
+    RKBaseProductListUInt8U1                     = (1 << 15),                  //
+    RKBaseProductListUInt8ZVWDPR                 = 0x0000003F,                 // Display All without K, Sh, Sv and Q
+    RKBaseProductListUInt8ZVWDPRK                = 0x0000007F,                 // Display All without Sh, Sv and Q
+    RKBaseProductListUInt8ZVWDPRKS               = 0x000001FF,                 // Display All without Sh, Sv and Q
+    RKBaseProductListUInt8ZVWDPRKSQ              = 0x000003FF,                 // Display All
+    RKBaseProductListUInt8All                    = 0x0000FFFF,                 // Display All (same as above)
+    RKBaseProductListFloatZ                      = (1 << 16),                  // Data of Z
+    RKBaseProductListFloatV                      = (1 << 17),                  // Data of V
+    RKBaseProductListFloatW                      = (1 << 18),                  // Data of W
+    RKBaseProductListFloatD                      = (1 << 19),                  // Data of D
+    RKBaseProductListFloatP                      = (1 << 20),                  // Data of P
+    RKBaseProductListFloatR                      = (1 << 21),                  // Data of R
+    RKBaseProductListFloatK                      = (1 << 22),                  // Data of K
+    RKBaseProductListFloatSh                     = (1 << 23),                  // Data of Sh
+    RKBaseProductListFloatSv                     = (1 << 24),                  // Data of Sv
+    RKBaseProductListFloatQ                      = (1 << 25),                  // Data of Q
+    RKBaseProductListFloatU6                     = (1 << 26),                  //
+    RKBaseProductListFloatU5                     = (1 << 27),                  //
+    RKBaseProductListFloatU4                     = (1 << 28),                  //
+    RKBaseProductListFloatU3                     = (1 << 29),                  //
+    RKBaseProductListFloatU2                     = (1 << 30),                  //
+    RKBaseProductListFloatU1                     = (1 << 31),                  //
+    RKBaseProductListFloatZVWDPR                 = 0x003F0000,                 // Base moment data without K, Sh, Sv and Q
+    RKBaseProductListFloatZVWDPRK                = 0x007F0000,                 // Base moment data without Sh, Sv and Q
+    RKBaseProductListFloatZVWDPRKS               = 0x01FF0000,                 // All data without Q
+    RKBaseProductListFloatZVWDPRKSQ              = 0x03FF0000,                 // All data
+    RKBaseProductListFloatAll                    = 0xFFFF0000                  // All data (same as above)
 };
 
 typedef uint8_t RKBaseProductIndex;
@@ -700,10 +700,10 @@ enum RKBaseProductIndex {
 
 typedef uint8_t RKProductType;
 enum RKProductType {
-    RKProductTypeUnknown             = 0,                                      // Unspecified
-    RKProductTypeCellMatch           = 1,                                      //
-    RKProductTypePPI                 = (1 << 1),                               //
-    RKProductTypeCAPPI               = (1 << 2)                                //
+    RKProductTypeUnknown                         = 0,                          // Unspecified
+    RKProductTypeCellMatch                       = 1,                          //
+    RKProductTypePPI                             = (1 << 1),                   //
+    RKProductTypeCAPPI                           = (1 << 2)                    //
 };
 
 typedef uint32_t RKConfigKey;
@@ -757,12 +757,12 @@ enum RKHealthNode {
 
 typedef uint8_t RKScriptProperty;
 enum RKScriptProperty {
-    RKScriptPropertyNull            = 0,
-    RKScriptPropertyProduceZip      = 1,
-    RKScriptPropertyProduceTgz      = (1 << 1),
-    RKScriptPropertyProduceTarXz    = (1 << 2),
-    RKScriptPropertyProduceArchive  = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz),
-    RKScriptPropertyRemoveNCFiles   = (1 << 3)
+    RKScriptPropertyNull                         = 0,
+    RKScriptPropertyProduceZip                   = 1,
+    RKScriptPropertyProduceTgz                   = (1 << 1),
+    RKScriptPropertyProduceTarXz                 = (1 << 2),
+    RKScriptPropertyProduceArchive               = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz),
+    RKScriptPropertyRemoveNCFiles                = (1 << 3)
 };
 
 //
@@ -1047,13 +1047,13 @@ typedef struct rk_waveform {
 
 typedef union rk_wave_file_header {
     struct {
-        uint8_t         count;                                                 // Count of groups
-        uint32_t        depth;                                                 // Waveform depth
-        RKWaveformType  type;                                                  // Waveform type
-        RKName          name;                                                  // Waveform name
-        double          fc;                                                    // Carrier frequency
-        double          fs;                                                    // Sampling frequency
-        uint8_t         filterCounts[RKMaximumWaveformCount];                  // Number of filters (see filterAnchors)
+        uint8_t          count;                                                // Count of groups
+        uint32_t         depth;                                                // Waveform depth
+        RKWaveformType   type;                                                 // Waveform type
+        RKName           name;                                                 // Waveform name
+        double           fc;                                                   // Carrier frequency
+        double           fs;                                                   // Sampling frequency
+        uint8_t          filterCounts[RKMaximumWaveformCount];                 // Number of filters (see filterAnchors)
     };
     char bytes[512];
 } RKWaveFileGlobalHeader;
@@ -1143,11 +1143,11 @@ typedef union rk_config {
 //
 typedef union rk_heath {
     struct {
-        RKIdentifier        i;                                                 // Identity counter
-        RKHealthFlag        flag;                                              // Health flag
-        struct timeval      time;                                              // Time in struct timeval
-        double              timeDouble;                                        // Time in double
-        char                string[RKMaximumStringLength];                     // Health string
+        RKIdentifier         i;                                                // Identity counter
+        RKHealthFlag         flag;                                             // Health flag
+        struct timeval       time;                                             // Time in struct timeval
+        double               timeDouble;                                       // Time in double
+        char                 string[RKMaximumStringLength];                    // Health string
     };
     RKByte               *bytes;
 } RKHealth;
@@ -1166,31 +1166,31 @@ typedef struct rk_nodal_health {
 //
 typedef union rk_position {
     struct {
-        RKIdentifier        i;                                                 // Counter
-        uint64_t            tic;                                               // Time tic
-        RKFourByte          rawElevation;                                      // Raw elevation readout
-        RKFourByte          rawAzimuth;                                        // Raw azimuth readout
-        RKFourByte          rawElevationVelocity;                              // Raw velocity of elevation readout
-        RKFourByte          rawAzimuthVelocity;                                // Raw velocity of azimuth readout
-        RKFourByte          rawElevationStatus;                                // Raw status of elevation readout
-        RKFourByte          rawAzimuthStatus;                                  // Raw status of azimuth readout
-        uint8_t             queueSize;                                         // Queue size of the readout buffer
-        uint8_t             elevationMode;                                     // Positioning mode of elevation
-        uint8_t             azimuthMode;                                       // Positioning mode of azimuth
-        uint8_t             sequence;                                          // DEBUG command sequence
-        RKPositionFlag      flag;                                              // Position flag
-        float               elevationDegrees;                                  // Decoded elevation
-        float               azimuthDegrees;                                    // Decoded elevation
-        float               elevationVelocityDegreesPerSecond;                 // Decoded velocity of elevation
-        float               azimuthVelocityDegreesPerSecond;                   // Decoded velocity of azimuth
-        float               elevationCounter;                                  // Progress counter (of target) of the elevation
-        float               elevationTarget;                                   // Targeted progress counter of the elevation
-        float               azimuthCounter;                                    // Progress counter (of target) of the azimuth
-        float               azimuthTarget;                                     // Targeted progress counter of the azimuth
-        float               sweepElevationDegrees;                             // Set elevation for current sweep
-        float               sweepAzimuthDegrees;                               // Set azimuth for current sweep
-        struct timeval      time;                                              // Time in struct timeval
-        double              timeDouble;                                        // Time in double;
+        RKIdentifier         i;                                                // Counter
+        uint64_t             tic;                                              // Time tic
+        RKFourByte           rawElevation;                                     // Raw elevation readout
+        RKFourByte           rawAzimuth;                                       // Raw azimuth readout
+        RKFourByte           rawElevationVelocity;                             // Raw velocity of elevation readout
+        RKFourByte           rawAzimuthVelocity;                               // Raw velocity of azimuth readout
+        RKFourByte           rawElevationStatus;                               // Raw status of elevation readout
+        RKFourByte           rawAzimuthStatus;                                 // Raw status of azimuth readout
+        uint8_t              queueSize;                                        // Queue size of the readout buffer
+        uint8_t              elevationMode;                                    // Positioning mode of elevation
+        uint8_t              azimuthMode;                                      // Positioning mode of azimuth
+        uint8_t              sequence;                                         // DEBUG command sequence
+        RKPositionFlag       flag;                                             // Position flag
+        float                elevationDegrees;                                 // Decoded elevation
+        float                azimuthDegrees;                                   // Decoded elevation
+        float                elevationVelocityDegreesPerSecond;                // Decoded velocity of elevation
+        float                azimuthVelocityDegreesPerSecond;                  // Decoded velocity of azimuth
+        float                elevationCounter;                                 // Progress counter (of target) of the elevation
+        float                elevationTarget;                                  // Targeted progress counter of the elevation
+        float                azimuthCounter;                                   // Progress counter (of target) of the azimuth
+        float                azimuthTarget;                                    // Targeted progress counter of the azimuth
+        float                sweepElevationDegrees;                            // Set elevation for current sweep
+        float                sweepAzimuthDegrees;                              // Set azimuth for current sweep
+        struct timeval       time;                                             // Time in struct timeval
+        double               timeDouble;                                       // Time in double;
     };
     RKByte               bytes[128];
 } RKPosition;
