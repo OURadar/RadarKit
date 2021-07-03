@@ -2237,8 +2237,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "Help\n"
                                 "====\n"
                                 "\n"
-                                HIGHLIGHT("a") " [USERNAME] [ENCRYPTED_PASSWORD] - Authenticate\n"
-                                "\n"
                                 HIGHLIGHT("b") " - Button event, simulate push event from a physical hardware button\n"
                                 "\n"
                                 HIGHLIGHT("d") " [COMMAND] [PARAMETER] - DSP parameters,\n"

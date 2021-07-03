@@ -10,9 +10,9 @@ core.*
 *.dSYM
 *.so
 *.pyc
-*.ipynb
 
 # Folders
+.ipynb_checkpoints
 __pycache__
 data
 waveforms
