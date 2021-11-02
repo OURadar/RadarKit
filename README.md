@@ -656,3 +656,7 @@ RKTestMomentProcessorSpeed
                     Time for each ray (100 pulses x 4,096 gates) = 8.35 ms (Best of 3)
                     Speed: 119.83 rays / sec
 ```
+
+## Future Capabilities
+
+- Replace / Add RKSIMD to straight C compute
