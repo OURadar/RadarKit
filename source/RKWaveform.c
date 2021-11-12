@@ -856,7 +856,19 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 }
                 h++;
             }
-            g = 10.0f * log10f(g);
+
+            for (i = 10; i < 15; i++) {
+                printf("%d  %3d%+3dj   %.3e%+.3ej\n", i,
+                    waveform->iSamples[k][i].i, waveform->iSamples[k][i].q,
+                    waveform->samples[k][i].i, waveform->samples[k][i].q);
+            }
+
+            if (waveform->type & RKWaveformTypeIsComplex) {
+                g = 10.0f * log10f(g);
+            } else {
+                // Need to double check this equation
+                g = 10.0f * log10f(g * sqrtf(2.0));
+            }
             if (waveform->filterAnchors[k][j].filterGain - g > +0.1f ||
                 waveform->filterAnchors[k][j].filterGain - g < -0.1f) {
                 RKLog(">Error. Filter gain not accurate.  (waveform: %.2f dB vs calculated: %.2f dB)", waveform->filterAnchors[k][j].filterGain, g);

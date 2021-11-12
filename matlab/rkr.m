@@ -1,6 +1,7 @@
 % A script to list files in ~/Downloads and generate a bscope plot
 
-if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads/raxpol', '*.rk*'); end
+% if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads/raxpol', '*.rk*'); end
+if ~exist('filename', 'var'), filename = blib('choosefile', '~/Downloads/', '*.rk*'); end
 if ~exist('showAnimation', 'var'), showAnimation = true; end
 if ~exist('generatePNG', 'var'), generatePNG = false; end
 
@@ -122,9 +123,9 @@ if (showAnimation)
                 dat.pulses(k).i, floor(rem(double(dat.pulses(k).i), M) / 2) - 5));
         end
         drawnow
-        if (generatePNG)
-            bfig png
-        end
+%         if (generatePNG)
+%             bfig('png')
+%         end
         jj = jj + M * N;
     end
 end
