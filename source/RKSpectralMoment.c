@@ -327,9 +327,9 @@ int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCo
         for (k = 0; k < lagCount; k++) {
             RKZeroOutIQZ(&space->R[p][k], space->capacity);
         }
-        
+
         RKIQZ *R = &space->R[p][0];
-        
+
         // Go through all pulses
         n = 0;
         do {
@@ -346,10 +346,10 @@ int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCo
             }
             n++;
         } while (n != pulseCount);
-        
+
         // Divide by n for the average
         RKSIMD_izscl(&space->mX[p], 1.0f / (float)n, gateCount);                         // mX /= n
-        
+
         // ACF
         for (k = 0; k < lagCount; k++) {
             RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)   (unbiased)

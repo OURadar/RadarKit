@@ -369,7 +369,36 @@ void proc(UserParams *arg) {
     }
 
     //printf("fpos = %s\n", RKUIntegerToCommaStyleString(ftell(fid)));
+    
+    // Initialize a pulse buffer for pulse copression
+    
+    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulseCapacity)));
 
+    
+    RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
+    if (scratch == NULL) {
+        RKLog("Error. Unable to allocate a scratch space.\n");
+        exit(EXIT_FAILURE);
+    }
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
+        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        exit(EXIT_FAILURE);
+    }
+    mem = 2 * nfft * sizeof(fftwf_complex);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    if (scratch->zi == NULL || scratch->zo == NULL) {
+        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        exit(EXIT_FAILURE);
+    }
+    mem += 2 * nfft * sizeof(RKFloat);
+    RKLog("mem = %s", RKIntegerToCommaStyleString(mem));
+    
+    printf("Quiting here for now ...\n");
+    exit(EXIT_SUCCESS);
+    
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
@@ -387,6 +416,12 @@ void proc(UserParams *arg) {
             } else {
                 i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
             }
+            // Pulse compression
+            // ...
+            if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
+                printf("Compress\n");
+            }
+            
             pulses[p++] = pulse;
             // Mark for process later
             m = false;
@@ -669,6 +704,7 @@ void proc(UserParams *arg) {
     RKProductBufferFree(product, 1);
     RKScratchFree(space);
 
+    free(scratch);
     free(fileHeader);
     
     return;
