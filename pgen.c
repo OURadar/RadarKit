@@ -372,7 +372,7 @@ void proc(UserParams *arg) {
     
     // Initialize a pulse buffer for pulse copression
     
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulseCapacity)));
+    const uint32_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulseCapacity)));
 
     
     RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
@@ -396,8 +396,19 @@ void proc(UserParams *arg) {
     mem += 2 * nfft * sizeof(RKFloat);
     RKLog("mem = %s", RKIntegerToCommaStyleString(mem));
     
-    printf("Quiting here for now ...\n");
-    exit(EXIT_SUCCESS);
+    RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);
+    
+    printf("waveform count %d\n", config->waveform->count);
+    RKComplex *filters[22][config->waveform->count];
+    bytes = nfft * sizeof(RKComplex);
+    for (k = 0; k < config->waveform->count; k++) {
+        for (j = 0; j < config->waveform->filterCounts[k]; j++) {
+            RKLog("k = %d  j = %d  len = %u\n", k, j, config->waveform->filterAnchors[k][j].length);
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&filters[k][j], RKSIMDAlignSize, bytes))
+            //memset(filters[k][j], 0, bytes);
+            memcpy(filters[k][j], config->waveform->samples, config->waveform->filterAnchors[k][j].length * sizeof(RKComplex));
+        }
+    }
     
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
@@ -420,6 +431,8 @@ void proc(UserParams *arg) {
             // ...
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
                 printf("Compress\n");
+                
+                
             }
             
             pulses[p++] = pulse;
@@ -703,6 +716,14 @@ void proc(UserParams *arg) {
     RKRayBufferFree(rayBuffer);
     RKProductBufferFree(product, 1);
     RKScratchFree(space);
+    RKFFTModuleFree(fftModule);
+
+    for (k = 0; k < config->waveform->count; k++) {
+        for (j = 0; j < config->waveform->filterCounts[k]; j++) {
+            RKLog("k = %d  j = %d  len = %u\n", k, j, config->waveform->filterAnchors[k][j].length);
+            free(filters[k][j]);
+        }
+    }
 
     free(scratch);
     free(fileHeader);
