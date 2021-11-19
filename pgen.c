@@ -403,13 +403,41 @@ void proc(UserParams *arg) {
     bytes = nfft * sizeof(RKComplex);
     for (k = 0; k < config->waveform->count; k++) {
         for (j = 0; j < config->waveform->filterCounts[k]; j++) {
-            RKLog("k = %d  j = %d  len = %u\n", k, j, config->waveform->filterAnchors[k][j].length);
+            const int origin = config->waveform->filterAnchors[k][j].origin;
+            const int length = config->waveform->filterAnchors[k][j].length;
+            RKLog(
+                "k = %d   j = %d   origin = %d   length = %d   nfft = %s   tail = %s\n",
+                k, j, origin, length,
+                RKIntegerToCommaStyleString(nfft),
+                RKIntegerToCommaStyleString(nfft - length)
+            );
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&filters[k][j], RKSIMDAlignSize, bytes))
-            //memset(filters[k][j], 0, bytes);
-            memcpy(filters[k][j], config->waveform->samples, config->waveform->filterAnchors[k][j].length * sizeof(RKComplex));
+            memcpy(filters[k][j], &config->waveform->samples[k][origin], length * sizeof(RKComplex));
+            memset(&filters[k][j][length], 0, (nfft - length) * sizeof(RKComplex));
         }
     }
-    
+
+    // For now, override waveform 1 with waveform 0
+    for (j = 0; j < config->waveform->filterCounts[0]; j++) {
+        const int length = config->waveform->filterAnchors[0][j].length;
+        printf("length = %d\n", length);
+        memcpy(filters[1][j], filters[0][j], nfft * sizeof(RKComplex));
+    }
+    #if defined(_DEBUG_FILTER)
+    for (k = 0; k < config->waveform->count; k++) {
+        for (j = 0; j < config->waveform->filterCounts[k]; j++) {
+            for (i = 0; i < 500; i++) {
+                const float a = sqrtf(filters[k][j][i].i * filters[k][j][i].i + filters[k][j][i].q * filters[k][j][i].q);
+                printf("config->waveform->samples[%d][%3d] = %+8.5f%+8.5fi  -->  filter[%d][%d][%3d] = %8.5f%+8.5fi (%.4f)\n",
+                    k, i, config->waveform->samples[k][i].i, config->waveform->samples[k][i].q,
+                    k, j, i, filters[k][j][i].i, filters[k][j][i].q,
+                    a);
+            }
+            printf("\n");
+        }
+    }
+    #endif
+
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
