@@ -398,9 +398,9 @@ void proc(UserParams *arg) {
     
     RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);
     
-    printf("waveform count %d\n", config->waveform->count);
+    printf("waveform count = %d    length = %d\n", config->waveform->count, config->waveform->depth);
     RKComplex *filters[22][config->waveform->count];
-    bytes = nfft * sizeof(RKComplex);
+    bytes = config->waveform->depth * sizeof(RKComplex);
     for (k = 0; k < config->waveform->count; k++) {
         for (j = 0; j < config->waveform->filterCounts[k]; j++) {
             const int origin = config->waveform->filterAnchors[k][j].origin;
@@ -413,15 +413,13 @@ void proc(UserParams *arg) {
             );
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&filters[k][j], RKSIMDAlignSize, bytes))
             memcpy(filters[k][j], &config->waveform->samples[k][origin], length * sizeof(RKComplex));
-            memset(&filters[k][j][length], 0, (nfft - length) * sizeof(RKComplex));
+            memset(&filters[k][j][length], 0, (config->waveform->depth - length) * sizeof(RKComplex));
         }
     }
 
     // For now, override waveform 1 with waveform 0
     for (j = 0; j < config->waveform->filterCounts[0]; j++) {
-        const int length = config->waveform->filterAnchors[0][j].length;
-        printf("length = %d\n", length);
-        memcpy(filters[1][j], filters[0][j], nfft * sizeof(RKComplex));
+        memcpy(filters[1][j], filters[0][j], config->waveform->depth * sizeof(RKComplex));
     }
     #if defined(_DEBUG_FILTER)
     for (k = 0; k < config->waveform->count; k++) {
@@ -458,7 +456,7 @@ void proc(UserParams *arg) {
             // Pulse compression
             // ...
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
-                printf("Compress\n");
+                printf("Compress  %p  %s\n", pulse, RKIntegerToCommaStyleString(pulse->header.capacity));
                 
                 
             }
@@ -605,10 +603,12 @@ void proc(UserParams *arg) {
                 }
             }
             // Use the end pulse as the start pulse of next ray
+            printf("pulses = %p %p ... %p\n", pulses[0], pulses[1], pulse);
             for (j = 0; j < 2; j++) {
                 RKComplex *x = RKGetComplexDataFromPulse(pulses[0], j);
                 RKIQZ z = RKGetSplitComplexDataFromPulse(pulses[0], j);
-                memcpy(x, RKGetComplexDataFromPulse(pulse, j), pulse->header.downSampledGateCount * sizeof(RKComplex));
+                RKComplex *src = RKGetComplexDataFromPulse(pulse, j);
+                memcpy(x, src, pulse->header.downSampledGateCount * sizeof(RKComplex));
                 for (i = 0; i < pulse->header.downSampledGateCount; i++) {
                     z.i[i] = x[i].i;
                     z.q[i] = x[i].q;
