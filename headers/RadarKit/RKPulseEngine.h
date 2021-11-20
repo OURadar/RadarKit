@@ -105,6 +105,8 @@ char *RKPulseEnginePulseString(RKPulseEngine *);
 void RKPulseEngineFilterSummary(RKPulseEngine *);
 void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
+void builtInCompressor(RKCompressionScratch *);
+
 //#ifdef __cplusplus
 //}
 //#endif

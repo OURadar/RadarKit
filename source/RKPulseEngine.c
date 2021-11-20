@@ -123,7 +123,7 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 
 #pragma mark - Delegate Workers
 
-static void builtInCompressor(RKCompressionScratch *scratch) {
+void builtInCompressor(RKCompressionScratch *scratch) {
 
     int i, p;
     RKPulse *pulse = scratch->pulse;
@@ -445,7 +445,7 @@ static void *pulseEngineCore(void *_in) {
                     pulse->parameters.planIndices[p][j] = planIndex;
                     pulse->parameters.planSizes[p][j] = engine->fftModule->plans[planIndex].size;
                 }
-            } // filterCount
+            } // for (j=0; j < engine->filterCount ...
             pulse->parameters.filterCounts[0] = j;
             pulse->parameters.filterCounts[1] = j;
             pulse->header.pulseWidthSampleCount = blindGateCount;

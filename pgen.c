@@ -374,7 +374,6 @@ void proc(UserParams *arg) {
     
     const uint32_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulseCapacity)));
 
-    
     RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
     if (scratch == NULL) {
         RKLog("Error. Unable to allocate a scratch space.\n");
@@ -399,7 +398,10 @@ void proc(UserParams *arg) {
     RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);
     
     printf("waveform count = %d    length = %d\n", config->waveform->count, config->waveform->depth);
-    RKComplex *filters[22][config->waveform->count];
+    
+//    RKFilterAnchor filterAnchors[RKMaximumWaveformCount][config->waveform->count];
+    RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
+    
     bytes = config->waveform->depth * sizeof(RKComplex);
     for (k = 0; k < config->waveform->count; k++) {
         for (j = 0; j < config->waveform->filterCounts[k]; j++) {
@@ -435,6 +437,8 @@ void proc(UserParams *arg) {
         }
     }
     #endif
+    
+    // Gather planIndex
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
@@ -456,9 +460,38 @@ void proc(UserParams *arg) {
             // Pulse compression
             // ...
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
-                printf("Compress  %p  %s\n", pulse, RKIntegerToCommaStyleString(pulse->header.capacity));
-                
-                
+                int blindGateCount = config->waveform->depth;
+                const int gid = pulse->header.i % config->waveform->count;
+                for (j = 0; j < config->waveform->filterCounts[gid]; j++) {
+                    int planIndex = (int)ceilf(log2f((float)MIN(pulse->header.gateCount - config->waveform->filterAnchors[gid][j].inputOrigin,
+                                                                config->waveform->filterAnchors[gid][j].maxDataLength)));
+                    printf("Compress  %p  %s  gid = %d   j = %d   planIndex = %d   %s\n",
+                           pulse, RKIntegerToCommaStyleString(pulse->header.capacity), gid, j, planIndex, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
+
+                    // Compression
+                    scratch->pulse = pulse;
+                    scratch->filter = filters[gid][j];
+                    scratch->filterAnchor = &config->waveform->filterAnchors[gid][j];
+                    scratch->planForwardInPlace = fftModule->plans[planIndex].forwardInPlace;
+                    scratch->planForwardOutPlace = fftModule->plans[planIndex].forwardOutPlace;
+                    scratch->planBackwardInPlace = fftModule->plans[planIndex].backwardInPlace;
+                    scratch->planBackwardOutPlace = fftModule->plans[planIndex].backwardOutPlace;
+                    scratch->planSize = fftModule->plans[planIndex].size;
+
+                    // Call the compressor
+                    builtInCompressor(scratch);
+
+                    // Copy over the parameters used
+                    for (p = 0; p < 2; p++) {
+                        pulse->parameters.planIndices[p][j] = planIndex;
+                        pulse->parameters.planSizes[p][j] = fftModule->plans[planIndex].size;
+                    }
+                }
+                pulse->parameters.filterCounts[0] = j;
+                pulse->parameters.filterCounts[1] = j;
+                pulse->header.pulseWidthSampleCount = blindGateCount;
+                pulse->header.gateCount -= blindGateCount;
+                pulse->header.s |= RKPulseStatusCompressed;
             }
             
             pulses[p++] = pulse;
