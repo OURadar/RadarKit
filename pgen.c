@@ -64,7 +64,7 @@ static void timeval2str(char *timestr, const struct timeval time) {
 
 void proc(UserParams *arg) {
     
-    int i = 0, j = 0, k = 0, p = 0;
+    int i = 0, j = 0, k = 0, o = 0, p = 0;
     uint32_t u32 = 0;
     char timestr[16];
     bool m = false;
@@ -442,7 +442,8 @@ void proc(UserParams *arg) {
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
-    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
+//    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
+    for (k = 0; k < 2; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         if (j == RKResultSuccess) {
@@ -459,41 +460,58 @@ void proc(UserParams *arg) {
                 i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
             }
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
-                printf("PC\n");
                 // Pulse compression
-//                int blindGateCount = config->waveform->depth;
-//                const int gid = pulse->header.i % config->waveform->count;
-//                for (j = 0; j < config->waveform->filterCounts[gid]; j++) {
-//                    int planIndex = (int)ceilf(log2f((float)MIN(pulse->header.gateCount - config->waveform->filterAnchors[gid][j].inputOrigin,
-//                                                                config->waveform->filterAnchors[gid][j].maxDataLength)));
-//                    printf("Compress  %p  %s  gid = %d   j = %d   planIndex = %d   %08x (%s)\n",
-//                           pulse, RKIntegerToCommaStyleString(pulse->header.gateCount), gid, j, planIndex,
-//                           pulse->header.s, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
-//
-//                    // Compression
-//                    scratch->pulse = pulse;
-//                    scratch->filter = filters[gid][j];
-//                    scratch->filterAnchor = &config->waveform->filterAnchors[gid][j];
-//                    scratch->planForwardInPlace = fftModule->plans[planIndex].forwardInPlace;
-//                    scratch->planForwardOutPlace = fftModule->plans[planIndex].forwardOutPlace;
-//                    scratch->planBackwardInPlace = fftModule->plans[planIndex].backwardInPlace;
-//                    scratch->planBackwardOutPlace = fftModule->plans[planIndex].backwardOutPlace;
-//                    scratch->planSize = fftModule->plans[planIndex].size;
-//
-//                    // Call the compressor
-//                    builtInCompressor(scratch);
-//
-//                    // Copy over the parameters used
-//                    for (int o = 0; o < 2; o++) {
-//                        pulse->parameters.planIndices[o][j] = planIndex;
-//                        pulse->parameters.planSizes[o][j] = fftModule->plans[planIndex].size;
-//                    }
-//                }
-//                pulse->parameters.filterCounts[0] = j;
-//                pulse->parameters.filterCounts[1] = j;
-//                pulse->header.pulseWidthSampleCount = blindGateCount;
-//                pulse->header.gateCount -= blindGateCount;
-//                pulse->header.s |= RKPulseStatusCompressed;
+                int blindGateCount = config->waveform->depth;
+                const int gid = pulse->header.i % config->waveform->count;
+                for (j = 0; j < config->waveform->filterCounts[gid]; j++) {
+                    int planIndex = (int)ceilf(log2f((float)MIN(pulse->header.gateCount - config->waveform->filterAnchors[gid][j].inputOrigin,
+                                                                config->waveform->filterAnchors[gid][j].maxDataLength)));
+                    printf("C:%s  gid = %d   j = %d   planIndex = %d   %08x (%s)\n",
+                           RKIntegerToCommaStyleString(pulse->header.gateCount), gid, j, planIndex,
+                           pulse->header.s, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
+
+                    // Compression
+                    scratch->pulse = pulse;
+                    scratch->filter = filters[gid][j];
+                    scratch->filterAnchor = &config->waveform->filterAnchors[gid][j];
+                    scratch->planForwardInPlace = fftModule->plans[planIndex].forwardInPlace;
+                    scratch->planForwardOutPlace = fftModule->plans[planIndex].forwardOutPlace;
+                    scratch->planBackwardInPlace = fftModule->plans[planIndex].backwardInPlace;
+                    scratch->planBackwardOutPlace = fftModule->plans[planIndex].backwardOutPlace;
+                    scratch->planSize = fftModule->plans[planIndex].size;
+
+                    // Call the compressor
+                    builtInCompressor(scratch);
+
+                    // Copy over the parameters used
+                    for (o = 0; o < 2; o++) {
+                        pulse->parameters.planIndices[o][j] = planIndex;
+                        pulse->parameters.planSizes[o][j] = fftModule->plans[planIndex].size;
+                    }
+                }
+                pulse->parameters.filterCounts[0] = j;
+                pulse->parameters.filterCounts[1] = j;
+                pulse->header.pulseWidthSampleCount = blindGateCount;
+                pulse->header.gateCount -= blindGateCount;
+                pulse->header.s |= RKPulseStatusCompressed;
+
+                // Down-sampling
+                int stride = MAX(1, fileHeader->desc.pulseToRayRatio);
+                if (stride > 1) {
+                    pulse->header.downSampledGateCount = (pulse->header.gateCount + stride - 1) / stride;
+                    for (o = 0; o < 2; o++) {
+                        RKComplex *Y = RKGetComplexDataFromPulse(pulse, o);
+                        RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, o);
+                        for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
+                            Y[i].i = Y[j].i;
+                            Y[i].q = Y[j].q;
+                            Z.i[i] = Z.i[j];
+                            Z.q[i] = Z.q[j];
+                        }
+                    }
+                } else {
+                    pulse->header.downSampledGateCount = pulse->header.gateCount;
+                }
             }
             
             pulses[p++] = pulse;
@@ -796,6 +814,10 @@ void proc(UserParams *arg) {
         }
     }
 
+    free(scratch->zi);
+    free(scratch->zo);
+    free(scratch->inBuffer);
+    free(scratch->outBuffer);
     free(scratch);
     free(fileHeader);
     
