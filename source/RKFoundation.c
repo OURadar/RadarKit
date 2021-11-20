@@ -891,26 +891,28 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid) 
     pulse->header.capacity = capacity;
     // Pulse payload: H and V data into channels 0 and 1, respectively. Duplicate to split-complex storage
     for (j = 0; j < 2; j++) {
-        RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-        RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
         if (type == RKRawDataTypeFromTransceiver) {
+            RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
             gateCount = pulse->header.gateCount;
+            readsize = fread(x, sizeof(RKInt16C), gateCount, fid);
         } else if (type == RKRawDataTypeAfterMatchedFilter) {
+            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             gateCount = pulse->header.downSampledGateCount;
+            readsize = fread(x, sizeof(RKComplex), gateCount, fid);
+            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+            for (i = 0; i < gateCount; i++) {
+                z.i[i] = x[i].i;
+                z.q[i] = x[i].q;
+            }
         } else {
             return RKResultRawDataTypeUndefined;
         }
-        readsize = fread(x, sizeof(RKComplex), gateCount, fid);
         if (readsize != gateCount) {
             RKLog("Error in RKReadPulseFromFileReference() readsize = %s != %s || > %s\n",
                   RKIntegerToCommaStyleString(readsize),
                   RKIntegerToCommaStyleString(gateCount),
                   RKIntegerToCommaStyleString(capacity));
             return RKResultTooBig;
-        }
-        for (i = 0; i < gateCount; i++) {
-            z.i[i] = x[i].i;
-            z.q[i] = x[i].q;
         }
     }
     return RKResultSuccess;
