@@ -9,6 +9,7 @@ typedef struct user_params {
     char filename[RKNameLength];
     int verbose;
     bool output;
+    bool compressedOutput;
     float SNRThreshold;
     float SQIThreshold;
 } UserParams;
@@ -32,6 +33,9 @@ static void showHelp() {
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"
            "     options can be specified multiples times for repetitions. For example, the\n"
            "     verbosity is increased by repeating the option multiple times.\n"
+           "\n"
+           "  -c (--compress)\n"
+           "         Generates compressed I/Q output file.\n"
            "\n"
            "  -d (--dir) " UNDERLINE("value") "\n"
            "         Specifies the directory to store the output files.\n"
@@ -437,30 +441,53 @@ void proc(UserParams *arg) {
         }
     }
     #endif
-    
-    // Output
-    RKFileHeader *outputFileHeader = (void *)malloc(sizeof(RKFileHeader));
-    memset(outputFileHeader, 0, sizeof(RKFileHeader));
-    sprintf(outputFileHeader->preface, "RadarKit/IQ");
-    outputFileHeader->version = RKRawDataVersion;
-    memcpy(&outputFileHeader->desc, &fileHeader->desc, sizeof(RKRadarDesc));
-    outputFileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
-    outputFileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
-    outputFileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
 
-    RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
-    memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
+    // Compressed Output
+    FILE *outfid;
+    if (arg->compressedOutput) {
+        RKFileHeader *outputFileHeader = (void *)malloc(sizeof(RKFileHeader));
+        memset(outputFileHeader, 0, sizeof(RKFileHeader));
+        RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
+        memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
 
-    char outputFilename[256];
-    strcpy(outputFilename, arg->filename);
-    c = strrchr(outputFilename, '.');
-    if (c) {
-        sprintf(c, ".rkc");
-    } else {
-        strcat(outputFilename, ".rkc");
+        char outputFilename[256];
+        strcpy(outputFilename, arg->filename);
+        c = strrchr(outputFilename, '.');
+        if (c) {
+            sprintf(c, ".rkc");
+        } else {
+            strcat(outputFilename, ".rkc");
+        }
+        RKLog("Output: \033[38;5;82m%s\033[m\n", outputFilename);
+        outfid = fopen(outputFilename, "w");
+
+        sprintf(outputFileHeader->preface, "RadarKit/IQ");
+        outputFileHeader->version = RKRawDataVersion;
+        memcpy(&outputFileHeader->desc, &fileHeader->desc, sizeof(RKRadarDesc));
+        outputFileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
+        outputFileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
+        outputFileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
+        fwrite(outputFileHeader, sizeof(RKFileHeader), 1, outfid);
+
+        strcpy(waveGlobalHeader->name, waveform->name);
+        waveGlobalHeader->count = waveform->count;
+        waveGlobalHeader->depth = waveform->depth;
+        waveGlobalHeader->type = waveform->type;
+        waveGlobalHeader->fc = waveform->fc;
+        waveGlobalHeader->fs = waveform->fs;
+        for (i = 0; i < waveform->count; i++) {
+            waveGlobalHeader->filterCounts[i] = waveform->filterCounts[i];
+        }
+        fwrite(waveGlobalHeader, sizeof(RKWaveFileGlobalHeader), 1, outfid);
+        for (i = 0; i < waveform->count; i++) {
+            fwrite(waveform->filterAnchors[i], sizeof(RKFilterAnchor), waveform->filterCounts[i], outfid);
+            fwrite(waveform->samples[i], sizeof(RKComplex), waveform->depth, outfid);
+            fwrite(waveform->iSamples[i], sizeof(RKInt16C), waveform->depth, outfid);
+        }
+
+        free(waveGlobalHeader);
+        free(outputFileHeader);
     }
-    printf("output: %s\n", outputFilename);
-
 
     // Gather planIndex
 
@@ -535,6 +562,13 @@ void proc(UserParams *arg) {
                     }
                 } else {
                     pulse->header.downSampledGateCount = pulse->header.gateCount;
+                }
+
+                // Compressed Output
+                if (arg->compressedOutput) {
+                    fwrite(&pulse->header, sizeof(RKPulseHeader), 1, outfid);
+                    fwrite(RKGetComplexDataFromPulse(pulse, 0), sizeof(RKComplex), pulse->header.downSampledGateCount, outfid);
+                    fwrite(RKGetComplexDataFromPulse(pulse, 1), sizeof(RKComplex), pulse->header.downSampledGateCount, outfid);
                 }
             }
             
@@ -820,7 +854,10 @@ void proc(UserParams *arg) {
 
         RKSweepFree(sweep);
     }
-    
+
+    if (arg->compressedOutput)
+        fclose(outfid);
+
     if (fileHeader->config.waveform) {
         RKWaveformFree(fileHeader->config.waveform);
         RKWaveformFree(fileHeader->config.waveformDecimate);
@@ -844,8 +881,6 @@ void proc(UserParams *arg) {
     free(scratch->outBuffer);
     free(scratch);
     
-    free(waveGlobalHeader);
-    free(outputFileHeader);
     free(fileHeader);
     
     return;
@@ -894,6 +929,7 @@ int main(int argc, const char **argv) {
     // Command line options
     struct option options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
+        {"compress"          , no_argument      , NULL, 'c'},
         {"dir"               , required_argument, NULL, 'd'},
         {"help"              , no_argument      , NULL, 'h'},
         {"no-output"         , no_argument      , NULL, 'n'},
@@ -912,6 +948,9 @@ int main(int argc, const char **argv) {
     while ((opt = getopt_long(argc, (char * const *)argv, str, options, &ind)) != -1) {
         switch (opt) {
             case 'A':
+                break;
+            case 'c':
+                arg->compressedOutput = true;
                 break;
             case 'd':
                 strcpy(arg->directory, optarg);
@@ -953,6 +992,7 @@ int main(int argc, const char **argv) {
         printf("arg->directory = %s\n", arg->directory);
         printf("arg->filename = %s\n", arg->filename);
         printf("arg->output = %s\n", arg->output ? "true" : "false");
+        printf("arg->compressedOutput = %s\n", arg->compressedOutput ? "true" : "false");
     }
 
     // Show framework name & version
