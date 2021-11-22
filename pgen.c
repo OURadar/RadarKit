@@ -401,8 +401,6 @@ void proc(UserParams *arg) {
     
     RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);
     
-    printf("waveform count = %d    length = %d\n", config->waveform->count, config->waveform->depth);
-    
 //    RKFilterAnchor filterAnchors[RKMaximumWaveformCount][config->waveform->count];
     RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
     
@@ -443,7 +441,7 @@ void proc(UserParams *arg) {
     #endif
 
     // Compressed Output
-    FILE *outfid;
+    FILE *outfid = NULL;
     if (arg->compressedOutput) {
         RKFileHeader *outputFileHeader = (void *)malloc(sizeof(RKFileHeader));
         memset(outputFileHeader, 0, sizeof(RKFileHeader));
@@ -462,8 +460,10 @@ void proc(UserParams *arg) {
         outfid = fopen(outputFilename, "w");
 
         sprintf(outputFileHeader->preface, "RadarKit/IQ");
+        outputFileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
         outputFileHeader->version = RKRawDataVersion;
         memcpy(&outputFileHeader->desc, &fileHeader->desc, sizeof(RKRadarDesc));
+        memcpy(&outputFileHeader->config, &fileHeader->config, sizeof(RKConfig));
         outputFileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
         outputFileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
         outputFileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
@@ -494,7 +494,7 @@ void proc(UserParams *arg) {
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
 //    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
-    for (k = 0; k < 2; k++) {
+    for (k = 0; k < 4; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         if (j == RKResultSuccess) {
@@ -755,6 +755,9 @@ void proc(UserParams *arg) {
     }
 
     fclose(fid);
+    if (arg->compressedOutput && outfid) {
+        fclose(outfid);
+    }
 
     gettimeofday(&e, NULL);
     double dt = RKTimevalDiff(e, s);
@@ -854,9 +857,6 @@ void proc(UserParams *arg) {
 
         RKSweepFree(sweep);
     }
-
-    if (arg->compressedOutput)
-        fclose(outfid);
 
     if (fileHeader->config.waveform) {
         RKWaveformFree(fileHeader->config.waveform);
