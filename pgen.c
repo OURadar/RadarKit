@@ -438,6 +438,30 @@ void proc(UserParams *arg) {
     }
     #endif
     
+    // Output
+    RKFileHeader *outputFileHeader = (void *)malloc(sizeof(RKFileHeader));
+    memset(outputFileHeader, 0, sizeof(RKFileHeader));
+    sprintf(outputFileHeader->preface, "RadarKit/IQ");
+    outputFileHeader->version = RKRawDataVersion;
+    memcpy(&outputFileHeader->desc, &fileHeader->desc, sizeof(RKRadarDesc));
+    outputFileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
+    outputFileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
+    outputFileHeader->bytes[sizeof(RKFileHeader) - 1] = 'L';
+
+    RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
+    memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
+
+    char outputFilename[256];
+    strcpy(outputFilename, arg->filename);
+    c = strrchr(outputFilename, '.');
+    if (c) {
+        sprintf(c, ".rkc");
+    } else {
+        strcat(outputFilename, ".rkc");
+    }
+    printf("output: %s\n", outputFilename);
+
+
     // Gather planIndex
 
     p = 0;    // total pulses per ray
@@ -819,6 +843,9 @@ void proc(UserParams *arg) {
     free(scratch->inBuffer);
     free(scratch->outBuffer);
     free(scratch);
+    
+    free(waveGlobalHeader);
+    free(outputFileHeader);
     free(fileHeader);
     
     return;
