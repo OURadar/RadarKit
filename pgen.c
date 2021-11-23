@@ -192,7 +192,16 @@ void proc(UserParams *arg) {
         RKLog("Warning. Sorry but I cannot handle this file. Ask my father.\n");
         exit(EXIT_FAILURE);
     }
-    
+
+    // Waveform override -- temporary
+    // For now, override waveform 1 with waveform 0
+    memcpy(config->waveform->samples[1], config->waveform->samples[0], config->waveform->depth * sizeof(RKComplex));
+    memcpy(config->waveform->filterAnchors[1], config->waveform->filterAnchors[0], sizeof(RKFilterAnchor));
+    RKWaveformFree(config->waveformDecimate);
+    config->waveformDecimate = RKWaveformCopy(config->waveform);
+
+    //
+
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
     RKPulse *pulses[RKMaximumPulsesPerRay];
@@ -399,9 +408,7 @@ void proc(UserParams *arg) {
     mem += 2 * nfft * sizeof(RKFloat);
     RKLog("mem = %s", RKIntegerToCommaStyleString(mem));
     
-    RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);
-    
-//    RKFilterAnchor filterAnchors[RKMaximumWaveformCount][config->waveform->count];
+    RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);    
     RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
     
     bytes = config->waveform->depth * sizeof(RKComplex);
@@ -421,14 +428,12 @@ void proc(UserParams *arg) {
         }
     }
 
-    // For now, override waveform 1 with waveform 0
-    for (j = 0; j < config->waveform->filterCounts[0]; j++) {
-        memcpy(filters[1][j], filters[0][j], config->waveform->depth * sizeof(RKComplex));
-    }
     #if defined(_DEBUG_FILTER)
     for (k = 0; k < config->waveform->count; k++) {
         for (j = 0; j < config->waveform->filterCounts[k]; j++) {
-            for (i = 0; i < 500; i++) {
+            printf("config->waveform->filterAnchors[k=%d][j=%d].length = %d\n", k, j,
+                config->waveform->filterAnchors[k][j].length);
+            for (i = 0; i < config->waveform->filterAnchors[j][0].length; i++) {
                 const float a = sqrtf(filters[k][j][i].i * filters[k][j][i].i + filters[k][j][i].q * filters[k][j][i].q);
                 printf("config->waveform->samples[%d][%3d] = %+8.5f%+8.5fi  -->  filter[%d][%d][%3d] = %8.5f%+8.5fi (%.4f)\n",
                     k, i, config->waveform->samples[k][i].i, config->waveform->samples[k][i].q,

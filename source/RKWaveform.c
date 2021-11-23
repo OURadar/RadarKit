@@ -898,11 +898,14 @@ void RKWaveformSummary(RKWaveform *waveform) {
                       waveform->filterAnchors[k][j].sensitivityGain,
                       waveform->filterAnchors[k][j].subCarrierFrequency);
             }
-            RKInt16C *v = waveform->iSamples[k] + waveform->filterAnchors[k][j].origin;
+            //RKInt16C *v = waveform->iSamples[k] + waveform->filterAnchors[k][j].origin;
+            RKComplex *v = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             g = 0.0f;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-                vi = (RKFloat)v->i / RKWaveformDigitalAmplitude;
-                vq = (RKFloat)v->q / RKWaveformDigitalAmplitude;
+                //vi = (RKFloat)v->i / RKWaveformDigitalAmplitude;
+                //vq = (RKFloat)v->q / RKWaveformDigitalAmplitude;
+                vi = v->i;
+                vq = v->q;
                 g += vi * vi + vq * vq;
                 v++;
             }
