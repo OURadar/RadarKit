@@ -193,12 +193,15 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
 
+    // -----------------------------------------------------------------------------------------
     // Waveform override -- temporary
     // For now, override waveform 1 with waveform 0
     memcpy(config->waveform->samples[1], config->waveform->samples[0], config->waveform->depth * sizeof(RKComplex));
     memcpy(config->waveform->filterAnchors[1], config->waveform->filterAnchors[0], sizeof(RKFilterAnchor));
     RKWaveformFree(config->waveformDecimate);
     config->waveformDecimate = RKWaveformCopy(config->waveform);
+
+    // -----------------------------------------------------------------------------------------
 
     //
 
@@ -406,12 +409,12 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
     mem += 2 * nfft * sizeof(RKFloat);
-    RKLog("mem = %s", RKIntegerToCommaStyleString(mem));
+    RKLog("mem = %s   nfft = %s", RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(nfft));
     
     RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);    
     RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
     
-    bytes = config->waveform->depth * sizeof(RKComplex);
+    bytes = nfft * sizeof(RKComplex);
     for (k = 0; k < config->waveform->count; k++) {
         for (j = 0; j < config->waveform->filterCounts[k]; j++) {
             const int origin = config->waveform->filterAnchors[k][j].origin;
@@ -424,15 +427,11 @@ void proc(UserParams *arg) {
             );
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&filters[k][j], RKSIMDAlignSize, bytes))
             memcpy(filters[k][j], &config->waveform->samples[k][origin], length * sizeof(RKComplex));
-            memset(&filters[k][j][length], 0, (config->waveform->depth - length) * sizeof(RKComplex));
-        }
-    }
+            memset(&filters[k][j][length], 0, (nfft - length) * sizeof(RKComplex));
 
-    #if defined(_DEBUG_FILTER)
-    for (k = 0; k < config->waveform->count; k++) {
-        for (j = 0; j < config->waveform->filterCounts[k]; j++) {
-            printf("config->waveform->filterAnchors[k=%d][j=%d].length = %d\n", k, j,
-                config->waveform->filterAnchors[k][j].length);
+            #if defined(_DEBUG_SHOW_FILTER_COEFFICIENTS_)
+            printf("config->waveform->filterAnchors[k=%d][j=%d].length = %d   .filterGain = %.2f dB\n", k, j,
+                config->waveform->filterAnchors[k][j].length, config->waveform->filterAnchors[k][j].filterGain);
             for (i = 0; i < config->waveform->filterAnchors[j][0].length; i++) {
                 const float a = sqrtf(filters[k][j][i].i * filters[k][j][i].i + filters[k][j][i].q * filters[k][j][i].q);
                 printf("config->waveform->samples[%d][%3d] = %+8.5f%+8.5fi  -->  filter[%d][%d][%3d] = %8.5f%+8.5fi (%.4f)\n",
@@ -440,10 +439,17 @@ void proc(UserParams *arg) {
                     k, j, i, filters[k][j][i].i, filters[k][j][i].q,
                     a);
             }
+            for (; i < nfft; i++) {
+                const float a = sqrtf(filters[k][j][i].i * filters[k][j][i].i + filters[k][j][i].q * filters[k][j][i].q);
+                printf("config->waveform->samples[%d][%d] =  _._____+_._____i  -->  filter[%d][%d][%3d] = %8.5f%+8.5fi (%.4f)\n",
+                    k, i,
+                    k, j, i, filters[k][j][i].i, filters[k][j][i].q,
+                    a);
+            }
             printf("\n");
+            #endif
         }
     }
-    #endif
 
     // Compressed Output
     FILE *outfid = NULL;
@@ -761,6 +767,7 @@ void proc(UserParams *arg) {
 
     fclose(fid);
     if (arg->compressedOutput && outfid) {
+        RKLog("Closing output file ...\n");
         fclose(outfid);
     }
 
