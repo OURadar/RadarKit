@@ -193,6 +193,11 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
 
+    if (arg->compressedOutput && fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
+        RKLog("Error. Cannot compress match-filter processed I/Q data.");
+        exit(EXIT_FAILURE);
+    }
+
     // -----------------------------------------------------------------------------------------
     // Waveform override -- temporary
     // For now, override waveform 1 with waveform 0
@@ -411,7 +416,7 @@ void proc(UserParams *arg) {
     mem += 2 * nfft * sizeof(RKFloat);
     RKLog("mem = %s   nfft = %s", RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(nfft));
     
-    RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);    
+    RKFFTModule *fftModule = RKFFTModuleInit(nfft, arg->verbose);
     RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
     
     bytes = nfft * sizeof(RKComplex);
