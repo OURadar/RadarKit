@@ -859,7 +859,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
 
             #if defined(_WAVE_SAMPLES)
             for (i = 10; i < 15; i++) {
-                printf("%d  %3d%+3dj   %.3e%+.3ej\n", i,
+                printf("%d  TX: %3d%+3dj    C: %.3e%+.3ej\n", i,
                     waveform->iSamples[k][i].i, waveform->iSamples[k][i].q,
                     waveform->samples[k][i].i, waveform->samples[k][i].q);
             }
