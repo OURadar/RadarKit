@@ -198,16 +198,6 @@ void proc(UserParams *arg) {
         exit(EXIT_FAILURE);
     }
 
-    // -----------------------------------------------------------------------------------------
-    // Waveform override -- temporary
-    // For now, override waveform 1 with waveform 0
-    // memcpy(config->waveform->samples[1], config->waveform->samples[0], config->waveform->depth * sizeof(RKComplex));
-    // memcpy(config->waveform->filterAnchors[1], config->waveform->filterAnchors[0], sizeof(RKFilterAnchor));
-    // RKWaveformFree(config->waveformDecimate);
-    // config->waveformDecimate = RKWaveformCopy(config->waveform);
-
-    // -----------------------------------------------------------------------------------------
-
     //
 
     RKBuffer pulseBuffer;
