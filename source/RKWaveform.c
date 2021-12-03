@@ -869,7 +869,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
                 g = 10.0f * log10f(g);
             } else {
                 // Need to double check this equation
-                g = 10.0f * log10f(g * sqrtf(2.0));
+                g = 10.0f * log10f(g * 2.0);
             }
             if (waveform->filterAnchors[k][j].filterGain - g > +0.1f ||
                 waveform->filterAnchors[k][j].filterGain - g < -0.1f) {
@@ -898,20 +898,17 @@ void RKWaveformSummary(RKWaveform *waveform) {
                       waveform->filterAnchors[k][j].sensitivityGain,
                       waveform->filterAnchors[k][j].subCarrierFrequency);
             }
-            //RKInt16C *v = waveform->iSamples[k] + waveform->filterAnchors[k][j].origin;
             RKComplex *v = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             g = 0.0f;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
-                //vi = (RKFloat)v->i / RKWaveformDigitalAmplitude;
-                //vq = (RKFloat)v->q / RKWaveformDigitalAmplitude;
                 vi = v->i;
                 vq = v->q;
                 g += vi * vi + vq * vq;
                 v++;
             }
             g = 10.0f * log10f(g);
-            if (g < 0.0f) {
-                RKLog("Warning. g = %.1f dB\n", g);
+            if (g < -0.001f) {
+                RKLog("Warning. Compression filter has g = %.4f dB\n", g);
             }
         }
     }
