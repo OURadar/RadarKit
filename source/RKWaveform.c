@@ -621,11 +621,20 @@ void RKWaveformConjuate(RKWaveform *waveform) {
 
 void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     int i, j, k, l;
-    waveform->fs /= stride;
-    waveform->depth /= stride;
     RKComplex *x;
     RKInt16C *w;
     RKFloat gainAdjust = sqrtf(stride);
+    if ((waveform->depth / stride) * stride != waveform->depth) {
+        x = waveform->samples[0];
+        RKFloat s = 0.0f;
+        for (j = 0, i = 0; j < waveform->depth / stride; j++, i += stride) {
+            s += x[i].i * x[i].i + x[i].q * x[i].q;
+        }
+        RKLog("Info. Incomplete downsampling. gainAdjust = %.4f --> %.4f *\n", gainAdjust, sqrtf(1.0f / s));
+        gainAdjust = sqrt(1.0f / s);
+    }
+    waveform->fs /= stride;
+    waveform->depth /= stride;
     for (l = 0; l < waveform->count; l++) {
         for (k = 0; k < waveform->filterCounts[l]; k++) {
             waveform->filterAnchors[l][k].origin /= stride;
