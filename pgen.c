@@ -499,8 +499,7 @@ void proc(UserParams *arg) {
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
-//    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
-    for (k = 0; k < 4; k++) {
+    for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
         j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
         if (j == RKResultSuccess) {
