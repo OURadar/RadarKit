@@ -624,21 +624,27 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
     RKComplex *x;
     RKInt16C *w;
     RKFloat gainAdjust = sqrtf(stride);
-    if ((waveform->depth / stride) * stride != waveform->depth) {
+    const int downSampledDepth = ((waveform->depth + stride - 1) / stride);
+    if (waveform->depth > 1 && downSampledDepth * stride != waveform->depth) {
         x = waveform->samples[0];
         RKFloat s = 0.0f;
-        for (j = 0, i = 0; j < waveform->depth / stride; j++, i += stride) {
+        for (j = 0, i = 0; j < downSampledDepth; j++, i += stride) {
             s += x[i].i * x[i].i + x[i].q * x[i].q;
         }
-        RKLog("Info. Incomplete downsampling. gainAdjust = %.4f --> %.4f *\n", gainAdjust, sqrtf(1.0f / s));
+        RKLog("Info. Non-integer downsampling: %s -- / %d --> %s   j = %s  gainAdjust = %.4f --> %.4f *\n",
+            RKIntegerToCommaStyleString(waveform->depth),
+            stride,
+            RKIntegerToCommaStyleString(downSampledDepth),
+            RKIntegerToCommaStyleString(j),
+            gainAdjust, sqrtf(1.0f / s));
         gainAdjust = sqrt(1.0f / s);
     }
     waveform->fs /= stride;
-    waveform->depth /= stride;
+    waveform->depth = downSampledDepth;
     for (l = 0; l < waveform->count; l++) {
         for (k = 0; k < waveform->filterCounts[l]; k++) {
             waveform->filterAnchors[l][k].origin /= stride;
-            waveform->filterAnchors[l][k].length /= stride;
+            waveform->filterAnchors[l][k].length = MAX(1, waveform->filterAnchors[l][k].length / stride);
             if (waveform->filterAnchors[l][k].inputOrigin % stride) {
                 waveform->filterAnchors[l][k].inputOrigin += stride;
             }
@@ -650,7 +656,7 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             if (waveform->filterAnchors[l][k].maxDataLength % stride) {
                 waveform->filterAnchors[l][k].maxDataLength += stride;
             }
-            waveform->filterAnchors[l][k].maxDataLength /= stride;
+            waveform->filterAnchors[l][k].maxDataLength = MAX(1, waveform->filterAnchors[l][k].maxDataLength / stride);
             waveform->filterAnchors[l][k].subCarrierFrequency *= stride;
         }
         x = waveform->samples[l];
