@@ -418,12 +418,14 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {0, 0, 0, 0}
     };
     
-    // First pass: just check for verbosity level
+    // Construct a long-option string
     s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
         struct option *o = &long_options[k];
-        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->val == 'v' ? "" : "::");
+        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
     }
+
+    // First pass: just check for verbosity level
     int opt, long_index = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, long_options, &long_index)) != -1) {
         switch (opt) {
@@ -450,11 +452,11 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     }
 
     // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
-    s = 0;
-    for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
-        struct option *o = &long_options[k];
-        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
-    }
+    // s = 0;
+    // for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
+    //     struct option *o = &long_options[k];
+    //     s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+    // }
     #if defined(DEBUG)
     printf("str = %s\n", str);
     #endif
