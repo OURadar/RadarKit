@@ -1799,12 +1799,19 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     
     printf("\n");
 
+    if (!(waveform->type & RKWaveformTypeIsComplex)) {
+        RKLog("Digital down-conversion ...\n");
+        RKWaveformDownConvert(waveform);
+    }
+    RKLog("Down-sampling / 8 ...\n");
     RKWaveformDecimate(waveform, 8);
     RKWaveformSummary(waveform);
     
     printf("\n");
     
-    RKWaveformDecimate(waveform, 15);
+    const int k = 4;
+    RKLog("Down-sampling / %d ...\n", k);
+    RKWaveformDecimate(waveform, k);
     RKWaveformSummary(waveform);
 
     RKWaveformFree(waveform);
