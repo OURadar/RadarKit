@@ -167,4 +167,7 @@ char *RKCountryFromPosition(const double latitude, const double longitude);
 char *RKGetNextKeyValue(char *json, char *key, char *value);
 int RKMergeColumns(char *, const char *, const char *, const int);
 
+char *RKBinaryString(char *dst, void *src, size_t count);
+void RKHeadTailBinaryString(char *dst, void *src, size_t count);
+
 #endif /* rk_misc_h */

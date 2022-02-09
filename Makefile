@@ -16,11 +16,14 @@ endif
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I headers/RadarKit -I /usr/local/include -I /usr/include -fPIC
 
+LDFLAGS = -L./ -L/usr/local/lib
+
 ifeq ($(KERNEL), Darwin)
 	CFLAGS += -fms-extensions -Wno-microsoft
-endif
+	CFLAGS += -I/usr/local/opt/openssl@1.1/include
 
-LDFLAGS = -L ./ -L /usr/local/lib
+	LDFLAGS += -L/usr/local/opt/openssl@1.1/lib
+endif
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
@@ -31,7 +34,7 @@ OBJS += RKWaveform.o
 OBJS += RKPositionEngine.o
 OBJS += RKPulseEngine.o RKPulseRingFilter.o RKMomentEngine.o
 OBJS += RKRadarRelay.o
-OBJS += RKNetwork.o RKServer.o RKClient.o
+OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
 OBJS += RKPulsePair.o RKMultiLag.o RKSpectralMoment.o RKCalibrator.o
 OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
@@ -60,14 +63,14 @@ else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
 		CFLAGS += -D_GNU_SOURCE -D_EXPLICIT_INTRINSIC -msse -msse2 -msse3 -msse4 -msse4.1
-		LDFLAGS += -L /usr/lib64
+		LDFLAGS += -L/usr/lib64
 	else
 		CFLAGS += -D_GNU_SOURCE
-		LDFLAGS += -L /usr/lib64
+		LDFLAGS += -L/usr/lib64
 	endif
 endif
 
-LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
+LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm -lssl
 
 ifeq ($(KERNEL), Darwin)
 else
