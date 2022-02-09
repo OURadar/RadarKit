@@ -1141,6 +1141,11 @@ char *RKCountryFromPosition(const double latitude, const double longitude) {
 		"ZM", "-13.133897", "27.849332", "Zambia",
 		"ZW", "-19.015438", "29.154857", "Zimbabwe"
 	};
+    // Special case for the US until we find a better solution
+    if (longitude > -125.0 && longitude < -65.0 && latitude > 25.0 && latitude < 50.0) {
+        strcpy(country, "United States");
+        return country;
+    }
 	int index = 0;
 	double minimum = 999.99;
 	for (int k = 0; k < sizeof(countries) / sizeof(countries[0]); k+=4) {

@@ -715,14 +715,16 @@ void RKTestGetCountry(void) {
         { 35.222567, -97.439478},  // United States
         { 36.391592, 127.031428},  // South Korea
         {-11.024860, -75.279694},  // Peru
-        { 34.756300, 135.615895}   // Japan
+        { 34.756300, 135.615895},  // Japan
+        { 41.963505, -70.667915}   // United States (far east)
     };
     
     RKName answers[] = {
         "United States",
         "South Korea",
         "Peru",
-        "Japan"
+        "Japan",
+        "United States"
     };
 
     for (k = 0; k < sizeof(coords) / sizeof(coords[0]); k++) {
