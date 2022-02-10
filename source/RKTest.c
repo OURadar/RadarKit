@@ -621,6 +621,11 @@ void RKTestParseJSONString(void) {
     "]\n";
 
     printf("%s\n", jsonArray);
+
+    char element[256];
+    RKGetNextElement(element, jsonArray);
+
+    printf("element = %s\n", element);
 }
 
 void RKTestFileManager(void) {

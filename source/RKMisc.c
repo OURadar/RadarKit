@@ -310,6 +310,63 @@ void RKReviseLogicalValues(char *string) {
     }
 }
 
+char *RKGetNextElement(char *element, const char *source) {
+    char *c = (char *)source;
+    while (*c != '{') {
+        c++;
+    }
+    char *start = c;
+    char *end = c + strlen(source);
+    int curly = 0;
+    bool doubleQuote = false;
+    bool singleQuote = false;
+    int round = 0;
+    int square = 0;
+    while (c < end) {
+        printf("c = '%c'\n", *c);
+        switch (*c) {
+            case '{':
+                curly++;
+                break;
+            case '}':
+                curly--;
+                break;
+            case '\'':
+                singleQuote = !singleQuote;
+                break;
+            case '"':
+                doubleQuote = !doubleQuote;
+                break;
+            case '(':
+                round++;
+                break;
+            case ')':
+                round--;
+                break;
+            case '[':
+                square++;
+                break;
+            case ']':
+                square--;
+                break;
+            default:
+                break;
+        }
+        if (*c == ',' &&
+            curly == 0 &&
+            singleQuote == false &&
+            doubleQuote == false &&
+            round == 0 &&
+            square == 0) {
+            break;
+        }
+        c++;
+    }
+    int size = (int)(c - source);
+    memcpy(element, start, (size_t)size);
+    return (char *)(source + size + 1);
+}
+
 #pragma mark -
 
 ////////////////////////////////////////////////
