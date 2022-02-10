@@ -17,6 +17,12 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
+//  3.0    - 2/xx/2022
+//         - Cloud communication to RadarHub
+//           - Added RKWebSocket
+//           - Added RKReporter
+//         -
+//
 //  2.6    - 6/9/2021
 //         - Fixed bug in reading version 5 in pgen
 //         - Variable buildNo is now version
@@ -311,5 +317,6 @@
 #include <RadarKit/RKHealthRelayTweeta.h>
 #include <RadarKit/RKRadarRelay.h>
 #include <RadarKit/RKHostMonitor.h>
+#include <RadarKit/RKReporter.h>
 
 #endif /* defined(__RadarKit__) */

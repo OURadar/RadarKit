@@ -29,6 +29,7 @@
 #include <RadarKit/RKFileManager.h>
 #include <RadarKit/RKRadarRelay.h>
 #include <RadarKit/RKHostMonitor.h>
+#include <RadarKit/RKWebSocket.h>
 
 #define xstr(s) str(s)
 #define str(s) #s

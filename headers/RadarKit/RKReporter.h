@@ -11,4 +11,23 @@
 
 #include <RadarKit/RKRadar.h>
 
+typedef struct rk_reporter {
+    // User set variables
+    RKName                           name;
+    int                              verbose;
+    RKRadar                          *radar;
+
+    // Program set variables
+    pthread_mutex_t                  mutex;
+
+    // Status / health
+    size_t                           memoryUsage;
+} RKReporter;
+
+RKReporter *RKReporterInit(void);
+void RKReporterFree(RKReporter *);
+
+void RKReporterStart(RKReporter *);
+void RKReporterStop(RKReporter *);
+
 #endif

@@ -16,6 +16,26 @@
 
 #pragma mark - Life Cycle
 
+RKReporter *RKReporterInit(void) {
+    return NULL;
+}
+
+void RKReporterFree(RKReporter *engine) {
+    free(engine);
+}
+
 #pragma mark - Properties
 
+void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
+    engine->verbose = verbose;
+}
+
 #pragma mark - Interactions
+
+void RKReporterStart(RKReporter *engine) {
+
+}
+
+void RKReporterStop(RKReporter *engine) {
+
+}
