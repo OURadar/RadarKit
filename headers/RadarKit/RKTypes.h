@@ -113,6 +113,7 @@
 #define RKOrangeColor                        "\033[38;5;208m"
 #define RKYellowColor                        "\033[38;5;226m"
 #define RKLimeColor                          "\033[38;5;118m"
+#define RKMintColor                          "\033[38;5;43m"
 #define RKGreenColor                         "\033[38;5;46m"
 #define RKTealColor                          "\033[38;5;49m"
 #define RKIceBlueColor                       "\033[38;5;51m"

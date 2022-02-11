@@ -717,13 +717,17 @@ void RKTestParseJSONString(void) {
     c = RKJSONGetElement(element, c);
     printf("element = %s (%d)\n", element, (int)strlen(element));
 
+    // Test parsing key-value pair from an array
     c = element + 1;
     do {
         c = RKJSONGetElement(small, c);
         k = (int)strlen(small);
         if (k) {
             RKJSONKeyValueFromString(key, value, small);
-            printf("small = %s (%d)    key = %s   value = %s\n", small, (int)strlen(small), key, value);
+            printf("small = " RKMintColor "%-38s" RKNoColor " (%d)    "
+                   "k " RKOrangeColor "%-30s" RKNoColor "   "
+                   "v " RKYellowColor "%s" RKNoColor "\n",
+                   small, (int)strlen(small), key, value);
         } else {
             printf("small = (empty) (%d)\n", (int)strlen(small));
         }
