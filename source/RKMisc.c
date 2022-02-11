@@ -344,6 +344,14 @@ void RKReviseLogicalValues(char *string) {
     }
 }
 
+char *RKJSONSkipWhiteSpaces(const char *haystack) {
+    char *c = (char *)haystack;
+    while (*c == ' ' || *c == '\r' || *c == '\n') {
+        c++;
+    }
+    return c;
+}
+
 char *RKJSONForwardPassed(const char *source, const char needle) {
     char *c = (char *)source;
     while (*c == ' ' || *c == '\n' || *c == '\r' || *c == needle) {
@@ -354,6 +362,10 @@ char *RKJSONForwardPassed(const char *source, const char needle) {
 
 char *RKJSONForwardPassedComma(const char *source) {
     return RKJSONForwardPassed(source, ',');
+}
+
+char *RKJSONForwardPassedColon(const char *source) {
+    return RKJSONForwardPassed(source, ':');
 }
 
 char *RKJSONGetElement(char *element, const char *source) {
@@ -374,10 +386,9 @@ char *RKJSONGetElement(char *element, const char *source) {
     int k;
     #endif
 
-    while (*c == ' ' || *c == '\r' || *c == '\n') {
-        c++;
-    }
     char *end = c + strlen(source);
+
+    c = RKJSONSkipWhiteSpaces(c);
 
     while (c < end) {
         switch (*c) {
@@ -465,11 +476,14 @@ char *RKJSONGetElement(char *element, const char *source) {
             singleQuote == false &&
             doubleQuote == false &&
             round <= 0 &&
-            square <= 0) {
+            square <= 0 &&
+            (*c == ',')) {
+            c++;
             break;
         }
     }
     *d = '\0';
+    c = RKJSONSkipWhiteSpaces(c);
     return c;
 }
 

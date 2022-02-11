@@ -567,7 +567,11 @@ void RKTestParseJSONString(void) {
     const size_t elementDepth = 4096;
     char *jsonArray = (char *)malloc(1024 * elementDepth);
     char *element = (char *)malloc(elementDepth);
+    char *small = (char *)malloc(elementDepth);
+    char *c;
+
     memset(element, 0, elementDepth);
+
     sprintf(jsonArray,
         "[\n"
         "    {\n"
@@ -644,7 +648,7 @@ void RKTestParseJSONString(void) {
 
     printf("%s\n", jsonArray);
 
-    char *c = jsonArray + 1;
+    c = jsonArray + 1;
 
     while (*c != '\0') {
         c = RKJSONGetElement(element, c);
@@ -658,13 +662,65 @@ void RKTestParseJSONString(void) {
                 printf("connected = %s\n", stringObject);
             }
         }
-        c = RKJSONForwardPassedComma(c);
         printf("\n");
     }
     printf("c = %c %s %d\n", *c, *c == '\0' ? "(EOL)" : "", (int)(c - jsonArray + 1));
 
+    printf("===\n");
+
+    c = jsonArray + 1;
+    c = RKJSONGetElement(element, c);
+    printf("element = %s (%d)\n", element, (int)strlen(element));
+    c = RKJSONGetElement(element, c);
+    printf("element = %s (%d)\n", element, (int)strlen(element));
+    c = RKJSONGetElement(element, c);
+    printf("element = %s (%d)\n", element, (int)strlen(element));
+    c = RKJSONGetElement(element, c);
+    printf("element = %s (%d)\n", element, (int)strlen(element));
+
+    c = element + 1;
+    c = RKJSONGetElement(small, c);
+    printf("small = %s (%d)\n", small, (int)strlen(small));
+    c = RKJSONGetElement(small, c);
+    printf("small = %s (%d)\n", small, (int)strlen(small));
+    c = RKJSONGetElement(small, c);
+    printf("small = %s (%d)\n", small, (int)strlen(small));
+    c = RKJSONGetElement(small, c);
+    printf("small = %s (%d)\n", small, (int)strlen(small));
+    
+    sprintf(jsonArray,
+            "     {\n"
+            "        \"name\": \"stargate\",\n"
+            "        \"id\": 3535738166,\n"
+            "        \"hostname\": \"mother\",\n"
+            "        \"advertises\": \"[\\\"encouragement\\\"]\",\n"
+            "        \"controlling\": \"{}\",\n"
+            "        \"controlling_connected\": \"{}\",\n"
+            "        \"controlled_by\": null,\n"
+            "        \"control_requested\": null,\n"
+            "        \"connected\": true,\n"
+            "        \"interested_in_logs\": true,\n"
+            "        \"interested_in_systemchanged\": false,\n"
+            "        \"controllable\": true\n"
+            "    },\n"
+            "");
+    
+    printf("jsonArray =\n%s\n", jsonArray);
+    
+    c = jsonArray;
+    c = RKJSONGetElement(element, c);
+    printf("element = %s (%d)\n", element, (int)strlen(element));
+
+    c = element + 1;
+    do {
+        c = RKJSONGetElement(small, c);
+        k = (int)strlen(small);
+        printf("small = %s (%d)\n", k ? small : "(empty)", (int)strlen(small));
+    } while (strlen(small) > 0);
+
     free(jsonArray);
     free(element);
+    free(small);
 }
 
 void RKTestFileManager(void) {
