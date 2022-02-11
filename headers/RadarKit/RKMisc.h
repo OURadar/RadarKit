@@ -152,6 +152,7 @@ void RKReplaceFileExtension(char *filename, const char *pattern, const char *rep
 char *RKSignalString(const int);
 
 int RKStripTail(char *);
+int RKUnquote(char *);
 int RKIndentCopy(char *dst, char *src, const int width);
 int RKStringCenterized(char *dst, const char *src, const int width);
 char *RKNextNoneWhite(const char *);

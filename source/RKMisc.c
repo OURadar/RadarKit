@@ -148,15 +148,21 @@ char *RKGetValueOfKey(const char *string, const char *key) {
     char *s, *e;
     size_t len;
     char *valueString = valueStrings[k];
-    char *keyPosition = strcasestr(string, key);
+    char quotedKey[256];
+    sprintf(quotedKey, "\"%s\"", key);
+    char *keyPosition = strcasestr(string, quotedKey);
+    if (keyPosition == NULL) {
+        sprintf(quotedKey, "'%s'", key);
+        keyPosition = strcasestr(string, quotedKey);
+    }
     
     if (keyPosition != NULL) {
         // Find start of the value
-        s = strchr(keyPosition + strlen(key), ':');
+        s = strchr(keyPosition + strlen(quotedKey), ':');
         if (s != NULL) {
             do {
                 s++;
-            } while (*s == '"' || *s == '\'' || *s == ' ');
+            } while (*s == ' ' || *s == '\r' || *s == '\n');
         } else {
             return NULL;
         }
@@ -176,8 +182,8 @@ char *RKGetValueOfKey(const char *string, const char *key) {
             }
             return valueString;
         } else if (*s == '{') {
-            // Find the end of curly bracket, return the entire array
-            e = s;
+            // Find the end of curly bracket, return the entire dictionary
+            e = s + 1;
             while (*e != '}') {
                 e++;
             }
@@ -189,10 +195,38 @@ char *RKGetValueOfKey(const char *string, const char *key) {
                 valueString[0] = '\0';
             }
             return valueString;
-        }
+        } else if (*s == '"') {
+            // Find the end of double quote, return the entire string
+            e = s + 1;
+            while (*e != '"') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        } else if (*s == '\'') {
+            // Find the end of single quote, return the entire string
+            e = s + 1;
+            while (*e != '\'') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        } 
         // Find end of the value
         e = s;
-        while (*e != '"' && *e != '\'' && *e != ',' && *e != '}' && *e != ']') {
+        while (*e != ',' && *e != '}' && *e != ']') {
             e++;
         }
         len = MIN(255, e - s);
@@ -835,6 +869,18 @@ int RKStripTail(char *string) {
         *c-- = '\0';
         k++;
     }
+    return k;
+}
+
+int RKUnquote(char *string) {
+    char q = string[0];
+    if (q != '"' && q != '\'') {
+        return (int)strlen(string);
+    }
+    char *e = strchr(string + 1, q);
+    int k = (int)(e - string - 1);
+    memmove(string, string + 1, k);
+    string[k] = '\0';
     return k;
 }
 

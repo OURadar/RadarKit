@@ -445,21 +445,32 @@ void RKTestParseJSONString(void) {
     printf("Getting specific key:\n");
     printf("---------------------\n");
     char *stringObject, *stringValue, *stringEnum;
-    if ((stringObject = RKGetValueOfKey(string, "latitude")) != NULL) {
+    double number;
+    if ((stringObject = RKGetValueOfKey(string, "GPS Latitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
         stringEnum = RKGetValueOfKey(stringObject, "enum");
         if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-            printf("latitude = %.7f\n", atof(stringValue));
+            if (*stringValue == '"') {
+                sscanf(stringValue, "\"%lf\"", &number);
+            } else {
+                number = atof(stringValue);
+            }
+            printf("GPS Latitude = %s -> %.7f\n", stringValue, number);
         }
     }
     printf("\n");
-    if ((stringObject = RKGetValueOfKey(string, "longitude")) != NULL) {
+    if ((stringObject = RKGetValueOfKey(string, "GPS Longitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
         stringEnum = RKGetValueOfKey(stringObject, "enum");
         if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-            printf("longitude = %.7f\n", atof(stringValue));
+            if (*stringValue == '"') {
+                sscanf(stringValue, "\"%lf\"", &number);
+            } else {
+                number = atof(stringValue);
+            }
+            printf("GPS Longitude = %s -> %.7f\n", stringValue, number);
         }
     }
 
@@ -486,11 +497,16 @@ void RKTestParseJSONString(void) {
     printf("stringValue = %s\n", stringValue == NULL ? "(NULL)" : stringValue);
     printf("stringEnum = %s\n", stringEnum == NULL ? "(NULL)" : stringEnum);
     if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-        printf("longitude = %.7f\n", atof(stringValue));
+        if (*stringValue == '"') {
+            sscanf(stringValue, "\"%lf\"", &number);
+        } else {
+            number = atof(stringValue);
+        }
+        printf("number = %s -> %.7f\n", stringValue, number);
     }
 
     printf("\n===\n\n");
-    
+
     int k;
     size_t s;
     const int N = 8;
@@ -499,6 +515,8 @@ void RKTestParseJSONString(void) {
     printf("%s (%d characters)\n\n", string, (int)strlen(string));
 
     stringObject = RKGetValueOfKey(string, "name");
+    printf("name = %s\n", stringObject);
+    RKUnquote(stringObject);
     printf("name = %s\n", stringObject);
     stringObject = RKGetValueOfKey(string, "PieceCount");
     printf("Piece Count = %s\n", stringObject);
@@ -628,31 +646,24 @@ void RKTestParseJSONString(void) {
 
     char *c = jsonArray + 1;
 
-    c = RKJSONGetElement(element, c);
-    printf("element = %s\n\n", element);
+    while (*c != '\0') {
+        c = RKJSONGetElement(element, c);
+        printf("element = %s (%d)\n", element, (int)strlen(element));
+        if (strlen(element) > 8) {
+            if ((stringObject = RKGetValueOfKey(element, "name"))) {
+                RKUnquote(stringObject);
+                printf("name = %s\n", stringObject);
+            }
+            if ((stringObject = RKGetValueOfKey(element, "connected"))) {
+                printf("connected = %s\n", stringObject);
+            }
+        }
+        c = RKJSONForwardPassedComma(c);
+        printf("\n");
+    }
+    printf("c = %c %s %d\n", *c, *c == '\0' ? "(EOL)" : "", (int)(c - jsonArray + 1));
 
-    c = RKJSONForwardPassedComma(c);
-    c = RKJSONGetElement(element, c);
-    printf("element = %s\n\n", element);
-
-    c = RKJSONForwardPassedComma(c);
-    c = RKJSONGetElement(element, c);
-    printf("element = %s\n\n", element);
-
-    c = RKJSONForwardPassedComma(c);
-    c = RKJSONGetElement(element, c);
-    printf("element = %s\n\n", element);
-
-    c = RKJSONForwardPassedComma(c);
-    c = RKJSONGetElement(element, c);
-    printf("element = %s\n\n", element);
-
-    c = RKJSONForwardPassedComma(c);
-    c = RKJSONGetElement(element, c);
-    printf("element = %s\n\n", element);
-
-    printf("c = %c\n", *c);
-
+    free(jsonArray);
     free(element);
 }
 
