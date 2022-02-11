@@ -310,32 +310,61 @@ void RKReviseLogicalValues(char *string) {
     }
 }
 
-char *RKGetNextElement(char *element, const char *source) {
+char *RKJSONForwardPassed(const char *source, const char needle) {
     char *c = (char *)source;
-    while (*c != '{') {
+    while (*c == ' ' || *c == '\n' || *c == '\r' || *c == needle) {
         c++;
     }
-    char *start = c;
-    char *end = c + strlen(source);
-    int curly = 0;
-    bool doubleQuote = false;
+    return c;
+}
+
+char *RKJSONForwardPassedComma(const char *source) {
+    return RKJSONForwardPassed(source, ',');
+}
+
+char *RKJSONGetElement(char *element, const char *source) {
+    char *c = (char *)source;
+    char *d = element;
+    bool slash = false;
+    bool colon = false;
+    bool comma = false;
     bool singleQuote = false;
+    bool doubleQuote = false;
+    int space = 0;
+    int curly = 0;
     int round = 0;
     int square = 0;
+
+    #if defined(DEBUG_GET_NEXT_ELEMENT)
+    char str[32];
+    int k;
+    #endif
+
+    while (*c == ' ' || *c == '\r' || *c == '\n') {
+        c++;
+    }
+    char *end = c + strlen(source);
+
     while (c < end) {
-        printf("c = '%c'\n", *c);
         switch (*c) {
-            case '{':
-                curly++;
-                break;
-            case '}':
-                curly--;
+            case '\\':
+                slash = true;
                 break;
             case '\'':
                 singleQuote = !singleQuote;
                 break;
             case '"':
-                doubleQuote = !doubleQuote;
+                if (!slash) {
+                    doubleQuote = !doubleQuote;
+                } else {
+                    slash = false;
+                }
+                break;
+            case '{':
+                curly++;
+                break;
+            case '}':
+                curly--;
                 break;
             case '(':
                 round++;
@@ -352,19 +381,62 @@ char *RKGetNextElement(char *element, const char *source) {
             default:
                 break;
         }
-        if (*c == ',' &&
-            curly == 0 &&
+
+        if (!doubleQuote) {
+            if (*c == ':') {
+                colon = true;
+                space = 0;
+            } if (*c == ',') {
+                comma = true;
+                space = 0;
+            }
+            if (*c == ' ') {
+                space++;
+            }
+        }
+
+        if (doubleQuote) {
+            *d++ = *c;
+        } else {
+            if (*c != '\r' && *c != '\n') {
+                if (*c != ' ') {
+                    *d++ = *c;
+                } else if (*c == ' ' && space == 1 && (comma == true || colon == true)) {
+                    *d++ = *c;
+                }
+            }
+        }
+
+        #if defined(DEBUG_GET_NEXT_ELEMENT)
+        k = sprintf(str, "\033[48;5;238;38;5;15m");
+        switch (*c) {
+            case '\r':
+                k += sprintf(str + k, "\\r");
+                break;
+            case '\n':
+                k += sprintf(str + k, "\\n");
+                break;
+            default:
+                k += sprintf(str + k, "%c", *c);
+                break;
+        }
+        sprintf(str + k, "\033[m%s", k == 20 ? " " : "");
+        printf("%s  '' %d  \"\" %d  {} %d  () %d  [] %d  s %d \033[48;5;238m%s\033[m \n",
+            str, singleQuote, doubleQuote, curly, round, square, space, element);
+        #endif
+
+        c++;
+
+        if (curly <= 0 &&
             singleQuote == false &&
             doubleQuote == false &&
-            round == 0 &&
-            square == 0) {
+            round <= 0 &&
+            square <= 0) {
             break;
         }
-        c++;
     }
-    int size = (int)(c - source);
-    memcpy(element, start, (size_t)size);
-    return (char *)(source + size + 1);
+    *d = '\0';
+    return c;
 }
 
 #pragma mark -

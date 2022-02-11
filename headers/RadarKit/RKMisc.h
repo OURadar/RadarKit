@@ -124,7 +124,9 @@ char *RKGetValueOfKey(const char *string, const char *key);
 void RKReplaceAllValuesOfKey(char *string, const char *key, int value);
 void RKReplaceEnumOfKey(char *string, const char *key, int value);
 void RKReviseLogicalValues(char *);
-char *RKGetNextElement(char *, const char *);
+char *RKJSONForwardPassed(const char *, const char);
+char *RKJSONForwardPassedComma(const char *);
+char *RKJSONGetElement(char *, const char *);
 
 char *RKUIntegerToCommaStyleString(const unsigned long long);
 char *RKIntegerToCommaStyleString(const long long);

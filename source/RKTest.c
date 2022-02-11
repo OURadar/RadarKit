@@ -546,86 +546,114 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
 
-    char jsonArray[] = ""
-    "[\n"
-    "    {\n"
-    "        \"name\": \"thing-0-0-0-SoCd\",\n"
-    "        \"id\": 1636945645,\n"
-    "        \"hostname\": \"thing-0-0-0\",\n"
-    "        \"advertises\": \"[]\",\n"
-    "        \"controlling\": \"{}\",\n"
-    "        \"controlling_connected\": \"{}\",\n"
-    "        \"controlled_by\": null,\n"
-    "        \"control_requested\": null,\n"
-    "        \"connected\": true,\n"
-    "        \"interested_in_logs\": false,\n"
-    "        \"interested_in_systemchanged\": false,\n"
-    "        \"controllable\": true\n"
-    "    },\n"
-    "    {\n"
-    "        \"name\": \"lights\",\n"
-    "        \"id\": 514840374,\n"
-    "        \"hostname\": \"mother\",\n"
-    "        \"advertises\": \"[]\",\n"
-    "        \"controlling\": \"{}\",\n"
-    "        \"controlling_connected\": \"{}\",\n"
-    "        \"controlled_by\": null,\n"
-    "        \"control_requested\": null,\n"
-    "        \"connected\": true,\n"
-    "        \"interested_in_logs\": false,\n"
-    "        \"interested_in_systemchanged\": false,\n"
-    "        \"controllable\": false\n"
-    "    },\n"
-    "    {\n"
-    "        \"name\": \"orch\",\n"
-    "        \"id\": 2492639455,\n"
-    "        \"hostname\": \"mother\",\n"
-    "        \"advertises\": \"[]\",\n"
-    "        \"controlling\": \"{}\",\n"
-    "        \"controlling_connected\": \"{}\",\n"
-    "        \"controlled_by\": null,\n"
-    "        \"control_requested\": null,\n"
-    "        \"connected\": true,\n"
-    "        \"interested_in_logs\": false,\n"
-    "        \"interested_in_systemchanged\": false,\n"
-    "        \"controllable\": false\n"
-    "    },\n"
-    "    {\n"
-    "        \"name\": \"stargate\",\n"
-    "        \"id\": 3535738166,\n"
-    "        \"hostname\": \"mother\",\n"
-    "        \"advertises\": \"[\\\"encouragement\\\"]\",\n"
-    "        \"controlling\": \"{}\",\n"
-    "        \"controlling_connected\": \"{}\",\n"
-    "        \"controlled_by\": null,\n"
-    "        \"control_requested\": null,\n"
-    "        \"connected\": true,\n"
-    "        \"interested_in_logs\": true,\n"
-    "        \"interested_in_systemchanged\": false,\n"
-    "        \"controllable\": true\n"
-    "    },\n"
-    "    {\n"
-    "        \"name\": \"thing-0-0-2-SoCd\",\n"
-    "        \"id\": 4031844090,\n"
-    "        \"hostname\": \"thing-0-0-2\",\n"
-    "        \"advertises\": \"[]\",\n"
-    "        \"controlling\": \"{}\",\n"
-    "        \"controlling_connected\": \"{}\",\n"
-    "        \"controlled_by\": null,\n"
-    "        \"control_requested\": null,\n"
-    "        \"connected\": true,\n"
-    "        \"interested_in_logs\": false,\n"
-    "        \"interested_in_systemchanged\": false,\n"
-    "        \"controllable\": true\n"
-    "    },\n"
-    "]\n";
+    const size_t elementDepth = 4096;
+    char *jsonArray = (char *)malloc(1024 * elementDepth);
+    char *element = (char *)malloc(elementDepth);
+    memset(element, 0, elementDepth);
+    sprintf(jsonArray,
+        "[\n"
+        "    {\n"
+        "        \"name\": \"thing-0-0-0-SoCd\",\n"
+        "        \"id\": 1636945645,\n"
+        "        \"hostname\": \"thing-0-0-0\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": true\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"lights\",\n"
+        "        \"id\": 514840374,\n"
+        "        \"hostname\": \"mother\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": false\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"orch\",\n"
+        "        \"id\": 2492639455,\n"
+        "        \"hostname\": \"mother\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": false\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"stargate\",\n"
+        "        \"id\": 3535738166,\n"
+        "        \"hostname\": \"mother\",\n"
+        "        \"advertises\": \"[\\\"encouragement\\\"]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": true,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": true\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"thing-0-0-2-SoCd\",\n"
+        "        \"id\": 4031844090,\n"
+        "        \"hostname\": \"thing-0-0-2\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": true\n"
+        "    },\n"
+        "]\n");
 
     printf("%s\n", jsonArray);
 
-    char element[256];
-    RKGetNextElement(element, jsonArray);
+    char *c = jsonArray + 1;
 
-    printf("element = %s\n", element);
+    c = RKJSONGetElement(element, c);
+    printf("element = %s\n\n", element);
+
+    c = RKJSONForwardPassedComma(c);
+    c = RKJSONGetElement(element, c);
+    printf("element = %s\n\n", element);
+
+    c = RKJSONForwardPassedComma(c);
+    c = RKJSONGetElement(element, c);
+    printf("element = %s\n\n", element);
+
+    c = RKJSONForwardPassedComma(c);
+    c = RKJSONGetElement(element, c);
+    printf("element = %s\n\n", element);
+
+    c = RKJSONForwardPassedComma(c);
+    c = RKJSONGetElement(element, c);
+    printf("element = %s\n\n", element);
+
+    c = RKJSONForwardPassedComma(c);
+    c = RKJSONGetElement(element, c);
+    printf("element = %s\n\n", element);
+
+    printf("c = %c\n", *c);
+
+    free(element);
 }
 
 void RKTestFileManager(void) {
