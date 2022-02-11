@@ -130,6 +130,7 @@ char *RKJSONForwardPassed(const char *, const char);
 char *RKJSONForwardPassedComma(const char *);
 char *RKJSONForwardPassedColon(const char *);
 char *RKJSONGetElement(char *, const char *);
+char *RKJSONKeyValueFromString(char *, char *, const char *);
 
 char *RKUIntegerToCommaStyleString(const unsigned long long);
 char *RKIntegerToCommaStyleString(const long long);

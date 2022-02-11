@@ -393,6 +393,7 @@ void RKTestParseCommaDelimitedValues(void) {
 
 void RKTestParseJSONString(void) {
     SHOW_FUNCTION_NAME
+    // A typical JSON health string from the health relay
     char string[] = "{"
     "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
     "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
@@ -568,10 +569,13 @@ void RKTestParseJSONString(void) {
     char *jsonArray = (char *)malloc(1024 * elementDepth);
     char *element = (char *)malloc(elementDepth);
     char *small = (char *)malloc(elementDepth);
+    char *value = (char *)malloc(elementDepth);
+    char *key = (char *)malloc(elementDepth);
     char *c;
 
     memset(element, 0, elementDepth);
 
+    // An array of dictionaries from multiple sources, each has multiple key-value pairs
     sprintf(jsonArray,
         "[\n"
         "    {\n"
@@ -646,10 +650,12 @@ void RKTestParseJSONString(void) {
         "    },\n"
         "]\n");
 
-    printf("%s\n", jsonArray);
+    printf("jsonArray =\n%s\n", jsonArray);
 
+    // Skip ahead the square bracket
     c = jsonArray + 1;
 
+    // Test an existing RKGetValueOfKey()
     while (*c != '\0') {
         c = RKJSONGetElement(element, c);
         printf("element = %s (%d)\n", element, (int)strlen(element));
@@ -715,12 +721,19 @@ void RKTestParseJSONString(void) {
     do {
         c = RKJSONGetElement(small, c);
         k = (int)strlen(small);
-        printf("small = %s (%d)\n", k ? small : "(empty)", (int)strlen(small));
+        if (k) {
+            RKJSONKeyValueFromString(key, value, small);
+            printf("small = %s (%d)    key = %s   value = %s\n", small, (int)strlen(small), key, value);
+        } else {
+            printf("small = (empty) (%d)\n", (int)strlen(small));
+        }
     } while (strlen(small) > 0);
 
     free(jsonArray);
     free(element);
     free(small);
+    free(value);
+    free(key);
 }
 
 void RKTestFileManager(void) {

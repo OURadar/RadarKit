@@ -140,7 +140,11 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     return oe;
 }
 
-// BUG: This function is limited to an array of 8 elements
+// LIMITATIONS:
+//  - Not a generic function, many assumptions
+//  - Static array variable limited to 8 elements
+//  - Cannot handle certain conditions within quoted strings
+//
 char *RKGetValueOfKey(const char *string, const char *key) {
     static char valueStrings[8][256];
     static int k = 7;
@@ -344,6 +348,8 @@ void RKReviseLogicalValues(char *string) {
     }
 }
 
+// RKJSON* functions
+
 char *RKJSONSkipWhiteSpaces(const char *haystack) {
     char *c = (char *)haystack;
     while (*c == ' ' || *c == '\r' || *c == '\n') {
@@ -368,14 +374,14 @@ char *RKJSONForwardPassedColon(const char *source) {
     return RKJSONForwardPassed(source, ':');
 }
 
-char *RKJSONGetElement(char *element, const char *source) {
+char *RKJSONScanPassed(char *destination, const char *source, const char needle) {
     char *c = (char *)source;
-    char *d = element;
+    char *d = destination;
+    bool singleQuote = false;
+    bool doubleQuote = false;
     bool slash = false;
     bool colon = false;
     bool comma = false;
-    bool singleQuote = false;
-    bool doubleQuote = false;
     int space = 0;
     int curly = 0;
     int round = 0;
@@ -472,18 +478,29 @@ char *RKJSONGetElement(char *element, const char *source) {
 
         c++;
 
-        if (curly <= 0 &&
-            singleQuote == false &&
+        if (singleQuote == false &&
             doubleQuote == false &&
-            round <= 0 &&
-            square <= 0 &&
-            (*c == ',')) {
+            curly == 0 &&
+            round == 0 &&
+            square == 0 &&
+            (*c == needle || *c == '}' || *c == ')' || *c == ']' || *c == '\0')) {
             c++;
             break;
         }
     }
     *d = '\0';
     c = RKJSONSkipWhiteSpaces(c);
+    return c;
+}
+
+char *RKJSONGetElement(char *element, const char *source) {
+    return RKJSONScanPassed(element, source, ',');
+}
+
+char *RKJSONKeyValueFromString(char *key, char *value, const char *source) {
+    char *c = (char *)source;
+    c = RKJSONScanPassed(key, c, ':');
+    c = RKJSONScanPassed(value, c, '\0');
     return c;
 }
 
