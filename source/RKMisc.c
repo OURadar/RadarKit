@@ -374,14 +374,16 @@ char *RKJSONForwardPassedColon(const char *source) {
     return RKJSONForwardPassed(source, ':');
 }
 
-char *RKJSONScanPassed(char *destination, const char *source, const char needle) {
+// Scan and copy a constituent until a delimiter
+// Delimiter within double quotes, single quotes, or brackets are passed through
+// The special combination \" within double quotes is passed through
+// In the copy process, unnecessary empty spaces are eliminated, except those within quotes
+char *RKJSONScanPassed(char *destination, const char *source, const char delimiter) {
     char *c = (char *)source;
     char *d = destination;
     bool singleQuote = false;
     bool doubleQuote = false;
     bool slash = false;
-    bool colon = false;
-    bool comma = false;
     int space = 0;
     int curly = 0;
     int round = 0;
@@ -433,26 +435,19 @@ char *RKJSONScanPassed(char *destination, const char *source, const char needle)
                 break;
         }
 
-        if (!doubleQuote) {
-            if (*c == ':') {
-                colon = true;
-                space = 0;
-            } if (*c == ',') {
-                comma = true;
-                space = 0;
-            }
-            if (*c == ' ') {
-                space++;
-            }
-        }
-
         if (doubleQuote) {
             *d++ = *c;
         } else {
+            // Allow only one space character right after a color (:) or a comma (,)
+            if (*c == ':' || *c == ',') {
+                space = 0;
+            } else if (*c == ' ') {
+                space++;
+            }
             if (*c != '\r' && *c != '\n') {
                 if (*c != ' ') {
                     *d++ = *c;
-                } else if (*c == ' ' && space == 1 && (comma == true || colon == true)) {
+                } else if (*c == ' ' && space == 1) {
                     *d++ = *c;
                 }
             }
@@ -483,7 +478,7 @@ char *RKJSONScanPassed(char *destination, const char *source, const char needle)
             curly == 0 &&
             round == 0 &&
             square == 0 &&
-            (*c == needle || *c == '}' || *c == ')' || *c == ']' || *c == '\0')) {
+            (*c == delimiter || *c == '}' || *c == ')' || *c == ']' || *c == '\0')) {
             c++;
             break;
         }
