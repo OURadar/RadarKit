@@ -242,6 +242,10 @@ RKValueType RKGuessValueType(const char *source) {
     RKValueType type = 0;
     if (*source == '"' || *source == '\'') {
         type = RKValueTypeString;
+    } else if (*source == '{') {
+        type = RKValueTypeDictionary;
+    } else if (*source == '[') {
+        type = RKValueTypeArray;
     } else if (*source >= '0' && *source <= '9') {
         char *dot = strchr(source, '.');
         if (dot) {
@@ -252,7 +256,7 @@ RKValueType RKGuessValueType(const char *source) {
     } else if (strcasestr(source, "false") || strcasestr(source, "true")) {
         type = RKValueTypeBool;
     } else if (strcasestr(source, "null")) {
-        type = RKValueTypeShowNull;
+        type = RKValueTypeNull;
     }
     return type;
 }
@@ -763,7 +767,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     bool b = *((bool *)value);
 
     if (rkGlobalParameters.showColor) {
-        if (type == RKValueTypeShowNull) {
+        if (type == RKValueTypeNull) {
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPinkColor "Null" RKNoColor, name);
         } else if (type == RKValueTypeBool) {
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
@@ -773,7 +777,7 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
         }
     } else {
-        if (type == RKValueTypeShowNull) {
+        if (type == RKValueTypeNull) {
             snprintf(string, RKNameLength - 1, "%s = Null", name);
         } else if (type == RKValueTypeBool) {
             snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
@@ -784,6 +788,47 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
         }
     }
     return string;
+}
+
+char *RKPrettyStringFromKeyValueString(char *destination, const char *source) {
+    size_t s = strlen(source);
+    if (s) {
+        s += 64;
+        char *t = malloc(s);
+        char *key = malloc(s);
+        char *value = malloc(s);
+
+        RKJSONKeyValueFromString(key, value, source);
+
+        strcpy(t, key);
+        sprintf(key, RKOrangeColor "%s" RKNoColor, t);
+
+        strcpy(t, value);
+        RKValueType type = RKGuessValueType(value);
+        if (type == RKValueTypeNull) {
+            sprintf(value, RKMonokaiGreen "null" RKNoColor);
+        } else if (type == RKValueTypeDictionary) {
+            // Need to make (t+1) pretty
+            sprintf(value, RKWhiteColor "{" RKNoColor "%s" RKWhiteColor "}" RKNoColor, t);
+        } else if (type == RKValueTypeArray) {
+            // Need to make (t+1) pretty
+            sprintf(value, RKWhiteColor "[" RKNoColor "%s" RKWhiteColor "]" RKNoColor, t);
+        } else if (type == RKValueTypeBool || type == RKValueTypeInt) {
+            sprintf(value, RKMonokaiPurple "%s" RKNoColor, t);
+        } else if (type == RKValueTypeString) {
+            //RKUnquote(t);
+            sprintf(value, RKMonokaiYellow "%s" RKNoColor, t);
+        }
+
+        sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+
+        free(value);
+        free(key);
+        free(t);
+    } else {
+        *destination = '\0';
+    }
+    return destination;
 }
 
 #pragma mark - Buffer

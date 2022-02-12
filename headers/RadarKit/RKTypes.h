@@ -127,6 +127,14 @@
 #define RKPinkColor                          "\033[38;5;213m"
 #define RKSalmonColor                        "\033[38;5;210m"
 #define RKGrayColor                          "\033[38;5;245m"
+#define RKWhiteColor                         "\033[38;5;15m"
+#define RKMonokaiRed                         "\033[38;5;196m"
+#define RKMonokaiPink                        "\033[38;5;197m"
+#define RKMonokaiOrange                      "\033[38;5;208m"
+#define RKMonokaiYellow                      "\033[38;5;186m"
+#define RKMonokaiGreen                       "\033[38;5;154m"
+#define RKMonokaiBlue                        "\033[38;5;81m"
+#define RKMonokaiPurple                      "\033[38;5;141m"
 #define RKPythonColor                        "\033[38;5;226;48;5;24m"
 #define RKRadarKitColor                      "\033[38;5;15;48;5;124m"
 #define RKMaximumStringLength                4096
@@ -362,6 +370,7 @@ enum RKEngineColor {
 
 typedef uint32_t RKValueType;
 enum RKValueType {
+    RKValueTypeNull,
     RKValueTypeBool,
     RKValueTypeInt,
     RKValueTypeLong,
@@ -404,7 +413,8 @@ enum RKValueType {
     RKValueTYpeDoubleDividedBy1M,
     RKValueTypeProductId = RKValueTypeInt8,
     RKValueTypeIdentifier = RKValueTypeUInt64,
-    RKValueTypeShowNull
+    RKValueTypeDictionary,
+    RKValueTypeArray
 };
 
 typedef uint32_t RKPositionFlagV1;

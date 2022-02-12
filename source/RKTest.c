@@ -565,7 +565,6 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
 
-    RKValueType type;
     const size_t elementDepth = 4096;
     char *jsonArray = (char *)malloc(1024 * elementDepth);
     char *element = (char *)malloc(elementDepth);
@@ -675,26 +674,6 @@ void RKTestParseJSONString(void) {
 
     printf("===\n");
 
-    c = jsonArray + 1;
-    c = RKJSONGetElement(element, c);
-    printf("element = %s (%d)\n", element, (int)strlen(element));
-    c = RKJSONGetElement(element, c);
-    printf("element = %s (%d)\n", element, (int)strlen(element));
-    c = RKJSONGetElement(element, c);
-    printf("element = %s (%d)\n", element, (int)strlen(element));
-    c = RKJSONGetElement(element, c);
-    printf("element = %s (%d)\n", element, (int)strlen(element));
-
-    c = element + 1;
-    c = RKJSONGetElement(small, c);
-    printf("small = %s (%d)\n", small, (int)strlen(small));
-    c = RKJSONGetElement(small, c);
-    printf("small = %s (%d)\n", small, (int)strlen(small));
-    c = RKJSONGetElement(small, c);
-    printf("small = %s (%d)\n", small, (int)strlen(small));
-    c = RKJSONGetElement(small, c);
-    printf("small = %s (%d)\n", small, (int)strlen(small));
-    
     sprintf(jsonArray,
             "     {\n"
             "        \"name\": \"stargate\",\n"
@@ -716,7 +695,7 @@ void RKTestParseJSONString(void) {
     
     c = jsonArray;
     c = RKJSONGetElement(element, c);
-    printf("element = %s (%d)\n", element, (int)strlen(element));
+    printf("element = " RKCreamColor "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
 
     // Test parsing key-value pair from an array
     c = element + 1;
@@ -740,25 +719,10 @@ void RKTestParseJSONString(void) {
     c = element + 1;
     do {
         c = RKJSONGetElement(element, c);
-        k = (int)strlen(element);
-        if (k) {
-            RKJSONKeyValueFromString(key, value, element);
-            type = RKGuessValueType(value);
-            if (type == RKValueTypeShowNull) {
-                sprintf(small, RKPinkColor "null" RKNoColor);
-            } else if (type == RKValueTypeBool) {
-                sprintf(small, RKPurpleColor "%s" RKNoColor, value);
-            } else if (type == RKValueTypeInt) {
-                sprintf(small, RKGreenColor "%s" RKNoColor, value);
-            } else if (type == RKValueTypeString) {
-                RKUnquote(value);
-                sprintf(small, RKCreamColor "%s" RKNoColor, value);
-            }
-            printf("element = " RKMintColor "%-38s" RKNoColor " (%d)    " RKOrangeColor "%s" RKNoColor " = %s\n",
-                   element, (int)strlen(element), key, small);
-        } else {
-            printf("element = (empty) (%d)\n", (int)strlen(small));
-        }
+        RKPrettyStringFromKeyValueString(small, element);
+        printf("element = " RKMintColor "%-38s" RKNoColor " (%d)  %s\n",
+               element, (int)strlen(element), small);
+
     } while (strlen(element) > 0);
 
     free(jsonArray);

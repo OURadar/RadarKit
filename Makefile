@@ -3,7 +3,7 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-CFLAGS = -std=gnu99 -O2
+CFLAGS = -O2
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -ggdb -DBETA_BRANCH
 endif
@@ -13,6 +13,7 @@ endif
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -DDEBUG_FILE_MANAGER
 
+CFLAGS += -std=gnu99
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I headers/RadarKit -I /usr/local/include -I /usr/include -fPIC
 

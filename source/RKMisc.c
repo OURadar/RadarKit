@@ -364,7 +364,7 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
     bool singleQuote = false;
     bool doubleQuote = false;
     bool slash = false;
-    int space = 0;
+    bool space = false;
     int curly = 0;
     int round = 0;
     int square = 0;
@@ -420,14 +420,13 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
         } else {
             // Allow only one space character right after a color (:) or a comma (,)
             if (*c == ':' || *c == ',') {
-                space = 0;
-            } else if (*c == ' ') {
-                space++;
+                space = true;
             }
             if (*c != '\r' && *c != '\n') {
                 if (*c != ' ') {
                     *d++ = *c;
-                } else if (*c == ' ' && space == 1) {
+                } else if (*c == ' ' && space == true) {
+                    space = false;
                     *d++ = *c;
                 }
             }
@@ -446,9 +445,10 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
                 k += sprintf(str + k, "%c", *c);
                 break;
         }
+        *(d + 1) = '\0';
         sprintf(str + k, "\033[m%s", k == 20 ? " " : "");
-        printf("%s  '' %d  \"\" %d  {} %d  () %d  [] %d  s %d \033[48;5;238m%s\033[m \n",
-            str, singleQuote, doubleQuote, curly, round, square, space, element);
+        printf("%s '%d \"%d {%d (%d [%d \\%d s%d \033[48;5;238m%s\033[m \n",
+            str, singleQuote, doubleQuote, curly, round, square, slash, space, destination);
         #endif
 
         c++;
