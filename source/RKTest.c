@@ -565,6 +565,7 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
 
+    RKValueType type;
     const size_t elementDepth = 4096;
     char *jsonArray = (char *)malloc(1024 * elementDepth);
     char *element = (char *)malloc(elementDepth);
@@ -726,12 +727,39 @@ void RKTestParseJSONString(void) {
             RKJSONKeyValueFromString(key, value, small);
             printf("small = " RKMintColor "%-38s" RKNoColor " (%d)    "
                    "k " RKOrangeColor "%-30s" RKNoColor "   "
-                   "v " RKYellowColor "%s" RKNoColor "\n",
+                   "v " RKCreamColor "%s" RKNoColor "\n",
                    small, (int)strlen(small), key, value);
         } else {
             printf("small = (empty) (%d)\n", (int)strlen(small));
         }
     } while (strlen(small) > 0);
+
+    printf("\n");
+
+    // Same as before, but prettier
+    c = element + 1;
+    do {
+        c = RKJSONGetElement(element, c);
+        k = (int)strlen(element);
+        if (k) {
+            RKJSONKeyValueFromString(key, value, element);
+            type = RKGuessValueType(value);
+            if (type == RKValueTypeShowNull) {
+                sprintf(small, RKPinkColor "null" RKNoColor);
+            } else if (type == RKValueTypeBool) {
+                sprintf(small, RKPurpleColor "%s" RKNoColor, value);
+            } else if (type == RKValueTypeInt) {
+                sprintf(small, RKGreenColor "%s" RKNoColor, value);
+            } else if (type == RKValueTypeString) {
+                RKUnquote(value);
+                sprintf(small, RKCreamColor "%s" RKNoColor, value);
+            }
+            printf("element = " RKMintColor "%-38s" RKNoColor " (%d)    " RKOrangeColor "%s" RKNoColor " = %s\n",
+                   element, (int)strlen(element), key, small);
+        } else {
+            printf("small = (empty) (%d)\n", (int)strlen(small));
+        }
+    } while (strlen(element) > 0);
 
     free(jsonArray);
     free(element);
@@ -758,18 +786,18 @@ void RKTestFileManager(void) {
         fprintf(stderr, "Unable to allocate payload.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     const char dataPath[] = "data";
     RKFileManager *fileManager = RKFileManagerInit();
     RKFileManagerSetPathToMonitor(fileManager, dataPath);
     RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
     RKFileManagerSetVerbose(fileManager, 3);
-    
+
     RKLog("Warning. All data in moment folder will be erased!\n");
     printf("Press Enter to continue ... 'n' to keep moment files, or Ctrl-C to terminate.\n");
-    
+
     j = getchar();
-    
+
     //printf("j = %d = %c\n", j, j);
     if (j != 'n' && j != 'N') {
         if (system("rm -rf data/moment") == -1) {

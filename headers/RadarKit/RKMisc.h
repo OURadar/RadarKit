@@ -126,9 +126,10 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value);
 void RKReviseLogicalValues(char *);
 
 char *RKJSONSkipWhiteSpaces(const char *);
-char *RKJSONForwardPassed(const char *, const char);
-char *RKJSONForwardPassedComma(const char *);
-char *RKJSONForwardPassedColon(const char *);
+// Scan and copy a constituent until a delimiter
+// Delimiter within double quotes, single quotes, or brackets are passed through
+// The special combination \" within double quotes is passed through
+// In the copy process, unnecessary empty spaces are eliminated, except those within quotes
 char *RKJSONGetElement(char *, const char *);
 char *RKJSONKeyValueFromString(char *, char *, const char *);
 

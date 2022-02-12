@@ -358,26 +358,6 @@ char *RKJSONSkipWhiteSpaces(const char *haystack) {
     return c;
 }
 
-char *RKJSONForwardPassed(const char *source, const char needle) {
-    char *c = (char *)source;
-    while (*c == ' ' || *c == '\n' || *c == '\r' || *c == needle) {
-        c++;
-    }
-    return c;
-}
-
-char *RKJSONForwardPassedComma(const char *source) {
-    return RKJSONForwardPassed(source, ',');
-}
-
-char *RKJSONForwardPassedColon(const char *source) {
-    return RKJSONForwardPassed(source, ':');
-}
-
-// Scan and copy a constituent until a delimiter
-// Delimiter within double quotes, single quotes, or brackets are passed through
-// The special combination \" within double quotes is passed through
-// In the copy process, unnecessary empty spaces are eliminated, except those within quotes
 char *RKJSONScanPassed(char *destination, const char *source, const char delimiter) {
     char *c = (char *)source;
     char *d = destination;
@@ -496,6 +476,7 @@ char *RKJSONKeyValueFromString(char *key, char *value, const char *source) {
     char *c = (char *)source;
     c = RKJSONScanPassed(key, c, ':');
     c = RKJSONScanPassed(value, c, '\0');
+    RKUnquote(key);
     return c;
 }
 
@@ -903,7 +884,7 @@ int RKUnquote(char *string) {
     if (q != '"' && q != '\'') {
         return (int)strlen(string);
     }
-    char *e = strchr(string + 1, q);
+    char *e = strrchr(string + 1, q);
     int k = (int)(e - string - 1);
     memmove(string, string + 1, k);
     string[k] = '\0';

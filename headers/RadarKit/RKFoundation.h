@@ -98,6 +98,7 @@ int RKSetRootFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
 char *RKVersionString(void);
+RKValueType RKGuessValueType(const char *);
 
 // Filename / string
 bool RKGetSymbolFromFilename(const char *filename, char *symbol);

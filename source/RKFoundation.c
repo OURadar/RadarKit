@@ -238,6 +238,25 @@ char *RKVersionString(void) {
     return versionString;
 }
 
+RKValueType RKGuessValueType(const char *source) {
+    RKValueType type = 0;
+    if (*source == '"' || *source == '\'') {
+        type = RKValueTypeString;
+    } else if (*source >= '0' && *source <= '9') {
+        char *dot = strchr(source, '.');
+        if (dot) {
+            type = RKValueTypeFloat;
+        } else {
+            type = RKValueTypeInt;
+        }
+    } else if (strcasestr(source, "false") || strcasestr(source, "true")) {
+        type = RKValueTypeBool;
+    } else if (strcasestr(source, "null")) {
+        type = RKValueTypeShowNull;
+    }
+    return type;
+}
+
 #pragma mark - Filename / String
 
 bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
@@ -744,7 +763,9 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     bool b = *((bool *)value);
 
     if (rkGlobalParameters.showColor) {
-        if (type == RKValueTypeBool) {
+        if (type == RKValueTypeShowNull) {
+            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPinkColor "Null" RKNoColor, name);
+        } else if (type == RKValueTypeBool) {
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
@@ -752,7 +773,9 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
         }
     } else {
-        if (type == RKValueTypeBool) {
+        if (type == RKValueTypeShowNull) {
+            snprintf(string, RKNameLength - 1, "%s = Null", name);
+        } else if (type == RKValueTypeBool) {
             snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
             snprintf(string, RKNameLength - 1, "%s = '%s'", name, c);

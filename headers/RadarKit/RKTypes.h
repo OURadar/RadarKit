@@ -112,6 +112,7 @@
 #define RKRedColor                           "\033[38;5;196m"
 #define RKOrangeColor                        "\033[38;5;208m"
 #define RKYellowColor                        "\033[38;5;226m"
+#define RKCreamColor                         "\033[38;5;229m"
 #define RKLimeColor                          "\033[38;5;118m"
 #define RKMintColor                          "\033[38;5;43m"
 #define RKGreenColor                         "\033[38;5;46m"
@@ -402,7 +403,8 @@ enum RKValueType {
     RKValueTYpeDoubleDividedBy1k,
     RKValueTYpeDoubleDividedBy1M,
     RKValueTypeProductId = RKValueTypeInt8,
-    RKValueTypeIdentifier = RKValueTypeUInt64
+    RKValueTypeIdentifier = RKValueTypeUInt64,
+    RKValueTypeShowNull
 };
 
 typedef uint32_t RKPositionFlagV1;
