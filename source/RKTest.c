@@ -757,7 +757,7 @@ void RKTestParseJSONString(void) {
             printf("element = " RKMintColor "%-38s" RKNoColor " (%d)    " RKOrangeColor "%s" RKNoColor " = %s\n",
                    element, (int)strlen(element), key, small);
         } else {
-            printf("small = (empty) (%d)\n", (int)strlen(small));
+            printf("element = (empty) (%d)\n", (int)strlen(small));
         }
     } while (strlen(element) > 0);
 
