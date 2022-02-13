@@ -822,10 +822,19 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
         return 0;
     }
 
-    s *= 2;
+    char *c = (char *)source;
+    char *e = c + strlen(c);
+    
+    // Each color uses about 15 B for \033[38;5;xxxm and \033[m, each value uses at least 3 of these
+    int k = 1;
+    do {
+        k += (*c == ':' || *c == ',');
+    } while (c++ < e);
+    s = MAX(s * 2, s + 2 * k * 15);
+
+    c = (char *)source;
 
     size_t size = 0;
-    char *c = (char *)source;
 
     if (*c == '{') {
         c++;
@@ -839,6 +848,9 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
             size += RKPrettyStringFromKeyValueString(destination + size, element);
         } while (strlen(element) > 0 && strlen(c) > 5);
         size += sprintf(destination + size, "}");
+        if (size > s) {
+            printf("RKPrettyStringFromKeyValueString() {} %d vs %d %s\n", (int)size, (int)s, element);
+        }
         free(element);
         return size;
     } else if (*c == '[') {
@@ -853,6 +865,9 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
             size += RKPrettyStringFromValueString(destination + size, element);
         } while (strlen(element) > 0 && strlen(c) > 1);
         size += sprintf(destination + size, "]");
+        if (size > s) {
+            printf("RKPrettyStringFromKeyValueString() [] %d vs %d %s\n", (int)size, (int)s, element);
+        }
         free(element);
         return size;
     }
@@ -870,6 +885,9 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     RKPrettyStringFromValueString(value, t);
 
     size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+    if (size > s) {
+        printf("RKPrettyStringFromKeyValueString() [] %d vs %d %s\n", (int)size, (int)s, destination);
+    }
 
     free(value);
     free(key);

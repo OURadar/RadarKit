@@ -31,14 +31,14 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
 
 static int RKSocketRead(RKWebSocket *R, uint32_t origin, size_t size) {
     if (R->useSSL) {
-        return SSL_read(R->ssl, R->frame + origin, size);
+        return SSL_read(R->ssl, R->frame + origin, (int)size);
     }
     return (int)read(R->sd,R->frame + origin, size);
 }
 
 static int RKSocketWrite(RKWebSocket *R, size_t size) {
     if (R->useSSL) {
-        return SSL_write(R->ssl, R->frame, size);
+        return SSL_write(R->ssl, R->frame, (int)size);
     }
     return (int)write(R->sd, R->frame, size);
 }
@@ -298,7 +298,7 @@ void *transporter(void *in) {
     RKWebSocket *R = (RKWebSocket *)in;
 
     int i, r;
-    void *anchor;
+    void *anchor = NULL;
     size_t size, targetFrameSize = 0;
     ws_frame_header *h = (ws_frame_header *)R->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
@@ -451,7 +451,7 @@ void *transporter(void *in) {
                 if (R->timeoutCount++ >= R->timeoutThreshold) {
                     R->timeoutCount = 0;
                     char *word = words[rand() % 8];
-                    r = RKWebSocketPing(R, word, strlen(word));
+                    r = RKWebSocketPing(R, word, (int)strlen(word));
                     if (R->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
                         for (i = 0; i < 4; i++) {

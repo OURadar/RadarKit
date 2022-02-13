@@ -566,8 +566,8 @@ void RKTestParseJSONString(void) {
     printf("\n===\n\n");
 
     const size_t elementDepth = 4096;
-    char *jsonStringPretty = (char *)malloc(2048 * elementDepth);
-    char *jsonString = (char *)malloc(1024 * elementDepth);
+    char *jsonStringPretty = (char *)malloc(64 * elementDepth);
+    char *jsonString = (char *)malloc(32 * elementDepth);
     char *element = (char *)malloc(elementDepth);
     char *small = (char *)malloc(elementDepth);
     char *value = (char *)malloc(elementDepth);
