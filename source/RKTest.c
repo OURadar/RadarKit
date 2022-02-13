@@ -566,7 +566,8 @@ void RKTestParseJSONString(void) {
     printf("\n===\n\n");
 
     const size_t elementDepth = 4096;
-    char *jsonArray = (char *)malloc(1024 * elementDepth);
+    char *jsonStringPretty = (char *)malloc(2048 * elementDepth);
+    char *jsonString = (char *)malloc(1024 * elementDepth);
     char *element = (char *)malloc(elementDepth);
     char *small = (char *)malloc(elementDepth);
     char *value = (char *)malloc(elementDepth);
@@ -576,7 +577,7 @@ void RKTestParseJSONString(void) {
     memset(element, 0, elementDepth);
 
     // An array of dictionaries from multiple sources, each has multiple key-value pairs
-    sprintf(jsonArray,
+    sprintf(jsonString,
         "[\n"
         "    {\n"
         "        \"name\": \"thing-0-0-0-SoCd\",\n"
@@ -650,31 +651,31 @@ void RKTestParseJSONString(void) {
         "    },\n"
         "]\n");
 
-    printf("jsonArray =\n%s\n", jsonArray);
+    printf("jsonString =\n%s\n", jsonString);
 
     // Skip ahead the square bracket
-    c = jsonArray + 1;
+    c = jsonString + 1;
 
-    // Test an existing RKGetValueOfKey()
+    // Test RKGetValueOfKey()
     while (*c != '\0') {
-        c = RKJSONGetElement(element, c);
-        printf("%s (%d)\n", element, (int)strlen(element));
+        c = RKJSONGetArrayElement(element, c);
+        printf(RKMintColor "%s" RKNoColor " (%d)\n", element, (int)strlen(element));
         if (strlen(element) > 8) {
             if ((stringObject = RKGetValueOfKey(element, "name"))) {
                 RKUnquote(stringObject);
-                printf("name = %s\n", stringObject);
+                printf(RKMonokaiOrange "name" RKMonokaiPink " = " RKMonokaiYellow "%s" RKNoColor "\n", stringObject);
             }
             if ((stringObject = RKGetValueOfKey(element, "connected"))) {
-                printf("connected = %s\n", stringObject);
+                printf(RKMonokaiOrange "connected" RKMonokaiPink " = " RKMonokaiPurple "%s" RKNoColor "\n", stringObject);
             }
         }
         printf("\n");
     }
-    printf("c = %c %s %d\n", *c, *c == '\0' ? "(EOL)" : "", (int)(c - jsonArray + 1));
+    printf("c = %s %d\n", *c == '\0' ? "(EOL)" : c, (int)(c - jsonString + 1));
 
     printf("===\n");
 
-    sprintf(jsonArray,
+    sprintf(jsonString,
             "     {\n"
             "        \"name\": \"stargate\",\n"
             "        \"id\": 3535738166,\n"
@@ -691,25 +692,25 @@ void RKTestParseJSONString(void) {
             "    },\n"
             "");
     
-    printf("jsonArray =\n%s\n", jsonArray);
+    printf("jsonString =\n%s\n", jsonString);
     
-    c = jsonArray;
-    c = RKJSONGetElement(element, c);
-    printf(RKCreamColor "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
+    c = jsonString;
+    c = RKJSONGetArrayElement(element, c);
+    printf(RKMonokaiYellow "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
 
     // Test parsing key-value pair from an array
     c = element + 1;
     do {
-        c = RKJSONGetElement(small, c);
+        c = RKJSONGetArrayElement(small, c);
         k = (int)strlen(small);
         if (k) {
             RKJSONKeyValueFromString(key, value, small);
             printf(RKMintColor "%-38s" RKNoColor " (%d)    "
-                   "k " RKOrangeColor "%-30s" RKNoColor "   "
-                   "v " RKCreamColor "%s" RKNoColor "\n",
+                   "k " RKMonokaiOrange "%-30s" RKNoColor "   "
+                   "v " RKMonokaiYellow "%s" RKNoColor "\n",
                    small, (int)strlen(small), key, value);
         } else {
-            printf("(empty) (%d)\n", (int)strlen(small));
+            printf(RKMonokaiGreen "(empty)" RKNoColor " (%d)\n", (int)strlen(small));
         }
     } while (strlen(small) > 0);
 
@@ -718,14 +719,34 @@ void RKTestParseJSONString(void) {
     // Same as before, but prettier
     c = element + 1;
     do {
-        c = RKJSONGetElement(element, c);
+        c = RKJSONGetArrayElement(element, c);
         RKPrettyStringFromKeyValueString(small, element);
-        printf(RKMintColor "%-38s" RKNoColor " (%d)  %s\n",
-               element, (int)strlen(element), small);
-
+        printf(RKMintColor "%-38s" RKNoColor " (%d)  %s\n", element, (int)strlen(element), small);
     } while (strlen(element) > 0);
 
-    free(jsonArray);
+    sprintf(jsonString,
+            "{\n"
+            "    \"string\": \"I am a string\", \n"
+            "    \"number\": 12345, \n"
+            "    \"float\": 32.56, \n"
+            "    \"logic\": True, \n"
+            "    \"array\": [1, 2, 3], \n"
+            "    \"dictionary\": {\"label\": \"label string\", \"value\": \"12 Hz\", \"Enum\": 0}, \n"
+            "    \"arrayOfDict\": \n"
+            "    [\n"
+            "        {\"label\": \"label 1\", \"value\": \"12 Hz\", \"Enum\": 0}, \n"
+            "        {\"label\": \"label 2\", \"value\": \"120 V\", \"Enum\": 1}, \n"
+            "    ]\n"
+            "}\n"
+            );
+
+    printf("jsonString =\n%s\n", jsonString);
+
+    RKPrettyStringFromKeyValueString(jsonStringPretty, jsonString);
+
+    printf("%s\n", jsonStringPretty);
+
+    free(jsonString);
     free(element);
     free(small);
     free(value);

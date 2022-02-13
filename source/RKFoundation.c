@@ -790,45 +790,94 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     return string;
 }
 
-char *RKPrettyStringFromKeyValueString(char *destination, const char *source) {
-    size_t s = strlen(source);
-    if (s) {
-        s += 64;
-        char *t = malloc(s);
-        char *key = malloc(s);
-        char *value = malloc(s);
-
-        RKJSONKeyValueFromString(key, value, source);
-
-        strcpy(t, key);
-        sprintf(key, RKOrangeColor "%s" RKNoColor, t);
-
-        strcpy(t, value);
-        RKValueType type = RKGuessValueType(value);
-        if (type == RKValueTypeNull) {
-            sprintf(value, RKMonokaiGreen "null" RKNoColor);
-        } else if (type == RKValueTypeDictionary) {
-            // Need to make (t+1) pretty
-            sprintf(value, RKWhiteColor "{" RKNoColor "%s" RKWhiteColor "}" RKNoColor, t);
-        } else if (type == RKValueTypeArray) {
-            // Need to make (t+1) pretty
-            sprintf(value, RKWhiteColor "[" RKNoColor "%s" RKWhiteColor "]" RKNoColor, t);
-        } else if (type == RKValueTypeBool || type == RKValueTypeInt) {
-            sprintf(value, RKMonokaiPurple "%s" RKNoColor, t);
-        } else if (type == RKValueTypeString) {
-            //RKUnquote(t);
-            sprintf(value, RKMonokaiYellow "%s" RKNoColor, t);
-        }
-
-        sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
-
-        free(value);
-        free(key);
-        free(t);
-    } else {
+size_t RKPrettyStringFromValueString(char *destination, const char *source) {
+    if (strlen(source) == 0) {
         *destination = '\0';
+        return 0;
     }
-    return destination;
+    RKValueType type = RKGuessValueType(source);
+    if (type == RKValueTypeNull) {
+        return sprintf(destination, RKMonokaiGreen "null" RKNoColor);
+    }
+    if (type == RKValueTypeDictionary) {
+        return RKPrettyStringFromKeyValueString(destination, source);
+    }
+    if (type == RKValueTypeArray) {
+        return RKPrettyStringFromKeyValueString(destination, source);
+    }
+    if (type == RKValueTypeBool || type == RKValueTypeInt || type == RKValueTypeFloat) {
+        return sprintf(destination, RKMonokaiPurple "%s" RKNoColor, source);
+    }
+    if (type == RKValueTypeString) {
+        return sprintf(destination, RKMonokaiYellow "%s" RKNoColor, source);
+    }
+    return sprintf(destination, "%s", source);
+}
+
+size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
+    size_t s = strlen(source);
+
+    if (s == 0) {
+        *destination = '\0';
+        return 0;
+    }
+
+    s *= 2;
+
+    size_t size = 0;
+    char *c = (char *)source;
+
+    if (*c == '{') {
+        c++;
+        char *element = malloc(s);
+        size = sprintf(destination, "{");
+        do {
+            c = RKJSONGetArrayElement(element, c);
+            if (size > 1) {
+                size += sprintf(destination + size, ", ");
+            }
+            size += RKPrettyStringFromKeyValueString(destination + size, element);
+        } while (strlen(element) > 0);
+        size -= 2;
+        size += sprintf(destination + size, "}");
+        free(element);
+        return size;
+    } else if (*c == '[') {
+        c++;
+        char *element = malloc(s);
+        size = sprintf(destination, "[");
+        do {
+            c = RKJSONGetArrayElement(element, c);
+            if (size > 1) {
+                size += sprintf(destination + size, ", ");
+            }
+            size += RKPrettyStringFromValueString(destination + size, element);
+        } while (strlen(element) > 0);
+        size -= 2;
+        size += sprintf(destination + size, "]");
+        free(element);
+        return size;
+    }
+
+    char *t = malloc(s);
+    char *key = malloc(s);
+    char *value = malloc(s);
+
+    RKJSONKeyValueFromString(key, value, source);
+
+    strcpy(t, key);
+    sprintf(key, RKOrangeColor "%s" RKNoColor, t);
+
+    strcpy(t, value);
+    RKPrettyStringFromValueString(value, t);
+
+    size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+
+    free(value);
+    free(key);
+    free(t);
+
+    return size;
 }
 
 #pragma mark - Buffer

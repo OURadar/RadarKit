@@ -468,7 +468,7 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
     return c;
 }
 
-char *RKJSONGetElement(char *element, const char *source) {
+char *RKJSONGetArrayElement(char *element, const char *source) {
     return RKJSONScanPassed(element, source, ',');
 }
 

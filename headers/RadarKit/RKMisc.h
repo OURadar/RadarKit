@@ -133,7 +133,7 @@ char *RKGetBackgroundColorOfIndex(const int);
 char *RKGetBackgroundColorOfCubeIndex(const int);
 
 //
-// Limited JSON
+// JSON (RadarKit 2)
 //
 // The following is a set of JSON functions that are *very* limited
 // They are made for efficiency with many assumptions
@@ -155,20 +155,24 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value);
 void RKReviseLogicalValues(char *);
 
 //
-// JSON
+// JSON (RadarKit 3)
 //
 // The following is a set of JSON functions that are made to handle
-// somewhat generic form
+// somewhat generic forms. More than previous verions but still a work
+// in progress by Jan 2022. Will add functionality as the need arises
 //
 
-// Returns a pointer of the first non-space character of the input source
+// Returns the pointer to the first non-space character of the input source
 char *RKJSONSkipWhiteSpaces(const char *);
 
 // Scan and copy a constituent until a delimiter
 // Delimiter within double quotes, single quotes, or brackets are passed through
 // The special combination \" within double quotes is passed through
 // In the copy process, unnecessary empty spaces are eliminated, except those within quotes
-char *RKJSONGetElement(char *, const char *);
+char *RKJSONScanPassed(char *, const char *, const char);
+
+// Get the current element of an array
+char *RKJSONGetArrayElement(char *, const char *);
 
 // Extract a like '"key": "value"' string into key string and value string
 // e.g., input = '"name": "startgate"' -> key = '"name"', value = '"stargate"'
