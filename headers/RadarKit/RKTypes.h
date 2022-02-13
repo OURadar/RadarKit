@@ -414,7 +414,8 @@ enum RKValueType {
     RKValueTypeProductId = RKValueTypeInt8,
     RKValueTypeIdentifier = RKValueTypeUInt64,
     RKValueTypeDictionary,
-    RKValueTypeArray
+    RKValueTypeArray,
+    RKValueTypeVariable
 };
 
 typedef uint32_t RKPositionFlagV1;

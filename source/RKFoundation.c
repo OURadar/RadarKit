@@ -239,7 +239,7 @@ char *RKVersionString(void) {
 }
 
 RKValueType RKGuessValueType(const char *source) {
-    RKValueType type = 0;
+    RKValueType type = RKValueTypeVariable;
     if (*source == '"' || *source == '\'') {
         type = RKValueTypeString;
     } else if (*source == '{') {
@@ -811,6 +811,9 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
     if (type == RKValueTypeString) {
         return sprintf(destination, RKMonokaiYellow "%s" RKNoColor, source);
     }
+    if (type == RKValueTypeVariable) {
+        return sprintf(destination, RKMonokaiOrange "%s" RKNoColor, source);
+    }
     return sprintf(destination, "%s", source);
 }
 
@@ -879,7 +882,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     RKJSONKeyValueFromString(key, value, source);
 
     strcpy(t, key);
-    sprintf(key, RKOrangeColor "%s" RKNoColor, t);
+    RKPrettyStringFromValueString(key, t);
 
     strcpy(t, value);
     RKPrettyStringFromValueString(value, t);
