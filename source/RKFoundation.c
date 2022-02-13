@@ -837,8 +837,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
                 size += sprintf(destination + size, ", ");
             }
             size += RKPrettyStringFromKeyValueString(destination + size, element);
-        } while (strlen(element) > 0);
-        size -= 2;
+        } while (strlen(element) > 0 && strlen(c) > 5);
         size += sprintf(destination + size, "}");
         free(element);
         return size;
@@ -852,8 +851,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
                 size += sprintf(destination + size, ", ");
             }
             size += RKPrettyStringFromValueString(destination + size, element);
-        } while (strlen(element) > 0);
-        size -= 2;
+        } while (strlen(element) > 0 && strlen(c) > 1);
         size += sprintf(destination + size, "]");
         free(element);
         return size;
