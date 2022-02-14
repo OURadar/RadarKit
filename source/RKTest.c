@@ -734,13 +734,14 @@ void RKTestParseJSONString(void) {
             "    \"float\": 32.56, \n"
             "    \"logic\": True, \n"
             "    \"array\": [1, 2, 3], \n"
-            "    \"dictionary\": {\"label\": \"label string\", \"value\": \"12 Hz\", \"enum\": 0, }, \n"
+            "    \"dictionary\": {\"label\": \"PRF\", \"value\": \"12 Hz\", \"enum\": 0, }, \n"
             "    \"arrayOfDict\": \n"
             "    [\n"
-            "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0}, \n"
-            "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1}, \n"
+            "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0},\n"
+            "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1},\n"
             "    ],\n"
-            "    \"emoji\": \"\U0001F44D \U0001F4AA\"\n"
+            "    \"emoji\": \"\U0001F44D\",\n"
+            "    \"emojiArray\": [\"\U0001F4AA\", \"\U0001F525\", \"\U0001F680\"]\n"
             "}"
             );
 

@@ -861,7 +861,10 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
         } while (strlen(element) > 0 && strlen(c) > 1);
         size += sprintf(destination + size, (b == '{') ? "}" : "]");
         #ifdef _SHOW_PRETTY_STRING_MEMORY
-        printf("RKPrettyStringFromKeyValueString() {} size = %d  alloc = %d %s\n", (int)size, (int)s, destination);
+        printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
+               (int)size, (int)s,
+               size < s ? RKMonokaiGreen "o" RKNoColor : RKMonokaiRed "x" RKNoColor,
+               destination);
         #endif
         free(element);
         return size;
@@ -881,7 +884,10 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
 
     size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
     #ifdef _SHOW_PRETTY_STRING_MEMORY
-    printf("RKPrettyStringFromKeyValueString() {} size = %d  alloc = %d %s\n", (int)size, (int)s, destination);
+    printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
+           (int)size, (int)s,
+           size < s ? RKMonokaiGreen "o" RKNoColor : RKMonokaiRed "x" RKNoColor,
+           destination);
     #endif
 
     free(value);
