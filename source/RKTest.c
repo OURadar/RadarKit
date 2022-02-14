@@ -738,7 +738,8 @@ void RKTestParseJSONString(void) {
             "    [\n"
             "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0}, \n"
             "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1}, \n"
-            "    ]\n"
+            "    ],\n"
+            "    \"emoji\": \"\U0001F44D \U0001F4AA\""
             "}"
             );
 
@@ -748,6 +749,7 @@ void RKTestParseJSONString(void) {
 
     printf("%s (%d)\n", jsonStringPretty, (int)strlen(jsonStringPretty));
 
+    free(jsonStringPretty);
     free(jsonString);
     free(element);
     free(small);
@@ -802,7 +804,7 @@ void RKTestFileManager(void) {
         k += sprintf(filename + k, "/RK-");
         k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         k += sprintf(filename + k, "-E%.1f", es[e]);
-        
+
         for (s = 0; s < ns; s++) {
             sprintf(filename + k, "-%s.nc", ss[s]);
             

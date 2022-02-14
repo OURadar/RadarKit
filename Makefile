@@ -3,7 +3,6 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-CFLAGS = -O2
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -ggdb -DBETA_BRANCH
 endif
@@ -12,6 +11,7 @@ endif
 #CFLAGS += -DDEBUG_IIR
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -DDEBUG_FILE_MANAGER
+#CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 
 CFLAGS += -std=gnu99
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
