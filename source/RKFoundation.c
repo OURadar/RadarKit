@@ -820,7 +820,7 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
 size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     size_t s = strlen(source) + 1;
 
-    if (s == 0) {
+    if (s == 1) {
         *destination = '\0';
         return 0;
     }

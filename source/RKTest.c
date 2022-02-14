@@ -723,8 +723,9 @@ void RKTestParseJSONString(void) {
         RKPrettyStringFromKeyValueString(small, element);
         printf(RKMintColor "%s" RKNoColor "\033[40G (%d)     %s \033[95G (%d) %d\n",
                element, (int)strlen(element),
-               small, (int)strlen(small), (int)strlen(small) - (int)strlen(element));
-    } while (strlen(element) > 0);
+               small, (int)strlen(small),
+               (int)strlen(small) - (int)strlen(element));
+    } while (strlen(small) > 0);
 
     sprintf(jsonString,
             "{\n"
@@ -739,7 +740,7 @@ void RKTestParseJSONString(void) {
             "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0}, \n"
             "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1}, \n"
             "    ],\n"
-            "    \"emoji\": \"\U0001F44D \U0001F4AA\""
+            "    \"emoji\": \"\U0001F44D \U0001F4AA\"\n"
             "}"
             );
 
