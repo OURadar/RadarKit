@@ -705,8 +705,8 @@ void RKTestParseJSONString(void) {
         k = (int)strlen(small);
         if (k) {
             RKJSONKeyValueFromString(key, value, small);
-            printf(RKMintColor "%-38s" RKNoColor " (%d)    "
-                   "k " RKMonokaiOrange "%-30s" RKNoColor "   "
+            printf(RKMintColor "%s" RKNoColor "\033[40G (%d)   "
+                   "k " RKMonokaiOrange "%s" RKNoColor "\033[80G   "
                    "v " RKMonokaiYellow "%s" RKNoColor "\n",
                    small, (int)strlen(small), key, value);
         } else {
@@ -721,7 +721,9 @@ void RKTestParseJSONString(void) {
     do {
         c = RKJSONGetArrayElement(element, c);
         RKPrettyStringFromKeyValueString(small, element);
-        printf(RKMintColor "%-38s" RKNoColor " (%d)  %s\n", element, (int)strlen(element), small);
+        printf(RKMintColor "%s" RKNoColor "\033[40G (%d)     %s \033[95G (%d) %d\n",
+               element, (int)strlen(element),
+               small, (int)strlen(small), (int)strlen(small) - (int)strlen(element));
     } while (strlen(element) > 0);
 
     sprintf(jsonString,
@@ -737,14 +739,14 @@ void RKTestParseJSONString(void) {
             "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0}, \n"
             "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1}, \n"
             "    ]\n"
-            "}\n"
+            "}"
             );
 
-    printf("jsonString =\n%s\n", jsonString);
+    printf("jsonString =\n%s (%d)\n\n", jsonString, (int)strlen(jsonString));
 
     RKPrettyStringFromKeyValueString(jsonStringPretty, jsonString);
 
-    printf("%s\n", jsonStringPretty);
+    printf("%s (%d)\n", jsonStringPretty, (int)strlen(jsonStringPretty));
 
     free(jsonString);
     free(element);
