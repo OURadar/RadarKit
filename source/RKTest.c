@@ -393,6 +393,7 @@ void RKTestParseCommaDelimitedValues(void) {
 
 void RKTestParseJSONString(void) {
     SHOW_FUNCTION_NAME
+    // A typical JSON health string from the health relay
     char string[] = "{"
     "\"Transceiver\":{\"Value\":true,\"Enum\":0}, "
     "\"Pedestal\":{\"Value\":true,\"Enum\":0}, "
@@ -445,21 +446,32 @@ void RKTestParseJSONString(void) {
     printf("Getting specific key:\n");
     printf("---------------------\n");
     char *stringObject, *stringValue, *stringEnum;
-    if ((stringObject = RKGetValueOfKey(string, "latitude")) != NULL) {
+    double number;
+    if ((stringObject = RKGetValueOfKey(string, "GPS Latitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
         stringEnum = RKGetValueOfKey(stringObject, "enum");
         if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-            printf("latitude = %.7f\n", atof(stringValue));
+            if (*stringValue == '"') {
+                sscanf(stringValue, "\"%lf\"", &number);
+            } else {
+                number = atof(stringValue);
+            }
+            printf("GPS Latitude = %s -> %.7f\n", stringValue, number);
         }
     }
     printf("\n");
-    if ((stringObject = RKGetValueOfKey(string, "longitude")) != NULL) {
+    if ((stringObject = RKGetValueOfKey(string, "GPS Longitude")) != NULL) {
         printf("stringObject = '%s'\n", stringObject);
         stringValue = RKGetValueOfKey(stringObject, "value");
         stringEnum = RKGetValueOfKey(stringObject, "enum");
         if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-            printf("longitude = %.7f\n", atof(stringValue));
+            if (*stringValue == '"') {
+                sscanf(stringValue, "\"%lf\"", &number);
+            } else {
+                number = atof(stringValue);
+            }
+            printf("GPS Longitude = %s -> %.7f\n", stringValue, number);
         }
     }
 
@@ -486,11 +498,16 @@ void RKTestParseJSONString(void) {
     printf("stringValue = %s\n", stringValue == NULL ? "(NULL)" : stringValue);
     printf("stringEnum = %s\n", stringEnum == NULL ? "(NULL)" : stringEnum);
     if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-        printf("longitude = %.7f\n", atof(stringValue));
+        if (*stringValue == '"') {
+            sscanf(stringValue, "\"%lf\"", &number);
+        } else {
+            number = atof(stringValue);
+        }
+        printf("number = %s -> %.7f\n", stringValue, number);
     }
 
     printf("\n===\n\n");
-    
+
     int k;
     size_t s;
     const int N = 8;
@@ -499,6 +516,8 @@ void RKTestParseJSONString(void) {
     printf("%s (%d characters)\n\n", string, (int)strlen(string));
 
     stringObject = RKGetValueOfKey(string, "name");
+    printf("name = %s\n", stringObject);
+    RKUnquote(stringObject);
     printf("name = %s\n", stringObject);
     stringObject = RKGetValueOfKey(string, "PieceCount");
     printf("Piece Count = %s\n", stringObject);
@@ -543,6 +562,201 @@ void RKTestParseJSONString(void) {
     printf("string = %s\n", string);
     RKReviseLogicalValues(string);
     printf("string = %s\n", string);
+
+    printf("\n===\n\n");
+
+    const size_t elementDepth = 4096;
+    char *jsonStringPretty = (char *)malloc(64 * elementDepth);
+    char *jsonString = (char *)malloc(32 * elementDepth);
+    char *element = (char *)malloc(elementDepth);
+    char *thingy = (char *)malloc(elementDepth);
+    char *value = (char *)malloc(elementDepth);
+    char *key = (char *)malloc(elementDepth);
+    char *c;
+
+    memset(element, 0, elementDepth);
+
+    // An array of dictionaries from multiple sources, each has multiple key-value pairs
+    sprintf(jsonString,
+        "[\n"
+        "    {\n"
+        "        \"name\": \"thing-0-0-0-SoCd\",\n"
+        "        \"id\": 1636945645,\n"
+        "        \"hostname\": \"thing-0-0-0\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": true\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"lights\",\n"
+        "        \"id\": 514840374,\n"
+        "        \"hostname\": \"mother\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": false\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"orch\",\n"
+        "        \"id\": 2492639455,\n"
+        "        \"hostname\": \"mother\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": false\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"stargate\",\n"
+        "        \"id\": 3535738166,\n"
+        "        \"hostname\": \"mother\",\n"
+        "        \"advertises\": \"[\\\"encouragement\\\"]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": true,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": true\n"
+        "    },\n"
+        "    {\n"
+        "        \"name\": \"thing-0-0-2-SoCd\",\n"
+        "        \"id\": 4031844090,\n"
+        "        \"hostname\": \"thing-0-0-2\",\n"
+        "        \"advertises\": \"[]\",\n"
+        "        \"controlling\": \"{}\",\n"
+        "        \"controlling_connected\": \"{}\",\n"
+        "        \"controlled_by\": null,\n"
+        "        \"control_requested\": null,\n"
+        "        \"connected\": true,\n"
+        "        \"interested_in_logs\": false,\n"
+        "        \"interested_in_systemchanged\": false,\n"
+        "        \"controllable\": true\n"
+        "    },\n"
+        "]\n");
+
+    printf("jsonString =\n%s\n", jsonString);
+
+    // Skip ahead the square bracket
+    c = jsonString + 1;
+
+    // Test RKGetValueOfKey()
+    while (*c != '\0') {
+        c = RKJSONGetArrayElement(element, c);
+        printf(RKMintColor "%s" RKNoColor " (%d)\n", element, (int)strlen(element));
+        if (strlen(element) > 8) {
+            if ((stringObject = RKGetValueOfKey(element, "name"))) {
+                RKUnquote(stringObject);
+                printf(RKMonokaiOrange "name" RKMonokaiPink " = " RKMonokaiYellow "%s" RKNoColor "\n", stringObject);
+            }
+            if ((stringObject = RKGetValueOfKey(element, "connected"))) {
+                printf(RKMonokaiOrange "connected" RKMonokaiPink " = " RKMonokaiPurple "%s" RKNoColor "\n", stringObject);
+            }
+        }
+        printf("\n");
+    }
+    printf("c = %s %d\n", *c == '\0' ? "(EOL)" : c, (int)(c - jsonString + 1));
+
+    printf("===\n");
+
+    sprintf(jsonString,
+            "{\n"
+            "    \"name\": \"stargate\",\n"
+            "    \"id\": 3535738166,\n"
+            "    \"hostname\": \"mother\",\n"
+            "    \"advertises\": \"[\\\"encouragement\\\"]\",\n"
+            "    \"controlling\": \"{}\",\n"
+            "    \"controlling_connected\": \"{}\",\n"
+            "    \"controlled_by\": null,\n"
+            "    \"control_requested\": null,\n"
+            "    \"connected\": true,\n"
+            "    \"interested_in_logs\": true,\n"
+            "    \"interested_in_systemchanged\": false,\n"
+            "    \"controllable\": true\n"
+            "},\n"
+            "");
+    
+    printf("jsonString =\n%s\n", jsonString);
+    
+    c = jsonString;
+    c = RKJSONGetArrayElement(element, c);
+    printf(RKMonokaiYellow "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
+
+    // Test parsing key-value pair from an array
+    c = element + 1;
+    do {
+        c = RKJSONGetArrayElement(thingy, c);
+        k = (int)strlen(thingy);
+        if (k) {
+            RKJSONKeyValueFromString(key, value, thingy);
+            printf(RKMintColor "%s" RKNoColor "\033[40G (%d)   "
+                   "k " RKMonokaiOrange "%s" RKNoColor "\033[80G   "
+                   "v " RKMonokaiYellow "%s" RKNoColor "\n",
+                   thingy, (int)strlen(thingy), key, value);
+        } else {
+            printf(RKMonokaiGreen "(empty)" RKNoColor " (%d)\n", (int)strlen(thingy));
+        }
+    } while (strlen(thingy) > 0);
+
+    printf("\n");
+
+    // Same as before, but prettier
+    c = element + 1;
+    do {
+        c = RKJSONGetArrayElement(element, c);
+        RKPrettyStringFromKeyValueString(thingy, element);
+        printf(RKMintColor "%s" RKNoColor "\033[40G (%d)     %s \033[95G (%d) %d\n",
+               element, (int)strlen(element),
+               thingy, (int)strlen(thingy),
+               (int)strlen(thingy) - (int)strlen(element));
+    } while (strlen(thingy) > 0);
+
+    sprintf(jsonString,
+            "{\n"
+            "    \"string\": \"I am a string\", \n"
+            "    \"number\": 12345, \n"
+            "    \"float\": 32.56, \n"
+            "    \"logic\": True, \n"
+            "    \"array\": [1, 2, 3], \n"
+            "    \"dictionary\": {\"label\": \"PRF\", \"value\": \"12 Hz\", \"enum\": 0, }, \n"
+            "    \"arrayOfDict\": \n"
+            "    [\n"
+            "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0},\n"
+            "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1},\n"
+            "    ],\n"
+            "    \"emoji\": \"\U0001F44D\",\n"
+            "    \"emojiArray\": [\"\U0001F4AA\", \"\U0001F525\", \"\U0001F680\"]\n"
+            "}"
+            );
+
+    printf("jsonString =\n%s (%d)\n\n", jsonString, (int)strlen(jsonString));
+
+    RKPrettyStringFromKeyValueString(jsonStringPretty, jsonString);
+
+    printf("%s (%d)\n", jsonStringPretty, (int)strlen(jsonStringPretty));
+
+    free(jsonStringPretty);
+    free(jsonString);
+    free(element);
+    free(thingy);
+    free(value);
+    free(key);
 }
 
 void RKTestFileManager(void) {
@@ -563,18 +777,18 @@ void RKTestFileManager(void) {
         fprintf(stderr, "Unable to allocate payload.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     const char dataPath[] = "data";
     RKFileManager *fileManager = RKFileManagerInit();
     RKFileManagerSetPathToMonitor(fileManager, dataPath);
     RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
     RKFileManagerSetVerbose(fileManager, 3);
-    
+
     RKLog("Warning. All data in moment folder will be erased!\n");
     printf("Press Enter to continue ... 'n' to keep moment files, or Ctrl-C to terminate.\n");
-    
+
     j = getchar();
-    
+
     //printf("j = %d = %c\n", j, j);
     if (j != 'n' && j != 'N') {
         if (system("rm -rf data/moment") == -1) {
@@ -592,7 +806,7 @@ void RKTestFileManager(void) {
         k += sprintf(filename + k, "/RK-");
         k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
         k += sprintf(filename + k, "-E%.1f", es[e]);
-        
+
         for (s = 0; s < ns; s++) {
             sprintf(filename + k, "-%s.nc", ss[s]);
             

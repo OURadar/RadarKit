@@ -85,8 +85,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-T22"
-            isEnabled = "NO">
+            argument = "-T5"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-T20 /Users/boonleng/Downloads/raxpol/RAXPOL-20210324-192607.rkc"

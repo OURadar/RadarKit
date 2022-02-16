@@ -238,6 +238,29 @@ char *RKVersionString(void) {
     return versionString;
 }
 
+RKValueType RKGuessValueType(const char *source) {
+    RKValueType type = RKValueTypeVariable;
+    if (*source == '"' || *source == '\'') {
+        type = RKValueTypeString;
+    } else if (*source == '{') {
+        type = RKValueTypeDictionary;
+    } else if (*source == '[') {
+        type = RKValueTypeArray;
+    } else if (*source >= '0' && *source <= '9') {
+        char *dot = strchr(source, '.');
+        if (dot) {
+            type = RKValueTypeFloat;
+        } else {
+            type = RKValueTypeInt;
+        }
+    } else if (strcasestr(source, "false") || strcasestr(source, "true")) {
+        type = RKValueTypeBool;
+    } else if (strcasestr(source, "null")) {
+        type = RKValueTypeNull;
+    }
+    return type;
+}
+
 #pragma mark - Filename / String
 
 bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
@@ -744,7 +767,9 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     bool b = *((bool *)value);
 
     if (rkGlobalParameters.showColor) {
-        if (type == RKValueTypeBool) {
+        if (type == RKValueTypeNull) {
+            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPinkColor "Null" RKNoColor, name);
+        } else if (type == RKValueTypeBool) {
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
@@ -752,7 +777,9 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
             snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
         }
     } else {
-        if (type == RKValueTypeBool) {
+        if (type == RKValueTypeNull) {
+            snprintf(string, RKNameLength - 1, "%s = Null", name);
+        } else if (type == RKValueTypeBool) {
             snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
             snprintf(string, RKNameLength - 1, "%s = '%s'", name, c);
@@ -761,6 +788,113 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
         }
     }
     return string;
+}
+
+size_t RKPrettyStringFromValueString(char *destination, const char *source) {
+    if (strlen(source) == 0) {
+        *destination = '\0';
+        return 0;
+    }
+    RKValueType type = RKGuessValueType(source);
+    if (type == RKValueTypeNull) {
+        return sprintf(destination, RKMonokaiGreen "null" RKNoColor);
+    }
+    if (type == RKValueTypeDictionary) {
+        return RKPrettyStringFromKeyValueString(destination, source);
+    }
+    if (type == RKValueTypeArray) {
+        return RKPrettyStringFromKeyValueString(destination, source);
+    }
+    if (type == RKValueTypeBool || type == RKValueTypeInt || type == RKValueTypeFloat) {
+        return sprintf(destination, RKMonokaiPurple "%s" RKNoColor, source);
+    }
+    if (type == RKValueTypeString) {
+        return sprintf(destination, RKMonokaiYellow "%s" RKNoColor, source);
+    }
+    if (type == RKValueTypeVariable) {
+        return sprintf(destination, RKMonokaiOrange "%s" RKNoColor, source);
+    }
+    return sprintf(destination, "%s", source);
+}
+
+size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
+    size_t s = strlen(source) + 1;
+
+    if (s == 1) {
+        *destination = '\0';
+        return 0;
+    }
+
+    char *c = (char *)source;
+    char *e = c + strlen(c);
+    
+    // Each color change uses up to 14 B for \033[38;5;123m (9-11 color dependent) and \033[m (3)
+    int k = 0;
+    do {
+        if (*c == ':') {
+            k += 3;
+        } else if (*c == ','  || *c == ']' || *c == '}') {
+            k++;
+        }
+    } while (c++ < e);
+    s += k * 14;
+
+    c = (char *)source;
+
+    char b = *c;
+    size_t size = 0;
+
+    if (b == '{' || b == '[') {
+        c++;
+        char *element = malloc(s);
+        size = sprintf(destination, (b == '{') ? "{" : "[");
+        do {
+            c = RKJSONGetArrayElement(element, c);
+            if (size > 1) {
+                size += sprintf(destination + size, ", ");
+            }
+            if (b == '{') {
+                size += RKPrettyStringFromKeyValueString(destination + size, element);
+            } else {
+                size += RKPrettyStringFromValueString(destination + size, element);
+            }
+        } while (strlen(element) > 0 && strlen(c) > 1);
+        size += sprintf(destination + size, (b == '{') ? "}" : "]");
+        #ifdef _SHOW_PRETTY_STRING_MEMORY
+        printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
+               (int)size, (int)s,
+               size < s ? RKMonokaiGreen "o" RKNoColor : RKMonokaiRed "x" RKNoColor,
+               destination);
+        #endif
+        free(element);
+        return size;
+    }
+
+    char *t = malloc(s);
+    char *key = malloc(s);
+    char *value = malloc(s);
+
+    RKJSONKeyValueFromString(key, value, source);
+
+    strcpy(t, key);
+    RKPrettyStringFromValueString(key, t);
+
+    strcpy(t, value);
+    RKPrettyStringFromValueString(value, t);
+
+    size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+    #ifdef _SHOW_PRETTY_STRING_MEMORY
+    printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
+           (int)size, (int)s,
+           size < s ? RKMonokaiGreen "o" RKNoColor : RKMonokaiRed "x" RKNoColor,
+           destination);
+    #endif
+
+    free(value);
+    free(key);
+    free(t);
+
+    return size;
 }
 
 #pragma mark - Buffer

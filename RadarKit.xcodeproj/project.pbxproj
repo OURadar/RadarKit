@@ -42,6 +42,11 @@
 		B56BD9F32642DA4D00113329 /* RKRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = B56BD9F22642DA4D00113329 /* RKRamp.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B56BD9F42642E06C00113329 /* RKProductFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EE832D20DFBC4F00681E29 /* RKProductFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B56BD9F52642E09400113329 /* RKCommandCenter.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKCommandCenter.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B56C075027B5877B0054A2E9 /* RKWebSocket.c in Sources */ = {isa = PBXBuildFile; fileRef = B56C074F27B5877B0054A2E9 /* RKWebSocket.c */; };
+		B56C075227B587850054A2E9 /* RKReporter.c in Sources */ = {isa = PBXBuildFile; fileRef = B56C075127B587850054A2E9 /* RKReporter.c */; };
+		B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075327B587990054A2E9 /* _rfc_6455.h */; };
+		B56C075627B587A40054A2E9 /* RKWebSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075527B587A40054A2E9 /* RKWebSocket.h */; };
+		B56C075827B587AA0054A2E9 /* RKReporter.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075727B587AA0054A2E9 /* RKReporter.h */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B2058A20E43128007D48E0 /* RKSweepFile.c */; };
@@ -204,6 +209,11 @@
 		B56AB0AA20A8826900E73AE9 /* Simple Emulator */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "Simple Emulator"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B56BD9F02642DA3400113329 /* RKRamp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKRamp.c; path = source/RKRamp.c; sourceTree = "<group>"; };
 		B56BD9F22642DA4D00113329 /* RKRamp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKRamp.h; path = headers/RadarKit/RKRamp.h; sourceTree = "<group>"; };
+		B56C074F27B5877B0054A2E9 /* RKWebSocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKWebSocket.c; path = source/RKWebSocket.c; sourceTree = "<group>"; };
+		B56C075127B587850054A2E9 /* RKReporter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKReporter.c; path = source/RKReporter.c; sourceTree = "<group>"; };
+		B56C075327B587990054A2E9 /* _rfc_6455.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = _rfc_6455.h; path = headers/RadarKit/_rfc_6455.h; sourceTree = "<group>"; };
+		B56C075527B587A40054A2E9 /* RKWebSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKWebSocket.h; path = headers/RadarKit/RKWebSocket.h; sourceTree = "<group>"; };
+		B56C075727B587AA0054A2E9 /* RKReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKReporter.h; path = headers/RadarKit/RKReporter.h; sourceTree = "<group>"; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
 		B5B2058820E43117007D48E0 /* RKSweepFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepFile.h; path = headers/RadarKit/RKSweepFile.h; sourceTree = "<group>"; };
 		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
@@ -356,6 +366,7 @@
 		B5324D8D1AB8CCEE00C00517 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				B56C075327B587990054A2E9 /* _rfc_6455.h */,
 				B5FA391F263475D8008C0454 /* RKVersion.h */,
 				B5324DDF1AB8D9F100C00517 /* RKTypes.h */,
 				B53AE7EC1D88824400364467 /* RKMisc.h */,
@@ -394,6 +405,8 @@
 				B528D9611E74EE8100A7328F /* RKFileManager.h */,
 				B5EBAA021E9C8D20006AE027 /* RKRadarRelay.h */,
 				B5377DC52041C18C00972E41 /* RKHostMonitor.h */,
+				B56C075527B587A40054A2E9 /* RKWebSocket.h */,
+				B56C075727B587AA0054A2E9 /* RKReporter.h */,
 				B5F5AE3A1DBF994200CF643F /* RKTest.h */,
 				B59471901D89B4D400EEE77C /* RadarKit.h */,
 			);
@@ -468,6 +481,8 @@
 				B5FFD4761FB0B5C600319453 /* RKFileManager.c */,
 				B5FFD4631FB0B5C300319453 /* RKRadarRelay.c */,
 				B5377DC72041C1B900972E41 /* RKHostMonitor.c */,
+				B56C074F27B5877B0054A2E9 /* RKWebSocket.c */,
+				B56C075127B587850054A2E9 /* RKReporter.c */,
 				B5FFD4721FB0B5C500319453 /* RKTest.c */,
 				B525FEF51FB0B6B800C5195C /* RadarKit.c */,
 			);
@@ -483,6 +498,7 @@
 			files = (
 				B5FA3920263475D8008C0454 /* RKVersion.h in Headers */,
 				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
+				B56C075827B587AA0054A2E9 /* RKReporter.h in Headers */,
 				B53AE7ED1D88824400364467 /* RKMisc.h in Headers */,
 				B55E437D1DB66682003C40CF /* RKSIMD.h in Headers */,
 				B5324DE21AB8DA0800C00517 /* RKFoundation.h in Headers */,
@@ -506,6 +522,7 @@
 				B52E45C31D91749C00FC1113 /* RKMomentEngine.h in Headers */,
 				B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */,
 				B5FAD8D220DE943B00E0A767 /* RKProduct.h in Headers */,
+				B56C075627B587A40054A2E9 /* RKWebSocket.h in Headers */,
 				B56BD9F42642E06C00113329 /* RKProductFile.h in Headers */,
 				B55F5F1A1E2C8F9600FA8B2E /* RKSweepEngine.h in Headers */,
 				B5C1F3641AB9CD34004F88CD /* RKRawDataRecorder.h in Headers */,
@@ -517,6 +534,7 @@
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
 				B56BD9F52642E09400113329 /* RKCommandCenter.h in Headers */,
 				B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */,
+				B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */,
 				B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */,
 				B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */,
 				B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */,
@@ -699,6 +717,7 @@
 			files = (
 				B565B5451E5A4623000C8503 /* bessi.c in Sources */,
 				B525FEF41FB0B6A400C5195C /* RKMisc.c in Sources */,
+				B56C075227B587850054A2E9 /* RKReporter.c in Sources */,
 				B5FFD48E1FB0B5C600319453 /* RKSIMD.c in Sources */,
 				B5FFD4811FB0B5C600319453 /* RKFoundation.c in Sources */,
 				B5FFD4961FB0B5C600319453 /* RKClock.c in Sources */,
@@ -731,6 +750,7 @@
 				B5FFD48D1FB0B5C600319453 /* RKPreference.c in Sources */,
 				B5FFD4851FB0B5C600319453 /* RKRadar.c in Sources */,
 				B5FFD4901FB0B5C600319453 /* RKCommandCenter.c in Sources */,
+				B56C075027B5877B0054A2E9 /* RKWebSocket.c in Sources */,
 				B5FFD4931FB0B5C600319453 /* RKFileManager.c in Sources */,
 				B5FFD4801FB0B5C600319453 /* RKRadarRelay.c in Sources */,
 				B5377DC82041C1B900972E41 /* RKHostMonitor.c in Sources */,

@@ -140,7 +140,11 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
     return oe;
 }
 
-// BUG: This function is limited to an array of 8 elements
+// LIMITATIONS:
+//  - Not a generic function, many assumptions
+//  - Static array variable limited to 8 elements
+//  - Cannot handle certain conditions within quoted strings
+//
 char *RKGetValueOfKey(const char *string, const char *key) {
     static char valueStrings[8][256];
     static int k = 7;
@@ -148,15 +152,21 @@ char *RKGetValueOfKey(const char *string, const char *key) {
     char *s, *e;
     size_t len;
     char *valueString = valueStrings[k];
-    char *keyPosition = strcasestr(string, key);
+    char quotedKey[256];
+    sprintf(quotedKey, "\"%s\"", key);
+    char *keyPosition = strcasestr(string, quotedKey);
+    if (keyPosition == NULL) {
+        sprintf(quotedKey, "'%s'", key);
+        keyPosition = strcasestr(string, quotedKey);
+    }
     
     if (keyPosition != NULL) {
         // Find start of the value
-        s = strchr(keyPosition + strlen(key), ':');
+        s = strchr(keyPosition + strlen(quotedKey), ':');
         if (s != NULL) {
             do {
                 s++;
-            } while (*s == '"' || *s == '\'' || *s == ' ');
+            } while (*s == ' ' || *s == '\r' || *s == '\n');
         } else {
             return NULL;
         }
@@ -176,8 +186,8 @@ char *RKGetValueOfKey(const char *string, const char *key) {
             }
             return valueString;
         } else if (*s == '{') {
-            // Find the end of curly bracket, return the entire array
-            e = s;
+            // Find the end of curly bracket, return the entire dictionary
+            e = s + 1;
             while (*e != '}') {
                 e++;
             }
@@ -189,10 +199,38 @@ char *RKGetValueOfKey(const char *string, const char *key) {
                 valueString[0] = '\0';
             }
             return valueString;
-        }
+        } else if (*s == '"') {
+            // Find the end of double quote, return the entire string
+            e = s + 1;
+            while (*e != '"') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        } else if (*s == '\'') {
+            // Find the end of single quote, return the entire string
+            e = s + 1;
+            while (*e != '\'') {
+                e++;
+            }
+            len = e - s + 1;
+            if (len > 0) {
+                strncpy(valueString, s, len);
+                valueString[len] = '\0';
+            } else {
+                valueString[0] = '\0';
+            }
+            return valueString;
+        } 
         // Find end of the value
         e = s;
-        while (*e != '"' && *e != '\'' && *e != ',' && *e != '}' && *e != ']') {
+        while (*e != ',' && *e != '}' && *e != ']') {
             e++;
         }
         len = MIN(255, e - s);
@@ -308,6 +346,138 @@ void RKReviseLogicalValues(char *string) {
         memset(token + 5 + strlen(token + 7), '\0', 2 * sizeof(char));
         token = strcasestr(token + 7, "\"false\"");
     }
+}
+
+// RKJSON* functions
+
+char *RKJSONSkipWhiteSpaces(const char *haystack) {
+    char *c = (char *)haystack;
+    while (*c == ' ' || *c == '\r' || *c == '\n') {
+        c++;
+    }
+    return c;
+}
+
+char *RKJSONScanPassed(char *destination, const char *source, const char delimiter) {
+    char *c = (char *)source;
+    char *d = destination;
+    bool singleQuote = false;
+    bool doubleQuote = false;
+    bool slash = false;
+    bool space = false;
+    int curly = 0;
+    int round = 0;
+    int square = 0;
+
+    #if defined(DEBUG_GET_NEXT_ELEMENT)
+    char str[32];
+    int k;
+    #endif
+
+    char *end = c + strlen(source);
+
+    c = RKJSONSkipWhiteSpaces(c);
+
+    while (c < end) {
+        switch (*c) {
+            case '\\':
+                slash = true;
+                break;
+            case '\'':
+                singleQuote = !singleQuote;
+                break;
+            case '"':
+                if (!slash) {
+                    doubleQuote = !doubleQuote;
+                } else {
+                    slash = false;
+                }
+                break;
+            case '{':
+                curly++;
+                break;
+            case '}':
+                curly--;
+                break;
+            case '(':
+                round++;
+                break;
+            case ')':
+                round--;
+                break;
+            case '[':
+                square++;
+                break;
+            case ']':
+                square--;
+                break;
+            default:
+                break;
+        }
+
+        if (doubleQuote) {
+            *d++ = *c;
+        } else {
+            // Allow only one space character right after a color (:) or a comma (,)
+            if (*c == ':' || *c == ',') {
+                space = true;
+            }
+            if (*c != '\r' && *c != '\n') {
+                if (*c != ' ') {
+                    *d++ = *c;
+                } else if (*c == ' ' && space == true) {
+                    space = false;
+                    *d++ = *c;
+                }
+            }
+        }
+
+        #if defined(DEBUG_GET_NEXT_ELEMENT)
+        k = sprintf(str, "\033[48;5;238;38;5;15m");
+        switch (*c) {
+            case '\r':
+                k += sprintf(str + k, "\\r");
+                break;
+            case '\n':
+                k += sprintf(str + k, "\\n");
+                break;
+            default:
+                k += sprintf(str + k, "%c", *c);
+                break;
+        }
+        *(d + 1) = '\0';
+        sprintf(str + k, "\033[m%s", k == 20 ? " " : "");
+        printf("%s '%d \"%d {%d (%d [%d \\%d s%d \033[48;5;238m%s\033[m \n",
+            str, singleQuote, doubleQuote, curly, round, square, slash, space, destination);
+        #endif
+
+        c++;
+
+        if (singleQuote == false &&
+            doubleQuote == false &&
+            curly == 0 &&
+            round == 0 &&
+            square == 0 &&
+            (*c == delimiter || *c == '}' || *c == ')' || *c == ']' || *c == '\0')) {
+            c++;
+            break;
+        }
+    }
+    *d = '\0';
+    c = RKJSONSkipWhiteSpaces(c);
+    return c;
+}
+
+char *RKJSONGetArrayElement(char *element, const char *source) {
+    return RKJSONScanPassed(element, source, ',');
+}
+
+char *RKJSONKeyValueFromString(char *key, char *value, const char *source) {
+    char *c = (char *)source;
+    c = RKJSONScanPassed(key, c, ':');
+    c = RKJSONScanPassed(value, c, '\0');
+    RKUnquote(key);
+    return c;
 }
 
 #pragma mark -
@@ -706,6 +876,18 @@ int RKStripTail(char *string) {
         *c-- = '\0';
         k++;
     }
+    return k;
+}
+
+int RKUnquote(char *string) {
+    char q = string[0];
+    if (q != '"' && q != '\'') {
+        return (int)strlen(string);
+    }
+    char *e = strrchr(string + 1, q);
+    int k = (int)(e - string - 1);
+    memmove(string, string + 1, k);
+    string[k] = '\0';
     return k;
 }
 
@@ -1299,4 +1481,28 @@ int RKMergeColumns(char *text, const char *left, const char *right, const int in
     }
     w += u + indent;
     return w;
+}
+
+char *RKBinaryString(char *dst, void *src, size_t count) {
+    uint8_t *c = (uint8_t *)src;
+    *dst++ = 'b';
+    *dst++ = '\'';
+    for (int i = 0; i < count; i++) {
+        if (*c >= 32 && *c < 127) {
+            if (*c == '\\' || *c == '\'') {
+                *dst++ = '\\';
+            }
+            *dst++ = *c++;
+        } else {
+            dst += sprintf(dst, "\\x%02x", *c++);
+        }
+    }
+    *dst++ = '\'';
+    *dst = '\0';
+    return dst;
+}
+
+void RKHeadTailBinaryString(char *dst, void *src, size_t count) {
+    char *tail = RKBinaryString(dst, src, 25);
+    RKBinaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
 }

@@ -168,25 +168,40 @@ static void *healthConsolidator(void *_in) {
         heading = NAN;
         latitude = NAN;
         longitude = NAN;
-        if ((stringObject = RKGetValueOfKey(string, "heading")) != NULL) {
+        if ((stringObject = RKGetValueOfKey(string, "GPS Heading")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                heading = (float)atof(stringValue);
+                //heading = (float)atof(stringValue);
+                if (*stringValue == '"') {
+                    sscanf(stringValue, "\"%f\"", &heading);
+                } else {
+                    heading = (float)atof(stringValue);
+                }
             }
         }
-        if ((stringObject = RKGetValueOfKey(string, "latitude")) != NULL) {
+        if ((stringObject = RKGetValueOfKey(string, "GPS Latitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                latitude = atof(stringValue);
+                //latitude = atof(stringValue);
+                if (*stringValue == '"') {
+                    sscanf(stringValue, "\"%lf\"", &latitude);
+                } else {
+                    latitude = atof(stringValue);
+                }
             }
         }
-        if ((stringObject = RKGetValueOfKey(string, "longitude")) != NULL) {
+        if ((stringObject = RKGetValueOfKey(string, "GPS Longitude")) != NULL) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                longitude = atof(stringValue);
+                //longitude = atof(stringValue);
+                if (*stringValue == '"') {
+                    sscanf(stringValue, "\"%lf\"", &longitude);
+                } else {
+                    longitude = atof(stringValue);
+                }
             }
         }
         if (isnan(heading) || (desc->initFlags & RKInitFlagIgnoreHeading)) {

@@ -3,7 +3,6 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-CFLAGS = -std=gnu99 -O2
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -ggdb -DBETA_BRANCH
 endif
@@ -12,17 +11,22 @@ endif
 #CFLAGS += -DDEBUG_IIR
 #CFLAGS += -DDEBUG_IQ
 #CFLAGS += -DDEBUG_FILE_MANAGER
+#CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 
+CFLAGS += -std=gnu99
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I headers/RadarKit -I /usr/local/include -I /usr/include -fPIC
 
+LDFLAGS = -L./ -L/usr/local/lib
+
 ifeq ($(KERNEL), Darwin)
 	CFLAGS += -fms-extensions -Wno-microsoft
+	CFLAGS += -I/usr/local/opt/openssl@1.1/include
+
+	LDFLAGS += -L/usr/local/opt/openssl@1.1/lib
 endif
 
-LDFLAGS = -L ./ -L /usr/local/lib
-
-OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKTest.o
+OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
 OBJS += RKPreference.o
 OBJS += RKFileManager.o RKHostMonitor.o
@@ -31,7 +35,7 @@ OBJS += RKWaveform.o
 OBJS += RKPositionEngine.o
 OBJS += RKPulseEngine.o RKPulseRingFilter.o RKMomentEngine.o
 OBJS += RKRadarRelay.o
-OBJS += RKNetwork.o RKServer.o RKClient.o
+OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
 OBJS += RKPulsePair.o RKMultiLag.o RKSpectralMoment.o RKCalibrator.o
 OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
@@ -60,14 +64,14 @@ else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
 		CFLAGS += -D_GNU_SOURCE -D_EXPLICIT_INTRINSIC -msse -msse2 -msse3 -msse4 -msse4.1
-		LDFLAGS += -L /usr/lib64
+		LDFLAGS += -L/usr/lib64
 	else
 		CFLAGS += -D_GNU_SOURCE
-		LDFLAGS += -L /usr/lib64
+		LDFLAGS += -L/usr/lib64
 	endif
 endif
 
-LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm
+LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm -lssl
 
 ifeq ($(KERNEL), Darwin)
 else

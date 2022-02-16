@@ -113,27 +113,106 @@ enum RKJSONObjectType {
     RKJSONObjectTypeObject
 };
 
+//
+// Color Output
+//
+
+// Returns an escape sequence to produce colored output on terminal (random)
 char *RKGetColor(void);
+
+// Same as before but you get to choose the index
 char *RKGetColorOfIndex(const int);
+
+// Returns an escape sequence to produce colored background on terminal (random)
 char *RKGetBackgroundColor(void);
+
+// Same as before but you get to choose the index
 char *RKGetBackgroundColorOfIndex(const int);
+
+// Same as before but indexing in a cube-like coordinte, see rkutil -T1
 char *RKGetBackgroundColorOfCubeIndex(const int);
 
+//
+// JSON (RadarKit 2)
+//
+// The following is a set of JSON functions that are *very* limited
+// They are made for efficiency with many assumptions
+//
+
+// Extract a string into type, key, and vlaue
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value);
+
+// Get the value of a specific key
 char *RKGetValueOfKey(const char *string, const char *key);
+
+// Replace all values of a key
 void RKReplaceAllValuesOfKey(char *string, const char *key, int value);
+
+// Repalce enum of a key
 void RKReplaceEnumOfKey(char *string, const char *key, int value);
+
+// Revise logical values like "true" to true
 void RKReviseLogicalValues(char *);
 
+//
+// JSON (RadarKit 3)
+//
+// The following is a set of JSON functions that are made to handle
+// somewhat generic forms. More than previous verions but still a work
+// in progress by Jan 2022. Will add functionality as the need arises
+//
+
+// Returns the pointer to the first non-space character of the input source
+char *RKJSONSkipWhiteSpaces(const char *);
+
+// Scan and copy a constituent until a delimiter
+// Delimiter within double quotes, single quotes, or brackets are passed through
+// The special combination \" within double quotes is passed through
+// In the copy process, unnecessary empty spaces are eliminated, except those within quotes
+char *RKJSONScanPassed(char *, const char *, const char);
+
+// Get the current element of an array
+char *RKJSONGetArrayElement(char *, const char *);
+
+// Extract a like '"key": "value"' string into key string and value string
+// e.g., input = '"name": "startgate"' -> key = '"name"', value = '"stargate"'
+char *RKJSONKeyValueFromString(char *, char *, const char *);
+
+//
+//
+//
+
+// Returns a string of an unsigned long long with thousands separator
 char *RKUIntegerToCommaStyleString(const unsigned long long);
+
+// Returns a string of a long long with thousands separator
 char *RKIntegerToCommaStyleString(const long long);
+
+// Returns a string of hexadecimal representation
 char *RKIntegerToHexStyleString(const long long);
+
+// Returns a string of a double with thousands separator
 char *RKFloatToCommaStyleString(const double);
 
+//
+//
+//
+
+// Returns a time string now
 char *RKNow(void);
+
+// Computes the time difference between to struct timeval
 double RKTimevalDiff(const struct timeval minuend, const struct timeval subtrahend);
+
+// Computes the time difference between to struct timespec
 double RKTimespecDiff(const struct timespec minuend, const struct timespec subtrahend);
+
+// Gets the current UTC time in struct timespec
 void RKUTCTime(struct timespec *);
+
+//
+//
+//
 
 bool RKFilenameExists(const char *);
 void RKPreparePath(const char *);
@@ -146,25 +225,57 @@ char *RKLastNPartsOfPath(const char *, const int n);
 char *RKPathStringByExpandingTilde(const char *);
 void RKReplaceFileExtension(char *filename, const char *pattern, const char *replacement);
 
+//
+//
+//
+
 char *RKSignalString(const int);
 
+//
+//
+//
+
 int RKStripTail(char *);
+int RKUnquote(char *);
 int RKIndentCopy(char *dst, char *src, const int width);
 int RKStringCenterized(char *dst, const char *src, const int width);
 char *RKNextNoneWhite(const char *);
 char *RKLastLine(const char *);
 char *RKStripEscapeSequence(const char *line);
 
+//
+//
+//
+
 float RKMinDiff(const float minuend, const float subtrahend);
 float RKUMinDiff(const float minuend, const float subtrahend);
 bool RKAngularCrossOver(const float a1, const float a2, const float crossover);
 
+//
+//
+//
+
 long RKGetCPUIndex(void);
 long RKGetMemoryUsage(void);
 
+//
+//
+//
+
 char *RKCountryFromPosition(const double latitude, const double longitude);
+
+//
+//
+//
 
 char *RKGetNextKeyValue(char *json, char *key, char *value);
 int RKMergeColumns(char *, const char *, const char *, const int);
+
+//
+//
+//
+
+char *RKBinaryString(char *dst, void *src, size_t count);
+void RKHeadTailBinaryString(char *dst, void *src, size_t count);
 
 #endif /* rk_misc_h */
