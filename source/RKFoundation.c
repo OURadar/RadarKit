@@ -819,7 +819,8 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
 
 size_t RKPrettyStringSizeEstimate(const char *source) {
     char *c = (char *)source;
-    size_t s = strlen(source) + 1;
+    char *e = c + strlen(source);
+    size_t s = (size_t)(e - c + 1);
     // Each color change uses up to 14 B for \033[38;5;123m (9-11 color dependent) and \033[m (3)
     int k = 0;
     do {
