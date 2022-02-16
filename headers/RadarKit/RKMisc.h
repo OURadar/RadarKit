@@ -178,6 +178,10 @@ char *RKJSONGetElement(char *, const char *);
 // e.g., input = '"name": "startgate"' -> key = '"name"', value = '"stargate"'
 char *RKJSONKeyValueFromElement(char *, char *, const char *);
 
+// Scan a source to an element where the key == name and return the position
+// The actual key and values are stored in the provided memory
+char *RKJSONScanToKey(char *element, char *key, char *value, const char *name, const char *source);
+
 //
 //
 //
