@@ -569,7 +569,7 @@ void RKTestParseJSONString(void) {
     char *jsonStringPretty = (char *)malloc(64 * elementDepth);
     char *jsonString = (char *)malloc(32 * elementDepth);
     char *element = (char *)malloc(elementDepth);
-    char *small = (char *)malloc(elementDepth);
+    char *thingy = (char *)malloc(elementDepth);
     char *value = (char *)malloc(elementDepth);
     char *key = (char *)malloc(elementDepth);
     char *c;
@@ -701,18 +701,18 @@ void RKTestParseJSONString(void) {
     // Test parsing key-value pair from an array
     c = element + 1;
     do {
-        c = RKJSONGetArrayElement(small, c);
-        k = (int)strlen(small);
+        c = RKJSONGetArrayElement(thingy, c);
+        k = (int)strlen(thingy);
         if (k) {
-            RKJSONKeyValueFromString(key, value, small);
+            RKJSONKeyValueFromString(key, value, thingy);
             printf(RKMintColor "%s" RKNoColor "\033[40G (%d)   "
                    "k " RKMonokaiOrange "%s" RKNoColor "\033[80G   "
                    "v " RKMonokaiYellow "%s" RKNoColor "\n",
-                   small, (int)strlen(small), key, value);
+                   thingy, (int)strlen(thingy), key, value);
         } else {
-            printf(RKMonokaiGreen "(empty)" RKNoColor " (%d)\n", (int)strlen(small));
+            printf(RKMonokaiGreen "(empty)" RKNoColor " (%d)\n", (int)strlen(thingy));
         }
-    } while (strlen(small) > 0);
+    } while (strlen(thingy) > 0);
 
     printf("\n");
 
@@ -720,12 +720,12 @@ void RKTestParseJSONString(void) {
     c = element + 1;
     do {
         c = RKJSONGetArrayElement(element, c);
-        RKPrettyStringFromKeyValueString(small, element);
+        RKPrettyStringFromKeyValueString(thingy, element);
         printf(RKMintColor "%s" RKNoColor "\033[40G (%d)     %s \033[95G (%d) %d\n",
                element, (int)strlen(element),
-               small, (int)strlen(small),
-               (int)strlen(small) - (int)strlen(element));
-    } while (strlen(small) > 0);
+               thingy, (int)strlen(thingy),
+               (int)strlen(thingy) - (int)strlen(element));
+    } while (strlen(thingy) > 0);
 
     sprintf(jsonString,
             "{\n"
@@ -754,7 +754,7 @@ void RKTestParseJSONString(void) {
     free(jsonStringPretty);
     free(jsonString);
     free(element);
-    free(small);
+    free(thingy);
     free(value);
     free(key);
 }
