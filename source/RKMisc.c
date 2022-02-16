@@ -485,7 +485,7 @@ char *RKJSONScanToKey(char *element, char *key, char *value, const char *name, c
     do {
         c = RKJSONGetElement(element, c);
         RKJSONKeyValueFromElement(key, value, element);
-    } while (strlen(element) > 0 && strcmp(key, name));
+    } while (strlen(element) > 0 && strcasecmp(key, name));
     return c;
 }
 

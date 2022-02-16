@@ -852,10 +852,12 @@
 					"${SRCROOT}/headers",
 					/usr/local/include,
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"/usr/local/opt/openssl@1.1/include",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SRCROOT)",
 					/usr/local/lib,
+					"/usr/local/opt/openssl@1.1/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				ONLY_ACTIVE_ARCH = YES;
@@ -917,10 +919,12 @@
 					"${SRCROOT}/headers",
 					/usr/local/include,
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"/usr/local/opt/openssl@1.1/include",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SRCROOT)",
 					/usr/local/lib,
+					"/usr/local/opt/openssl@1.1/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				ONLY_ACTIVE_ARCH = YES;
