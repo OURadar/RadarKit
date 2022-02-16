@@ -835,6 +835,10 @@ size_t RKPrettyStringSizeEstimate(const char *source) {
 }
 
 size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
+    if (strlen(source) == 0) {
+        *destination = '\0';
+        return 0;
+    }
     size_t s = RKPrettyStringSizeEstimate(source);
 
     char *c = (char *)source;
@@ -847,7 +851,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
         char *element = malloc(s);
         size = sprintf(destination, (b == '{') ? "{" : "[");
         do {
-            c = RKJSONGetArrayElement(element, c);
+            c = RKJSONGetElement(element, c);
             if (size > 1) {
                 size += sprintf(destination + size, ", ");
             }
@@ -872,7 +876,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     char *key = malloc(s);
     char *value = malloc(s);
 
-    RKJSONKeyValueFromString(key, value, source);
+    RKJSONKeyValueFromElement(key, value, source);
 
     strcpy(t, key);
     RKPrettyStringFromValueString(key, t);

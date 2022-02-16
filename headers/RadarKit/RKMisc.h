@@ -172,11 +172,11 @@ char *RKJSONSkipWhiteSpaces(const char *);
 char *RKJSONScanPassed(char *, const char *, const char);
 
 // Get the current element of an array
-char *RKJSONGetArrayElement(char *, const char *);
+char *RKJSONGetElement(char *, const char *);
 
 // Extract a like '"key": "value"' string into key string and value string
 // e.g., input = '"name": "startgate"' -> key = '"name"', value = '"stargate"'
-char *RKJSONKeyValueFromString(char *, char *, const char *);
+char *RKJSONKeyValueFromElement(char *, char *, const char *);
 
 //
 //

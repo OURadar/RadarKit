@@ -468,11 +468,11 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
     return c;
 }
 
-char *RKJSONGetArrayElement(char *element, const char *source) {
+char *RKJSONGetElement(char *element, const char *source) {
     return RKJSONScanPassed(element, source, ',');
 }
 
-char *RKJSONKeyValueFromString(char *key, char *value, const char *source) {
+char *RKJSONKeyValueFromElement(char *key, char *value, const char *source) {
     char *c = (char *)source;
     c = RKJSONScanPassed(key, c, ':');
     c = RKJSONScanPassed(value, c, '\0');
