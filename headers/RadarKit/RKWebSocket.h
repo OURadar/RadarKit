@@ -22,7 +22,6 @@
 #include <openssl/crypto.h>
 
 #include "_rfc_6455.h"
-//#include "common.h"
 
 #define RKWebSocketFrameSize                     (1024 * 1024)
 #define RKWebSocketPayloadDepth                  1000
