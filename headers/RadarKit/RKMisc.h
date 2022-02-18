@@ -160,6 +160,7 @@ void RKReviseLogicalValues(char *);
 // The following is a set of JSON functions that are made to handle
 // somewhat generic forms. More than previous verions but still a work
 // in progress by Jan 2022. Will add functionality as the need arises
+// Single quotes (') are used to denote the boundary of the char array
 //
 
 // Returns the pointer to the first non-space character of the input source
@@ -175,13 +176,17 @@ char *RKJSONScanPassed(char *, const char *, const char);
 char *RKJSONGetElement(char *, const char *);
 
 // Extract a like '"key": "value"' string into key string and value string
-// e.g., input = '"name": "startgate"' -> key = '"name"', value = '"stargate"'
+// e.g., '"name": "startgate"' -> key = 'name' (no double quotes), value = '"stargate"'
 char *RKJSONKeyValueFromElement(char *, char *, const char *);
 
-// Scan a source to an element where the key == name and return the position in source
-// Element, key, and value memories must be provided to hold expected values
+// Scan a source to an element where the key == name and return the position in source as
+// (char *) memories keyValue, key, and value must be provided to hold expected output
 // The provided key name is case insensitive
-char *RKJSONScanToKey(char *element, char *key, char *value, const char *name, const char *source);
+// e.g., source: '{"tag": "shoe", "id": 123}', name = 'tag' produces
+//       output: keyValue = '"tag": "show"', key = 'tag', value = '"shoe"'
+// e.g., source: = {"tag": "shoe", "id": 123},
+//       output: keyValue = '"id": 123', key = 'id', value = '123'
+char *RKJSONGetValueOfKey(char *keyValueString, char *key, char *value, const char *name, const char *source);
 
 //
 //

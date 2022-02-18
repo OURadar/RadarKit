@@ -480,12 +480,18 @@ char *RKJSONKeyValueFromElement(char *key, char *value, const char *source) {
     return c;
 }
 
-char *RKJSONScanToKey(char *element, char *key, char *value, const char *name, const char *source) {
+char *RKJSONGetValueOfKey(char *keyValue, char *key, char *value, const char *name, const char *source) {
     char *c = (char *)source;
+    if (*c == '{') {
+        c++;
+    }
+    *key = '\0';
+    *value = '\0';
+    *keyValue = '\0';
     do {
-        c = RKJSONGetElement(element, c);
-        RKJSONKeyValueFromElement(key, value, element);
-    } while (strlen(element) > 0 && strcasecmp(key, name));
+        c = RKJSONGetElement(keyValue, c);
+        RKJSONKeyValueFromElement(key, value, keyValue);
+    } while (strlen(keyValue) > 0 && strcasecmp(key, name));
     return c;
 }
 
