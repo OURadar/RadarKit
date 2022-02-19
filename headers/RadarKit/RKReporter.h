@@ -14,13 +14,24 @@
 typedef struct rk_reporter {
     // User set variables
     RKName                           name;
+    RKName                           host;
+    RKName                           address;
+    char                             welcome[RKMaximumStringLength];
+    char                             control[RKMaximumStringLength];
+    char                             message[RKMaximumStringLength];
     int                              verbose;
     RKRadar                          *radar;
 
     // Program set variables
+    RKWebSocket                      *ws;
+    RKWebSocketSSLFlag               flag;
+    pthread_t                        tidReportWorker;
     pthread_mutex_t                  mutex;
 
     // Status / health
+    RKEngineState                    state;
+    uint64_t                         tic;
+    float                            lag;
     size_t                           memoryUsage;
 } RKReporter;
 
