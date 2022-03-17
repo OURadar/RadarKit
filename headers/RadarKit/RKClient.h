@@ -15,13 +15,8 @@
 
 #include <RadarKit/RKNetwork.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
-typedef int RKClientState;
-
-enum RKClientState {
+typedef uint32_t RKClientState;
+enum {
     RKClientStateNull,
     RKClientStateCreating,
     RKClientStateResolvingIP,
@@ -101,9 +96,5 @@ void RKClientSetCloseHandler(RKClient *, int (*)(RKClient *));
 
 void RKClientStart(RKClient *, const bool waitForConnection);
 void RKClientStop(RKClient *);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(___RadarKit_RKClient__) */

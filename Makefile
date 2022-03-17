@@ -53,12 +53,12 @@ ECHO_FLAG = -e
 ifneq (, $(findstring Darwin, $(KERNEL_VER)))
 	ECHO_FLAG =
 endif
-ifneq (, $(findstring Ubuntu, $(KERNEL_VER)))
+ifneq (, $(findstring Linux, $(KERNEL)))
 	ECHO_FLAG =
 endif
 
 ifeq ($(KERNEL), Darwin)
-	# Mac OS X
+	# macOS
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
 else

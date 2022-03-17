@@ -11,12 +11,8 @@
 
 #include <RadarKit/RKFoundation.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 typedef int RKWindowType;
-enum RKWindowType{
+enum {
     RKWindowTypeBoxCar,
     RKWindowTypeHann,
     RKWindowTypeHamming,
@@ -26,9 +22,5 @@ enum RKWindowType{
 };
 
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(__RadarKit_Window__) */

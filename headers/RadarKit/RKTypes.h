@@ -339,7 +339,7 @@ N(RKResultNothingToRead) \
 N(RKResultNoRadar)
 
 #define N(x) x,
-enum RKResult {
+enum {
     RKResultNames
     RKResultCount,
 };
@@ -369,7 +369,7 @@ enum RKEngineColor {
 };
 
 typedef uint32_t RKValueType;
-enum RKValueType {
+enum {
     RKValueTypeNull,
     RKValueTypeBool,
     RKValueTypeInt,
@@ -419,7 +419,7 @@ enum RKValueType {
 };
 
 typedef uint32_t RKPositionFlagV1;
-enum RKPositionFlagV1 {
+enum {
     RKPositionFlagV1Vacant                       = 0,
     RKPositionFlagV1AzimuthEnabled               = 1,                          //  0 - EN
     RKPositionFlagV1AzimuthSafety                = (1 << 1),                   //  1
@@ -444,7 +444,7 @@ enum RKPositionFlagV1 {
 };
 
 typedef uint32_t RKPositionFlag;
-enum RKPositionFlag {
+enum {
     RKPositionFlagVacant                         = 0,
     RKPositionFlagAzimuthEnabled                 = 1,                          //  0 - EN
     RKPositionFlagAzimuthSafety                  = (1 << 1),                   //  1
@@ -469,7 +469,7 @@ enum RKPositionFlag {
 };
 
 typedef uint32_t RKHeadingType;
-enum RKHeadingType {
+enum {
     RKHeadingTypeNormal,
     RKHeadingTypeAdd90,
     RKHeadingTypeAdd180,
@@ -477,20 +477,20 @@ enum RKHeadingType {
 };
 
 typedef uint32_t RKStatusFlag;
-enum RKStatusFlag {
+enum {
     RKStatusFlagVacant                           = 0,
     RKStatusFlagReady                            = 1
 };
 
 typedef uint32_t RKHealthFlag;
-enum RKHealthFlag {
+enum {
     RKHealthFlagVacant                           = 0,
     RKHealthFlagReady                            = 1,
     RKHealthFlagUsed                             = (1 << 1)
 };
 
 typedef uint32_t RKMarker;
-enum RKMarker {
+enum {
     RKMarkerNull                                 = 0,
     RKMarkerSweepMiddle                          = 1,                          //
     RKMarkerSweepBegin                           = (1 << 1),                   //  0000 0010
@@ -521,7 +521,7 @@ enum RKMarker {
 // -> RKPulseStatusReadyForMoments
 //
 typedef uint32_t RKPulseStatus;
-enum RKPulseStatus {
+enum {
     RKPulseStatusVacant                          = 0,
     RKPulseStatusHasIQData                       = 1,                          // 0x01
     RKPulseStatusHasPosition                     = (1 << 1),                   // 0x02
@@ -540,7 +540,7 @@ enum RKPulseStatus {
 };
 
 typedef uint32_t RKRayStatus;
-enum RKRayStatus {
+enum {
     RKRayStatusVacant                            = 0,
     RKRayStatusProcessing                        = 1,
     RKRayStatusProcessed                         = (1 << 1),
@@ -551,7 +551,7 @@ enum RKRayStatus {
 };
 
 typedef uint32_t RKInitFlag;
-enum RKInitFlag {
+enum {
     RKInitFlagNone                               = 0,
     RKInitFlagVerbose                            = 0x00000001,
     RKInitFlagVeryVerbose                        = 0x00000002,
@@ -580,7 +580,7 @@ enum RKInitFlag {
 // The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021
 // Level 15 data type
 typedef uint32_t RKMomentList;
-enum RKMomentList {
+enum {
     RKMomentListNull                             = 0,                          //   none
     RKMomentListHm                               = 1,                          //   mXh      assume i
     RKMomentListHmi                              = 1,                          //   mXh i
@@ -616,7 +616,7 @@ enum RKMomentList {
 };
 
 typedef uint8_t RKMomentIndex;
-enum RKMomentIndex {
+enum {
     RKMomentIndexHmi,
     RKMomentIndexHmq,
     RKMomentIndexHR0,
@@ -648,7 +648,7 @@ enum RKMomentIndex {
 
 // Used to be RKBaseMomentList; -boonleng 6/1/2021
 typedef uint32_t RKBaseProductList;
-enum RKBaseProductList {
+enum {
     RKBaseProductListNone                        = 0,                          // None
     RKBaseProductListUInt8Z                      = 1,                          // Display Z - Reflectivity dBZ
     RKBaseProductListUInt8V                      = (1 << 1),                   // Display V - Velocity
@@ -695,7 +695,7 @@ enum RKBaseProductList {
 };
 
 typedef uint8_t RKBaseProductIndex;
-enum RKBaseProductIndex {
+enum {
     RKBaseProductIndexZ,
     RKBaseProductIndexV,
     RKBaseProductIndexW,
@@ -713,7 +713,7 @@ enum RKBaseProductIndex {
 };
 
 typedef uint8_t RKProductType;
-enum RKProductType {
+enum {
     RKProductTypeUnknown                         = 0,                          // Unspecified
     RKProductTypeCellMatch                       = 1,                          //
     RKProductTypePPI                             = (1 << 1),                   //
@@ -721,7 +721,7 @@ enum RKProductType {
 };
 
 typedef uint32_t RKConfigKey;
-enum RKConfigKey {
+enum {
     RKConfigKeyNull,
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
@@ -752,7 +752,7 @@ enum RKConfigKey {
 };
 
 typedef uint8_t RKHealthNode;
-enum RKHealthNode {
+enum {
     RKHealthNodeRadarKit,
     RKHealthNodeTransceiver,
     RKHealthNodePedestal,
@@ -770,7 +770,7 @@ enum RKHealthNode {
 };
 
 typedef uint8_t RKScriptProperty;
-enum RKScriptProperty {
+enum {
     RKScriptPropertyNull                         = 0,
     RKScriptPropertyProduceZip                   = 1,
     RKScriptPropertyProduceTgz                   = (1 << 1),
@@ -806,7 +806,7 @@ enum RKScriptProperty {
 //                    (RKEngineStateChildAllocated | RKEngineStateChildProperlyWired | RKEngineStateAllocated | RKEngineStateProperlyWired)
 //
 typedef uint32_t RKEngineState;
-enum RKEngineState {
+enum {
     RKEngineStateNull                            = 0,                          // Nothing
     RKEngineStateSleep0                          = 1,                          // Usually for a wait just outside of the main while loop
     RKEngineStateSleep1                          = (1 << 1),                   // Stage 1 wait - usually waiting for pulse
@@ -834,7 +834,7 @@ enum RKEngineState {
 };
 
 typedef uint32_t RKStatusEnum;
-enum RKStatusEnum {
+enum {
     RKStatusEnumUnknown                          = -3,                         //
     RKStatusEnumOld                              = -3,                         //
     RKStatusEnumInvalid                          = -2,                         //
@@ -855,7 +855,7 @@ enum RKStatusEnum {
 };
 
 typedef uint32_t RKFileType;
-enum RKFileType {
+enum {
     RKFileTypeIQ,
     RKFileTypeMoment,
     RKFileTypeHealth,
@@ -864,7 +864,7 @@ enum RKFileType {
 };
 
 typedef uint64_t RKStream;
-enum RKStream {
+enum {
     RKStreamNull                                 = 0,                          //
     RKStreamStatusMask                           = 0x0F,                       // Values 0-15 in the lowest 4 bits (exclusive mode)
     RKStreamStatusPositions                      = 1,                          //
@@ -926,7 +926,7 @@ enum RKStream {
 };
 
 typedef uint8_t RKHostStatus;
-enum RKHostStatus {
+enum {
     RKHostStatusUnknown,
     RKHostStatusUnreachable,
     RKHostStatusPartiallyReachable,
@@ -935,7 +935,7 @@ enum RKHostStatus {
 };
 
 typedef uint32_t RKProductStatus;
-enum RKProductStatus {
+enum {
     RKProductStatusVacant                        = 0,                          //
     RKProductStatusActive                        = (1 << 0),                   // This slot has been registered
     RKProductStatusBusy                          = (1 << 1),                   // Waiting for processing node
@@ -947,7 +947,7 @@ enum RKProductStatus {
 };
 
 typedef uint32_t RKTextPreferences;
-enum RKTextPreferences {
+enum {
     RKTextPreferencesNone                        = 0,                          //
     RKTextPreferencesShowColor                   = 1,                          // Use escape sequence for colors
     RKTextPreferencesDrawBackground              = (1 << 1),                   // Repaint the background
@@ -962,7 +962,7 @@ enum RKTextPreferences {
 };
 
 typedef uint32_t RKWaveformType;
-enum RKWaveformType {
+enum {
     RKWaveformTypeNone                           = 0,                          //
     RKWaveformTypeIsComplex                      = 1,                          // Complex form usually represents baseband
     RKWaveformTypeSingleTone                     = (1 << 1),                   // The traditional single frequency waveform
@@ -975,14 +975,14 @@ enum RKWaveformType {
 };
 
 typedef uint32_t RKEventType;
-enum RKEventType {
+enum {
     RKEventTypeNull,                                                           //
     RKEventTypeRaySweepBegin,                                                  //
     RKEventTypeRaySweepEnd                                                     //
 };
 
 typedef uint8_t RKFilterType;
-enum RKFilterType {
+enum {
     RKFilterTypeNull,                                                          // No filter
     RKFilterTypeElliptical1,                                                   // Elliptical filter, high pass at 0.1 rad / sample
     RKFilterTypeElliptical2,                                                   // Elliptical filter, high pass at 0.2 rad / sample
@@ -995,7 +995,7 @@ enum RKFilterType {
 };
 
 typedef uint8_t RKRawDataType;
-enum RKRawDataType {
+enum {
     RKRawDataTypeNull,                                                         // No recording
     RKRawDataTypeFromTransceiver,                                              // Raw straight from the digital transceiver (RKInt16C)
     RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression (RKFloat)

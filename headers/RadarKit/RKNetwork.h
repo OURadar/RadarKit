@@ -18,26 +18,21 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 typedef int RKNetworkSocketType;
-typedef int RKNetworkMessageFormat;
-typedef uint32_t RKNetworkPacketType;
-
-enum RKNetworkSocketType {
+enum {
     RKNetworkSocketTypeTCP = 1,
     RKNetworkSocketTypeUDP
 };
 
-enum RKNetworkMessageFormat {
+typedef int RKNetworkMessageFormat;
+enum {
     RKNetworkMessageFormatNewLine,                         // Line-by-line reading
     RKNetworkMessageFormatConstantSize,                    // Fixed length packets
     RKNetworkMessageFormatHeaderDefinedSize                // The header is of type RKNetDelimiter
 };
 
-enum RKNetworkPacketType {
+typedef uint32_t RKNetworkPacketType;
+enum {
     RKNetworkPacketTypeBytes,
     RKNetworkPacketTypeBeacon,
     RKNetworkPacketTypePlainText,
@@ -72,9 +67,5 @@ typedef union rk_net_delimiter {
 
 ssize_t RKNetworkSendPackets(int, ...);
 void RKNetworkShowPacketTypeNumbers(void);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(___RadarKit_RKNetwork__) */

@@ -14,14 +14,14 @@
 #define RKTestWaveformCacheCount 2
 
 typedef int RKTestFlag;
-enum RKTestFlag {
+enum {
     RKTestFlagNone         = 0,
     RKTestFlagVerbose      = 1,
     RKTestFlagShowResults  = 1 << 1
 };
 
 typedef int RKTestSIMDFlag;
-enum RKTestSIMDFlag {
+enum {
     RKTestSIMDFlagNull                       = 0,
     RKTestSIMDFlagShowNumbers                = 1,
     RKTestSIMDFlagPerformanceTestArithmetic  = 1 << 1,
@@ -30,7 +30,7 @@ enum RKTestSIMDFlag {
 };
 
 typedef int RKTestPedestalScanMode;
-enum RKTestPedestalScanMode {
+enum {
     RKTestPedestalScanModeNull,
     RKTestPedestalScanModePPI,
     RKTestPedestalScanModeRHI,

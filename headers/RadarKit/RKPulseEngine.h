@@ -12,10 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKDSP.h>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 typedef struct rk_pulse_worker RKPulseWorker;
 typedef struct rk_pulse_engine RKPulseEngine;
 
@@ -106,9 +102,5 @@ void RKPulseEngineFilterSummary(RKPulseEngine *);
 void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
 void builtInCompressor(RKCompressionScratch *);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(__RadarKit_Pulse_Engine__) */
