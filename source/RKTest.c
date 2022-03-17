@@ -572,7 +572,7 @@ void RKTestParseJSONString(void) {
     char *thingy = (char *)malloc(elementDepth);
     char *value = (char *)malloc(elementDepth);
     char *key = (char *)malloc(elementDepth);
-    char *c;
+    char *c, *d;
 
     memset(element, 0, elementDepth);
 
@@ -656,9 +656,9 @@ void RKTestParseJSONString(void) {
     // Skip ahead the square bracket
     c = jsonString + 1;
 
-    // Test RKGetValueOfKey()
+    // Test RKGetValueOfKey() from RadarKit 2
     while (*c != '\0') {
-        c = RKJSONGetArrayElement(element, c);
+        c = RKJSONGetElement(element, c);
         printf(RKMintColor "%s" RKNoColor " (%d)\n", element, (int)strlen(element));
         if (strlen(element) > 8) {
             if ((stringObject = RKGetValueOfKey(element, "name"))) {
@@ -673,7 +673,62 @@ void RKTestParseJSONString(void) {
     }
     printf("c = %s %d\n", *c == '\0' ? "(EOL)" : c, (int)(c - jsonString + 1));
 
-    printf("===\n");
+    printf("\n===\n\n");
+
+    // Test RKScan the RadarKit 3 JSON functions
+    c = jsonString + 1;
+    while (true) {
+        c = RKJSONGetElement(element, c);
+        if (strlen(element) < 5) {
+            break;
+        }
+        RKPrettyStringFromKeyValueString(jsonStringPretty, element);
+        printf("element %s\n", jsonStringPretty);
+        d = element + 1;
+        while (true) {
+            d = RKJSONGetElement(thingy, d);
+            if (strlen(thingy) < 5) {
+                break;
+            }
+            RKPrettyStringFromKeyValueString(jsonStringPretty, thingy);
+            printf("  thingy %s\n", jsonStringPretty);
+        }
+        printf("\n");
+    }
+
+    // Test RKJSONGetValueOfKey() from RadarKit 3
+    c = jsonString + 1;
+    while (true) {
+        c = RKJSONGetElement(element, c);
+        if (strlen(element) < 5) {
+            break;
+        }
+        RKJSONGetValueOfKey(thingy, key, value, "name", element);
+        if (strcasestr(value, "SoCd")) {
+            printf("%s = %s", key, value);
+            RKJSONGetValueOfKey(thingy, key, value, "connected", element);
+            printf("   %s = %s\n", key, value);
+        }
+    }
+    
+    printf("\n===\n\n");
+
+    // If the subsequent key can be assumed to come after the previous, we can supply a forwarded pointer from RKJSONGetValueOfKey()
+    c = jsonString + 1;
+    while (true) {
+        c = RKJSONGetElement(element, c);
+        if (strlen(element) < 5) {
+            break;
+        }
+        d = RKJSONGetValueOfKey(thingy, key, value, "name", element);
+        if (strcasestr(value, "SoCd")) {
+            printf("%s = %s", key, value);
+            RKJSONGetValueOfKey(thingy, key, value, "controllable", d);
+            printf("   %s = %s\n", key, value);
+        }
+    }
+
+    printf("\n===\n\n");
 
     sprintf(jsonString,
             "{\n"
@@ -695,16 +750,16 @@ void RKTestParseJSONString(void) {
     printf("jsonString =\n%s\n", jsonString);
     
     c = jsonString;
-    c = RKJSONGetArrayElement(element, c);
+    c = RKJSONGetElement(element, c);
     printf(RKMonokaiYellow "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
 
     // Test parsing key-value pair from an array
     c = element + 1;
     do {
-        c = RKJSONGetArrayElement(thingy, c);
+        c = RKJSONGetElement(thingy, c);
         k = (int)strlen(thingy);
         if (k) {
-            RKJSONKeyValueFromString(key, value, thingy);
+            RKJSONKeyValueFromElement(key, value, thingy);
             printf(RKMintColor "%s" RKNoColor "\033[40G (%d)   "
                    "k " RKMonokaiOrange "%s" RKNoColor "\033[80G   "
                    "v " RKMonokaiYellow "%s" RKNoColor "\n",
@@ -719,13 +774,13 @@ void RKTestParseJSONString(void) {
     // Same as before, but prettier
     c = element + 1;
     do {
-        c = RKJSONGetArrayElement(element, c);
+        c = RKJSONGetElement(element, c);
         RKPrettyStringFromKeyValueString(thingy, element);
         printf(RKMintColor "%s" RKNoColor "\033[40G (%d)     %s \033[95G (%d) %d\n",
                element, (int)strlen(element),
                thingy, (int)strlen(thingy),
                (int)strlen(thingy) - (int)strlen(element));
-    } while (strlen(thingy) > 0);
+    } while (strlen(element) > 0);
 
     sprintf(jsonString,
             "{\n"

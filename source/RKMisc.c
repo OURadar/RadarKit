@@ -468,15 +468,30 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
     return c;
 }
 
-char *RKJSONGetArrayElement(char *element, const char *source) {
+char *RKJSONGetElement(char *element, const char *source) {
     return RKJSONScanPassed(element, source, ',');
 }
 
-char *RKJSONKeyValueFromString(char *key, char *value, const char *source) {
+char *RKJSONKeyValueFromElement(char *key, char *value, const char *source) {
     char *c = (char *)source;
     c = RKJSONScanPassed(key, c, ':');
     c = RKJSONScanPassed(value, c, '\0');
     RKUnquote(key);
+    return c;
+}
+
+char *RKJSONGetValueOfKey(char *keyValue, char *key, char *value, const char *name, const char *source) {
+    char *c = (char *)source;
+    if (*c == '{') {
+        c++;
+    }
+    *key = '\0';
+    *value = '\0';
+    *keyValue = '\0';
+    do {
+        c = RKJSONGetElement(keyValue, c);
+        RKJSONKeyValueFromElement(key, value, keyValue);
+    } while (strlen(keyValue) > 0 && strcasecmp(key, name));
     return c;
 }
 

@@ -817,17 +817,10 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
     return sprintf(destination, "%s", source);
 }
 
-size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
-    size_t s = strlen(source) + 1;
-
-    if (s == 1) {
-        *destination = '\0';
-        return 0;
-    }
-
+size_t RKPrettyStringSizeEstimate(const char *source) {
     char *c = (char *)source;
-    char *e = c + strlen(c);
-    
+    char *e = c + strlen(source);
+    size_t s = (size_t)(e - c + 1);
     // Each color change uses up to 14 B for \033[38;5;123m (9-11 color dependent) and \033[m (3)
     int k = 0;
     do {
@@ -838,8 +831,17 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
         }
     } while (c++ < e);
     s += k * 14;
+    return s;
+}
 
-    c = (char *)source;
+size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
+    if (strlen(source) == 0) {
+        *destination = '\0';
+        return 0;
+    }
+    size_t s = RKPrettyStringSizeEstimate(source);
+
+    char *c = (char *)source;
 
     char b = *c;
     size_t size = 0;
@@ -849,7 +851,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
         char *element = malloc(s);
         size = sprintf(destination, (b == '{') ? "{" : "[");
         do {
-            c = RKJSONGetArrayElement(element, c);
+            c = RKJSONGetElement(element, c);
             if (size > 1) {
                 size += sprintf(destination + size, ", ");
             }
@@ -874,7 +876,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     char *key = malloc(s);
     char *value = malloc(s);
 
-    RKJSONKeyValueFromString(key, value, source);
+    RKJSONKeyValueFromElement(key, value, source);
 
     strcpy(t, key);
     RKPrettyStringFromValueString(key, t);
