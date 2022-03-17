@@ -777,7 +777,11 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
                 if (waveform->type & RKWaveformTypeIsComplex) {
                     gain += (x->q * x->q);
                 }
+                x++;
             }
+            #if defined(DEBUG_WAVEFORM_NORMALIZATION)
+            RKLog("Tone[%d] gain = %.4f (%.3f dB)\n", j, gain, 10.0f * log10f(gain));
+            #endif
             gain = sqrtf(gain);
             x = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             for (i = 0; i < waveform->filterAnchors[k][j].length; i++) {
@@ -794,8 +798,9 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
                 if (waveform->type & RKWaveformTypeIsComplex) {
                     gain += (x->q * x->q);
                 }
+                x++;
             }
-            RKLog("gain -> %.2f\n", 10.0f * log10f(gain));
+            RKLog(">Tone[%d] gain > %.4f (%.2f dB)\n", j, gain, 10.0f * log10f(gain));
             #endif
         }
     }
