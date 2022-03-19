@@ -538,8 +538,11 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
     char *c;
     size_t len;
 
+    printf("RKWebSocketInit()\n");
+
     RKWebSocket *R = (RKWebSocket *)malloc(sizeof(RKWebSocket));
     memset(R, 0, sizeof(RKWebSocket));
+    printf("R @ %p  %zu\n", R, sizeof(RKWebSocket));
     pthread_attr_init(&R->threadAttributes);
     pthread_mutex_init(&R->lock, NULL);
 
@@ -564,10 +567,13 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
         R->useSSL = flag == RKWebSocketFlagSSLOn;
     }
     if (R->useSSL) {
+        printf("SSL_library_init()\n");
         SSL_library_init();
+        printf("SSL_load_error_strings()\n");
         SSL_load_error_strings();
         R->sslContext = SSL_CTX_new(SSLv23_method());
         R->ssl = SSL_new(R->sslContext);
+        printf("R->sslContext @ %p\n", R->ssl);
     }
     R->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
     RKWebSocketSetPingInterval(R, RKWebSocketTimeoutThresholdSeconds);

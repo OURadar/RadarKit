@@ -67,11 +67,11 @@ else
 		LDFLAGS += -L/usr/lib64
 	else
 		CFLAGS += -D_GNU_SOURCE
-		LDFLAGS += -L/usr/lib64
+		LDFLAGS += -L/usr/lib64 -L/usr/lib/x86_64-linux-gnu
 	endif
 endif
 
-LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm -lssl
+LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm -lssl -lcrypto
 
 ifeq ($(KERNEL), Darwin)
 else

@@ -70,6 +70,7 @@ char *RKTestByNumberDescription(const int indent) {
     "20 - Reading a .rkc file; -T20 FILENAME\n"
     "21 - RKTestReviseLogicalValues()\n"
     "22 - RKCommandQueue unit test\n"
+    "23 - RKWebScoket unit test\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -194,6 +195,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 22:
             RKTestPreparePath();
+            break;
+        case 23:
+            RKTestWebSocket();
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -1315,6 +1319,11 @@ void RKTestPreparePath(void) {
         RKPreparePath(filename);
         tt += 86400;
     }
+}
+
+void RKTestWebSocket(void) {
+    RKWebSocket *w = RKWebSocketInit("172.30.0.21:443", "/ws/radar/horus/", RKWebSocketFlagSSLOn);
+    printf("w @ %p\n", w);
 }
 
 #pragma mark -
