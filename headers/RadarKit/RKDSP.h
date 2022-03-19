@@ -16,10 +16,6 @@
 
 #define RKCommonFFTPlanCount 18
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 typedef struct rk_fft_resource {
     unsigned int                     size;
     unsigned int                     count;
@@ -145,9 +141,5 @@ void RKFFTModuleFree(RKFFTModule *);
 //
 
 RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(__RadarKit_RKDSP__) */

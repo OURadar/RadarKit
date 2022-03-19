@@ -310,6 +310,10 @@
  
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <RadarKit/RKRadar.h>
 #include <RadarKit/RKTest.h>
 #include <RadarKit/RKCommandCenter.h>
@@ -318,5 +322,9 @@
 #include <RadarKit/RKRadarRelay.h>
 #include <RadarKit/RKHostMonitor.h>
 #include <RadarKit/RKReporter.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* defined(__RadarKit__) */

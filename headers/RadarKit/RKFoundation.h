@@ -114,6 +114,7 @@ void RKShowVecComplex(const char *name, const RKComplex *p, const int n);
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
 char *RKStringFromValue(const void *value, RKValueType type);
 char *RKVariableInString(const char *name, const void *value, RKValueType type);
+size_t RKPrettyStringSizeEstimate(const char *);
 size_t RKPrettyStringFromKeyValueString(char *, const char *);
 
 // Clearing buffer

@@ -15,13 +15,8 @@
 #define RKServerSelectTimeoutUs     200;
 #define RKServerBufferDepth         8
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 typedef int RKServerState;
-
-enum RKServerState {
+enum {
     RKServerStateNull,
     RKServerStateFree,
     RKServerStateOpening,
@@ -30,7 +25,7 @@ enum RKServerState {
 };
 
 typedef int RKOperatorState;
-enum RKOperatorState {
+enum {
     RKOperatorStateNull,
     RKOperatorStateFree,
     RKOperatorStateAllocated,
@@ -40,7 +35,7 @@ enum RKOperatorState {
 };
 
 typedef int RKServerOption;
-enum RKServerOption {
+enum {
     RKServerOptionNone           = 0,
     RKServerOptionExpectBeacon   = 1
 };
@@ -129,9 +124,5 @@ void RKServerWait(RKServer *);
 void RKServerStop(RKServer *);
 
 ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format);
-
-//#ifdef __cplusplus
-//}
-//#endif
 
 #endif /* defined(___RadarKit_Server__) */

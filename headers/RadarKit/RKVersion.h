@@ -12,4 +12,4 @@
 #define _RKVersionBranch ""
 #endif
 
-#define _RKVersionString "2.6.1" _RKVersionBranch
+#define _RKVersionString "3.0.0" _RKVersionBranch

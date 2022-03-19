@@ -12,7 +12,7 @@
 #include <RadarKit/RKFoundation.h>
 
 typedef int RKRampType;
-enum RKRampType{
+enum {
     RKRampTypeZeros,
     RKRampTypeOnes,
     RKRampTypeStep,
