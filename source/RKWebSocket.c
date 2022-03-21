@@ -566,11 +566,6 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
         R->useSSL = flag == RKWebSocketFlagSSLOn;
     }
     if (R->useSSL) {
-//        printf("SSL_library_init()\n");
-//        SSL_library_init();
-//        printf("SSL_load_error_strings()\n");
-//        SSL_load_error_strings();
-//        R->sslContext = SSL_CTX_new(SSLv23_method());
         R->sslContext = SSL_CTX_new(TLS_client_method());
         R->ssl = SSL_new(R->sslContext);
         printf("R->sslContext @ %p\n", R->ssl);
