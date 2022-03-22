@@ -1001,6 +1001,31 @@ enum {
     RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression (RKFloat)
 };
 
+typedef uint8_t RadarHubType;
+enum {
+    RKRadarHubTypeHandshake                      = 1,                          // JSON message {"radar":"px1000","command":"radarConnect"}
+    RKRadarHubTypeControl                        = 2,                          // JSON control {"Go":{...},"Stop":{...},...}
+    RKRadarHubTypeHealth                         = 3,                          // JSON health {"Transceiver":{...},"Pedestal":{...},...}
+    RKRadarHubTypeReserve4                       = 4,                          //
+    RKRadarHubTypeScope                          = 5,                          // Scope data in binary
+    RKRadarHubTypeResponse                       = 6,                          // Plain text response
+    RKRadarHubTypeReserved7                      = 7,                          //
+    RKRadarHubTypeReserved8                      = 8,                          //
+    RKRadarHubTypeReserved9                      = 9,                          //
+    RKRadarHubTypeReserved10                     = 10,                         //
+    RKRadarHubTypeReserved11                     = 11,                         //
+    RKRadarHubTypeReserved12                     = 12,                         //
+    RKRadarHubTypeReserved13                     = 13,                         //
+    RKRadarHubTypeReserved14                     = 14,                         //
+    RKRadarHubTypeReserved15                     = 15,                         //
+    RKRadarHubTypeRadialZ                        = 16,                         //
+    RKRadarHubTypeRadialV                        = 17,                         //
+    RKRadarHubTypeRadialW                        = 18,                         //
+    RKRadarHubTypeRadialD                        = 19,                         //
+    RKRadarHubTypeRadialP                        = 20,                         //
+    RKRadarHubTypeRadialR                        = 21                          //
+};
+
 #pragma mark - Structure Definitions
 
 //
