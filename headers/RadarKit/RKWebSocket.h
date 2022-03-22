@@ -22,7 +22,6 @@
 #include <openssl/crypto.h>
 
 #include "_rfc_6455.h"
-//#include "common.h"
 
 #define RKWebSocketFrameSize                     (1024 * 1024)
 #define RKWebSocketPayloadDepth                  1000
@@ -100,11 +99,10 @@ void RKWebSocketSetCloseHandler(RKWebSocket *, void (*)(RKWebSocket *));
 void RKWebSocketSetMessageHandler(RKWebSocket *, void (*)(RKWebSocket *, void *, size_t));
 void RKWebSocketSetErrorHandler(RKWebSocket *, void (*)(RKWebSocket *));
 
-// This is technically RKWebSocketStartAsClient()
-// No plans to make RKWebSocketStartAsServer()
+// This is technically RKWebSocketStartAsClient(). Sorry, but no plans to make RKWebSocketStartAsServer()
 void RKWebSocketStart(RKWebSocket *);
 
-// Stop the server
+// Stop the socket
 void RKWebSocketStop(RKWebSocket *);
 
 // Wait until all payloads are sent

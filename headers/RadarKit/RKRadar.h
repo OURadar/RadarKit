@@ -31,10 +31,9 @@
 #include <RadarKit/RKHostMonitor.h>
 #include <RadarKit/RKWebSocket.h>
 
-#define xstr(s) str(s)
-#define str(s) #s
+#define rk_str(s) #s
 #define RADAR_VARIABLE_OFFSET(STRING, NAME) \
-sprintf(STRING, "                    radar->" xstr(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
+sprintf(STRING, "                    radar->" rk_str(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
 typedef uint32_t RKRadarState;
 enum {
@@ -330,12 +329,12 @@ void RKConcludeControls(RKRadar *);                                             
 #pragma mark - Developer Access
 
 // Absolute address value query
-void RKGetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);           // Does not work like the way I expected just yet
-void RKSetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);           // Does not work like the way I expected just yet
-void RKShowOffsets(RKRadar *, char *);                                                              // Does not work like the way I expected just yet
+void RKGetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);          // Does not work like the way I expected just yet
+void RKSetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);          // Does not work like the way I expected just yet
+void RKShowOffsets(RKRadar *, char *);                                                             // Does not work like the way I expected just yet
 
 // ASCII Art
-int RKBufferOverview(char *, RKRadar *, const RKTextPreferences);                                   // Do you ASCII? :)
+int RKBufferOverview(char *, RKRadar *, const RKTextPreferences);                                  // Do you ASCII? :)
 int RKHealthOverview(char *, const char *, const RKTextPreferences);
 
 #endif /* defined(__RadarKit_RKRadar__) */

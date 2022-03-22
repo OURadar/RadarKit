@@ -70,6 +70,7 @@ char *RKTestByNumberDescription(const int indent) {
     "20 - Reading a .rkc file; -T20 FILENAME\n"
     "21 - RKTestReviseLogicalValues()\n"
     "22 - RKCommandQueue unit test\n"
+    "23 - RKWebScoket unit test\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -194,6 +195,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 22:
             RKTestPreparePath();
+            break;
+        case 23:
+            RKTestWebSocket();
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -1371,6 +1375,43 @@ void RKTestPreparePath(void) {
         tt += 86400;
     }
 }
+
+static void RKTestWebSocketHandleOpen(RKWebSocket *w) {
+    char show[160];
+    char message[80];
+    // I know, magic packet here. First byte value = 1 means handshake in RadarHub
+    int r = sprintf(message, "%c{\"radar\":\"radarkit\", \"command\":\"radarConnect\"}", 1);
+    RKBinaryString(show, message, r);
+    printf("RKTestWebSocketHandleOpen() %s\n", show);
+    RKWebSocketSend(w, message, r);
+}
+
+static void RKTestWebSocketHandleMessage(RKWebSocket *w, void *payload, size_t size) {
+    printf("RKTestWebSocketHandleMessage() %s\n", (char *)payload);
+}
+
+static void RKTestWebSocketHandleClose(RKWebSocket *w) {
+    printf("RKTestWebSocketHandleClose()\n");
+}
+
+void RKTestWebSocket(void) {
+    RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
+    RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
+    RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
+    RKWebSocketSetMessageHandler(w, &RKTestWebSocketHandleMessage);
+    RKWebSocketStart(w);
+    int k = 0;
+    while (!w->connected && k++ < 50) {
+        usleep(10000);
+    }
+    k = 0;
+    while (w->payloadTail < 2 && k++ < 50) {
+        usleep(10000);
+    }
+    RKWebSocketStop(w);
+    RKWebSocketFree(w);
+}
+
 
 #pragma mark -
 
