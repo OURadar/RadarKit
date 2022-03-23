@@ -538,7 +538,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
     char *c;
     size_t len;
 
-    printf("RKWebSocketInit()\n");
+    // printf("RKWebSocketInit()\n");
 
     RKWebSocket *R = (RKWebSocket *)malloc(sizeof(RKWebSocket));
     memset(R, 0, sizeof(RKWebSocket));
@@ -568,7 +568,6 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
     if (R->useSSL) {
         R->sslContext = SSL_CTX_new(TLS_client_method());
         R->ssl = SSL_new(R->sslContext);
-        printf("R->sslContext @ %p\n", R->ssl);
     }
     R->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
     RKWebSocketSetPingInterval(R, RKWebSocketTimeoutThresholdSeconds);
