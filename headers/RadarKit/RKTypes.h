@@ -253,7 +253,7 @@ typedef union rk_half_float_t {
     };
     uint8_t bytes[2];                                                          // raw bytes
     uint16_t word;                                                             // 16-bit word
-} RKByteFloat16;
+} RKWordFloat16;
 
 //
 // 32-bit float
@@ -267,7 +267,7 @@ typedef union rk_single_float_t {
     uint8_t bytes[4];                                                          // raw bytes
     uint32_t word;                                                             // 32-bit word
     float value;
-} RKByteFloat32;
+} RKWordFloat32;
 
 //
 // 64-bit float
@@ -281,7 +281,7 @@ typedef union rk_double_float_t {
     uint8_t bytes[8];                                                          // raw bytes
     uint64_t word;                                                             // 64-bit word
     double value;
-} RKByteFloat64;
+} RKWordFloat64;
 
 typedef union rk_filter_anchor {
     struct {

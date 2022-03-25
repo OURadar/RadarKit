@@ -607,16 +607,16 @@ RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
 // Inspired by https://github.com/ramenhut/half
 //
 
-RKByteFloat64 RKSingle2Double(RKByteFloat32 s) {
-    RKByteFloat64 d;
+RKWordFloat64 RKSingle2Double(RKWordFloat32 s) {
+    RKWordFloat64 d;
     d.s = s.s;
     d.e = s.e == 0 ? 0 : (((int16_t)s.e - 127) & 0x7FF) + 1023;
     d.m = (uint64_t)s.m << 29;
     return d;
 }
 
-RKByteFloat32 RKHalf2Single(RKByteFloat16 s) {
-    RKByteFloat32 d;
+RKWordFloat32 RKHalf2Single(RKWordFloat16 s) {
+    RKWordFloat32 d;
     d.s = s.s;
     d.e = s.e == 0 ? 0 : (((int8_t)s.e - 15) & 0xFF) + 127;
     d.m = (uint16_t)s.m << 13;
