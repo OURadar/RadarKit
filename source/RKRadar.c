@@ -834,8 +834,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         // Pulse compression engine
         radar->pulseEngine = RKPulseEngineInit();
         RKPulseEngineSetInputOutputBuffers(radar->pulseEngine, &radar->desc,
-                                                      radar->configs, &radar->configIndex,
-                                                      radar->pulses, &radar->pulseIndex);
+                                           radar->configs, &radar->configIndex,
+                                           radar->pulses, &radar->pulseIndex);
         RKPulseEngineSetFFTModule(radar->pulseEngine, radar->fftModule);
         radar->memoryUsage += radar->pulseEngine->memoryUsage;
         radar->state |= RKRadarStatePulseCompressionEngineInitialized;
