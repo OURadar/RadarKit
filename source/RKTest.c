@@ -1197,7 +1197,7 @@ void RKTestReadIQ(const char *filename) {
     int i, j, k, p = 0;
     size_t tr;
     time_t startTime;
-    size_t readsize, bytes, mem = 0;
+    size_t readsize, bytes;
     char timestr[32];
     long filesize = 0;
     uint32_t u32;
@@ -1293,7 +1293,6 @@ void RKTestReadIQ(const char *filename) {
         RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
         exit(EXIT_FAILURE);
     }
-    mem += bytes;
     RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
           RKUIntegerToCommaStyleString(bytes),
           RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),

@@ -30,7 +30,8 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
     fftwf_complex *in;
     RKFloat A, phi, q, omegaI, omegaQ;
     RKFloat s;
-    RKFloat sumW2, sumW4, sumY2, sumW2Y2, sumW4Y2;
+    RKFloat sumW2, sumW4, sumY2;
+    // RKFloat sumW2Y2, sumW4Y2;
     RKFloat omega;
     RKFloat a, b, c, d;
     
@@ -139,8 +140,8 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
             sumW2 = 0.0f;
             sumW4 = 0.0f;
             sumY2 = 0.0f;
-            sumW2Y2 = 0.0f;
-            sumW4Y2 = 0.0f;
+            //sumW2Y2 = 0.0f;
+            //sumW4Y2 = 0.0f;
             // Use omeage in range [0, 2 * PI)
             if (omega < 0.0f) {
                 omega += twoPi;
@@ -157,8 +158,8 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
                 sumW2 += q;
                 sumW4 += q * q;
                 s = in[k][0] * in[k][0] + in[k][1] * in[k][1];
-                sumW2Y2 += q * s;
-                sumW4Y2 += q * q * s;
+                //sumW2Y2 += q * s;
+                //sumW4Y2 += q * q * s;
             }
             a = (RKFloat)planSize;
             b = sumW2;
