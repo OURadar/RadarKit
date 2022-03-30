@@ -142,4 +142,11 @@ void RKFFTModuleFree(RKFFTModule *);
 
 RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count);
 
+//
+// Half, Single, and Double Precision Floats
+//
+
+RKWordFloat64 RKSingle2Double(const RKWordFloat32 x);
+RKWordFloat32 RKHalf2Single(const RKWordFloat16 x);
+
 #endif /* defined(__RadarKit_RKDSP__) */
