@@ -152,7 +152,7 @@ void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), co
 
 #pragma mark - Performance Tests
 
-void RKTestPulseCompressionSpeed(void);
+void RKTestPulseCompressionSpeed(const int);
 void RKTestMomentProcessorSpeed(void);
 void RKTestCacheWrite(void);
 

@@ -273,7 +273,11 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
             break;
         case 61:
-            RKTestPulseCompressionSpeed();
+            if (arg == NULL) {
+                RKTestPulseCompressionSpeed(13);
+                exit(EXIT_FAILURE);
+            }
+            RKTestPulseCompressionSpeed(atoi((char *)arg));
             break;
         case 62:
             RKTestMomentProcessorSpeed();
@@ -1880,6 +1884,7 @@ void RKTestWriteFFTWisdom(void) {
     fftwf_plan plan;
     fftwf_complex *in, *out;
     int nfft = 1 << (int)ceilf(log2f((float)RKMaximumGateCount));
+    // int nfft = 1 << 20;
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
     out = fftwf_malloc(nfft * sizeof(fftwf_complex));
     RKLog("Generating FFT wisdom ...\n");
@@ -2426,16 +2431,20 @@ void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), co
 
 #pragma mark - Performance Tests
 
-void RKTestPulseCompressionSpeed(void) {
+void RKTestPulseCompressionSpeed(const int offt) {
     SHOW_FUNCTION_NAME
     int p, i, j, k;
-    const size_t nfft = 1 << 13;
+    const size_t nfft = 1 << offt;
     fftwf_complex *f, *in, *out;
     RKInt16C *X;
     RKComplex *Y;
-    const int testCount = 5000;
+    const int testCount = 4096 >> MAX(1, offt - 16);
     struct timeval tic, toc;
     double mint, t;
+
+    RKLog(UNDERLINE("PulseCompression") "\n");
+    RKLog("Allocating memory for %s (o = %d) samples ...\n",
+        RKIntegerToCommaStyleString(nfft), offt);
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&Y, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
@@ -2459,7 +2468,7 @@ void RKTestPulseCompressionSpeed(void) {
         f[k][1] = 0.0f;
     }
 
-    RKLog(UNDERLINE("PulseCompression") "\n");
+    RKLog("Beginning test: 3 x %d ...\n", testCount);
 
     mint = INFINITY;
     for (i = 0; i < 3; i++) {
