@@ -131,7 +131,7 @@ void RKTestWebSocket(void);
 void RKTestSIMD(const RKTestSIMDFlag);
 void RKTestWindow(void);
 void RKTestHilbertTransform(void);
-void RKTestWriteFFTWisdom(void);
+void RKTestWriteFFTWisdom(const int);
 void RKTestRingFilterShowCoefficients(void);
 void RKTestRamp(void);
 

@@ -212,7 +212,12 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestHilbertTransform();
             break;
         case 34:
-            RKTestWriteFFTWisdom();
+            if (arg == NULL) {
+                const int offt = (int)ceilf(log2f((float)RKMaximumGateCount));
+                RKTestWriteFFTWisdom(offt);
+                exit(EXIT_FAILURE);
+            }
+            RKTestWriteFFTWisdom(atoi((char *)arg));
             break;
         case 35:
             RKTestRingFilterShowCoefficients();
@@ -1879,12 +1884,11 @@ void RKTestHilbertTransform(void) {
     free(y);
 }
 
-void RKTestWriteFFTWisdom(void) {
+void RKTestWriteFFTWisdom(const int offt) {
     SHOW_FUNCTION_NAME
     fftwf_plan plan;
     fftwf_complex *in, *out;
-    int nfft = 1 << (int)ceilf(log2f((float)RKMaximumGateCount));
-    // int nfft = 1 << 20;
+    int nfft = 1 << offt;
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
     out = fftwf_malloc(nfft * sizeof(fftwf_complex));
     RKLog("Generating FFT wisdom ...\n");
