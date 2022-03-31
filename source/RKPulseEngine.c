@@ -765,9 +765,11 @@ void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
 //
 // Input:
 // engine - the pulse compression engine
-// buffer - the raw data buffer
-// index - the reference index watch, *index is the latest reading in *pulses
-// size - number of slots in *pulses
+// desc - the description of the radar
+// configBuffer - config buffer (for status display only)
+// configIndex - index to retrieve the up-to-date config
+// pulseBuffer - the raw data buffer
+// pulseIndex - the reference index watch, *pulseIndex is the latest reading in *pulseBuffer
 //
 void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc *desc,
                                         RKConfig *configBuffer, uint32_t *configIndex,
