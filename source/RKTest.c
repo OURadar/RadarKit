@@ -2466,12 +2466,12 @@ void RKTestPulseCompressionSpeed(const int offt) {
     RKInt16C *X;
     RKComplex *Y;
     const int nfft = 1 << offt;
-    const int testCount = 4096 >> MAX(1, offt - 16);
+    const int testCount = 1024 >> MAX(0, offt - 14);
     struct timeval tic, toc;
     double mint, t;
 
     RKLog(UNDERLINE("PulseCompression") "\n");
-    RKLog("Allocating memory for %s (o = %d) samples ...\n",
+    RKLog("Allocating memory for %s sample pulses (o = %d) ...\n",
         RKIntegerToCommaStyleString(nfft), offt);
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
@@ -2483,9 +2483,12 @@ void RKTestPulseCompressionSpeed(const int offt) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return;
     }
-
+    
+    RKLog("Setting up DFT resources (1 / 3) ...\n");
     fftwf_plan planForwardInPlace = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
+    RKLog("Setting up DFT resources (2 / 3) ...\n");
     fftwf_plan planForwardOutPlace = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    RKLog("Setting up DFT resources (3 / 3) ...\n");
     fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
 
     // Set some real values so that we don't have see NAN in the data / results, which could slow down FFTW
