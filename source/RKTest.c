@@ -71,6 +71,7 @@ char *RKTestByNumberDescription(const int indent) {
     "21 - RKTestReviseLogicalValues()\n"
     "22 - RKCommandQueue unit test\n"
     "23 - RKWebScoket unit test\n"
+    "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -198,6 +199,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 23:
             RKTestWebSocket();
+            break;
+        case 24:
+            RKTestReadBareRKComplex((char *)arg);
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -1197,7 +1201,8 @@ void RKTestReadIQ(const char *filename) {
     int i, j, k, p = 0;
     size_t tr;
     time_t startTime;
-    size_t readsize, bytes, mem = 0;
+    size_t readsize, bytes;
+    size_t mem = 0;
     char timestr[32];
     long filesize = 0;
     uint32_t u32;
@@ -1361,6 +1366,7 @@ void RKTestReadIQ(const char *filename) {
 }
 
 void RKTestPreparePath(void) {
+    SHOW_FUNCTION_NAME
     int k;
     time_t tt;
     char daystr[32], timestr[32];
@@ -1395,6 +1401,7 @@ static void RKTestWebSocketHandleClose(RKWebSocket *w) {
 }
 
 void RKTestWebSocket(void) {
+    SHOW_FUNCTION_NAME
     RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
@@ -1412,6 +1419,24 @@ void RKTestWebSocket(void) {
     RKWebSocketFree(w);
 }
 
+void RKTestReadBareRKComplex(const char *filename) {
+    SHOW_FUNCTION_NAME
+    int k;
+    FILE *fid = fopen(filename, "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file %s\n", filename);
+        return;
+    }
+    RKComplex *buffer = (RKComplex *)malloc(100 * sizeof(RKComplex));
+    int r = fread(buffer, sizeof(RKComplex), 100, fid);
+    RKLog("Read %d RKComplex elements\n", r);
+    RKComplex *x = buffer;
+    for (k = 0; k < r; k++) {
+        printf("%3d: %7.4f%+7.4f\n", k, x->i, x->q);
+        x++;
+    }
+    free(buffer);
+}
 
 #pragma mark -
 

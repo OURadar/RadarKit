@@ -125,6 +125,7 @@ void RKTestReviseLogicalValues(void);
 void RKTestReadIQ(const char *);
 void RKTestPreparePath(void);
 void RKTestWebSocket(void);
+void RKTestReadBareRKComplex(const char *);
 
 #pragma mark - DSP Tests
 
