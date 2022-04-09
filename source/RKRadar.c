@@ -1388,10 +1388,10 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
             r = RKPulseEngineSetFilter(radar->pulseEngine,
-                                            filter,
-                                            waveform->filterAnchors[k][j],
-                                            k,
-                                            j);
+                                       filter,
+                                       waveform->filterAnchors[k][j],
+                                       k,
+                                       j);
             if (r != RKResultSuccess) {
                 return RKResultFailedToSetWaveform;
             }

@@ -72,7 +72,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
             case RKConfigKeyPRF:
                 newConfig->prt[0] = (RKFloat)(1.0 / va_arg(args, double));
                 if (newConfig->prt[0] != oldConfig->prt[0]) {
-                    sprintf(stringBuffer[0], "PRF = %s Hz **", RKIntegerToCommaStyleString((int)roundf(1.0f / newConfig->prt[0])));
+                    sprintf(stringBuffer[0], "PRF = %s Hz", RKIntegerToCommaStyleString((int)roundf(1.0f / newConfig->prt[0])));
                 }
                 break;
             case RKConfigKeyDualPRF:

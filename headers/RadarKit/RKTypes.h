@@ -1364,7 +1364,7 @@ typedef struct rk_ray_header {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKMomentList     baseMomentList;                                       // List of calculated moments
+    RKMomentList         baseMomentList;                                       // List of calculated moments
     RKBaseProductList    baseProductList;                                      // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index

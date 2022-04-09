@@ -216,7 +216,12 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestHilbertTransform();
             break;
         case 34:
-            RKTestWriteFFTWisdom();
+            if (arg == NULL) {
+                const int offt = (int)ceilf(log2f((float)RKMaximumGateCount));
+                RKTestWriteFFTWisdom(offt);
+                exit(EXIT_FAILURE);
+            }
+            RKTestWriteFFTWisdom(atoi((char *)arg));
             break;
         case 35:
             RKTestRingFilterShowCoefficients();
@@ -277,7 +282,11 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
             break;
         case 61:
-            RKTestPulseCompressionSpeed();
+            if (arg == NULL) {
+                RKTestPulseCompressionSpeed(13);
+                exit(EXIT_FAILURE);
+            }
+            RKTestPulseCompressionSpeed(atoi((char *)arg));
             break;
         case 62:
             RKTestMomentProcessorSpeed();
@@ -1202,7 +1211,6 @@ void RKTestReadIQ(const char *filename) {
     size_t tr;
     time_t startTime;
     size_t readsize, bytes;
-    size_t mem = 0;
     char timestr[32];
     long filesize = 0;
     uint32_t u32;
@@ -1298,7 +1306,6 @@ void RKTestReadIQ(const char *filename) {
         RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
         exit(EXIT_FAILURE);
     }
-    mem += bytes;
     RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
           RKUIntegerToCommaStyleString(bytes),
           RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
@@ -1428,7 +1435,7 @@ void RKTestReadBareRKComplex(const char *filename) {
         return;
     }
     RKComplex *buffer = (RKComplex *)malloc(100 * sizeof(RKComplex));
-    int r = fread(buffer, sizeof(RKComplex), 100, fid);
+    size_t r = fread(buffer, sizeof(RKComplex), 100, fid);
     RKLog("Read %d RKComplex elements\n", r);
     RKComplex *x = buffer;
     for (k = 0; k < r; k++) {
@@ -1901,11 +1908,11 @@ void RKTestHilbertTransform(void) {
     free(y);
 }
 
-void RKTestWriteFFTWisdom(void) {
+void RKTestWriteFFTWisdom(const int offt) {
     SHOW_FUNCTION_NAME
     fftwf_plan plan;
     fftwf_complex *in, *out;
-    int nfft = 1 << (int)ceilf(log2f((float)RKMaximumGateCount));
+    int nfft = 1 << offt;
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
     out = fftwf_malloc(nfft * sizeof(fftwf_complex));
     RKLog("Generating FFT wisdom ...\n");
@@ -2452,16 +2459,20 @@ void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), co
 
 #pragma mark - Performance Tests
 
-void RKTestPulseCompressionSpeed(void) {
+void RKTestPulseCompressionSpeed(const int offt) {
     SHOW_FUNCTION_NAME
     int p, i, j, k;
-    const size_t nfft = 1 << 13;
     fftwf_complex *f, *in, *out;
     RKInt16C *X;
     RKComplex *Y;
-    const int testCount = 5000;
+    const int nfft = 1 << offt;
+    const int testCount = 4096 >> MAX(1, offt - 16);
     struct timeval tic, toc;
     double mint, t;
+
+    RKLog(UNDERLINE("PulseCompression") "\n");
+    RKLog("Allocating memory for %s (o = %d) samples ...\n",
+        RKIntegerToCommaStyleString(nfft), offt);
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&Y, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
@@ -2485,7 +2496,7 @@ void RKTestPulseCompressionSpeed(void) {
         f[k][1] = 0.0f;
     }
 
-    RKLog(UNDERLINE("PulseCompression") "\n");
+    RKLog("Beginning test: 3 x %d ...\n", testCount);
 
     mint = INFINITY;
     for (i = 0; i < 3; i++) {

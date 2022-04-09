@@ -576,17 +576,15 @@ void RKFFTModuleFree(RKFFTModule *module) {
 // Always assume the x-axis is in [0, 2 * M_PI) across count points
 RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
     int k;
-    RKFloat q, s, phi;
+    RKFloat q, phi;
     RKComplex omega = {.i = 0.0f, .q = 0.0f};
     RKGaussian gauss = {.A = 0.0f, .mu = 0.0f, .sigma = 0.0f};
     const RKFloat twoPi = 1.0f / (RKFloat)count * 2.0f * M_PI;
     const int halfCount = count / 2;
 
-    s = 0.0f;
     RKComplex *yy = y;
     for (k = 0; k < count; k++) {
         q = yy->i * yy->i + yy->q * yy->q;
-        s += q;
         if (k >= halfCount) {
             phi = (RKFloat)(k - count) * twoPi;
         } else {
