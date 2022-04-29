@@ -600,7 +600,7 @@ void proc(UserParams *arg) {
                        pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                        RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                        pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio,
-                       i0, pulse->header.azimuthBinIndex,
+                       i0, pulse->header.positionIndex,
                        pulse->header.marker,
                        m ? "*" : "",
                        pulse->header.marker & RKMarkerSweepBegin ? "S" : "",

@@ -71,6 +71,7 @@ char *RKTestByNumberDescription(const int indent) {
     "21 - RKTestReviseLogicalValues()\n"
     "22 - RKCommandQueue unit test\n"
     "23 - RKWebScoket unit test\n"
+    "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -198,6 +199,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 23:
             RKTestWebSocket();
+            break;
+        case 24:
+            RKTestReadBareRKComplex((char *)arg);
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -1369,6 +1373,7 @@ void RKTestReadIQ(const char *filename) {
 }
 
 void RKTestPreparePath(void) {
+    SHOW_FUNCTION_NAME
     int k;
     time_t tt;
     char daystr[32], timestr[32];
@@ -1403,6 +1408,7 @@ static void RKTestWebSocketHandleClose(RKWebSocket *w) {
 }
 
 void RKTestWebSocket(void) {
+    SHOW_FUNCTION_NAME
     RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
@@ -1420,6 +1426,24 @@ void RKTestWebSocket(void) {
     RKWebSocketFree(w);
 }
 
+void RKTestReadBareRKComplex(const char *filename) {
+    SHOW_FUNCTION_NAME
+    int k;
+    FILE *fid = fopen(filename, "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file %s\n", filename);
+        return;
+    }
+    RKComplex *buffer = (RKComplex *)malloc(100 * sizeof(RKComplex));
+    size_t r = fread(buffer, sizeof(RKComplex), 100, fid);
+    RKLog("Read %d RKComplex elements\n", r);
+    RKComplex *x = buffer;
+    for (k = 0; k < r; k++) {
+        printf("%3d: %7.4f%+7.4f\n", k, x->i, x->q);
+        x++;
+    }
+    free(buffer);
+}
 
 #pragma mark -
 
@@ -2438,16 +2462,16 @@ void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), co
 void RKTestPulseCompressionSpeed(const int offt) {
     SHOW_FUNCTION_NAME
     int p, i, j, k;
-    const size_t nfft = 1 << offt;
     fftwf_complex *f, *in, *out;
     RKInt16C *X;
     RKComplex *Y;
-    const int testCount = 4096 >> MAX(1, offt - 16);
+    const int nfft = 1 << offt;
+    const int testCount = 1024 >> MAX(0, offt - 14);
     struct timeval tic, toc;
     double mint, t;
 
     RKLog(UNDERLINE("PulseCompression") "\n");
-    RKLog("Allocating memory for %s (o = %d) samples ...\n",
+    RKLog("Allocating memory for %s sample pulses (o = %d) ...\n",
         RKIntegerToCommaStyleString(nfft), offt);
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
@@ -2459,9 +2483,12 @@ void RKTestPulseCompressionSpeed(const int offt) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return;
     }
-
+    
+    RKLog("Setting up DFT resources (1 / 3) ...\n");
     fftwf_plan planForwardInPlace = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
+    RKLog("Setting up DFT resources (2 / 3) ...\n");
     fftwf_plan planForwardOutPlace = fftwf_plan_dft_1d(nfft, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    RKLog("Setting up DFT resources (3 / 3) ...\n");
     fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
 
     // Set some real values so that we don't have see NAN in the data / results, which could slow down FFTW

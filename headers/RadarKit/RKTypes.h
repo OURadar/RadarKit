@@ -143,7 +143,7 @@
 #define RKMaximumCommandLength               512
 #define RKNameLength                         128
 #define RKStatusStringLength                 256
-#define RKPulseHeaderPaddedSize              256                               // Change this to higher number for post-AVX2 intrinsics
+#define RKPulseHeaderPaddedSize              320                               // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
 #define RKShortNameLength                    20                                // Short names, e.g., C1, M2, P0, etc. (including color)
 
@@ -1278,7 +1278,7 @@ typedef union rk_position {
 //
 // Pulse header
 //
-typedef struct rk_pulse_header {
+typedef struct rk_pulse_header_v2 {
     RKIdentifier        i;                                                     // Identity counter
     RKIdentifier        n;                                                     // Network counter, may be useful to indicate packet loss
     uint64_t            t;                                                     // A clean clock-related tic count
@@ -1300,6 +1300,33 @@ typedef struct rk_pulse_header {
     float               azimuthDegrees;                                        // Azimuth in degrees
     float               elevationVelocityDegreesPerSecond;                     // Velocity of elevation in degrees / second
     float               azimuthVelocityDegreesPerSecond;                       // Velocity of azimuth in degrees / second
+} RKPulseHeaderV2;
+
+typedef union rk_pulse_header {
+    struct {
+        RKIdentifier        i;                                                 // Identity counter
+        RKIdentifier        n;                                                 // Network counter, may be useful to indicate packet loss
+        uint64_t            t;                                                 // A clean clock-related tic count
+        RKPulseStatus       s;                                                 // Status flag
+        uint32_t            capacity;                                          // Allocated capacity
+        uint32_t            gateCount;                                         // Number of range gates
+        uint32_t            downSampledGateCount;                              // Number of range gates after down-sampling
+        uint32_t            pulseWidthSampleCount;                             // Pulsewidth
+        RKMarker            marker;                                            // Position Marker
+        struct timeval      time;                                              // UNIX time in seconds since 1970/1/1 12:00am
+        double              timeDouble;                                        // Time in double representation
+        RKFourByte          rawAzimuth;                                        // Raw azimuth reading, which may take up to 4 bytes
+        RKFourByte          rawElevation;                                      // Raw elevation reading, which may take up to 4 bytes
+        uint16_t            configIndex;                                       // Operating configuration index
+        uint16_t            configSubIndex;                                    // Operating configuration sub-index
+        uint32_t            positionIndex;                                     // Ray position index
+        float               gateSizeMeters;                                    // Size of range gates
+        float               elevationDegrees;                                  // Elevation in degrees
+        float               azimuthDegrees;                                    // Azimuth in degrees
+        float               elevationVelocityDegreesPerSecond;                 // Velocity of elevation in degrees / second
+        float               azimuthVelocityDegreesPerSecond;                   // Velocity of azimuth in degrees / second
+    };
+    RKByte               bytes[192];
 } RKPulseHeader;
 
 //
