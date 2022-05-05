@@ -3,7 +3,7 @@
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 9/20/15.
-//  Copyright (c) 2015 Boonleng Cheong. All rights reserved.
+//  Copyright (c) 2015-2022 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_Moment_Engine__
