@@ -10,7 +10,7 @@
 #define __RadarKit_Moment_Engine__
 
 #include <RadarKit/RKFoundation.h>
-#include <RadarKit/RKDSP.h>
+#include <RadarKit/RKMoment.h>
 #include <RadarKit/RKPulsePair.h>
 #include <RadarKit/RKMultiLag.h>
 #include <RadarKit/RKSpectralMoment.h>

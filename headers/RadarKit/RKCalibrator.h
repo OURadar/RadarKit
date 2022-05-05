@@ -10,7 +10,7 @@
 #define __RadarKit_Calibrator__
 
 #include <RadarKit/RKFoundation.h>
-#include <RadarKit/RKDSP.h>
+#include <RadarKit/RKMoment.h>
 
 void RKCalibratorSimple(RKScratch *, RKConfig *);
 

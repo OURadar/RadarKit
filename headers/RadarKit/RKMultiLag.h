@@ -10,7 +10,7 @@
 #define __RadarKit_MultiLag__
 
 #include <RadarKit/RKFoundation.h>
-#include <RadarKit/RKDSP.h>
+#include <RadarKit/RKMoment.h>
 
 int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount);
 

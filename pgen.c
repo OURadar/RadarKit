@@ -14,13 +14,6 @@ typedef struct user_params {
     float SQIThreshold;
 } UserParams;
 
-// Make some private functions available
-
-int prepareScratch(RKScratch *);
-int makeRayFromScratch(RKScratch *, RKRay *);
-size_t RKScratchAlloc(RKScratch **space, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool);
-void RKScratchFree(RKScratch *);
-
 #pragma mark - Functions
 
 static void showHelp() {

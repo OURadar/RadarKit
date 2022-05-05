@@ -29,6 +29,7 @@ endif
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
+OBJS += RKMoment.o
 OBJS += RKPreference.o
 OBJS += RKFileManager.o RKHostMonitor.o
 OBJS += RKConfig.o RKHealth.o
