@@ -13,7 +13,7 @@
 #include <RadarKit/RKDSP.h>
 
 typedef int8_t RKCellMask;
-enum RKCellMask {
+enum {
     RKCellMaskNull     = 0,
     RKCellMaskKeepH    = 1,
     RKCellMaskKeepV    = (1 << 1),
@@ -75,5 +75,7 @@ void RKScratchFree(RKScratch *);
 
 int prepareScratch(RKScratch *);
 int makeRayFromScratch(RKScratch *, RKRay *);
+
+int RKNullProcessor(RKScratch *, RKPulse **, const uint16_t);
 
 #endif

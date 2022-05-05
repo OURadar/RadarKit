@@ -17,11 +17,9 @@ static void *pulseGatherer(void *);
 
 // Private Functions (accessible for tests)
 
-int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count);
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride);
 
-#pragma mark -
-#pragma mark Helper Functions
+#pragma mark - Helper Functions
 
 static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
     int i, c;
@@ -106,10 +104,6 @@ static void RKMomentEngineCheckWiring(RKMomentEngine *engine) {
         return;
     }
     engine->state |= RKEngineStateProperlyWired;
-}
-
-int nullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count) {
-    return 0;
 }
 
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
@@ -573,7 +567,7 @@ static void *pulseGatherer(void *_in) {
             RKLog(">%s Method = RKPulsePair\n", engine->name);
         } else if (engine->processor == &RKSpectralMoment) {
             RKLog(">%s Method = RKSpectralMoment\n", engine->name);
-        } else if (engine->processor == &nullProcessor) {
+        } else if (engine->processor == &RKNullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
             RKLog(">%s Method %p not recognized\n", engine->name, engine->processor);

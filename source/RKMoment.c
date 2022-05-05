@@ -440,3 +440,7 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     }
     return k;
 }
+
+int RKNullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+    return 0;
+}
