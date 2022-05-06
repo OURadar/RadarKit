@@ -530,7 +530,7 @@ void proc(UserParams *arg) {
                     scratch->planSize = fftModule->plans[planIndex].size;
 
                     // Call the compressor
-                    builtInCompressor(scratch);
+                    RKBuiltInCompressor(scratch);
 
                     // Copy over the parameters used
                     for (o = 0; o < 2; o++) {

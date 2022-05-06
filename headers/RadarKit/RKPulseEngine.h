@@ -101,6 +101,6 @@ char *RKPulseEnginePulseString(RKPulseEngine *);
 void RKPulseEngineFilterSummary(RKPulseEngine *);
 void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
-void builtInCompressor(RKCompressionScratch *);
+void RKBuiltInCompressor(RKCompressionScratch *);
 
 #endif /* defined(__RadarKit_Pulse_Engine__) */

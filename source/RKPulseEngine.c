@@ -123,7 +123,7 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 
 #pragma mark - Delegate Workers
 
-void builtInCompressor(RKCompressionScratch *scratch) {
+void RKBuiltInCompressor(RKCompressionScratch *scratch) {
 
     int i, p;
     RKPulse *pulse = scratch->pulse;
@@ -731,7 +731,7 @@ RKPulseEngine *RKPulseEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->compressor = &builtInCompressor;
+    engine->compressor = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
