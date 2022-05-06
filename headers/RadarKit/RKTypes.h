@@ -135,6 +135,7 @@
 #define RKMonokaiGreen                       "\033[38;5;154m"
 #define RKMonokaiBlue                        "\033[38;5;81m"
 #define RKMonokaiPurple                      "\033[38;5;141m"
+#define RKWarningColor                       "\033[38;5;15;48;5;197m"
 #define RKPythonColor                        "\033[38;5;226;48;5;24m"
 #define RKRadarKitColor                      "\033[38;5;15;48;5;124m"
 #define RKMaximumStringLength                4096
@@ -143,7 +144,7 @@
 #define RKMaximumCommandLength               512
 #define RKNameLength                         128
 #define RKStatusStringLength                 256
-#define RKPulseHeaderPaddedSize              320                               // Change this to higher number for post-AVX2 intrinsics
+#define RKPulseHeaderPaddedSize              384                               // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
 #define RKShortNameLength                    20                                // Short names, e.g., C1, M2, P0, etc. (including color)
 
