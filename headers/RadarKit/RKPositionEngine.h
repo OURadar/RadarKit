@@ -91,7 +91,7 @@ void RKPositionEngineSetVerbose(RKPositionEngine *, const int);
 void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *, const RKRadarDesc *,
                                            RKPosition *, uint32_t *,
                                            RKConfig *,   uint32_t *,
-                                           RKPulse *,    uint32_t *);
+                                           RKBuffer,     uint32_t *);
 
 int RKPositionEngineStart(RKPositionEngine *);
 int RKPositionEngineStop(RKPositionEngine *);

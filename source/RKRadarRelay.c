@@ -46,8 +46,8 @@ static int RKRadarRelayRead(RKClient *client) {
     int j, k;
     RKHealth *health;
     RKStatus *status;
-    RKRay *ray = engine->rayBuffer;
-    RKPulse *pulse = engine->pulseBuffer;
+    RKRay *ray = (RKRay *)engine->rayBuffer;
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
 
     uint8_t *u8Data = NULL;
     uint32_t productList;
@@ -69,7 +69,7 @@ static int RKRadarRelayRead(RKClient *client) {
                 RKLog("%s beacon.\n", engine->name);
             }
             break;
-            
+
         case RKNetworkPacketTypeProcessorStatus:
             // Queue up the status
             k = *engine->statusIndex;
@@ -85,7 +85,7 @@ static int RKRadarRelayRead(RKClient *client) {
                 RKLog("%s RKNetworkPacketTypeProcessorStatus: %d\n", engine->name, k);
             }
             break;
-            
+
         case RKNetworkPacketTypeHealth:
             // Queue up the health
             k = *engine->healthIndex;
@@ -191,7 +191,7 @@ static int RKRadarRelayRead(RKClient *client) {
                 } else {
                     u8Data = NULL;
                 }
-                
+
                 if (u8Data) {
                     memcpy(u8Data, client->userPayload + sizeof(RKRayHeader) + j * rxGateCount * sizeof(uint8_t), ray->header.gateCount * sizeof(uint8_t));
                 }
@@ -202,7 +202,7 @@ static int RKRadarRelayRead(RKClient *client) {
             ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
             ray->header.s = RKRayStatusVacant;
             break;
-            
+
         case RKNetworkPacketTypePlainText:
             break;
 
@@ -212,7 +212,7 @@ static int RKRadarRelayRead(RKClient *client) {
             strncpy(engine->responses[engine->responseIndex], client->userPayload, RKRadarRelayFeedbackCapacity - 1);
             engine->responseIndex = RKNextModuloS(engine->responseIndex, RKRadarRelayFeedbackDepth);
             break;
-            
+
         case RKNetworkPacketTypeSweepHeader:
             gettimeofday(&engine->sweepTic, NULL);
             memcpy(&engine->sweepHeaderCache, client->userPayload, sizeof(RKSweepHeader));
@@ -236,7 +236,7 @@ static int RKRadarRelayRead(RKClient *client) {
                 engine->sweepRayIndex = 0;
             }
             break;
-            
+
         default:
             RKLog("%s New type %d of size %s\n", engine->name, client->netDelimiter.type, RKIntegerToCommaStyleString(client->netDelimiter.size));
             break;
@@ -311,7 +311,7 @@ RKRadarRelay *RKRadarRelayInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKRadarRelay));
-    
+
     // TCP socket server over port 10000.
     sprintf(engine->name, "%s<SmartRadarRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarRelay) : "",

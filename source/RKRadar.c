@@ -689,7 +689,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, i);
             size_t offset = (size_t)pulse->data - (size_t)pulse;
             if (offset != RKPulseHeaderPaddedSize) {
-                printf("Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderPaddedSize);
+                RKLog("Error. Unexpected offset = %d != %d\n", (int)offset, RKPulseHeaderPaddedSize);
             }
         }
         radar->state |= RKRadarStateRawIQBufferAllocated;
