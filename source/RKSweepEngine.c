@@ -243,7 +243,7 @@ static void *sweepManager(void *in) {
                 RKLog("%s Error creating %s\n", engine->name, filename);
             }
             // Notify file manager of a new addition if the file handling script does not remove them
-            if (!(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
+            if (engine->fileManager && !(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
             }
         } else if (engine->verbose > 1) {
