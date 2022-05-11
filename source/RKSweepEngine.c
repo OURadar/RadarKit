@@ -288,6 +288,8 @@ static void *sweepManager(void *in) {
                 RKReplaceFileExtension(filename, "__", "tar.xz");
             } else if (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTgz) {
                 RKReplaceFileExtension(filename, "__", "tgz");
+            } else if (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTxz) {
+                RKReplaceFileExtension(filename, "__", "txz");
             } else {
                 RKReplaceFileExtension(filename, "__", "zip");
             }
