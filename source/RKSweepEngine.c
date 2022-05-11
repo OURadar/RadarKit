@@ -249,7 +249,7 @@ static void *sweepManager(void *in) {
         } else if (engine->verbose > 1) {
             RKLog("%s Skipping %s ...\n", engine->name, filename);
         }
-        
+
         // Make a summary for logging
         if (p == 0) {
             // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
@@ -294,7 +294,7 @@ static void *sweepManager(void *in) {
                 RKReplaceFileExtension(filename, "__", "zip");
             }
             RKLog("%s %s", engine->name, filename);
-            if (RKFilenameExists(filename)) {
+            if (engine->fileManager && RKFilenameExists(filename)) {
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
             }
         }
@@ -307,7 +307,7 @@ static void *sweepManager(void *in) {
 
 static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
-    
+
     int j, n, p, s;
 
     struct timeval t0, t1;
@@ -385,7 +385,7 @@ static void *rayGatherer(void *in) {
         if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
-        
+
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - j) / engine->radarDescription->rayBufferDepth, 1.0f);
 
@@ -477,7 +477,7 @@ static void *rayGatherer(void *in) {
 
         // Record down the ray that is just processed
         engine->processedRayIndex = j;
-        
+
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {
