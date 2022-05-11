@@ -802,7 +802,9 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
     if (engine->state & RKEngineStateWantActive) {
         RKMomentEngineStop(engine);
     }
-    free(engine->momentSource);
+    if (engine->momentSource) {
+        free(engine->momentSource);
+    }
     free(engine);
 }
 
