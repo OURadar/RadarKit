@@ -817,8 +817,9 @@ enum {
     RKScriptPropertyProduceZip                   = 1,
     RKScriptPropertyProduceTgz                   = (1 << 1),
     RKScriptPropertyProduceTarXz                 = (1 << 2),
-    RKScriptPropertyProduceArchive               = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz),
-    RKScriptPropertyRemoveNCFiles                = (1 << 3)
+    RKScriptPropertyProduceTxz                   = (1 << 3),
+    RKScriptPropertyProduceArchive               = (RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz | RKScriptPropertyProduceTarXz | RKScriptPropertyProduceTxz),
+    RKScriptPropertyRemoveNCFiles                = (1 << 4)
 };
 
 //
