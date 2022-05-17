@@ -34,14 +34,14 @@ Follow these steps to get the project
    ##### Debian / Ubuntu
 
    ```shell
-   apt-get install libfftw3-dev libnetcdf-dev
+   apt-get install libfftw3-dev libnetcdf-dev libssl-dev
    ```
 
    ##### CentOS 7
 
    ```shell
    yum install epel-release
-   yum install fftw-devel netcdf-devel
+   yum install fftw-devel netcdf-devel ssl-devel
    ```
 
    ##### macOS
@@ -49,7 +49,7 @@ Follow these steps to get the project
    I use [Homebrew] as my package manager for macOS. I highly recommend it.
 
    ```shell
-   brew install fftw netcdf
+   brew install fftw netcdf openssl
    ```
 
    or
