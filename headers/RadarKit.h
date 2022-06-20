@@ -12,16 +12,13 @@
 //
 //         - To do:
 //         - Major:
-//           - v3.0 - Cloud communication (reverse relay)
+//           - [x] v3.0 - Cloud communication (reverse relay)
 //           - Task, event, sequence of tasks
 //         - Minor:
 //           - Mapping coefficients to product files
 //
-//  3.0    - 2/xx/2022
-//         - Cloud communication to RadarHub
-//           - Added RKWebSocket
-//           - Added RKReporter
-//         -
+//  3.0    - 6/20/2022
+//         - Added RKWebSocket for communication to RadarHub
 //
 //  2.6    - 6/9/2021
 //         - Fixed bug in reading version 5 in pgen
@@ -307,7 +304,7 @@
  processing such as auto-correlation calculations, pulse compressions, FIR (finite
  impulse response) and IIR (infinite impulse response) filtering, window functions,
  data transportation across network, etc.
- 
+
  */
 
 #ifdef __cplusplus
