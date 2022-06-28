@@ -24,7 +24,7 @@
 //         -
 //
 //  2.6    - 6/9/2021
-//         - Fixed bug in reading version 5 in pgen
+//         - Fixed bugs in reading built 5 in pgen
 //         - Variable buildNo is now version
 //         - New RKConfig definition
 //         - Deprecated RKConfig->filterCount

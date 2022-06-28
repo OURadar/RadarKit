@@ -1544,7 +1544,7 @@ typedef union rk_product_desc {                                                /
         RKName               unit;                                             // Unit of the product
         RKName               colormap;                                         // Colormap of the product for the UI
         char                 symbol[8];                                        // Product symbol
-        RKBaseProductIndex    index;                                            // Base moment index
+        RKBaseProductIndex   index;                                            // Base moment index
         RKProductType        type;                                             // RKProductType
         uint32_t             pieceCount;                                       // Count of piece-wise function that maps data to color index
         RKFloat              w[16];                                            // Data to color index weight (piece-wise function)
