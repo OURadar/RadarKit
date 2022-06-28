@@ -48,6 +48,8 @@ static void copyRayHeader(RKRayHeaderV1 *destination, RKRayHeader *source) {
     destination->i               = source->i;
     destination->n               = source->n;
     destination->marker          = source->marker;
+    destination->configIndex     = source->configIndex;
+    destination->configSubIndex  = source->configSubIndex;
     destination->gateCount       = source->gateCount;
     destination->pulseCount      = source->pulseCount;
     destination->gateSizeMeters  = source->gateSizeMeters;
@@ -61,6 +63,10 @@ static void copyRayHeader(RKRayHeaderV1 *destination, RKRayHeader *source) {
     destination->endTimeDouble   = source->endTimeDouble;
     destination->endAzimuth      = source->endAzimuth;
     destination->endElevation    = source->endElevation;
+    destination->fftOrder        = source->fftOrder;
+    destination->reserved1       = source->reserved1;
+    destination->reserved2       = source->reserved2;
+    destination->reserved3       = source->reserved3;
 }
 
 #pragma mark - Handlers
@@ -991,15 +997,15 @@ int socketStreamHandler(RKOperator *O) {
                 if (user->streams & RKStreamDisplaySv) {
                     rayHeaderV1.baseProductList |= RKBaseProductListUInt8Sv;
                 }
-                uint32_t displayList = rayHeaderV1.baseProductList & RKBaseProductListUInt8All;
+                uint32_t displayList = rayHeaderV1.baseProductList & RKBaseProductListUInt8ZVWDPR;
                 uint32_t displayCount = __builtin_popcount(displayList);
                 //RKLog("displayCount = %d / %x\n", productCount, productList);
 
-                rayHeader.gateCount /= user->rayDownSamplingRatio;
-                rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
+                rayHeaderV1.gateCount /= user->rayDownSamplingRatio;
+                rayHeaderV1.gateSizeMeters *= (float)user->rayDownSamplingRatio;
 
                 O->delimTx.type = RKNetworkPacketTypeRayDisplay;
-                O->delimTx.size = (uint32_t)(sizeof(RKRayHeaderV1) + displayCount * rayHeader.gateCount * sizeof(uint8_t));
+                O->delimTx.size = (uint32_t)(sizeof(RKRayHeaderV1) + displayCount * rayHeaderV1.gateCount * sizeof(uint8_t));
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeaderV1, sizeof(RKRayHeaderV1), NULL);
 
                 for (j = 0; j < displayCount; j++) {
@@ -1038,10 +1044,10 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     if (u8Data) {
                         uint8_t *lowRateData = (uint8_t *)user->string;
-                        for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
+                        for (i = 0, k = 0; i < rayHeaderV1.gateCount; i++, k += user->rayDownSamplingRatio) {
                             lowRateData[i] = u8Data[k];
                         }
-                        RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
+                        RKOperatorSendPackets(O, lowRateData, rayHeaderV1.gateCount * sizeof(uint8_t), NULL);
                     }
                 }
                 ray->header.s |= RKRayStatusStreamed;
