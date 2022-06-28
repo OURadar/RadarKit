@@ -998,7 +998,7 @@ int socketStreamHandler(RKOperator *O) {
 
                 O->delimTx.type = RKNetworkPacketTypeRayDisplay;
                 O->delimTx.size = (uint32_t)(sizeof(RKRayHeaderV1) + displayCount * rayHeader.gateCount * sizeof(uint8_t));
-                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeaderV1), NULL);
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeaderV1, sizeof(RKRayHeaderV1), NULL);
 
                 for (j = 0; j < displayCount; j++) {
                     if (displayList & RKBaseProductListUInt8Z) {
