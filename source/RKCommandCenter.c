@@ -822,40 +822,41 @@ int socketStreamHandler(RKOperator *O) {
             while (user->rayIndex != endIndex) {
                 ray = RKGetRayFromBuffer(user->radar->rays, user->rayIndex);
                 // Duplicate and send the header with only selected products
-                memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                //memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                copyRayHeader(&rayHeaderV1, &ray->header);
                 // Gather the products to be sent
                 rayHeader.baseProductList = RKBaseProductListNone;
                 if (user->streams & RKStreamProductZ) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatZ;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatZ;
                 }
                 if (user->streams & RKStreamProductV) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatV;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatV;
                 }
                 if (user->streams & RKStreamProductW) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatW;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatW;
                 }
                 if (user->streams & RKStreamProductD) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatD;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatD;
                 }
                 if (user->streams & RKStreamProductP) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatP;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatP;
                 }
                 if (user->streams & RKStreamProductR) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatR;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatR;
                 }
                 if (user->streams & RKStreamProductK) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatK;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatK;
                 }
                 if (user->streams & RKStreamProductQ) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatQ;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatQ;
                 }
                 if (user->streams & RKStreamProductSh) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatSh;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatSh;
                 }
                 if (user->streams & RKStreamProductSv) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatSv;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatSv;
                 }
-                uint32_t productList = rayHeader.baseProductList & RKBaseProductListFloatZVWDPRKSQ;
+                uint32_t productList = rayHeaderV1.baseProductList & RKBaseProductListFloatZVWDPRKSQ;
                 uint32_t productCount = __builtin_popcount(productList);
                 //RKLog("ProductCount = %d / %x\n", productCount, productList);
 
