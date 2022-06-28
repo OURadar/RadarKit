@@ -77,7 +77,7 @@ typedef struct rk_ray_header_v1 {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKMomentList         baseMomentList;                                       // List of calculated moments
+    RKBaseProductList    baseProductList;                                      // List of calculated moments
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            // Gate count of the ray
