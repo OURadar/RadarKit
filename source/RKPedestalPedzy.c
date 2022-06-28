@@ -44,12 +44,17 @@ static int RKPedestalPedzyRead(RKClient *client) {
         position->flag &= RKPositionFlagHardwareMask;
         memcpy(newPosition, client->userPayload, sizeof(RKPosition));
         // Correct by radar heading
-        //newPosition->azimuthDegrees += radar->desc.heading + 180.0f;
         newPosition->azimuthDegrees += radar->desc.heading + me->headingOffset;
         if (newPosition->azimuthDegrees < 0.0f) {
             newPosition->azimuthDegrees += 360.0f;
         } else if (newPosition->azimuthDegrees >= 360.0f) {
             newPosition->azimuthDegrees -= 360.0f;
+        }
+        newPosition->sweepAzimuthDegrees += radar->desc.heading + me->headingOffset;
+        if (newPosition->sweepAzimuthDegrees < 0.0f) {
+            newPosition->sweepAzimuthDegrees += 360.0f;
+        } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
+            newPosition->sweepAzimuthDegrees -= 360.0f;
         }
         RKSetPositionReady(radar, newPosition);
     } else {

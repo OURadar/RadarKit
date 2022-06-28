@@ -15,7 +15,7 @@
 static void *healthConsolidator(void *_in) {
     RKHealthEngine *engine = (RKHealthEngine *)_in;
     RKRadarDesc *desc = engine->radarDescription;
-    
+
     int i, j, k, n, s;
 	struct timeval t0, t1;
 
@@ -32,7 +32,7 @@ static void *healthConsolidator(void *_in) {
 
     uint32_t *indices = (uint32_t *)malloc(desc->healthNodeCount * sizeof(uint32_t));
     memset(indices, 0xFF, desc->healthNodeCount * sizeof(uint32_t));
-    
+
 	// Update the engine state
 	engine->state |= RKEngineStateWantActive;
 	engine->state ^= RKEngineStateActivating;
@@ -129,7 +129,7 @@ static void *healthConsolidator(void *_in) {
             }
         }
         engine->state ^= RKEngineStateSleep2;
-        
+
         if (!(engine->state & RKEngineStateWantActive)) {
             break;
         }
@@ -204,7 +204,7 @@ static void *healthConsolidator(void *_in) {
                 }
             }
         }
-        if (isnan(heading) || (desc->initFlags & RKInitFlagIgnoreHeading)) {
+        if (isnan(heading) || (desc->initFlags & RKInitFlagIgnoreHeading) || (desc->initFlags & RKInitFlagIgnoreGPS)) {
             // If there is also supplied GPS, replace the enum of the GPS readings to not wired
             RKReplaceEnumOfKey(string, "heading", RKStatusEnumNotWired);
             // Concatenate with heading values if GPS values are not reported
@@ -212,7 +212,6 @@ static void *healthConsolidator(void *_in) {
                          "\"Heading Override\":{\"Value\":true,\"Enum\":0}, "
                          "\"Sys Heading\":{\"Value\":\"%.2f deg\",\"Enum\":0}, ",
                          desc->heading);
-            
         } else {
             if (engine->verbose > 1) {
                 RKLog("%s MAG:  heading = %.2f\n", engine->name, heading);
@@ -278,7 +277,7 @@ static void *healthConsolidator(void *_in) {
     }
 
     free(indices);
-    
+
     engine->state ^= RKEngineStateActive;
     return NULL;
 }

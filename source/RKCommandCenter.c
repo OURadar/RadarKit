@@ -21,7 +21,7 @@ static void consolidateStreams(RKCommandCenter *engine) {
 
     int j, k;
     RKStream consolidatedStreams;
-    
+
     // Consolidate streams
     for (j = 0; j < RKCommandCenterMaxRadars; j++) {
         RKRadar *radar = engine->radars[j];
@@ -42,12 +42,39 @@ static void consolidateStreams(RKCommandCenter *engine) {
     }
 }
 
+static void copyRayHeader(RKRayHeaderV1 *destination, RKRayHeader *source) {
+    destination->capacity        = source->capacity;
+    destination->s               = source->s;
+    destination->i               = source->i;
+    destination->n               = source->n;
+    destination->marker          = source->marker;
+    destination->configIndex     = source->configIndex;
+    destination->configSubIndex  = source->configSubIndex;
+    destination->gateCount       = source->gateCount;
+    destination->pulseCount      = source->pulseCount;
+    destination->gateSizeMeters  = source->gateSizeMeters;
+    destination->sweepElevation  = source->sweepElevation;
+    destination->sweepAzimuth    = source->sweepAzimuth;
+    destination->startTime       = source->startTime;
+    destination->startTimeDouble = source->startTimeDouble;
+    destination->startAzimuth    = source->startAzimuth;
+    destination->startElevation  = source->startElevation;
+    destination->endTime         = source->endTime;
+    destination->endTimeDouble   = source->endTimeDouble;
+    destination->endAzimuth      = source->endAzimuth;
+    destination->endElevation    = source->endElevation;
+    destination->fftOrder        = source->fftOrder;
+    destination->reserved1       = source->reserved1;
+    destination->reserved2       = source->reserved2;
+    destination->reserved3       = source->reserved3;
+}
+
 #pragma mark - Handlers
 
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
-    
+
     int j, k;
 
     j = snprintf(user->commandResponse, RKMaximumPacketSize - 1, "%s %d radar:", engine->name, engine->radarCount);
@@ -59,15 +86,15 @@ int socketCommandHandler(RKOperator *O) {
     struct timeval t0;
     gettimeofday(&t0, NULL);
     user->timeLastIn = (double)t0.tv_sec + 1.0e-6 * (double)t0.tv_usec;
-    
+
     char sval1[RKMaximumCommandLength];
     char sval2[RKMaximumCommandLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
-    
+
     // Delimited reading: each command is separated by a ';'
     // e.g., a radarkit nopasswd;s hz;h hv on;
-    
+
     char *commandString = O->cmd;
     char *commandStringEnd = NULL;
     const size_t commandStringLength = strlen(commandString);
@@ -126,7 +153,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress = RKStreamNull;
                     RKLog("%s %s Disconnected all streams\n", engine->name, O->name);
                     break;
-                    
+
                 case 'a':
                     // Authenticate
                     sscanf(commandString + 1, "%s %s", sval1, sval2);
@@ -150,7 +177,7 @@ int socketCommandHandler(RKOperator *O) {
                     }
                     user->streamsInProgress &= ~RKStreamStatusMask;
                     break;
-                    
+
                 case 'd':
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
@@ -253,7 +280,7 @@ int socketCommandHandler(RKOperator *O) {
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
-                    
+
                 case 'u':
                     // Turn this user into an active node with user product return
                     RKParseProductDescription(&user->productDescriptions[user->productCount], commandString + 1);
@@ -282,7 +309,7 @@ int socketCommandHandler(RKOperator *O) {
                     sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
-                    
+
                 default:
                     RKExecuteCommand(user->radar, commandString, user->commandResponse);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
@@ -304,11 +331,11 @@ int socketCommandHandler(RKOperator *O) {
                     snprintf(user->commandResponse, RKMaximumPacketSize - 1, "ACK. %s selected." RKEOL, sval1);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
-                    
+
                 case 's':
                     // Stream varrious data
                     user->streams = RKStreamFromString(commandString + 1);
-                    
+
                     consolidateStreams(engine);
 
                     k = user->rayIndex;
@@ -320,7 +347,7 @@ int socketCommandHandler(RKOperator *O) {
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
-                    
+
                 default:
                     // Just forward to the right radar
                     RKLog("%s %s Queue command '%s' to relay.\n", engine->name, O->name, commandString);
@@ -349,14 +376,14 @@ int socketCommandHandler(RKOperator *O) {
             commandString = NULL;
         }
     } // while (commandString != NULL) ...
-    
+
     return 0;
 }
 
 int socketStreamHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
     RKUser *user = &engine->users[O->iid];
-    
+
     int i, j, k, s;
     char *c;
     static struct timeval t0;
@@ -375,10 +402,11 @@ int socketStreamHandler(RKOperator *O) {
 
     RKRay *ray;
     RKRayHeader rayHeader;
-    
+    RKRayHeaderV1 rayHeaderV1;
+
     RKSweep *sweep;
     RKSweepHeader sweepHeader;
-    
+
     RKProduct *product;
 
     uint8_t *u8Data = NULL;
@@ -391,7 +419,7 @@ int socketStreamHandler(RKOperator *O) {
 
     RKIdentifier identifier;
     RKProductId productId;
-    
+
     struct timeval timevalOrigin, timevalTx, timevalRx;
     double deltaTx, deltaRx;
 
@@ -728,7 +756,7 @@ int socketStreamHandler(RKOperator *O) {
             RKLog("%s %s No Status / Deactivated.   statusIndex = %d\n", engine->name, O->name, user->statusIndex);
         }
     }
-    
+
     // Health Status
     #pragma mark Health Status
     if (user->streams & user->access & RKStreamHealthInJSON) {
@@ -801,50 +829,51 @@ int socketStreamHandler(RKOperator *O) {
             while (user->rayIndex != endIndex) {
                 ray = RKGetRayFromBuffer(user->radar->rays, user->rayIndex);
                 // Duplicate and send the header with only selected products
-                memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                //memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                copyRayHeader(&rayHeaderV1, &ray->header);
                 // Gather the products to be sent
-                rayHeader.baseProductList = RKBaseProductListNone;
+                rayHeaderV1.baseProductList = RKBaseProductListNone;
                 if (user->streams & RKStreamProductZ) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatZ;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatZ;
                 }
                 if (user->streams & RKStreamProductV) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatV;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatV;
                 }
                 if (user->streams & RKStreamProductW) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatW;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatW;
                 }
                 if (user->streams & RKStreamProductD) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatD;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatD;
                 }
                 if (user->streams & RKStreamProductP) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatP;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatP;
                 }
                 if (user->streams & RKStreamProductR) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatR;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatR;
                 }
                 if (user->streams & RKStreamProductK) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatK;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatK;
                 }
                 if (user->streams & RKStreamProductQ) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatQ;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatQ;
                 }
                 if (user->streams & RKStreamProductSh) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatSh;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatSh;
                 }
                 if (user->streams & RKStreamProductSv) {
-                    rayHeader.baseProductList |= RKBaseProductListFloatSv;
+                    rayHeaderV1.baseProductList |= RKBaseProductListFloatSv;
                 }
-                uint32_t productList = rayHeader.baseProductList & RKBaseProductListFloatZVWDPRKSQ;
+                uint32_t productList = rayHeaderV1.baseProductList & RKBaseProductListFloatZVWDPRKSQ;
                 uint32_t productCount = __builtin_popcount(productList);
                 //RKLog("ProductCount = %d / %x\n", productCount, productList);
-                
+
                 rayHeader.gateCount /= user->rayDownSamplingRatio;
                 rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
-                
+
                 O->delimTx.type = RKNetworkPacketTypeRayDisplay;
                 O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + productCount * rayHeader.gateCount * sizeof(float));
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
-                
+
                 for (j = 0; j < productCount; j++) {
                     if (productList & RKBaseProductListFloatZ) {
                         productList ^= RKBaseProductListFloatZ;
@@ -933,49 +962,51 @@ int socketStreamHandler(RKOperator *O) {
             while (user->rayIndex != endIndex) {
                 ray = RKGetRayFromBuffer(user->radar->rays, user->rayIndex);
                 // Duplicate and send the header with only selected products
-                memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                // memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
+                copyRayHeader(&rayHeaderV1, &ray->header);
+
                 // Gather the products to be sent
-                rayHeader.baseProductList = RKBaseProductListNone;
+                rayHeaderV1.baseProductList = RKBaseProductListNone;
                 if (user->streams & RKStreamDisplayZ) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8Z;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Z;
                 }
                 if (user->streams & RKStreamDisplayV) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8V;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8V;
                 }
                 if (user->streams & RKStreamDisplayW) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8W;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8W;
                 }
                 if (user->streams & RKStreamDisplayD) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8D;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8D;
                 }
                 if (user->streams & RKStreamDisplayP) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8P;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8P;
                 }
                 if (user->streams & RKStreamDisplayR) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8R;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8R;
                 }
                 if (user->streams & RKStreamDisplayK) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8K;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8K;
                 }
                 if (user->streams & RKStreamDisplayQ) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8Q;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Q;
                 }
                 if (user->streams & RKStreamDisplaySh) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8Sh;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Sh;
                 }
                 if (user->streams & RKStreamDisplaySv) {
-                    rayHeader.baseProductList |= RKBaseProductListUInt8Sv;
+                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Sv;
                 }
-                uint32_t displayList = rayHeader.baseProductList & RKBaseProductListUInt8All;
+                uint32_t displayList = rayHeaderV1.baseProductList & RKBaseProductListUInt8ZVWDPR;
                 uint32_t displayCount = __builtin_popcount(displayList);
                 //RKLog("displayCount = %d / %x\n", productCount, productList);
 
-                rayHeader.gateCount /= user->rayDownSamplingRatio;
-                rayHeader.gateSizeMeters *= (float)user->rayDownSamplingRatio;
+                rayHeaderV1.gateCount /= user->rayDownSamplingRatio;
+                rayHeaderV1.gateSizeMeters *= (float)user->rayDownSamplingRatio;
 
                 O->delimTx.type = RKNetworkPacketTypeRayDisplay;
-                O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + displayCount * rayHeader.gateCount * sizeof(uint8_t));
-                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
+                O->delimTx.size = (uint32_t)(sizeof(RKRayHeaderV1) + displayCount * rayHeaderV1.gateCount * sizeof(uint8_t));
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeaderV1, sizeof(RKRayHeaderV1), NULL);
 
                 for (j = 0; j < displayCount; j++) {
                     if (displayList & RKBaseProductListUInt8Z) {
@@ -1013,10 +1044,10 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     if (u8Data) {
                         uint8_t *lowRateData = (uint8_t *)user->string;
-                        for (i = 0, k = 0; i < rayHeader.gateCount; i++, k += user->rayDownSamplingRatio) {
+                        for (i = 0, k = 0; i < rayHeaderV1.gateCount; i++, k += user->rayDownSamplingRatio) {
                             lowRateData[i] = u8Data[k];
                         }
-                        RKOperatorSendPackets(O, lowRateData, rayHeader.gateCount * sizeof(uint8_t), NULL);
+                        RKOperatorSendPackets(O, lowRateData, rayHeaderV1.gateCount * sizeof(uint8_t), NULL);
                     }
                 }
                 ray->header.s |= RKRayStatusStreamed;
@@ -1141,9 +1172,9 @@ int socketStreamHandler(RKOperator *O) {
                     user->scratch[i - 1] = '\0';
                 }
 
-                const uint32_t baseMomentCount = __builtin_popcount(sweepHeader.baseProductList);
+                const uint32_t baseProductCount = __builtin_popcount(sweepHeader.baseProductList);
 
-                if (baseMomentCount) {
+                if (baseProductCount) {
                     size = 0;
                     gettimeofday(&timevalOrigin, NULL);
 
@@ -1152,7 +1183,7 @@ int socketStreamHandler(RKOperator *O) {
                     size += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &sweepHeader, sizeof(RKSweepHeader), NULL);
 
                     O->delimTx.type = RKNetworkPacketTypeSweepRay;
-                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + baseMomentCount * sweepHeader.gateCount * sizeof(RKFloat));
+                    O->delimTx.size = (uint32_t)(sizeof(RKRayHeader) + baseProductCount * sweepHeader.gateCount * sizeof(RKFloat));
 
                     for (k = 0; k < sweepHeader.rayCount; k++) {
                         ray = sweep->rays[k];
@@ -1163,7 +1194,7 @@ int socketStreamHandler(RKOperator *O) {
                         if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
                             RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
                         }
-                        for (j = 0; j < baseMomentCount; j++) {
+                        for (j = 0; j < baseProductCount; j++) {
                             if (productList & RKBaseProductListFloatZ) {
                                 productList ^= RKBaseProductListFloatZ;
                                 f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
@@ -1213,7 +1244,7 @@ int socketStreamHandler(RKOperator *O) {
                           RKVariableInString("configId", &sweepHeader.config.i, RKValueTypeIdentifier), user->scratch + 1);
                     if (engine->verbose > 1) {
                         RKLog(">%s %s user->streams = 0x%lx / 0x%lx\n", engine->name, O->name, user->streams, RKStreamSweepZVWDPRKS);
-                        RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseMomentCount);
+                        RKLog(">%s %s Sent a sweep of size %s B (%d moments)\n", engine->name, O->name, RKIntegerToCommaStyleString(size), baseProductCount);
                     }
 
                     for (k = 0; k < user->productCount; k++) {
@@ -1387,7 +1418,7 @@ int socketStreamHandler(RKOperator *O) {
                 case 1:
                     // Down-sampled twice (in addition to radar->desc.pulseToRayRatio) I/Q data from RKComplex samples
                     k = user->pulseDownSamplingRatio;
-                
+
                     //pulseHeader.gateCount = MIN(pulseHeader.downSampledGateCount / k, RKMaximumGateCount);
                     pulseHeader.gateCount = MIN(4096, pulseHeader.downSampledGateCount / k);
                     pulseHeader.gateSizeMeters *= (float)(k * user->radar->desc.pulseToRayRatio);
@@ -1402,7 +1433,7 @@ int socketStreamHandler(RKOperator *O) {
                         userDataV++->q = (int16_t)(scale * yV++->q);
                     }
                     break;
-                
+
                 default:
                     // I/Q data from Int16C samples
                     pulseHeader.gateCount = MIN(4096, pulseHeader.pulseWidthSampleCount + 10);
@@ -1425,11 +1456,11 @@ int socketStreamHandler(RKOperator *O) {
 
             size = pulseHeader.gateCount * sizeof(RKInt16C);
             //RKLog("%s %s %d vs %d / %d\n", engine->name, O->name, pulseHeader.gateCount, i, user->pulseDownSamplingRatio);
-            
+
             O->delimTx.type = RKNetworkPacketTypePulseData;
             O->delimTx.size = (uint32_t)(sizeof(RKPulseHeader) + 2 * size);
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &pulseHeader, sizeof(RKPulseHeader), user->samples[0], size, user->samples[1], size, NULL);
-            
+
             user->timeLastDisplayIQOut = time;
             user->timeLastOut = time;
         } else {
@@ -1459,20 +1490,20 @@ int socketStreamHandler(RKOperator *O) {
             RKOperatorHangUp(O);
         }
     }
-    
+
     return 0;
 }
 
 int socketInitialHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
-    
+
     if (engine->radarCount == 0) {
         RKLog("%s No radar yet.\n", engine->name);
         return RKResultNoRadar;
     }
 
     pthread_mutex_lock(&engine->mutex);
-    
+
     RKUser *user = &engine->users[O->iid];
     if (user->streams != RKStreamNull) {
         RKLog("%s %s Warning. Unexpected user state.   user->streams = %x", engine->name, O->name, user->streams);
@@ -1502,9 +1533,9 @@ int socketInitialHandler(RKOperator *O) {
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row, O->iid);
     snprintf(user->login, 63, "radarop");
     user->serverOperator = O;
-    
+
     pthread_mutex_unlock(&engine->mutex);
-    
+
     return RKResultSuccess;
 }
 

@@ -481,6 +481,7 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE_SIMD(pulse->headerBytes)
     SHOW_SIZE_SIMD(RKPulse)
     SHOW_SIZE(RKRayHeader)
+    SHOW_SIZE(RKRayHeaderV1)
     SHOW_SIZE_SIMD(ray->headerBytes)
     SHOW_SIZE(RKSweep)
     SHOW_SIZE(sweep->header)

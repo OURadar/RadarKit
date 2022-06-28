@@ -460,31 +460,6 @@ enum {
     RKValueTypeVariable
 };
 
-typedef uint32_t RKPositionFlagV1;
-enum {
-    RKPositionFlagV1Vacant                       = 0,
-    RKPositionFlagV1AzimuthEnabled               = 1,                          //  0 - EN
-    RKPositionFlagV1AzimuthSafety                = (1 << 1),                   //  1
-    RKPositionFlagV1AzimuthError                 = (1 << 2),                   //  2
-    RKPositionFlagV1AzimuthSweep                 = (1 << 8),                   //  8
-    RKPositionFlagV1AzimuthPoint                 = (1 << 9),                   //  9
-    RKPositionFlagV1AzimuthComplete              = (1 << 10),                  // 10
-    RKPositionFlagV1ElevationEnabled             = (1 << 16),                  //  0 - EN
-    RKPositionFlagV1ElevationSafety              = (1 << 17),                  //  1
-    RKPositionFlagV1ElevationError               = (1 << 18),                  //  2
-    RKPositionFlagV1ElevationSweep               = (1 << 24),                  //  8
-    RKPositionFlagV1ElevationPoint               = (1 << 25),                  //  9
-    RKPositionFlagV1ElevationComplete            = (1 << 26),                  // 10
-    RKPositionFlagV1ScanActive                   = (1 << 28),
-    RKPositionFlagV1VCPActive                    = (1 << 29),
-    RKPositionFlagV1HardwareMask                 = 0x3FFFFFFF,
-    RKPositionFlagV1Used                         = (1 << 30),
-    RKPositionFlagV1Ready                        = (1 << 31),
-    RKPositionFlagV1AzimuthModeMask              = (RKPositionFlagV1AzimuthSweep | RKPositionFlagV1AzimuthPoint),
-    RKPositionFlagV1ElevationModeMask            = (RKPositionFlagV1ElevationSweep | RKPositionFlagV1ElevationPoint),
-    RKPositionFlagV1ScanModeMask                 = (RKPositionFlagV1AzimuthModeMask | RKPositionFlagV1ElevationModeMask)
-};
-
 typedef uint32_t RKPositionFlag;
 enum {
     RKPositionFlagVacant                         = 0,
@@ -1157,35 +1132,6 @@ typedef struct rk_waveform_response {
 } RKWaveformResponse;
 
 //
-// A running configuration buffer (version 1, see below for updated version)
-//
-typedef struct rk_config_v1 {
-    RKIdentifier         i;                                                    // Identity counter
-    float                sweepElevation;                                       // Sweep elevation angle (degrees)
-    float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
-    RKMarker             startMarker;                                          // Marker of the latest start ray
-    uint8_t              filterCount;                                          // Number of filters
-    RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level
-    RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
-    RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
-    uint32_t             pulseGateCount;                                       // Number of range gates
-    RKFloat              pulseGateSize;                                        // Size of range gate (m)
-    uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
-    uint32_t             waveformId[RKMaximumFilterCount];                     // Transmit waveform
-    RKFloat              noise[2];                                             // Noise floor (ADU)
-    RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
-    RKFloat              systemDCal;                                           // System-wide ZDR calibration (dB)
-    RKFloat              systemPCal;                                           // System-wide phase calibration (rad)
-    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Waveform Z calibration (dB)
-    RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
-    RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
-    RKFloat              SNRThreshold;                                         // Censor SNR (dB)
-    RKFloat              SQIThreshold;                                         // Censor SQI
-    RKName               waveform;                                             // Waveform name
-    char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
-} RKConfigV1;
-
-//
 // A running configuration buffer
 //
 typedef union rk_config {
@@ -1429,20 +1375,6 @@ typedef struct rk_sweep {
     RKBuffer             rayBuffer;
     RKRay                *rays[RKMaximumRaysPerSweep];
 } RKSweep;
-
-//
-// File header of raw I/Q data
-//
-typedef union rk_file_header_v1 {
-    struct {                                                                   // Up to version (buildNo) 5
-        RKName               preface;                                          //
-        uint32_t             buildNo;                                          //
-        RKRadarDesc          desc;                                             //
-        RKConfigV1           config;                                           //
-        RKRawDataType        dataType;                                         //
-    };                                                                         //
-    RKByte               bytes[4096];                                          //
-} RKFileHeaderV1;
 
 typedef union rk_file_header {
     struct {

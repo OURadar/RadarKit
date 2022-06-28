@@ -54,7 +54,7 @@ ECHO_FLAG = -e
 ifneq (, $(findstring Darwin, $(KERNEL_VER)))
 	ECHO_FLAG =
 endif
-ifneq (, $(findstring Linux, $(KERNEL)))
+ifneq (, $(findstring Linux, $(KERNEL_VER)))
 	ECHO_FLAG =
 endif
 
