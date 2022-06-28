@@ -47,6 +47,7 @@ static void copyRayHeader(RKRayHeaderV1 *destination, RKRayHeader *source) {
     destination->s               = source->s;
     destination->i               = source->i;
     destination->n               = source->n;
+    destination->marker          = source->marker;
     destination->gateCount       = source->gateCount;
     destination->pulseCount      = source->pulseCount;
     destination->gateSizeMeters  = source->gateSizeMeters;
@@ -825,7 +826,7 @@ int socketStreamHandler(RKOperator *O) {
                 //memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
                 copyRayHeader(&rayHeaderV1, &ray->header);
                 // Gather the products to be sent
-                rayHeader.baseProductList = RKBaseProductListNone;
+                rayHeaderV1.baseProductList = RKBaseProductListNone;
                 if (user->streams & RKStreamProductZ) {
                     rayHeaderV1.baseProductList |= RKBaseProductListFloatZ;
                 }
