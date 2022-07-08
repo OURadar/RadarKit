@@ -15,6 +15,7 @@ endif
 #CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 
 CFLAGS += -std=gnu99
+CFLAGS += -Woverlength-strings
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I headers/RadarKit -I /usr/local/include -I /usr/include -fPIC
 

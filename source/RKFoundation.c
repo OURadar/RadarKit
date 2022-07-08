@@ -80,7 +80,7 @@ int RKLog(const char *whatever, ...) {
     bool has_info = info_str != NULL;
     bool has_error =  error_str != NULL;
     bool has_warning = warning_str != NULL;
-    
+
     char *anchor = (char *)whatever + (whatever[0] == '>' ? 1 : 0);
 
     if (has_ok || has_info || has_error || has_warning) {
@@ -97,11 +97,11 @@ int RKLog(const char *whatever, ...) {
         } else {
             len = 0;
         }
-        
+
         strncpy(colored_whatever, anchor, len);
         colored_whatever[len] = '\0';
         anchor += len;
-        
+
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
                 len += sprintf(colored_whatever + len, RKGreenColor);
@@ -114,9 +114,9 @@ int RKLog(const char *whatever, ...) {
             }
         }
         strncpy(colored_whatever + len, anchor, RKMaximumStringLength - len);
-        
+
         i += vsprintf(msg + i, colored_whatever, args);
-        
+
         if (rkGlobalParameters.showColor) {
             sprintf(msg + i, RKNoColor);
         }
@@ -125,7 +125,7 @@ int RKLog(const char *whatever, ...) {
     } else {
         vsprintf(msg + i, anchor, args);
     }
-    
+
     if (whatever[strlen(whatever) - 1] != '\n') {
         strncat(msg, "\n", RKMaximumStringLength - 1);
     }
@@ -321,7 +321,7 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     struct dirent *ent;
 
     strcpy(list[0], filename);
-    
+
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
     //printf("path -> %s\n", path);
@@ -404,7 +404,7 @@ void RKShowBanner(const char *title, const char *color) {
     }
     char message[terminalSize.ws_col + 32];
     char padding[terminalSize.ws_col + 32];
-    
+
     if (rkGlobalParameters.showColor) {
         k = sprintf(padding, "%s", color);
     } else {
@@ -424,7 +424,7 @@ void RKShowBanner(const char *title, const char *color) {
     if (rkGlobalParameters.showColor) {
         sprintf(message + k, RKNoColor);
     }
-    
+
     printf("\r");
     printf("%s\n", padding);
     printf("%s\n", message);
@@ -440,11 +440,11 @@ void RKShowTypeSizes(void) {
     RKPulse *pulse = NULL;
     RKRay *ray = NULL;
     RKSweep *sweep = NULL;
-    
+
     // Keeep current output stream and temporary change to screen output
     FILE *stream = rkGlobalParameters.stream;
     rkGlobalParameters.stream = stdout;
-    
+
     SHOW_SIZE(void *)
     SHOW_SIZE(char)
     SHOW_SIZE(short)
@@ -477,6 +477,7 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKNodalHealth)
     SHOW_SIZE(RKPosition)
     SHOW_SIZE(RKPulseHeader)
+    SHOW_SIZE(RKPulseHeaderV2)
     SHOW_SIZE(RKPulseParameters)
     SHOW_SIZE_SIMD(pulse->headerBytes)
     SHOW_SIZE_SIMD(RKPulse)
@@ -499,7 +500,7 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKProductHeader)
 
     printf("\n");
-    
+
     RKFilterAnchor anchor = RKFilterAnchorDefault;
     printf("RKFilterAnchorDefault:\n");
     printf(".%s\n", RKVariableInString("name", &anchor.name, RKValueTypeUInt32));
@@ -512,9 +513,9 @@ void RKShowTypeSizes(void) {
     printf(".%s dB\n", RKVariableInString("sensitivityGain", &anchor.sensitivityGain, RKValueTypeFloat));
     printf(".%s dB\n", RKVariableInString("filterGain", &anchor.filterGain, RKValueTypeFloat));
     printf(".%s\n", RKVariableInString("fullScale", &anchor.fullScale, RKValueTypeFloat));
-    
+
     printf("\n");
-    
+
     RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(1000);
     memcpy(&anchor, &anchor2, sizeof(RKFilterAnchor));
     printf("RKFilterAnchorDefaultWithMaxDataLength(1000):\n");
@@ -683,7 +684,7 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeInt64InHex:
             c = RKIntegerToHexStyleString(i64);
             break;
-            
+
         case RKValueTypeUInt:
             ul = u;
         case RKValueTypeULong:
@@ -713,7 +714,7 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeUInt64InHex:
             c = RKIntegerToHexStyleString((unsigned long long)u64);
             break;
-            
+
         case RKValueTypeSize:
             c = RKUIntegerToCommaStyleString((unsigned long long)s);
             break;
@@ -1021,6 +1022,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
     uint32_t gateCount = 0;
     const uint32_t capacity = pulse->header.capacity;
     // Pulse header
+    printf("buildNo = %d\n", header->version);
     readsize = fread(pulse, sizeof(RKPulseHeader), 1, fid);
     if (readsize == 0) {
         return RKResultNothingToRead;
@@ -1157,7 +1159,7 @@ static void *fileMonitorRunLoop(void *in) {
 
     int s;
     struct stat fileStat;
-    
+
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
@@ -1672,7 +1674,7 @@ void RKParseQuotedStrings(const char *source, ...) {
     char *s = (char *)source, *e, q;
     char *string = va_arg(args, char *);
     size_t length = 0;
-    
+
     while (string != NULL) {
         // Look for the beginning quote
         while (*s != '"' && *s != '\'' && *s != '\0') {
@@ -1719,7 +1721,7 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
 // low        < x <= normalLow     --> RKStatusEnumLow
 // normalLow  < x <= normalHigh    --> RKStatusEnumNormal
 // normalHigh < x <= high          --> RKStatusEnumHigh
-// high       < x <= tooHigh       --> RKStatusEnumTooHigh       
+// high       < x <= tooHigh       --> RKStatusEnumTooHigh
 // tooHigh    < x                  --> RKStatusEnumCritical
 
 RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi) {

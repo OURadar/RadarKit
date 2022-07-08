@@ -113,6 +113,34 @@ typedef union rk_file_header_v1 {
     RKByte               bytes[4096];                                          //
 } RKFileHeaderV1;
 
+
+//
+// Pulse header
+//
+typedef struct rk_pulse_header_v2 {
+    RKIdentifier        i;                                                     // Identity counter
+    RKIdentifier        n;                                                     // Network counter, may be useful to indicate packet loss
+    uint64_t            t;                                                     // A clean clock-related tic count
+    RKPulseStatus       s;                                                     // Status flag
+    uint32_t            capacity;                                              // Allocated capacity
+    uint32_t            gateCount;                                             // Number of range gates
+    uint32_t            downSampledGateCount;                                  // Number of range gates after down-sampling
+    RKMarker            marker;                                                // Position Marker
+    uint32_t            pulseWidthSampleCount;                                 // Pulsewidth
+    struct timeval      time;                                                  // UNIX time in seconds since 1970/1/1 12:00am
+    double              timeDouble;                                            // Time in double representation
+    RKFourByte          rawAzimuth;                                            // Raw azimuth reading, which may take up to 4 bytes
+    RKFourByte          rawElevation;                                          // Raw elevation reading, which may take up to 4 bytes
+    uint16_t            configIndex;                                           // Operating configuration index
+    uint16_t            configSubIndex;                                        // Operating configuration sub-index
+    uint16_t            azimuthBinIndex;                                       // Ray bin
+    float               gateSizeMeters;                                        // Size of range gates
+    float               elevationDegrees;                                      // Elevation in degrees
+    float               azimuthDegrees;                                        // Azimuth in degrees
+    float               elevationVelocityDegreesPerSecond;                     // Velocity of elevation in degrees / second
+    float               azimuthVelocityDegreesPerSecond;                       // Velocity of azimuth in degrees / second
+} RKPulseHeaderV2;
+
 #pragma pack(pop)
 
 #endif
