@@ -261,7 +261,7 @@ void proc(UserParams *arg) {
             RKLog("fpos = %s\n", RKIntegerToCommaStyleString(fpos));
         }
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
+        RKReadPulseFromFileReference(pulse, fileHeader, fid);
         fseek(fid, fpos, SEEK_SET);
         RKLog(">fileHeader.preface = '%s'   version = %d\n", fileHeader->preface, fileHeader->version);
         RKLog(">fileHeader.dataType = '%s'\n",
@@ -494,7 +494,7 @@ void proc(UserParams *arg) {
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        j = RKReadPulseFromFileReference(pulse, fileHeader->dataType, fid);
+        j = RKReadPulseFromFileReference(pulse, fileHeader, fid);
         if (j == RKResultSuccess) {
             if (p == 0 && arg->verbose) {
                 RKLog("pulse[0].gateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.gateCount));

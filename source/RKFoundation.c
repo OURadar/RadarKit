@@ -1015,7 +1015,7 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t count) {
 }
 
 // Read pulse from a file reference
-int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid) {
+int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid) {
     int i, j;
     size_t readsize;
     uint32_t gateCount = 0;
@@ -1025,16 +1025,21 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid) 
     if (readsize == 0) {
         return RKResultNothingToRead;
     }
+    uint32_t downSampledGateCount = pulse->header.gateCount / header->desc.pulseToRayRatio;
+    if (downSampledGateCount != pulse->header.downSampledGateCount) {
+        RKLog("Error. Expected downSampledGateCount = %u vs %u\n", downSampledGateCount, pulse->header.downSampledGateCount);
+    }
     pulse->header.capacity = capacity;
     // Pulse payload: H and V data into channels 0 and 1, respectively. Duplicate to split-complex storage
     for (j = 0; j < 2; j++) {
-        if (type == RKRawDataTypeFromTransceiver) {
+        if (header->dataType == RKRawDataTypeFromTransceiver) {
             RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
             gateCount = pulse->header.gateCount;
             readsize = fread(x, sizeof(RKInt16C), gateCount, fid);
-        } else if (type == RKRawDataTypeAfterMatchedFilter) {
+        } else if (header->dataType == RKRawDataTypeAfterMatchedFilter) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             gateCount = pulse->header.downSampledGateCount;
+//            gateCount = downSampledGateCount;
             readsize = fread(x, sizeof(RKComplex), gateCount, fid);
             RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
             for (i = 0; i < gateCount; i++) {

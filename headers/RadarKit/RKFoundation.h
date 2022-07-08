@@ -132,7 +132,7 @@ RKInt16C *RKGetInt16CDataFromPulse(RKPulse *, const uint32_t);
 RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t);
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
 int RKClearPulseBuffer(RKBuffer, const uint32_t);
-int RKReadPulseFromFileReference(RKPulse *pulse, RKRawDataType type, FILE *fid);
+int RKReadPulseFromFileReference(RKPulse *, RKFileHeader *, FILE *);
 
 // Ray
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);
