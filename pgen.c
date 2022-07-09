@@ -60,7 +60,7 @@ static void timeval2str(char *timestr, const struct timeval time) {
 }
 
 void proc(UserParams *arg) {
-    
+
     int i = 0, j = 0, k = 0, o = 0, p = 0;
     uint32_t u32 = 0;
     char timestr[16];
@@ -75,7 +75,7 @@ void proc(UserParams *arg) {
     char *c;
 
     RKLog("Opening file %s ...", arg->filename);
-    
+
     gettimeofday(&s, NULL);
     RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
     RKWaveform *waveform = NULL;
@@ -333,7 +333,7 @@ void proc(UserParams *arg) {
     space->velocityFactor = 0.25f * fileHeader->desc.wavelength / config->prt[0] / M_PI;
     space->widthFactor = fileHeader->desc.wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
     space->KDPFactor = 1.0f / space->gateSizeMeters;
-    
+
     if (arg->verbose > 1) {
         float *t;
         t = space->S2Z[0];  RKLog(">S2Z = %.1e, %.1e, %.1e, %.1e, %.1e ...\n", t[0], t[10], t[50], t[100], t[250]);
@@ -373,9 +373,9 @@ void proc(UserParams *arg) {
     }
 
     //printf("fpos = %s\n", RKUIntegerToCommaStyleString(ftell(fid)));
-    
+
     // Initialize a pulse buffer for pulse copression
-    
+
     const uint32_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulseCapacity)));
 
     RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
@@ -398,10 +398,10 @@ void proc(UserParams *arg) {
     }
     mem += 2 * nfft * sizeof(RKFloat);
     RKLog("mem = %s   nfft = %s", RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(nfft));
-    
+
     RKFFTModule *fftModule = RKFFTModuleInit(nfft, arg->verbose);
     RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
-    
+
     bytes = nfft * sizeof(RKComplex);
     for (k = 0; k < config->waveform->count; k++) {
         for (j = 0; j < config->waveform->filterCounts[k]; j++) {
@@ -488,12 +488,19 @@ void proc(UserParams *arg) {
         free(outputFileHeader);
     }
 
-    // Gather planIndex
+    // Since we are using pulseBuffer as a linear buffer, we can just get the anchors ahead of time
+    for (p = 0; p < RKMaximumPulsesPerRay; p++) {
+        pulses[p] = RKGetPulseFromBuffer(pulseBuffer, p);
+    }
+    for (r = 0; r < RKMaximumRaysPerSweep; r++) {
+        rays[r] = RKGetRayFromBuffer(rayBuffer, r);
+    }
 
     p = 0;    // total pulses per ray
     r = 0;    // total rays per sweep
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
-        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
+        RKPulse *pulse = pulses[p++];
+
         j = RKReadPulseFromFileReference(pulse, fileHeader, fid);
         if (j == RKResultSuccess) {
             if (p == 0 && arg->verbose) {
@@ -569,8 +576,7 @@ void proc(UserParams *arg) {
                     fwrite(RKGetComplexDataFromPulse(pulse, 1), sizeof(RKComplex), pulse->header.downSampledGateCount, outfid);
                 }
             }
-            
-            pulses[p++] = pulse;
+
             // Mark for process later
             m = false;
             if (i1 != i0 || p == RKMaximumPulsesPerRay) {
@@ -624,7 +630,8 @@ void proc(UserParams *arg) {
                 }
 
                 // Get a ray from the buffer, set the ray headers
-                RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
+                // RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
+                RKRay *ray = rays[r++];
                 ray->header.startTime       = S->header.time;
                 ray->header.startTimeDouble = S->header.timeDouble;
                 ray->header.startAzimuth    = S->header.azimuthDegrees;
@@ -680,9 +687,12 @@ void proc(UserParams *arg) {
                            data[0], data[10], data[100], data[250], data[500],
                            cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
                 }
-                
+                if (arg->verbose) {
+                    printf("E%4.1f[%4.1f] A%5.1f[%5.1f] ", ray->header.startElevation, ray->header.sweepElevation, ray->header.startAzimuth, ray->header.sweepAzimuth);
+                    RKShowVecFloatLowPrecision(" Z = ", space->Z[0], 10);
+                }
                 // Collect the ray
-                rays[r++] = ray;
+                // rays[r++] = ray;
             } else if (p > 1) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
@@ -711,8 +721,6 @@ void proc(UserParams *arg) {
                            marker);
                 }
             }
-            // Use the end pulse as the start pulse of next ray
-            printf("pulses = %p %p ... %p\n", pulses[0], pulses[1], pulse);
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
                 for (j = 0; j < 2; j++) {
                     RKInt16C *x = RKGetInt16CDataFromPulse(pulses[0], j);
@@ -731,6 +739,7 @@ void proc(UserParams *arg) {
                     }
                 }
             }
+            // Use the end pulse as the start pulse of next ray
             memcpy(pulses[0], pulse, sizeof(RKPulseHeader));
             p = 1;
         } // if (m) ...
@@ -879,9 +888,9 @@ void proc(UserParams *arg) {
     free(scratch->inBuffer);
     free(scratch->outBuffer);
     free(scratch);
-    
+
     free(fileHeader);
-    
+
     return;
 }
 
@@ -924,7 +933,7 @@ int main(int argc, const char **argv) {
     arg->SNRThreshold = NAN;
     arg->SQIThreshold = NAN;
     arg->output = true;
-    
+
     // Command line options
     struct option options[] = {
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
@@ -1001,8 +1010,8 @@ int main(int argc, const char **argv) {
 
     // Now we process
     proc(arg);
-    
+
     free(arg);
-    
+
     exit(EXIT_SUCCESS);
 }

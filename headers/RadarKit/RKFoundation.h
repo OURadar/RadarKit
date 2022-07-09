@@ -109,6 +109,7 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 // Common numeric output
 void RKShowName(void);
 void RKShowTypeSizes(void);
+void RKShowVecFloatLowPrecision(const char *name, const float *p, const int n);
 void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
 void RKShowVecComplex(const char *name, const RKComplex *p, const int n);

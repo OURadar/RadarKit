@@ -117,7 +117,7 @@ typedef union rk_file_header_v1 {
 //
 // Pulse header
 //
-typedef struct rk_pulse_header_v2 {
+typedef struct rk_pulse_header_v1 {
     RKIdentifier        i;                                                     // Identity counter
     RKIdentifier        n;                                                     // Network counter, may be useful to indicate packet loss
     uint64_t            t;                                                     // A clean clock-related tic count
@@ -139,7 +139,23 @@ typedef struct rk_pulse_header_v2 {
     float               azimuthDegrees;                                        // Azimuth in degrees
     float               elevationVelocityDegreesPerSecond;                     // Velocity of elevation in degrees / second
     float               azimuthVelocityDegreesPerSecond;                       // Velocity of azimuth in degrees / second
-} RKPulseHeaderV2;
+} RKPulseHeaderV1;
+
+//
+// Pulse
+//
+// - RKPulse struct is padded to a SIMD alignment
+//
+typedef struct rk_pulse_v1 {
+    union {
+        struct {
+            RKPulseHeaderV1      header;                                       //
+            RKPulseParameters    parameters;                                   //
+        };                                                                     //
+        RKByte               headerBytes[RKPulseHeaderPaddedSize];             //
+    };                                                                         //
+    RKByte               data[0];                                              //
+} RKPulseV1;
 
 #pragma pack(pop)
 

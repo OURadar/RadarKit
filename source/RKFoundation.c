@@ -477,7 +477,7 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKNodalHealth)
     SHOW_SIZE(RKPosition)
     SHOW_SIZE(RKPulseHeader)
-    SHOW_SIZE(RKPulseHeaderV2)
+    SHOW_SIZE(RKPulseHeaderV1)
     SHOW_SIZE(RKPulseParameters)
     SHOW_SIZE_SIMD(pulse->headerBytes)
     SHOW_SIZE_SIMD(RKPulse)
@@ -548,6 +548,17 @@ void RKShowTypeSizes(void) {
     rkGlobalParameters.stream = stream;
 }
 
+void RKShowVecFloatLowPrecision(const char *name, const float *p, const int n) {
+    int i = 0;
+    int k = 0;
+    char str[RKMaximumStringLength];
+    k = sprintf(str, "%s[", name);
+    while (i < n && k < RKMaximumStringLength - 20)
+        k += sprintf(str + k, "%6.2f ", p[i++]);
+    sprintf(str + k, "]");
+    printf("%s\n", str);
+}
+
 void RKShowVecFloat(const char *name, const float *p, const int n) {
     int i = 0;
     int k = 0;
@@ -558,7 +569,6 @@ void RKShowVecFloat(const char *name, const float *p, const int n) {
     sprintf(str + k, "]");
     printf("%s\n", str);
 }
-
 
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     int i = 0;
@@ -1021,15 +1031,56 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
     size_t readsize;
     uint32_t gateCount = 0;
     const uint32_t capacity = pulse->header.capacity;
-    // Pulse header
-    printf("buildNo = %d\n", header->version);
-    readsize = fread(pulse, sizeof(RKPulseHeader), 1, fid);
-    if (readsize == 0) {
-        return RKResultNothingToRead;
+    static RKPulseHeaderV1 *headerV1 = NULL;
+    switch (header->version) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            RKLog("Warning. Version = %d not expected.\n", header->version);
+            return RKResultNothingToRead;
+            break;
+        case 5:
+            RKLog("Warning. Reading as version 6.\n");
+        case 6:
+            if (headerV1 == NULL) {
+                // RKLog("Allocating headerV1 ...\n");
+                headerV1 = (RKPulseHeaderV1 *)malloc(sizeof(RKPulseHeaderV1));
+            }
+            readsize = fread(headerV1, sizeof(RKPulseHeaderV1), 1, fid);
+            pulse->header.i = headerV1->i;
+            pulse->header.n = headerV1->n;
+            pulse->header.t = headerV1->t;
+            pulse->header.s = headerV1->s;
+            pulse->header.gateCount = headerV1->gateCount;
+            pulse->header.downSampledGateCount = headerV1->downSampledGateCount;
+            pulse->header.pulseWidthSampleCount = headerV1->pulseWidthSampleCount;
+            pulse->header.marker = headerV1->marker;
+            pulse->header.time = headerV1->time;
+            pulse->header.timeDouble = headerV1->timeDouble;
+            pulse->header.rawAzimuth = headerV1->rawAzimuth;
+            pulse->header.rawElevation = headerV1->rawElevation;
+            pulse->header.configIndex = headerV1->configIndex;
+            pulse->header.configSubIndex = headerV1->configSubIndex;
+            pulse->header.positionIndex = headerV1->azimuthBinIndex;
+            pulse->header.gateSizeMeters = headerV1->gateSizeMeters;
+            pulse->header.elevationDegrees = headerV1->elevationDegrees;
+            pulse->header.azimuthDegrees = headerV1->azimuthDegrees;
+            pulse->header.elevationVelocityDegreesPerSecond = headerV1->elevationVelocityDegreesPerSecond;
+            pulse->header.azimuthVelocityDegreesPerSecond = headerV1->azimuthVelocityDegreesPerSecond;
+            break;
+        default:
+            readsize = fread(pulse, sizeof(RKPulseHeader), 1, fid);
+            break;
     }
-    uint32_t downSampledGateCount = pulse->header.gateCount / header->desc.pulseToRayRatio;
-    if (downSampledGateCount != pulse->header.downSampledGateCount) {
-        RKLog("Error. Expected downSampledGateCount = %u vs %u\n", downSampledGateCount, pulse->header.downSampledGateCount);
+    if (readsize == 0) {
+        if (headerV1 != NULL) {
+            // RKLog("Freeing headerV1 ...\n");
+            free(headerV1);
+            headerV1 = NULL;
+        }
+        return RKResultNothingToRead;
     }
     pulse->header.capacity = capacity;
     // Pulse payload: H and V data into channels 0 and 1, respectively. Duplicate to split-complex storage
@@ -1041,7 +1092,6 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
         } else if (header->dataType == RKRawDataTypeAfterMatchedFilter) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             gateCount = pulse->header.downSampledGateCount;
-//            gateCount = downSampledGateCount;
             readsize = fread(x, sizeof(RKComplex), gateCount, fid);
             RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
             for (i = 0; i < gateCount; i++) {
