@@ -17,9 +17,9 @@ endif
 CFLAGS += -std=gnu99
 CFLAGS += -Woverlength-strings
 CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
-CFLAGS += -I headers -I headers/RadarKit -I /usr/local/include -I /usr/include -fPIC
+CFLAGS += -I headers -I headers/RadarKit -fPIC
 
-LDFLAGS = -L./ -L/usr/local/lib
+LDFLAGS = -L./
 
 ifeq ($(KERNEL), Darwin)
 	CFLAGS += -fms-extensions -Wno-microsoft
@@ -27,6 +27,11 @@ ifeq ($(KERNEL), Darwin)
 
 	LDFLAGS += -L/usr/local/opt/openssl@1.1/lib
 endif
+
+CFLAGS += -I/usr/include
+CFLAGS += -I/usr/local/include
+
+IDFLAGS += -L/usr/local/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o

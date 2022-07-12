@@ -566,7 +566,11 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
         R->useSSL = flag == RKWebSocketFlagSSLOn;
     }
     if (R->useSSL) {
+        #if OPENSSL_VERSION_NUMBER < 0x10100000L
+        R->sslContext = SSL_CTX_new(SSLv23_client_method());
+        #else
         R->sslContext = SSL_CTX_new(TLS_client_method());
+        #endif
         R->ssl = SSL_new(R->sslContext);
     }
     R->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
