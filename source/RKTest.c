@@ -387,7 +387,7 @@ void RKTestBasicMath(void) {
     RKFloat d = RKComplexAbsSquare(RKComplexSubtract(c, (RKComplex){-1.0f, -3.0f}));
     printf("%.1f%+.1fj * %.1f%+.1fj = %.1f%+.1fj  %s\n", a.i, a.q, b.i, b.q, c.i, c.q, d < 1.0e-4 ? "ok" : "failed");
     printf("|%.1f%+.1fj|^2 = %.1f\n", a.i, a.q, RKComplexAbsSquare(a));
-    
+
 }
 
 void RKTestParseCommaDelimitedValues(void) {
@@ -720,7 +720,7 @@ void RKTestParseJSONString(void) {
             printf("   %s = %s\n", key, value);
         }
     }
-    
+
     printf("\n===\n\n");
 
     // If the subsequent key can be assumed to come after the previous, we can supply a forwarded pointer from RKJSONGetValueOfKey()
@@ -756,9 +756,9 @@ void RKTestParseJSONString(void) {
             "    \"controllable\": true\n"
             "},\n"
             "");
-    
+
     printf("jsonString =\n%s\n", jsonString);
-    
+
     c = jsonString;
     c = RKJSONGetElement(element, c);
     printf(RKMonokaiYellow "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
@@ -862,7 +862,7 @@ void RKTestFileManager(void) {
     }
 
     RKFileManagerStart(fileManager);
-    
+
     e = 0;
     for (j = 0; j < 50; j++) {
         startTime += 3000;
@@ -874,9 +874,9 @@ void RKTestFileManager(void) {
 
         for (s = 0; s < ns; s++) {
             sprintf(filename + k, "-%s.nc", ss[s]);
-            
+
             RKPreparePath(filename);
-            
+
             fid = fopen(filename, "w");
             if (fid == NULL) {
                 fprintf(stderr, "Unable to create file.\n");
@@ -884,13 +884,13 @@ void RKTestFileManager(void) {
             }
             fwrite(payload, filesize, 1, fid);
             fclose(fid);
-            
+
             RKFileManagerAddFile(fileManager, filename, RKFileTypeMoment);
         }
         e = RKNextModuloS(e, ne);
         usleep(500000);
     }
-    
+
     RKFileManagerFree(fileManager);
 }
 
@@ -997,7 +997,7 @@ void RKTestGetCountry(void) {
         { 34.756300, 135.615895},  // Japan
         { 41.963505, -70.667915}   // United States (far east)
     };
-    
+
     RKName answers[] = {
         "United States",
         "South Korea",
@@ -1328,19 +1328,32 @@ void RKTestReadIQ(const char *filename) {
         tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
         tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
         // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
-        for (j = 0; j < 2; j++) {
-            RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-            RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-            readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-            if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
-                printf("Error. This should not happen.  readsize = %s != %s || > %s\n",
-                       RKIntegerToCommaStyleString(readsize),
-                       RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                       RKIntegerToCommaStyleString(pulseCapacity));
+        if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
+            for (j = 0; j < 2; j++) {
+                RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
+                readsize = fread(x, sizeof(RKInt16C), pulse->header.gateCount, fid);
+                if (readsize != pulse->header.gateCount || readsize > pulseCapacity) {
+                    printf("Error. This should not happen.  readsize = %s != %s || > %s\n",
+                        RKIntegerToCommaStyleString(readsize),
+                        RKIntegerToCommaStyleString(pulse->header.gateCount),
+                        RKIntegerToCommaStyleString(pulseCapacity));
+                }
             }
-            for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-                z.i[i] = x[i].i;
-                z.q[i] = x[i].q;
+        } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
+            for (j = 0; j < 2; j++) {
+                RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
+                readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
+                if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
+                    printf("Error. This should not happen.  readsize = %s != %s || > %s\n",
+                        RKIntegerToCommaStyleString(readsize),
+                        RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                        RKIntegerToCommaStyleString(pulseCapacity));
+                }
+                RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
+                for (i = 0; i < pulse->header.downSampledGateCount; i++) {
+                    z.i[i] = x[i].i;
+                    z.q[i] = x[i].q;
+                }
             }
         }
         if (p % 100 == 0) {
@@ -2035,7 +2048,7 @@ void RKTestWaveformWrite(void) {
     RKWaveformFree(loadedWaveform);
 
     printf("Remove the waveform file? (y/n) [y]:");
-    
+
     int j = getchar();
     if (j == 10 || j == 'y' || j == 'Y') {
         RKLog("Removing waveform file ...\n");
@@ -2050,7 +2063,7 @@ void RKTestWaveformDownsampling(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitAsTimeFrequencyMultiplexing(160.0e6, 0.0, 4.0e6, 50.0e-6);
     RKWaveformSummary(waveform);
-    
+
     RKWaveformDecimate(waveform, 32);
     RKWaveformSummary(waveform);
 }
@@ -2058,7 +2071,7 @@ void RKTestWaveformDownsampling(void) {
 void RKTestWaveformShowProperties(void) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform;
-    
+
     waveform = RKWaveformInitAsSingleTone(160.0e6, 1.0e6, 1.0e-6);
     RKWaveformSummary(waveform);
 
@@ -2082,23 +2095,23 @@ void RKTestWaveformShowProperties(void) {
     RKWaveformFree(waveform);
 
     printf("\n");
-    
+
     waveform = RKWaveformInitAsFrequencyHops(200.0e6, 0.0, 1.0e-6, 20.0e6, 5);
     RKWaveformSummary(waveform);
-    
+
     printf("\n");
-    
+
     RKWaveformDecimate(waveform, 4);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
-    
+
     printf("\n");
-    
+
     waveform = RKWaveformInitAsFrequencyHoppingChirp(200.0e6, 0.0, 25.0e6, 1.6e-6, 5);
     RKWaveformSummary(waveform);
-    
+
     printf("\n");
-    
+
     RKWaveformDecimate(waveform, 4);
     RKWaveformSummary(waveform);
     RKWaveformFree(waveform);
@@ -2133,7 +2146,7 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     SHOW_FUNCTION_NAME
     RKWaveform *waveform = RKWaveformInitFromFile(filename);
     RKWaveformSummary(waveform);
-    
+
     printf("\n");
 
     if (!(waveform->type & RKWaveformTypeIsComplex)) {
@@ -2143,9 +2156,9 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     RKLog("Down-sampling / 8 ...\n");
     RKWaveformDecimate(waveform, 8);
     RKWaveformSummary(waveform);
-    
+
     printf("\n");
-    
+
     const int k = 4;
     RKLog("Down-sampling / %d ...\n", k);
     RKWaveformDecimate(waveform, k);
@@ -2265,7 +2278,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKPulse *pulses[pulseCount];
-    
+
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
@@ -2476,7 +2489,7 @@ void RKTestPulseCompressionSpeed(const int offt) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return;
     }
-    
+
     RKLog("Setting up DFT resources (1 / 3) ...\n");
     fftwf_plan planForwardInPlace = fftwf_plan_dft_1d(nfft, in, in, FFTW_FORWARD, FFTW_MEASURE);
     RKLog("Setting up DFT resources (2 / 3) ...\n");
@@ -2712,7 +2725,7 @@ void RKTestCacheWrite(void) {
 void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
     RKRadar *radar = transceiver->radar;
-    
+
     int j, k, s;
     char *c, string[RKMaximumStringLength];
     long fpos, fsize;
@@ -2723,7 +2736,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKFileHeader *fileHeader = &transceiver->fileHeaderCache;
     RKPulseHeader *pulseHeader = &transceiver->pulseHeaderCache;
     uint32_t gateCount;
-    
+
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
@@ -2736,12 +2749,12 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
      (transceiver->sprt == 4 ? transceiver->prt * 5.0 / 4.0 : transceiver->prt));
 
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
-    
+
     // Use a counter that mimics microsecond increments
     //RKSetPulseTicsPerSeconds(radar, 1.0e6);
-    
+
     transceiver->state |= RKEngineStateActive;
-    
+
     // Open the folder, build a list of files
     char *filelist = malloc(1024 * RKMaximumPathLength * sizeof(char));
     if (filelist == NULL) {
@@ -2792,7 +2805,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     for (k = 0; k < count; k++) {
         RKLog(">%s %d. %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
     }
- 
+
     // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
     s = 0;
     transceiver->state |= RKEngineStateSleep0;
@@ -2803,11 +2816,11 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         }
     }
     transceiver->state ^= RKEngineStateSleep0;
-    
+
     // RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
-    
+
     gettimeofday(&t1, NULL);
-    
+
     FILE *fid;
 
     k = 0;   // k file index from the filelist
@@ -2843,14 +2856,14 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             continue;
         }
         RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
-        
+
         transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
         transceiver->prt = fileHeader->config.prt[0];
         RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
               transceiver->name,
               1.0e3 * transceiver->prt,
               RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
-        
+
         if (transceiver->prt <= 1.0e-4 || transceiver->prt > 0.1) {
             transceiver->prt = CLAMP(transceiver->prt, 1.0e-4, 0.1);
             RKLog("%s Info. Overriding PRT --> %.2f ms (PRF = %s Hz)\n",
@@ -2858,7 +2871,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                   1.0e3 * transceiver->prt,
                   RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
         }
-        
+
         RKAddConfig(radar,
                     RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
                     RKConfigKeySystemZCal, fileHeader->config.systemZCal[0], fileHeader->config.systemZCal[1],
@@ -2873,7 +2886,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                     RKConfigKeySweepElevation, fileHeader->config.sweepElevation,
                     RKConfigKeySweepAzimuth, fileHeader->config.sweepAzimuth,
                     RKConfigKeyNull);
-        
+
         transceiver->periodOdd = transceiver->periodEven = transceiver->prt;
         transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)round(0.05 / transceiver->prt));
         RKLog("%s Using chunkSize = %d\n", transceiver->name, transceiver->chunkSize);
@@ -2899,7 +2912,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                 break;
             }
             fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
-            
+
             pulse->header.gateSizeMeters = pulseHeader->gateSizeMeters;
             pulse->header.gateCount = gateCount;
             pulse->header.rawAzimuth = pulseHeader->rawAzimuth;
@@ -2908,14 +2921,14 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             pulse->header.elevationDegrees = pulseHeader->elevationDegrees;
             pulse->header.azimuthVelocityDegreesPerSecond = pulseHeader->azimuthVelocityDegreesPerSecond;
             pulse->header.elevationVelocityDegreesPerSecond = pulseHeader->elevationVelocityDegreesPerSecond;
-            
+
             //        RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
             //                                RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
             //                                RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
             //                                RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,
             //                                RKConfigKeyPulseGateCount, pulse->header.gateCount,
             //                                RKConfigKeyPositionMarker, marker0,
-            
+
             if (pulseHeader->marker & RKMarkerSweepBegin) {
                 RKLog("%s Sweep begin.\n", transceiver->name);
                 RKAddConfig(radar,
@@ -2923,17 +2936,17 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                             RKConfigKeyPulseGateSize, pulseHeader->gateSizeMeters,
                             RKConfigKeyNull);
             }
-            
+
             pulse->header.configIndex = radar->configIndex;
 
             RKSetPulseReady(radar, pulse);
-            
+
 //            RKLog("%s pulse->header.s = %04x  marker = %04x gateCount = %d\n", transceiver->name, pulseHeader->marker, pulseHeader->s, gateCount);
-            
+
             fpos = ftell(fid);
             even = !even;
             tic++;
-            
+
             if (j++ == transceiver->chunkSize) {
                 gettimeofday(&t0, NULL);
                 j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
@@ -2943,16 +2956,16 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                 j = 0;
             }
         }
-        
+
         fpos = ftell(fid);
         RKLog("%s Pulse count = %s   fpos = %s   fsize = %s\n", transceiver->name,
               RKUIntegerToCommaStyleString(j),
               RKUIntegerToCommaStyleString(fpos),
               RKUIntegerToCommaStyleString(fsize));
         fclose(fid);
-        
+
         //periodTotal = 0.0;
-        
+
         //k = RKNextModuloS(k, count);
         k++;
         if (k == count) {
@@ -2961,9 +2974,9 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     }
 
     transceiver->state ^= RKEngineStateActive;
-    
+
     free(filelist);
-    
+
     return NULL;
 }
 
@@ -2981,7 +2994,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     long tic = 0;
     struct timeval t0, t1, t2;
     bool even = true;
-    
+
     // Update the engine state
     transceiver->state |= RKEngineStateWantActive;
     transceiver->state &= ~RKEngineStateActivating;
@@ -2997,7 +3010,7 @@ void *RKTestTransceiverRunLoop(void *input) {
     transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)floor(0.05 / transceiver->prt));
     transceiver->gateSizeMeters = 1.5e8f / transceiver->fs;
     transceiver->gateCount = MIN(transceiver->gateCapacity, (1.5e8 * transceiver->prt) / transceiver->gateSizeMeters);
-    
+
     // Show some info
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s MHz (%.2f m)   %sPRF = %s Hz   (PRT = %.3f ms, %s)\n",
@@ -3018,7 +3031,7 @@ void *RKTestTransceiverRunLoop(void *input) {
               RKIntegerToCommaStyleString(transceiver->chunkSize),
               RKFloatToCommaStyleString(1.0e6 * transceiver->prt));
     }
-    
+
     double periodTotal;
 
     float a;
@@ -3076,12 +3089,12 @@ void *RKTestTransceiverRunLoop(void *input) {
     float volt;
     float room;
     RKHealth *health;
-    
+
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
 
     // Use a counter that mimics microsecond increments
     RKSetPulseTicsPerSeconds(radar, 1.0e6);
-    
+
     transceiver->state |= RKEngineStateActive;
 
     // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
@@ -3113,7 +3126,7 @@ void *RKTestTransceiverRunLoop(void *input) {
 
         for (j = 0; j < transceiver->chunkSize && transceiver->state & RKEngineStateWantActive; j++) {
             RKPulse *pulse = RKGetVacantPulse(radar);
-            
+
             // Fill in the header
             pulse->header.t = (uint64_t)(1.0e6 * t);
             pulse->header.gateCount = transceiver->gateCount;
@@ -3423,7 +3436,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
             }
         }
     }
-    
+
     transceiver->state |= RKEngineStateActivating;
     if (strlen(transceiver->playbackFolder)) {
         RKLog("%s Launching playback run loop ...\n", transceiver->name);
@@ -3464,11 +3477,11 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         }
         return RKResultFailedToExecuteCommand;
     }
-    
+
     if (transceiver->verbose) {
         RKLog("%s %s", transceiver->name, RKVariableInString("command", command, RKValueTypeString));
     }
-    
+
     switch (command[0]) {
         case 'd':
             if (!strcmp(command, "disconnect")) {
@@ -3700,7 +3713,7 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
 void *RKTestPedestalRunLoop(void *input) {
     RKTestPedestal *pedestal = (RKTestPedestal *)input;
     RKRadar *radar = pedestal->radar;
-    
+
     float azimuth = 0.0f;
     float elevation = 0.0f;
     double dt = 0.0;
@@ -3725,11 +3738,11 @@ void *RKTestPedestalRunLoop(void *input) {
     // Use a counter that mimics microsecond increments
     RKSetPositionTicsPerSeconds(radar, 1.0 / PEDESTAL_SAMPLING_TIME);
     int healthTicCount = (int)(0.1 / PEDESTAL_SAMPLING_TIME);
-    
+
     pedestal->state |= RKEngineStateActive;
 
     int commandCount = pedestal->commandCount;
-    
+
     while (pedestal->state & RKEngineStateWantActive) {
         if (commandCount != pedestal->commandCount) {
             commandCount = pedestal->commandCount;
@@ -3776,7 +3789,7 @@ void *RKTestPedestalRunLoop(void *input) {
             scanEndRHI = false;
         }
         RKSetPositionReady(radar, position);
-        
+
         // Report health
         if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
@@ -3798,7 +3811,7 @@ void *RKTestPedestalRunLoop(void *input) {
                 RKSetHealthReady(radar, health);
             }
         }
-        
+
         // Posiiton change
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
@@ -3844,7 +3857,7 @@ void *RKTestPedestalRunLoop(void *input) {
         } else if (pedestal->scanMode == RKTestPedestalScanModeBadPedestal) {
             azimuth = (float)rand() * 360.0f / RAND_MAX;
         }
-        
+
         // Wait to simulate sampling time
         do {
             gettimeofday(&t0, NULL);
@@ -3853,7 +3866,7 @@ void *RKTestPedestalRunLoop(void *input) {
         } while (pedestal->state & RKEngineStateWantActive && dt < PEDESTAL_SAMPLING_TIME);
         t1 = t0;
     }
-    
+
     pedestal->state ^= RKEngineStateActive;
     return NULL;
 }
@@ -3889,10 +3902,10 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
 int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *response) {
     RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
     RKRadar *radar = pedestal->radar;
-    
+
     int k;
     char sval[4][64];
-    
+
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
             pedestal->state ^= RKEngineStateWantActive;
@@ -3969,7 +3982,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
-    
+
     return RKResultSuccess;
 }
 
@@ -3984,7 +3997,7 @@ int RKTestPedestalFree(RKPedestal pedestalReference) {
 void *RKTestHealthRelayRunLoop(void *input) {
     RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)input;
     RKRadar *radar = healthRelay->radar;
-    
+
     int n;
     float powerH, powerV;
     double latitude, longitude, heading;
@@ -3995,9 +4008,9 @@ void *RKTestHealthRelayRunLoop(void *input) {
     healthRelay->state &= ~RKEngineStateActivating;
 
     gettimeofday(&t1, NULL);
-    
+
     RKLog("%s Started.   mem = %s B\n", healthRelay->name, RKUIntegerToCommaStyleString(healthRelay->memoryUsage));
-    
+
     if (radar->desc.initFlags & RKInitFlagVerbose) {
         RKLog("%s fs = %s Hz\n", healthRelay->name, RKIntegerToCommaStyleString((long)(1.0 / HEALTH_RELAY_SAMPLING_TIME)));
     }
@@ -4060,9 +4073,9 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
     healthRelay->memoryUsage = sizeof(RKTestPedestal);
     healthRelay->radar = radar;
     healthRelay->state = RKEngineStateAllocated;
-    
+
     // Parse input here if there is any
-    
+
     healthRelay->state |= RKEngineStateActivating;
     if (pthread_create(&healthRelay->tidRunLoop, NULL, RKTestHealthRelayRunLoop, healthRelay)) {
         RKLog("%s. Unable to create pedestal run loop.\n", healthRelay->name);
@@ -4071,7 +4084,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
     while (!(healthRelay->state & RKEngineStateActive)) {
         usleep(10000);
     }
-    
+
     return (RKHealthRelay)healthRelay;
 }
 
@@ -4108,7 +4121,7 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
-    
+
     return RKResultSuccess;
 }
 
@@ -4173,14 +4186,14 @@ void RKTestExperiment(void) {
     // o  Stop the pedestal
     // o  Get the sweep, derive average ZDR
     // o  Derive ZCal
-    
+
     // For SunCal
     // o  Get time of day --> elevation of the Sun
     // o  Pedestal command to scan 360-deg at Sun's EL
     // o  Wait for a sweep to complete
     // o  Find the peak of Sh + Sv
     // o  Derive heading
-    
+
     // RadarKit should not know what is the pedestal command
     // One option: Have user fill in the task variables:
     // - Pedestal command for RKPedestalExec()
@@ -4192,7 +4205,7 @@ void RKTestExperiment(void) {
     // - Stop command for RKTransceiverExec()
     // - Stop command for RKHealthRelayExec()
     // - Task function to modify pref.conf or user definied config file
-    
+
     // Modify a few bytes
     FILE *fid = fopen("/Users/boonleng/Downloads/rkr/PX10K-20190827-203331.rkr", "r+");
     if (fid == NULL) {
@@ -4205,7 +4218,7 @@ void RKTestExperiment(void) {
         fclose(fid);
         return;
     }
-    
+
     RKLog("PRT = %.4e\n", fileHeader->config.prt[0]);
     RKLog("SNRThreshold = %.4f dB\n", fileHeader->config.SNRThreshold);
     RKLog("SQIThreshold = %.4f\n", fileHeader->config.SQIThreshold);
@@ -4216,12 +4229,12 @@ void RKTestExperiment(void) {
         fclose(fid);
         return;
     }
-    
+
     RKLog("RKPulse capacity / gateCount = %u / %u\n", pulseHeader->capacity, pulseHeader->gateCount);
-    
+
     // Change some values
     fileHeader->config.prt[0] = 1.0 / 1450.0;
-    
+
     rewind(fid);
     if (fwrite(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
         RKLog("Error. Failed writing file header.\n");
