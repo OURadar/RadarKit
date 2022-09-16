@@ -40,7 +40,7 @@ else
     dt = 1 / 50;
 end
 
-ds = floor(ns / 800);
+ds = max(1, floor(ns / 800));
 
 r_fast = (1:ng) * dr;
 t_fast = (1:ng) * dt;
