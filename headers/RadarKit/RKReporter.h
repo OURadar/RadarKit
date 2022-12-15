@@ -35,8 +35,11 @@ typedef struct rk_reporter {
     size_t                           memoryUsage;
 } RKReporter;
 
+RKReporter *RKReporterInitWithHost(const char *);
 RKReporter *RKReporterInit(void);
 void RKReporterFree(RKReporter *);
+
+void RKReporterSetRadar(RKReporter *, RKRadar *);
 
 void RKReporterStart(RKReporter *);
 void RKReporterStop(RKReporter *);

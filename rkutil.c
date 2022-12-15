@@ -871,6 +871,8 @@ int main(int argc, const char **argv) {
     RKCommandCenterSetPort(center, systemPreferences->port);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
+    
+    // Make a reporter and have it call a RadarHub
 
     // Now we use the framework.
     if (systemPreferences->simulate) {
