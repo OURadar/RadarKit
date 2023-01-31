@@ -65,6 +65,7 @@ char *RKTestByNumberDescription(const int indent) {
     "22 - RKCommandQueue unit test\n"
     "23 - RKWebScoket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
+    "25 - Connect to RadarHub - RKReporterInit()\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -195,6 +196,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 24:
             RKTestReadBareRKComplex((char *)arg);
+            break;
+        case 25:
+            RKTestRadarHub();
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -1415,6 +1419,7 @@ static void RKTestWebSocketHandleClose(RKWebSocket *w) {
 
 void RKTestWebSocket(void) {
     SHOW_FUNCTION_NAME
+    RKLog("Initializing websocket ...");
     RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
@@ -1449,6 +1454,13 @@ void RKTestReadBareRKComplex(const char *filename) {
         x++;
     }
     free(buffer);
+}
+
+void RKTestRadarHub(void) {
+    SHOW_FUNCTION_NAME
+    RKReporter *reporter = RKReporterInit();
+    sleep(1);
+    RKReporterFree(reporter);
 }
 
 #pragma mark -

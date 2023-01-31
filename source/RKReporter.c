@@ -52,8 +52,16 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     return engine;
 }
 
-RKReporter *RKReporterInit(void) {
+RKReporter *RKReporterInitForRadarHub(void) {
+    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
+}
+
+RKReporter *RKReporterInitForLocal(void) {
     return RKReporterInitWithHost("http://localhost:8001");
+}
+
+RKReporter *RKReporterInit(void) {
+    return RKReporterInitForRadarHub();
 }
 
 void RKReporterFree(RKReporter *engine) {

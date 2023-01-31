@@ -10,6 +10,7 @@
 #define __RadarKit_Test__
 
 #include <RadarKit/RKRadar.h>
+#include <RadarKit/RKReporter.h>
 
 #define RKTestWaveformCacheCount 2
 
@@ -126,6 +127,7 @@ void RKTestReadIQ(const char *);
 void RKTestPreparePath(void);
 void RKTestWebSocket(void);
 void RKTestReadBareRKComplex(const char *);
+void RKTestRadarHub(void);
 
 #pragma mark - DSP Tests
 

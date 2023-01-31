@@ -95,18 +95,18 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
 
 static void *systemInspectorRunLoop(void *in) {
     RKSimpleEngine *engine = (RKSimpleEngine *)in;
-    
+
     int j, k, s;
-    
+
     bool shown = false;
-    
+
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
     RKRadar *radar = (RKRadar *)engine->userResource;
 
     RKLog("%s Started.   radar = %s\n", engine->name, radar->desc.name);
-    
+
     engine->state ^= RKEngineStateActive;
 
     double dt;
@@ -249,7 +249,7 @@ static void *systemInspectorRunLoop(void *in) {
         } else {
             pedestalEnum = RKStatusEnumInvalid;
         }
-        
+
         // Only do this if the radar is a signal processor
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             // General Health
@@ -390,7 +390,7 @@ void *radarCoPilot(void *in) {
     int s = 0;
 
     RKLog("CoPilot started.  %d\n", productGenerator->rayStatusBufferIndex);
-    
+
     while (radar->active) {
         s = 0;
         while (k == productGenerator->rayStatusBufferIndex && radar->active) {
@@ -541,7 +541,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     // -------------------------------------------------- Buffers --------------------------------------------------
-    
+
     // Status buffer
     if (radar->desc.initFlags & RKInitFlagAllocStatusBuffer) {
         bytes = radar->desc.statusBufferDepth * sizeof(RKStatus);
@@ -589,7 +589,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->state |= RKRadarStateConfigBufferAllocated;
     }
-    
+
     // Health buffer
     if (radar->desc.initFlags & RKInitFlagAllocHealthBuffer) {
         bytes = radar->desc.healthBufferDepth * sizeof(RKHealth);
@@ -613,7 +613,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->state |= RKRadarStateHealthBufferAllocated;
     }
-    
+
     // Health nodes
     if (radar->desc.initFlags & RKInitFlagAllocHealthNodes) {
         bytes = radar->desc.healthNodeCount * sizeof(RKNodalHealth);
@@ -647,7 +647,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->state |= RKRadarStateHealthNodesAllocated;
     }
-    
+
     // Position buffer
     if (radar->desc.initFlags & RKInitFlagAllocPositionBuffer) {
         bytes = radar->desc.positionBufferDepth * sizeof(RKPosition);
@@ -773,7 +773,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->memoryUsage += bytes;
         radar->state |= RKRadarStateControlsAllocated;
     }
-    
+
     // -------------------------------------------------- Engines --------------------------------------------------
 
     // File manager
@@ -799,7 +799,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->pulseClock, tmpName);
         radar->memoryUsage += sizeof(RKClock);
-        
+
         if (radar->desc.positionSmoothFactor > 0) {
             radar->positionClock = RKClockInitWithSize(radar->desc.positionSmoothFactor + 1000, radar->desc.positionSmoothFactor);
         } else {
@@ -830,7 +830,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         // FFT module
         radar->fftModule = RKFFTModuleInit(radar->desc.pulseCapacity, radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0);
         radar->memoryUsage += sizeof(RKFFTModule);
-        
+
         // Pulse compression engine
         radar->pulseEngine = RKPulseEngineInit();
         RKPulseEngineSetInputOutputBuffers(radar->pulseEngine, &radar->desc,
@@ -909,13 +909,13 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Other resources
     pthread_mutex_init(&radar->mutex, NULL);
-    
+
     // Recording level 0 - moment and health only
     RKSetRecordingLevel(radar, 0);
 
     // Give the radar an impulse waveform
     RKSetWaveformToImpulse(radar);
-    
+
     // Total memory usage
     RKLog("Radar initialized. Data buffers occupy %s%s B%s (%s GiB)\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
@@ -1715,7 +1715,7 @@ int RKGoLive(RKRadar *radar) {
 
     // Now we declare the radar is live
     radar->state |= RKRadarStateLive;
-    
+
     // Health Relay
     if (radar->healthRelayInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
@@ -1736,7 +1736,7 @@ int RKGoLive(RKRadar *radar) {
         }
         radar->state |= RKRadarStateHealthRelayInitialized;
     }
-    
+
     // Pedestal
     if (radar->pedestalInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
@@ -2226,7 +2226,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         break;
                 }
                 break;
-                
+
             case 'h':
                 if (strlen(commandString) == 1 || !strncmp(commandString, "help", 4)) {
                     if (string == NULL) {
@@ -2307,7 +2307,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "\n"
                                 HIGHLIGHT("z") " - Everything stops\n"
                                 "\n");
-                    
+
                     k += sprintf(string + k,
                                  HIGHLIGHT("t") " - " UNDERLINE_ITALIC("Transceiver") " commands, everything that starts with 't' goes to the transceiver\n"
                                  "    module in a concatenated form, e.g., 't help' -> 'help' to the transceiver.\n\n");
@@ -2332,7 +2332,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     } else {
                         k += sprintf(string + k, "    INFO: Pedestal not set.\n");
                     }
-                    
+
                     k += sprintf(string + k,
                                  HIGHLIGHT("h") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with 'h' goes to the health relay\n"
                                  "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
@@ -2344,11 +2344,11 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     } else {
                         k += sprintf(string + k, "    INFO: Health Relay not set.\n");
                     }
-                    
+
                     sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
-                    
+
                 } else {
-                
+
                     // Forward to health relay
                     if (strlen(commandString) < 2) {
                         if (string) {
@@ -2364,7 +2364,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     radar->healthRelayExec(radar->healthRelay, commandString + k, string);
                 }
                 break;
-                
+
             case 'p':
                 // Pass everything to pedestal
                 if (strlen(commandString) < 2) {
@@ -2420,7 +2420,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                              (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording I/Q" : "in unknown state")));
                 }
                 break;
-                
+
             case 'b':  // Button event
             case 'y':  // Start everything
             case 'z':  // Stop everything
@@ -2433,7 +2433,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     radar->masterControllerExec(radar->masterController, commandString, string);
                 }
                 break;
-                
+
             default:
                 if (string) {
                     snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);
@@ -2985,23 +2985,23 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     RKRay *ray;
     RKPulse *pulse;
     RKPosition *position;
-    
+
     // Symbols and corresponding colors
     const char m0 = '.';  const char c0[] = RKRedColor;
     const char m1 = '|';  const char c1[] = RKYellowColor;
     const char m2 = ':';  const char c2[] = RKGreenColor;
     const char m3 = 'o';  const char c3[] = RKBlueColor;
     const char m4 = '-';  const char c4[] = RKBlueColor;
-    
+
     int w = MAX(4, (int)log10(MAX(radar->desc.pulseBufferDepth, radar->desc.rayBufferDepth)) + 1);
 
     static struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
-    
+
     if (flag & RKTextPreferencesDrawBackground) {
         // General address format goes like this: [color reset] [new line] %04d-%04d
         char format[64];
         sprintf(format, "%%0%dd-%%0%dd\n", w, w);
-        
+
         // Check the terminal width
         switch (flag & RKTextPreferencesWindowSizeMask) {
             case RKTextPreferencesWindowSize80x25:
@@ -3043,7 +3043,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                 RKLog("Using window size %d x %d\n", terminalSize.ws_col, terminalSize.ws_row);
                 break;
         }
-        
+
         // Background of buffers: digits occupy 2 numbers (2 x w), '-', some ' '(front), some ' '(back), then pick the optimal 5.
         slice = (terminalSize.ws_col - 2 * w - 3 + 4) / 5 * 5;
 
@@ -3053,7 +3053,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
 
         // Clear screen, go to the origin
         m = sprintf(text, "\033[1;1H\033[2J");
-        
+
         // Position
         if (radar->positions) {
             c = RKIntegerToCommaStyleString(radar->desc.positionBufferSize);
@@ -3079,7 +3079,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         } else {
             n++;
         }
-        
+
         // Pulse buffer
         c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
         s = strlen(c);
@@ -3162,7 +3162,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
             n++;
         }
         n++;
-        
+
         if (flag & RKTextPreferencesShowColor) {
             m += sprintf(text + m,
                          "\033[%d;%dH"
@@ -3274,7 +3274,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         }
         n++;
     }
-    
+
     n += 2;
     if (terminalSize.ws_row > 25) {
         n++;
@@ -3404,7 +3404,7 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
     int m = 0;
     int nd = 0, nl = 0;
     char *d, *s, *e;
-    
+
     //static struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
 
     char key[RKNameLength];

@@ -36,6 +36,8 @@ typedef struct rk_reporter {
 } RKReporter;
 
 RKReporter *RKReporterInitWithHost(const char *);
+RKReporter *RKReporterInitForRadarHub(void);
+RKReporter *RKReporterInitForLocal(void);
 RKReporter *RKReporterInit(void);
 void RKReporterFree(RKReporter *);
 
