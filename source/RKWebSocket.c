@@ -56,7 +56,7 @@ static size_t RKWebSocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
             r = 0;
         } else {
             r = strlen((char *)src);
-        } 
+        }
     } else {
         r = size;
     }
@@ -310,9 +310,11 @@ void *transporter(void *in) {
     fd_set efd;
     struct timeval timeout;
     time_t s1, s0;
-    
+
     uint32_t origin = 0;
     uint32_t total = 0;
+
+    printf("transporter %d\n", R->wantActive);
 
     while (R->wantActive) {
 
@@ -586,6 +588,10 @@ void RKWebSocketFree(RKWebSocket *R) {
 }
 
 #pragma mark - Properties
+
+void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
+    R->verbose = verbose;
+}
 
 void RKWebSocketSetPath(RKWebSocket *R, const char *path) {
     strcpy(R->path, path);

@@ -92,6 +92,7 @@ void headTailBinaryString(char *dst, void *src, size_t);
 RKWebSocket *RKWebSocketInit(const char *, const char *, const RKWebSocketSSLFlag);
 void RKWebSocketFree(RKWebSocket *);
 
+void RKWebSocketSetVerbose(RKWebSocket *, const int);
 void RKWebSocketSetPath(RKWebSocket *, const char *);
 void RKWebSocketSetPingInterval(RKWebSocket *, const float);
 void RKWebSocketSetOpenHandler(RKWebSocket *, void (*)(RKWebSocket *));

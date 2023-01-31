@@ -1419,11 +1419,14 @@ static void RKTestWebSocketHandleClose(RKWebSocket *w) {
 
 void RKTestWebSocket(void) {
     SHOW_FUNCTION_NAME
-    RKLog("Initializing websocket ...");
+    RKLog("Initializing WebSocket ...");
     RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
     RKWebSocketSetMessageHandler(w, &RKTestWebSocketHandleMessage);
+    RKWebSocketSetVerbose(w, 2);
+
+    RKLog("Starting WebSocket ...");
     RKWebSocketStart(w);
     int k = 0;
     while (!w->connected && k++ < 50) {
