@@ -72,6 +72,7 @@ void RKReporterFree(RKReporter *engine) {
 
 void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
+    RKWebSocketSetVerbose(engine->ws, verbose);
 }
 
 void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {

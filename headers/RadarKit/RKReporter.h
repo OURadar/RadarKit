@@ -42,6 +42,7 @@ RKReporter *RKReporterInit(void);
 void RKReporterFree(RKReporter *);
 
 void RKReporterSetRadar(RKReporter *, RKRadar *);
+void RKReporterSetVerbose(RKReporter *engine, const int verbose);
 
 void RKReporterStart(RKReporter *);
 void RKReporterStop(RKReporter *);

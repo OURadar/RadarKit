@@ -212,7 +212,7 @@ static int RKWebSocketConnect(RKWebSocket *R) {
 
     char *buf = (char *)R->frame;
     strcpy(R->secret, "RadarHub123456789abcde");
-    FILE *fid = fopen("secret", "r");
+    FILE *fid = fopen("radarkit-radarhub-secret", "r");
     if (fid) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
@@ -313,8 +313,6 @@ void *transporter(void *in) {
 
     uint32_t origin = 0;
     uint32_t total = 0;
-
-    printf("transporter %d\n", R->wantActive);
 
     while (R->wantActive) {
 

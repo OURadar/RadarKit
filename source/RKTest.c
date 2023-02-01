@@ -63,7 +63,7 @@ char *RKTestByNumberDescription(const int indent) {
     "20 - Reading a .rkc file; -T20 FILENAME\n"
     "21 - RKTestReviseLogicalValues()\n"
     "22 - RKCommandQueue unit test\n"
-    "23 - RKWebScoket unit test\n"
+    "23 - RKWebSocket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "25 - Connect to RadarHub - RKReporterInit()\n"
     "\n"
@@ -1436,6 +1436,12 @@ void RKTestWebSocket(void) {
     while (w->payloadTail < 2 && k++ < 50) {
         usleep(10000);
     }
+    RKLog("Received something.");
+    k = 0;
+    while (k++ < 50) {
+        usleep(10000);
+    }
+    RKLog("Stopping WebSocket ...");
     RKWebSocketStop(w);
     RKWebSocketFree(w);
 }
@@ -1462,6 +1468,11 @@ void RKTestReadBareRKComplex(const char *filename) {
 void RKTestRadarHub(void) {
     SHOW_FUNCTION_NAME
     RKReporter *reporter = RKReporterInit();
+
+    // Need to make a radar
+
+    RKReporterSetVerbose(reporter, 2);
+    RKReporterStart(reporter);
     sleep(1);
     RKReporterFree(reporter);
 }
