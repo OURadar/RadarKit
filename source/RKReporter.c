@@ -48,7 +48,18 @@ RKReporter *RKReporterInitWithHost(const char *host) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKReporter));
+    sprintf(engine->name, "%s<RadarHubConnect>%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
+    engine->memoryUsage = sizeof(RKReporter);
+    // char *c = strstr(host, "://");
+    // if (c) {
+    //     strncpy(engine->host, c + 3, RKNameLength);
+    // } else if (host) {
+    //     strncpy(engine->host, host, RKNameLength);
+    // }
     strncpy(engine->host, host, RKNameLength);
+    RKLog("%s host = %s\n", engine->name, engine->host);
     return engine;
 }
 
@@ -72,13 +83,15 @@ void RKReporterFree(RKReporter *engine) {
 
 void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
-    RKWebSocketSetVerbose(engine->ws, verbose);
 }
 
 void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     engine->radar = radar;
-    sprintf(engine->address, "/ws/radar/%s/", radar->name);
-    RKLog("Setting up radar $s ... %s\n", radar->name, engine->address);
+    RKName name;
+    strcpy(name, radar->desc.name);
+    RKStringLower(name);
+    sprintf(engine->address, "/ws/radar/%s/", name);
+    RKLog("%s Setting up radar %s ... %s\n", engine->name, name, engine->address);
     if (strstr(engine->host, "https") != NULL) {
         engine->flag = RKWebSocketFlagSSLOn;
     } else {
@@ -93,7 +106,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
 #pragma mark - Interactions
 
 void RKReporterStart(RKReporter *engine) {
-
+    RKLog("%s Starting ...\n", engine->name);
 }
 
 void RKReporterStop(RKReporter *engine) {

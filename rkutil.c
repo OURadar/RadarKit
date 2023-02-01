@@ -282,7 +282,7 @@ UserParams *systemPreferencesInit(void) {
         exit(EXIT_FAILURE);
     }
     memset(user, 0, sizeof(UserParams));
-    
+
     // Build a RKRadar initialization description
     user->desc.initFlags = RKInitFlagAllocEverything;
     user->desc.pulseBufferDepth = 2500;
@@ -295,7 +295,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.positionLatency = 0.00001;
     user->port = 10000;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
-    
+
     return user;
 }
 
@@ -313,7 +313,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
         RKPreferenceFree(userPreferences);
         return;
     }
-    
+
     RKPreferenceObject *object;
 
     // Only show the inner working if verbosity level > 1 (1 -> 0, 2+ -> 1)
@@ -343,7 +343,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",           &user->goCommand,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
-    
+
     // Shortcuts
     k = 0;
     memset(user->controls, 0, RKMaximumControlCount * sizeof(RKControl));
@@ -417,7 +417,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"simulate-sleep"    , required_argument, NULL, 'z'},
         {0, 0, 0, 0}
     };
-    
+
     // Construct a long-option string
     s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
@@ -694,9 +694,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
 #pragma mark - Radar Parameters
 
 static void updateRadarParameters(UserParams *systemPreferences) {
-    
+
     int k;
-    
+
     // Some parameters before the radar is live
     if (!myRadar->active) {
         RKSetProcessingCoreCounts(myRadar,
@@ -720,7 +720,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         strcpy(myRadar->desc.filePrefix, systemPreferences->desc.filePrefix);
         RKLog("Product file prefix changed to '%s'\n", myRadar->desc.filePrefix);
     }
-    
+
     // GPS override
     if (systemPreferences->ignoreGPS) {
         myRadar->desc.initFlags |= RKInitFlagIgnoreGPS;
@@ -751,7 +751,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
         k++;
     }
     RKConcludeControls(myRadar);
-    
+
     // Always refresh waveform calibrations
     RKClearWaveformCalibrations(myRadar);
     k = 0;
@@ -771,7 +771,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     } else if (!strcasecmp(systemPreferences->ringFilter, "e4") || !strcasecmp(systemPreferences->ringFilter, "elliptical4")) {
         RKSetPulseRingFilterByType(myRadar, RKFilterTypeElliptical4, 0);
     }
-    
+
     // Refresh all system calibration
     RKAddConfig(myRadar,
                 RKConfigKeyPRF, systemPreferences->prf,
@@ -793,7 +793,7 @@ static void updateRadarParameters(UserParams *systemPreferences) {
 static void handlePreferenceFileUpdate(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
     UserParams *user = (UserParams *)engine->userResource;
-    
+
     // Update user parameters from preference file then update the radar
     updateSystemPreferencesFromControlFile(user);
     updateRadarParameters(user);
@@ -859,7 +859,7 @@ int main(int argc, const char **argv) {
 
     // Update parameters for RadarKit
     updateRadarParameters(systemPreferences);
-    
+
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
@@ -871,8 +871,12 @@ int main(int argc, const char **argv) {
     RKCommandCenterSetPort(center, systemPreferences->port);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
-    
+
     // Make a reporter and have it call a RadarHub
+    RKReporter *reporter = RKReporterInit();
+    RKReporterSetVerbose(reporter, systemPreferences->verbose);
+    RKReporterSetRadar(reporter, myRadar);
+    RKReporterStart(reporter);
 
     // Now we use the framework.
     if (systemPreferences->simulate) {
@@ -921,7 +925,7 @@ int main(int argc, const char **argv) {
                           RKTestPedestalExec,
                           RKTestPedestalFree);
         }
-        
+
         if (strlen(systemPreferences->tweetaHost)) {
             if (systemPreferences->verbose > 1) {
                 RKLog("Health relay input = '%s'", systemPreferences->tweetaHost);
@@ -955,7 +959,7 @@ int main(int argc, const char **argv) {
         RKExecuteCommand(myRadar, "t w h200502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
-    
+
         RKLog("Starting a new PPI ...\n");
         if (systemPreferences->prf <= 20.0f) {
             RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
@@ -969,7 +973,7 @@ int main(int argc, const char **argv) {
 
         // Wait indefinitely until something happens through a user command through the command center
         RKWaitWhileActive(myRadar);
-        
+
         RKFileMonitorFree(preferenceFileMonitor);
 
     } else if (systemPreferences->desc.initFlags == RKInitFlagRelay) {
@@ -981,11 +985,11 @@ int main(int argc, const char **argv) {
         if (strlen(systemPreferences->streams)) {
             RKRadarRelayUpdateStreams(myRadar->radarRelay, RKStreamFromString(systemPreferences->streams));
         }
-        
+
         // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
         RKWaitWhileActive(myRadar);
-        
+
     } else if (systemPreferences->desc.initFlags == RKInitFlagIQPlayback) {
 
         // Build a series of options for transceiver, only pass down the relevant parameters
@@ -1010,16 +1014,16 @@ int main(int argc, const char **argv) {
         RKWaitWhileActive(myRadar);
 
     } else {
-        
+
         RKSetWantScreenOutput(true);
         RKLog("Error. This should not happen.");
-        
+
     }
 
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);
-    
+
     RKFree(myRadar);
 
     systemPreferencesFree(systemPreferences);

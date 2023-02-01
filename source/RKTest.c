@@ -1469,10 +1469,6 @@ void RKTestRadarHub(void) {
     SHOW_FUNCTION_NAME
     RKReporter *reporter = RKReporterInit();
 
-    // Need to make a radar
-    RKRadar *radar = RKRadarInit();
-
-    RKReporterSetRadar(reporter, radar);
     RKReporterSetVerbose(reporter, 2);
 
     RKReporterStart(reporter);
