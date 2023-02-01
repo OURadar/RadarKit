@@ -1470,10 +1470,15 @@ void RKTestRadarHub(void) {
     RKReporter *reporter = RKReporterInit();
 
     // Need to make a radar
+    RKRadar *radar = RKRadarInit();
 
+    RKReporterSetRadar(reporter, radar);
     RKReporterSetVerbose(reporter, 2);
+
     RKReporterStart(reporter);
+
     sleep(1);
+
     RKReporterFree(reporter);
 }
 
