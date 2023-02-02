@@ -587,12 +587,12 @@ void RKWebSocketFree(RKWebSocket *R) {
 
 #pragma mark - Properties
 
-void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
-    R->verbose = verbose;
-}
-
 void RKWebSocketSetPath(RKWebSocket *R, const char *path) {
     strcpy(R->path, path);
+}
+
+void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
+    R->verbose = verbose;
 }
 
 void RKWebSocketSetPingInterval(RKWebSocket *R, const float period) {
