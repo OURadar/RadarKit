@@ -79,7 +79,8 @@ RKReporter *RKReporterInitWithHost(const char *host) {
 
 RKReporter *RKReporterInitForRadarHub(void) {
     //return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
-    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
+//    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
+    return RKReporterInitWithHost("10.197.14.52:8001");
 }
 
 RKReporter *RKReporterInitForLocal(void) {
@@ -109,6 +110,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     strcpy(name, radar->desc.name);
     RKStringLower(name);
     sprintf(engine->address, "/ws/radar/%s/", name);
+//    sprintf(engine->address, "/ws/radar/%s/", radar->desc.name);
     RKLog("%s Setting up radar %s ... %s\n", engine->name, radar->desc.name, engine->address);
     engine->ws = RKWebSocketInit(engine->host, engine->address, engine->flag);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
@@ -125,5 +127,6 @@ void RKReporterStart(RKReporter *engine) {
 }
 
 void RKReporterStop(RKReporter *engine) {
-
+    RKLog("%s Disconnecting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
+    RKWebSocketStop(engine->ws);
 }

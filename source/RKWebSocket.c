@@ -217,7 +217,7 @@ static int RKWebSocketConnect(RKWebSocket *R) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
             if (R->verbose > 1) {
-                printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+                printf("Using secret %s (%zu) ...\n", buf, strlen(buf));
             }
             strcpy(R->secret, buf);
         }
