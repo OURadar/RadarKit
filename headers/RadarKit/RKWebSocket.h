@@ -95,9 +95,9 @@ RKWebSocket *RKWebSocketInit(const char *, const char *, const RKWebSocketSSLFla
 void RKWebSocketFree(RKWebSocket *);
 
 void RKWebSocketSetPath(RKWebSocket *, const char *);
+void RKWebSocketSetParent(RKWebSocket *, const void *);
 void RKWebSocketSetVerbose(RKWebSocket *, const int);
 void RKWebSocketSetPingInterval(RKWebSocket *, const float);
-void RKWebSocketSetParent(RKWebSocket *, void *);
 void RKWebSocketSetOpenHandler(RKWebSocket *, void (*)(RKWebSocket *));
 void RKWebSocketSetCloseHandler(RKWebSocket *, void (*)(RKWebSocket *));
 void RKWebSocketSetMessageHandler(RKWebSocket *, void (*)(RKWebSocket *, void *, size_t));

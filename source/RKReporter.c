@@ -22,11 +22,12 @@ void handleOpen(RKWebSocket *w) {
     int r;
     r = sprintf(R->welcome,
         "%c{"
-            "\"radar\":\"%s\", "
+            "\"name\":\"%s\", "
             "\"command\":\"radarConnect\""
         "}",
         RadarHubTypeHandshake, R->radar->desc.name);
     RKLog("%s Sending open packet ...\n", R->name);
+    printf("%s\n", R->welcome);
     RKWebSocketSend(w, R->welcome, r);
 //    sendControl(w);
 }
@@ -117,6 +118,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
     RKWebSocketSetMessageHandler(engine->ws, &handleMessage);
     RKWebSocketSetVerbose(engine->ws, engine->verbose);
+    RKWebSocketSetParent(engine->ws, engine);
 }
 
 #pragma mark - Interactions

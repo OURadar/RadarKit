@@ -591,6 +591,10 @@ void RKWebSocketSetPath(RKWebSocket *R, const char *path) {
     strcpy(R->path, path);
 }
 
+void RKWebSocketSetParent(RKWebSocket *R, const void *parent) {
+    R->parent = (void *)parent;
+}
+
 void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
     R->verbose = verbose;
 }
