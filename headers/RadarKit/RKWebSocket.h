@@ -53,6 +53,8 @@ struct rk_websocket {
     int                      port;
     bool                     useSSL;
     int                      verbose;
+    
+    void                     *parent;
 
     void                     (*onOpen)(RKWebSocket *);
     void                     (*onClose)(RKWebSocket *);
@@ -93,6 +95,8 @@ RKWebSocket *RKWebSocketInit(const char *, const char *, const RKWebSocketSSLFla
 void RKWebSocketFree(RKWebSocket *);
 
 void RKWebSocketSetPath(RKWebSocket *, const char *);
+void RKWebSocketSetParent(RKWebSocket *, const void *);
+void RKWebSocketSetVerbose(RKWebSocket *, const int);
 void RKWebSocketSetPingInterval(RKWebSocket *, const float);
 void RKWebSocketSetOpenHandler(RKWebSocket *, void (*)(RKWebSocket *));
 void RKWebSocketSetCloseHandler(RKWebSocket *, void (*)(RKWebSocket *));

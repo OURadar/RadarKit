@@ -159,7 +159,7 @@ char *RKGetValueOfKey(const char *string, const char *key) {
         sprintf(quotedKey, "'%s'", key);
         keyPosition = strcasestr(string, quotedKey);
     }
-    
+
     if (keyPosition != NULL) {
         // Find start of the value
         s = strchr(keyPosition + strlen(quotedKey), ':');
@@ -227,7 +227,7 @@ char *RKGetValueOfKey(const char *string, const char *key) {
                 valueString[0] = '\0';
             }
             return valueString;
-        } 
+        }
         // Find end of the value
         e = s;
         while (*e != ',' && *e != '}' && *e != ']') {
@@ -505,11 +505,11 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
-    
+
     char *string = stringBuffer[ibuf];
-    
+
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
-    
+
     sprintf(string, "%llu", num);
     if (num < 1000) {
         return string;
@@ -565,11 +565,11 @@ char *RKIntegerToCommaStyleString(const long long num) {
 char *RKIntegerToHexStyleString(const long long num) {
     static int ibuf = 0;
     static char stringBuffer[16][32];
-    
+
     char *string = stringBuffer[ibuf];
-    
+
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
-    
+
     sprintf(string, "0x%04llx", num);
 
     return string;
@@ -584,9 +584,9 @@ char *RKFloatToCommaStyleString(const double num) {
     static int ibuf = 0;
     static char stringBuffer[16][32];
     char *string = stringBuffer[ibuf];
-    
+
     ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
-    
+
     i = sprintf(string, "%.3f", num);
     if (i <= 7) {
         return string;
@@ -1052,7 +1052,7 @@ int sched_getaffinity(pid_t pid, size_t cpu_size, cpu_set_t *cpu_set) {
 int pthread_setaffinity_np(pthread_t thread, size_t cpu_size, cpu_set_t *cpu_set) {
     thread_port_t mach_thread;
     int core = 0;
-    
+
     for (core = 0; core < 8 * cpu_size; core++) {
         if (CPU_ISSET(core, cpu_set)) break;
     }
@@ -1520,4 +1520,13 @@ char *RKBinaryString(char *dst, void *src, size_t count) {
 void RKHeadTailBinaryString(char *dst, void *src, size_t count) {
     char *tail = RKBinaryString(dst, src, 25);
     RKBinaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
+}
+
+char *RKStringLower(char *string) {
+    char *c = string;
+    char *e = c + strlen(c);
+    do {
+        *c = *c > 0x40 && *c < 0x5b ? *c | 0x60 : *c;
+    } while (c++ < e);
+    return string;
 }

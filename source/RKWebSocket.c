@@ -56,7 +56,7 @@ static size_t RKWebSocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
             r = 0;
         } else {
             r = strlen((char *)src);
-        } 
+        }
     } else {
         r = size;
     }
@@ -212,12 +212,12 @@ static int RKWebSocketConnect(RKWebSocket *R) {
 
     char *buf = (char *)R->frame;
     strcpy(R->secret, "RadarHub123456789abcde");
-    FILE *fid = fopen("secret", "r");
+    FILE *fid = fopen("radarkit-radarhub-secret", "r");
     if (fid) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
             if (R->verbose > 1) {
-                printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+                printf("Using secret %s (%zu) ...\n", buf, strlen(buf));
             }
             strcpy(R->secret, buf);
         }
@@ -310,7 +310,7 @@ void *transporter(void *in) {
     fd_set efd;
     struct timeval timeout;
     time_t s1, s0;
-    
+
     uint32_t origin = 0;
     uint32_t total = 0;
 
@@ -589,6 +589,14 @@ void RKWebSocketFree(RKWebSocket *R) {
 
 void RKWebSocketSetPath(RKWebSocket *R, const char *path) {
     strcpy(R->path, path);
+}
+
+void RKWebSocketSetParent(RKWebSocket *R, const void *parent) {
+    R->parent = (void *)parent;
+}
+
+void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
+    R->verbose = verbose;
 }
 
 void RKWebSocketSetPingInterval(RKWebSocket *R, const float period) {

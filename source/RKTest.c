@@ -63,8 +63,9 @@ char *RKTestByNumberDescription(const int indent) {
     "20 - Reading a .rkc file; -T20 FILENAME\n"
     "21 - RKTestReviseLogicalValues()\n"
     "22 - RKCommandQueue unit test\n"
-    "23 - RKWebScoket unit test\n"
+    "23 - RKWebSocket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
+    "25 - Connect to RadarHub - RKReporterInit()\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -195,6 +196,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 24:
             RKTestReadBareRKComplex((char *)arg);
+            break;
+        case 25:
+            RKTestRadarHub();
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull);
@@ -1415,10 +1419,14 @@ static void RKTestWebSocketHandleClose(RKWebSocket *w) {
 
 void RKTestWebSocket(void) {
     SHOW_FUNCTION_NAME
+    RKLog("Initializing WebSocket ...");
     RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
     RKWebSocketSetMessageHandler(w, &RKTestWebSocketHandleMessage);
+    RKWebSocketSetVerbose(w, 2);
+
+    RKLog("Starting WebSocket ...");
     RKWebSocketStart(w);
     int k = 0;
     while (!w->connected && k++ < 50) {
@@ -1428,6 +1436,12 @@ void RKTestWebSocket(void) {
     while (w->payloadTail < 2 && k++ < 50) {
         usleep(10000);
     }
+    RKLog("Received something.");
+    k = 0;
+    while (k++ < 50) {
+        usleep(10000);
+    }
+    RKLog("Stopping WebSocket ...");
     RKWebSocketStop(w);
     RKWebSocketFree(w);
 }
@@ -1449,6 +1463,19 @@ void RKTestReadBareRKComplex(const char *filename) {
         x++;
     }
     free(buffer);
+}
+
+void RKTestRadarHub(void) {
+    SHOW_FUNCTION_NAME
+    RKReporter *reporter = RKReporterInit();
+
+    RKReporterSetVerbose(reporter, 2);
+
+    RKReporterStart(reporter);
+
+    sleep(1);
+
+    RKReporterFree(reporter);
 }
 
 #pragma mark -

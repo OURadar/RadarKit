@@ -389,6 +389,7 @@ enum {
 
 enum RKEngineColor {
     RKEngineColorCommandCenter = 10,
+    RKEngineColorRadarHubReporter = 8,
     RKEngineColorPulseCompressionEngine = 7,
     RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
