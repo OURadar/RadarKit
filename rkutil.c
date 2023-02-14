@@ -1024,6 +1024,9 @@ int main(int argc, const char **argv) {
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);
 
+    RKReporterStop(reporter);
+    RKReporterFree(reporter);
+
     RKFree(myRadar);
 
     systemPreferencesFree(systemPreferences);

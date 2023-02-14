@@ -1660,7 +1660,7 @@ void RKCommandCenterStart(RKCommandCenter *center) {
 }
 
 void RKCommandCenterStop(RKCommandCenter *center) {
-    if (center->verbose > 1) {
+    if (center->verbose) {
         RKLog("%s Stopping ...\n", center->name);
     }
     RKServerStop(center->server);

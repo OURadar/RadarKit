@@ -110,5 +110,9 @@ void RKReporterStart(RKReporter *engine) {
 }
 
 void RKReporterStop(RKReporter *engine) {
-
+    if (engine->verbose) {
+        RKLog("%s Stopping ...\n", engine->name);
+    }
+    RKWebSocketStop(engine->ws);
+    RKLog("%s Stopped.\n", engine->name);
 }
