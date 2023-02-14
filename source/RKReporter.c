@@ -37,6 +37,11 @@ void handleClose(RKWebSocket *W) {
 //    if (R->verbose) {
 //        printf("ONCLOSE\n");
 //    }
+    RKReporter *reporter = (RKReporter *)W->parent;
+    if (reporter->state | RKEngineStateActive) {
+        reporter->state ^= RKEngineStateActive;
+    }
+    RKLog("%s WebSocket handleClose()\n", reporter->name);
 }
 
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
@@ -79,9 +84,9 @@ RKReporter *RKReporterInitWithHost(const char *host) {
 }
 
 RKReporter *RKReporterInitForRadarHub(void) {
-    //return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
+    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
 //    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
-    return RKReporterInitWithHost("10.197.14.52:8001");
+//    return RKReporterInitWithHost("10.197.14.52:8001");
 }
 
 RKReporter *RKReporterInitForLocal(void) {
