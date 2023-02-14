@@ -217,7 +217,7 @@ static int RKWebSocketConnect(RKWebSocket *R) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
             if (R->verbose > 1) {
-                printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+                printf("Using secret %s (%zu) ...\n", buf, strlen(buf));
             }
             strcpy(R->secret, buf);
         }
@@ -525,7 +525,7 @@ void *transporter(void *in) {
         }
     }
 
-    if (R->verbose) {
+    if (R->verbose > 1) {
         printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
     }
 
@@ -587,12 +587,16 @@ void RKWebSocketFree(RKWebSocket *R) {
 
 #pragma mark - Properties
 
-void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
-    R->verbose = verbose;
-}
-
 void RKWebSocketSetPath(RKWebSocket *R, const char *path) {
     strcpy(R->path, path);
+}
+
+void RKWebSocketSetParent(RKWebSocket *R, const void *parent) {
+    R->parent = (void *)parent;
+}
+
+void RKWebSocketSetVerbose(RKWebSocket *R, const int verbose) {
+    R->verbose = verbose;
 }
 
 void RKWebSocketSetPingInterval(RKWebSocket *R, const float period) {

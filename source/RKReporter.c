@@ -15,17 +15,20 @@
 #pragma mark - Delegate Workers
 
 void handleOpen(RKWebSocket *w) {
-//    if (R->verbose) {
-//        printf("ONOPEN\n");
-//    }
-//    int r;
-//    r = sprintf(R->welcome,
-//        "%c{"
-//            "\"radar\":\"%s\", "
-//            "\"command\":\"radarConnect\""
-//        "}",
-//        RadarHubTypeHandshake, R->name);
-//    RKWebSocketSend(R->ws, R->welcome, r);
+    RKReporter *R = (RKReporter *)w->parent;
+    if (R->verbose) {
+        printf("RKReporter: ONOPEN\n");
+    }
+    int r;
+    r = sprintf(R->welcome,
+        "%c{"
+            "\"name\":\"%s\", "
+            "\"command\":\"radarConnect\""
+        "}",
+        RadarHubTypeHandshake, R->radar->desc.name);
+    RKLog("%s Sending open packet ...\n", R->name);
+    printf("%s\n", R->welcome);
+    RKWebSocketSend(w, R->welcome, r);
 //    sendControl(w);
 }
 
@@ -52,19 +55,33 @@ RKReporter *RKReporterInitWithHost(const char *host) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKReporter);
-    // char *c = strstr(host, "://");
-    // if (c) {
-    //     strncpy(engine->host, c + 3, RKNameLength);
-    // } else if (host) {
-    //     strncpy(engine->host, host, RKNameLength);
-    // }
     strncpy(engine->host, host, RKNameLength);
     RKLog("%s host = %s\n", engine->name, engine->host);
+    if (strstr(engine->host, "https") != NULL) {
+        engine->flag = RKWebSocketFlagSSLOn;
+    } else {
+        engine->flag = RKWebSocketFlagSSLOff;
+    }
+    char *c = strstr(engine->host, "://");
+    if (c) {
+        size_t l = strlen(engine->host) - (size_t)(c - engine->host) - 3;
+        memmove(engine->host, c + 3, l);
+        engine->host[l] = '\0';
+    }
+    if (engine->flag & RKWebSocketFlagSSLOn && strstr(engine->host, ":") == NULL) {
+        strcat(engine->host, ":443");
+    }
+    if (strstr(engine->host, ":443")) {
+        engine->flag = RKWebSocketFlagSSLOn;
+    }
+    RKLog("%s revised host = %s (SSL %s)\n", engine->name, engine->host, engine->flag & RKWebSocketFlagSSLOn ? "On" : "Off");
     return engine;
 }
 
 RKReporter *RKReporterInitForRadarHub(void) {
-    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
+    //return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
+//    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
+    return RKReporterInitWithHost("10.197.14.52:8001");
 }
 
 RKReporter *RKReporterInitForLocal(void) {
@@ -83,6 +100,9 @@ void RKReporterFree(RKReporter *engine) {
 
 void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
+    if (engine->ws) {
+        RKWebSocketSetVerbose(engine->ws, engine->verbose);
+    }
 }
 
 void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
@@ -91,28 +111,28 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     strcpy(name, radar->desc.name);
     RKStringLower(name);
     sprintf(engine->address, "/ws/radar/%s/", name);
-    RKLog("%s Setting up radar %s ... %s\n", engine->name, name, engine->address);
-    if (strstr(engine->host, "https") != NULL) {
-        engine->flag = RKWebSocketFlagSSLOn;
-    } else {
-        engine->flag = RKWebSocketFlagSSLOff;
-    }
+//    sprintf(engine->address, "/ws/radar/%s/", radar->desc.name);
+    RKLog("%s Setting up radar %s ... %s\n", engine->name, radar->desc.name, engine->address);
     engine->ws = RKWebSocketInit(engine->host, engine->address, engine->flag);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
     RKWebSocketSetMessageHandler(engine->ws, &handleMessage);
+    RKWebSocketSetVerbose(engine->ws, engine->verbose);
+    RKWebSocketSetParent(engine->ws, engine);
 }
 
 #pragma mark - Interactions
 
 void RKReporterStart(RKReporter *engine) {
-    RKLog("%s Starting ...\n", engine->name);
+    RKLog("%s Starting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
+    RKWebSocketStart(engine->ws);
 }
 
 void RKReporterStop(RKReporter *engine) {
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
+    RKLog("%s Disconnecting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
     RKWebSocketStop(engine->ws);
     RKLog("%s Stopped.\n", engine->name);
 }

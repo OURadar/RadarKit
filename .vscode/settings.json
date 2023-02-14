@@ -36,5 +36,6 @@
     "/usr/local/opt/openssl@1.1/include"
   ],
   "C_Cpp_Runner.cCompilerPath": "/usr/bin/clang",
-  "C_Cpp_Runner.cppCompilerPath": "/usr/bin/clang++"
+  "C_Cpp_Runner.cppCompilerPath": "/usr/bin/clang++",
+  "C_Cpp_Runner.useMsvc": false
 }
