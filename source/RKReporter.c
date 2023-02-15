@@ -3,12 +3,36 @@
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 2/9/22.
-//  Copyright (c) 2017-2022 Boonleng Cheong. All rights reserved.
+//  Copyright (c) 2017-2023 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKReporter.h>
 
 // Private declarations
+
+#pragma mark - Busy Loop
+
+void *reporter(void *in) {
+    RKReporter *engine = (RKReporter *)in;
+    RKRadar *radar = engine->radar;
+
+    int s = 0;
+    int k = 0;
+
+    RKLog("%s Started.  mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
+
+    engine->state |= RKEngineStateActive;
+
+    while (engine->state & RKEngineStateActive) {
+        RKLog("%s Busy %d\n", engine->name, k);
+        s = 0;
+        do {
+            usleep(100000);
+        } while (engine->state & RKEngineStateActive && s++ < 10);
+    }
+
+    return NULL;
+}
 
 #pragma mark - Helper Functions
 
@@ -38,14 +62,17 @@ void handleClose(RKWebSocket *W) {
 //        printf("ONCLOSE\n");
 //    }
     RKReporter *reporter = (RKReporter *)W->parent;
-    if (reporter->state | RKEngineStateActive) {
+    if (reporter->state & RKEngineStateActive) {
         reporter->state ^= RKEngineStateActive;
     }
     RKLog("%s WebSocket handleClose()\n", reporter->name);
 }
 
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
+    RKReporter *reporter = (RKReporter *)W->parent;
+    RKRadar *radar = reporter->radar;
 }
+
 
 #pragma mark - Life Cycle
 
@@ -84,9 +111,9 @@ RKReporter *RKReporterInitWithHost(const char *host) {
 }
 
 RKReporter *RKReporterInitForRadarHub(void) {
-    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
+//    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
 //    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
-//    return RKReporterInitWithHost("10.197.14.52:8001");
+    return RKReporterInitWithHost("10.197.14.52:8001");
 }
 
 RKReporter *RKReporterInitForLocal(void) {
@@ -112,12 +139,11 @@ void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
 
 void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     engine->radar = radar;
-    RKName name;
-    strcpy(name, radar->desc.name);
-    RKStringLower(name);
-    sprintf(engine->address, "/ws/radar/%s/", name);
-//    sprintf(engine->address, "/ws/radar/%s/", radar->desc.name);
-    RKLog("%s Setting up radar %s ... %s\n", engine->name, radar->desc.name, engine->address);
+    RKName node;
+    strcpy(node, radar->desc.name);
+    RKStringLower(node);
+    sprintf(engine->address, "/ws/radar/%s/", node);
+    RKLog("%s Setting up radar %s @ %s\n", engine->name, radar->desc.name, engine->address);
     engine->ws = RKWebSocketInit(engine->host, engine->address, engine->flag);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
@@ -131,6 +157,10 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
 void RKReporterStart(RKReporter *engine) {
     RKLog("%s Starting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
     RKWebSocketStart(engine->ws);
+    if (pthread_create(&engine->ticWorker, NULL, reporter, engine)) {
+        RKLog("%s Error. Failed to create reporter().\n", engine->name);
+        return;
+    }
 }
 
 void RKReporterStop(RKReporter *engine) {

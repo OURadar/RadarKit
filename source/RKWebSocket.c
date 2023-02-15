@@ -344,7 +344,7 @@ void *transporter(void *in) {
                             } else {
                                 RKHeadTailBinaryString(message, payload->source, payload->size);
                             }
-                            printf("WRITE \033[38;5;154m%s\033[m (%zu)\n", message, payload->size);
+                            printf("RKWebSocket.transporter: WRITE \033[38;5;154m%s\033[m (%zu)\n", message, payload->size);
                         }
                         size = RKWebSocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(R, size);
@@ -457,9 +457,9 @@ void *transporter(void *in) {
                         for (i = 0; i < 4; i++) {
                             uword[i] = R->frame[6 + i] ^ key.code[i % 4];
                         }
-                        printf("C-PING: \033[38;5;82m%s\033[m\n", uword);
+                        printf("RKWebSocket.transporter: C-PING: \033[38;5;82m%s\033[m\n", uword);
                         if (R->verbose > 2) {
-                            printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
+                            printf("RKWebSocket.transporter: %2d sent  ", r); RKShowWebsocketFrameHeader(R);
                         }
                     }
                 }
@@ -494,8 +494,8 @@ void *transporter(void *in) {
             }
         } // while (R->wantActive && R->connected) ...
         if (R->sd) {
-            if (R->verbose) {
-                printf("Closing socket sd = %d ...\n", R->sd);
+            if (R->verbose > 1) {
+                printf("RKWebSocket.transporter: Closing socket sd = %d ...\n", R->sd);
             }
             if (R->onClose) {
                 R->onClose(R);
@@ -511,10 +511,10 @@ void *transporter(void *in) {
             if (i != r && R->verbose) {
                 i = r;
                 if (r > 2) {
-                    printf("\rNo connection. Retry in %d second%s ... ",
+                    printf("\rRKWebSocket.transporter: No connection. Retry in %d second%s ... ",
                         10 - r, 10 - r > 1 ? "s" : "");
                 } else {
-                    printf("\rNo connection.");
+                    printf("\rRKWebSocket.transporter: No connection.");
                 }
                 fflush(stdout);
             }
@@ -526,7 +526,7 @@ void *transporter(void *in) {
     }
 
     if (R->verbose > 1) {
-        printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
+        printf("RKWebSocket.transporter: R->wantActive = %s\n", R->wantActive ? "true" : "false");
     }
 
     return NULL;
