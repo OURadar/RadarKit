@@ -50,6 +50,7 @@ typedef struct rk_reporter {
     // User set variables
     RKName                           name;
     RKName                           host;
+    RKName                           pathway;
     RKName                           address;
     char                             welcome[RKMaximumStringLength];
     char                             control[RKMaximumStringLength];
@@ -72,6 +73,8 @@ typedef struct rk_reporter {
     RKStream                         streams;
     RKStream                         streamsInProgress;
     uint32_t                         healthIndex;
+    uint32_t                         pulseIndex;
+    uint32_t                         rayIndex;
     char                             string[RKMaximumPacketSize];
     
     RKNetDelimiter   delimString;                          // Convenient delimiter for text response of commands
