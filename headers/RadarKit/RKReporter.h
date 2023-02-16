@@ -56,18 +56,28 @@ typedef struct rk_reporter {
     char                             message[RKMaximumStringLength];
     int                              verbose;
     RKRadar                          *radar;
-
+    
     // Program set variables
     RKWebSocket                      *ws;
     RKWebSocketSSLFlag               flag;
     pthread_t                        ticWorker;
     pthread_mutex_t                  mutex;
-
+    
     // Status / health
     RKEngineState                    state;
     uint64_t                         tic;
     float                            lag;
     size_t                           memoryUsage;
+    
+    RKStream                         streams;
+    RKStream                         streamsInProgress;
+    uint32_t                         healthIndex;
+    char                             string[RKMaximumPacketSize];
+    
+    RKNetDelimiter   delimString;                          // Convenient delimiter for text response of commands
+    RKNetDelimiter   delimTx;                              // Convenient delimiter for streaming
+    RKNetDelimiter   delimRx;                              // Convenient delimiter for receiving
+    RKNetDelimiter   beacon;                               // Beacon
 } RKReporter;
 
 RKReporter *RKReporterInitWithHost(const char *);
