@@ -144,6 +144,7 @@ static void showHelp() {
            "          p - Pulse engine\n"
            "          r - Ring filter engine\n"
            "          s - Sweep engine\n"
+           "          w - RadarHub WebSocket Reporter\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
            "         Tests a specific component of the RadarKit framework.\n"
@@ -874,7 +875,9 @@ int main(int argc, const char **argv) {
 
     // Make a reporter and have it call a RadarHub
     RKReporter *reporter = RKReporterInit();
-    RKReporterSetVerbose(reporter, systemPreferences->verbose);
+    int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
+    RKLog("WebSocket verbosity = %d\n", v);
+    RKReporterSetVerbose(reporter, v);
     RKReporterSetRadar(reporter, myRadar);
     RKReporterStart(reporter);
 

@@ -4053,9 +4053,9 @@ void *RKTestHealthRelayRunLoop(void *input) {
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         if (health) {
             sprintf(health->string, "{"
-                    "\"PSU H\":{\"Value\":true, \"Enum\":%d}, "
-                    "\"PSU V\":{\"Value\":true, \"Enum\":%d}, "
-                    "\"GPS Valid\":{\"Value\":true, \"Enum\":0}, "
+                    "\"PSU H\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"PSU V\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
                     "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
                     "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "

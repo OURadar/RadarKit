@@ -255,7 +255,9 @@ static void *healthConsolidator(void *_in) {
                 locationChangeCount = 0;
             }
         }
-        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
+        // Add the log time as the last object
+        i += sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);
+        RKLog("%s k = %d   i = %d\n", engine->name, k, i);
 
         // Replace some quoted logical values, e.g., "TRUE", "True", "true", etc. -> true
         RKReviseLogicalValues(string);

@@ -20,12 +20,13 @@ void *reporter(void *in) {
 
     int j;
     int k = 0;
+
     int s = 0;
     char *c;
     uint32_t index;
 
     void *payload = malloc(PAYLOAD_CAPACITY);
-    size_t payload_size = 0;
+    size_t payload_size;
 
     RKLog("%s Started.  mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
 
@@ -38,7 +39,7 @@ void *reporter(void *in) {
         #pragma mark Health Status
         
         if (engine->streams & RKStreamHealthInJSON) {
-            index = RKPreviousModuloS(radar->healthIndex, radar->desc.healthBufferDepth);
+            index = radar->healthIndex;
 
             if (!(engine->streamsInProgress & RKStreamHealthInJSON)) {
                 engine->streamsInProgress |= RKStreamHealthInJSON;
@@ -50,6 +51,7 @@ void *reporter(void *in) {
                 engine->healthIndex = index;
             }
 
+            engine->state |= RKEngineStateSleep1;
             s = 0;
             while (radar->healths[engine->healthIndex].flag != RKHealthFlagReady && engine->ws->connected && s++ < 20) {
                 if (s % 10 == 0 && engine->verbose > 1) {
@@ -57,27 +59,12 @@ void *reporter(void *in) {
                 }
                 usleep(50000);
             }
+            engine->state ^= RKEngineStateSleep1;
 
             if (radar->healths[engine->healthIndex].flag == RKHealthFlagReady && engine->ws->connected) {
-                j = 0;
-                k = 0;
-//                while (engine->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
-//                    c = radar->healths[engine->healthIndex].string;
-//                    k += sprintf(engine->string + k, "%s\n", c);
-//                    engine->healthIndex = RKNextModuloS(engine->healthIndex, radar->desc.healthBufferDepth);
-//                    j++;
-//                }
-//                if (j) {
-//                    // Take out the last '\n', replace it with somethign else + EOL
-//                    snprintf(engine->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
-//                    engine->delimTx.type = RKNetworkPacketTypeHealth;
-//                    engine->delimTx.size = k;
-//                    RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-//                }
-                while (engine->healthIndex != index && k < RKMaximumStringLength - 200) {
+                while (engine->healthIndex != index) {
                     snprintf(payload, PAYLOAD_CAPACITY, "%c%s", RKRadarHubTypeHealth, radar->healths[engine->healthIndex].string);
-                    RKStripTail(payload);
-                    payload_size = strlen(payload + 1) + 1;
+                    payload_size = 1 + strlen((char *)(payload + 1));
                     c = payload + payload_size - 2;
                     RKLog("%s Sending health packet s=%zu  MSG = ... %c(%d) %c(%d) (%d)\n",
                           engine->name, payload_size, *c, *c, *(c + 1), *(c + 1), (int)*(c + 2));
