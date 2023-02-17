@@ -19,11 +19,10 @@ void *reporter(void *in) {
     RKRadar *radar = engine->radar;
 
     int j;
-    int k = 0;
+    int k;
 
-    int s = 0;
+    int s;
     char *c;
-    uint32_t index;
 
     void *payload = malloc(PAYLOAD_CAPACITY);
     size_t payload_size;
@@ -32,23 +31,25 @@ void *reporter(void *in) {
 
     engine->state |= RKEngineStateActive;
 
+    k = radar->healthIndex;
     while (engine->state & RKEngineStateActive) {
-        RKLog("%s Busy %d\n", engine->name, k);
+        RKLog("%s Busy %d (0x%x %s)\n", engine->name, k,
+              radar->healths[k].flag,
+              radar->healths[k].flag == RKStatusFlagVacant ? "vacant" : "ready");
         
         // Health Status
         #pragma mark Health Status
         
         if (engine->streams & RKStreamHealthInJSON) {
-            index = radar->healthIndex;
+            engine->healthIndex = radar->healthIndex;
 
             if (!(engine->streamsInProgress & RKStreamHealthInJSON)) {
                 engine->streamsInProgress |= RKStreamHealthInJSON;
                 if (engine->verbose) {
-                    RKLog("%s Begin streaming RKHealth -> %d (0x%x %s).\n", engine->name, index,
-                          radar->healths[index].flag,
-                          radar->healths[index].flag == RKStatusFlagVacant ? "vacant" : "ready");
+                    RKLog("%s Begin streaming RKHealth -> %d (0x%x %s).\n", engine->name, k,
+                          radar->healths[k].flag,
+                          radar->healths[k].flag == RKStatusFlagVacant ? "vacant" : "ready");
                 }
-                engine->healthIndex = index;
             }
 
             engine->state |= RKEngineStateSleep1;
@@ -62,25 +63,39 @@ void *reporter(void *in) {
             engine->state ^= RKEngineStateSleep1;
 
             if (radar->healths[engine->healthIndex].flag == RKHealthFlagReady && engine->ws->connected) {
-                while (engine->healthIndex != index) {
-                    snprintf(payload, PAYLOAD_CAPACITY, "%c%s", RKRadarHubTypeHealth, radar->healths[engine->healthIndex].string);
-                    payload_size = 1 + strlen((char *)(payload + 1));
-                    c = payload + payload_size - 2;
-                    RKLog("%s Sending health packet s=%zu  MSG = ... %c(%d) %c(%d) (%d)\n",
-                          engine->name, payload_size, *c, *c, *(c + 1), *(c + 1), (int)*(c + 2));
-                    RKWebSocketSend(engine->ws, payload, payload_size);
-                    engine->healthIndex = RKNextModuloS(engine->healthIndex, radar->desc.healthBufferDepth);
+                while (k != engine->healthIndex) {
+                    if (k % 4 == 0) {
+                        snprintf(payload, PAYLOAD_CAPACITY, "%c%s", RKRadarHubTypeHealth, radar->healths[engine->healthIndex].string);
+                        payload_size = 1 + strlen((char *)(payload + 1));
+                        c = payload + payload_size - 2;
+                        if (engine->verbose > 1) {
+                            RKLog("%s Sending health packet s=%zu  MSG = ... %c(%d) %c(%d) (%d)\n",
+                                  engine->name, payload_size, *c, *c, *(c + 1), *(c + 1), (int)*(c + 2));
+                        }
+                        RKWebSocketSend(engine->ws, payload, payload_size);
+                    }
+                    k = RKNextModuloS(k, radar->desc.healthBufferDepth);
                 }
             } else {
                 RKLog("%s No Health / Deactivated.   healthIndex = %d / %d\n", engine->name, engine->healthIndex, radar->healthIndex);
             }
-
         }
+        
+        // AScope Samples
+        #pragma mark AScope Samples
+
+        // Product Display Data
+        #pragma mark Product Display
         
         s = 0;
         do {
             usleep(100000);
         } while (engine->state & RKEngineStateActive && s++ < 10);
+    }
+
+    if (engine->streamsInProgress & RKStreamHealthInJSON) {
+        RKLog("%s End streaming RKHealth\n");
+        engine->streamsInProgress ^= RKStreamHealthInJSON;
     }
 
     return NULL;

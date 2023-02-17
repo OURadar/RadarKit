@@ -1,12 +1,12 @@
 //
-//  RKHealth.c
+//  RKHealthEngine.c
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 1/28/17.
 //  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKHealth.h>
+#include <RadarKit/RKHealthEngine.h>
 
 #pragma mark - Helper Functions
 
@@ -257,7 +257,6 @@ static void *healthConsolidator(void *_in) {
         }
         // Add the log time as the last object
         i += sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);
-        RKLog("%s k = %d   i = %d\n", engine->name, k, i);
 
         // Replace some quoted logical values, e.g., "TRUE", "True", "true", etc. -> true
         RKReviseLogicalValues(string);

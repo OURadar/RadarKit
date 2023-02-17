@@ -73,14 +73,13 @@ typedef struct rk_reporter {
     RKStream                         streams;
     RKStream                         streamsInProgress;
     uint32_t                         healthIndex;
+    uint32_t                         healthStride;
     uint32_t                         pulseIndex;
+    uint32_t                         pulseStride;
     uint32_t                         rayIndex;
+    uint32_t                         rayStride;
     char                             string[RKMaximumPacketSize];
     
-    RKNetDelimiter   delimString;                          // Convenient delimiter for text response of commands
-    RKNetDelimiter   delimTx;                              // Convenient delimiter for streaming
-    RKNetDelimiter   delimRx;                              // Convenient delimiter for receiving
-    RKNetDelimiter   beacon;                               // Beacon
 } RKReporter;
 
 RKReporter *RKReporterInitWithHost(const char *);
