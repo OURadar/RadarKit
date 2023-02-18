@@ -46,6 +46,8 @@ enum Blah {
 
 #endif
 
+#define PAYLOAD_CAPACITY    (1024 * 1024)
+
 typedef struct rk_reporter {
     // User set variables
     RKName                           name;
@@ -55,6 +57,8 @@ typedef struct rk_reporter {
     char                             welcome[RKMaximumStringLength];
     char                             control[RKMaximumStringLength];
     char                             message[RKMaximumStringLength];
+    char                             scratch[RKMaximumStringLength];
+    char                             payload[PAYLOAD_CAPACITY];
     int                              verbose;
     RKRadar                          *radar;
     
@@ -72,11 +76,8 @@ typedef struct rk_reporter {
     
     RKStream                         streams;
     RKStream                         streamsInProgress;
-    uint32_t                         healthIndex;
     uint32_t                         healthStride;
-    uint32_t                         pulseIndex;
     uint32_t                         pulseStride;
-    uint32_t                         rayIndex;
     uint32_t                         rayStride;
     char                             string[RKMaximumPacketSize];
     
