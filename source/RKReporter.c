@@ -10,6 +10,21 @@
 
 // Private declarations
 
+static void disconnectStreams(RKReporter *engine) {
+    if (engine->streamsInProgress & RKStreamHealthInJSON) {
+        engine->streamsInProgress ^= RKStreamHealthInJSON;
+        RKLog("%s Ended streaming RKStreamHealthInJSON ...\n", engine->name);
+    }
+    if (engine->streamsInProgress & RKStreamScopeStuff) {
+        engine->streamsInProgress ^= RKStreamScopeStuff;
+        RKLog("%s Ended streaming RKStreamScopeStuff ...\n", engine->name);
+    }
+    if (engine->streamsInProgress & RKStreamDisplayAll) {
+        engine->streamsInProgress &= !RKStreamDisplayAll;
+        RKLog("%s Ended streaming RKStreamDisplayAll ...\n", engine->name);
+    }
+}
+
 #pragma mark - Busy Loop
 
 void *reporter(void *in) {
@@ -19,7 +34,6 @@ void *reporter(void *in) {
     int h = 0;
     int p = 0;
     int r = 0;
-    int s;
 
     size_t payload_size;
     int count;
@@ -40,125 +54,117 @@ void *reporter(void *in) {
     engine->state |= RKEngineStateActive;
 
     while (engine->state & RKEngineStateActive) {
-        // Health Status
-        #pragma mark Health Status
-        
-        if (engine->streams & RKStreamHealthInJSON) {
-            if (!(engine->streamsInProgress & RKStreamHealthInJSON)) {
-                engine->streamsInProgress |= RKStreamHealthInJSON;
-                h = radar->healthIndex;
-                if (engine->verbose) {
-                    health = &radar->healths[h];
-                    RKLog("%s Begin streaming RKStreamHealthInJSON -> %d (0x%x %s).\n", engine->name, h,
-                          radar->healths[h].flag,
-                          radar->healths[h].flag == RKStatusFlagVacant ? "vacant" : "ready");
-                }
-            }
+        if (engine->ws->connected) {
 
-            health = &radar->healths[h];
+            // Health Status
+            #pragma mark Health Status
 
-            engine->state |= RKEngineStateSleep1;
-            s = 0;
-            while (health->flag != RKHealthFlagReady && engine->state & RKEngineStateActive && engine->ws->connected && s++ < 20) {
-                if (s % 10 == 0 && engine->verbose > 1) {
-                    RKLog("%s sleep 0/%.1f s\n", engine->name, s * 0.1f);
-                }
-                usleep(5000);
-            }
-            engine->state ^= RKEngineStateSleep1;
-
-            if (h % engine->healthStride) {
-                engine->state |= RKEngineStateSleep2;
-                usleep(10000);
-                engine->state ^= RKEngineStateSleep2;
-            } else if (health->flag == RKHealthFlagReady && engine->ws->connected) {
-                snprintf(payload, PAYLOAD_CAPACITY, "%c%s", RKRadarHubTypeHealth, health->string);
-                payload_size = 1 + strlen((char *)(payload + 1));
-                if (engine->verbose > 1) {
-                    if (payload_size < 64) {
-                        RKBinaryString(message, payload, payload_size);
-                    } else {
-                        RKHeadTailBinaryString(message, payload, payload_size);
+            if (engine->streams & RKStreamHealthInJSON) {
+                if (!(engine->streamsInProgress & RKStreamHealthInJSON)) {
+                    engine->streamsInProgress |= RKStreamHealthInJSON;
+                    h = radar->healthIndex;
+                    if (engine->verbose) {
+                        RKLog("%s Begin streaming RKStreamHealthInJSON   h = %d\n", engine->name, h);
                     }
-                    RKLog("%s K%02d %s (%zu)", engine->name, h, message, payload_size);
                 }
-                RKWebSocketSend(engine->ws, payload, payload_size);
-            } else {
-                RKLog("%s No Health / Deactivated.   healthIndex = %d / %d\n", engine->name, h, radar->healthIndex);
+
+                health = &radar->healths[h];
+
+                if (health->flag & RKHealthFlagReady) {
+                    if (h % engine->healthStride) {
+                        usleep(1);
+                    } else {
+                        snprintf(payload, PAYLOAD_CAPACITY, "%c%s", RKRadarHubTypeHealth, health->string);
+                        payload_size = 1 + strlen((char *)(payload + 1));
+                        if (engine->verbose > 1) {
+                            if (payload_size < 64) {
+                                RKBinaryString(message, payload, payload_size);
+                            } else {
+                                RKHeadTailBinaryString(message, payload, payload_size);
+                            }
+                            RKLog("%s H%02d %s (%zu)", engine->name, h, message, payload_size);
+                        }
+                        RKWebSocketSend(engine->ws, payload, payload_size);
+                    }
+                    health->flag |= RKHealthFlagUsed;
+                    h = RKNextModuloS(h, radar->desc.healthBufferDepth);
+                }
             }
 
-            h = RKNextModuloS(h, radar->desc.healthBufferDepth);
+            // AScope Samples
+            #pragma mark AScope Samples
+            if (engine->streams & RKStreamScopeStuff) {
+                if (!(engine->streamsInProgress & RKStreamScopeStuff)) {
+                    engine->streamsInProgress |= RKStreamScopeStuff;
+                    p = radar->pulseIndex;
+                    if (engine->verbose) {
+                        RKLog("%s Begin streaming RKStreamScopeStuff   p = %d\n", engine->name, p);
+                    }
+                }
+
+                pulse = RKGetPulseFromBuffer(radar->pulses, p);
+
+                if (pulse->header.s & RKPulseStatusReadyForMoments) {
+                    if (p % engine->pulseStride) {
+                        usleep(1);
+                    } else if (engine->ws->connected) {
+                        count = 100;
+                        *(char *)payload = RadarHubTypeScope;
+                        payload_size = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
+                        xh = RKGetInt16CDataFromPulse(pulse, 0);
+                        xv = RKGetInt16CDataFromPulse(pulse, 1);
+                        y = (int16_t *)(payload + 1);
+                        for (int k = 0; k < count; k++) {
+                            *(y            ) = xh->i;
+                            *(y + count    ) = xh->q;
+                            *(y + count * 2) = xv->i;
+                            *(y + count * 3) = xv->q;
+                            xh++;
+                            xv++;
+                            y++;
+                        }
+                        if (engine->verbose > 1) {
+                            RKLog("%s P%04d i=%06zu A%.2f\n", engine->name, p, pulse->header.i, pulse->header.azimuthDegrees);
+                        }
+                        RKWebSocketSend(engine->ws, payload, payload_size);
+                    }
+                    p = RKNextModuloS(p, radar->desc.pulseBufferDepth);
+                }
+            }
+
+            // Product Display Data
+            #pragma mark Product Display
+            if (engine->streams & RKStreamDisplayAll) {
+                if ((engine->streamsInProgress & RKStreamDisplayAll) != (engine->streams & RKStreamDisplayAll)) {
+                    engine->streamsInProgress |= (engine->streams & RKStreamDisplayAll);
+                    r = radar->rayIndex;
+                    if (engine->verbose) {
+                        RKLog("%s Begin streaming RKStreamDisplay   r = %d\n", engine->name, r);
+                    }
+                }
+
+                ray = RKGetRayFromBuffer(radar->rays, r);
+
+                if (r % engine->rayStride) {
+                    ray->header.s |= RKRayStatusStreamed;
+                    r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
+                } else if (ray->header.s & RKRayStatusReady) {
+                    ray->header.s |= RKRayStatusStreamed;
+                    r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
+                } else if (engine->verbose > 2) {
+                    RKLog("%s Ray not ready   r = %d   radar->rayIndex = %d\n", engine->name, r, radar->rayIndex);
+                }
+            }
+
+        } else {
+
+            disconnectStreams(engine);
+
         }
-        
-        // AScope Samples
-        #pragma mark AScope Samples
-        if (engine->streams & RKStreamScopeStuff) {
-            if (!(engine->streamsInProgress & RKStreamScopeStuff)) {
-                engine->streamsInProgress |= RKStreamScopeStuff;
-                p = radar->pulseIndex;
-                if (engine->verbose) {
-                    pulse = RKGetPulseFromBuffer(radar->pulses, p);
-                    RKLog("%s Begin streaming RKStreamScopeStuff -> %d (0x%x %s).\n", engine->name, p,
-                          pulse->header.s, pulse->header.s & RKPulseStatusHasIQData ? "IQ" : "N");
-                }
-            }
-
-            pulse = RKGetPulseFromBuffer(radar->pulses, p);
-
-            engine->state |= RKEngineStateSleep1;
-            s = 0;
-            while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateActive && engine->ws->connected && s++ < 20) {
-                if (s % 10 == 0 && engine->verbose > 1) {
-                    RKLog("%s sleep 0/%.1f s\n", engine->name, s * 0.1f);
-                }
-                usleep(5000);
-            }
-            engine->state ^= RKEngineStateSleep1;
-
-            if (p % engine->pulseStride) {
-                engine->state |= RKEngineStateSleep2;
-                usleep(10000);
-                engine->state ^= RKEngineStateSleep2;
-            } else if (pulse->header.s & RKPulseStatusHasIQData && engine->ws->connected) {
-                if (engine->verbose) {
-                    RKLog("%s pulse %d %zu A%.2\n", engine->name, p, pulse->header.i, pulse->header.azimuthDegrees);
-                }
-                count = 100;
-                *(char *)payload = RadarHubTypeScope;
-                payload_size = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
-                xh = RKGetInt16CDataFromPulse(pulse, 0);
-                xv = RKGetInt16CDataFromPulse(pulse, 1);
-                y = (int16_t *)(payload + 1);
-                for (int k = 0; k < count; k++) {
-                    *(y            ) = xh->i;
-                    *(y + count    ) = xh->q;
-                    *(y + count * 2) = xv->i;
-                    *(y + count * 3) = xv->q;
-                    xh++;
-                    xv++;
-                }
-                RKLog("%s pulse %d\n", engine->name, p);
-                RKWebSocketSend(engine->ws, payload, payload_size);
-            } else {
-                RKLog("%s No Health / Deactivated.   healthIndex = %d / %d\n", engine->name, h, radar->healthIndex);
-            }
-
-            p = RKNextModuloS(p, radar->desc.pulseBufferDepth);
-        }
-
-        // Product Display Data
-        #pragma mark Product Display
-        
-        s = 0;
-        do {
-            usleep(1000);
-        } while (engine->state & RKEngineStateActive && s++ < 10);
+        usleep(1000);
     }
 
-    if (engine->streamsInProgress & RKStreamHealthInJSON) {
-        RKLog("%s End streaming RKHealth\n", engine->name);
-        engine->streamsInProgress ^= RKStreamHealthInJSON;
-    }
+    disconnectStreams(engine);
 
     return NULL;
 }
@@ -217,7 +223,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->healthStride = 2;
-    engine->pulseStride = 2;
+    engine->pulseStride = 100;
     engine->rayStride = 1;
     engine->memoryUsage = sizeof(RKReporter);
     strncpy(engine->host, host, RKNameLength);
