@@ -360,7 +360,7 @@ void RKRawDataRecorderSetCacheSize(RKRawDataRecorder *engine, uint32_t size) {
         engine->memoryUsage -= engine->cacheSize;
     }
     engine->cacheSize = size;
-    if (posix_memalign((void **)&engine->cache, RKSIMDAlignSize, engine->cacheSize)) {
+    if (posix_memalign((void **)&engine->cache, RKMemoryAlignSize, engine->cacheSize)) {
         RKLog("%s Error. Unable to allocate cache.", engine->name);
         exit(EXIT_FAILURE);
     }

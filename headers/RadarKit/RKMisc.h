@@ -80,8 +80,8 @@ RKUIntegerToCommaStyleString(sizeof(x)));
 printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor \
 "   \033[40G" RKOrangeColor "SIMDAlign" RKNoColor " = " RKPurpleColor "%s" RKNoColor "  %s\n", \
 RKUIntegerToCommaStyleString(sizeof(x)), \
-sizeof(x) % RKSIMDAlignSize == 0 ? "True" : "False", \
-sizeof(x) % RKSIMDAlignSize != 0 ? RKWarningColor " WARNING " RKNoColor : "");
+sizeof(x) % RKMemoryAlignSize == 0 ? "True" : "False", \
+sizeof(x) % RKMemoryAlignSize != 0 ? RKWarningColor " WARNING " RKNoColor : "");
 
 #if defined(__APPLE__)
 

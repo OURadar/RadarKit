@@ -1288,11 +1288,11 @@ void RKTestReadIQ(const char *filename) {
     }
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
-    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
+    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKMemoryAlignSize)) * RKMemoryAlignSize;
     if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
         u32 = fileHeader->desc.pulseCapacity;
     } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
-        u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(int16_t);
+        u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(int16_t);
     } else {
         RKLog("Error. Unable to handle dataType %d", fileHeader->dataType);
         exit(EXIT_FAILURE);
@@ -1485,7 +1485,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKSIMD_show_info();
 
     int i;
-    const int n = RKSIMDAlignSize / sizeof(RKFloat) * 2;
+    const int n = RKMemoryAlignSize / sizeof(RKFloat) * 2;
 
     for (i = 1; i <= 8; i++) {
         RKSIMD_show_count(i);
@@ -1502,15 +1502,15 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     RKComplex *cd;
     RKComplex *cc;
 
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKSIMDAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->i, RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&src->q, RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->i, RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&dst->q, RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->i, RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cpy->q, RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cs,     RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cd,     RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&cc,     RKMemoryAlignSize, RKMaximumGateCount * sizeof(RKComplex)));
 
     const RKFloat tiny = 1.0e-3f;
     bool good;
@@ -2507,11 +2507,11 @@ void RKTestPulseCompressionSpeed(const int offt) {
     RKLog("Allocating memory for %s sample pulses (o = %d) ...\n",
         RKIntegerToCommaStyleString(nfft), offt);
 
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKSIMDAlignSize, nfft * sizeof(RKInt16C)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&Y, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&f, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&X, RKMemoryAlignSize, nfft * sizeof(RKInt16C)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&Y, RKMemoryAlignSize, nfft * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&f, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (in == NULL || out == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return;

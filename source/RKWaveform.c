@@ -72,8 +72,8 @@ RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
         RKLog("Warning. Waveform count is clamped to %s\n", RKIntegerToCommaStyleString(waveform->count));
     }
     for (k = 0; k < waveform->count; k++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKComplex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[k], RKSIMDAlignSize, waveform->depth * sizeof(RKInt16C)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[k], RKMemoryAlignSize, waveform->depth * sizeof(RKComplex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[k], RKMemoryAlignSize, waveform->depth * sizeof(RKInt16C)));
         if (waveform->samples[k] == NULL || waveform->iSamples[k] == NULL) {
             RKLog("Error. Unable to allocate memory.\n");
             exit(EXIT_FAILURE);
@@ -284,8 +284,8 @@ RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *append
     //waveform->iSamples[0] = realloc(waveform->iSamples[0], depth * sizeof(RKInt16C));
     RKComplex *samples = waveform->samples[0];
     RKInt16C *iSamples = waveform->iSamples[0];
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[0], RKSIMDAlignSize, depth * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[0], RKSIMDAlignSize, depth * sizeof(RKInt16C)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->samples[0], RKMemoryAlignSize, depth * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&waveform->iSamples[0], RKMemoryAlignSize, depth * sizeof(RKInt16C)));
     memcpy(waveform->samples[0], samples, waveform->depth * sizeof(RKComplex));
     memcpy(waveform->iSamples[0], iSamples, waveform->depth * sizeof(RKInt16C));
     free(samples);
@@ -678,8 +678,8 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
 
     int nfft = (int)powf(2.0f, ceilf(log2f((float)waveform->depth)));
 
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&w, RKSIMDAlignSize, nfft * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKSIMDAlignSize, nfft * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&w, RKMemoryAlignSize, nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&s, RKMemoryAlignSize, nfft * sizeof(RKComplex)));
 
     // Generate an SSB equivalent so that a real-valued function cos(omega t) becomes exp(i omage t)
     if (!(waveform->type & RKWaveformTypeIsComplex)) {

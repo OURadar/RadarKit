@@ -50,7 +50,7 @@
 // RKMaximumControlCount The number of controls (buttons)
 // RKMaximumCalibrationCount The number of waveform calibration set
 // RKMaximumGateCount The maximum number of gates allocated for each pulse
-// RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
+// RKMemoryAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
 //
 
 #pragma mark - Constants
@@ -65,8 +65,8 @@
 #define RKBuffer3SlotCount                   100                               // Products - Level III - Ready for archive
 #define RKMaximumControlCount                128                               // Controls
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
-#define RKMaximumGateCount                   262144                            // Must be a multiple of RKSIMDAlignSize
-#define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
+#define RKMaximumGateCount                   262144                            // Must be a multiple of RKMemoryAlignSize
+#define RKMemoryAlignSize                    64                                // SSE 16, AVX 32, AVX-512 64
 #define RKMomentCount                        26                                // 32 to be the absolute max since momentList enum is 32-bit
 #define RKBaseProductCount                   10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed

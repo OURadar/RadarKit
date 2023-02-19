@@ -16,7 +16,9 @@ endif
 
 CFLAGS += -std=gnu99
 CFLAGS += -Woverlength-strings
-CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
+#CFLAGS += -march=native
+#CFLAGS += -mfpmath=sse
+CFLAGS += -Wall -Wno-unknown-pragmas
 CFLAGS += -I headers -I headers/RadarKit -fPIC
 
 LDFLAGS = -L./

@@ -943,25 +943,25 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
 //    RKIQZ              Z[2];
 //
 size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
-    size_t alignment = RKSIMDAlignSize / sizeof(RKFloat);
+    size_t alignment = RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity != (capacity / alignment) * alignment) {
         RKLog("Error. Pulse capacity must be multiple of %d!", alignment);
         return 0;
     }
     RKPulse *pulse;
     size_t headerSize = sizeof(pulse->headerBytes);
-    if (headerSize != (headerSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
+    if (headerSize != (headerSize / RKMemoryAlignSize) * RKMemoryAlignSize) {
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
     size_t channelCount = 2;
     size_t pulseSize = headerSize + channelCount * capacity * (sizeof(RKInt16C) + 4 * sizeof(RKFloat));
-    if (pulseSize != (pulseSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
+    if (pulseSize != (pulseSize / RKMemoryAlignSize) * RKMemoryAlignSize) {
         RKLog("Error. The total pulse size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(pulseSize));
         return 0;
     }
     size_t bytes = count * pulseSize;
-    if (posix_memalign((void **)mem, RKSIMDAlignSize, bytes)) {
+    if (posix_memalign((void **)mem, RKMemoryAlignSize, bytes)) {
         RKLog("Error. Unable to allocate pulse buffer.");
         exit(EXIT_FAILURE);
     }
@@ -1123,14 +1123,14 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
 //    int16_t            sdata[RKMomentCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
-    size_t alignment = RKSIMDAlignSize / sizeof(RKFloat);
+    size_t alignment = RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity != (capacity / alignment) * alignment) {
         RKLog("Error. Ray capacity must be a multiple of %d!", alignment);
         return 0;
     }
     RKRay *ray;
     size_t headerSize = sizeof(ray->headerBytes);
-    if (headerSize != (headerSize / RKSIMDAlignSize) * RKSIMDAlignSize) {
+    if (headerSize != (headerSize / RKMemoryAlignSize) * RKMemoryAlignSize) {
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
@@ -1141,7 +1141,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t c
         return 0;
     }
     size_t bytes = count * raySize;
-    if (posix_memalign((void **)mem, RKSIMDAlignSize, bytes)) {
+    if (posix_memalign((void **)mem, RKMemoryAlignSize, bytes)) {
         RKLog("Error. Unable to allocate ray buffer.");
         exit(EXIT_FAILURE);
     }

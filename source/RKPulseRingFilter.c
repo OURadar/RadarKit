@@ -135,7 +135,7 @@ static void *ringFilterCore(void *_in) {
     RKPulse *pulse;
     size_t mem = 0;
     
-    if ((me->processOrigin * sizeof(RKFloat)) % RKSIMDAlignSize > 0) {
+    if ((me->processOrigin * sizeof(RKFloat)) % RKMemoryAlignSize > 0) {
         RKLog("%s %s Error. Each filter origin must align to the SIMD requirements.\n", engine->name, me->name);
         return NULL;
     }
@@ -145,10 +145,10 @@ static void *ringFilterCore(void *_in) {
     RKIQZ yy;
     const int depth = RKMaximumIIRFilterTaps;
     size_t filterSize = depth * engine->radarDescription->pulseCapacity / engine->coreCount * sizeof(RKFloat);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.i, RKSIMDAlignSize, 2 * filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.q, RKSIMDAlignSize, 2 * filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.i, RKSIMDAlignSize, 2 * filterSize));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.q, RKSIMDAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.i, RKMemoryAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&xx.q, RKMemoryAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.i, RKMemoryAlignSize, 2 * filterSize));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&yy.q, RKMemoryAlignSize, 2 * filterSize));
     memset(xx.i, 0, 2 * filterSize);
     memset(xx.q, 0, 2 * filterSize);
     memset(yy.i, 0, 2 * filterSize);
@@ -156,8 +156,8 @@ static void *ringFilterCore(void *_in) {
     mem += 8 * filterSize;
 
     double *busyPeriods, *fullPeriods;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         exit(EXIT_FAILURE);
@@ -429,7 +429,7 @@ static void *pulseRingWatcher(void *_in) {
     
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
-    uint32_t paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize / sizeof(RKFloat));
+    uint32_t paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKMemoryAlignSize) * engine->coreCount * RKMemoryAlignSize / sizeof(RKFloat));
     uint32_t length = paddedGateCount / engine->coreCount;
     uint32_t origin = 0;
     if (engine->verbose > 2) {
@@ -559,7 +559,7 @@ static void *pulseRingWatcher(void *_in) {
         // Update processing region if necessary
         if (gateCount != MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
             gateCount = MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount);
-            paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKSIMDAlignSize) * engine->coreCount * RKSIMDAlignSize / sizeof(RKFloat));
+            paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKMemoryAlignSize) * engine->coreCount * RKMemoryAlignSize / sizeof(RKFloat));
             RKLog("%s %s   %s", engine->name,
                   RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
                   RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32));

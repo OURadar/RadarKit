@@ -148,7 +148,7 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
        // Copy and convert the samples
         RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
         X += filterAnchor->inputOrigin;
-        if (filterAnchor->inputOrigin % RKSIMDAlignSize == 0) {
+        if (filterAnchor->inputOrigin % RKMemoryAlignSize == 0) {
             RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
         } else {
             RKSIMD_Int2Complex_reg(X, (RKComplex *)in, inBound);
@@ -299,15 +299,15 @@ static void *pulseEngineCore(void *_in) {
         RKLog("%s Error. Unable to allocate a scratch space.\n", engine->name);
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     size_t mem = 2 * nfft * sizeof(fftwf_complex);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
     if (scratch->zi == NULL || scratch->zo == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         return (void *)RKResultFailedToAllocateFFTSpace;
@@ -315,8 +315,8 @@ static void *pulseEngineCore(void *_in) {
     mem += 2 * nfft * sizeof(RKFloat);
 
     double *busyPeriods, *fullPeriods;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKSIMDAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
@@ -808,7 +808,7 @@ void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc
     engine->state |= RKEngineStateMemoryChange;
     for (int g = 0; g < RKMaximumWaveformCount; g++) {
         for (int i = 0; i < RKMaximumFilterCount; i++) {
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[g][i], RKSIMDAlignSize, bytes))
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&engine->filters[g][i], RKMemoryAlignSize, bytes))
             engine->memoryUsage += bytes;
         }
     }

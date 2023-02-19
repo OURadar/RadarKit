@@ -438,7 +438,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Allocate self
     bytes = sizeof(RKRadar);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&radar, RKSIMDAlignSize, bytes))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&radar, RKMemoryAlignSize, bytes))
     memset(radar, 0, bytes);
 
     // Get the number of CPUs
@@ -504,7 +504,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.pulseCapacity == 0) {
         radar->desc.pulseCapacity = 1;
     }
-    uint32_t stride = radar->desc.pulseToRayRatio * RKSIMDAlignSize;
+    uint32_t stride = radar->desc.pulseToRayRatio * RKMemoryAlignSize;
     radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + stride - 1) / stride) * stride / sizeof(RKFloat);
     if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Info. Pulse capacity changed from %s to %s (stride = %d RKFloats, %d B)\n",
@@ -697,7 +697,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Ray (moment) and product buffers
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
-        k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) * sizeof(RKFloat) / (float)RKSIMDAlignSize)) * RKSIMDAlignSize / sizeof(RKFloat);
+        k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) * sizeof(RKFloat) / (float)RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
         if (bytes == 0 || radar->rays == NULL) {
             RKLog("Error. Unable to allocate memory for rays.\n");
