@@ -10,9 +10,9 @@
 #define __RadarHub_Types__
 
 enum RadarHubType {
-    RadarHubTypeHandshake       = 1,             // JSON message {"radar":"px1000","command":"radarConnect"}
-    RadarHubTypeControl         = 2,             // JSON control {"Go":{...},"Stop":{...},...}
-    RadarHubTypeHealth          = 3,             // JSON health {"Transceiver":{...},"Pedestal":{...},...}
+    RadarHubTypeHandshake       = 1,             // JSON message {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}
+    RadarHubTypeControl         = 2,             // JSON control {"Go":{...}, "Stop":{...},...}
+    RadarHubTypeHealth          = 3,             // JSON health {"Transceiver":{...}, "Pedestal":{...},...}
     RadarHubTypeReserve4        = 4,             //
     RadarHubTypeScope           = 5,             // Scope data in binary
     RadarHubTypeResponse        = 6,             // Plain text response

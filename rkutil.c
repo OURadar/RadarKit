@@ -1,5 +1,5 @@
 //
-//  main.c
+//  rkutil.c
 //  RadarKit Utility
 //
 //  Created by Boonleng Cheong
