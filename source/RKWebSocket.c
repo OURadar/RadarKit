@@ -190,7 +190,7 @@ static int RKWebSocketConnect(RKWebSocket *R) {
         return -1;
     }
 
-    if (R->verbose) {
+    if (R->verbose > 1) {
         printf("\nConnecting %s:%d %s...\n", R->ip, R->port,
             R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
     }
@@ -236,7 +236,7 @@ static int RKWebSocketConnect(RKWebSocket *R) {
         R->path,
         R->host,
         R->secret);
-    if (R->verbose > 1) {
+    if (R->verbose > 2) {
         printf("%s", buf);
     }
 

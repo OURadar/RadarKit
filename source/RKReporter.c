@@ -109,7 +109,7 @@ void *reporter(void *in) {
                         usleep(1);
                     } else if (engine->ws->connected) {
                         count = 100;
-                        *(char *)payload = RadarHubTypeScope;
+                        *(char *)payload = RKRadarHubTypeScope;
                         payload_size = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
                         xh = RKGetInt16CDataFromPulse(pulse, 0);
                         xv = RKGetInt16CDataFromPulse(pulse, 1);
@@ -175,18 +175,17 @@ void *reporter(void *in) {
 
 void handleOpen(RKWebSocket *w) {
     RKReporter *engine = (RKReporter *)w->parent;
-    if (engine->verbose) {
-        printf("RKReporter: ONOPEN\n");
-    }
     size_t r = sprintf(engine->welcome,
         "%c{"
             "\"command\":\"radarConnect\", "
             "\"pathway\":\"%s\", "
             "\"name\":\"%s\""
         "}",
-        RadarHubTypeHandshake, engine->pathway, engine->radar->desc.name);
+        RKRadarHubTypeHandshake, engine->pathway, engine->radar->desc.name);
     RKLog("%s Sending open packet %s ...\n", engine->name, engine->address);
-    RKLog("%s %s\n", engine->name, engine->welcome);
+    if (engine->verbose) {
+        RKLog("%s %s\n", engine->name, engine->welcome);
+    }
     RKWebSocketSend(w, engine->welcome, r);
 //    sendControl(w);
 }

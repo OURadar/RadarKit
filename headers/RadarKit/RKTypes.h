@@ -874,7 +874,7 @@ enum {
 };
 
 typedef uint32_t RKFileType;
-enum {
+enum RKFileType {
     RKFileTypeIQ,
     RKFileTypeMoment,
     RKFileTypeHealth,
@@ -883,7 +883,7 @@ enum {
 };
 
 typedef uint64_t RKStream;
-enum {
+enum RKStream {
     RKStreamNull                                 = 0,                          //
     RKStreamStatusMask                           = 0x0F,                       // Values 0-15 in the lowest 4 bits (exclusive mode)
     RKStreamStatusPositions                      = 1,                          //
@@ -945,7 +945,7 @@ enum {
 };
 
 typedef uint8_t RKHostStatus;
-enum {
+enum RKHostStatus {
     RKHostStatusUnknown,
     RKHostStatusUnreachable,
     RKHostStatusPartiallyReachable,
@@ -954,7 +954,7 @@ enum {
 };
 
 typedef uint32_t RKProductStatus;
-enum {
+enum RKProductStatus {
     RKProductStatusVacant                        = 0,                          //
     RKProductStatusActive                        = (1 << 0),                   // This slot has been registered
     RKProductStatusBusy                          = (1 << 1),                   // Waiting for processing node
@@ -966,7 +966,7 @@ enum {
 };
 
 typedef uint32_t RKTextPreferences;
-enum {
+enum RKTextPreferences {
     RKTextPreferencesNone                        = 0,                          //
     RKTextPreferencesShowColor                   = 1,                          // Use escape sequence for colors
     RKTextPreferencesDrawBackground              = (1 << 1),                   // Repaint the background
@@ -981,7 +981,7 @@ enum {
 };
 
 typedef uint32_t RKWaveformType;
-enum {
+enum RKWaveformType {
     RKWaveformTypeNone                           = 0,                          //
     RKWaveformTypeIsComplex                      = 1,                          // Complex form usually represents baseband
     RKWaveformTypeSingleTone                     = (1 << 1),                   // The traditional single frequency waveform
@@ -994,14 +994,14 @@ enum {
 };
 
 typedef uint32_t RKEventType;
-enum {
+enum RKEventType {
     RKEventTypeNull,                                                           //
     RKEventTypeRaySweepBegin,                                                  //
     RKEventTypeRaySweepEnd                                                     //
 };
 
 typedef uint8_t RKFilterType;
-enum {
+enum RKFilterType {
     RKFilterTypeNull,                                                          // No filter
     RKFilterTypeElliptical1,                                                   // Elliptical filter, high pass at 0.1 rad / sample
     RKFilterTypeElliptical2,                                                   // Elliptical filter, high pass at 0.2 rad / sample
@@ -1014,17 +1014,17 @@ enum {
 };
 
 typedef uint8_t RKRawDataType;
-enum {
+enum RKRawDataType {
     RKRawDataTypeNull,                                                         // No recording
     RKRawDataTypeFromTransceiver,                                              // Raw straight from the digital transceiver (RKInt16C)
     RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression (RKFloat)
 };
 
 typedef uint8_t RadarHubType;
-enum {
-    RKRadarHubTypeHandshake                      = 1,                          // JSON message {"radar":"px1000","command":"radarConnect"}
-    RKRadarHubTypeControl                        = 2,                          // JSON control {"Go":{...},"Stop":{...},...}
-    RKRadarHubTypeHealth                         = 3,                          // JSON health {"Transceiver":{...},"Pedestal":{...},...}
+enum RadarHubType {
+    RKRadarHubTypeHandshake                      = 1,                          // JSON message {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}
+    RKRadarHubTypeControl                        = 2,                          // JSON control {"Go":{...}, "Stop":{...},...}
+    RKRadarHubTypeHealth                         = 3,                          // JSON health {"Transceiver":{...}, "Pedestal":{...},...}
     RKRadarHubTypeReserve4                       = 4,                          //
     RKRadarHubTypeScope                          = 5,                          // Scope data in binary
     RKRadarHubTypeResponse                       = 6,                          // Plain text response
