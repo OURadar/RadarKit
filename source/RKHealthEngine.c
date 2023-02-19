@@ -46,6 +46,13 @@ static void *healthConsolidator(void *_in) {
 
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
+    // Wait for the master node RKHealthNodeRadarKit to advance once (When RKRadar uses GetVacantHealth from RKHealthNodeRadarKit)
+    s = 0;
+    do {
+        usleep(100000);
+    } while (engine->healthNodes[RKHealthNodeRadarKit].index == 0 && s++ < 5);
+    RKLog("%s healthNodes[%d].index = %d   s = %d\n", engine->name, RKHealthNodeRadarKit, engine->healthNodes[RKHealthNodeRadarKit].index, s);
+
     k = 0;   // health index
     while (engine->state & RKEngineStateWantActive) {
         // Evaluate the nodal-health buffers every once in a while

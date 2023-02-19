@@ -880,7 +880,6 @@ int main(int argc, const char **argv) {
     // Make a reporter and have it call a RadarHub
     RKReporter *reporter = RKReporterInit();
     int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
-    RKLog("WebSocket verbosity = %d\n", v);
     RKReporterSetVerbose(reporter, v);
     RKReporterSetRadar(reporter, myRadar);
     RKReporterStart(reporter);
