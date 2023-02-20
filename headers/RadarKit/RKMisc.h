@@ -286,8 +286,8 @@ int RKMergeColumns(char *, const char *, const char *, const int);
 //
 //
 
-char *RKBinaryString(char *dst, void *src, size_t count);
-void RKHeadTailBinaryString(char *dst, void *src, size_t count);
+char *RKBinaryString(char *dst, void *src, const size_t count);
+void RKHeadTailBinaryString(char *dst, void *src, const size_t count);
 
 //
 //

@@ -23,7 +23,7 @@ typedef struct rk_reporter {
     char                             control[RKMaximumStringLength];
     char                             message[RKMaximumStringLength];
     char                             scratch[RKMaximumStringLength];
-    char                             payload[PAYLOAD_CAPACITY];
+    char                             payload[4][PAYLOAD_CAPACITY];
     int                              verbose;
     RKRadar                          *radar;
 

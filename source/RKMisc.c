@@ -1498,7 +1498,7 @@ int RKMergeColumns(char *text, const char *left, const char *right, const int in
     return w;
 }
 
-char *RKBinaryString(char *dst, void *src, size_t count) {
+char *RKBinaryString(char *dst, void *src, const size_t count) {
     uint8_t *c = (uint8_t *)src;
     *dst++ = 'b';
     *dst++ = '\'';
@@ -1517,7 +1517,7 @@ char *RKBinaryString(char *dst, void *src, size_t count) {
     return dst;
 }
 
-void RKHeadTailBinaryString(char *dst, void *src, size_t count) {
+void RKHeadTailBinaryString(char *dst, void *src, const size_t count) {
     char *tail = RKBinaryString(dst, src, 25);
     RKBinaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
 }

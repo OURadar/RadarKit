@@ -462,7 +462,7 @@ enum {
 };
 
 typedef uint32_t RKPositionFlag;
-enum {
+enum RKPositionFlag {
     RKPositionFlagVacant                         = 0,
     RKPositionFlagAzimuthEnabled                 = 1,                          //  0 - EN
     RKPositionFlagAzimuthSafety                  = (1 << 1),                   //  1
@@ -487,7 +487,7 @@ enum {
 };
 
 typedef uint32_t RKHeadingType;
-enum {
+enum RKHeadingType {
     RKHeadingTypeNormal,
     RKHeadingTypeAdd90,
     RKHeadingTypeAdd180,
@@ -495,20 +495,20 @@ enum {
 };
 
 typedef uint32_t RKStatusFlag;
-enum {
+enum RKStatusFlag {
     RKStatusFlagVacant                           = 0,
     RKStatusFlagReady                            = 1
 };
 
 typedef uint32_t RKHealthFlag;
-enum {
+enum RKHealthFlag {
     RKHealthFlagVacant                           = 0,
     RKHealthFlagReady                            = 1,
     RKHealthFlagUsed                             = (1 << 1)
 };
 
 typedef uint32_t RKMarker;
-enum {
+enum RKMarker {
     RKMarkerNull                                 = 0,
     RKMarkerSweepMiddle                          = 1,                          //
     RKMarkerSweepBegin                           = (1 << 1),                   //  0000 0010
@@ -539,7 +539,7 @@ enum {
 // -> RKPulseStatusReadyForMoments
 //
 typedef uint32_t RKPulseStatus;
-enum {
+enum RKPulseStatus {
     RKPulseStatusVacant                          = 0,
     RKPulseStatusHasIQData                       = 1,                          // 0x01
     RKPulseStatusHasPosition                     = (1 << 1),                   // 0x02
@@ -554,11 +554,12 @@ enum {
     RKPulseStatusRingProcessed                   = (1 << 10),
     RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
     RKPulseStatusUsedForMoments                  = (1 << 11),
-    RKPulseStatusRecorded                        = (1 << 12)
+    RKPulseStatusRecorded                        = (1 << 12),
+    RKPulseStatusStreamed                        = (1 << 13)
 };
 
 typedef uint32_t RKRayStatus;
-enum {
+enum RKRayStatus {
     RKRayStatusVacant                            = 0,
     RKRayStatusProcessing                        = 1,
     RKRayStatusProcessed                         = (1 << 1),
@@ -569,7 +570,7 @@ enum {
 };
 
 typedef uint32_t RKInitFlag;
-enum {
+enum RKInitFlag {
     RKInitFlagNone                               = 0,
     RKInitFlagVerbose                            = 0x00000001,
     RKInitFlagVeryVerbose                        = 0x00000002,

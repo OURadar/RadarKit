@@ -39,7 +39,7 @@ void *reporter(void *in) {
     int count;
 
     char *message = engine->message;
-    void *payload = engine->payload;
+    void *payload = NULL;
 
     int16_t *y;
 
@@ -58,7 +58,6 @@ void *reporter(void *in) {
 
             // Health Status
             #pragma mark Health Status
-
             if (engine->streams & RKStreamHealthInJSON) {
                 if (!(engine->streamsInProgress & RKStreamHealthInJSON)) {
                     engine->streamsInProgress |= RKStreamHealthInJSON;
@@ -74,6 +73,9 @@ void *reporter(void *in) {
                     if (h % engine->healthStride) {
                         usleep(1);
                     } else {
+                        // Use payload 0 as target
+                        payload = engine->payload[0];
+                        // Put together the health payload for RadarHub
                         snprintf(payload, PAYLOAD_CAPACITY, "%c%s", RKRadarHubTypeHealth, health->string);
                         payload_size = 1 + strlen((char *)(payload + 1));
                         if (engine->verbose > 1) {
@@ -108,6 +110,9 @@ void *reporter(void *in) {
                     if (p % engine->pulseStride) {
                         usleep(1);
                     } else if (engine->ws->connected) {
+                        // Use payload 1 as target
+                        payload = engine->payload[1];
+                        // Put together the payload for RadarHub
                         count = 100;
                         *(char *)payload = RKRadarHubTypeScope;
                         payload_size = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
@@ -133,12 +138,14 @@ void *reporter(void *in) {
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
+                    pulse->header.s |= RKPulseStatusStreamed;
                     p = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 }
             }
 
             // Product Display Data
             #pragma mark Product Display
+            payload = engine->payload[2];
             if (engine->streams & RKStreamDisplayAll) {
                 if ((engine->streamsInProgress & RKStreamDisplayAll) != (engine->streams & RKStreamDisplayAll)) {
                     engine->streamsInProgress |= (engine->streams & RKStreamDisplayAll);
@@ -154,12 +161,18 @@ void *reporter(void *in) {
                     ray->header.s |= RKRayStatusStreamed;
                     r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 } else if (ray->header.s & RKRayStatusReady) {
+                    // Use payload 2 as target
+                    payload = engine->payload[2];
+                    // Put together the payload for RadarHub
                     ray->header.s |= RKRayStatusStreamed;
                     r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 } else if (engine->verbose > 2) {
                     RKLog("%s Ray not ready   r = %d   radar->rayIndex = %d\n", engine->name, r, radar->rayIndex);
                 }
             }
+
+            // Others
+            payload = engine->payload[3];
 
         } else {
 
