@@ -44,6 +44,7 @@ typedef struct rk_reporter {
     uint32_t                         healthStride;
     uint32_t                         pulseStride;
     uint32_t                         rayStride;
+    uint32_t                         fps;
     char                             string[RKMaximumPacketSize];
 
 } RKReporter;

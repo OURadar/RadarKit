@@ -431,7 +431,7 @@ void *transporter(void *in) {
                         if (W->verbose > 2) {
                             printf("%2u read  ", total); RKShowWebsocketFrameHeader(W);
                         }
-                        printf("S-%s: \033[38;5;220m%s%s\033[m (%zu)\n",
+                        printf("RKWebSocket.transporter: S-%s: \033[38;5;220m%s%s\033[m (%zu)\n",
                             OPCODE_STRING(h->opcode), (char *)anchor, size > 64 ? " ..." : "", size);
                     }
                     W->timeoutCount = 0;
