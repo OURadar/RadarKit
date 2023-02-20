@@ -379,10 +379,12 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    const float q[4] = {1.0, -1.0, 1.0, -1.0};
 	RKVec r, i, x;
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
-	RKVec c = _rk_mm_set_pf(-1.0, 1.0, -1.0, 1.0);               // [  1  -1   1  -1 ]
+	//RKVec c = _rk_mm_set_pf(-1.0, 1.0, -1.0, 1.0);               // [  1  -1   1  -1 ]
+    RKVec c = _rk_mm_set_pf(q);                                  // [  1  -1   1  -1 ]
 	for (k = 0; k < K; k++) {
         *d = _rk_mm_mul_pf(*d, c);                               // [  c  -d   z  -w ]
 		r = _rk_mm_moveldup_pf(*s);                              // [  a   a   x   x ]
