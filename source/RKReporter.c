@@ -114,7 +114,7 @@ void *reporter(void *in) {
                         xh = RKGetInt16CDataFromPulse(pulse, 0);
                         xv = RKGetInt16CDataFromPulse(pulse, 1);
                         y = (int16_t *)(payload + 1);
-                        for (int k = 0; k < count; k++) {
+                        for (int k = 0; k < count - 1; k++) {
                             *(y            ) = xh->i;
                             *(y + count    ) = xh->q;
                             *(y + count * 2) = xv->i;
@@ -123,6 +123,11 @@ void *reporter(void *in) {
                             xv++;
                             y++;
                         }
+                        *(y            ) = -1;
+                        *(y + count    ) = 1;
+                        *(y + count * 2) = -1;
+                        *(y + count * 3) = 1;
+
                         if (engine->verbose > 1) {
                             RKLog("%s P%04d i=%06zu A%.2f\n", engine->name, p, pulse->header.i, pulse->header.azimuthDegrees);
                         }
@@ -205,7 +210,9 @@ void handleClose(RKWebSocket *W) {
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     RKReporter *engine = (RKReporter *)W->parent;
     RKRadar *radar = engine->radar;
-    RKLog("%s   radar = %s\n", engine->name, radar->desc.name);
+
+    char *message = (char *)payload;
+    RKLog("%s radar = %s   %s\n", engine->name, radar->desc.name, message);
 }
 
 
