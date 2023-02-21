@@ -37,11 +37,13 @@ void *reporter(void *in) {
 
     size_t payload_size;
     int count;
+    int k;
 
     char *message = engine->message;
     void *payload = NULL;
 
     int16_t *y;
+
     uint8_t *z;
 
     RKHealth *health;
@@ -49,6 +51,8 @@ void *reporter(void *in) {
     RKRay *ray;
 
     RKInt16C *xh, *xv;
+
+    RKRadarHubRay *display;
 
     RKLog("%s Started.  mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
 
@@ -107,10 +111,10 @@ void *reporter(void *in) {
 
                 pulse = RKGetPulseFromBuffer(radar->pulses, p);
 
-                if (pulse->header.s & RKPulseStatusReadyForMoments) {
+                if (pulse->header.s & RKPulseStatusHasIQData) {
                     if (p % engine->pulseStride) {
                         usleep(1);
-                    } else if (engine->ws->connected) {
+                    } else {
                         // Use payload 1 as target
                         payload = engine->payload[1];
                         // Put together the payload for RadarHub
@@ -120,7 +124,7 @@ void *reporter(void *in) {
                         xh = RKGetInt16CDataFromPulse(pulse, 0);
                         xv = RKGetInt16CDataFromPulse(pulse, 1);
                         y = (int16_t *)(payload + 1);
-                        for (int k = 0; k < count - 1; k++) {
+                        for (k = 0; k < count - 1; k++) {
                             *(y            ) = xh->i;
                             *(y + count    ) = xh->q;
                             *(y + count * 2) = xv->i;
@@ -161,20 +165,27 @@ void *reporter(void *in) {
                 if (ray->header.s & RKRayStatusReady) {
                     if (r % engine->rayStride) {
                         usleep(1);
-                    } else if (engine->ws->connected) {
-                    // Use payload 2 as target
-                    payload = engine->payload[2];
-                    // Put together the payload for RadarHub
-                    count = 100;
-                    *(char *)payload = RKRadarHubTypeRadialZ;
-                    payload_size = sizeof(int16_t) * 4 + count;
-                    z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-                    // Es, Ee, As, Ae, Z0, Z1, Z2, ...
-                    // (int16_t *)payload
+                    } else {
+                        // Use a ray pointer for convenience
+                        display = (RKRadarHubRay *)payload;
+                        // Put together the ray for RadarHub
+                        count = 100;
+                        // T, Es, Ee, As, Ae, _, Z0, Z1, Z2, ...
+                        display->header.type = RKRadarHubTypeRadialZ;
+                        display->header.startElevation = ray->header.startElevation;
+                        display->header.endElevation = ray->header.endElevation;
+                        display->header.startAzimuth = ray->header.startAzimuth;
+                        display->header.endAzimuth = ray->header.endAzimuth;
+                        payload_size = sizeof(RKRadarHubRayHeader) + count * sizeof(RKByte);
+                        z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+                        memcpy(display->data, z, count * sizeof(RKByte));
+                        RKWebSocketSend(engine->ws, payload, payload_size);
+                        if (engine->verbose > 1) {
+                            RKLog("%s  R%02d\n", engine->name, r);
+                        }
+                    }
                     ray->header.s |= RKRayStatusStreamed;
                     r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
-                } else if (engine->verbose > 2) {
-                    RKLog("%s Ray not ready   r = %d   radar->rayIndex = %d\n", engine->name, r, radar->rayIndex);
                 }
             }
 

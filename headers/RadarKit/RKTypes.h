@@ -1046,6 +1046,25 @@ enum RadarHubType {
     RKRadarHubTypeRadialR                        = 21                          //
 };
 
+typedef union rk_radarhub_ray_header {
+    struct {
+        uint8_t                type;                                           // Redundant definition as the first byte of the WS frame is type
+        int16_t                startElevation;                                 // Start of scan elevation
+        int16_t                endElevation;                                   // End of scan elevation
+        int16_t                startAzimuth;                                   // Start of scan azimuth
+        int16_t                endAzimuth;                                     // End of scan azimuth
+    };
+    RKByte                 bytes[10];                                          //
+} RKRadarHubRayHeader;
+
+typedef union rk_radarhub_ray {
+    struct {
+        RKRadarHubRayHeader    header;
+        RKByte                 data[RKMaximumGateCount];
+    };
+    RKByte                 *bytes;
+} RKRadarHubRay;
+
 #pragma mark - Structure Definitions
 
 //
