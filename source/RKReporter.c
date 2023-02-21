@@ -42,6 +42,7 @@ void *reporter(void *in) {
     void *payload = NULL;
 
     int16_t *y;
+    uint8_t *z;
 
     RKHealth *health;
     RKPulse *pulse;
@@ -157,13 +158,19 @@ void *reporter(void *in) {
 
                 ray = RKGetRayFromBuffer(radar->rays, r);
 
-                if (r % engine->rayStride) {
-                    ray->header.s |= RKRayStatusStreamed;
-                    r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
-                } else if (ray->header.s & RKRayStatusReady) {
+                if (ray->header.s & RKRayStatusReady) {
+                    if (r % engine->rayStride) {
+                        usleep(1);
+                    } else if (engine->ws->connected) {
                     // Use payload 2 as target
                     payload = engine->payload[2];
                     // Put together the payload for RadarHub
+                    count = 100;
+                    *(char *)payload = RKRadarHubTypeRadialZ;
+                    payload_size = sizeof(int16_t) * 4 + count;
+                    z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+                    // Es, Ee, As, Ae, Z0, Z1, Z2, ...
+                    // (int16_t *)payload
                     ray->header.s |= RKRayStatusStreamed;
                     r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 } else if (engine->verbose > 2) {
