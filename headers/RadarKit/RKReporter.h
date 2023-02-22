@@ -37,6 +37,7 @@ typedef struct rk_reporter {
     RKEngineState                    state;
     uint64_t                         tic;
     float                            lag;
+    bool                             connected;
     size_t                           memoryUsage;
 
     RKStream                         streams;

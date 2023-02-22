@@ -348,6 +348,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",           &user->goCommand,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterTypeFloat, 1);
 
     // Shortcuts
     k = 0;
@@ -966,7 +967,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
-        RKLog("Starting a new PPI ...\n");
+        RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
         if (systemPreferences->prf <= 20.0f) {
             RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
         } else if (systemPreferences->prf <= 100.0f) {

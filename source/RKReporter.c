@@ -179,13 +179,14 @@ void *reporter(void *in) {
                         payload_size = sizeof(RKRadarHubRayHeader) + count * sizeof(RKByte);
                         z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
                         memcpy(display->data, z, count * sizeof(RKByte));
-                        RKWebSocketSend(engine->ws, payload, payload_size);
                         if (engine->verbose > 1) {
-                            RKLog("%s  R%02d\n", engine->name, r);
+                            RKHeadTailBinaryString(message, payload, payload_size);
+                            RKLog("%s R%02d %s\n", engine->name, r, ray->header.startAzimuth, message);
                         }
+                        RKWebSocketSend(engine->ws, payload, payload_size);
                     }
                     ray->header.s |= RKRayStatusStreamed;
-                    r = RKNextModuloS(p, radar->desc.pulseBufferDepth);
+                    r = RKNextModuloS(r, radar->desc.rayBufferDepth);
                 }
             }
 
@@ -230,7 +231,7 @@ void handleOpen(RKWebSocket *W) {
             "\"pathway\":\"%s\", "
             "\"name\":\"%s\""
         "}",
-        RKRadarHubTypeHandshake, engine->pathway, engine->radar->desc.name);
+        RKRadarHubTypeHandshake, engine->pathway, radar->desc.name);
     if (r < 0) {
         RKLog("%s Error. Unable to construct handshake message.\n", engine->name);
     }
@@ -296,6 +297,22 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
 
     char *message = (char *)payload;
     RKLog("%s radar = %s   %s\n", engine->name, radar->desc.name, message);
+
+    if (strstr((char *)message, "Welcome")) {
+        engine->connected = true;
+        return;
+    }
+
+    int c = rand() % 3;
+    int r = sprintf(engine->message, "%c%c%s",
+                    RKRadarHubTypeResponse,
+                    c == 0 ? 'A' : (c == 1 ? 'Q' : 'N'),
+                    message);
+    RKWebSocketSend(W, engine->message, r);
+    RKLog("%s %s%s%s\n", engine->name,
+          rkGlobalParameters.showColor ? RKMonokaiGreen : "",
+          engine->message + 1,
+          rkGlobalParameters.showColor ? RKNoColor : "");
 }
 
 
@@ -339,7 +356,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     RKLog("%s revised host = %s (SSL %s)\n", engine->name, engine->host, engine->flag & RKWebSocketFlagSSLOn ? "On" : "Off");
 
     // Default streams
-    engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff;
+    engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
     return engine;
 }
 
