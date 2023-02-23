@@ -1559,6 +1559,6 @@ void RKHeadTailByteString(char *dst, void *src, const size_t count) {
         c = (uint8_t *)src;
         r = sprintf(dst, "b'\\x\%02d'", *c++);
         char *dummy = RKBytesInHex(dst + r, c, 7);
-        RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 5, 5);
+        RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
     }
 }

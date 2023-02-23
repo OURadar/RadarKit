@@ -234,7 +234,7 @@ static void *ringFilterCore(void *_in) {
 
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i0);
 		if (!(pulse->header.s & RKPulseStatusRingInspected)) {
-			fprintf(stderr, "This should not happen.   i0 = %d\n", i0);
+			fprintf(stderr, "RKPulseRingFilter Pulse has not been inspected.   i0 = %d\n", i0);
 		}
 
         // Now we do the work
@@ -580,10 +580,10 @@ static void *pulseRingWatcher(void *_in) {
                 }
             }
         }
-        
+
         // The pulse is considered "inspected" whether it will be skipped / filtered by the designated worker
         pulse->header.s |= RKPulseStatusRingInspected;
-        
+
 		#ifdef SHOW_RING_FILTER_DOUBLE_BUFFERING
 		for (c = 0; c < engine->coreCount; c++) {
 			*workerTaskDone++ = false;

@@ -143,7 +143,7 @@ void *reporter(void *in) {
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
-                    pulse->header.s |= RKPulseStatusStreamed;
+//                    pulse->header.s |= RKPulseStatusStreamed;
                     p = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 }
             }
