@@ -358,11 +358,6 @@ void RKTestPrettyStrings(void) {
     printf("\n");
     char status[] = "0{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":0}, \"Log Time\":1570804516}";
     *status = '\x03';
-    char string[RKMaximumStringLength];
-    RKHeadTailBinaryString(string, status, strlen(status));
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, status, strlen(status));
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     size_t payload_size = 100;
     uint8_t payload[payload_size];
     payload[0] = 5;
@@ -371,10 +366,15 @@ void RKTestPrettyStrings(void) {
     }
     payload[payload_size - 2] = 1;
     payload[payload_size - 1] = 0;
+    char string[RKMaximumStringLength];
+    RKHeadTailBinaryString(string, status, strlen(status));
+    printf("RKHeadTailBinaryString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     RKHeadTailBinaryString(string, payload, payload_size);
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailBinaryString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKHeadTailByteString(string, status, strlen(status));
+    printf("RKHeadTailByteString   : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     RKHeadTailByteString(string, payload, payload_size);
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailByteString   : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
 }
 
 void RKTestBasicMath(void) {
