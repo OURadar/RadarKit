@@ -247,33 +247,20 @@ void handleOpen(RKWebSocket *W) {
             "\"control\": ["
                 "{\"Label\":\"Go\", \"Command\":\"t y\"}, "
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
-                "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "
-                "{\"Label\":\"Try Me 2\", \"Command\":\"t w 2\"}, "
+                "{\"Label\":\"Stop Pedestal\", \"Command\":\"p stop\"}, "
+                "{\"Label\":\"Park\", \"Command\":\"p point 0 90\"}, "
                 "{\"Label\":\"%d FPS\", \"Left\":\"d f-\", \"Right\":\"d f+\"}, "
                 "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
                 "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
                 "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
-                "{\"Label\":\"PRF 3,000 Hz (40 km)\", \"Command\":\"t prf 3003\"}, "
-                "{\"Label\":\"PRF 4,000 Hz (28 km)\", \"Command\":\"t prf 4000\"}, "
-                "{\"Label\":\"PRF 5,000 Hz (17.6 km)\", \"Command\":\"t prf 5000\"}, "
-                "{\"Label\":\"Stop Pedestal\", \"Command\":\"p stop\"}, "
-                "{\"Label\":\"Park\", \"Command\":\"p point 0 90\"}, "
-                "{\"Label\":\"DC PSU On\", \"Command\":\"h pow on\"}, "
-                "{\"Label\":\"DC PSU Off\", \"Command\":\"h pow off\"}, "
                 "{\"Label\":\"Measure Noise\", \"Command\":\"t n\"}, "
-                "{\"Label\":\"Transmit Toggle\", \"Command\":\"t tx\"}, "
                 "{\"Label\":\"10us pulse\", \"Command\":\"t w s10\"}, "
-                "{\"Label\":\"12us LFM\", \"Command\":\"t w q0412\"}, "
-                "{\"Label\":\"20us pulse\", \"Command\":\"t w s20\"}, "
+                "{\"Label\":\"20us LFM\", \"Command\":\"t w q0420\"}, "
                 "{\"Label\":\"50us pulse\", \"Command\":\"t w s50\"}, "
                 "{\"Label\":\"TFM + OFM\", \"Command\":\"t w ofm\"}, "
                 "{\"Label\":\"OFM\", \"Command\":\"t w ofmd\"}, "
-                "{\"Label\":\"1-tilt EL 2.4 deg @ 18 deg/s\", \"Command\":\"p vol p 2.4 300 18\"}, "
-                "{\"Label\":\"5-tilt VCP @ 45 deg/s\", \"Command\":\"p vol p 2 300 45/p 4 300 45/p 6 300 45/p 8 300 45/p 10 300 45\"}, "
-                "{\"Label\":\"5-tilt VCP @ 25 deg/s\", \"Command\":\"p vol p 2 300 25/p 4 300 25/p 6 300 25/p 8 300 25/p 10 300 25\"}, "
-                "{\"Label\":\"5-tilt VCP @ 18 deg/s\", \"Command\":\"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18\"}, "
-                "{\"Label\":\"5-tilt VCP @ 12 deg/s\", \"Command\":\"p vol p 2 300 12/p 4 300 12/p 6 300 12/p 8 300 12/p 10 300 12\"}, "
-                "{\"Label\":\"6-tilt VCP @ 18 deg/s\", \"Command\":\"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18\"}"
+                "{\"Label\":\"1-tilt EL 3.0 deg @ 5 deg/s\", \"Command\":\"p ppi 3 5\"}, "
+                "{\"Label\":\"1-tilt EL 5.0 deg @ 20 deg/s\", \"Command\":\"p ppi 5 20\"}"
             "]"
         "}",
         RKRadarHubTypeControl, engine->pathway, engine->fps);
@@ -329,7 +316,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->healthStride = 2;
-    engine->pulseStride = 100;
+    engine->pulseStride = 10;
     engine->rayStride = 1;
     engine->memoryUsage = sizeof(RKReporter);
     strncpy(engine->host, host, RKNameLength);
