@@ -348,9 +348,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
 }
 
 RKReporter *RKReporterInitForRadarHub(void) {
-//    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
-//    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
-    return RKReporterInitWithHost("10.197.14.52:8001");
+    return RKReporterInitWithHost("https://radarhub.arrc.ou.edu");
 }
 
 RKReporter *RKReporterInitForLocal(void) {
@@ -358,7 +356,10 @@ RKReporter *RKReporterInitForLocal(void) {
 }
 
 RKReporter *RKReporterInit(void) {
-    return RKReporterInitForRadarHub();
+//    return RKReporterInitForLocal();
+//    return RKReporterInitForRadarHub();
+//    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
+        return RKReporterInitWithHost("10.197.14.52:8001");
 }
 
 void RKReporterFree(RKReporter *engine) {

@@ -29,8 +29,8 @@ LDFLAGS = -L./
 
 ifeq ($(KERNEL), Darwin)
 	ifeq ($(MACHINE), arm64)
-		CFLAGS += -I/opt/homebrew/opt/openssl@1.1/include
-		LDFLAGS += -L/opt/homebrew/opt/openssl@1.1/lib
+		CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
+		LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
 	else
 		CFLAGS += -I/usr/local/opt/openssl@1.1/include
 		LDFLAGS += -L/usr/local/opt/openssl@1.1/lib
@@ -38,8 +38,8 @@ ifeq ($(KERNEL), Darwin)
 endif
 
 ifeq ($(MACHINE), arm64)
-	CFLAGS += -I/opt/homebrew/include
-	LDFLAGS += -L/opt/homebrew/lib
+	CFLAGS += -I${HOMEBREW_PREFIX}/include
+	LDFLAGS += -L${HOMEBREW_PREFIX}/lib
 else
 	CFLAGS += -I/usr/include
 	CFLAGS += -I/usr/local/include
