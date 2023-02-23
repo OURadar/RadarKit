@@ -28,16 +28,24 @@ CFLAGS += -I headers -I headers/RadarKit -fPIC
 LDFLAGS = -L./
 
 ifeq ($(KERNEL), Darwin)
-	CFLAGS += -fms-extensions -Wno-microsoft
-	CFLAGS += -I/usr/local/opt/openssl@1.1/include
-
-	LDFLAGS += -L/usr/local/opt/openssl@1.1/lib
+	ifeq ($(MACHINE), arm64)
+		CFLAGS += -I/opt/homebrew/opt/openssl@1.1/include
+		LDFLAGS += -L/opt/homebrew/opt/openssl@1.1/lib
+	else
+		CFLAGS += -I/usr/local/opt/openssl@1.1/include
+		LDFLAGS += -L/usr/local/opt/openssl@1.1/lib
+	endif
 endif
 
-CFLAGS += -I/usr/include
-CFLAGS += -I/usr/local/include
+ifeq ($(MACHINE), arm64)
+	CFLAGS += -I/opt/homebrew/include
+	LDFLAGS += -L/opt/homebrew/lib
+else
+	CFLAGS += -I/usr/include
+	CFLAGS += -I/usr/local/include
 
-IDFLAGS += -L/usr/local/lib
+	LDFLAGS += -L/usr/local/lib
+endif
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
@@ -73,7 +81,7 @@ endif
 ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
-	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
+	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -fms-extensions -Wno-microsoft
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
