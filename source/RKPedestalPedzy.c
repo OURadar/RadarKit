@@ -122,6 +122,10 @@ static void *pedestalHealth(void *in) {
             azEnum = RKStatusEnumNormal;
             elEnum = RKStatusEnumNormal;
         }
+        
+        // VCP State machine
+        
+        
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
         if (health) {
             double rate = RKGetPositionUpdateRate(radar);

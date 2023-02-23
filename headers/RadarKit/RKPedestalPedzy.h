@@ -25,6 +25,9 @@ typedef struct rk_pedzy {
     RKRadar                *radar;
     float                  headingOffset;
 
+    // VCP engine
+    RKVCPEngine            *vcpEngine;
+
     // Program set variables
     pthread_t              tidPedestalMonitor;
 } RKPedestalPedzy;
