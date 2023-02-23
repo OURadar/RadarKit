@@ -336,6 +336,7 @@ void RKTestPrettyStrings(void) {
     f = 20000.0f;   printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
     f = 400000.0f;  printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
     f = 1234567.8f; printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    //
     printf("\n");
     char *c;
     bool tf = true; printf("%s\n", RKVariableInString("tf", &tf, RKValueTypeBool));
@@ -353,6 +354,27 @@ void RKTestPrettyStrings(void) {
     i32 = 0x303f;
     c = RKVariableInString("mask", &i32, RKValueTypeInt32InHex);
     printf("%s (len = %zu)\n", c, strlen(c));
+    //
+    printf("\n");
+    char status[] = "0{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":0}, \"Log Time\":1570804516}";
+    *status = '\x03';
+    char string[RKMaximumStringLength];
+    RKHeadTailBinaryString(string, status, strlen(status));
+    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKHeadTailByteString(string, status, strlen(status));
+    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    size_t payload_size = 100;
+    uint8_t payload[payload_size];
+    payload[0] = 5;
+    for (k = 1; k < payload_size - 2; k++) {
+        payload[k] = rand() & 0xff;
+    }
+    payload[payload_size - 2] = 1;
+    payload[payload_size - 1] = 0;
+    RKHeadTailBinaryString(string, payload, payload_size);
+    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKHeadTailByteString(string, payload, payload_size);
+    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
 }
 
 void RKTestBasicMath(void) {

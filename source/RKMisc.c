@@ -1530,3 +1530,35 @@ char *RKStringLower(char *string) {
     } while (c++ < e);
     return string;
 }
+
+char *RKBytesInHex(char *dst, void *src, const size_t count) {
+    int i;
+    uint8_t *c = (uint8_t *)src;
+    *dst++ = '[';
+    for (i = 0; i < count; i++) {
+        dst += sprintf(dst, ".\\%02x", *c++);
+    }
+    *dst++ = ']';
+    *dst = '\0';
+    return dst;
+}
+
+void RKHeadTailByteString(char *dst, void *src, const size_t count) {
+    int i;
+    uint8_t *c = (uint8_t *)src;
+    int r = 0;
+    size_t bound = MIN(25, count);
+    for (i = 0; i < bound; i++, c++) {
+        if (*c >= 32 && *c < 127) {
+            r++;
+        }
+    }
+    if (r > bound / 2) {
+        RKHeadTailBinaryString(dst, src, count);
+    } else {
+        c = (uint8_t *)src;
+        r = sprintf(dst, "b'\\x\%02d'", *c++);
+        char *dummy = RKBytesInHex(dst + r, c, 7);
+        RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 5, 5);
+    }
+}
