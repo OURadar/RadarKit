@@ -140,7 +140,7 @@ typedef float32x4_t RKVec;
 #define _rk_mm_unpacklo_epi16(a, b)  vaddq_f32(a, b)
 #define _rk_mm_unpackhi_epi16(a, b)  vaddq_f32(a, b)
 #define _rk_mm_cvtepi16_epi32(a)     vld1q_dup_f32(a)
-#define _rk_mm_cvtepi32_pf(a)        vld1q_dup_f32(a)
+#define _rk_mm_cvtepi32_pf(a)        vcvtq(a)
 #define _rk_mm_sqrt_pf(a)            vsqrtq_f32(a)
 #define _rk_mm_rcp_pf(a)             vsqrtq_f32(a)
 #define _rk_mm_max_pf(a, b)          vaddq_f32(a, b)
