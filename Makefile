@@ -16,7 +16,13 @@ endif
 
 CFLAGS += -std=gnu99
 CFLAGS += -Woverlength-strings
-CFLAGS += -march=native -mfpmath=sse -Wall -Wno-unknown-pragmas
+CFLAGS += -Wall -Wno-unknown-pragmas
+
+ifeq ($(MACHINE), x86_64)
+	CFLAGS += -march=native
+	CFLAGS += -mfpmath=sse
+endif
+
 CFLAGS += -I headers -I headers/RadarKit -fPIC
 
 LDFLAGS = -L./
@@ -38,9 +44,9 @@ OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
 OBJS += RKMoment.o
 OBJS += RKPreference.o
 OBJS += RKFileManager.o RKHostMonitor.o
-OBJS += RKConfig.o RKHealth.o
+OBJS += RKConfig.o
 OBJS += RKWaveform.o
-OBJS += RKPositionEngine.o
+OBJS += RKPositionEngine.o RKHealthEngine.o
 OBJS += RKPulseEngine.o RKPulseRingFilter.o RKMomentEngine.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o

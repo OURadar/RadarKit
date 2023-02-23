@@ -1,12 +1,12 @@
 //
-//  RKHealth.c
+//  RKHealthEngine.c
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 1/28/17.
 //  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKHealth.h>
+#include <RadarKit/RKHealthEngine.h>
 
 #pragma mark - Helper Functions
 
@@ -45,6 +45,13 @@ static void *healthConsolidator(void *_in) {
     engine->state |= RKEngineStateActive;
 
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
+
+    // Wait for the master node RKHealthNodeRadarKit to advance once (When RKRadar uses GetVacantHealth from RKHealthNodeRadarKit)
+    s = 0;
+    do {
+        usleep(100000);
+    } while (engine->healthNodes[RKHealthNodeRadarKit].index == 0 && s++ < 5);
+    RKLog("%s healthNodes[%d].index = %d   s = %d\n", engine->name, RKHealthNodeRadarKit, engine->healthNodes[RKHealthNodeRadarKit].index, s);
 
     k = 0;   // health index
     while (engine->state & RKEngineStateWantActive) {
@@ -255,7 +262,8 @@ static void *healthConsolidator(void *_in) {
                 locationChangeCount = 0;
             }
         }
-        sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);                                               // Add the log time as the last object
+        // Add the log time as the last object
+        i += sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);
 
         // Replace some quoted logical values, e.g., "TRUE", "True", "true", etc. -> true
         RKReviseLogicalValues(string);

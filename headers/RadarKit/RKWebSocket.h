@@ -88,9 +88,6 @@ struct rk_websocket {
     uint8_t                  frame[RKWebSocketFrameSize];                      // A local buffer to store a frame
 };
 
-char *binaryString(char *dst, void *src, size_t);
-void headTailBinaryString(char *dst, void *src, size_t);
-
 RKWebSocket *RKWebSocketInit(const char *, const char *, const RKWebSocketSSLFlag);
 void RKWebSocketFree(RKWebSocket *);
 
@@ -114,6 +111,6 @@ void RKWebSocketStop(RKWebSocket *);
 void RKWebSocketWait(RKWebSocket *);
 
 // Send a packet
-int RKWebSocketSend(RKWebSocket *, void *, size_t);
+int RKWebSocketSend(RKWebSocket *, void *, const size_t);
 
 #endif

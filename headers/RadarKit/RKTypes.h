@@ -50,7 +50,7 @@
 // RKMaximumControlCount The number of controls (buttons)
 // RKMaximumCalibrationCount The number of waveform calibration set
 // RKMaximumGateCount The maximum number of gates allocated for each pulse
-// RKSIMDAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
+// RKMemoryAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
 //
 
 #pragma mark - Constants
@@ -65,8 +65,8 @@
 #define RKBuffer3SlotCount                   100                               // Products - Level III - Ready for archive
 #define RKMaximumControlCount                128                               // Controls
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
-#define RKMaximumGateCount                   262144                            // Must be a multiple of RKSIMDAlignSize
-#define RKSIMDAlignSize                      64                                // SSE 16, AVX 32, AVX-512 64
+#define RKMaximumGateCount                   262144                            // Must be a multiple of RKMemoryAlignSize
+#define RKMemoryAlignSize                    64                                // SSE 16, AVX 32, AVX-512 64
 #define RKMomentCount                        26                                // 32 to be the absolute max since momentList enum is 32-bit
 #define RKBaseProductCount                   10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
@@ -462,7 +462,7 @@ enum {
 };
 
 typedef uint32_t RKPositionFlag;
-enum {
+enum RKPositionFlag {
     RKPositionFlagVacant                         = 0,
     RKPositionFlagAzimuthEnabled                 = 1,                          //  0 - EN
     RKPositionFlagAzimuthSafety                  = (1 << 1),                   //  1
@@ -487,7 +487,7 @@ enum {
 };
 
 typedef uint32_t RKHeadingType;
-enum {
+enum RKHeadingType {
     RKHeadingTypeNormal,
     RKHeadingTypeAdd90,
     RKHeadingTypeAdd180,
@@ -495,20 +495,20 @@ enum {
 };
 
 typedef uint32_t RKStatusFlag;
-enum {
+enum RKStatusFlag {
     RKStatusFlagVacant                           = 0,
     RKStatusFlagReady                            = 1
 };
 
 typedef uint32_t RKHealthFlag;
-enum {
+enum RKHealthFlag {
     RKHealthFlagVacant                           = 0,
     RKHealthFlagReady                            = 1,
     RKHealthFlagUsed                             = (1 << 1)
 };
 
 typedef uint32_t RKMarker;
-enum {
+enum RKMarker {
     RKMarkerNull                                 = 0,
     RKMarkerSweepMiddle                          = 1,                          //
     RKMarkerSweepBegin                           = (1 << 1),                   //  0000 0010
@@ -539,7 +539,7 @@ enum {
 // -> RKPulseStatusReadyForMoments
 //
 typedef uint32_t RKPulseStatus;
-enum {
+enum RKPulseStatus {
     RKPulseStatusVacant                          = 0,
     RKPulseStatusHasIQData                       = 1,                          // 0x01
     RKPulseStatusHasPosition                     = (1 << 1),                   // 0x02
@@ -554,11 +554,12 @@ enum {
     RKPulseStatusRingProcessed                   = (1 << 10),
     RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
     RKPulseStatusUsedForMoments                  = (1 << 11),
-    RKPulseStatusRecorded                        = (1 << 12)
+    RKPulseStatusRecorded                        = (1 << 12),
+    RKPulseStatusStreamed                        = (1 << 13)
 };
 
 typedef uint32_t RKRayStatus;
-enum {
+enum RKRayStatus {
     RKRayStatusVacant                            = 0,
     RKRayStatusProcessing                        = 1,
     RKRayStatusProcessed                         = (1 << 1),
@@ -569,7 +570,7 @@ enum {
 };
 
 typedef uint32_t RKInitFlag;
-enum {
+enum RKInitFlag {
     RKInitFlagNone                               = 0,
     RKInitFlagVerbose                            = 0x00000001,
     RKInitFlagVeryVerbose                        = 0x00000002,
@@ -874,7 +875,7 @@ enum {
 };
 
 typedef uint32_t RKFileType;
-enum {
+enum RKFileType {
     RKFileTypeIQ,
     RKFileTypeMoment,
     RKFileTypeHealth,
@@ -883,7 +884,7 @@ enum {
 };
 
 typedef uint64_t RKStream;
-enum {
+enum RKStream {
     RKStreamNull                                 = 0,                          //
     RKStreamStatusMask                           = 0x0F,                       // Values 0-15 in the lowest 4 bits (exclusive mode)
     RKStreamStatusPositions                      = 1,                          //
@@ -945,7 +946,7 @@ enum {
 };
 
 typedef uint8_t RKHostStatus;
-enum {
+enum RKHostStatus {
     RKHostStatusUnknown,
     RKHostStatusUnreachable,
     RKHostStatusPartiallyReachable,
@@ -954,7 +955,7 @@ enum {
 };
 
 typedef uint32_t RKProductStatus;
-enum {
+enum RKProductStatus {
     RKProductStatusVacant                        = 0,                          //
     RKProductStatusActive                        = (1 << 0),                   // This slot has been registered
     RKProductStatusBusy                          = (1 << 1),                   // Waiting for processing node
@@ -966,7 +967,7 @@ enum {
 };
 
 typedef uint32_t RKTextPreferences;
-enum {
+enum RKTextPreferences {
     RKTextPreferencesNone                        = 0,                          //
     RKTextPreferencesShowColor                   = 1,                          // Use escape sequence for colors
     RKTextPreferencesDrawBackground              = (1 << 1),                   // Repaint the background
@@ -981,7 +982,7 @@ enum {
 };
 
 typedef uint32_t RKWaveformType;
-enum {
+enum RKWaveformType {
     RKWaveformTypeNone                           = 0,                          //
     RKWaveformTypeIsComplex                      = 1,                          // Complex form usually represents baseband
     RKWaveformTypeSingleTone                     = (1 << 1),                   // The traditional single frequency waveform
@@ -994,14 +995,14 @@ enum {
 };
 
 typedef uint32_t RKEventType;
-enum {
+enum RKEventType {
     RKEventTypeNull,                                                           //
     RKEventTypeRaySweepBegin,                                                  //
     RKEventTypeRaySweepEnd                                                     //
 };
 
 typedef uint8_t RKFilterType;
-enum {
+enum RKFilterType {
     RKFilterTypeNull,                                                          // No filter
     RKFilterTypeElliptical1,                                                   // Elliptical filter, high pass at 0.1 rad / sample
     RKFilterTypeElliptical2,                                                   // Elliptical filter, high pass at 0.2 rad / sample
@@ -1014,17 +1015,17 @@ enum {
 };
 
 typedef uint8_t RKRawDataType;
-enum {
+enum RKRawDataType {
     RKRawDataTypeNull,                                                         // No recording
     RKRawDataTypeFromTransceiver,                                              // Raw straight from the digital transceiver (RKInt16C)
     RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression (RKFloat)
 };
 
 typedef uint8_t RadarHubType;
-enum {
-    RKRadarHubTypeHandshake                      = 1,                          // JSON message {"radar":"px1000","command":"radarConnect"}
-    RKRadarHubTypeControl                        = 2,                          // JSON control {"Go":{...},"Stop":{...},...}
-    RKRadarHubTypeHealth                         = 3,                          // JSON health {"Transceiver":{...},"Pedestal":{...},...}
+enum RadarHubType {
+    RKRadarHubTypeHandshake                      = 1,                          // JSON message {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}
+    RKRadarHubTypeControl                        = 2,                          // JSON control {"Go":{...}, "Stop":{...},...}
+    RKRadarHubTypeHealth                         = 3,                          // JSON health {"Transceiver":{...}, "Pedestal":{...},...}
     RKRadarHubTypeReserve4                       = 4,                          //
     RKRadarHubTypeScope                          = 5,                          // Scope data in binary
     RKRadarHubTypeResponse                       = 6,                          // Plain text response
@@ -1044,6 +1045,25 @@ enum {
     RKRadarHubTypeRadialP                        = 20,                         //
     RKRadarHubTypeRadialR                        = 21                          //
 };
+
+typedef union rk_radarhub_ray_header {
+    struct {
+        uint8_t                type;                                           // Redundant definition as the first byte of the WS frame is type
+        int16_t                startElevation;                                 // Start of scan elevation
+        int16_t                endElevation;                                   // End of scan elevation
+        int16_t                startAzimuth;                                   // Start of scan azimuth
+        int16_t                endAzimuth;                                     // End of scan azimuth
+    };
+    RKByte                 bytes[10];                                          //
+} RKRadarHubRayHeader;
+
+typedef union rk_radarhub_ray {
+    struct {
+        RKRadarHubRayHeader    header;
+        RKByte                 data[RKMaximumGateCount];
+    };
+    RKByte                 *bytes;
+} RKRadarHubRay;
 
 #pragma mark - Structure Definitions
 

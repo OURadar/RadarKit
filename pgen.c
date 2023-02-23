@@ -203,11 +203,11 @@ void proc(UserParams *arg) {
     const RKBaseProductList momentList = RKBaseProductListFloatZVWDPR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
-    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKSIMDAlignSize)) * RKSIMDAlignSize;
+    const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKMemoryAlignSize)) * RKMemoryAlignSize;
     if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
         u32 = fileHeader->desc.pulseCapacity;
     } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
-        u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKSIMDAlignSize) * RKSIMDAlignSize / sizeof(int16_t);
+        u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(int16_t);
     } else {
         RKLog("Error. Unable to handle dataType %d", fileHeader->dataType);
         exit(EXIT_FAILURE);
@@ -383,15 +383,15 @@ void proc(UserParams *arg) {
         RKLog("Error. Unable to allocate a scratch space.\n");
         exit(EXIT_FAILURE);
     }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKSIMDAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         exit(EXIT_FAILURE);
     }
     mem = 2 * nfft * sizeof(fftwf_complex);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKSIMDAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
     if (scratch->zi == NULL || scratch->zo == NULL) {
         RKLog("Error. Unable to allocate resources for FFTW.\n");
         exit(EXIT_FAILURE);
@@ -413,7 +413,7 @@ void proc(UserParams *arg) {
                 RKIntegerToCommaStyleString(nfft),
                 RKIntegerToCommaStyleString(nfft - length)
             );
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&filters[k][j], RKSIMDAlignSize, bytes))
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&filters[k][j], RKMemoryAlignSize, bytes))
             memcpy(filters[k][j], &config->waveform->samples[k][origin], length * sizeof(RKComplex));
             memset(&filters[k][j][length], 0, (nfft - length) * sizeof(RKComplex));
 

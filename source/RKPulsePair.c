@@ -11,12 +11,17 @@
 void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) {
     const RKFloat va = space->velocityFactor;
     const RKFloat wa = space->widthFactor;
+    const RKFloat ten = 10.0f;
+    const RKFloat one = 1.0f;
+    const RKFloat zero = 0.0f;
+    const RKFloat tiny = 1.0e-6;
     const RKVec va_pf = _rk_mm_set1_pf(va);
     const RKVec wa_pf = _rk_mm_set1_pf(wa);
-    const RKVec ten_pf = _rk_mm_set1_pf(10.0f);
-    const RKVec one_pf = _rk_mm_set1_pf(1.0f);
-    const RKVec zero_pf = _rk_mm_set1_pf(0.0f);
+    const RKVec ten_pf = _rk_mm_set1_pf(ten);
+    const RKVec one_pf = _rk_mm_set1_pf(one);
+    const RKVec zero_pf = _rk_mm_set1_pf(zero);
     //const RKVec dcal_pf = _rk_mm_set1_pf(space->dcal);
+    RKFloat n;
     RKVec n_pf;
     RKFloat *s;
     RKFloat *z;
@@ -37,7 +42,8 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     // S Z V W
     for (p = 0; p < 2; p++) {
-        n_pf = _rk_mm_set1_pf(MAX(1.0e-6f, space->noise[p]));
+        n = MAX(tiny, space->noise[p]);
+        n_pf = _rk_mm_set1_pf(n);
         s_pf = (RKVec *)space->S[p];
         r_pf = (RKVec *)space->aR[p][0];
         p_pf = (RKVec *)space->aR[p][1];
@@ -326,9 +332,12 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             }
         }
         // Divide by n for the average
-        RKVec n0 = _rk_mm_set1_pf(1.0f / (float)count);
-        RKVec n1 = _rk_mm_set1_pf(1.0f / (float)(count - 1));
-        RKVec n2 = _rk_mm_set1_pf(1.0f / (float)(count - 2));
+        const float rc0 = 1.0f / (float)count;
+        const float rc1 = 1.0f / (float)(count - 1);
+        const float rc2 = 1.0f / (float)(count - 2);
+        RKVec n0 = _rk_mm_set1_pf(rc0);
+        RKVec n1 = _rk_mm_set1_pf(rc1);
+        RKVec n2 = _rk_mm_set1_pf(rc2);
         mi = (RKVec *)space->mX[p].i;
         mq = (RKVec *)space->mX[p].q;
         r0i = (RKVec *)space->R[p][0].i;
@@ -603,7 +612,8 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             j++;
         }
         // Divide by n for the average
-        RKVec ss = _rk_mm_set1_pf(1.0f / (float)j);
+        RKFloat c = 1.0f / (float)j;
+        RKVec ss = _rk_mm_set1_pf(c);
         RKVec *mi = (RKVec *)space->mX[p].i;
         RKVec *mq = (RKVec *)space->mX[p].q;
         RKVec *si = (RKVec *)space->R[p][0].i;

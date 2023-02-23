@@ -142,8 +142,8 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 gateCount = RKMaximumGateCount;
             }
 
-            // Derive the RKSIMDAlignSize compliant capacity
-            capacity = (uint32_t)ceilf((float)gateCount / RKSIMDAlignSize) * RKSIMDAlignSize;
+            // Derive the RKMemoryAlignSize compliant capacity
+            capacity = (uint32_t)ceilf((float)gateCount / RKMemoryAlignSize) * RKMemoryAlignSize;
 
             RKLog("rayCount = %s   gateCount = %s   capacity = %s\n",
                   RKIntegerToCommaStyleString(rayCount), RKIntegerToCommaStyleString(gateCount), RKIntegerToCommaStyleString(capacity));

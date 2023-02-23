@@ -1,5 +1,5 @@
 //
-//  main.c
+//  rkutil.c
 //  RadarKit Utility
 //
 //  Created by Boonleng Cheong
@@ -144,6 +144,7 @@ static void showHelp() {
            "          p - Pulse engine\n"
            "          r - Ring filter engine\n"
            "          s - Sweep engine\n"
+           "          w - RadarHub WebSocket Reporter\n"
            "\n"
            "  -T (--test) " UNDERLINE("value") "\n"
            "         Tests a specific component of the RadarKit framework.\n"
@@ -160,6 +161,10 @@ static void showHelp() {
            "\n"
            "    -s1 -Vss\n"
            "         Runs the program in verbose level = 2 for sweep engine, and to simulate\n"
+           "         a level-1 system.\n"
+           "\n"
+           "    -s1 -Vwww\n"
+           "         Runs the program in verbose level = 3 for reporter engine, and to simulate\n"
            "         a level-1 system.\n"
            "\n"
            "    -v -s1 -L -f2000\n"
@@ -343,6 +348,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",           &user->goCommand,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterTypeFloat, 1);
 
     // Shortcuts
     k = 0;
@@ -874,7 +880,8 @@ int main(int argc, const char **argv) {
 
     // Make a reporter and have it call a RadarHub
     RKReporter *reporter = RKReporterInit();
-    RKReporterSetVerbose(reporter, systemPreferences->verbose);
+    int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
+    RKReporterSetVerbose(reporter, v);
     RKReporterSetRadar(reporter, myRadar);
     RKReporterStart(reporter);
 
@@ -960,7 +967,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
-        RKLog("Starting a new PPI ...\n");
+        RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
         if (systemPreferences->prf <= 20.0f) {
             RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
         } else if (systemPreferences->prf <= 100.0f) {
@@ -1023,6 +1030,9 @@ int main(int argc, const char **argv) {
     RKCommandCenterRemoveRadar(center, myRadar);
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);
+
+    RKReporterStop(reporter);
+    RKReporterFree(reporter);
 
     RKFree(myRadar);
 

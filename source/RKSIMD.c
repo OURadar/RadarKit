@@ -379,10 +379,12 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    const float q[4] = {1.0, -1.0, 1.0, -1.0};
 	RKVec r, i, x;
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
-	RKVec c = _rk_mm_set_pf(-1.0, 1.0, -1.0, 1.0);               // [  1  -1   1  -1 ]
+	//RKVec c = _rk_mm_set_pf(-1.0, 1.0, -1.0, 1.0);               // [  1  -1   1  -1 ]
+    RKVec c = _rk_mm_set_pf(q);                                  // [  1  -1   1  -1 ]
 	for (k = 0; k < K; k++) {
         *d = _rk_mm_mul_pf(*d, c);                               // [  c  -d   z  -w ]
 		r = _rk_mm_moveldup_pf(*s);                              // [  a   a   x   x ]
@@ -476,14 +478,18 @@ void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n) {
 
 void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
     int k;
+
 #if defined(__AVX512F__) || defined(__AVX2__)
+
     RKVecCvt *s = (RKVecCvt *)src;
     RKVec *d = (RKVec *)dst;
     int K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     for (k = 0; k < K; k++) {
         *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
     }
-#else
+
+#elif defined(_EXPLICIT_INTRINSIC)
+
     __m64 *s = (__m64 *)src;
     __m128 *d = (__m128 *)dst;
     __m64 z64 = _mm_setzero_si64();
@@ -495,8 +501,20 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
         t = _mm_srai_epi32(_mm_slli_epi32(t, 16), 16);
         *d++ = _mm_cvtepi32_ps(t);
     }
+
+#else
     
+    RKInt16C *s = src;
+    RKComplex *d = dst;
+    for (k = 0; k < n; k++) {
+        d->i = (RKFloat)s->i;
+        d->q = (RKFloat)s->q;
+        d++;
+        s++;
+    }
+
 #endif
+
     return;
 }
 

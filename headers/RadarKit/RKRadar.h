@@ -14,7 +14,7 @@
 #include <RadarKit/RKClient.h>
 #include <RadarKit/RKClock.h>
 #include <RadarKit/RKConfig.h>
-#include <RadarKit/RKHealth.h>
+#include <RadarKit/RKHealthEngine.h>
 #include <RadarKit/RKCalibrator.h>
 #include <RadarKit/RKPositionEngine.h>
 #include <RadarKit/RKPulseEngine.h>
