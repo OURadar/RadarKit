@@ -16,6 +16,7 @@ typedef struct user_params {
     RKRadarDesc              desc;
     RKName                   pedzyHost;
     RKName                   tweetaHost;
+    RKName                   remotebHost;
     RKName                   relayHost;
     RKName                   ringFilter;
     RKName                   momentMethod;
@@ -331,6 +332,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",            user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RemoteHost",          user->remotebHost,          RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -399,6 +401,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
         {"dir"               , required_argument, NULL, 'D'},
+        {"host"              , required_argument, NULL, 'H'},
         {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
@@ -487,6 +490,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->desc.initFlags = RKInitFlagIQPlayback;
                 strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
+                break;
+            case 'H':
+                strncpy(user->remotebHost, optarg, sizeof(user->remotebHost));
+                user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':
                 user->port = atoi(optarg);
@@ -879,7 +886,7 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKReporter *reporter = RKReporterInit();
+    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->remotebHost);
     int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
     RKReporterSetVerbose(reporter, v);
     RKReporterSetRadar(reporter, myRadar);

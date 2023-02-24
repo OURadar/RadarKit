@@ -320,6 +320,9 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     engine->rayStride = 1;
     engine->memoryUsage = sizeof(RKReporter);
     strncpy(engine->host, host, RKNameLength);
+    if (strlen(engine->host) == 0) {
+        sprintf(engine->host, "http://localhost:8000");
+    }
 
     // Could move most of these to RKWebScoket.c
     RKLog("%s host = %s\n", engine->name, engine->host);
@@ -352,14 +355,11 @@ RKReporter *RKReporterInitForRadarHub(void) {
 }
 
 RKReporter *RKReporterInitForLocal(void) {
-    return RKReporterInitWithHost("http://localhost:8001");
+    return RKReporterInitWithHost("http://localhost:8000");
 }
 
 RKReporter *RKReporterInit(void) {
-//    return RKReporterInitForLocal();
-//    return RKReporterInitForRadarHub();
-//    return RKReporterInitWithHost("radarhub.arrc.ou.edu:443");
-        return RKReporterInitWithHost("10.197.14.52:8001");
+    return RKReporterInitForLocal();
 }
 
 void RKReporterFree(RKReporter *engine) {
