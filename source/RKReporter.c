@@ -180,8 +180,8 @@ void *reporter(void *in) {
                         z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
                         memcpy(display->data, z, count * sizeof(RKByte));
                         if (engine->verbose > 1) {
-                            RKHeadTailBinaryString(message, payload, payload_size);
-                            RKLog("%s R%02d %s\n", engine->name, r, ray->header.startAzimuth, message);
+                            RKHeadTailByteString(message, payload, payload_size);
+                            RKLog("%s R%04d A%.2f %s\n", engine->name, r, ray->header.startAzimuth, message);
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }

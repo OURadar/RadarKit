@@ -94,7 +94,7 @@ typedef __m128i RKVecCvt;
 //#define _rk_mm_log10_pf(a)           _mm256_log10_ps(a)
 //#endif
 
-#elif defined(_EXPLICIT_INTRINSIC)
+#elif defined(_EXPLICIT_INTRINSIC) || defined(__x86_64__)
 
 typedef __m128 RKVec;
 #define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)

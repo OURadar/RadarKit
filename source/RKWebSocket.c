@@ -546,7 +546,7 @@ void *transporter(void *in) {
                     printf("\r%s No connection. Retry in %d second%s ... ", W->name,
                         10 - r, 10 - r > 1 ? "s" : "");
                 } else {
-                    RKLog("%s No connection.\n");
+                    RKLog("%s No connection.\n", W->name);
                 }
                 fflush(stdout);
             }
