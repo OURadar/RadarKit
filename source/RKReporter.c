@@ -89,7 +89,7 @@ void *reporter(void *in) {
                             } else {
                                 RKHeadTailBinaryString(message, payload, payload_size);
                             }
-                            RKLog("%s H%02d %s (%zu)", engine->name, h, message, payload_size);
+                            RKLog("%s H%04d %s (%zu)", engine->name, h, message, payload_size);
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
@@ -139,7 +139,8 @@ void *reporter(void *in) {
                         *(y + count * 3) = 1;
 
                         if (engine->verbose > 1) {
-                            RKLog("%s P%04d i=%06zu A%.2f\n", engine->name, p, pulse->header.i, pulse->header.azimuthDegrees);
+                            RKHeadTailByteString(message, payload, payload_size);
+                            RKLog("%s P%04d %s (%zu)\n", engine->name, p, message, payload_size);
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
@@ -181,7 +182,7 @@ void *reporter(void *in) {
                         memcpy(display->data, z, count * sizeof(RKByte));
                         if (engine->verbose > 1) {
                             RKHeadTailByteString(message, payload, payload_size);
-                            RKLog("%s R%04d A%.2f %s\n", engine->name, r, ray->header.startAzimuth, message);
+                            RKLog("%s R%04d %s (%zu)\n", engine->name, r, message, payload_size);
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }

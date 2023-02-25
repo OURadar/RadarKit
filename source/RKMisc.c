@@ -1553,11 +1553,12 @@ void RKHeadTailByteString(char *dst, void *src, const size_t count) {
             r++;
         }
     }
-    if (r > bound / 2) {
+    //printf("r = %d   bound / 2 = %d\n", r, (int)bound / 2);
+    if (r > bound * 2 / 3) {
         RKHeadTailBinaryString(dst, src, count);
     } else {
         c = (uint8_t *)src;
-        r = sprintf(dst, "b'\\x%02d'", *c++);
+        r = sprintf(dst, "b'\\x%02x'", *c++);
         char *dummy = RKBytesInHex(dst + r, c, 7);
         RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
     }

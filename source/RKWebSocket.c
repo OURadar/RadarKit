@@ -352,7 +352,7 @@ void *transporter(void *in) {
                             if (payload->size < 64) {
                                 RKBinaryString(message, payload->source, payload->size);
                             } else {
-                                RKHeadTailBinaryString(message, payload->source, payload->size);
+                                RKHeadTailByteString(message, payload->source, payload->size);
                             }
                             printf("RKWebSocket.transporter: WRITE \033[38;5;154m%s\033[m (%zu)\n",
                                    message, payload->size);
@@ -472,7 +472,6 @@ void *transporter(void *in) {
                     r = RKWebSocketPing(W, word, (int)strlen(word));
                     if (W->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&W->frame[2])};
-//                        size = strlen(word);
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
