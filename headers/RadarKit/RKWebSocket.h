@@ -26,19 +26,12 @@
 #define RKWebSocketFrameSize                     (1024 * 1024)
 #define RKWebSocketPayloadDepth                  1000
 #define RKWebSocketTimeoutDeltaMicroseconds      10000
-#define RKWebSocketTimeoutThresholdSeconds       20.0
+#define RKWebSocketTimeoutThresholdSeconds       5.0
 
 #ifndef htonll
 #define htonll(x) (((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
 #define ntohll(x) (((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 #endif
-
-//typedef uint8_t RKWebSocketSSLFlag;
-//enum {
-//    RKWebSocketFlagSSLAuto,
-//    RKWebSocketFlagSSLOff,
-//    RKWebSocketFlagSSLOn
-//};
 
 typedef struct rk_websocket_payload {
     void    *source;

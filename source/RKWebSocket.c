@@ -306,7 +306,8 @@ void *transporter(void *in) {
     ws_frame_header *h = (ws_frame_header *)W->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
     char uword[5] = "xxxx";
-    char message[1024];
+    char message[256];
+    char show[256];
 
     fd_set rfd;
     fd_set wfd;
@@ -435,11 +436,19 @@ void *transporter(void *in) {
                         if (W->verbose > 2) {
                             printf("%2u read  ", total); RKShowWebsocketFrameHeader(W);
                         }
-                        RKLog("%s S-%s: %s%s%s%s (%zu)\n", W->name,
+                        if (size != 4 && h->opcode == RFC6455_OPCODE_PING) {
+                            RKBytesInHex(show, anchor, size);
+                        } else if (size > 64) {
+                            snprintf(show, 63, "%s ...", (char *)anchor);
+                            show[64] = '\0';
+                        } else {
+                            memcpy(show, anchor, size);
+                            show[size] = '\0';
+                        }
+                        RKLog("%s S-%s: %s%s%s (%zu)\n", W->name,
                               OPCODE_STRING(h->opcode),
                               rkGlobalParameters.showColor ? RKOrangeColor : "",
-                              (char *)anchor,
-                              size > 64 ? " ..." : "",
+                              show,
                               rkGlobalParameters.showColor ? RKNoColor : "",
                               size);
                     }
@@ -463,13 +472,15 @@ void *transporter(void *in) {
                     r = RKWebSocketPing(W, word, (int)strlen(word));
                     if (W->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&W->frame[2])};
+//                        size = strlen(word);
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
-                        RKLog("%s C-PING: %s%s%s\n", W->name,
+                        RKLog("%s C-PING: %s%s%s (%zu)\n", W->name,
                               rkGlobalParameters.showColor ? RKLimeColor : "",
                               uword,
-                              rkGlobalParameters.showColor ? RKNoColor : "");
+                              rkGlobalParameters.showColor ? RKNoColor : "",
+                              strlen(word));
                         if (W->verbose > 2) {
                             printf("%s %2d sent  ", W->name, r); RKShowWebsocketFrameHeader(W);
                         }
@@ -487,10 +498,16 @@ void *transporter(void *in) {
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
-                        RKLog("%s C-PONG: %s%s%s\n", W->name,
+                        if (h->len != 4) {
+                            RKBytesInHex(show, message, h->len);
+                        } else {
+                            memcpy(show, message, h->len + 1);
+                        }
+                        RKLog("%s C-PONG: %s%s%s (%zu)\n", W->name,
                               rkGlobalParameters.showColor ? RKLimeColor : "",
-                              uword,
-                              rkGlobalParameters.showColor ? RKNoColor : "");
+                              show,
+                              rkGlobalParameters.showColor ? RKNoColor : "",
+                              h->len);
                         if (W->verbose > 2) {
                             printf("%2d sent  ", r); RKShowWebsocketFrameHeader(W);
                         }
