@@ -1427,22 +1427,23 @@ static void RKTestWebSocketHandleOpen(RKWebSocket *w) {
     // I know, magic packet here. First byte value = 1 means handshake in RadarHub
     int r = sprintf(message, "%c{\"radar\":\"radarkit\", \"command\":\"radarConnect\"}", 1);
     RKBinaryString(show, message, r);
-    printf("RKTestWebSocketHandleOpen() %s\n", show);
+    RKLog("RKTestWebSocketHandleOpen() %s\n", show);
     RKWebSocketSend(w, message, r);
 }
 
 static void RKTestWebSocketHandleMessage(RKWebSocket *w, void *payload, size_t size) {
-    printf("RKTestWebSocketHandleMessage() %s\n", (char *)payload);
+    RKLog("RKTestWebSocketHandleMessage() %s\n", (char *)payload);
 }
 
 static void RKTestWebSocketHandleClose(RKWebSocket *w) {
-    printf("RKTestWebSocketHandleClose()\n");
+    RKLog("RKTestWebSocketHandleClose()\n");
 }
 
 void RKTestWebSocket(void) {
     SHOW_FUNCTION_NAME
     RKLog("Initializing WebSocket ...");
-    RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
+    RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/");
+    //RKWebSocket *w = RKWebSocketInit("localhost:8000", "/ws/radar/radarkit/");
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
     RKWebSocketSetMessageHandler(w, &RKTestWebSocketHandleMessage);
@@ -1458,9 +1459,9 @@ void RKTestWebSocket(void) {
     while (w->payloadTail < 2 && k++ < 50) {
         usleep(10000);
     }
-    RKLog("Received something.");
+    RKLog("Handshake and welcome messages received");
     k = 0;
-    while (k++ < 50) {
+    while (k++ < 3000) {
         usleep(10000);
     }
     RKLog("Stopping WebSocket ...");

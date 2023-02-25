@@ -325,25 +325,25 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     }
 
     // Could move most of these to RKWebScoket.c
-    RKLog("%s host = %s\n", engine->name, engine->host);
-    if (strstr(engine->host, "https") != NULL) {
-        engine->flag = RKWebSocketFlagSSLOn;
-    } else {
-        engine->flag = RKWebSocketFlagSSLOff;
-    }
-    char *c = strstr(engine->host, "://");
-    if (c) {
-        size_t l = strlen(engine->host) - (size_t)(c - engine->host) - 3;
-        memmove(engine->host, c + 3, l);
-        engine->host[l] = '\0';
-    }
-    if (engine->flag & RKWebSocketFlagSSLOn && strstr(engine->host, ":") == NULL) {
-        strcat(engine->host, ":443");
-    }
-    if (strstr(engine->host, ":443")) {
-        engine->flag = RKWebSocketFlagSSLOn;
-    }
-    RKLog("%s revised host = %s (SSL %s)\n", engine->name, engine->host, engine->flag & RKWebSocketFlagSSLOn ? "On" : "Off");
+//    RKLog("%s host = %s\n", engine->name, engine->host);
+//    if (strstr(engine->host, "https") != NULL) {
+//        engine->flag = RKWebSocketFlagSSLOn;
+//    } else {
+//        engine->flag = RKWebSocketFlagSSLOff;
+//    }
+//    char *c = strstr(engine->host, "://");
+//    if (c) {
+//        size_t l = strlen(engine->host) - (size_t)(c - engine->host) - 3;
+//        memmove(engine->host, c + 3, l);
+//        engine->host[l] = '\0';
+//    }
+//    if (engine->flag & RKWebSocketFlagSSLOn && strstr(engine->host, ":") == NULL) {
+//        strcat(engine->host, ":443");
+//    }
+//    if (strstr(engine->host, ":443")) {
+//        engine->flag = RKWebSocketFlagSSLOn;
+//    }
+//    RKLog("%s revised host = %s (SSL %s)\n", engine->name, engine->host, engine->flag & RKWebSocketFlagSSLOn ? "On" : "Off");
 
     // Default streams
     engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
@@ -355,7 +355,7 @@ RKReporter *RKReporterInitForRadarHub(void) {
 }
 
 RKReporter *RKReporterInitForLocal(void) {
-    return RKReporterInitWithHost("http://localhost:8000");
+    return RKReporterInitWithHost("localhost:8000");
 }
 
 RKReporter *RKReporterInit(void) {
@@ -381,7 +381,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     RKStringLower(engine->pathway);
     sprintf(engine->address, "/ws/radar/%s/", engine->pathway);
     RKLog("%s Setting up radar %s @ %s\n", engine->name, radar->desc.name, engine->address);
-    engine->ws = RKWebSocketInit(engine->host, engine->address, engine->flag);
+    engine->ws = RKWebSocketInit(engine->host, engine->address);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
     RKWebSocketSetMessageHandler(engine->ws, &handleMessage);
