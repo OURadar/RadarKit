@@ -302,7 +302,6 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
           rkGlobalParameters.showColor ? RKNoColor : "");
 }
 
-
 #pragma mark - Life Cycle
 
 RKReporter *RKReporterInitWithHost(const char *host) {
@@ -319,31 +318,11 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     engine->pulseStride = 10;
     engine->rayStride = 1;
     engine->memoryUsage = sizeof(RKReporter);
-    strncpy(engine->host, host, RKNameLength);
-    if (strlen(engine->host) == 0) {
+    if (strlen(host) == 0 || host == NULL) {
         sprintf(engine->host, "http://localhost:8000");
+    } else {
+        strncpy(engine->host, host, RKNameLength);
     }
-
-    // Could move most of these to RKWebScoket.c
-//    RKLog("%s host = %s\n", engine->name, engine->host);
-//    if (strstr(engine->host, "https") != NULL) {
-//        engine->flag = RKWebSocketFlagSSLOn;
-//    } else {
-//        engine->flag = RKWebSocketFlagSSLOff;
-//    }
-//    char *c = strstr(engine->host, "://");
-//    if (c) {
-//        size_t l = strlen(engine->host) - (size_t)(c - engine->host) - 3;
-//        memmove(engine->host, c + 3, l);
-//        engine->host[l] = '\0';
-//    }
-//    if (engine->flag & RKWebSocketFlagSSLOn && strstr(engine->host, ":") == NULL) {
-//        strcat(engine->host, ":443");
-//    }
-//    if (strstr(engine->host, ":443")) {
-//        engine->flag = RKWebSocketFlagSSLOn;
-//    }
-//    RKLog("%s revised host = %s (SSL %s)\n", engine->name, engine->host, engine->flag & RKWebSocketFlagSSLOn ? "On" : "Off");
 
     // Default streams
     engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
@@ -380,7 +359,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     strcpy(engine->pathway, radar->desc.name);
     RKStringLower(engine->pathway);
     sprintf(engine->address, "/ws/radar/%s/", engine->pathway);
-    RKLog("%s Setting up radar %s @ %s\n", engine->name, radar->desc.name, engine->address);
+    RKLog("%s Setting up radar %s @ %s %s\n", engine->name, radar->desc.name, engine->host, engine->address);
     engine->ws = RKWebSocketInit(engine->host, engine->address);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);

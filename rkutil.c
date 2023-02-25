@@ -16,7 +16,7 @@ typedef struct user_params {
     RKRadarDesc              desc;
     RKName                   pedzyHost;
     RKName                   tweetaHost;
-    RKName                   remotebHost;
+    RKName                   remoteHost;
     RKName                   relayHost;
     RKName                   ringFilter;
     RKName                   momentMethod;
@@ -301,6 +301,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.positionLatency = 0.00001;
     user->port = 10000;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
+//    strcpy(user->remoteHost, "http://localhost:8000");
 
     return user;
 }
@@ -332,7 +333,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",            user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RemoteHost",          user->remotebHost,          RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RemoteHost",          user->remoteHost,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -492,7 +493,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'H':
-                strncpy(user->remotebHost, optarg, sizeof(user->remotebHost));
+                strncpy(user->remoteHost, optarg, sizeof(user->remoteHost));
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':
@@ -886,11 +887,16 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->remotebHost);
-    int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
-    RKReporterSetVerbose(reporter, v);
-    RKReporterSetRadar(reporter, myRadar);
-    RKReporterStart(reporter);
+    RKLog("remoteHost = '%s' (%zu)\n", systemPreferences->remoteHost, strlen(systemPreferences->remoteHost));
+    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->remoteHost);
+    if (reporter == NULL) {
+        RKLog("Error. Unable to initiate reporter\n");
+    } else {
+        int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
+        RKReporterSetVerbose(reporter, v);
+        RKReporterSetRadar(reporter, myRadar);
+        RKReporterStart(reporter);
+    }
 
     // Now we use the framework.
     if (systemPreferences->simulate) {
@@ -1038,8 +1044,10 @@ int main(int argc, const char **argv) {
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);
 
-    RKReporterStop(reporter);
-    RKReporterFree(reporter);
+    if (reporter) {
+        RKReporterStop(reporter);
+        RKReporterFree(reporter);
+    }
 
     RKFree(myRadar);
 

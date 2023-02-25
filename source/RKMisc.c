@@ -1536,7 +1536,7 @@ char *RKBytesInHex(char *dst, void *src, const size_t count) {
     uint8_t *c = (uint8_t *)src;
     *dst++ = '[';
     for (i = 0; i < count; i++) {
-        dst += sprintf(dst, ".\\%02x", *c++);
+        dst += sprintf(dst, ".%02x", *c++);
     }
     *dst++ = ']';
     *dst = '\0';
@@ -1557,7 +1557,7 @@ void RKHeadTailByteString(char *dst, void *src, const size_t count) {
         RKHeadTailBinaryString(dst, src, count);
     } else {
         c = (uint8_t *)src;
-        r = sprintf(dst, "b'\\x\%02d'", *c++);
+        r = sprintf(dst, "b'\\x%02d'", *c++);
         char *dummy = RKBytesInHex(dst + r, c, 7);
         RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
     }

@@ -567,7 +567,7 @@ void *transporter(void *in) {
 #pragma mark - Life Cycle
 
 RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
-    char *c;
+    char *c, *n;
     size_t len;
 
     RKWebSocket *W = (RKWebSocket *)malloc(sizeof(RKWebSocket));
@@ -578,6 +578,11 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     pthread_attr_init(&W->threadAttributes);
     pthread_mutex_init(&W->lock, NULL);
 
+    // Default if host == NULL
+    if (host == NULL || strlen(host) == 0) {
+        RKLog("%s Error. Input host cannot be %s\n", W->name, host);
+        return NULL;
+    }
     // Look for protocol https / http
     if ((c = strstr(host, "https:")) != NULL) {
         W->useSSL = true;
@@ -586,24 +591,30 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     }
     // Look for port number at the end
     if ((c = strstr(host, "://")) != NULL) {
-        c = strstr(c, ":");
+        c += 3;
+        n = strstr(c, ":");
     } else {
-        c = strstr(host, ":");
+        c = (char *)host;
+        n = strstr(host, ":");
     }
-    if (c == NULL) {
+    if (n == NULL) {
         W->port = 80;
         strcpy(W->host, host);
     } else {
-        W->port = atoi(c + 1);
-        len = (size_t)(c - host);
-        strncpy(W->host, host, len);
-        W->host[len] = '\0';
+        W->port = atoi(n + 1);
+        len = (size_t)(n - c);
+        if (len) {
+            strncpy(W->host, c, len);
+            W->host[len] = '\0';
+        } else {
+            sprintf(W->host, "localhost");
+        }
         if (W->useSSL == false && W->port == 443) {
             W->useSSL = true;
         }
     }
     // Look for pathway
-    if (strlen(path) == 0) {
+    if (path == NULL || strlen(path) == 0) {
         sprintf(W->path, "/");
     } else {
         strcpy(W->path, path);
