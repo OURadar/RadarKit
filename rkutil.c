@@ -887,7 +887,6 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKLog("remoteHost = '%s' (%zu)\n", systemPreferences->remoteHost, strlen(systemPreferences->remoteHost));
     RKReporter *reporter = RKReporterInitWithHost(systemPreferences->remoteHost);
     if (reporter == NULL) {
         RKLog("Error. Unable to initiate reporter\n");

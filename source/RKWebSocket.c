@@ -630,9 +630,11 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     W->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
     RKWebSocketSetPingInterval(W, RKWebSocketTimeoutThresholdSeconds);
 
-    RKLog("%s RKWebSocketInit() %s%s:%d%s\n", W->name,
+    RKLog("%s RKWebSocketInit() %s%s%s:%d%s%s\n", W->name,
+          rkGlobalParameters.showColor ? (W->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
           W->useSSL ? "https://" : "http://",
-          W->host, W->port, W->path);
+          W->host, W->port, W->path,
+          rkGlobalParameters.showColor ? RKNoColor : "");
 
     return W;
 }

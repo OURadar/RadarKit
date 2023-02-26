@@ -743,7 +743,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKWaveformCalibration *calibration = &radar->waveformCalibrations[i];
             calibration->uid = -(uint32_t)radar->desc.waveformCalibrationCapacity + i;
         }
-        RKLog("Waveform calibrations occupy %s B (%s units)",
+        RKLog("Waveform calibrations occupy %s B  (%s units)",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.waveformCalibrationCapacity));
         radar->memoryUsage += bytes;
@@ -767,7 +767,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKControl *control = &radar->controls[i];
             control->uid = -(uint32_t)radar->desc.controlCapacity + i;
         }
-        RKLog("Controls occupy %s B (%s units)",
+        RKLog("Controls occupy %s B  (%s units)",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.controlCapacity));
         radar->memoryUsage += bytes;

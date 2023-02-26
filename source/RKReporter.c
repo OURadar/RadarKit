@@ -360,7 +360,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     strcpy(engine->pathway, radar->desc.name);
     RKStringLower(engine->pathway);
     sprintf(engine->address, "/ws/radar/%s/", engine->pathway);
-    RKLog("%s Setting up radar %s @ %s %s\n", engine->name, radar->desc.name, engine->host, engine->address);
+    RKLog("%s Setting up radar %s (%s @ %s)\n", engine->name, radar->desc.name, engine->host, engine->address);
     engine->ws = RKWebSocketInit(engine->host, engine->address);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
