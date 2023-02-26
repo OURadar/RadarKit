@@ -284,10 +284,22 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     RKRadar *radar = engine->radar;
 
     char *message = (char *)payload;
-    RKLog("%s radar = %s   %s\n", engine->name, radar->desc.name, message);
 
-    if (strstr((char *)message, "Welcome")) {
+    if (strstr(message, "Welcome")) {
         engine->connected = true;
+        RKLog("%s radar = %s   %s%s%s\n", engine->name,
+              radar->desc.name,
+              rkGlobalParameters.showColor ? RKMonokaiGreen : "",
+              message,
+              rkGlobalParameters.showColor ? RKNoColor : "");
+        return;
+    } else if (strstr(message, "Bye")) {
+        engine->connected = false;
+        RKLog("%s radar = %s   %s%s%s\n", engine->name,
+              radar->desc.name,
+              rkGlobalParameters.showColor ? RKMonokaiOrange : "",
+              message,
+              rkGlobalParameters.showColor ? RKNoColor : "");
         return;
     }
 
@@ -296,11 +308,14 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
                     RKRadarHubTypeResponse,
                     c == 0 ? 'A' : (c == 1 ? 'Q' : 'N'),
                     message);
-    RKWebSocketSend(W, engine->message, r);
     RKLog("%s %s%s%s\n", engine->name,
-          rkGlobalParameters.showColor ? RKMonokaiGreen : "",
-          engine->message + 1,
+          rkGlobalParameters.showColor ? (c == 0 ? RKMonokaiGreen :
+                                          (c == 1 ? RKBaseGreenColor : RKMonokaiOrange)) : "",
+          engine->message,
           rkGlobalParameters.showColor ? RKNoColor : "");
+
+    // Repeat the incoming message with prefix 'A', 'Q', or 'N'
+    RKWebSocketSend(W, engine->message, r);
 }
 
 #pragma mark - Life Cycle
