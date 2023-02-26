@@ -301,7 +301,6 @@ UserParams *systemPreferencesInit(void) {
     user->desc.positionLatency = 0.00001;
     user->port = 10000;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
-//    strcpy(user->remoteHost, "http://localhost:8000");
 
     return user;
 }
@@ -352,6 +351,18 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterTypeFloat, 1);
+
+    // Revise some parameters
+    s = (int)strlen(user->desc.dataPath);
+    if (user->desc.dataPath[s - 1] == '/') {
+        user->desc.dataPath[s - 1] = '\0';
+    }
+    if (!isfinite(user->SNRThreshold)) {
+        user->SNRThreshold = -20.0f;
+    }
+    if (user->SQIThreshold < 0.0f) {
+        user->SQIThreshold = 0.0f;
+    }
 
     // Shortcuts
     k = 0;
