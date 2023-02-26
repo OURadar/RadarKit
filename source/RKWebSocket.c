@@ -572,7 +572,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     RKWebSocket *W = (RKWebSocket *)malloc(sizeof(RKWebSocket));
     memset(W, 0, sizeof(RKWebSocket));
     sprintf(W->name, "%s<  RKWebSocket  >%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorWebSocket) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     pthread_attr_init(&W->threadAttributes);
     pthread_mutex_init(&W->lock, NULL);

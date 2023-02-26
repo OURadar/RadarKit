@@ -388,27 +388,28 @@ enum {
 #undef N
 
 enum RKEngineColor {
-    RKEngineColorCommandCenter = 13,
-    RKEngineColorRadarHubReporter = 9,
+    RKEngineColorCommandCenter = 14,
+    RKEngineColorRadarHubReporter = 10,
     RKEngineColorPulseCompressionEngine = 7,
     RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
-    RKEngineColorMomentEngine = 8,
+    RKEngineColorMomentEngine = 9,
     RKEngineColorHealthEngine = 1,
-    RKEngineColorDataRecorder = 11,
-    RKEngineColorSweepEngine = 17,
+    RKEngineColorDataRecorder = 12,
+    RKEngineColorSweepEngine = 18,
     RKEngineColorHealthLogger = 5,
     RKEngineColorFileManager = 2,
-    RKEngineColorTransceiver = 16,
-    RKEngineColorPedestalRelayPedzy = 14,
+    RKEngineColorTransceiver = 17,
+    RKEngineColorPedestalRelayPedzy = 15,
     RKEngineColorHealthRelayTweeta = 0,
-    RKEngineColorRadarRelay = 16,
-    RKEngineColorHostMonitor = 15,
-    RKEngineColorClock = 18,
-    RKEngineColorMisc = 19,
-    RKEngineColorEngineMonitor = 18,
+    RKEngineColorRadarRelay = 17,
+    RKEngineColorHostMonitor = 16,
+    RKEngineColorClock = 19,
+    RKEngineColorMisc = 20,
+    RKEngineColorEngineMonitor = 19,
     RKEngineColorConfig = 6,
-    RKEngineColorFFTModule = 18
+    RKEngineColorFFTModule = 19,
+    RKEngineColorWebSocket = 8
 };
 
 typedef uint32_t RKValueType;

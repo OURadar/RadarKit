@@ -808,7 +808,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.positionTicsPerSecond > 0) {
             RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
-        sprintf(tmpName, "%s<AimPedestalTime>%s",
+        sprintf(tmpName, "%s< PedestalTime  >%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->positionClock, tmpName);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
