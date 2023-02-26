@@ -304,7 +304,7 @@ void RKTestByNumber(const int number, const void *arg) {
 
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
-    for (int k = 0; k < 17; k++) {
+    for (int k = 0; k < 19; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
     printf("\n");
