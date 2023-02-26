@@ -30,6 +30,7 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
 }
 
 static int RKSocketRead(RKWebSocket *W, uint32_t origin, size_t size) {
+    W->tic++;
     if (W->useSSL) {
         return SSL_read(W->ssl, W->frame + origin, (int)size);
     }
@@ -37,6 +38,7 @@ static int RKSocketRead(RKWebSocket *W, uint32_t origin, size_t size) {
 }
 
 static int RKSocketWrite(RKWebSocket *W, size_t size) {
+    W->tic++;
     if (W->useSSL) {
         return SSL_write(W->ssl, W->frame, (int)size);
     }
@@ -318,6 +320,8 @@ void *transporter(void *in) {
     uint32_t origin = 0;
     uint32_t total = 0;
 
+    W->tic = 1;
+
     while (W->wantActive) {
 
         RKWebSocketConnect(W);
@@ -539,7 +543,7 @@ void *transporter(void *in) {
         do {
             s0 = time(NULL);
             r = (int)difftime(s0, s1);
-            if (i != r && W->verbose) {
+            if (i != r && W->verbose > 1) {
                 i = r;
                 if (r > 2) {
                     printf("\r%s No connection. Retry in %d second%s ... ", W->name,
@@ -551,7 +555,7 @@ void *transporter(void *in) {
             }
             usleep(200000);
         } while (W->wantActive && r < 10);
-        if (W->verbose) {
+        if (W->verbose > 1) {
             printf("\033[1K\r");
         }
     }
@@ -630,12 +634,6 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     W->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
     RKWebSocketSetPingInterval(W, RKWebSocketTimeoutThresholdSeconds);
 
-    RKLog("%s RKWebSocketInit() %s%s%s:%d%s%s\n", W->name,
-          rkGlobalParameters.showColor ? (W->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
-          W->useSSL ? "https://" : "http://",
-          W->host, W->port, W->path,
-          rkGlobalParameters.showColor ? RKNoColor : "");
-
     return W;
 }
 
@@ -682,6 +680,13 @@ void RKWebSocketSetErrorHandler(RKWebSocket *W, void (*routine)(RKWebSocket *)) 
 #pragma mark - Methods
 
 void RKWebSocketStart(RKWebSocket *W) {
+    if (W->verbose) {
+        RKLog("%s RKWebSocketStart() %s%s%s:%d%s%s\n", W->name,
+              rkGlobalParameters.showColor ? (W->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
+              W->useSSL ? "https://" : "http://",
+              W->host, W->port, W->path,
+              rkGlobalParameters.showColor ? RKNoColor : "");
+    }
     pthread_mutex_lock(&W->lock);
     W->wantActive = true;
     pthread_mutex_unlock(&W->lock);

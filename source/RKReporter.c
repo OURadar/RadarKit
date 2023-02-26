@@ -54,11 +54,15 @@ void *reporter(void *in) {
 
     RKRadarHubRay *display;
 
+    do {
+        usleep(10000);
+    } while (engine->ws->tic < 1);
+
     RKLog("%s Started.  mem = %s B\n", engine->name, RKIntegerToCommaStyleString(engine->memoryUsage));
 
     engine->state |= RKEngineStateActive;
 
-    while (engine->state & RKEngineStateActive) {
+    while (engine->state & RKEngineStateWantActive) {
         if (engine->ws->connected) {
 
             // Health Status
@@ -68,7 +72,7 @@ void *reporter(void *in) {
                     engine->streamsInProgress |= RKStreamHealthInJSON;
                     h = radar->healthIndex;
                     if (engine->verbose) {
-                        RKLog("%s Begin streaming RKStreamHealthInJSON   h = %d\n", engine->name, h);
+                        RKLog("%s RKStreamHealthInJSON started.   h = %d\n", engine->name, h);
                     }
                 }
 
@@ -105,7 +109,7 @@ void *reporter(void *in) {
                     engine->streamsInProgress |= RKStreamScopeStuff;
                     p = radar->pulseIndex;
                     if (engine->verbose) {
-                        RKLog("%s Begin streaming RKStreamScopeStuff   p = %d\n", engine->name, p);
+                        RKLog("%s RKStreamScopeStuff started.   p = %d\n", engine->name, p);
                     }
                 }
 
@@ -157,7 +161,7 @@ void *reporter(void *in) {
                     engine->streamsInProgress |= (engine->streams & RKStreamDisplayAll);
                     r = radar->rayIndex;
                     if (engine->verbose) {
-                        RKLog("%s Begin streaming RKStreamDisplay   r = %d\n", engine->name, r);
+                        RKLog("%s RKStreamDisplay started.   r = %d\n", engine->name, r);
                     }
                 }
 
@@ -204,6 +208,10 @@ void *reporter(void *in) {
 
     disconnectStreams(engine);
 
+    if (engine->state & RKEngineStateActive) {
+        engine->state ^= RKEngineStateActive;
+    }
+
     return NULL;
 }
 
@@ -237,8 +245,8 @@ void handleOpen(RKWebSocket *W) {
         RKLog("%s Error. Unable to construct handshake message.\n", engine->name);
     }
     RKLog("%s Sending open packet %s ...\n", engine->name, engine->address);
-    if (engine->verbose) {
-        RKLog("%s %s\n", engine->name, engine->welcome);
+    if (engine->verbose > 1) {
+        RKLog(">%s %s\n", engine->name, engine->welcome);
     }
     RKWebSocketSend(W, engine->welcome, r);
     //
@@ -276,7 +284,9 @@ void handleClose(RKWebSocket *W) {
     if (engine->state & RKEngineStateActive) {
         engine->state ^= RKEngineStateActive;
     }
-    RKLog("%s WebSocket handleClose()\n", engine->name);
+    if (engine->verbose > 1) {
+        RKLog("%s RKReporter.handleClose()\n", engine->name);
+    }
 }
 
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
@@ -284,6 +294,10 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     RKRadar *radar = engine->radar;
 
     char *message = (char *)payload;
+
+    if (engine->verbose) {
+        RKLog("%s %s\n", engine->name, message);
+    }
 
     if (strstr(message, "Welcome")) {
         engine->connected = true;
@@ -375,24 +389,34 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     strcpy(engine->pathway, radar->desc.name);
     RKStringLower(engine->pathway);
     sprintf(engine->address, "/ws/radar/%s/", engine->pathway);
-    RKLog("%s Setting up radar %s (%s @ %s)\n", engine->name, radar->desc.name, engine->host, engine->address);
+    if (engine->verbose > 1) {
+        RKLog("%s Setting up radar %s (%s @ %s)\n", engine->name, radar->desc.name, engine->host, engine->address);
+    }
     engine->ws = RKWebSocketInit(engine->host, engine->address);
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
     RKWebSocketSetMessageHandler(engine->ws, &handleMessage);
-    RKWebSocketSetVerbose(engine->ws, engine->verbose);
+    RKWebSocketSetVerbose(engine->ws, engine->verbose - 1);
     RKWebSocketSetParent(engine->ws, engine);
 }
 
 #pragma mark - Interactions
 
 void RKReporterStart(RKReporter *engine) {
-    RKLog("%s Starting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
+    RKLog("%s Starting ...\n", engine->name);
+    RKLog(">%s host = %s%s:%d%s%s\n", engine->name,
+          rkGlobalParameters.showColor ? (engine->ws->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
+          engine->ws->host, engine->ws->port, engine->ws->path,
+          rkGlobalParameters.showColor ? RKNoColor : "");
     RKWebSocketStart(engine->ws);
+    engine->state |= RKEngineStateWantActive;
     if (pthread_create(&engine->ticWorker, NULL, reporter, engine)) {
         RKLog("%s Error. Failed to create reporter().\n", engine->name);
         return;
     }
+    do {
+        usleep(10000);
+    } while (engine->state & RKEngineStateWantActive && !(engine->state & RKEngineStateActive));
 }
 
 void RKReporterStop(RKReporter *engine) {

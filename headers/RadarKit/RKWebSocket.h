@@ -78,6 +78,7 @@ struct rk_websocket {
     useconds_t               timeoutDeltaMicroseconds;                         // Timeout of select()
     uint32_t                 timeoutThreshold;                                 // Internal variable
     uint32_t                 timeoutCount;                                     // Internal variable
+    uint64_t                 tic;
 
     uint8_t                  frame[RKWebSocketFrameSize];                      // A local buffer to store a frame
 };
