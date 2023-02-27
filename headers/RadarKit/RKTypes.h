@@ -353,6 +353,7 @@ N(RKResultFailedToStartRayGatherer) \
 N(RKResultFailedToStartHealthWorker) \
 N(RKResultFailedToStartPulseRecorder) \
 N(RKResultFailedToStartPedestalMonitor) \
+N(RKResultFailedToStartpedestalVcpEngine) \
 N(RKResultFailedToStartFileManager) \
 N(RKResultFailedToStartFileRemover) \
 N(RKResultFailedToStartTransceiver) \
