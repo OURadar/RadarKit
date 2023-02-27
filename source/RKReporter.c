@@ -295,10 +295,6 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
 
     char *message = (char *)payload;
 
-    if (engine->verbose) {
-        RKLog("%s %s\n", engine->name, message);
-    }
-
     if (strstr(message, "Welcome")) {
         engine->connected = true;
         RKLog("%s radar = %s   %s%s%s\n", engine->name,
@@ -315,6 +311,10 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
               message,
               rkGlobalParameters.showColor ? RKNoColor : "");
         return;
+    }
+    
+    if (engine->verbose) {
+        RKLog("%s %s\n", engine->name, message);
     }
 
     int c = rand() % 3;

@@ -3394,7 +3394,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
-    sprintf(transceiver->name, "%s<SimTransceiver >%s",
+    sprintf(transceiver->name, "%s< SimTransceiver>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->state = RKEngineStateAllocated;
@@ -4117,7 +4117,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(healthRelay, 0, sizeof(RKHealthRelay));
-    sprintf(healthRelay->name, "%s<SimHealthRelay >%s",
+    sprintf(healthRelay->name, "%s< SimHealthRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     healthRelay->memoryUsage = sizeof(RKTestPedestal);
