@@ -26,7 +26,7 @@
 #define RKWebSocketFrameSize                     (1024 * 1024)
 #define RKWebSocketPayloadDepth                  1000
 #define RKWebSocketTimeoutDeltaMicroseconds      10000
-#define RKWebSocketTimeoutThresholdSeconds       5.0
+#define RKWebSocketTimeoutThresholdSeconds       10.0
 
 #ifndef htonll
 #define htonll(x) (((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))

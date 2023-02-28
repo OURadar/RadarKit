@@ -122,7 +122,7 @@ void *reporter(void *in) {
                         // Use payload 1 as target
                         payload = engine->payload[1];
                         // Put together the payload for RadarHub
-                        count = 100;
+                        count = MIN(200, pulse->header.gateCount);
                         *(char *)payload = RKRadarHubTypeScope;
                         payload_size = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
                         xh = RKGetInt16CDataFromPulse(pulse, 0);
@@ -143,7 +143,7 @@ void *reporter(void *in) {
                         *(y + count * 3) = 1;
 
                         if (engine->verbose > 1) {
-                            RKHeadTailByteString(message, payload, payload_size);
+                            RKRadarHubPayloadString(message, payload, payload_size);
                             RKLog("%s P%04d %s (%zu)\n", engine->name, p, message, payload_size);
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
@@ -174,7 +174,7 @@ void *reporter(void *in) {
                         // Use a ray pointer for convenience
                         display = (RKRadarHubRay *)payload;
                         // Put together the ray for RadarHub
-                        count = 100;
+                        count = MIN(200, ray->header.gateCount);
                         // T, Es, Ee, As, Ae, _, Z0, Z1, Z2, ...
                         display->header.type = RKRadarHubTypeRadialZ;
                         display->header.startElevation = ray->header.startElevation;
@@ -185,7 +185,7 @@ void *reporter(void *in) {
                         z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
                         memcpy(display->data, z, count * sizeof(RKByte));
                         if (engine->verbose > 1) {
-                            RKHeadTailByteString(message, payload, payload_size);
+                            RKRadarHubPayloadString(message, payload, payload_size);
                             RKLog("%s R%04d %s (%zu)\n", engine->name, r, message, payload_size);
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
@@ -353,7 +353,6 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     } else {
         strncpy(engine->host, host, RKNameLength);
     }
-
     // Default streams
     engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
     return engine;
@@ -380,7 +379,7 @@ void RKReporterFree(RKReporter *engine) {
 void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
     if (engine->ws) {
-        RKWebSocketSetVerbose(engine->ws, engine->verbose);
+        RKWebSocketSetVerbose(engine->ws, verbose - 1);
     }
 }
 

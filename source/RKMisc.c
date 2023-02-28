@@ -1544,7 +1544,12 @@ char *RKBytesInHex(char *dst, void *src, const size_t count) {
     return dst;
 }
 
-void RKHeadTailByteString(char *dst, void *src, const size_t count) {
+void RKHeadTailBytesInHex(char *dst, void *src, const size_t count) {
+    char *dummy = RKBytesInHex(dst, src, 7);
+    RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
+}
+
+void RKRadarHubPayloadString(char *dst, void *src, const size_t count) {
     int i;
     uint8_t *c = (uint8_t *)src;
     int r = 0;
@@ -1560,7 +1565,6 @@ void RKHeadTailByteString(char *dst, void *src, const size_t count) {
     } else {
         c = (uint8_t *)src;
         r = sprintf(dst, "b'\\x%02x'", *c++);
-        char *dummy = RKBytesInHex(dst + r, c, 7);
-        RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
+        RKHeadTailBytesInHex(dst + r, c, count - 1);
     }
 }

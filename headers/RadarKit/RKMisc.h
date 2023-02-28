@@ -289,7 +289,8 @@ int RKMergeColumns(char *, const char *, const char *, const int);
 char *RKBinaryString(char *dst, void *src, const size_t count);
 void RKHeadTailBinaryString(char *dst, void *src, const size_t count);
 char *RKBytesInHex(char *dst, void *src, const size_t count);
-void RKHeadTailByteString(char *dst, void *src, const size_t count);
+void RKHeadTailBytesInHex(char *dst, void *src, const size_t count);
+void RKRadarHubPayloadString(char *dst, void *src, const size_t count);
 
 //
 //

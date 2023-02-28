@@ -368,13 +368,13 @@ void RKTestPrettyStrings(void) {
     payload[payload_size - 1] = 0;
     char string[RKMaximumStringLength];
     RKHeadTailBinaryString(string, status, strlen(status));
-    printf("RKHeadTailBinaryString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailBinaryString  : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     RKHeadTailBinaryString(string, payload, payload_size);
-    printf("RKHeadTailBinaryString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, status, strlen(status));
-    printf("RKHeadTailByteString   : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, payload, payload_size);
-    printf("RKHeadTailByteString   : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailBinaryString  : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKRadarHubPayloadString(string, status, strlen(status));
+    printf("RKRadarHubPayloadString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKRadarHubPayloadString(string, payload, payload_size);
+    printf("RKRadarHubPayloadString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
 }
 
 void RKTestBasicMath(void) {

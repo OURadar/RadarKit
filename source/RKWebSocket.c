@@ -352,11 +352,11 @@ void *transporter(void *in) {
                     while (W->payloadTail != W->payloadHead) {
                         uint16_t tail = W->payloadTail == RKWebSocketPayloadDepth - 1 ? 0 : W->payloadTail + 1;
                         const RKWebSocketPayload *payload = &W->payloads[tail];
-                        if (W->verbose > 2 || (*((char *)payload->source) == 5 && payload->size > 805)) {
+                        if (W->verbose > 2) {
                             if (payload->size < 64) {
                                 RKBinaryString(message, payload->source, payload->size);
                             } else {
-                                RKHeadTailByteString(message, payload->source, payload->size);
+                                RKRadarHubPayloadString(message, payload->source, payload->size);
                             }
                             printf("RKWebSocket.transporter: WRITE \033[38;5;154m%s\033[m (%zu)\n",
                                    message, payload->size);
@@ -442,9 +442,8 @@ void *transporter(void *in) {
                         }
                         if (size != 4 && h->opcode == RFC6455_OPCODE_PING) {
                             RKBytesInHex(show, anchor, size);
-                        } else if (size > 64) {
-                            snprintf(show, 63, "%s ...", (char *)anchor);
-                            show[64] = '\0';
+                        } else if (size > 32) {
+                            RKHeadTailBytesInHex(show, anchor, size);
                         } else {
                             memcpy(show, anchor, size);
                             show[size] = '\0';
