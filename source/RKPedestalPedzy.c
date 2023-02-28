@@ -745,13 +745,13 @@ int pedestalPoint(RKPedestalPedzy *me, const float el_point, const float az_poin
             action.param[1] = 0.0f;
         }
 
-        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action)
+        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
         i++;
         usleep(1000);
     }
     action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
-    action.param[0] = 0.0f
+    action.param[0] = 0.0f;
     action.mode[1] = RKPedestalInstructTypeAxisAzimuth | RKPedestalInstructTypeModeStandby;
-    action.param[1] = 0.0f
-    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action)
+    action.param[1] = 0.0f;
+    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
 }
