@@ -379,10 +379,10 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         } else if (!strncmp("go", cmd, 2) || !strncmp("run", cmd, 3)) {
             pedestalVcpArmSweeps(me->vcpHandle,RKPedestalVcpRepeat);
-            sprintf(response, "ACK. Go." RKEOL);
+            printf("ACK. Go." RKEOL);
         } else if (!strncmp("once", cmd, 4)) {
             pedestalVcpArmSweeps(me->vcpHandle, RKPedestalVcpNoRepeat);
-            sprintf(response, "ACK. Once." RKEOL);
+            printf("ACK. Once." RKEOL);
         } else if ((!strncmp("vol", cmd, 3) || !strncmp("lvol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
             // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
             immediatelyDo = false;
@@ -409,7 +409,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 //                                                 elevation   azimuth     rate        ???
                 n = sscanf(token, "%16s %16s %16s %16s %16s", cmd, cparams[0], cparams[1], cparams[2], cparams[3]);
                 if (n < 2) {
-                    sprintf(response, "NAK. Ill-defined VOL." RKEOL);
+                    printf("NAK. Ill-defined VOL." RKEOL);
                     return RKResultFailedToSetVcp;
                 }
                 if (sscanf(cparams[0], "%f,%f", &el_start, &el_end) == 1) {
@@ -432,7 +432,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 } else if (*cmd == 'b') {
                     VcpMode = RKVcpModeSpeedDown;
                 } else {
-                    sprintf(response, "NAK. Ill-defined VOL." RKEOL);
+                    printf("NAK. Ill-defined VOL." RKEOL);
                     everythingOkay = false;
                     pedestalVcpClearSweeps(me->vcpHandle);
                     return RKResultFailedToSetVcp;
@@ -449,10 +449,10 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                     pedestalVcpNextHitter(me->vcpHandle);
                     pedestalVcpNextHitter(me->vcpHandle);
                 }
-                pedestalVcpSummary(me->vcpHandle, response);
-                sprintf(response, "ACK. Volume added successfully." RKEOL);
+                pedestalVcpSummary(me->vcpHandle, me->msg);
+                printf("ACK. Volume added successfully." RKEOL);
             } else {
-                sprintf(response, "NAK. Some error occurred." RKEOL);
+                printf("NAK. Some error occurred." RKEOL);
             }
         } else {
             skipNetResponse = false;

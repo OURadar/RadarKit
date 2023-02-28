@@ -119,7 +119,8 @@ typedef struct rk_pedzy {
     float                  headingOffset;
     bool                   vcpActive;
     RKPedestalVcpHandle    *vcpHandle;
-    uint32_t                lastActionAge;
+    uint32_t               lastActionAge;
+    char                   msg[4096];
     // // VCP engine
     // RKVCPEngine            *vcpEngine;
 
