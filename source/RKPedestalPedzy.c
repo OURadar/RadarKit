@@ -545,12 +545,12 @@ void pedestalVcpClearDeck(RKPedestalVcpHandle *V) {
 }
 
 void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
-    V->sweepCount = V->onDeckCount;
-    V->onDeckCount = V->inTheHoleCount;
     memset(V->batterSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
     memcpy(V->batterSweeps, V->onDeckSweeps, sizeof(RKPedestalVcpSweepHandle));
     memset(V->onDeckSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
     memcpy(V->onDeckSweeps, V->inTheHoleSweeps, sizeof(RKPedestalVcpSweepHandle));
+    V->sweepCount = V->onDeckCount;
+    V->onDeckCount = V->inTheHoleCount;
     V->active = true;
     V->i = 0;
     V->j = 0;
