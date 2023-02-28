@@ -21,6 +21,12 @@
 #define RKPedestalVcpNoRepeat          0
 #define RKPedestalVcpStatusPeriodMS    2000
 
+#define RKPedestalPositionRoom         0.5f
+#define RKPedestalPointTimeOut         3000
+
+#define RKPedestalPointAzimuth         1
+#define RKPedestalPointElevation       0
+
 struct timeval RKPedestalVcpCurrentTime;
 struct timeval RKPedestalVcpStatusTriggerTime;
 struct timeval RKPedestalVcpStatusPeriod;
@@ -125,19 +131,7 @@ typedef struct rk_pedzy {
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);
 int RKPedestalPedzyExec(RKPedestal, const char *, char *);
 int RKPedestalPedzyFree(RKPedestal);
-RKPedestalAction pedestalVcpGetAction(RKPedestalVcpHandle *, const RKPosition *);
 RKPedestalVcpHandle *pedestalVcpInit(void);
-void pedestalVcpArmSweeps(RKPedestalVcpHandle *, const bool);
-void pedestalVcpClearSweeps(RKPedestalVcpHandle *);
-void pedestalVcpClearHole(RKPedestalVcpHandle *);
-void pedestalVcpClearDeck(RKPedestalVcpHandle *);
-void pedestalVcpNextHitter(RKPedestalVcpHandle *);
-RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
-                       const float el_start, const float el_end,
-                       const float az_start, const float az_end, const float az_mark,
-                       const float rate);
-int pedestalVcpAddLineupSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle );
-int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle );
-void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, bool linetag);
+void pedestalVcpSendAction(RKClient *, char *,RKPedestalAction *);
 void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 #endif /* __RadarKit_RKPedestal__ */
