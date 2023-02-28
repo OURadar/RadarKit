@@ -448,6 +448,8 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 if (immediatelyDo) {
                     pedestalVcpNextHitter(me->vcpHandle);
                     pedestalVcpNextHitter(me->vcpHandle);
+                } else if (!strncmp("lvol", cmd, 4)) {
+                    pedestalVcpNextHitter(me->vcpHandle);
                 }
                 pedestalVcpSummary(me->vcpHandle, me->msg);
                 printf("ACK. Volume added successfully." RKEOL);
@@ -531,6 +533,7 @@ void pedestalVcpClearSweeps(RKPedestalVcpHandle *V) {
     V->progress = RKVcpProgressNone;
     V->sweepCount = 0;
     V->onDeckCount = 0;
+    V->inTheHoleCount = 0;
     V->active = true;
     V->i = 0;
     V->j = 0;
@@ -546,9 +549,9 @@ void pedestalVcpClearDeck(RKPedestalVcpHandle *V) {
 
 void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
     memset(V->batterSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
-    memcpy(V->batterSweeps, V->onDeckSweeps, sizeof(RKPedestalVcpSweepHandle));
+    memcpy(V->batterSweeps, V->onDeckSweeps, V->onDeckCount * sizeof(RKPedestalVcpSweepHandle));
     memset(V->onDeckSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
-    memcpy(V->onDeckSweeps, V->inTheHoleSweeps, sizeof(RKPedestalVcpSweepHandle));
+    memcpy(V->onDeckSweeps, V->inTheHoleSweeps, V->inTheHoleCount * sizeof(RKPedestalVcpSweepHandle));
     V->sweepCount = V->onDeckCount;
     V->onDeckCount = V->inTheHoleCount;
     V->active = true;
@@ -599,12 +602,20 @@ void pedestalVcpSendAction(int sd, char *ship, RKPedestalAction *act) {
     RKNetworkSendPackets(sd, ship, sizeof(RKPedestalAction) + 1, NULL);
 }
 
-void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, bool linetag) {
+void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, RKVcpHitter linetag) {
     char prefix[7];
-    if (linetag) {
-        strncpy(prefix, "LINEUP ", 7);
-    } else {
-        strncpy(prefix, "       ", 7);
+    switch (linetag){
+        case RKVcpAtBat:
+            strncpy(prefix, "       ", 7);
+            break;
+        case RKVcpPinch:
+            strncpy(prefix, "PINCH  ", 7);
+            break;
+        case RKVcpLine:
+            strncpy(prefix, "LINEUP ", 7);
+            break;
+        default:
+            break;
     }
 
     for (int i=0; i<SC; i++) {
@@ -657,11 +668,11 @@ void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, bool line
 
 void pedestalVcpSummary(RKPedestalVcpHandle *V, char *msg) {
     msg[0] = '\0';
-    makeSweepMessage(V->batterSweeps, msg, V->sweepCount, false);
-    if (!memcmp(V->inTheHoleSweeps, V->onDeckSweeps, sizeof(RKPedestalVcpSweepHandle))) {
-        makeSweepMessage(V->onDeckSweeps, msg, V->onDeckCount, false);
+    makeSweepMessage(V->batterSweeps, msg, V->sweepCount, RKVcpAtBat);
+    if (memcmp(V->inTheHoleSweeps, V->onDeckSweeps, (V->onDeckCount+V->inTheHoleCount)*sizeof(RKPedestalVcpSweepHandle))) {
+        makeSweepMessage(V->onDeckSweeps, msg, V->onDeckCount, RKVcpPinch);
     }
-    makeSweepMessage(V->inTheHoleSweeps, msg, V->inTheHoleCount, true);
+    makeSweepMessage(V->inTheHoleSweeps, msg, V->inTheHoleCount, RKVcpLine);
     printf("================================================\n"
            "VCP Summary:\n"
            "------------\n"
