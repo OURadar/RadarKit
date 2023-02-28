@@ -599,7 +599,8 @@ int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *V, RKPedestalVcpSweepHandle sw
 void pedestalVcpSendAction(int sd, char *ship, RKPedestalAction *act) {
     sprintf(ship, "%c", 0x0f);
     memcpy(ship + 1, act, sizeof(RKPedestalAction));
-    RKNetworkSendPackets(sd, ship, sizeof(RKPedestalAction) + 1, NULL);
+    strncpy(ship + 1 + sizeof(RKPedestalAction), RKEOL, 2);
+    RKNetworkSendPackets(sd, ship, sizeof(RKPedestalAction) + 3, NULL);
 }
 
 void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, RKVcpHitter linetag) {
