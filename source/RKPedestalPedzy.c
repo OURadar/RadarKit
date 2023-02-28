@@ -174,7 +174,7 @@ static void *pedestalVcpEngine(void *in) {
                 // Call the control handler based on the suggested action
                 if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
                     // P->control(P->ped, action);
-                    pedestalVcpSendAction(client->sd, me->latestCommand, &action)
+                    pedestalVcpSendAction(client->sd, me->latestCommand, &action);
                     // sprintf(me->latestCommand, "%c", 0x0f);
                     // memcpy(me->latestCommand + 1, &action, sizeof(RKPedestalAction));
                     // RKNetworkSendPackets(client->sd, me->latestCommand, sizeof(RKPedestalAction) + 1, NULL);
@@ -714,35 +714,35 @@ int pedestalPoint(RKPedestalPedzy *me, const float el_point, const float az_poin
     while ((umin_diff_el > RKPedestalPositionRoom || umin_diff_az > RKPedestalPositionRoom)
         && i < RKPedestalPointTimeOut) {
 
-        *pos = RKGetLatestPosition(me->radar);
+        pos = RKGetLatestPosition(me->radar);
         umin_diff_el = umin_diff(el_point, pos->elevationDegrees);
         if (umin_diff_el > RKPedestalPositionRoom){
             action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-            rate_el = pedestalGetRate( umin_diff_el, RKPedestalPointElevation )
+            rate_el = pedestalGetRate( umin_diff_el, RKPedestalPointElevation );
             min_diff_el = min_diff(el_point, pos->elevationDegrees);
             if (min_diff_el >= 0.0f){
-                action.param[0] = rate_el
+                action.param[0] = rate_el;
             }else{
-                action.param[0] = -rate_el
+                action.param[0] = -rate_el;
             }
         } else{
             action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
-            action.param[0] = 0.0f
+            action.param[0] = 0.0f;
         }
 
         umin_diff_az = umin_diff(az_point, pos->azimuthDegrees);
         if (umin_diff_az > RKPedestalPositionRoom){
             action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-            rate_az = pedestalGetRate( umin_diff_az, RKPedestalPointAzimuth )
+            rate_az = pedestalGetRate( umin_diff_az, RKPedestalPointAzimuth );
             min_diff_az = min_diff(el_point, pos->azimuthDegrees);
             if (min_diff_az >= 0.0f){
-                action.param[1] = rate_az
+                action.param[1] = rate_az;
             }else{
-                action.param[1] = -rate_az
+                action.param[1] = -rate_az;
             }
         } else{
             action.mode[1] = RKPedestalInstructTypeAxisAzimuth | RKPedestalInstructTypeModeStandby;
-            action.param[1] = 0.0f
+            action.param[1] = 0.0f;
         }
 
         pedestalVcpSendAction(me->client->sd, me->latestCommand, &action)
