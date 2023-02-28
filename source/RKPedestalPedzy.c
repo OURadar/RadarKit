@@ -90,6 +90,7 @@ static void *pedestalVcpEngine(void *in) {
     int i;
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
+    RKClient *client = me->client;
     RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum vcpActive;
@@ -101,8 +102,6 @@ static void *pedestalVcpEngine(void *in) {
     RKPedestalVcpStatusPeriod.tv_usec = (RKPedestalVcpStatusPeriodMS % 1000) * 1000;
     timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
     // RKPedestalVcpHandle *V = me->vcpHandle;
-    char azPosition[16];
-    char elPosition[16];
     RKStatusEnum azEnum;
     RKStatusEnum elEnum;
     RKPedestalAction action;
@@ -130,43 +129,44 @@ static void *pedestalVcpEngine(void *in) {
             // sprintf(azPosition, "%.2f deg", position->azimuthDegrees);
             azEnum = RKStatusEnumNormal;
             elEnum = RKStatusEnumNormal;
-        }
-        if (me->vcpHandle->active){
-            // put vcp get action here
-            action = pedestalVcpGetAction(me->vcpHandle, position);
-            // Call the control handler based on the suggested action
-            if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
-                // P->control(P->ped, action);
-                sprintf(me->latestCommand, "%c", 0x0f);
-                memcpy(me->latestCommand + 1, action, sizeof(RKPedestalAction));
-                RKNetworkSendPackets(client->sd, me->latestCommand, sizeof(RKPedestalAction) + 1, NULL);
-                // put new action command smuggle here
-                for (i = 0; i < 2; i++) {
-                    if (action.mode[i] != RKPedestalInstructTypeNone) {
-                        RKLog("action.mode[%d] %s%s%s%s%s%s %.2f\n", i,
-                           InstructIsAzimuth(action.mode[i]) ? "AZ"       : "EL",
-                           InstructIsPoint(action.mode[i])   ? " point"   : "",
-                           InstructIsSlew(action.mode[i])    ? " slew"    : "",
-                           InstructIsStandby(action.mode[i]) ? " standby" : "",
-                           InstructIsEnable(action.mode[i])  ? " enable"  : "",
-                           InstructIsDisable(action.mode[i]) ? " disable" : "",
-                           action.param[i]);
+
+            if (me->vcpHandle->active){
+                // put vcp get action here
+                action = pedestalVcpGetAction(me->vcpHandle, position);
+                // Call the control handler based on the suggested action
+                if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
+                    // P->control(P->ped, action);
+                    sprintf(me->latestCommand, "%c", 0x0f);
+                    memcpy(me->latestCommand + 1, &action, sizeof(RKPedestalAction));
+                    RKNetworkSendPackets(client->sd, me->latestCommand, sizeof(RKPedestalAction) + 1, NULL);
+                    // put new action command smuggle here
+                    for (i = 0; i < 2; i++) {
+                        if (action.mode[i] != RKPedestalInstructTypeNone) {
+                            RKLog("action.mode[%d] %s%s%s%s%s%s %.2f\n", i,
+                               InstructIsAzimuth(action.mode[i]) ? "AZ"       : "EL",
+                               InstructIsPoint(action.mode[i])   ? " point"   : "",
+                               InstructIsSlew(action.mode[i])    ? " slew"    : "",
+                               InstructIsStandby(action.mode[i]) ? " standby" : "",
+                               InstructIsEnable(action.mode[i])  ? " enable"  : "",
+                               InstructIsDisable(action.mode[i]) ? " disable" : "",
+                               action.param[i]);
+                        }
                     }
+                    me->lastActionAge = 0;
                 }
-                me->lastActionAge = 0;
             }
-        }
-        if (timercmp(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusTriggerTime, >=)) {
-            timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
-            if (me->vcpHandle->active) {
-                printf("                 -- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
-                    me->vcpHandle->i,
-                    me->vcpHandle->sweep_count,
-                    position->elevationDegrees,
-                    position->azimuthDegrees,
-                    me->vcpHandle->progress);
-            } else {
-                printf("                 -- [ VCP inactive ] --\n");
+            if (timercmp(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusTriggerTime, >=)) {
+                timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
+                if (me->vcpHandle->active) {
+                    printf("                 -- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
+                        me->vcpHandle->i,
+                        me->vcpHandle->sweepCount,
+                        position->elevationDegrees,
+                        position->azimuthDegrees,
+                        me->vcpHandle->progress);
+                } else {
+                    printf("                 -- [ VCP inactive ] --\n");
+                }
             }
         }
         usleep(1000);
@@ -174,6 +174,7 @@ static void *pedestalVcpEngine(void *in) {
     }
     return (void *)NULL;
 }
+
 static void *pedestalHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
@@ -301,7 +302,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     char cmd[16] = "";
     char cparams[4][256];
     float az_start, az_end, az_mark, el_start, el_end, rate;
-    int n, i, k;
+    int n;
     cparams[0][0] = '\0';
     cparams[1][0] = '\0';
     cparams[2][0] = '\0';
@@ -474,6 +475,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalVcpHandle *V, const RKPosition *
     action.param[1] = 0.0f;
     action.sweepElevation = V->sweepMarkerElevation;
     action.sweepAzimuth = V->sweepAzimuth;
+    return action;
 }
 
 void pedestalVcpArmSweeps(RKPedestalVcpHandle *V, const bool repeat) {
@@ -575,7 +577,7 @@ void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, bool line
                         prefix,
                         i,
                         SW[i].elevationStart,
-                        SW[i].az_start,
+                        SW[i].azimuthStart,
                         SW[i].azimuthEnd,
                         SW[i].azimuthSlew);
                 break;
@@ -583,7 +585,7 @@ void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, bool line
                 sprintf(msg + strlen(msg), "%s%d : RHI A%.2f E%.2f-%.2f @ %.2f deg/s",
                         prefix,
                         i,
-                        SW[i].az_start,
+                        SW[i].azimuthStart,
                         SW[i].elevationStart,
                         SW[i].elevationEnd,
                         SW[i].elevationSlew);

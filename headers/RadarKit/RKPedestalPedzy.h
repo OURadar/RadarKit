@@ -17,8 +17,13 @@
 #define RKPedestalPedzyFeedbackDepth   8
 #define RKPedestalVcpMaxSweeps         256
 
-#define PedestalVcpRepeat              1
-#define PedestalVcpNoRepeat            0
+#define RKPedestalVcpRepeat            1
+#define RKPedestalVcpNoRepeat          0
+#define RKPedestalVcpStatusPeriodMS    2000
+
+struct timeval RKPedestalVcpCurrentTime;
+struct timeval RKPedestalVcpStatusTriggerTime;
+struct timeval RKPedestalVcpStatusPeriod;
 
 enum RKVcpProgress {
     RKVcpProgressNone       = 0,        // Not active, ready for next sweep
@@ -28,7 +33,6 @@ enum RKVcpProgress {
     RKVcpProgressEnd        = 1 << 3,   // End of a sweep, waiting for pedestal to stop / reposition
     RKVcpProgressMarker     = 1 << 7    // Sweep complete marker
 };
-
 
 typedef int RKVcpOption;
 enum RKVcpOption {
@@ -49,22 +53,6 @@ enum RKVcpMode {
     RKVcpModeSpeedDown       = 7
 };
 
-typedef int RKPedestalInstructType;
-enum RKPedestalInstructType {
-    RKPedestalInstructTypeNone                  = 0,                // 0x00
-    RKPedestalInstructTypeModeStandby           = 1,                // 0x01
-    RKPedestalInstructTypeModeEnable            = 2,                // 0x02
-    RKPedestalInstructTypeModeDisable           = 3,                // 0x03
-    RKPedestalInstructTypeModeSlew              = 4,                // 0x04
-    RKPedestalInstructTypeModePoint             = 5,                // 0x05
-    RKPedestalInstructTypeModeReset             = 6,                // 0x06
-    RKPedestalInstructTypeModeTest              = 7,                // 0x07
-    RKPedestalInstructTypeModeMask              = 0x0F,             // Lower four bits for instructions
-    RKPedestalInstructTypeAxisElevation         = 0x10,             // 0x10
-    RKPedestalInstructTypeAxisAzimuth           = 0x20,             // 0x20
-    RKPedestalInstructTypeAxisMask              = 0x30              // Upper four bits for axis selection
-};
-
 #define InstructIsAzimuth(i)     ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisAzimuth)
 #define InstructIsElevation(i)   ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisElevation)
 #define InstructIsTest(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeTest)
@@ -74,24 +62,16 @@ enum RKPedestalInstructType {
 #define InstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
 #define InstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
 
-typedef struct rk_pedzy {
-    // User set variables
-    RKClient               *client;
-    uint32_t               responseIndex;
-    char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
-    char                   latestCommand[RKMaximumCommandLength];
-    RKRadar                *radar;
-    float                  headingOffset;
-    bool                   vcpActive;
-    RKPedestalVcpHandle    *vcpHandle;
-    uint32_t                lastActionAge;
-    // // VCP engine
-    // RKVCPEngine            *vcpEngine;
-
-    // Program set variables
-    pthread_t              tidPedestalMonitor;
-    pthread_t              tidVcpEngine;
-} RKPedestalPedzy;
+typedef struct rk_vcp_sweep {
+    RKVcpMode   mode;
+    float       azimuthStart;                   // Azimuth start of a sweep
+    float       azimuthEnd;                     // Azimuth end of a sweep
+    float       azimuthSlew;                    // Azimuth slew speed
+    float       azimuthMark;                    // Azimuth to mark end of sweep
+    float       elevationStart;                 // Elevation start of a sweep
+    float       elevationEnd;                   // Elevation end of a sweep
+    float       elevationSlew;                  // Elevation slew speed
+} RKPedestalVcpSweepHandle;
 
 typedef struct rk_vcp {
     // User set parameters
@@ -123,18 +103,41 @@ typedef struct rk_vcp {
     int                         progress;
 } RKPedestalVcpHandle;
 
-typedef struct rk_vcp_sweep {
-    RKVcpMode   mode;
-    float       azimuthStart;                   // Azimuth start of a sweep
-    float       azimuthEnd;                     // Azimuth end of a sweep
-    float       azimuthSlew;                    // Azimuth slew speed
-    float       azimuthMark;                    // Azimuth to mark end of sweep
-    float       elevationStart;                 // Elevation start of a sweep
-    float       elevationEnd;                   // Elevation end of a sweep
-    float       elevationSlew;                  // Elevation slew speed
-} RKPedestalVcpSweepHandle;
+typedef struct rk_pedzy {
+    // User set variables
+    RKClient               *client;
+    uint32_t               responseIndex;
+    char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
+    char                   latestCommand[RKMaximumCommandLength];
+    RKRadar                *radar;
+    float                  headingOffset;
+    bool                   vcpActive;
+    RKPedestalVcpHandle    *vcpHandle;
+    uint32_t                lastActionAge;
+    // // VCP engine
+    // RKVCPEngine            *vcpEngine;
+
+    // Program set variables
+    pthread_t              tidPedestalMonitor;
+    pthread_t              tidVcpEngine;
+} RKPedestalPedzy;
 
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);
 int RKPedestalPedzyExec(RKPedestal, const char *, char *);
 int RKPedestalPedzyFree(RKPedestal);
+RKPedestalAction pedestalVcpGetAction(RKPedestalVcpHandle *, const RKPosition *);
+RKPedestalVcpHandle *pedestalVcpInit(void);
+void pedestalVcpArmSweeps(RKPedestalVcpHandle *, const bool);
+void pedestalVcpClearSweeps(RKPedestalVcpHandle *);
+void pedestalVcpClearHole(RKPedestalVcpHandle *);
+void pedestalVcpClearDeck(RKPedestalVcpHandle *);
+void pedestalVcpNextHitter(RKPedestalVcpHandle *);
+RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
+                       const float el_start, const float el_end,
+                       const float az_start, const float az_end, const float az_mark,
+                       const float rate);
+int pedestalVcpAddLineupSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle );
+int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle );
+void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, bool linetag);
+void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 #endif /* __RadarKit_RKPedestal__ */
