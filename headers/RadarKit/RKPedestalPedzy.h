@@ -17,8 +17,13 @@
 #define RKPedestalPedzyFeedbackDepth   8
 #define RKPedestalVcpMaxSweeps         256
 
-#define PedestalVcpRepeat              1
-#define PedestalVcpNoRepeat            0
+#define RKPedestalVcpRepeat            1
+#define RKPedestalVcpNoRepeat          0
+#define RKPedestalVcpStatusPeriodMS    2000
+
+struct timeval RKPedestalVcpCurrentTime;
+struct timeval RKPedestalVcpStatusTriggerTime;
+struct timeval RKPedestalVcpStatusPeriod;
 
 enum RKVcpProgress {
     RKVcpProgressNone       = 0,        // Not active, ready for next sweep
@@ -28,7 +33,6 @@ enum RKVcpProgress {
     RKVcpProgressEnd        = 1 << 3,   // End of a sweep, waiting for pedestal to stop / reposition
     RKVcpProgressMarker     = 1 << 7    // Sweep complete marker
 };
-
 
 typedef int RKVcpOption;
 enum RKVcpOption {
