@@ -59,6 +59,12 @@ enum RKVcpMode {
     RKVcpModeSpeedDown       = 7
 };
 
+enum RKVcpHitter {
+    RKVcpAtBat              = 0,        // current vcp
+    RKVcpPinch              = 1,        // vcp only once
+    RKVcpLine               = 2,        // next vcp
+};
+
 #define InstructIsAzimuth(i)     ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisAzimuth)
 #define InstructIsElevation(i)   ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisElevation)
 #define InstructIsTest(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeTest)
