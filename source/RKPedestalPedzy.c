@@ -26,7 +26,7 @@ RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
                        const float rate);
 int pedestalVcpAddLineupSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle sweep);
 int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle sweep);
-void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, bool linetag);
+void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, RKVcpHitter linetag);
 float pedestalGetRate(const float diff_deg, int axis);
 
 float min_diff(const float v1, const float v2) {
