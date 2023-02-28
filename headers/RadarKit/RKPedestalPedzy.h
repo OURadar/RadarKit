@@ -59,6 +59,7 @@ enum RKVcpMode {
     RKVcpModeSpeedDown       = 7
 };
 
+typedef int RKVcpHitter;
 enum RKVcpHitter {
     RKVcpAtBat              = 0,        // current vcp
     RKVcpPinch              = 1,        // vcp only once
