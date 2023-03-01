@@ -21,8 +21,9 @@
 #define RKPedestalVcpNoRepeat          0
 #define RKPedestalVcpStatusPeriodMS    2000
 
-#define RKPedestalPositionRoom         0.5f
-#define RKPedestalPointTimeOut         3000
+#define RKPedestalPositionRoom         0.3f
+#define RKPedestalVelocityRoom         1.0f
+#define RKPedestalPointTimeOut         1500
 
 #define RKPedestalPointAzimuth         1
 #define RKPedestalPointElevation       0
