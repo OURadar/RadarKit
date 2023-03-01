@@ -147,6 +147,7 @@ static void *pedestalVcpEngine(void *in) {
     RKStatusEnum elEnum;
     RKPedestalAction action;
     while (me->client->state < RKClientStateDisconnecting) {
+        gettimeofday(&RKPedestalVcpCurrentTime, NULL);
         if (me->client->state < RKClientStateConnected) {
             azInterlockStatus = RKStatusEnumInvalid;
             elInterlockStatus = RKStatusEnumInvalid;
