@@ -71,7 +71,6 @@ static int RKPedestalPedzyRead(RKClient *client) {
                   position->tic,
                   position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
         }
-
         // Get a vacant slot for position from Radar, copy over the data, then set it ready
         RKPosition *newPosition = RKGetVacantPosition(radar);
         if (newPosition == NULL) {
@@ -96,6 +95,60 @@ static int RKPedestalPedzyRead(RKClient *client) {
             newPosition->sweepAzimuthDegrees += 360.0f;
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
+        }
+        if (me->vcpHandle->active){
+            int i = me->vcpHandle->i;
+            newPosition->sweepElevationDegrees = me->vcpHandle->lastAction->sweepElevation;
+            newPosition->sweepAzimuthDegrees = me->vcpHandle->lastAction->sweepAzimuth;
+            // clear flag
+            newPosition->flag = RKPositionFlagVacant;
+            // VCP engine is active
+            newPosition->flag |= RKPositionFlagVCPActive;
+            // Sweep is active: data collection portion (i.e., exclude transitions)
+            if (me->vcpHandle->progress & RKVcpProgressReady ||
+                me->vcpHandle->progress & RKVcpProgressMiddle ||
+                me->vcpHandle->batterSweeps[i].mode == RKVcpModePPIAzimuthStep ||
+                me->vcpHandle->batterSweeps[i].mode == RKVcpModePPIContinuous) {
+                // Always active if any of the conditions above are met
+                newPosition->flag |= RKPositionFlagScanActive;
+            }
+            // Point / sweep flag
+            switch (me->vcpHandle->batterSweeps[i].mode) {
+                case RKVcpModePPI:
+                case RKVcpModeSector:
+                case RKVcpModeNewSector:
+                case RKVcpModePPIAzimuthStep:
+                case RKVcpModePPIContinuous:
+                    newPosition->flag |= RKPositionFlagAzimuthSweep;
+                    newPosition->flag |= RKPositionFlagElevationPoint;
+                    //pos->flag &= ~POSITION_FLAG_EL_SWEEP;
+                    break;
+                case RKVcpModeRHI:
+                    newPosition->flag |= RKPositionFlagAzimuthPoint;
+                    newPosition->flag |= RKPositionFlagElevationSweep;
+                    //pos->flag &= ~POSITION_FLAG_AZ_SWEEP;
+                    break;
+                default:
+                    newPosition->flag |= RKPositionFlagAzimuthPoint | RKPositionFlagElevationPoint;
+                    break;
+            }
+            // Completion flag
+            if (me->vcpHandle->progress & RKVcpProgressMarker) {
+                switch (me->vcpHandle->batterSweeps[i].mode) {
+                    case RKVcpModePPI:
+                    case RKVcpModeSector:
+                    case RKVcpModeNewSector:
+                    case RKVcpModePPIAzimuthStep:
+                    case RKVcpModePPIContinuous:
+                        newPosition->flag |= RKPositionFlagAzimuthComplete;
+                        break;
+                    case RKVcpModeRHI:
+                        newPosition->flag |= RKPositionFlagElevationComplete;
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
         RKSetPositionReady(radar, newPosition);
     } else {
@@ -179,6 +232,7 @@ static void *pedestalVcpEngine(void *in) {
             if (me->vcpHandle->active){
                 // put vcp get action here
                 action = pedestalVcpGetAction(me);
+                me->vcpHandle->lastAction = &action;
                 // Call the control handler based on the suggested action
                 if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
                     // P->control(P->ped, action);
