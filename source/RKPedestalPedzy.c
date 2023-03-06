@@ -573,10 +573,6 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
     float umin_diff_az;
     float umin_diff_vel_el;
     float umin_diff_vel_az;
-    float min_diff_el;
-    float min_diff_az;
-    float rate_el;
-    float rate_az;
    
     RKPosition *pos = RKGetLatestPosition(me->radar);
     RKPedestalAction action;
@@ -1252,6 +1248,10 @@ float pedestalGetRate(const float diff_deg, int axis){
 int pedestalPoint(RKPedestalPedzy *me, const float el_point, const float az_point){
     float umin_diff_el;
     float umin_diff_az;
+    float min_diff_el;
+    float min_diff_az;
+    float rate_el;
+    float rate_az;
     RKPosition *pos = RKGetLatestPosition(me->radar);
     RKPedestalAction action;
     action.mode[0] = RKPedestalInstructTypeNone;
