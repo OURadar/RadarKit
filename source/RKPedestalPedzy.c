@@ -29,8 +29,10 @@ int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle swe
 void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, RKVcpHitter linetag);
 float pedestalGetRate(const float diff_deg, int axis);
 int pedestalPoint(RKPedestalPedzy *, const float el_point, const float az_point);
-int pedestalElevationPoint(RKPedestalPedzy *, const float el_point, const float rate_az);
 int pedestalAzimuthPoint(RKPedestalPedzy *, const float az_point, const float rate_el);
+int pedestalElevationPoint(RKPedestalPedzy *, const float el_point, const float rate_az);
+RKPedestalAction pedestalAzimuthPointNudge(RKPedestalPedzy *, const float az_point, const float rate_el);
+RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *, const float el_point, const float rate_az);
 
 float min_diff(const float v1, const float v2) {
     float d = v1 - v2;
@@ -625,17 +627,21 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
             case RKVcpModePPI:
             case RKVcpModePPIAzimuthStep:
             case RKVcpModePPIContinuous:
-                pedestalElevationPoint(me, V->batterSweeps[V->i].elevationStart, V->batterSweeps[V->i].azimuthSlew);
-                action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-                action.param[0] = 0.0f;
-                action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                action.param[1] = V->batterSweeps[V->i].azimuthSlew;
+                umin_diff_el = umin_diff(V->batterSweeps[V->i].elevationStart, pos->elevationDegrees);
+                if (umin_diff_el > RKPedestalPositionRoom){
+                    action = pedestalElevationPointNudge(me, V->batterSweeps[V->i].elevationStart, V->batterSweeps[V->i].azimuthSlew);
+                }else{
+                    action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action.param[0] = 0.0f;
+                    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action.param[1] = V->batterSweeps[V->i].azimuthSlew;
+                }
                 break;
             case RKVcpModeSpeedDown:
                 umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
                 umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
                 int tic = 0;
-                while ((umin_diff_el > RKPedestalVelocityRoom || umin_diff_az > RKPedestalPositionRoom)
+                while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom)
                     && tic < RKPedestalPointTimeOut) {
                     pos = RKGetLatestPosition(me->radar);
                     umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
@@ -755,7 +761,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     V->counterTargetAzimuth = 0;
                 } else {
-                    pedestalElevationPoint(me, V->targetElevation, V->batterSweeps[V->i].azimuthSlew);
+                    action = pedestalElevationPointNudge(me, V->targetElevation, V->batterSweeps[V->i].azimuthSlew);
                 }
                 break;
             case RKVcpModeRHI:
@@ -770,7 +776,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     V->counterTargetAzimuth = 0;
                 } else {
-                    pedestalAzimuthPoint(me, V->targetAzimuth, V->batterSweeps[V->i].elevationSlew);
+                    action = pedestalAzimuthPointNudge(me, V->targetAzimuth, V->batterSweeps[V->i].elevationSlew);
                 }
                 break;
             case RKVcpModePPIAzimuthStep:
@@ -778,7 +784,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 printf("\033[1;33mReady for sweep %d - EL %.2f  @ crossover AZ %.2f\033[0m\n", V->i, action.sweepElevation, action.sweepAzimuth);
                 umin_diff_el = umin_diff(V->sweepElevation, pos->elevationDegrees);
                 if (umin_diff_el > RKPedestalPositionRoom) {
-                    pedestalElevationPoint(me, V->sweepElevation, V->batterSweeps[V->i].azimuthSlew);
+                    action = pedestalElevationPointNudge(me, V->sweepElevation, V->batterSweeps[V->i].azimuthSlew);
                 } else if (V->option & RKVcpOptionBrakeElevationDuringSweep &&
                            (pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom ||
                             pos->elevationVelocityDegreesPerSecond < -RKPedestalVelocityRoom)) {
@@ -1246,10 +1252,6 @@ float pedestalGetRate(const float diff_deg, int axis){
 int pedestalPoint(RKPedestalPedzy *me, const float el_point, const float az_point){
     float umin_diff_el;
     float umin_diff_az;
-    float min_diff_el;
-    float min_diff_az;
-    float rate_el;
-    float rate_az;
     RKPosition *pos = RKGetLatestPosition(me->radar);
     RKPedestalAction action;
     action.mode[0] = RKPedestalInstructTypeNone;
@@ -1363,7 +1365,6 @@ int pedestalAzimuthPoint(RKPedestalPedzy *me, const float az_point, const float 
     }
 }
 
-
 int pedestalElevationPoint(RKPedestalPedzy *me, const float el_point, const float rate_az){
     float umin_diff_el;
     float min_diff_el;
@@ -1413,4 +1414,68 @@ int pedestalElevationPoint(RKPedestalPedzy *me, const float el_point, const floa
     }else{
         return 1;
     }
+}
+
+
+RKPedestalAction pedestalAzimuthPointNudge(RKPedestalPedzy *me, const float az_point, const float rate_el){
+    float umin_diff_az;
+    float min_diff_az;
+    float rate_az;
+    RKPosition *pos = RKGetLatestPosition(me->radar);
+    RKPedestalAction action;
+    action.mode[0] = RKPedestalInstructTypeNone;
+    action.mode[1] = RKPedestalInstructTypeNone;
+    action.param[0] = 0.0f;
+    action.param[1] = 0.0f;
+    action.sweepElevation = pos->elevationDegrees;
+    action.sweepAzimuth = az_point;
+    umin_diff_az = umin_diff(az_point, pos->azimuthDegrees);
+    if (umin_diff_az > RKPedestalPositionRoom){
+        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+        rate_az = pedestalGetRate( umin_diff_az, RKPedestalPointAzimuth );
+        min_diff_az = min_diff(az_point, pos->azimuthDegrees);
+        if (min_diff_az >= 0.0f){
+            action.param[1] = rate_az;
+        }else{
+            action.param[1] = -rate_az;
+        }
+    } else{
+        action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+        action.param[1] = 0.0f;
+    }
+    action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+    action.param[0] = rate_el;
+    return action;
+}
+
+
+RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *me, const float el_point, const float rate_az){
+    float umin_diff_el;
+    float min_diff_el;
+    float rate_el;
+    RKPosition *pos = RKGetLatestPosition(me->radar);
+    RKPedestalAction action;
+    action.mode[0] = RKPedestalInstructTypeNone;
+    action.mode[1] = RKPedestalInstructTypeNone;
+    action.param[0] = 0.0f;
+    action.param[1] = 0.0f;
+    action.sweepElevation = el_point;
+    action.sweepAzimuth = pos->azimuthDegrees;
+    umin_diff_el = umin_diff(el_point, pos->elevationDegrees);
+    if (umin_diff_el > RKPedestalPositionRoom){
+        action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+        rate_el = pedestalGetRate( umin_diff_el, RKPedestalPointElevation );
+        min_diff_el = min_diff(el_point, pos->elevationDegrees);
+        if (min_diff_el >= 0.0f){
+            action.param[0] = rate_el;
+        }else{
+            action.param[0] = -rate_el;
+        }
+    } else{
+        action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+        action.param[0] = 0.0f;
+    }
+    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+    action.param[1] = rate_az;
+    return action;
 }
