@@ -262,19 +262,19 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     // This block is now hardcoded for default secret key, should replace ...
     if (strcmp(W->secret, "RadarHub123456789abcde") == 0 &&
         strcmp(W->digest, "O9QKgAZPEwFaLSqyFPYMHcGBp5g=")) {
-        fprintf(stderr, "Error. R->digest = %s\n", W->digest);
+        fprintf(stderr, "Error. W->digest = %s\n", W->digest);
         fprintf(stderr, "Error. Unexpected digest.\n");
         return -1;
     }
 
     if (strcasecmp(W->upgrade, "WebSocket")) {
-        fprintf(stderr, "Error. R->upgrade = %s\n", W->upgrade);
+        fprintf(stderr, "Error. W->upgrade = %s\n", W->upgrade);
         fprintf(stderr, "Error. Connection is not websocket.\n");
         return -1;
     }
 
     if (strcasecmp(W->connection, "upgrade")) {
-        fprintf(stderr, "Error. R->connection = %s\n", W->connection);
+        fprintf(stderr, "Error. W->connection = %s\n", W->connection);
         fprintf(stderr, "Error. Connection did not get upgraded.\n");
         return -1;
     }
@@ -567,7 +567,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
     }
     if (W->useSSL) {
         #if OPENSSL_VERSION_NUMBER < 0x10100000L
-        R->sslContext = SSL_CTX_new(SSLv23_client_method());
+        W->sslContext = SSL_CTX_new(SSLv23_client_method());
         #else
         W->sslContext = SSL_CTX_new(TLS_client_method());
         #endif

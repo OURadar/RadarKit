@@ -1589,18 +1589,6 @@ typedef struct rk_command_queue {
     uint32_t             toc;                                                  // Withdrawal count
 } RKCommandQueue;
 
-// typedef struct rk_pedestal_action {
-//     int                  mode[2];                                              // Mode for each axis (EL, AZ)
-//     float                params[2];                                            //
-//     float                sweepElevation;                                       //
-//     float                sweepAzimuth;                                         //
-// } RKPedestalAction;
-
-// typedef struct rk_vcp_engine {
-//     RKName               name;
-//     RKPedestalAction     action;
-// } RKVCPEngine;
-
 #pragma pack(pop)
 
 #endif /* defined(__RadarKit_Types__) */
