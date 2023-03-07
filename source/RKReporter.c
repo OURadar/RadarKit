@@ -371,6 +371,9 @@ RKReporter *RKReporterInit(void) {
 }
 
 void RKReporterFree(RKReporter *engine) {
+    if (engine->ws) {
+        RKWebSocketFree(engine->ws);
+    }
     free(engine);
 }
 
@@ -422,6 +425,13 @@ void RKReporterStop(RKReporter *engine) {
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }
+    if (engine->state & RKEngineStateWantActive) {
+        engine->state ^= RKEngineStateWantActive;
+    }
+    int s = 0;
+    do {
+        usleep(10000);
+    } while (engine->state & RKEngineStateActive && s++ < 300);
     RKLog("%s Disconnecting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
     RKWebSocketStop(engine->ws);
     RKLog("%s Stopped.\n", engine->name);
