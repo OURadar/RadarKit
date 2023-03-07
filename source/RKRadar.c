@@ -743,7 +743,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKWaveformCalibration *calibration = &radar->waveformCalibrations[i];
             calibration->uid = -(uint32_t)radar->desc.waveformCalibrationCapacity + i;
         }
-        RKLog("Waveform calibrations occupy %s B (%s units)",
+        RKLog("Waveform calibrations occupy %s B  (%s units)",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.waveformCalibrationCapacity));
         radar->memoryUsage += bytes;
@@ -767,7 +767,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
             RKControl *control = &radar->controls[i];
             control->uid = -(uint32_t)radar->desc.controlCapacity + i;
         }
-        RKLog("Controls occupy %s B (%s units)",
+        RKLog("Controls occupy %s B  (%s units)",
               RKIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.controlCapacity));
         radar->memoryUsage += bytes;
@@ -795,7 +795,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.pulseTicsPerSecond > 0) {
             RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
         }
-        sprintf(tmpName, "%s<TransceiverTime>%s",
+        sprintf(tmpName, "%s<   PulseClock  >%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->pulseClock, tmpName);
         radar->memoryUsage += sizeof(RKClock);
@@ -808,7 +808,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.positionTicsPerSecond > 0) {
             RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
-        sprintf(tmpName, "%s<AimPedestalTime>%s",
+        sprintf(tmpName, "%s< PositionClock >%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->positionClock, tmpName);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);

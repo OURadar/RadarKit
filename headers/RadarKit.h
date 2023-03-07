@@ -17,6 +17,12 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
+//  3.2    - 02/25/2023
+//         - Added RKReporter for RadarHub communication
+//         - Added RKWebSocket, a built-from-scratch implementation
+//         - Added SSL support for WebSocket connections through https
+//         - Added various screen output functions for binary payloads
+//
 //  3.1    - 6/28/2022
 //         - RKCommandCenter adopted RKRayHeaderV1 for legacy compatibility
 //

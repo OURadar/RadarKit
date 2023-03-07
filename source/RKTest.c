@@ -304,7 +304,7 @@ void RKTestByNumber(const int number, const void *arg) {
 
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
-    for (int k = 0; k < 17; k++) {
+    for (int k = 0; k < 21; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
     printf("\n");
@@ -358,11 +358,6 @@ void RKTestPrettyStrings(void) {
     printf("\n");
     char status[] = "0{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":0}, \"Log Time\":1570804516}";
     *status = '\x03';
-    char string[RKMaximumStringLength];
-    RKHeadTailBinaryString(string, status, strlen(status));
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, status, strlen(status));
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     size_t payload_size = 100;
     uint8_t payload[payload_size];
     payload[0] = 5;
@@ -371,10 +366,15 @@ void RKTestPrettyStrings(void) {
     }
     payload[payload_size - 2] = 1;
     payload[payload_size - 1] = 0;
+    char string[RKMaximumStringLength];
+    RKHeadTailBinaryString(string, status, strlen(status));
+    printf("RKHeadTailBinaryString  : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     RKHeadTailBinaryString(string, payload, payload_size);
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, payload, payload_size);
-    printf("%s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailBinaryString  : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKRadarHubPayloadString(string, status, strlen(status));
+    printf("RKRadarHubPayloadString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKRadarHubPayloadString(string, payload, payload_size);
+    printf("RKRadarHubPayloadString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
 }
 
 void RKTestBasicMath(void) {
@@ -1427,22 +1427,23 @@ static void RKTestWebSocketHandleOpen(RKWebSocket *w) {
     // I know, magic packet here. First byte value = 1 means handshake in RadarHub
     int r = sprintf(message, "%c{\"radar\":\"radarkit\", \"command\":\"radarConnect\"}", 1);
     RKBinaryString(show, message, r);
-    printf("RKTestWebSocketHandleOpen() %s\n", show);
+    RKLog("RKTestWebSocketHandleOpen() %s\n", show);
     RKWebSocketSend(w, message, r);
 }
 
 static void RKTestWebSocketHandleMessage(RKWebSocket *w, void *payload, size_t size) {
-    printf("RKTestWebSocketHandleMessage() %s\n", (char *)payload);
+    RKLog("RKTestWebSocketHandleMessage() %s\n", (char *)payload);
 }
 
 static void RKTestWebSocketHandleClose(RKWebSocket *w) {
-    printf("RKTestWebSocketHandleClose()\n");
+    RKLog("RKTestWebSocketHandleClose()\n");
 }
 
 void RKTestWebSocket(void) {
     SHOW_FUNCTION_NAME
     RKLog("Initializing WebSocket ...");
-    RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/", RKWebSocketFlagSSLOn);
+    RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/");
+    //RKWebSocket *w = RKWebSocketInit("localhost:8000", "/ws/radar/radarkit/");
     RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
     RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
     RKWebSocketSetMessageHandler(w, &RKTestWebSocketHandleMessage);
@@ -1458,9 +1459,9 @@ void RKTestWebSocket(void) {
     while (w->payloadTail < 2 && k++ < 50) {
         usleep(10000);
     }
-    RKLog("Received something.");
+    RKLog("Handshake and welcome messages received");
     k = 0;
-    while (k++ < 50) {
+    while (k++ < 3000) {
         usleep(10000);
     }
     RKLog("Stopping WebSocket ...");
@@ -3393,7 +3394,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
-    sprintf(transceiver->name, "%s<TransceiverCast>%s",
+    sprintf(transceiver->name, "%s< SimTransceiver>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->state = RKEngineStateAllocated;
@@ -3927,7 +3928,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
-    sprintf(pedestal->name, "%s<AimPedestalCast>%s",
+    sprintf(pedestal->name, "%s<  SimPedestal  >%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->memoryUsage = sizeof(RKTestPedestal);
@@ -4116,7 +4117,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(healthRelay, 0, sizeof(RKHealthRelay));
-    sprintf(healthRelay->name, "%s<HealthRelayCast>%s",
+    sprintf(healthRelay->name, "%s< SimHealthRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     healthRelay->memoryUsage = sizeof(RKTestPedestal);

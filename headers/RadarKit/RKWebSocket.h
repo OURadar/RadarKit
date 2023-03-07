@@ -26,19 +26,12 @@
 #define RKWebSocketFrameSize                     (1024 * 1024)
 #define RKWebSocketPayloadDepth                  1000
 #define RKWebSocketTimeoutDeltaMicroseconds      10000
-#define RKWebSocketTimeoutThresholdSeconds       20.0
+#define RKWebSocketTimeoutThresholdSeconds       10.0
 
 #ifndef htonll
 #define htonll(x) (((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
 #define ntohll(x) (((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 #endif
-
-typedef uint8_t RKWebSocketSSLFlag;
-enum {
-    RKWebSocketFlagSSLAuto,
-    RKWebSocketFlagSSLOff,
-    RKWebSocketFlagSSLOn
-};
 
 typedef struct rk_websocket_payload {
     void    *source;
@@ -48,6 +41,7 @@ typedef struct rk_websocket_payload {
 typedef struct rk_websocket RKWebSocket;
 
 struct rk_websocket {
+    RKName                   name;
     char                     host[80];
     char                     path[80];
     int                      port;
@@ -84,11 +78,12 @@ struct rk_websocket {
     useconds_t               timeoutDeltaMicroseconds;                         // Timeout of select()
     uint32_t                 timeoutThreshold;                                 // Internal variable
     uint32_t                 timeoutCount;                                     // Internal variable
+    uint64_t                 tic;
 
     uint8_t                  frame[RKWebSocketFrameSize];                      // A local buffer to store a frame
 };
 
-RKWebSocket *RKWebSocketInit(const char *, const char *, const RKWebSocketSSLFlag);
+RKWebSocket *RKWebSocketInit(const char *, const char *);
 void RKWebSocketFree(RKWebSocket *);
 
 void RKWebSocketSetPath(RKWebSocket *, const char *);

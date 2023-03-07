@@ -30,6 +30,7 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
 }
 
 static int RKSocketRead(RKWebSocket *W, uint32_t origin, size_t size) {
+    W->tic++;
     if (W->useSSL) {
         return SSL_read(W->ssl, W->frame + origin, (int)size);
     }
@@ -37,6 +38,7 @@ static int RKSocketRead(RKWebSocket *W, uint32_t origin, size_t size) {
 }
 
 static int RKSocketWrite(RKWebSocket *W, size_t size) {
+    W->tic++;
     if (W->useSSL) {
         return SSL_write(W->ssl, W->frame, (int)size);
     }
@@ -181,28 +183,31 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     if (c) {
         strcpy(W->ip, c);
     } else {
-        fprintf(stderr, "Error getting IP address.\n");
+        RKLog("%s Error. Failed getting IP address.\n", W->name);
         return -1;
     }
 
     if ((W->sd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        fprintf(stderr, "Error opening socket\n");
+        RKLog("%s Error. Failed opening socket\n", W->name);
         return -1;
     }
 
     if (W->verbose > 1) {
-        printf("\nConnecting %s:%d %s...\n", W->ip, W->port,
-            W->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
+        RKLog("%s Connecting %s:%d %s...\n", W->name,
+              W->ip, W->port,
+              W->useSSL
+               ? (rkGlobalParameters.showColor ? "(\033[38;5;220mssl\033[m) " : "(ssl) ")
+               : "");
     }
 
     W->sa.sin_family = AF_INET;
     W->sa.sin_port = htons(W->port);
     if (inet_pton(AF_INET, W->ip, &W->sa.sin_addr) <= 0) {
-        fprintf(stderr, "Invalid address / address not supported \n");
+        RKLog("%s Error. Invalid address / address not supported\n", W->name);
         return -1;
     }
     if ((r = connect(W->sd, (struct sockaddr *)&W->sa, sizeof(struct sockaddr_in))) < 0) {
-        fprintf(stderr, "Connection failed.  r = %d\n", r);
+        RKLog("%s Error. Connection failed.  r = %d\n", W->name, r);
         return -1;
     }
     if (W->useSSL) {
@@ -217,13 +222,13 @@ static int RKWebSocketConnect(RKWebSocket *W) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
             if (W->verbose > 1) {
-                printf("Using secret %s (%zu) ...\n", buf, strlen(buf));
+                RKLog("%s Using secret %s (%zu) ...\n", W->name, buf, strlen(buf));
             }
             strcpy(W->secret, buf);
         }
         fclose(fid);
     } else if (W->verbose) {
-        printf("Using default secret %s ...\n", W->secret);
+        RKLog("%s Using default secret %s ...\n", W->name, W->secret);
     }
     sprintf(buf,
         "GET %s HTTP/1.1\r\n"
@@ -303,7 +308,8 @@ void *transporter(void *in) {
     ws_frame_header *h = (ws_frame_header *)W->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
     char uword[5] = "xxxx";
-    char message[1024];
+    char message[256];
+    char show[256];
 
     fd_set rfd;
     fd_set wfd;
@@ -313,6 +319,8 @@ void *transporter(void *in) {
 
     uint32_t origin = 0;
     uint32_t total = 0;
+
+    W->tic = 1;
 
     while (W->wantActive) {
 
@@ -344,19 +352,20 @@ void *transporter(void *in) {
                     while (W->payloadTail != W->payloadHead) {
                         uint16_t tail = W->payloadTail == RKWebSocketPayloadDepth - 1 ? 0 : W->payloadTail + 1;
                         const RKWebSocketPayload *payload = &W->payloads[tail];
-                        if (W->verbose > 2 || (*((char *)payload->source) == 5 && payload->size > 805)) {
+                        if (W->verbose > 2) {
                             if (payload->size < 64) {
                                 RKBinaryString(message, payload->source, payload->size);
                             } else {
-                                RKHeadTailBinaryString(message, payload->source, payload->size);
+                                RKRadarHubPayloadString(message, payload->source, payload->size);
                             }
-                            printf("RKWebSocket.transporter: WRITE \033[38;5;154m%s\033[m (%zu)\n", message, payload->size);
+                            printf("RKWebSocket.transporter: WRITE \033[38;5;154m%s\033[m (%zu)\n",
+                                   message, payload->size);
                         }
                         size = RKWebSocketFrameEncode(W->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(W, size);
                         if (r < 0) {
                             if (W->verbose) {
-                                fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
+                                RKLog("%s Error. RKSocketWrite() = %d\n", W->name, r);
                             }
                             W->connected = false;
                             break;
@@ -373,7 +382,7 @@ void *transporter(void *in) {
             } else if (r < 0) {
                 // Errors
                 if (W->verbose) {
-                    fprintf(stderr, "Error. select() = %d during write cycle.\n", r);
+                    RKLog("%s Error. select() = %d during write cycle\n", W->name, r);
                 }
                 break;
             }
@@ -431,8 +440,20 @@ void *transporter(void *in) {
                         if (W->verbose > 2) {
                             printf("%2u read  ", total); RKShowWebsocketFrameHeader(W);
                         }
-                        printf("RKWebSocket.transporter: S-%s: \033[38;5;220m%s%s\033[m (%zu)\n",
-                            OPCODE_STRING(h->opcode), (char *)anchor, size > 64 ? " ..." : "", size);
+                        if (size != 4 && h->opcode == RFC6455_OPCODE_PING) {
+                            RKBytesInHex(show, anchor, size);
+                        } else if (size > 32) {
+                            RKHeadTailBytesInHex(show, anchor, size);
+                        } else {
+                            memcpy(show, anchor, size);
+                            show[size] = '\0';
+                        }
+                        RKLog("%s S-%s: %s%s%s (%zu)\n", W->name,
+                              OPCODE_STRING(h->opcode),
+                              rkGlobalParameters.showColor ? RKOrangeColor : "",
+                              show,
+                              rkGlobalParameters.showColor ? RKNoColor : "",
+                              size);
                     }
                     W->timeoutCount = 0;
                 } else {
@@ -442,7 +463,7 @@ void *transporter(void *in) {
             } else if (r < 0) {
                 // Errors
                 if (W->verbose) {
-                    fprintf(stderr, "Error. select() = %d during read cycle.\n", r);
+                    RKLog("%s Error. select() = %d during read cycle.\n", W->name, r);
                 }
                 W->connected = false;
                 break;
@@ -457,9 +478,13 @@ void *transporter(void *in) {
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
-                        printf("RKWebSocket.transporter: C-PING: \033[38;5;82m%s\033[m\n", uword);
+                        RKLog("%s C-PING: %s%s%s (%zu)\n", W->name,
+                              rkGlobalParameters.showColor ? RKLimeColor : "",
+                              uword,
+                              rkGlobalParameters.showColor ? RKNoColor : "",
+                              strlen(word));
                         if (W->verbose > 2) {
-                            printf("RKWebSocket.transporter: %2d sent  ", r); RKShowWebsocketFrameHeader(W);
+                            printf("%s %2d sent  ", W->name, r); RKShowWebsocketFrameHeader(W);
                         }
                     }
                 }
@@ -475,7 +500,16 @@ void *transporter(void *in) {
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
-                        printf("C-PONG: \033[38;5;82m%s\033[m\n", uword);
+                        if (h->len != 4) {
+                            RKBytesInHex(show, message, h->len);
+                        } else {
+                            memcpy(show, message, h->len + 1);
+                        }
+                        RKLog("%s C-PONG: %s%s%s (%zu)\n", W->name,
+                              rkGlobalParameters.showColor ? RKLimeColor : "",
+                              show,
+                              rkGlobalParameters.showColor ? RKNoColor : "",
+                              h->len);
                         if (W->verbose > 2) {
                             printf("%2d sent  ", r); RKShowWebsocketFrameHeader(W);
                         }
@@ -495,7 +529,7 @@ void *transporter(void *in) {
         } // while (W->wantActive && W->connected) ...
         if (W->sd) {
             if (W->verbose > 1) {
-                printf("RKWebSocket.transporter: Closing socket sd = %d ...\n", W->sd);
+                RKLog("%s Closing socket sd = %d ...\n", W->name, W->sd);
             }
             if (W->onClose) {
                 W->onClose(W);
@@ -508,25 +542,25 @@ void *transporter(void *in) {
         do {
             s0 = time(NULL);
             r = (int)difftime(s0, s1);
-            if (i != r && W->verbose) {
+            if (i != r && W->verbose > 1) {
                 i = r;
                 if (r > 2) {
-                    printf("\rRKWebSocket.transporter: No connection. Retry in %d second%s ... ",
+                    printf("\r%s No connection. Retry in %d second%s ... ", W->name,
                         10 - r, 10 - r > 1 ? "s" : "");
                 } else {
-                    printf("\rRKWebSocket.transporter: No connection.");
+                    RKLog("%s No connection.\n", W->name);
                 }
                 fflush(stdout);
             }
             usleep(200000);
         } while (W->wantActive && r < 10);
-        if (W->verbose) {
+        if (W->verbose > 1) {
             printf("\033[1K\r");
         }
     }
 
     if (W->verbose > 1) {
-        printf("RKWebSocket.transporter: W->wantActive = %s\n", W->wantActive ? "true" : "false");
+        RKLog("%s W->wantActive = %s\n", W->name, W->wantActive ? "true" : "false");
     }
 
     return NULL;
@@ -534,37 +568,60 @@ void *transporter(void *in) {
 
 #pragma mark - Life Cycle
 
-RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSocketSSLFlag flag) {
-    char *c;
+RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
+    char *c, *n;
     size_t len;
-
-    // printf("RKWebSocketInit()\n");
 
     RKWebSocket *W = (RKWebSocket *)malloc(sizeof(RKWebSocket));
     memset(W, 0, sizeof(RKWebSocket));
+    sprintf(W->name, "%s<  RKWebSocket  >%s",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorWebSocket) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "");
     pthread_attr_init(&W->threadAttributes);
     pthread_mutex_init(&W->lock, NULL);
 
-    c = strstr(host, ":");
-    if (c == NULL) {
+    // Default if host == NULL
+    if (host == NULL || strlen(host) == 0) {
+        RKLog("%s Error. Input host cannot be %s\n", W->name, host);
+        return NULL;
+    }
+    // Look for protocol https / http
+    if ((c = strstr(host, "https:")) != NULL) {
+        W->useSSL = true;
+    } else {
+        W->useSSL = false;
+    }
+    // Look for port number at the end
+    if ((c = strstr(host, "://")) != NULL) {
+        c += 3;
+        n = strstr(c, ":");
+    } else {
+        c = (char *)host;
+        n = strstr(host, ":");
+    }
+    if (n == NULL) {
         W->port = 80;
         strcpy(W->host, host);
     } else {
-        W->port = atoi(c + 1);
-        len = (size_t)(c - host);
-        strncpy(W->host, host, len);
-        W->host[len] = '\0';
+        W->port = atoi(n + 1);
+        len = (size_t)(n - c);
+        if (len) {
+            strncpy(W->host, c, len);
+            W->host[len] = '\0';
+        } else {
+            sprintf(W->host, "localhost");
+        }
+        if (W->useSSL == false && W->port == 443) {
+            W->useSSL = true;
+        }
     }
-    if (strlen(path) == 0) {
+    // Look for pathway
+    if (path == NULL || strlen(path) == 0) {
         sprintf(W->path, "/");
     } else {
         strcpy(W->path, path);
     }
-    if (flag == RKWebSocketFlagSSLAuto) {
-        W->useSSL = W->port == 443;
-    } else {
-        W->useSSL = flag == RKWebSocketFlagSSLOn;
-    }
+    // Establish the SSL context if necessary
     if (W->useSSL) {
         #if OPENSSL_VERSION_NUMBER < 0x10100000L
         W->sslContext = SSL_CTX_new(SSLv23_client_method());
@@ -622,6 +679,13 @@ void RKWebSocketSetErrorHandler(RKWebSocket *W, void (*routine)(RKWebSocket *)) 
 #pragma mark - Methods
 
 void RKWebSocketStart(RKWebSocket *W) {
+    if (W->verbose) {
+        RKLog("%s RKWebSocketStart() %s%s%s:%d%s%s\n", W->name,
+              rkGlobalParameters.showColor ? (W->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
+              W->useSSL ? "https://" : "http://",
+              W->host, W->port, W->path,
+              rkGlobalParameters.showColor ? RKNoColor : "");
+    }
     pthread_mutex_lock(&W->lock);
     W->wantActive = true;
     pthread_mutex_unlock(&W->lock);

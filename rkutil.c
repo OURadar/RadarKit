@@ -16,6 +16,7 @@ typedef struct user_params {
     RKRadarDesc              desc;
     RKName                   pedzyHost;
     RKName                   tweetaHost;
+    RKName                   remoteHost;
     RKName                   relayHost;
     RKName                   ringFilter;
     RKName                   momentMethod;
@@ -331,6 +332,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",            user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RemoteHost",          user->remoteHost,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -349,6 +351,18 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterTypeFloat, 1);
+
+    // Revise some parameters
+    s = (int)strlen(user->desc.dataPath);
+    if (user->desc.dataPath[s - 1] == '/') {
+        user->desc.dataPath[s - 1] = '\0';
+    }
+    if (!isfinite(user->SNRThreshold)) {
+        user->SNRThreshold = -20.0f;
+    }
+    if (user->SQIThreshold < 0.0f) {
+        user->SQIThreshold = 0.0f;
+    }
 
     // Shortcuts
     k = 0;
@@ -399,6 +413,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
         {"dir"               , required_argument, NULL, 'D'},
+        {"host"              , required_argument, NULL, 'H'},
         {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
@@ -487,6 +502,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->desc.initFlags = RKInitFlagIQPlayback;
                 strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
+                break;
+            case 'H':
+                strncpy(user->remoteHost, optarg, sizeof(user->remoteHost));
+                user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':
                 user->port = atoi(optarg);
@@ -879,11 +898,15 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKReporter *reporter = RKReporterInit();
-    int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
-    RKReporterSetVerbose(reporter, v);
-    RKReporterSetRadar(reporter, myRadar);
-    RKReporterStart(reporter);
+    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->remoteHost);
+    if (reporter == NULL) {
+        RKLog("Error. Unable to initiate reporter\n");
+    } else {
+        int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
+        RKReporterSetVerbose(reporter, v);
+        RKReporterSetRadar(reporter, myRadar);
+        RKReporterStart(reporter);
+    }
 
     // Now we use the framework.
     if (systemPreferences->simulate) {
@@ -963,7 +986,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w h040502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
-        RKExecuteCommand(myRadar, "t w h200502.5", NULL);
+        RKExecuteCommand(myRadar, "t w h20052.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
@@ -1031,8 +1054,10 @@ int main(int argc, const char **argv) {
     RKCommandCenterStop(center);
     RKCommandCenterFree(center);
 
-    RKReporterStop(reporter);
-    RKReporterFree(reporter);
+    if (reporter) {
+        RKReporterStop(reporter);
+        RKReporterFree(reporter);
+    }
 
     RKFree(myRadar);
 

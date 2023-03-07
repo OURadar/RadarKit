@@ -27,9 +27,10 @@ char *RKGetBackgroundColor(void) {
 char *RKGetBackgroundColorOfIndex(const int i) {
     const uint8_t colors[] = {
         210, 197, 202, 130, 136,
-         70,  28,  22,  30,  39,
-         27,  99,  57,  90, 162,
-        241, 236
+         70,  28,  22,  24,  30,
+         31,  38,  39,  33,  27,
+         99,  57,  90, 162, 241,
+        236
     };
     static int s = 3;
     static char str[4][32];
@@ -1536,14 +1537,19 @@ char *RKBytesInHex(char *dst, void *src, const size_t count) {
     uint8_t *c = (uint8_t *)src;
     *dst++ = '[';
     for (i = 0; i < count; i++) {
-        dst += sprintf(dst, ".\\%02x", *c++);
+        dst += sprintf(dst, ".%02x", *c++);
     }
     *dst++ = ']';
     *dst = '\0';
     return dst;
 }
 
-void RKHeadTailByteString(char *dst, void *src, const size_t count) {
+void RKHeadTailBytesInHex(char *dst, void *src, const size_t count) {
+    char *dummy = RKBytesInHex(dst, src, 7);
+    RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
+}
+
+void RKRadarHubPayloadString(char *dst, void *src, const size_t count) {
     int i;
     uint8_t *c = (uint8_t *)src;
     int r = 0;
@@ -1553,12 +1559,12 @@ void RKHeadTailByteString(char *dst, void *src, const size_t count) {
             r++;
         }
     }
-    if (r > bound / 2) {
+    //printf("r = %d   bound / 2 = %d\n", r, (int)bound / 2);
+    if (r > bound * 2 / 3) {
         RKHeadTailBinaryString(dst, src, count);
     } else {
         c = (uint8_t *)src;
-        r = sprintf(dst, "b'\\x\%02d'", *c++);
-        char *dummy = RKBytesInHex(dst + r, c, 7);
-        RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
+        r = sprintf(dst, "b'\\x%02x'", *c++);
+        RKHeadTailBytesInHex(dst + r, c, count - 1);
     }
 }

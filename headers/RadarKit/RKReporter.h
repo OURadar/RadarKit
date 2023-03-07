@@ -29,7 +29,6 @@ typedef struct rk_reporter {
 
     // Program set variables
     RKWebSocket                      *ws;
-    RKWebSocketSSLFlag               flag;
     pthread_t                        ticWorker;
     pthread_mutex_t                  mutex;
 
