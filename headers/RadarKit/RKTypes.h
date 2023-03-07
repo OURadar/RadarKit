@@ -353,6 +353,7 @@ N(RKResultFailedToStartRayGatherer) \
 N(RKResultFailedToStartHealthWorker) \
 N(RKResultFailedToStartPulseRecorder) \
 N(RKResultFailedToStartPedestalMonitor) \
+N(RKResultFailedToStartpedestalVcpEngine) \
 N(RKResultFailedToStartFileManager) \
 N(RKResultFailedToStartFileRemover) \
 N(RKResultFailedToStartTransceiver) \
@@ -368,6 +369,7 @@ N(RKResultFailedToCreateUnitWorker) \
 N(RKResultFailedToStartHostWatcher) \
 N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
+N(RKResultFailedToSetVcp) \
 N(RKResultFailedToAddHost) \
 N(RKResultFailedToFindProductId) \
 N(RKResultFailedToOpenFileForProduct) \
@@ -1015,6 +1017,22 @@ enum RKFilterType {
     RKFilterTypeTest1
 };
 
+typedef int RKPedestalInstructType;
+enum RKPedestalInstructType {
+    RKPedestalInstructTypeNone                  = 0,                           // 0x00
+    RKPedestalInstructTypeModeStandby           = 1,                           // 0x01
+    RKPedestalInstructTypeModeEnable            = 2,                           // 0x02
+    RKPedestalInstructTypeModeDisable           = 3,                           // 0x03
+    RKPedestalInstructTypeModeSlew              = 4,                           // 0x04
+    RKPedestalInstructTypeModePoint             = 5,                           // 0x05
+    RKPedestalInstructTypeModeReset             = 6,                           // 0x06
+    RKPedestalInstructTypeModeTest              = 7,                           // 0x07
+    RKPedestalInstructTypeModeMask              = 0x0F,                        // Lower four bits for instructions
+    RKPedestalInstructTypeAxisElevation         = 0x10,                        // 0x10
+    RKPedestalInstructTypeAxisAzimuth           = 0x20,                        // 0x20
+    RKPedestalInstructTypeAxisMask              = 0x30                         // Upper four bits for axis selection
+};
+
 typedef uint8_t RKRawDataType;
 enum RKRawDataType {
     RKRawDataTypeNull,                                                         // No recording
@@ -1244,6 +1262,13 @@ typedef union rk_position {
     };
     RKByte               bytes[128];
 } RKPosition;
+
+typedef struct rk_pedestal_action {
+    RKPedestalInstructType   mode[2];                                          // One mode for EL and the other for AZ
+    float                    param[2];
+    float                    sweepElevation;
+    float                    sweepAzimuth;
+} RKPedestalAction;
 
 typedef union rk_pulse_header {
     struct {
