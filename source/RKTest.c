@@ -304,7 +304,7 @@ void RKTestByNumber(const int number, const void *arg) {
 
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
-    for (int k = 0; k < 17; k++) {
+    for (int k = 0; k < 21; k++) {
         printf("%s<BackgroundColor %2d>%s    %s<Color %2d>%s\n", RKGetBackgroundColorOfIndex(k), k, RKNoColor, RKGetColorOfIndex(k), k, RKNoColor);
     }
     printf("\n");
@@ -368,13 +368,13 @@ void RKTestPrettyStrings(void) {
     payload[payload_size - 1] = 0;
     char string[RKMaximumStringLength];
     RKHeadTailBinaryString(string, status, strlen(status));
-    printf("RKHeadTailBinaryString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailBinaryString  : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
     RKHeadTailBinaryString(string, payload, payload_size);
-    printf("RKHeadTailBinaryString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, status, strlen(status));
-    printf("RKHeadTailByteString   : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
-    RKHeadTailByteString(string, payload, payload_size);
-    printf("RKHeadTailByteString   : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    printf("RKHeadTailBinaryString  : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKRadarHubPayloadString(string, status, strlen(status));
+    printf("RKRadarHubPayloadString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
+    RKRadarHubPayloadString(string, payload, payload_size);
+    printf("RKRadarHubPayloadString : %s%s%s\n", RKMonokaiGreen, string, RKNoColor);
 }
 
 void RKTestBasicMath(void) {
@@ -3394,7 +3394,7 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
-    sprintf(transceiver->name, "%s<TransceiverCast>%s",
+    sprintf(transceiver->name, "%s< SimTransceiver>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->state = RKEngineStateAllocated;
@@ -3928,7 +3928,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
-    sprintf(pedestal->name, "%s<AimPedestalCast>%s",
+    sprintf(pedestal->name, "%s<  SimPedestal  >%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->memoryUsage = sizeof(RKTestPedestal);
@@ -4117,7 +4117,7 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(healthRelay, 0, sizeof(RKHealthRelay));
-    sprintf(healthRelay->name, "%s<HealthRelayCast>%s",
+    sprintf(healthRelay->name, "%s< SimHealthRelay>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     healthRelay->memoryUsage = sizeof(RKTestPedestal);

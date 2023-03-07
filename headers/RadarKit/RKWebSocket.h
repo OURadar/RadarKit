@@ -26,7 +26,7 @@
 #define RKWebSocketFrameSize                     (1024 * 1024)
 #define RKWebSocketPayloadDepth                  1000
 #define RKWebSocketTimeoutDeltaMicroseconds      10000
-#define RKWebSocketTimeoutThresholdSeconds       5.0
+#define RKWebSocketTimeoutThresholdSeconds       10.0
 
 #ifndef htonll
 #define htonll(x) (((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
@@ -78,6 +78,7 @@ struct rk_websocket {
     useconds_t               timeoutDeltaMicroseconds;                         // Timeout of select()
     uint32_t                 timeoutThreshold;                                 // Internal variable
     uint32_t                 timeoutCount;                                     // Internal variable
+    uint64_t                 tic;
 
     uint8_t                  frame[RKWebSocketFrameSize];                      // A local buffer to store a frame
 };

@@ -426,7 +426,7 @@ static void *hostWatcher(void *in) {
             RKLog(">%s tic[%d] = %d\n", engine->name, k, worker->tic);
         }
     }
-    
+
     // Wait here while the engine should stay active
     while (engine->state & RKEngineStateWantActive) {
         // Consolidate all the state from all unit watcher
