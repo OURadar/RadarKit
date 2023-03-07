@@ -1019,18 +1019,18 @@ enum RKFilterType {
 
 typedef int RKPedestalInstructType;
 enum RKPedestalInstructType {
-    RKPedestalInstructTypeNone                  = 0,                // 0x00
-    RKPedestalInstructTypeModeStandby           = 1,                // 0x01
-    RKPedestalInstructTypeModeEnable            = 2,                // 0x02
-    RKPedestalInstructTypeModeDisable           = 3,                // 0x03
-    RKPedestalInstructTypeModeSlew              = 4,                // 0x04
-    RKPedestalInstructTypeModePoint             = 5,                // 0x05
-    RKPedestalInstructTypeModeReset             = 6,                // 0x06
-    RKPedestalInstructTypeModeTest              = 7,                // 0x07
-    RKPedestalInstructTypeModeMask              = 0x0F,             // Lower four bits for instructions
-    RKPedestalInstructTypeAxisElevation         = 0x10,             // 0x10
-    RKPedestalInstructTypeAxisAzimuth           = 0x20,             // 0x20
-    RKPedestalInstructTypeAxisMask              = 0x30              // Upper four bits for axis selection
+    RKPedestalInstructTypeNone                  = 0,                           // 0x00
+    RKPedestalInstructTypeModeStandby           = 1,                           // 0x01
+    RKPedestalInstructTypeModeEnable            = 2,                           // 0x02
+    RKPedestalInstructTypeModeDisable           = 3,                           // 0x03
+    RKPedestalInstructTypeModeSlew              = 4,                           // 0x04
+    RKPedestalInstructTypeModePoint             = 5,                           // 0x05
+    RKPedestalInstructTypeModeReset             = 6,                           // 0x06
+    RKPedestalInstructTypeModeTest              = 7,                           // 0x07
+    RKPedestalInstructTypeModeMask              = 0x0F,                        // Lower four bits for instructions
+    RKPedestalInstructTypeAxisElevation         = 0x10,                        // 0x10
+    RKPedestalInstructTypeAxisAzimuth           = 0x20,                        // 0x20
+    RKPedestalInstructTypeAxisMask              = 0x30                         // Upper four bits for axis selection
 };
 
 typedef uint8_t RKRawDataType;
