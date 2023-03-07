@@ -329,19 +329,6 @@ Follow these steps to get the project
 
 This example is extremely simple. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
-## Basic Usage on Signal Processing Space
-
-A seprate processing space to generate high-level products is implemented through [PyRadarKit], which is primarily housed at
-
-```
-https://git.arrc.ou.edu/radar/PyRadarKit
-```
-
-and
-
-```
-https://github.com/OURadar/PyRadarKit
-```
 
 # Design Philosophy
 
@@ -357,14 +344,13 @@ The **health relay** is the hardware that is also low speed, typically on the or
 
 Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
 
-Starting version 2.0, the RadarKit framework supports product injection from [PyRadarKit].
 
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
 [tweeto]: https://git.arrc.ou.edu/cheo4524/tweeto.git
 [iradar]: https://arrc.ou.edu/tools
-[pyradarkit]: https://git.arrc.ou.edu/radar/PyRadarKit.git
 [openssl]: https://www.openssl.org
+[radarhub]: https://git.arrc.ou.edu/radar/RadarHub.git
 
 # Radar Struct
 
