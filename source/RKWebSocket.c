@@ -624,7 +624,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     // Establish the SSL context if necessary
     if (W->useSSL) {
         #if OPENSSL_VERSION_NUMBER < 0x10100000L
-        R->sslContext = SSL_CTX_new(SSLv23_client_method());
+        W->sslContext = SSL_CTX_new(SSLv23_client_method());
         #else
         W->sslContext = SSL_CTX_new(TLS_client_method());
         #endif
