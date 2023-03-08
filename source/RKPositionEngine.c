@@ -28,7 +28,7 @@ static void *pulseTagger(void *);
 #define RKPositionVcpFlagCompleteString(x)                         \
 (x & RKPositionFlagElevationComplete ? "\033[92msweepComplete" RKNoColor:          \
 (x & RKPositionFlagAzimuthComplete ? "\033[92msweepComplete" RKNoColor:            \
-(x & RKPositionFlagVCPActive ? "\033[93mVCPActive" RKNoColor: "\033[91mVCPinActive" RKNoColor))
+(x & RKPositionFlagVCPActive ? "\033[93mVCPActive" RKNoColor: "\033[91mVCPinActive" RKNoColor)))
 
 static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     int i;
