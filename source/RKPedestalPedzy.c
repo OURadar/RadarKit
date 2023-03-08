@@ -413,6 +413,8 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     bool skipNetResponse;
     bool immediatelyDo;
     bool onlyOnce;
+    immediatelyDo = false;
+    onlyOnce = false;
     skipNetResponse = true;
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
@@ -446,8 +448,6 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             printf("ACK. Once." RKEOL);
         } else if ((!strncmp("vol", cmd, 3) || !strncmp("lvol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
             // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
-            immediatelyDo = false;
-            onlyOnce = false;
             if (!strncmp("vol", cmd, 3)) {
                 immediatelyDo = true;
                 pedestalVcpClearSweeps(me->vcpHandle);
@@ -516,6 +516,144 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             } else {
                 printf("NAK. Some error occurred." RKEOL);
             }
+
+        } else if ((!strncmp("pp", cmd, 2) || !strncmp("lpp", cmd, 3) || !strncmp("opp", cmd, 2))) {
+
+            char *elevations = cparams[0];
+            char *azimuth = cparams[1];
+            const char comma[] = ",";
+
+            if (!strncmp("pp", cmd, 2)) {
+                immediatelyDo = true;
+                pedestalVcpClearSweeps(me->vcpHandle);
+            } else if (!strncmp("lpp", cmd, 3)) {
+                pedestalVcpClearHole(me->vcpHandle);
+            } else if (!strncmp("opp", cmd, 3)) {
+                onlyOnce = true;
+                pedestalVcpClearDeck(me->vcpHandle);
+            }
+
+            if (n < 1) {
+                printf("NAK. Ill-defined PPI array, n1 = %d" RKEOL, n);
+                return 1;
+            }
+            if (n == 1) {
+                az_start = 0.0f;
+                az_end = 0.0f;
+            }
+            if (n > 1) {
+                az_start = atof(azimuth);
+            } else {
+                az_start = 0.0f;
+            }
+            az_mark = az_start;
+            if (n > 2) {
+                rate = atof(cparams[2]);
+            } else {
+                rate = 18.0;
+            }
+
+            char *token = strtok(elevations, comma);
+
+            int k = 0;
+            bool everythingOkay = true;
+            while (token != NULL && k++ < 50) {
+                n = sscanf(token, "%f", &el_start);
+                if (n == 0) {
+                    everythingOkay = false;
+                    break;
+                }
+                if (onlyOnce) {
+                    pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModePPIAzimuthStep, el_start, el_end, az_start, az_end, az_mark, rate));
+                }else{
+                    pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModePPIAzimuthStep, el_start, el_end, az_start, az_end, az_mark, rate));
+                }
+                token = strtok(NULL, comma);
+            }
+
+            if (everythingOkay) {
+                me->vcpHandle->active = true;
+                if (immediatelyDo) {
+                    pedestalVcpNextHitter(me->vcpHandle);
+                }
+                pedestalVcpSummary(me->vcpHandle, me->msg);
+                printf("ACK. Volume added successfully." RKEOL);
+            } else {
+                printf("NAK. Some error occurred." RKEOL);
+            }
+
+        } else if ((!strncmp("rr", cmd, 2) || !strncmp("lrr", cmd, 3) || !strncmp("orr", cmd, 2))) {
+
+            char *elevation = cparams[0];
+            char *azimuths = cparams[1];
+            const char comma[] = ",";
+
+            if (!strncmp("rr", cmd, 2)) {
+                immediatelyDo = true;
+                pedestalVcpClearSweeps(me->vcpHandle);
+            } else if (!strncmp("lrr", cmd, 3)) {
+                pedestalVcpClearHole(me->vcpHandle);
+            } else if (!strncmp("orr", cmd, 3)) {
+                onlyOnce = true;
+                pedestalVcpClearDeck(me->vcpHandle);
+            }
+
+            if (n < 2) {
+                printf("NAK. Ill-defined RHI array, n1 = %d" RKEOL, n);
+                return 1;
+            }
+            if (n > 2) {
+                rate = atof(cparams[2]);
+            } else {
+                rate = 18.0;
+            }
+            n = sscanf(elevation, "%f,%f", &el_start, &el_end);
+            if (n < 2) {
+                printf("NAK. Ill-defined RHI array, n2 = %d" RKEOL, n);
+                return 1;
+            }
+
+            char *token = strtok(azimuths, comma);
+
+            int k = 0;
+            bool everythingOkay = true;
+            // bool rhiflip = false;
+            while (token != NULL && k++ < 180) {
+                n = sscanf(token, "%f", &az_start);
+                if (n == 0) {
+                    everythingOkay = false;
+                    break;
+                }
+                // el_start = P->limit(P->ped, el_start, INSTRUCT_MODE_POINT | INSTRUCT_AXIS_EL);
+                // el_end = P->limit(P->ped, el_end, INSTRUCT_MODE_POINT | INSTRUCT_AXIS_EL);
+                // az_start = P->limit(P->ped, az_start, INSTRUCT_MODE_POINT | INSTRUCT_AXIS_AZ);
+                // az_end = az_start;
+                // rate = P->limit(P->ped, rate, INSTRUCT_MODE_SLEW | INSTRUCT_AXIS_EL);
+                if (onlyOnce) {
+                    pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                }else{
+                    pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                }
+                rate=-rate
+                // if (rhiflip) {
+                //     VCP_add_lineup_sweep(P->vcph, VCP_make_sweep(VCP_MODE_RHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
+                // } else {
+                //     VCP_add_lineup_sweep(P->vcph, VCP_make_sweep(VCP_MODE_RHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                // }
+                // rhiflip = !rhiflip;
+                token = strtok(NULL, comma);
+            }
+            if (everythingOkay) {
+                me->vcpHandle->active = true;
+                if (immediatelyDo) {
+                    pedestalVcpNextHitter(me->vcpHandle);
+                }
+                pedestalVcpSummary(me->vcpHandle, me->msg);
+                printf("ACK. Volume added successfully." RKEOL);
+            } else {
+                printf("NAK. Some error occurred." RKEOL);
+            }
+
         } else {
             skipNetResponse = false;
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
