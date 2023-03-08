@@ -61,7 +61,7 @@ struct rk_position_engine {
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
     uint8_t                verbose;
-    RKPedestal             pedestal;
+    RKPedestal             *pedestal;
     RKPedestal             (*hardwareInit)(void *);
     int                    (*hardwareExec)(RKPedestal, const char *);
     int                    (*hardwareRead)(RKPedestal, RKPosition *);
