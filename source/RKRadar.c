@@ -1761,7 +1761,7 @@ int RKGoLive(RKRadar *radar) {
             return RKResultIncompletePedestal;
         }
         radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
-        radar->positionEngine->pedestal = &radar->pedestal;
+        radar->positionEngine->pedestal = radar->pedestal;
         if (radar->pedestal == NULL) {
             RKLog("Error. Unable to start the pedestal.\n");
             pthread_mutex_unlock(&radar->mutex);
