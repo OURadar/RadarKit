@@ -25,6 +25,11 @@ static void *pulseTagger(void *);
 (x & RKPositionFlagElevationError ? "\033[91m" :                \
 (x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[93m"))
 
+#define RKPositionVcpFlagCompleteString(x)                         \
+(x & RKPositionFlagElevationComplete ? "\033[92msweepComplete" :          \
+(x & RKPositionFlagAzimuthComplete ? "\033[92msweepComplete" :            \
+(x & RKPositionFlagVCPActive ? "\033[93mVCPActive" : "\033[91mVCPinActive"))
+
 static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     int i;
     char *string;
@@ -60,7 +65,7 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
+    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %d / %d [%d]  %s%s %08x",
              (unsigned long)position->i,
              rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
              rkGlobalParameters.showColor ? RKNoColor : "",
@@ -72,6 +77,11 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
              position->elevationDegrees,
              position->elevationVelocityDegreesPerSecond,
              position->sweepElevationDegrees,
+             &engine->pedestal.vcpHandle->i,
+             &engine->pedestal.vcpHandle->sweepCount,
+             &engine->pedestal.vcpHandle->onDeckCount,
+             rkGlobalParameters.showColor ? RKPositionVcpFlagCompleteString(position->flag) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "",
              position->flag);
 
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
