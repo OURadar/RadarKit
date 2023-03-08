@@ -634,7 +634,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 }else{
                     pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
                 }
-                rate=-rate
+                rate=-rate;
                 // if (rhiflip) {
                 //     VCP_add_lineup_sweep(P->vcph, VCP_make_sweep(VCP_MODE_RHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
                 // } else {
