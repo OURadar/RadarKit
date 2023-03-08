@@ -77,9 +77,9 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
              position->elevationDegrees,
              position->elevationVelocityDegreesPerSecond,
              position->sweepElevationDegrees,
-             &engine->pedestal->vcpHandle->i,
-             &engine->pedestal->vcpHandle->sweepCount,
-             &engine->pedestal->vcpHandle->onDeckCount,
+             engine->pedestal->vcpHandle->i,
+             engine->pedestal->vcpHandle->sweepCount,
+             engine->pedestal->vcpHandle->onDeckCount,
              RKPositionVcpFlagCompleteString(position->flag),
              position->flag);
 
