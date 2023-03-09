@@ -100,8 +100,10 @@ static int RKPedestalPedzyRead(RKClient *client) {
         }
         if (me->vcpHandle->active){
             int i = me->vcpHandle->i;
-            newPosition->sweepElevationDegrees = me->vcpHandle->lastAction->sweepElevation;
-            newPosition->sweepAzimuthDegrees = me->vcpHandle->lastAction->sweepAzimuth;
+            radar->positionEngine->vcpI = i;
+            radar->positionEngine->vcpSweepCount = me->vcpHandle->sweepCount;
+            newPosition->sweepElevationDegrees = me->vcpHandle->lastAction.sweepElevation;
+            newPosition->sweepAzimuthDegrees = me->vcpHandle->lastAction.sweepAzimuth;
             // clear flag
             newPosition->flag = RKPositionFlagVacant;
             // VCP engine is active
@@ -136,6 +138,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
             }
             // Completion flag
             if (me->vcpHandle->progress & RKVcpProgressMarker) {
+                me->vcpHandle->progress ^= RKVcpProgressMarker;
                 switch (me->vcpHandle->batterSweeps[i].mode) {
                     case RKVcpModePPI:
                     case RKVcpModeSector:
@@ -151,6 +154,9 @@ static int RKPedestalPedzyRead(RKClient *client) {
                         break;
                 }
             }
+        } else{
+            radar->positionEngine->vcpI = 0;
+            radar->positionEngine->vcpSweepCount = 0;
         }
         RKSetPositionReady(radar, newPosition);
     } else {
@@ -234,7 +240,7 @@ static void *pedestalVcpEngine(void *in) {
             if (me->vcpHandle->active){
                 // put vcp get action here
                 action = pedestalVcpGetAction(me);
-                me->vcpHandle->lastAction = &action;
+                me->vcpHandle->lastAction = action;
                 // Call the control handler based on the suggested action
                 if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
                     // P->control(P->ped, action);
@@ -619,7 +625,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
             int k = 0;
             bool everythingOkay = true;
-            // bool rhiflip = false;
+            bool RHIFlip = false;
             while (token != NULL && k++ < 180) {
                 n = sscanf(token, "%f", &az_start);
                 if (n == 0) {
@@ -633,17 +639,19 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 // az_end = az_start;
                 // rate = P->limit(P->ped, rate, INSTRUCT_MODE_SLEW | INSTRUCT_AXIS_EL);
                 if (onlyOnce) {
-                    pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                    if (RHIFlip) {
+                        pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
+                    } else {
+                        pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                    }
                 }else{
-                    pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                    if (RHIFlip) {
+                        pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
+                    } else {
+                        pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
+                    }
                 }
-                rate=-rate;
-                // if (rhiflip) {
-                //     VCP_add_lineup_sweep(P->vcph, VCP_make_sweep(VCP_MODE_RHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
-                // } else {
-                //     VCP_add_lineup_sweep(P->vcph, VCP_make_sweep(VCP_MODE_RHI, el_start, el_end, az_start, az_end, 0.0f, rate));
-                // }
-                // rhiflip = !rhiflip;
+                RHIFlip = !RHIFlip;
                 token = strtok(NULL, comma);
             }
             if (everythingOkay) {
@@ -706,6 +714,7 @@ RKPedestalVcpHandle *pedestalVcpInit(void) {
     memset(V, 0, sizeof(RKPedestalVcpHandle));
     snprintf(V->name, 64, "VCP");
     V->option = RKVcpOptionRepeat;
+    V->active = false;
     return V;
 }
 
@@ -750,16 +759,8 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
         switch (V->batterSweeps[V->i].mode) {
             case RKVcpModeSector:
             case RKVcpModeNewSector:
+            case RKVcpModeSpeedDown:
             case RKVcpModeRHI:
-                umin_diff_el = umin_diff(V->batterSweeps[V->i].elevationStart, pos->elevationDegrees);
-                umin_diff_az = umin_diff(V->batterSweeps[V->i].azimuthStart, pos->azimuthDegrees);
-                if (umin_diff_el > RKPedestalPositionRoom || umin_diff_az > RKPedestalPositionRoom){
-                    pedestalPoint(me, V->batterSweeps[V->i].elevationStart, V->batterSweeps[V->i].azimuthStart);
-                }
-                action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
-                action.param[0] = 0.0f;
-                action.mode[1] = RKPedestalInstructTypeAxisAzimuth | RKPedestalInstructTypeModeStandby;
-                action.param[1] = 0.0f;
                 break;
             case RKVcpModePPI:
             case RKVcpModePPIAzimuthStep:
@@ -774,31 +775,6 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action.param[1] = V->batterSweeps[V->i].azimuthSlew;
                 }
-                break;
-            case RKVcpModeSpeedDown:
-                umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
-                umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
-                int tic = 0;
-                while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom)
-                    && tic < RKPedestalPointTimeOut) {
-                    pos = RKGetLatestPosition(me->radar);
-                    umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
-                    umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
-                    action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                    action.param[0] = pos->elevationVelocityDegreesPerSecond * 0.8;
-                    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                    action.param[1] = pos->azimuthVelocityDegreesPerSecond * 0.8;
-                    printf("EL slew %.2f | AZ slew %.2f dps\n",
-                        pos->elevationVelocityDegreesPerSecond, pos->azimuthVelocityDegreesPerSecond);
-                    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-                    tic++;
-                    usleep(20000);
-                }
-                action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-                action.param[0] = 0;
-                action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-                action.param[1] = 0;
-                printf("%s","Pedestal break finish.");
                 break;
             default:
                 break;
@@ -816,34 +792,27 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
             case RKVcpModeNewSector:
             case RKVcpModeSector:
             case RKVcpModeRHI:
-                // Wait until the pedestal is slow enough
-                if (umin_diff_el < RKPedestalPositionRoom &&
-                    umin_diff_az < RKPedestalPositionRoom &&
-                    pos->azimuthVelocityDegreesPerSecond > -RKPedestalVelocityRoom &&
-                    pos->azimuthVelocityDegreesPerSecond < RKPedestalVelocityRoom &&
-                    pos->elevationVelocityDegreesPerSecond > -RKPedestalVelocityRoom &&
-                    pos->elevationVelocityDegreesPerSecond < RKPedestalVelocityRoom) {
-                    switch (V->batterSweeps[V->i].mode) {
-                        case RKVcpModeSector:
-                            V->sweepAzimuth = 0.0f;
-                            V->sweepElevation = V->batterSweeps[V->i].elevationStart;
-                            V->sweepMarkerElevation = V->batterSweeps[V->i].elevationStart;
-                            printf("Ready for EL %.2f\n", V->sweepElevation);
-                            break;
-                        case RKVcpModeRHI:
-                            V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
-                            V->sweepElevation = 0.0f;
-                            V->sweepMarkerElevation = 0.0f;
-                            printf("Ready for AZ %.2f\n", V->sweepAzimuth);
-                            break;
-                        default:
-                            V->sweepAzimuth = 0.0f;
-                            V->sweepElevation = 0.0f;
-                            V->sweepMarkerElevation = 0.0f;
-                            break;
-                    }
-                    V->progress = RKVcpProgressReady;
+            case RKVcpModeSpeedDown:
+                switch (V->batterSweeps[V->i].mode) {
+                    case RKVcpModeSector:
+                        V->sweepAzimuth = 0.0f;
+                        V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                        V->sweepMarkerElevation = V->batterSweeps[V->i].elevationStart;
+                        printf("Ready for EL %.2f\n", V->sweepElevation);
+                        break;
+                    case RKVcpModeRHI:
+                        V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                        V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                        V->sweepMarkerElevation = V->batterSweeps[V->i].elevationEnd;
+                        printf("Ready for AZ %.2f\n", V->sweepAzimuth);
+                        break;
+                    default:
+                        V->sweepAzimuth = 0.0f;
+                        V->sweepElevation = 0.0f;
+                        V->sweepMarkerElevation = 0.0f;
+                        break;
                 }
+                V->progress = RKVcpProgressReady;
                 break;
             case RKVcpModePPI:
             case RKVcpModePPIAzimuthStep:
@@ -858,9 +827,6 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     printf("\033[1;32mFirst start for sweep %d - EL %.2f  @ crossover AZ %.2f   umin_diff_az=%.2f\033[0m\n", V->i, V->sweepElevation, V->sweepAzimuth, umin_diff_az);
                     V->progress = RKVcpProgressReady;
                 }
-                break;
-            case RKVcpModeSpeedDown:
-                V->progress = RKVcpProgressEnd;
                 break;
             default:
                 break;
@@ -904,6 +870,21 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 }
                 break;
             case RKVcpModeRHI:
+                V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                V->sweepMarkerElevation = V->batterSweeps[V->i].elevationEnd;
+                printf("Ready for AZ %.2f\n", V->sweepAzimuth);
+
+                umin_diff_el = umin_diff(V->batterSweeps[V->i].elevationStart, pos->elevationDegrees);
+                umin_diff_az = umin_diff(V->batterSweeps[V->i].azimuthStart, pos->azimuthDegrees);
+                if (umin_diff_el > RKPedestalPositionRoom || umin_diff_az > RKPedestalPositionRoom){
+                    pedestalPoint(me, V->batterSweeps[V->i].elevationStart, V->batterSweeps[V->i].azimuthStart);
+                }
+                // action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
+                // action.param[0] = 0.0f;
+                // action.mode[1] = RKPedestalInstructTypeAxisAzimuth | RKPedestalInstructTypeModeStandby;
+                // action.param[1] = 0.0f;
+
                 V->targetElevation = V->batterSweeps[V->i].elevationEnd - V->batterSweeps[V->i].elevationStart;
                 V->targetAzimuth = V->batterSweeps[V->i].azimuthStart;
                 V->counterTargetElevation = 0;
@@ -962,6 +943,29 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 V->targetElevation = V->batterSweeps[V->i].elevationStart;
                 break;
             case RKVcpModeSpeedDown:
+                umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
+                umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
+                int tic = 0;
+                while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom)
+                    && tic < RKPedestalPointTimeOut) {
+                    pos = RKGetLatestPosition(me->radar);
+                    umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
+                    umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
+                    action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                    action.param[0] = pos->elevationVelocityDegreesPerSecond * 0.8;
+                    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action.param[1] = pos->azimuthVelocityDegreesPerSecond * 0.8;
+                    printf("EL slew %.2f | AZ slew %.2f dps\n",
+                        pos->elevationVelocityDegreesPerSecond, pos->azimuthVelocityDegreesPerSecond);
+                    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
+                    tic++;
+                    usleep(20000);
+                }
+                action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                action.param[0] = 0;
+                action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+                action.param[1] = 0;
+                printf("%s","Pedestal break finish.");
                 V->progress = RKVcpProgressEnd;
                 break;
             default:
@@ -1001,6 +1005,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 break;
             case RKVcpModeRHI:
                 V->counterTargetElevation += min_diff(pos->elevationDegrees, V->elevationPrevious);
+                // if (V->progress & RKVcpProgressMarker) {
+                //     V->progress ^= RKVcpProgressMarker;
+                // } else if ((V->batterSweeps[V->i].elevationSlew > 0.0f && V->counterTargetElevation >= V->targetElevation) ||
                 if ((V->batterSweeps[V->i].elevationSlew > 0.0f && V->counterTargetElevation >= V->targetElevation) ||
                     (V->batterSweeps[V->i].elevationSlew < 0.0f && V->counterTargetElevation <= V->targetElevation)) {
                     action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
@@ -1042,9 +1049,10 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     V->counterTargetAzimuth = 0;
                 }
                 g = marker_diff_az - V->markerDiffAzimuthPrevious;
-                if (V->progress & RKVcpProgressMarker) {
-                    V->progress ^= RKVcpProgressMarker;
-                } else  if (V->counterMarkerAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
+                // if (V->progress & RKVcpProgressMarker) {
+                //     V->progress ^= RKVcpProgressMarker;
+                // } else if (V->counterMarkerAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
+                if (V->counterMarkerAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
                     if (V->option & RKVcpOptionVerbose) {
                         printf("Marker cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterSweeps[V->i].azimuthMark, pos->azimuthDegrees, V->markerDiffAzimuthPrevious, marker_diff_az);
                     }
@@ -1129,7 +1137,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                             //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                         }
                     }
-                    V->progress = RKVcpProgressNone;
+                    V->progress |= RKVcpProgressReady;
                 }
                 break;
             case RKVcpModePPIAzimuthStep:
@@ -1154,9 +1162,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
                     V->progress |= RKVcpProgressReady;
                 }
-                if (V->batterSweeps[V->i].mode != RKVcpModePPIAzimuthStep) {
-                    V->progress = RKVcpOptionNone;
-                }
+                // if (V->batterSweeps[V->i].mode != RKVcpModePPIAzimuthStep) {
+                //     V->progress |= RKVcpOptionNone;
+                // }
                 break;
             case RKVcpModePPIContinuous:
                 break;
@@ -1216,9 +1224,9 @@ void pedestalVcpClearSweeps(RKPedestalVcpHandle *V) {
     V->sweepCount = 0;
     V->onDeckCount = 0;
     V->inTheHoleCount = 0;
-    V->active = true;
     V->i = 0;
     V->j = 0;
+    V->active = true;
 }
 
 void pedestalVcpClearHole(RKPedestalVcpHandle *V) {
@@ -1237,9 +1245,9 @@ void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
     memcpy(V->onDeckSweeps, V->inTheHoleSweeps, V->inTheHoleCount * sizeof(RKPedestalVcpSweepHandle));
     V->sweepCount = V->onDeckCount;
     V->onDeckCount = V->inTheHoleCount;
-    V->active = true;
     V->i = 0;
     V->j = 0;
+    V->active = true;
 }
 
 RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,

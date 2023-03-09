@@ -81,6 +81,8 @@ struct rk_position_engine {
     uint64_t               tic;
     float                  lag;
     size_t                 memoryUsage;
+    int                    vcpI;
+    int                    vcpSweepCount;
 };
 
 
