@@ -919,8 +919,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 if (umin_diff_el > RKPedestalPositionRoom) {
                     pedestalElevationPoint(me, V->sweepElevation, V->batterSweeps[V->i].azimuthSlew);
                     action = pedestalElevationPointNudge(me, V->sweepElevation, V->batterSweeps[V->i].azimuthSlew);
-                } else if (V->option & RKVcpOptionBrakeElevationDuringSweep &&
-                           (pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom ||
+                } else if ((pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom ||
                             pos->elevationVelocityDegreesPerSecond < -RKPedestalVelocityRoom)) {
                     action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
                 }
@@ -932,8 +931,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 umin_diff_el = umin_diff(V->sweepElevation, pos->elevationDegrees);
                 if (umin_diff_el < RKPedestalPositionRoom) {
                     //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
-                    if (V->option & RKVcpOptionBrakeElevationDuringSweep &&
-                        (pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom 
+                    if ((pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom 
                             || pos->elevationVelocityDegreesPerSecond < -RKPedestalVelocityRoom)) {
                         action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
                     }
@@ -1012,8 +1010,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                 }
                 // If the elevation axis is still moving and the previous command has been a while
-                if (V->option & RKVcpOptionBrakeElevationDuringSweep &&
-                    (V->tic > 100 && (pos->elevationVelocityDegreesPerSecond < -0.05f ||
+                if ((V->tic > 100 && (pos->elevationVelocityDegreesPerSecond < -0.05f ||
                     pos->elevationVelocityDegreesPerSecond > 0.05f))) {
                     target_diff_el = umin_diff(pos->elevationDegrees, V->targetElevation);
                     if (target_diff_el < RKPedestalPositionRoom) {
@@ -1652,4 +1649,41 @@ RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *me, const float el
     action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
     action.param[1] = rate_az;
     return action;
+}
+
+int pedestalSlowDown(RKPedestalPedzy *me){
+    float umin_diff_vel_el;
+    float umin_diff_vel_az;
+    RKPosition *pos = RKGetLatestPosition(me->radar);
+    RKPedestalAction action;
+
+    umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
+    umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
+    int tic = 0;
+    while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom)
+        && tic < RKPedestalPointTimeOut) {
+        pos = RKGetLatestPosition(me->radar);
+        umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
+        umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
+        action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+        action.param[0] = pos->elevationVelocityDegreesPerSecond * 0.8;
+        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+        action.param[1] = pos->azimuthVelocityDegreesPerSecond * 0.8;
+        printf("EL slew %.2f | AZ slew %.2f dps\n",
+            pos->elevationVelocityDegreesPerSecond, pos->azimuthVelocityDegreesPerSecond);
+        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
+        tic++;
+        usleep(20000);
+    }
+    action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+    action.param[0] = 0;
+    action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+    action.param[1] = 0;
+    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
+    printf("%s","SlowDown finish.");
+    if (i < RKPedestalPointTimeOut){
+        return 0;
+    }else{
+        return 1;
+    }
 }
