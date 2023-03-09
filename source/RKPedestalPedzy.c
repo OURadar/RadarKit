@@ -102,10 +102,11 @@ static int RKPedestalPedzyRead(RKClient *client) {
             int i = me->vcpHandle->i;
             radar->positionEngine->vcpI = i;
             radar->positionEngine->vcpSweepCount = me->vcpHandle->sweepCount;
-            newPosition->sweepElevationDegrees = me->vcpHandle->lastAction.sweepElevation;
-            newPosition->sweepAzimuthDegrees = me->vcpHandle->lastAction.sweepAzimuth;
+            newPosition->sweepElevationDegrees = V->sweepMarkerElevation;
+            newPosition->sweepAzimuthDegrees = V->sweepAzimuth;
+
             // clear flag
-            newPosition->flag = RKPositionFlagVacant;
+            // newPosition->flag = RKPositionFlagVacant;
             // VCP engine is active
             newPosition->flag |= RKPositionFlagVCPActive;
             // Sweep is active: data collection portion (i.e., exclude transitions)
@@ -523,7 +524,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 printf("NAK. Some error occurred." RKEOL);
             }
 
-        } else if ((!strncmp("pp", cmd, 2) || !strncmp("lpp", cmd, 3) || !strncmp("opp", cmd, 2))) {
+        } else if ((!strncmp("pp", cmd, 2) || !strncmp("lpp", cmd, 3) || !strncmp("opp", cmd, 3))) {
 
             char *elevations = cparams[0];
             char *azimuth = cparams[1];
@@ -590,7 +591,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 printf("NAK. Some error occurred." RKEOL);
             }
 
-        } else if ((!strncmp("rr", cmd, 2) || !strncmp("lrr", cmd, 3) || !strncmp("orr", cmd, 2))) {
+        } else if ((!strncmp("rr", cmd, 2) || !strncmp("lrr", cmd, 3) || !strncmp("orr", cmd, 3))) {
 
             char *elevation = cparams[0];
             char *azimuths = cparams[1];
@@ -664,6 +665,9 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             } else {
                 printf("NAK. Some error occurred." RKEOL);
             }
+
+        } else if (!strncmp("summ", cmd, 4)) {
+            pedestalVcpSummary(me->vcpHandle, me->msg);
 
         } else {
             skipNetResponse = false;
@@ -821,8 +825,8 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 if (umin_diff_el < RKPedestalPositionRoom &&
                     pos->elevationVelocityDegreesPerSecond > -RKPedestalVelocityRoom &&
                     pos->elevationVelocityDegreesPerSecond < RKPedestalVelocityRoom) {
-                    V->sweepElevation = V->batterSweeps[V->i].elevationStart;
                     V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                    V->sweepElevation = V->batterSweeps[V->i].elevationStart;
                     V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                     printf("\033[1;32mFirst start for sweep %d - EL %.2f  @ crossover AZ %.2f   umin_diff_az=%.2f\033[0m\n", V->i, V->sweepElevation, V->sweepAzimuth, umin_diff_az);
                     V->progress = RKVcpProgressReady;
@@ -845,6 +849,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
         switch (V->batterSweeps[V->i].mode) {
             case RKVcpModeSector:
             case RKVcpModePPI:
+                V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                 // V->sweep_az = V->sweeps[V->i].az_start;
                 V->targetAzimuth = V->batterSweeps[V->i].azimuthEnd - V->batterSweeps[V->i].azimuthStart;
                 if (V->targetAzimuth <= 0.0f && V->batterSweeps[V->i].azimuthSlew > 0.0f) {
@@ -901,6 +908,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 }
                 break;
             case RKVcpModePPIAzimuthStep:
+                V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                 //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                 printf("\033[1;33mReady for sweep %d - EL %.2f  @ crossover AZ %.2f\033[0m\n", V->i, action.sweepElevation, action.sweepAzimuth);
                 umin_diff_el = umin_diff(V->sweepElevation, pos->elevationDegrees);
@@ -914,6 +924,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 }
                 break;
             case RKVcpModePPIContinuous:
+                V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                 umin_diff_el = umin_diff(V->sweepElevation, pos->elevationDegrees);
                 if (umin_diff_el < RKPedestalPositionRoom) {
                     //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
@@ -927,6 +940,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 }
                 break;
             case RKVcpModeNewSector:
+                V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                 //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                 V->targetAzimuth = V->batterSweeps[V->i].azimuthEnd - pos->azimuthDegrees;
                 if (V->batterSweeps[V->i].azimuthSlew > 0.0 && V->targetAzimuth < 0.0) {
@@ -943,6 +959,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 V->targetElevation = V->batterSweeps[V->i].elevationStart;
                 break;
             case RKVcpModeSpeedDown:
+                V->sweepAzimuth = 0.0f;
+                V->sweepElevation = 0.0f;
+                V->sweepMarkerElevation = 0.0f;
                 umin_diff_vel_el = umin_diff(0.0f, pos->elevationVelocityDegreesPerSecond);
                 umin_diff_vel_az = umin_diff(0.0f, pos->azimuthVelocityDegreesPerSecond);
                 int tic = 0;
@@ -1060,7 +1079,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     V->counterMarkerAzimuth = 0;
                     // Sweep marked, go to the next sweep
                     V->j = (V->j == V->sweepCount - 1) ? 0 : V->j + 1;
-                    V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
+                    // V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                 }
                 g = umin_diff(pos->azimuthDegrees, V->azimuthPrevious);
                 V->counterTargetAzimuth += g;
@@ -1147,8 +1166,8 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     if (V->option & RKVcpOptionRepeat) {
                         pedestalVcpNextHitter(me->vcpHandle);
                         printf("VCP repeats.\n");
-                        V->sweepElevation = V->batterSweeps[V->i].elevationStart;
-                        V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                        // V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                        // V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
                         V->progress |= RKVcpProgressReady;
                     } else {
                         printf("VCP stops.\n");
@@ -1158,8 +1177,8 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                         break;
                     }
                 } else {
-                    V->sweepElevation = V->batterSweeps[V->i].elevationStart;
-                    V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                    // V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                    // V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
                     V->progress |= RKVcpProgressReady;
                 }
                 // if (V->batterSweeps[V->i].mode != RKVcpModePPIAzimuthStep) {
