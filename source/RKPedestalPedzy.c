@@ -668,6 +668,8 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
         } else if (!strncmp("summ", cmd, 4)) {
             pedestalVcpSummary(me->vcpHandle, me->msg);
+            strncpy(me->responses[me->responseIndex], me->msg, RKMaximumStringLength - 1);
+            me->responseIndex = RKNextModuloS(me->responseIndex, RKPedestalPedzyFeedbackDepth);
 
         } else {
             skipNetResponse = false;
