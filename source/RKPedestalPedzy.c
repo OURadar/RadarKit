@@ -33,6 +33,7 @@ int pedestalAzimuthPoint(RKPedestalPedzy *, const float az_point, const float ra
 int pedestalElevationPoint(RKPedestalPedzy *, const float el_point, const float rate_az);
 RKPedestalAction pedestalAzimuthPointNudge(RKPedestalPedzy *, const float az_point, const float rate_el);
 RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *, const float el_point, const float rate_az);
+void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 
 float min_diff(const float v1, const float v2) {
     float d = v1 - v2;
@@ -668,8 +669,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
         } else if (!strncmp("summ", cmd, 4)) {
             pedestalVcpSummary(me->vcpHandle, me->msg);
-            strncpy(me->responses[me->responseIndex], me->msg, RKMaximumStringLength - 1);
-            me->responseIndex = RKNextModuloS(me->responseIndex, RKPedestalPedzyFeedbackDepth);
+            strncpy(response, me->msg, RKMaximumStringLength - 1);
 
         } else {
             skipNetResponse = false;
@@ -1263,7 +1263,7 @@ void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
     memset(V->batterSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
     memcpy(V->batterSweeps, V->onDeckSweeps, V->onDeckCount * sizeof(RKPedestalVcpSweepHandle));
     memset(V->onDeckSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
-    memcpy(V->onDeckSweeps, V->inTheHoleSweeps, V->inTheHoleCount * sizeof(RKPedestalVcpSweepHandle));
+    memcpy(V->onDeckSweeps, V->inTheHoleSweeps, (V->onDeckCount+V->inTheHoleCount) * sizeof(RKPedestalVcpSweepHandle));
     V->sweepCount = V->onDeckCount;
     V->onDeckCount = V->inTheHoleCount;
     V->i = 0;
