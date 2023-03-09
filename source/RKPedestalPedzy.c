@@ -1681,7 +1681,7 @@ int pedestalSlowDown(RKPedestalPedzy *me){
     action.param[1] = 0;
     pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
     printf("%s","SlowDown finish.");
-    if (i < RKPedestalPointTimeOut){
+    if (tic < RKPedestalPointTimeOut){
         return 0;
     }else{
         return 1;
