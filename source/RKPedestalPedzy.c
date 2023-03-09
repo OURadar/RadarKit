@@ -921,7 +921,10 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     action = pedestalElevationPointNudge(me, V->sweepElevation, V->batterSweeps[V->i].azimuthSlew);
                 } else if ((pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom ||
                             pos->elevationVelocityDegreesPerSecond < -RKPedestalVelocityRoom)) {
-                    action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
+                    action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action.param[0] = 0.0f;
+                    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action.param[1] = V->batterSweeps[V->i].azimuthSlew;
                 }
                 break;
             case RKVcpModePPIContinuous:
@@ -933,7 +936,10 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                     //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     if ((pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityRoom 
                             || pos->elevationVelocityDegreesPerSecond < -RKPedestalVelocityRoom)) {
-                        action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
+                        action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                        action.param[0] = 0.0f;
+                        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                        action.param[1] = V->batterSweeps[V->i].azimuthSlew;
                     }
                     //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     V->counterTargetAzimuth = 0;
