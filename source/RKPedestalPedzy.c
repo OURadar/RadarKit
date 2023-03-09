@@ -102,8 +102,8 @@ static int RKPedestalPedzyRead(RKClient *client) {
             int i = me->vcpHandle->i;
             radar->positionEngine->vcpI = i;
             radar->positionEngine->vcpSweepCount = me->vcpHandle->sweepCount;
-            newPosition->sweepElevationDegrees = V->sweepMarkerElevation;
-            newPosition->sweepAzimuthDegrees = V->sweepAzimuth;
+            newPosition->sweepElevationDegrees = me->vcpHandle->sweepMarkerElevation;
+            newPosition->sweepAzimuthDegrees = me->vcpHandle->sweepAzimuth;
 
             // clear flag
             // newPosition->flag = RKPositionFlagVacant;
