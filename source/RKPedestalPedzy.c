@@ -1162,6 +1162,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                         }
                     }
                     V->progress |= RKVcpProgressReady;
+                    V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                    V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                    V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                 }
                 break;
             case RKVcpModePPIAzimuthStep:
@@ -1174,6 +1177,9 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                         // V->sweepElevation = V->batterSweeps[V->i].elevationStart;
                         // V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
                         V->progress |= RKVcpProgressReady;
+                        V->sweepAzimuth = V->batterSweeps[V->i].azimuthStart;
+                        V->sweepElevation = V->batterSweeps[V->i].elevationStart;
+                        V->sweepMarkerElevation = V->batterSweeps[V->j].elevationStart;
                     } else {
                         printf("VCP stops.\n");
                         V->active = false;
