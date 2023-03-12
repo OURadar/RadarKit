@@ -411,6 +411,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
     char cmd[16] = "";
     char cparams[4][256];
+    float fparams[4];
     float az_start, az_end, az_mark, el_start, el_end, rate;
     int n;
     cparams[0][0] = '\0';
@@ -671,6 +672,30 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
         } else if (!strncmp("summ", cmd, 4)) {
             pedestalVcpSummary(me->vcpHandle, me->msg);
+            strncpy(response, me->msg, RKMaximumStringLength - 1);
+
+        } else if (!strncmp("spoint", cmd, 6)) {
+            // Point
+            if (n < 1) {
+                sprintf(me->msg, "NAK. Use as: %s [AZ] [EL]" RKEOL, cmd);
+                strncpy(response, me->msg, RKMaximumStringLength - 1);
+                return RKResultFailedToExecuteCommand;
+            }
+            fparams[0] = atof(cparams[0]);
+            if (n > 1) {
+                fparams[1] = atof(cparams[1]);
+                snprintf(me->msg, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg, EL:%.2f deg." RKEOL,
+                         fparams[0],
+                         fparams[1]
+                         );
+            } else {
+                RKPosition *pos = RKGetLatestPosition(me->radar);
+                fparams[1] = pos->elevationDegrees;
+                snprintf(me->msg, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg." RKEOL,
+                         fparams[0]
+                         );
+            }
+            pedestalPoint(me, fparams[1], fparams[0]);
             strncpy(response, me->msg, RKMaximumStringLength - 1);
 
         } else {
