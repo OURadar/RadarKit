@@ -457,12 +457,12 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         } else if (!strncmp("once", cmd, 4)) {
             pedestalVcpArmSweeps(me->vcpHandle, RKPedestalVcpNoRepeat);
             printf("ACK. Once." RKEOL);
-        } else if ((!strncmp("vol", cmd, 3) || !strncmp("lvol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
+        } else if ((!strncmp("vol", cmd, 3) || !strncmp("ivol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
             // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
-            if (!strncmp("vol", cmd, 3)) {
+            if ( !me->vcpHandle->active || !strncmp("ivol", cmd, 4)) {
                 immediatelyDo = true;
                 pedestalVcpClearSweeps(me->vcpHandle);
-            } else if (!strncmp("lvol", cmd, 4)) {
+            } else if (!strncmp("vol", cmd, 3)) {
                 pedestalVcpClearHole(me->vcpHandle);
             } else if (!strncmp("ovol", cmd, 4)) {
                 onlyOnce = true;
@@ -528,16 +528,16 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 printf("NAK. Some error occurred." RKEOL);
             }
 
-        } else if ((!strncmp("pp", cmd, 2) || !strncmp("lpp", cmd, 3) || !strncmp("opp", cmd, 3))) {
+        } else if ((!strncmp("pp", cmd, 2) || !strncmp("ipp", cmd, 3) || !strncmp("opp", cmd, 3))) {
 
             char *elevations = cparams[0];
             char *azimuth = cparams[1];
             const char comma[] = ",";
 
-            if (!strncmp("pp", cmd, 2)) {
+            if ( !me->vcpHandle->active || !strncmp("ipp", cmd, 3)) {
                 immediatelyDo = true;
                 pedestalVcpClearSweeps(me->vcpHandle);
-            } else if (!strncmp("lpp", cmd, 3)) {
+            } else if (!strncmp("pp", cmd, 2)) {
                 pedestalVcpClearHole(me->vcpHandle);
             } else if (!strncmp("opp", cmd, 3)) {
                 onlyOnce = true;
@@ -595,16 +595,16 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 printf("NAK. Some error occurred." RKEOL);
             }
 
-        } else if ((!strncmp("rr", cmd, 2) || !strncmp("lrr", cmd, 3) || !strncmp("orr", cmd, 3))) {
+        } else if ((!strncmp("rr", cmd, 2) || !strncmp("irr", cmd, 3) || !strncmp("orr", cmd, 3))) {
 
             char *elevation = cparams[0];
             char *azimuths = cparams[1];
             const char comma[] = ",";
 
-            if (!strncmp("rr", cmd, 2)) {
+            if ( !me->vcpHandle->active || !strncmp("irr", cmd, 3)) {
                 immediatelyDo = true;
                 pedestalVcpClearSweeps(me->vcpHandle);
-            } else if (!strncmp("lrr", cmd, 3)) {
+            } else if (!strncmp("rr", cmd, 2)) {
                 pedestalVcpClearHole(me->vcpHandle);
             } else if (!strncmp("orr", cmd, 3)) {
                 onlyOnce = true;
