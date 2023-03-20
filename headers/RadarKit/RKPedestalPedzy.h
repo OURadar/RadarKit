@@ -130,8 +130,6 @@ typedef struct rk_pedzy {
     RKPedestalVcpHandle    *vcpHandle;
     uint32_t               lastActionAge;
     char                   msg[4096];
-    // // VCP engine
-    // RKVCPEngine            *vcpEngine;
 
     // Program set variables
     pthread_t              tidPedestalMonitor;
@@ -143,4 +141,5 @@ int RKPedestalPedzyExec(RKPedestal, const char *, char *);
 int RKPedestalPedzyFree(RKPedestal);
 RKPedestalVcpHandle *pedestalVcpInit(void);
 void pedestalVcpSendAction(int sd, char *,RKPedestalAction *);
+
 #endif /* __RadarKit_RKPedestal__ */

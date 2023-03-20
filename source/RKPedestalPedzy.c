@@ -172,8 +172,6 @@ static void *pedestalVcpEngine(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
     RKClient *client = me->client;
-    RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
-    RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum vcpActive;
 
     gettimeofday(&RKPedestalVcpCurrentTime, NULL);
@@ -182,26 +180,17 @@ static void *pedestalVcpEngine(void *in) {
     RKPedestalVcpStatusPeriod.tv_sec = RKPedestalVcpStatusPeriodMS / 1000;
     RKPedestalVcpStatusPeriod.tv_usec = (RKPedestalVcpStatusPeriodMS % 1000) * 1000;
     timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
-    // RKPedestalVcpHandle *V = me->vcpHandle;
-    RKStatusEnum azEnum;
-    RKStatusEnum elEnum;
     RKPedestalAction action;
+
     while (me->client->state < RKClientStateDisconnecting) {
         gettimeofday(&RKPedestalVcpCurrentTime, NULL);
         if (me->client->state < RKClientStateConnected) {
-            azInterlockStatus = RKStatusEnumInvalid;
-            elInterlockStatus = RKStatusEnumInvalid;
             vcpActive = RKStatusEnumInvalid;
-            printf("--.-- deg");
-            printf("--.-- deg");
-            // sprintf(elPosition, "--.-- deg");
-            // sprintf(azPosition, "--.-- deg");
-            azEnum = RKStatusEnumInvalid;
-            elEnum = RKStatusEnumInvalid;
         } else {
+            //
+            //   To be replaced with continuous position data ... -boonleng
+            //
             RKPosition *position = RKGetLatestPosition(radar);
-            azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
-            elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
                 vcpActive = RKStatusEnumFault;
             } else if (position->flag & RKPositionFlagVCPActive) {
@@ -209,12 +198,6 @@ static void *pedestalVcpEngine(void *in) {
             } else {
                 vcpActive = RKStatusEnumStandby;
             }
-            // printf("%.2f deg", position->elevationDegrees);
-            // printf("%.2f deg", position->azimuthDegrees);
-            // sprintf(elPosition, "%.2f deg", position->elevationDegrees);
-            // sprintf(azPosition, "%.2f deg", position->azimuthDegrees);
-            azEnum = RKStatusEnumNormal;
-            elEnum = RKStatusEnumNormal;
 
             if (me->vcpHandle->active){
                 // put vcp get action here
@@ -283,6 +266,7 @@ static void *pedestalHealth(void *in) {
             elEnum = RKStatusEnumInvalid;
         } else {
             RKPosition *position = RKGetLatestPosition(radar);
+            RKLog("position = %.2f %.2f\n", position->azimuthDegrees, position->elevationDegrees);
             azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
@@ -1071,7 +1055,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 //printf("AZ %.2f   counter %.2f   %.2f - %.2f = %.2f\n", pos->az_deg, V->counter_target_az, target_diff_az, V->target_diff_az_prev, g);
                 if (V->counterTargetAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
                     if (V->option & RKVcpOptionVerbose) {
-                        printf("Target cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterSweeps[V->i].azimuthEnd, pos->azimuthDegrees, V->targetDiffAzimuthPrevious, target_diff_az);
+                        RKLog("Warning. Target cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterSweeps[V->i].azimuthEnd, pos->azimuthDegrees, V->targetDiffAzimuthPrevious, target_diff_az);
                     }
                     V->progress |= RKVcpProgressEnd;
                     V->counterTargetAzimuth = 0;
@@ -1082,7 +1066,7 @@ RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *me) {
                 // } else if (V->counterMarkerAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
                 if (V->counterMarkerAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
                     if (V->option & RKVcpOptionVerbose) {
-                        printf("Marker cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterSweeps[V->i].azimuthMark, pos->azimuthDegrees, V->markerDiffAzimuthPrevious, marker_diff_az);
+                        RKLog("Warning. Marker cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterSweeps[V->i].azimuthMark, pos->azimuthDegrees, V->markerDiffAzimuthPrevious, marker_diff_az);
                     }
                     V->progress |= RKVcpProgressMarker;
                     V->counterMarkerAzimuth = 0;
@@ -1272,9 +1256,7 @@ void pedestalVcpClearDeck(RKPedestalVcpHandle *V) {
 }
 
 void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
-    memset(V->batterSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
     memcpy(V->batterSweeps, V->onDeckSweeps, V->onDeckCount * sizeof(RKPedestalVcpSweepHandle));
-    memset(V->onDeckSweeps, 0, sizeof(RKPedestalVcpSweepHandle));
     memcpy(V->onDeckSweeps, V->inTheHoleSweeps, (V->onDeckCount+V->inTheHoleCount) * sizeof(RKPedestalVcpSweepHandle));
     V->sweepCount = V->onDeckCount;
     V->onDeckCount = V->inTheHoleCount;
@@ -1407,24 +1389,24 @@ void pedestalVcpSummary(RKPedestalVcpHandle *V, char *msg) {
            "================================================\n", msg);
 }
 
-float pedestalGetRate(const float diff_deg, int axis){
+float pedestalGetRate(const float diff_deg, int axis) {
     float rate = 0.0f;
-    if ( axis == RKPedestalPointAzimuth ){
-        if ( diff_deg >= 20.0f){
+    if (axis == RKPedestalPointAzimuth) {
+        if (diff_deg >= 20.0f) {
             rate = 30.0f;
-        } else if ( diff_deg >= 10.0f){
+        } else if (diff_deg >= 10.0f) {
             rate = 20.0f;
-        } else if ( diff_deg >= 5.0f){
+        } else if (diff_deg >= 5.0f) {
             rate = 10.0f;
-        } else if ( diff_deg < 5.0f){
+        } else if (diff_deg < 5.0f) {
             rate = 3.0f;
         }
-    } else if ( axis == RKPedestalPointElevation ){
-        if ( diff_deg >= 20.0f){
+    } else if (axis == RKPedestalPointElevation) {
+        if (diff_deg >= 20.0f) {
             rate = 15.0f;
-        } else if ( diff_deg >= 7.0f){
+        } else if (diff_deg >= 7.0f) {
             rate = 10.0f;
-        } else if ( diff_deg < 7.0f){
+        } else if (diff_deg < 7.0f) {
             rate = 3.0f;
         }
     }
@@ -1594,6 +1576,7 @@ int pedestalElevationPoint(RKPedestalPedzy *me, const float el_point, const floa
     action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
     action.param[1] = rate_az;
     pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
+    
     printf("%s","Elevation point finish.");
     if (i < RKPedestalPointTimeOut){
         return 0;
@@ -1675,8 +1658,7 @@ int pedestalSlowDown(RKPedestalPedzy *me){
     umin_diff_vel_el = RKUMinDiff(0.0f, pos->elevationVelocityDegreesPerSecond);
     umin_diff_vel_az = RKUMinDiff(0.0f, pos->azimuthVelocityDegreesPerSecond);
     int tic = 0;
-    while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom)
-        && tic < RKPedestalPointTimeOut) {
+    while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom) && tic < RKPedestalPointTimeOut) {
         pos = RKGetLatestPosition(me->radar);
         umin_diff_vel_el = RKUMinDiff(0.0f, pos->elevationVelocityDegreesPerSecond);
         umin_diff_vel_az = RKUMinDiff(0.0f, pos->azimuthVelocityDegreesPerSecond);
@@ -1696,9 +1678,9 @@ int pedestalSlowDown(RKPedestalPedzy *me){
     action.param[1] = 0;
     pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
     printf("%s","SlowDown finish.");
-    if (tic < RKPedestalPointTimeOut){
+    if (tic < RKPedestalPointTimeOut) {
         return 0;
-    }else{
+    } else {
         return 1;
     }
 }

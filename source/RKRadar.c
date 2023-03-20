@@ -2723,7 +2723,7 @@ RKPosition *RKGetLatestPosition(RKRadar *radar) {
     RKPosition *position = &radar->positions[index];
     int k = 0;
     while (!(position->flag & RKPositionFlagReady) && k++ < radar->desc.positionBufferDepth) {
-        index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
+        index = RKPreviousModuloS(index, radar->desc.positionBufferDepth);
         position = &radar->positions[index];
     }
     return position;
