@@ -115,7 +115,7 @@ typedef struct rk_vcp {
     float                       sweepElevation;                 // Elevation control
     float                       sweepAzimuth;                   // Azimuth control
     int                         progress;
-    RKPedestalAction            *lastAction;                     // store last action
+    RKPedestalAction            lastAction;                     // store last action
 } RKPedestalVcpHandle;
 
 typedef struct rk_pedzy {
@@ -143,5 +143,4 @@ int RKPedestalPedzyExec(RKPedestal, const char *, char *);
 int RKPedestalPedzyFree(RKPedestal);
 RKPedestalVcpHandle *pedestalVcpInit(void);
 void pedestalVcpSendAction(int sd, char *,RKPedestalAction *);
-void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 #endif /* __RadarKit_RKPedestal__ */
