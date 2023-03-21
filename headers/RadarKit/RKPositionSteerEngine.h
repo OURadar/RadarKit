@@ -28,7 +28,7 @@ struct rk_position_steer_engine {
 
     // Program set variables
     pthread_t              threadId;
-    int                    vcpI;
+    int                    vcpIndex;
     int                    vcpSweepCount;
 
     // Status / health
@@ -38,7 +38,6 @@ struct rk_position_steer_engine {
     RKEngineState          state;
     uint64_t               tic;
     float                  lag;
-    size_t                 memoryUsage;
 };
 
 RKPositionSteerEngine *RKPositionSteerEngineInit(void);

@@ -4,7 +4,7 @@
 //
 //  Created by Boonleng Cheong on 1/4/17.
 //
-//  Significant contribution from Ming-Duan Tze in 2023
+//  Significant contributions from Ming-Duan Tze in 2023
 //
 //  Copyright © 2017-2023 Boonleng Cheong. All rights reserved.
 //

@@ -17,6 +17,7 @@
 #include <RadarKit/RKHealthEngine.h>
 #include <RadarKit/RKCalibrator.h>
 #include <RadarKit/RKPositionEngine.h>
+#include <RadarKit/RKPositionSteerEngine.h>
 #include <RadarKit/RKPulseEngine.h>
 #include <RadarKit/RKPulseRingFilter.h>
 #include <RadarKit/RKMomentEngine.h>
@@ -56,17 +57,17 @@ enum {
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
     RKRadarStatePositionEngineInitialized            = (1 << 18),  //
-    RKRadarStateHealthEngineInitialized              = (1 << 19),  //
-    RKRadarStateMomentEngineInitialized              = (1 << 20),  //
-    RKRadarStateSweepEngineInitialized               = (1 << 21),  //
-    RKRadarStateFileRecorderInitialized              = (1 << 22),  //
-    RKRadarStateHealthLoggerInitialized              = (1 << 23),  //
-    RKRadarStateFileManagerInitialized               = (1 << 24),  //
-    RKRadarStateHealthRelayInitialized               = (1 << 25),  //
-    RKRadarStateTransceiverInitialized               = (1 << 26),  //
-    RKRadarStatePedestalInitialized                  = (1 << 27),  //
-    RKRadarStateHostMonitorInitialized               = (1 << 28),  //
-    RKRadarStateReserved7                            = (1 << 29),  //
+    RKRadarStatePositionSteerEngineInitialized       = (1 << 19),  //
+    RKRadarStateHealthEngineInitialized              = (1 << 20),  //
+    RKRadarStateMomentEngineInitialized              = (1 << 21),  //
+    RKRadarStateSweepEngineInitialized               = (1 << 22),  //
+    RKRadarStateFileRecorderInitialized              = (1 << 23),  //
+    RKRadarStateHealthLoggerInitialized              = (1 << 24),  //
+    RKRadarStateFileManagerInitialized               = (1 << 25),  //
+    RKRadarStateHealthRelayInitialized               = (1 << 26),  //
+    RKRadarStateTransceiverInitialized               = (1 << 27),  //
+    RKRadarStatePedestalInitialized                  = (1 << 28),  //
+    RKRadarStateHostMonitorInitialized               = (1 << 29),  //
     RKRadarStateRadarRelayInitialized                = (1 << 30),  //
     RKRadarStateLive                                 = (1 << 31)   //
 };

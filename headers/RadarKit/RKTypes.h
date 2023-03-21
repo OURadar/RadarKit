@@ -395,7 +395,8 @@ enum RKEngineColor {
     RKEngineColorPulseCompressionEngine = 7,
     RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
-    RKEngineColorMomentEngine = 9,
+    RKEngineColorPositionSteerEngine = 15,
+    RKEngineColorMomentEngine = 15,
     RKEngineColorHealthEngine = 1,
     RKEngineColorDataRecorder = 12,
     RKEngineColorSweepEngine = 18,
@@ -592,11 +593,12 @@ enum RKInitFlag {
     RKInitFlagAllocHealthNodes                   = 0x00004000,                 // 1 << 14
     RKInitFlagReserved1                          = 0x00008000,                 // 1 << 15
     RKInitFlagPulsePositionCombiner              = 0x00010000,                 // 1 << 16
-    RKInitFlagSignalProcessor                    = 0x00020000,                 // 1 << 17
+    RKInitFlagPositionSteerEngine                = 0x00020000,                 // 1 << 17
+    RKInitFlagSignalProcessor                    = 0x00040000,                 // 1 << 18
     RKInitFlagRelay                              = 0x00007703,                 // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
-    RKInitFlagIQPlayback                         = 0x00027701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
-    RKInitFlagAllocEverything                    = 0x00037F01,
-    RKInitFlagAllocEverythingQuiet               = 0x00037F00,
+    RKInitFlagIQPlayback                         = 0x00047701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
+    RKInitFlagAllocEverything                    = 0x00077F01,
+    RKInitFlagAllocEverythingQuiet               = 0x00077F00,
 };
 
 // The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021

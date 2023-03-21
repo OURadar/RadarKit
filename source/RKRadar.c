@@ -825,6 +825,18 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStatePositionEngineInitialized;
     }
 
+    // Steer engine to make steer actions
+    if (radar->desc.initFlags & RKInitFlagPositionSteerEngine) {
+        // Position steer engine
+        RKLog("initializing RKPositionSteerEngineInit");
+        radar->positionSteerEngine = RKPositionSteerEngineInit();
+        RKPositionSteerEngineSetInputOutputBuffers(radar->positionSteerEngine, &radar->desc,
+                                                   radar->positions, &radar->positionIndex,
+                                                   radar->configs, &radar->configIndex);
+        radar->memoryUsage += radar->positionSteerEngine->memoryUsage;
+        radar->state |= RKRadarStatePositionSteerEngineInitialized;
+    }
+
     // Signal processor performs pulse compression, calculates moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // FFT module
@@ -1062,6 +1074,10 @@ int RKFree(RKRadar *radar) {
         RKPositionEngineFree(radar->positionEngine);
         radar->positionEngine = NULL;
     }
+    if (radar->state & RKRadarStatePositionSteerEngineInitialized) {
+        RKPositionSteerEngineFree(radar->positionSteerEngine);
+        radar->positionSteerEngine = NULL;
+    }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineFree(radar->momentEngine);
         radar->momentEngine = NULL;
@@ -1270,6 +1286,9 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
     if (radar->positionEngine) {
         RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     }
+    if (radar->positionSteerEngine) {
+        RKPositionSteerEngineSetVerbose(radar->positionSteerEngine, verbose);
+    }
     if (radar->pulseEngine) {
         RKPulseEngineSetVerbose(radar->pulseEngine, verbose);
     }
@@ -1312,6 +1331,9 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
                 break;
             case 'a':
                 RKPositionEngineSetVerbose(radar->positionEngine, array[k]);
+                break;
+            case 'b':
+                RKPositionSteerEngineSetVerbose(radar->positionSteerEngine, array[k]);
                 break;
             case 'm':
                 RKMomentEngineSetVerbose(radar->momentEngine, array[k]);
@@ -1677,6 +1699,9 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
         RKPositionEngineStart(radar->positionEngine);
     }
+    if (radar->desc.initFlags & RKInitFlagPositionSteerEngine) {
+        RKPositionSteerEngineStart(radar->positionSteerEngine);
+    }
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         if (radar->desc.initFlags & RKInitFlagManuallyAssignCPU) {
             // Main thread uses 1 CPU. Start the others from 1.
@@ -1937,6 +1962,10 @@ int RKStop(RKRadar *radar) {
     if (radar->state & RKRadarStatePositionEngineInitialized) {
         RKPositionEngineStop(radar->positionEngine);
         radar->state ^= RKRadarStatePositionEngineInitialized;
+    }
+    if (radar->state & RKRadarStatePositionSteerEngineInitialized) {
+        RKPositionSteerEngineStop(radar->positionSteerEngine);
+        radar->state ^= RKRadarStatePositionSteerEngineInitialized;
     }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineStop(radar->momentEngine);
