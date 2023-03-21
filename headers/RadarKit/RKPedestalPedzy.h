@@ -143,7 +143,10 @@ typedef struct rk_pedzy {
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);
 int RKPedestalPedzyExec(RKPedestal, const char *, char *);
 int RKPedestalPedzyFree(RKPedestal);
+
 RKPedestalVcpHandle *pedestalVcpInit(void);
 void pedestalVcpSendAction(int sd, char *,RKPedestalAction *);
+
+char *RKPedestalPedzyStatusString(RKPedestalPedzy *);
 
 #endif /* __RadarKit_RKPedestal__ */

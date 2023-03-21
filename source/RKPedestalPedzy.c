@@ -3,7 +3,10 @@
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 1/4/17.
-//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
+//
+//  Significant contribution from Ming-Duan Tze in 2023
+//
+//  Copyright © 2017-2023 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKPedestalPedzy.h>
@@ -60,6 +63,8 @@ static void RKPedestalPedzyUpdateStatusString(RKPedestalPedzy *engine) {
     } else {
         sprintf(string, "-- [ VCP inactive ] --\n");
     }
+
+    engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
 static int RKPedestalPedzyRead(RKClient *client) {
@@ -1714,4 +1719,10 @@ int pedestalSlowDown(RKPedestalPedzy *me){
     } else {
         return 1;
     }
+}
+
+#pragma mark - Methods
+
+char *RKPedestalPedzyStatusString(RKPedestalPedzy *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

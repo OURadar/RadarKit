@@ -118,6 +118,7 @@ struct rk_radar {
     RKFFTModule                      *fftModule;
     RKHealthEngine                   *healthEngine;
     RKPositionEngine                 *positionEngine;
+    RKPositionSteerEngine            *positionSteerEngine;
     RKPulseEngine                    *pulseEngine;
     RKPulseRingFilterEngine          *pulseRingFilterEngine;
     RKMomentEngine                   *momentEngine;

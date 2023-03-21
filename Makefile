@@ -54,11 +54,12 @@ OBJS += RKPreference.o
 OBJS += RKFileManager.o RKHostMonitor.o
 OBJS += RKConfig.o
 OBJS += RKWaveform.o
-OBJS += RKPositionEngine.o RKHealthEngine.o
-OBJS += RKPulseEngine.o RKPulseRingFilter.o RKMomentEngine.o
+OBJS += RKHealthEngine.o
+OBJS += RKPositionEngine.o RKPositionSteerEngine.o
+OBJS += RKPulseEngine.o RKPulseRingFilter.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
-OBJS += RKPulsePair.o RKMultiLag.o RKSpectralMoment.o RKCalibrator.o
+OBJS += RKMomentEngine.o RKPulsePair.o RKMultiLag.o RKSpectralMoment.o RKCalibrator.o
 OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
 

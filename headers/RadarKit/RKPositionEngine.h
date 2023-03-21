@@ -101,4 +101,4 @@ int RKPositionEngineStop(RKPositionEngine *);
 char *RKPositionEngineStatusString(RKPositionEngine *);
 char *RKPositionEnginePositionString(RKPositionEngine *);
 
-#endif /* __RadarKit_RKPedestal__ */
+#endif

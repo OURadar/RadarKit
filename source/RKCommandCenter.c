@@ -665,24 +665,21 @@ int socketStreamHandler(RKOperator *O) {
                       engine->name, O->name, user->rayIndex, endIndex);
             } // if (ray) ...
         } else if (k == RKStreamASCIIArtHealth) {
-            // Stream "7" - ASCII art of reflectivity
+            // Stream "7" - Health Overview
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamASCIIArtHealth) {
                 user->streamsInProgress = RKStreamASCIIArtHealth;
             }
             health = RKGetLatestHealth(user->radar);
             k = RKHealthOverview(user->string, health->string, user->textPreferences | RKTextPreferencesDrawBackground);
-            /*
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            // Special case to avoid character 007, which is a beep.
-            if ((O->delimTx.size & 0xFF) == 0x07) {
-                O->delimTx.size++;
-            }
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-            */
             RKOperatorSendPackets(O, user->string, k, NULL);
             user->timeLastOut = time;
             user->ticForStatusStream++;
+        } else if (k == RKStreamASCIIArtVCP) {
+            // Stream "8" - VCP engine
+            if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamASCIIArtVCP) {
+                user->streamsInProgress = RKStreamASCIIArtVCP;
+            }
+            //endIndex = RKPreviousModuloS(user->radar->pedestal->, RKBufferSSlotCount);
         }
 
         // Send another set of controls if the radar controls have changed.

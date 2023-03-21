@@ -898,6 +898,7 @@ enum RKStream {
     RKStreamStatusBuffers                        = 6,                          // Buffer overview
     RKStreamASCIIArtZ                            = 7,                          // Are you ASCII me?
     RKStreamASCIIArtHealth                       = 8,                          // Health in ASCII art
+    RKStreamASCIIArtVCP                          = 9,                          // VCP in ASCII art
     RKStreamStatusAll                            = 0xFF,                       //
     RKStreamHealthInJSON                         = (1 << 5),                   // Health in JSON
     RKStreamStatusEngineBinary                   = (1 << 6),                   // WIP: Status of various engines
