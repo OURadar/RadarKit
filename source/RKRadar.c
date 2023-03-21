@@ -3558,3 +3558,7 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
 
     return m;
 }
+
+int RKArcherOverview(char *text, const char *json, const RKTextPreferences flag) {
+    return 0;
+}

@@ -37,6 +37,31 @@ void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 
 #pragma mark - Internal Functions
 
+static void RKPedestalPedzyUpdateStatusString(RKPedestalPedzy *engine) {
+    char *string;
+    RKPedestalVcpHandle *vcpHandle = engine->vcpHandle;
+
+    // Status string
+    string = engine->statusBuffer[engine->statusBufferIndex];
+
+    // Always terminate the end of string buffer
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
+
+    RKPosition *position = RKGetLatestPosition(engine->radar);
+
+    if (vcpHandle->active) {
+        sprintf(string, "-- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
+                vcpHandle->i,
+                vcpHandle->sweepCount,
+                position->elevationDegrees,
+                position->azimuthDegrees,
+                vcpHandle->progress);
+    } else {
+        sprintf(string, "-- [ VCP inactive ] --\n");
+    }
+}
+
 static int RKPedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
@@ -232,16 +257,17 @@ static void *pedestalVcpEngine(void *in) {
             }
             if (timercmp(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusTriggerTime, >=)) {
                 timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
-                if (vcpHandle->active) {
-                    printf("                 -- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
-                           vcpHandle->i,
-                           vcpHandle->sweepCount,
-                        position->elevationDegrees,
-                        position->azimuthDegrees,
-                           vcpHandle->progress);
-                } else {
-                    printf("                 -- [ VCP inactive ] --\n");
-                }
+//                if (vcpHandle->active) {
+//                    printf("                 -- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
+//                           vcpHandle->i,
+//                           vcpHandle->sweepCount,
+//                        position->elevationDegrees,
+//                        position->azimuthDegrees,
+//                           vcpHandle->progress);
+//                } else {
+//                    printf("                 -- [ VCP inactive ] --\n");
+//                }
+                RKPedestalPedzyUpdateStatusString(me);
             }
         }
         usleep(20000);

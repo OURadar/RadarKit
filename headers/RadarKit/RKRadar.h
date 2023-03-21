@@ -336,5 +336,6 @@ void RKShowOffsets(RKRadar *, char *);                                          
 // ASCII Art
 int RKBufferOverview(char *, RKRadar *, const RKTextPreferences);                                  // Do you ASCII? :)
 int RKHealthOverview(char *, const char *, const RKTextPreferences);
+int RKArcherOverview(char *, const char *, const RKTextPreferences);
 
 #endif /* defined(__RadarKit_RKRadar__) */

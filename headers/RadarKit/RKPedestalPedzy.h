@@ -134,6 +134,10 @@ typedef struct rk_pedzy {
     // Program set variables
     pthread_t              tidPedestalMonitor;
     pthread_t              tidVcpEngine;
+
+    // Status / health
+    char                   statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
+    uint32_t               statusBufferIndex;
 } RKPedestalPedzy;
 
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);
