@@ -884,6 +884,7 @@
 					"-lz",
 					"-lssl",
 				);
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -953,6 +954,7 @@
 					"-lz",
 					"-lssl",
 				);
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};

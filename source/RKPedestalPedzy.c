@@ -40,6 +40,7 @@ void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 static int RKPedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
+    RKPedestalVcpHandle *vcpHandle = me->vcpHandle;
     RKRadar *radar = me->radar;
 
     if (client->netDelimiter.type == 'p') {
@@ -76,27 +77,27 @@ static int RKPedestalPedzyRead(RKClient *client) {
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
-        if (me->vcpHandle->active){
-            int i = me->vcpHandle->i;
+        if (vcpHandle->active){
+            int i = vcpHandle->i;
             radar->positionEngine->vcpI = i;
-            radar->positionEngine->vcpSweepCount = me->vcpHandle->sweepCount;
-            newPosition->sweepElevationDegrees = me->vcpHandle->sweepMarkerElevation;
-            newPosition->sweepAzimuthDegrees = me->vcpHandle->sweepAzimuth;
+            radar->positionEngine->vcpSweepCount = vcpHandle->sweepCount;
+            newPosition->sweepElevationDegrees = vcpHandle->sweepMarkerElevation;
+            newPosition->sweepAzimuthDegrees = vcpHandle->sweepAzimuth;
 
             // clear flag
             // newPosition->flag = RKPositionFlagVacant;
             // VCP engine is active
             newPosition->flag |= RKPositionFlagVCPActive;
             // Sweep is active: data collection portion (i.e., exclude transitions)
-            if (me->vcpHandle->progress & RKVcpProgressReady ||
-                me->vcpHandle->progress & RKVcpProgressMiddle ||
-                me->vcpHandle->batterSweeps[i].mode == RKVcpModePPIAzimuthStep ||
-                me->vcpHandle->batterSweeps[i].mode == RKVcpModePPIContinuous) {
+            if (vcpHandle->progress & RKVcpProgressReady ||
+                vcpHandle->progress & RKVcpProgressMiddle ||
+                vcpHandle->batterSweeps[i].mode == RKVcpModePPIAzimuthStep ||
+                vcpHandle->batterSweeps[i].mode == RKVcpModePPIContinuous) {
                 // Always active if any of the conditions above are met
                 newPosition->flag |= RKPositionFlagScanActive;
             }
             // Point / sweep flag
-            switch (me->vcpHandle->batterSweeps[i].mode) {
+            switch (vcpHandle->batterSweeps[i].mode) {
                 case RKVcpModePPI:
                 case RKVcpModeSector:
                 case RKVcpModeNewSector:
@@ -116,9 +117,9 @@ static int RKPedestalPedzyRead(RKClient *client) {
                     break;
             }
             // Completion flag
-            if (me->vcpHandle->progress & RKVcpProgressMarker) {
-                me->vcpHandle->progress ^= RKVcpProgressMarker;
-                switch (me->vcpHandle->batterSweeps[i].mode) {
+            if (vcpHandle->progress & RKVcpProgressMarker) {
+                vcpHandle->progress ^= RKVcpProgressMarker;
+                switch (vcpHandle->batterSweeps[i].mode) {
                     case RKVcpModePPI:
                     case RKVcpModeSector:
                     case RKVcpModeNewSector:
@@ -167,11 +168,13 @@ static int RKPedestalPedzyGreet(RKClient *client) {
 }
 
 #pragma mark - Delegate Workers
+
 static void *pedestalVcpEngine(void *in) {
-    int i;
+    int i, k;
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
     RKClient *client = me->client;
+    RKPedestalVcpHandle *vcpHandle = me->vcpHandle;
     RKStatusEnum vcpActive;
 
     gettimeofday(&RKPedestalVcpCurrentTime, NULL);
@@ -181,6 +184,8 @@ static void *pedestalVcpEngine(void *in) {
     RKPedestalVcpStatusPeriod.tv_usec = (RKPedestalVcpStatusPeriodMS % 1000) * 1000;
     timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
     RKPedestalAction action;
+
+    k = radar->positionIndex;
 
     while (me->client->state < RKClientStateDisconnecting) {
         gettimeofday(&RKPedestalVcpCurrentTime, NULL);
@@ -199,12 +204,12 @@ static void *pedestalVcpEngine(void *in) {
                 vcpActive = RKStatusEnumStandby;
             }
 
-            if (me->vcpHandle->active){
+            if (vcpHandle->active){
                 // put vcp get action here
                 action = pedestalVcpGetAction(me);
-                // action.sweepElevation = me->vcpHandle->batterSweeps[me->vcpHandle->i].elevationStart;
-                // action.sweepAzimuth = me->vcpHandle->batterSweeps[me->vcpHandle->i].azimuthStart;
-                me->vcpHandle->lastAction = action;
+                // action.sweepElevation = vcpHandle->batterSweeps[vcpHandle->i].elevationStart;
+                // action.sweepAzimuth = vcpHandle->batterSweeps[vcpHandle->i].azimuthStart;
+                vcpHandle->lastAction = action;
                 // Call the control handler based on the suggested action
                 if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
                     // P->control(P->ped, action);
@@ -227,13 +232,13 @@ static void *pedestalVcpEngine(void *in) {
             }
             if (timercmp(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusTriggerTime, >=)) {
                 timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
-                if (me->vcpHandle->active) {
+                if (vcpHandle->active) {
                     printf("                 -- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
-                        me->vcpHandle->i,
-                        me->vcpHandle->sweepCount,
+                           vcpHandle->i,
+                           vcpHandle->sweepCount,
                         position->elevationDegrees,
                         position->azimuthDegrees,
-                        me->vcpHandle->progress);
+                           vcpHandle->progress);
                 } else {
                     printf("                 -- [ VCP inactive ] --\n");
                 }
