@@ -11,32 +11,32 @@
 
 #include <RadarKit/RKPedestalPedzy.h>
 
-// Internal Functions
+//// Internal Functions
+//
+//static int RKPedestalPedzyRead(RKClient *);
+//static int RKPedestalPedzyGreet(RKClient *);
+//static void *pedestalHealth(void *);
 
-static int RKPedestalPedzyRead(RKClient *);
-static int RKPedestalPedzyGreet(RKClient *);
-static void *pedestalHealth(void *);
-
-RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *);
-void pedestalVcpArmSweeps(RKPedestalVcpHandle *, const bool);
-void pedestalVcpClearSweeps(RKPedestalVcpHandle *);
-void pedestalVcpClearHole(RKPedestalVcpHandle *);
-void pedestalVcpClearDeck(RKPedestalVcpHandle *);
-void pedestalVcpNextHitter(RKPedestalVcpHandle *);
-RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
-                       const float el_start, const float el_end,
-                       const float az_start, const float az_end, const float az_mark,
-                       const float rate);
-int pedestalVcpAddLineupSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle sweep);
-int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle sweep);
-void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, RKVcpHitter linetag);
-float pedestalGetRate(const float diff_deg, int axis);
-int pedestalPoint(RKPedestalPedzy *, const float el_point, const float az_point);
-int pedestalAzimuthPoint(RKPedestalPedzy *, const float az_point, const float rate_el);
-int pedestalElevationPoint(RKPedestalPedzy *, const float el_point, const float rate_az);
-RKPedestalAction pedestalAzimuthPointNudge(RKPedestalPedzy *, const float az_point, const float rate_el);
-RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *, const float el_point, const float rate_az);
-void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
+//RKPedestalAction pedestalVcpGetAction(RKPedestalPedzy *);
+//void pedestalVcpArmSweeps(RKPedestalVcpHandle *, const bool);
+//void pedestalVcpClearSweeps(RKPedestalVcpHandle *);
+//void pedestalVcpClearHole(RKPedestalVcpHandle *);
+//void pedestalVcpClearDeck(RKPedestalVcpHandle *);
+//void pedestalVcpNextHitter(RKPedestalVcpHandle *);
+//RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
+//                       const float el_start, const float el_end,
+//                       const float az_start, const float az_end, const float az_mark,
+//                       const float rate);
+//int pedestalVcpAddLineupSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle sweep);
+//int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *, RKPedestalVcpSweepHandle sweep);
+//void makeSweepMessage(RKPedestalVcpSweepHandle *, char *, int SC, RKVcpHitter linetag);
+//float pedestalGetRate(const float diff_deg, int axis);
+//int pedestalPoint(RKPedestalPedzy *, const float el_point, const float az_point);
+//int pedestalAzimuthPoint(RKPedestalPedzy *, const float az_point, const float rate_el);
+//int pedestalElevationPoint(RKPedestalPedzy *, const float el_point, const float rate_az);
+//RKPedestalAction pedestalAzimuthPointNudge(RKPedestalPedzy *, const float az_point, const float rate_el);
+//RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *, const float el_point, const float rate_az);
+//void pedestalVcpSummary(RKPedestalVcpHandle *, char *);
 
 #pragma mark - Internal Functions
 
@@ -45,6 +45,9 @@ static int RKPedestalPedzyRead(RKClient *client) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
 //    RKPedestalVcpHandle *vcpHandle = me->vcpHandle;
     RKRadar *radar = me->radar;
+    RKPedestalVcpHandle *vcpHandle = &radar->positionSteerEngine->vcpHandle;
+
+    RKPositionFlag flag;
 
     if (client->netDelimiter.type == 'p') {
         // The payload just read by RKClient
@@ -80,6 +83,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
+
 //        if (vcpHandle->active){
 //            int i = vcpHandle->i;
 //            radar->positionEngine->vcpI = i;
@@ -142,6 +146,9 @@ static int RKPedestalPedzyRead(RKClient *client) {
 //            radar->positionEngine->vcpSweepCount = 0;
 //        }
         RKSetPositionReady(radar, newPosition);
+
+//        action = RKPositionSteerEngineGetAction();
+
     } else {
         // This the command acknowledgement, queue it up to feedback
         char *string = (char *)client->userPayload;
@@ -279,7 +286,8 @@ static void *pedestalHealth(void *in) {
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
                 vcpActive = RKStatusEnumFault;
-            } else if (position->flag & RKPositionFlagVCPActive) {
+            //} else if (position->flag & RKPositionFlagVCPActive) {
+            } else if (radar->positionSteerEngine->vcpActive) {
                 vcpActive = RKStatusEnumActive;
             } else {
                 vcpActive = RKStatusEnumStandby;

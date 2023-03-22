@@ -94,6 +94,8 @@
 #define RKMaximumSymbolLength                8                                 // String length includes the terminating character!
 #define RKMaximumFileExtensionLength         8                                 // String length includes the terminating character!
 #define RKUserParameterCount                 8                                 //
+#define RKMaximumScanCount                   256                               //
+#define RKPedestalActionBufferDepth          8                                 //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"

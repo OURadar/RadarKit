@@ -16,41 +16,9 @@
 #include <RadarKit/RKConfig.h>
 #include <RadarKit/RKDSP.h>
 
-typedef int RKVCPProgress;
-enum RKVCPProgress {
-    RKVCPProgressNone       = 0,        // Not active, ready for next sweep
-    RKVCPProgressSetup      = 1,        // Getting ready
-    RKVCPProgressReady      = 1 << 1,   // Ready for the next sweep
-    RKVCPProgressMiddle     = 1 << 2,   // Middle of a sweep
-    RKVCPProgressEnd        = 1 << 3,   // End of a sweep, waiting for pedestal to stop / reposition
-    RKVCPProgressMarker     = 1 << 7    // Sweep complete marker
-};
-
-typedef int RKVcpOption;
-enum RKVcpOption {
-    RKVcpOptionNone                         = 0,
-    RKVcpOptionBrakeElevationDuringSweep    = 1,
-    RKVcpOptionRepeat                       = 1 << 1,
-    RKVcpOptionVerbose                      = 1 << 2
-};
-
-typedef int RKVcpMode;
-enum RKVcpMode {
-    RKVcpModeRHI             = 1,
-    RKVcpModeSector          = 2,
-    RKVcpModePPI             = 3,
-    RKVcpModePPIAzimuthStep  = 4,
-    RKVcpModePPIContinuous   = 5,
-    RKVcpModeNewSector       = 6,
-    RKVcpModeSpeedDown       = 7
-};
-
-typedef int RKVcpHitter;
-enum RKVcpHitter {
-    RKVcpAtBat              = 0,        // current vcp
-    RKVcpPinch              = 1,        // vcp only once
-    RKVcpLine               = 2,        // next vcp
-};
+#define RKPedestalPositionTolerance    0.3f
+#define RKPedestalVelocityTolerance    1.0f
+#define RKPedestalPointTimeOut         1500
 
 #define InstructIsAzimuth(i)     ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisAzimuth)
 #define InstructIsElevation(i)   ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisElevation)
@@ -61,26 +29,66 @@ enum RKVcpHitter {
 #define InstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
 #define InstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
 
-#define RKVCPMaximumSweepCount   256
+typedef int RKPedestalAxis;
+enum RKPedestalAxis {
+    RKPedestalAxisElevation  = 0,
+    RKPedestalAxisAzimuth    = 1
+};
 
-typedef struct rk_vcp_sweep {
-    RKVcpMode                   mode;
-    float                       azimuthStart;                   // Azimuth start of a sweep
-    float                       azimuthEnd;                     // Azimuth end of a sweep
+typedef int RKScanProgress;
+enum RKScanProgress {
+    RKScanProgressNone       = 0,        // Not active, ready for next sweep
+    RKScanProgressSetup      = 1,        // Getting ready
+    RKScanProgressReady      = 1 << 1,   // Ready for the next sweep
+    RKScanProgressMiddle     = 1 << 2,   // Middle of a sweep
+    RKScanProgressEnd        = 1 << 3,   // End of a sweep, waiting for pedestal to stop / reposition
+    RKScanProgressMarker     = 1 << 7    // Sweep complete marker
+};
+
+typedef int RKScanOption;
+enum RKScanOption {
+    RKScanOptionNone                         = 0,
+    RKScanOptionBrakeElevationDuringSweep    = 1,
+    RKScanOptionRepeat                       = 1 << 1,
+    RKScanOptionVerbose                      = 1 << 2
+};
+
+typedef int RKScanMode;
+enum RKScanMode {
+    RKScanModeRHI             = 1,
+    RKScanModeSector          = 2,
+    RKScanModePPI             = 3,
+    RKScanModePPIAzimuthStep  = 4,
+    RKScanModePPIContinuous   = 5,
+    RKScanModeNewSector       = 6,
+    RKScanModeSpeedDown       = 7
+};
+
+typedef int RKScanHitter;
+enum RKScanHitter {
+    RKScanAtBat              = 0,        // current vcp
+    RKScanPinch              = 1,        // vcp only once
+    RKScanLine               = 2,        // next vcp
+};
+
+typedef struct rk_scan_path {
+    RKScanMode                  mode;                           // Scan mode
+    float                       azimuthStart;                   // Azimuth start of a scan
+    float                       azimuthEnd;                     // Azimuth end of a scan
     float                       azimuthSlew;                    // Azimuth slew speed
-    float                       azimuthMark;                    // Azimuth to mark end of sweep
-    float                       elevationStart;                 // Elevation start of a sweep
-    float                       elevationEnd;                   // Elevation end of a sweep
+    float                       azimuthMark;                    // Azimuth to mark end of scan
+    float                       elevationStart;                 // Elevation start of a scan
+    float                       elevationEnd;                   // Elevation end of a scan
     float                       elevationSlew;                  // Elevation slew speed
-} RKPedestalVcpSweepHandle;
+} RKScanPath;
 
-typedef struct rk_vcp {
+typedef struct rk_scan_state {
     // User set parameters
     char                        name[64];
-    RKVcpOption                 option;
-    RKPedestalVcpSweepHandle    batterSweeps[RKVCPMaximumSweepCount];
-    RKPedestalVcpSweepHandle    onDeckSweeps[RKVCPMaximumSweepCount];
-    RKPedestalVcpSweepHandle    inTheHoleSweeps[RKVCPMaximumSweepCount];
+    RKScanOption                option;
+    RKScanPath                  batterScans[RKMaximumScanCount];
+    RKScanPath                  onDeckScans[RKMaximumScanCount];
+    RKScanPath                  inTheHoleScans[RKMaximumScanCount];
     int                         inTheHoleCount;
     int                         onDeckCount;
     int                         sweepCount;
@@ -120,12 +128,15 @@ struct rk_position_steer_engine {
     // Program set variables
     pthread_t              threadId;
     double                 startTime;
+    RKPedestalVcpHandle    vcpHandle;
     bool                   vcpActive;
     int                    vcpIndex;
     int                    vcpSweepCount;
     struct timeval         currentTime;
     struct timeval         statusPeriod;
     struct timeval         statusTriggerTime;
+    RKPedestalAction       actions[RKPedestalActionBufferDepth];
+    int                    actionIndex;
 
     // Status / health
     size_t                 memoryUsage;
@@ -146,6 +157,8 @@ void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *, const R
 
 int RKPositionSteerEngineStart(RKPositionSteerEngine *);
 int RKPositionSteerEngineStop(RKPositionSteerEngine *);
+
+RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine);
 
 char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *);
 
