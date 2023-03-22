@@ -8,7 +8,37 @@
 
 #include <RadarKit/RKPositionSteerEngine.h>
 
-// Internal functions
+#pragma mark - Internal Functions
+
+static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engine) {
+    char *string;
+    //RKPedestalVcpHandle *vcpHandle = engine->vcpHandle;
+
+    // Status string
+    string = engine->statusBuffer[engine->statusBufferIndex];
+
+    // Always terminate the end of string buffer
+    string[RKStatusStringLength - 1] = '\0';
+    string[RKStatusStringLength - 2] = '#';
+
+//    RKPosition *position = RKGetLatestPosition(engine->radar);
+    uint32_t index = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
+    RKPosition *position = &engine->positionBuffer[index];
+
+    if (engine->vcpActive) {
+        sprintf(string, "-- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %% ] --\n",
+                engine->vcpIndex,
+                engine->vcpSweepCount,
+                position->elevationDegrees,
+                position->azimuthDegrees);
+    } else {
+        sprintf(string, "-- [ VCP inactive ] --\n");
+    }
+
+    engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
+}
+
+#pragma mark - Delegate Workers
 
 static void *positionSteerer(void *_in) {
     RKPositionSteerEngine *engine = (RKPositionSteerEngine *)_in;
