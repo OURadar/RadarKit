@@ -9,8 +9,8 @@
 //  Most codes are ported from Ming-Duan Tze's VCP implementation
 //
 
-#ifndef __RadarKit_PositionSteerEngine__
-#define __RadarKit_PositionSteerEngine__
+#ifndef __RadarKit_Position_Steer_Engine__
+#define __RadarKit_Position_Steer_Engine__
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKConfig.h>
@@ -166,9 +166,19 @@ void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
 void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
 void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
 void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
+void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
 
-RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine);
+int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
+int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
+
+RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode,
+                                             const float elevationStart, const float elevationEnd,
+                                             const float azimuthStart, const float azimuthEnd, const float azimuthMark,
+                                             const float rate);
+RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *);
 
 char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *);
+
+void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *, char *);
 
 #endif

@@ -408,77 +408,89 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             //pedestalVcpArmSweeps(me->vcpHandle, RKPedestalVcpNoRepeat);
             RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatNone);
             printf("ACK. Once." RKEOL);
-//        } else if ((!strncmp("vol", cmd, 3) || !strncmp("ivol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
-//            // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
-//            if ( !me->vcpHandle->active || !strncmp("ivol", cmd, 4)) {
-//                immediatelyDo = true;
-//                pedestalVcpClearSweeps(me->vcpHandle);
-//            } else if (!strncmp("vol", cmd, 3)) {
-//                pedestalVcpClearHole(me->vcpHandle);
-//            } else if (!strncmp("ovol", cmd, 4)) {
-//                onlyOnce = true;
-//                pedestalVcpClearDeck(me->vcpHandle);
-//            }
-//            const char delimiters[] = "/";
-//            char *token;
-//            char cp[strlen(command)];
-//            strcpy(cp, &command[4]);
-//            token = strtok(cp, delimiters);
-//
-//            bool everythingOkay = true;
-//            int VcpMode = RKVcpModeSpeedDown;
-//            while (token != NULL) {
-//                // parse in the usual way
-//                //                                                 elevation   azimuth     rate        ???
-//                n = sscanf(token, "%16s %16s %16s %16s %16s", cmd, cparams[0], cparams[1], cparams[2], cparams[3]);
-//                if (n < 2) {
-//                    printf("NAK. Ill-defined VOL." RKEOL);
-//                    return RKResultFailedToSetVcp;
-//                }
-//                if (sscanf(cparams[0], "%f,%f", &el_start, &el_end) == 1) {
-//                    el_end = el_start;
-//                }
-//                n = sscanf(cparams[1], "%f,%f,%f", &az_start, &az_end, &az_mark);
-//                if (n == 1) {
-//                    az_end = az_start;
-//                    az_mark = az_start;
-//                } else if (n == 2) {
-//                    az_mark = az_end;
-//                }
-//                rate = atof(cparams[2]);
-//                printf("EL %.2f-%.2f°   AZ %.2f-%.2f°/%.2f° @ %.2f dps\n", el_start, el_end, az_start, az_end, az_mark, rate);
-//
-//                if (*cmd == 'p') {
-//                    VcpMode = RKVcpModePPIAzimuthStep;
-//                } else if (*cmd == 'r') {
-//                    VcpMode = RKVcpModeRHI;
-//                } else if (*cmd == 'b') {
-//                    VcpMode = RKVcpModeSpeedDown;
-//                } else {
-//                    printf("NAK. Ill-defined VOL." RKEOL);
-//                    everythingOkay = false;
-//                    pedestalVcpClearSweeps(me->vcpHandle);
-//                    return RKResultFailedToSetVcp;
-//                }
-//                if (onlyOnce) {
-//                    pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(VcpMode, el_start, el_end, az_start, az_end, az_mark, rate));
-//                }else{
-//                    pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(VcpMode, el_start, el_end, az_start, az_end, az_mark, rate));
-//                }
-//                token = strtok(NULL, delimiters);
-//            }
-//            if (everythingOkay) {
-//                me->vcpHandle->active = true;
-//                if (immediatelyDo) {
-//                    pedestalVcpNextHitter(me->vcpHandle);
-//                }
-//
-//                pedestalVcpSummary(me->vcpHandle, me->msg);
-//                printf("ACK. Volume added successfully." RKEOL);
-//            } else {
-//                printf("NAK. Some error occurred." RKEOL);
-//            }
-//
+        } else if ((!strncmp("vol", cmd, 3) || !strncmp("ivol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
+            // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
+            if (!positionSteerEngine->vcpHandle.active || !strncmp("ivol", cmd, 4)) {
+                immediatelyDo = true;
+                //pedestalVcpClearSweeps(positionSteerEngine->vcpHandle);
+                RKPositionSteerEngineClearSweeps(positionSteerEngine);
+            } else if (!strncmp("vol", cmd, 3)) {
+                //pedestalVcpClearHole(positionSteerEngine->vcpHandle);
+                RKPositionSteerEngineClearHole(positionSteerEngine);
+            } else if (!strncmp("ovol", cmd, 4)) {
+                onlyOnce = true;
+                //pedestalVcpClearDeck(positionSteerEngine->vcpHandle);
+                RKPositionSteerEngineClearDeck(positionSteerEngine);
+            }
+            const char delimiters[] = "/";
+            char *token;
+            char cp[strlen(command)];
+            strcpy(cp, &command[4]);
+            token = strtok(cp, delimiters);
+
+            bool everythingOkay = true;
+            //int VcpMode = RKVcpModeSpeedDown;
+            RKScanMode mode = RKScanModeSpeedDown;
+            while (token != NULL) {
+                // parse in the usual way
+                //                                                 elevation   azimuth     rate        ???
+                n = sscanf(token, "%16s %16s %16s %16s %16s", cmd, cparams[0], cparams[1], cparams[2], cparams[3]);
+                if (n < 2) {
+                    printf("NAK. Ill-defined VOL." RKEOL);
+                    return RKResultFailedToSetVcp;
+                }
+                if (sscanf(cparams[0], "%f,%f", &el_start, &el_end) == 1) {
+                    el_end = el_start;
+                }
+                n = sscanf(cparams[1], "%f,%f,%f", &az_start, &az_end, &az_mark);
+                if (n == 1) {
+                    az_end = az_start;
+                    az_mark = az_start;
+                } else if (n == 2) {
+                    az_mark = az_end;
+                }
+                rate = atof(cparams[2]);
+                printf("EL %.2f-%.2f°   AZ %.2f-%.2f°/%.2f° @ %.2f dps\n", el_start, el_end, az_start, az_end, az_mark, rate);
+                RKScanPath scan = RKPositionSteerEngineMakeScanPath(mode, el_start, el_end, az_start, az_end, az_mark, rate);
+
+                if (*cmd == 'p') {
+                    //VcpMode = RKVcpModePPIAzimuthStep;
+
+                } else if (*cmd == 'r') {
+                    //VcpMode = RKVcpModeRHI;
+                    mode = RKScanModeRHI;
+                } else if (*cmd == 'b') {
+                    //VcpMode = RKVcpModeSpeedDown;
+                    mode = RKScanModeSpeedDown;
+                } else {
+                    printf("NAK. Ill-defined VOL." RKEOL);
+                    everythingOkay = false;
+                    //pedestalVcpClearSweeps(me->vcpHandle);
+                    RKPositionSteerEngineClearSweeps(positionSteerEngine);
+                    return RKResultFailedToSetVcp;
+                }
+                if (onlyOnce) {
+                    //pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(VcpMode, el_start, el_end, az_start, az_end, az_mark, rate));
+                    RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
+                } else {
+                    //pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(VcpMode, el_start, el_end, az_start, az_end, az_mark, rate));
+                    RKPositionSteerEngineAddLineupSweep(positionSteerEngine, scan);
+                }
+                token = strtok(NULL, delimiters);
+            }
+            if (everythingOkay) {
+                //me->vcpHandle->active = true;  // already implied in NextHitter
+                if (immediatelyDo) {
+                    //pedestalVcpNextHitter(me->vcpHandle);
+                    RKPositionSteerEngineNextHitter(positionSteerEngine);
+                }
+                //pedestalVcpSummary(me->vcpHandle, me->msg);
+                RKPositionSteerEngineScanSummary(positionSteerEngine, me->msg);
+                printf("ACK. Volume added successfully." RKEOL);
+            } else {
+                printf("NAK. Some error occurred." RKEOL);
+            }
+
 //        } else if ((!strncmp("pp", cmd, 2) || !strncmp("ipp", cmd, 3) || !strncmp("opp", cmd, 3))) {
 //
 //            char *elevations = cparams[0];
@@ -689,61 +701,9 @@ int RKPedestalPedzyFree(RKPedestal input) {
     return RKResultSuccess;
 }
 
-//RKPedestalVcpHandle *pedestalVcpInit(void) {
-//    RKPedestalVcpHandle *V = (RKPedestalVcpHandle *)malloc(sizeof(RKPedestalVcpHandle));
-//    if (V == NULL) {
-//        fprintf(stderr, "Unable to allocate resources for VCP.\n");
-//        return NULL;
-//    }
-//    memset(V, 0, sizeof(RKPedestalVcpHandle));
-//    snprintf(V->name, 64, "VCP");
-//    V->option = RKVcpOptionRepeat;
-//    V->active = false;
-//    return V;
-//}
 //
 //
 //
-//
-//
-//
-//RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
-//                       const float el_start, const float el_end,
-//                       const float az_start, const float az_end, const float az_mark,
-//                       const float rate) {
-//    RKPedestalVcpSweepHandle sweep;
-//    memset(&sweep, 0, sizeof(RKPedestalVcpSweepHandle));
-//    sweep.mode     = mode;
-//    sweep.azimuthStart = az_start;
-//    sweep.azimuthEnd   = az_end;
-//    sweep.azimuthMark  = az_mark;
-//    sweep.azimuthSlew  = rate;
-//    sweep.elevationStart = el_start;
-//    sweep.elevationEnd   = el_end;
-//    sweep.elevationSlew  = rate;
-//    return sweep;
-//}
-//
-//int pedestalVcpAddLineupSweep(RKPedestalVcpHandle *V, RKPedestalVcpSweepHandle sweep) {
-//    if (V->inTheHoleCount < RKPedestalVcpMaxSweeps - 1) {
-//        V->inTheHoleSweeps[V->inTheHoleCount++] = sweep;
-//        V->onDeckSweeps[V->onDeckCount++] = sweep;
-//    } else {
-//        fprintf(stderr, "Cannot add more tilts. Currently %d.\n", V->inTheHoleCount);
-//        return 1;
-//    }
-//    return 0;
-//}
-//
-//int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *V, RKPedestalVcpSweepHandle sweep) {
-//    if (V->onDeckCount < RKPedestalVcpMaxSweeps - 1) {
-//        V->onDeckSweeps[V->onDeckCount++] = sweep;
-//    } else {
-//        fprintf(stderr, "Cannot add more tilts. Currently %d.\n", V->onDeckCount);
-//        return 1;
-//    }
-//    return 0;
-//}
 //
 //void pedestalVcpSendAction(int sd, char *ship, RKPedestalAction *act) {
 //    sprintf(ship, "%c", 0x0f);
@@ -753,107 +713,9 @@ int RKPedestalPedzyFree(RKPedestal input) {
 //    RKNetworkSendPackets(sd, ship, sizeof(RKPedestalAction) + 3, NULL);
 //}
 //
-//void makeSweepMessage(RKPedestalVcpSweepHandle *SW, char *msg, int SC, RKVcpHitter linetag) {
-//    char prefix[7];
-//    switch (linetag){
-//        case RKVcpAtBat:
-//            strncpy(prefix, "       ", 7);
-//            break;
-//        case RKVcpPinch:
-//            strncpy(prefix, "PINCH  ", 7);
-//            break;
-//        case RKVcpLine:
-//            strncpy(prefix, "LINEUP ", 7);
-//            break;
-//        default:
-//            break;
-//    }
+
 //
-//    for (int i=0; i<SC; i++) {
-//        switch (SW[i].mode) {
-//            case RKVcpModePPI:
-//                sprintf(msg + strlen(msg), "%s%d : PPI E%.2f @ %.2f deg/s",
-//                        prefix,
-//                        i,
-//                        SW[i].elevationStart,
-//                        SW[i].azimuthSlew);
-//                break;
-//            case RKVcpModeSector:
-//            case RKVcpModeNewSector:
-//                sprintf(msg + strlen(msg), "%s%d : SEC E%.2f A%.2f-%.2f @ %.2f deg/s",
-//                        prefix,
-//                        i,
-//                        SW[i].elevationStart,
-//                        SW[i].azimuthStart,
-//                        SW[i].azimuthEnd,
-//                        SW[i].azimuthSlew);
-//                break;
-//            case RKVcpModeRHI:
-//                sprintf(msg + strlen(msg), "%s%d : RHI A%.2f E%.2f-%.2f @ %.2f deg/s",
-//                        prefix,
-//                        i,
-//                        SW[i].azimuthStart,
-//                        SW[i].elevationStart,
-//                        SW[i].elevationEnd,
-//                        SW[i].elevationSlew);
-//                break;
-//            case RKVcpModePPIAzimuthStep:
-//            case RKVcpModePPIContinuous:
-//                sprintf(msg + strlen(msg), "%s%d : PPI_NEW E%.2f A%.2f @ %.2f deg/s",
-//                        prefix,
-//                        i,
-//                        SW[i].elevationStart,
-//                        SW[i].azimuthMark,
-//                        SW[i].azimuthSlew);
-//                break;
-//            case RKVcpModeSpeedDown:
-//                sprintf(msg + strlen(msg), "%s%d : PPI_SLOWDOWN",
-//                        prefix,
-//                        i);
-//            default:
-//                break;
-//        }
-//        sprintf(msg + strlen(msg), "\n");
-//    }
-//}
 //
-//void pedestalVcpSummary(RKPedestalVcpHandle *V, char *msg) {
-//    msg[0] = '\0';
-//    makeSweepMessage(V->batterSweeps, msg, V->sweepCount, RKVcpAtBat);
-//    if (memcmp(V->inTheHoleSweeps, V->onDeckSweeps, (V->onDeckCount+V->inTheHoleCount)*sizeof(RKPedestalVcpSweepHandle))) {
-//        makeSweepMessage(V->onDeckSweeps, msg, V->onDeckCount, RKVcpPinch);
-//    }
-//    makeSweepMessage(V->inTheHoleSweeps, msg, V->inTheHoleCount, RKVcpLine);
-//    printf("================================================\n"
-//           "VCP Summary:\n"
-//           "------------\n"
-//           "%s"
-//           "================================================\n", msg);
-//}
-//
-//float pedestalGetRate(const float diff_deg, int axis) {
-//    float rate = 0.0f;
-//    if (axis == RKPedestalPointAzimuth) {
-//        if (diff_deg >= 20.0f) {
-//            rate = 30.0f;
-//        } else if (diff_deg >= 10.0f) {
-//            rate = 20.0f;
-//        } else if (diff_deg >= 5.0f) {
-//            rate = 10.0f;
-//        } else if (diff_deg < 5.0f) {
-//            rate = 3.0f;
-//        }
-//    } else if (axis == RKPedestalPointElevation) {
-//        if (diff_deg >= 20.0f) {
-//            rate = 15.0f;
-//        } else if (diff_deg >= 7.0f) {
-//            rate = 10.0f;
-//        } else if (diff_deg < 7.0f) {
-//            rate = 3.0f;
-//        }
-//    }
-//    return rate;
-//}
 //
 //int pedestalPoint(RKPedestalPedzy *me, const float el_point, const float az_point){
 //    float umin_diff_el;
