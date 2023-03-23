@@ -29,10 +29,16 @@
 #define InstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
 #define InstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
 
+typedef bool RKScanRepeat;
+enum RKScanRepeat {
+    RKScanRepeatNone                             = false,
+    RKScanRepeatForever                          = true
+};
+
 typedef int RKPedestalAxis;
 enum RKPedestalAxis {
-    RKPedestalAxisElevation  = 0,
-    RKPedestalAxisAzimuth    = 1
+    RKPedestalAxisElevation                      = 0,
+    RKPedestalAxisAzimuth                        = 1
 };
 
 typedef int RKScanProgress;
@@ -127,7 +133,6 @@ struct rk_position_steer_engine {
     pthread_t              threadId;
     double                 startTime;
     RKPedestalVcpHandle    vcpHandle;
-    bool                   vcpActive;
     int                    vcpIndex;
     int                    vcpSweepCount;
     struct timeval         currentTime;
@@ -155,6 +160,12 @@ void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *, const R
 
 int RKPositionSteerEngineStart(RKPositionSteerEngine *);
 int RKPositionSteerEngineStop(RKPositionSteerEngine *);
+
+void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
+void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
 
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine);
 
