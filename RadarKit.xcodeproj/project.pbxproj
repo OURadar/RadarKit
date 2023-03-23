@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		B50276A71E3CF20D002C46B1 /* RKHealthEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276A61E3CF20D002C46B1 /* RKHealthEngine.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B50276AB1E3CFC19002C46B1 /* RKHealthRelayTweeta.h in Headers */ = {isa = PBXBuildFile; fileRef = B50276AA1E3CFC19002C46B1 /* RKHealthRelayTweeta.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B508EA721FB3FC6500A6A83C /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B508EA761FB7AABA00A6A83C /* RKPulseRingFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = B508EA751FB7AAB900A6A83C /* RKPulseRingFilter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B508EA781FB7AAD500A6A83C /* RKPulseRingFilter.c in Sources */ = {isa = PBXBuildFile; fileRef = B508EA771FB7AAD500A6A83C /* RKPulseRingFilter.c */; };
 		B525FEF41FB0B6A400C5195C /* RKMisc.c in Sources */ = {isa = PBXBuildFile; fileRef = B525FEF31FB0B6A400C5195C /* RKMisc.c */; };
@@ -49,6 +48,8 @@
 		B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075327B587990054A2E9 /* _rfc_6455.h */; };
 		B56C075627B587A40054A2E9 /* RKWebSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075527B587A40054A2E9 /* RKWebSocket.h */; };
 		B56C075827B587AA0054A2E9 /* RKReporter.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075727B587AA0054A2E9 /* RKReporter.h */; };
+		B57E2AF329CBE73700D29300 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
+		B57E2AF529CBE77E00D29300 /* pref.conf in CopyFiles */ = {isa = PBXBuildFile; fileRef = B56AB0A520A732DC00E73AE9 /* pref.conf */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B2058A20E43128007D48E0 /* RKSweepFile.c */; };
@@ -141,6 +142,16 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		B57E2AF429CBE77300D29300 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 16;
+			files = (
+				B57E2AF529CBE77E00D29300 /* pref.conf in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B5C1F3421AB9C118004F88CD /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -307,7 +318,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B508EA721FB3FC6500A6A83C /* libRadarKit.a in Frameworks */,
+				B57E2AF329CBE73700D29300 /* libRadarKit.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -614,6 +625,7 @@
 				B5C1F3401AB9C118004F88CD /* Sources */,
 				B5C1F3411AB9C118004F88CD /* Frameworks */,
 				B5C1F3421AB9C118004F88CD /* CopyFiles */,
+				B57E2AF429CBE77300D29300 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -683,6 +695,8 @@
 					};
 					B5C1F3431AB9C118004F88CD = {
 						CreatedOnToolsVersion = 6.1;
+						DevelopmentTeam = 33Q44947M2;
+						ProvisioningStyle = Automatic;
 					};
 					B5DD4EDB261DF97C004BACB9 = {
 						CreatedOnToolsVersion = 12.4;
@@ -828,6 +842,7 @@
 		B50A81441AB89B6200E12E1F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALLOW_TARGET_PLATFORM_SPECIALIZATION = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
@@ -851,6 +866,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				EXCLUDED_ARCHS = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -870,18 +886,11 @@
 					/usr/local/lib,
 					"/usr/local/opt/openssl@1.1/lib",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
-					"-I${SRCROOT}/headers",
-					"-I/usr/local/include",
 					"-fPIC",
 					"-mfpmath=sse",
-					"-msse",
-					"-msse2",
-					"-msse3",
-					"-msse4",
-					"-msse4.1",
 				);
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
@@ -891,12 +900,16 @@
 					"-lssl",
 				);
 				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = YES;
+				USER_HEADER_SEARCH_PATHS = "${SRCROOT}/headers";
 			};
 			name = Debug;
 		};
 		B50A81451AB89B6200E12E1F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALLOW_TARGET_PLATFORM_SPECIALIZATION = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
@@ -919,6 +932,7 @@
 				CODE_SIGN_ENTITLEMENTS = entitlements/common.entitlements;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				EXCLUDED_ARCHS = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -938,18 +952,11 @@
 					/usr/local/lib,
 					"/usr/local/opt/openssl@1.1/lib",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
-					"-I${SRCROOT}/headers",
-					"-I/usr/local/include",
 					"-fPIC",
 					"-mfpmath=sse",
-					"-msse",
-					"-msse2",
-					"-msse3",
-					"-msse4",
-					"-msse4.1",
 				);
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
@@ -959,6 +966,9 @@
 					"-lssl",
 				);
 				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = YES;
+				USER_HEADER_SEARCH_PATHS = "${SRCROOT}/headers";
 			};
 			name = Release;
 		};
@@ -1218,9 +1228,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = "$(inherited)";
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 33Q44947M2;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1238,12 +1250,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ou.arrc.radarkit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -1266,10 +1279,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = "$(inherited)";
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 33Q44947M2;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -1281,11 +1296,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_CFLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ou.arrc.radarkit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 			};
 			name = Release;

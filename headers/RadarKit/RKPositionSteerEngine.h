@@ -37,53 +37,52 @@ enum RKPedestalAxis {
 
 typedef int RKScanProgress;
 enum RKScanProgress {
-    RKScanProgressNone       = 0,        // Not active, ready for next sweep
-    RKScanProgressSetup      = 1,        // Getting ready
-    RKScanProgressReady      = 1 << 1,   // Ready for the next sweep
-    RKScanProgressMiddle     = 1 << 2,   // Middle of a sweep
-    RKScanProgressEnd        = 1 << 3,   // End of a sweep, waiting for pedestal to stop / reposition
-    RKScanProgressMarker     = 1 << 7    // Sweep complete marker
+    RKScanProgressNone                           = 0,                          // Not active, ready for next sweep
+    RKScanProgressSetup                          = 1,                          // Getting ready
+    RKScanProgressReady                          = 1 << 1,                     // Ready for the next sweep
+    RKScanProgressMiddle                         = 1 << 2,                     // Middle of a sweep
+    RKScanProgressEnd                            = 1 << 3,                     // End of a sweep, waiting for pedestal to stop / reposition
+    RKScanProgressMarker                         = 1 << 7                      // Sweep complete marker
 };
 
 typedef int RKScanOption;
 enum RKScanOption {
-    RKScanOptionNone                         = 0,
-    RKScanOptionBrakeElevationDuringSweep    = 1,
-    RKScanOptionRepeat                       = 1 << 1,
-    RKScanOptionVerbose                      = 1 << 2
+    RKScanOptionNone                             = 0,
+    RKScanOptionBrakeElevationDuringSweep        = 1,
+    RKScanOptionRepeat                           = 1 << 1,
+    RKScanOptionVerbose                          = 1 << 2
 };
 
 typedef int RKScanMode;
 enum RKScanMode {
-    RKScanModeRHI             = 1,
-    RKScanModeSector          = 2,
-    RKScanModePPI             = 3,
-    RKScanModePPIAzimuthStep  = 4,
-    RKScanModePPIContinuous   = 5,
-    RKScanModeNewSector       = 6,
-    RKScanModeSpeedDown       = 7
+    RKScanModeRHI                                = 1,
+    RKScanModeSector                             = 2,
+    RKScanModePPI                                = 3,
+    RKScanModePPIAzimuthStep                     = 4,
+    RKScanModePPIContinuous                      = 5,
+    RKScanModeNewSector                          = 6,
+    RKScanModeSpeedDown                          = 7
 };
 
 typedef int RKScanHitter;
 enum RKScanHitter {
-    RKScanAtBat              = 0,        // current vcp
-    RKScanPinch              = 1,        // vcp only once
-    RKScanLine               = 2,        // next vcp
+    RKScanAtBat                                  = 0,                          // current vcp
+    RKScanPinch                                  = 1,                          // vcp only once
+    RKScanLine                                   = 2,                          // next vcp
 };
 
 typedef struct rk_scan_path {
-    RKScanMode                  mode;                           // Scan mode
-    float                       azimuthStart;                   // Azimuth start of a scan
-    float                       azimuthEnd;                     // Azimuth end of a scan
-    float                       azimuthSlew;                    // Azimuth slew speed
-    float                       azimuthMark;                    // Azimuth to mark end of scan
-    float                       elevationStart;                 // Elevation start of a scan
-    float                       elevationEnd;                   // Elevation end of a scan
-    float                       elevationSlew;                  // Elevation slew speed
+    RKScanMode                  mode;                                          // Scan mode
+    float                       azimuthStart;                                  // Azimuth start of a scan
+    float                       azimuthEnd;                                    // Azimuth end of a scan
+    float                       azimuthSlew;                                   // Azimuth slew speed
+    float                       azimuthMark;                                   // Azimuth to mark end of scan
+    float                       elevationStart;                                // Elevation start of a scan
+    float                       elevationEnd;                                  // Elevation end of a scan
+    float                       elevationSlew;                                 // Elevation slew speed
 } RKScanPath;
 
 typedef struct rk_scan_state {
-    // User set parameters
     char                        name[64];
     RKScanOption                option;
     RKScanPath                  batterScans[RKMaximumScanCount];
@@ -92,25 +91,24 @@ typedef struct rk_scan_state {
     int                         inTheHoleCount;
     int                         onDeckCount;
     int                         sweepCount;
-    // Program set variables
     bool                        active;
-    int                         i;                              // Sweep index for control
-    int                         j;                              // Sweep index for marker
-    int                         tic;                            // Counter of the run loop
-    float                       elevationPrevious;
-    float                       azimuthPrevious;
-    float                       counterTargetElevation;         // Elevation control target
-    float                       counterTargetAzimuth;           // Azimuth control target
-    float                       counterMarkerAzimuth;           // Azimuth marker target
-    float                       targetElevation;
-    float                       targetAzimuth;                  // Target of end sweep: counter or transition aimuth
-    float                       targetDiffAzimuthPrevious;
-    float                       markerDiffAzimuthPrevious;
-    float                       sweepMarkerElevation;           // Elevation marker
-    float                       sweepElevation;                 // Elevation control
-    float                       sweepAzimuth;                   // Azimuth control
-    int                         progress;
-    RKPedestalAction            lastAction;                     // store last action
+    int                         i;                                             // Sweep index for control
+    int                         j;                                             // Sweep index for marker
+    int                         tic;                                           // Counter of the run loop
+    float                       elevationPrevious;                             //
+    float                       azimuthPrevious;                               //
+    float                       counterTargetElevation;                        // Elevation control target
+    float                       counterTargetAzimuth;                          // Azimuth control target
+    float                       counterMarkerAzimuth;                          // Azimuth marker target
+    float                       targetElevation;                               //
+    float                       targetAzimuth;                                 // Target of end sweep: counter or transition aimuth
+    float                       targetDiffAzimuthPrevious;                     //
+    float                       markerDiffAzimuthPrevious;                     //
+    float                       sweepMarkerElevation;                          // Elevation marker
+    float                       sweepElevation;                                // Elevation control
+    float                       sweepAzimuth;                                  // Azimuth control
+    int                         progress;                                      //
+    RKPedestalAction            lastAction;                                    // store last action
 } RKPedestalVcpHandle;
 
 typedef struct rk_position_steer_engine RKPositionSteerEngine;

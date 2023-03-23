@@ -21,36 +21,6 @@
 //#define RKPedestalVcpStatusPeriodMS    2000
 //
 //
-//typedef struct rk_vcp {
-//    // User set parameters
-//    char                        name[64];
-//    RKVcpOption                 option;
-//    RKPedestalVcpSweepHandle    batterSweeps[RKPedestalVcpMaxSweeps];
-//    RKPedestalVcpSweepHandle    onDeckSweeps[RKPedestalVcpMaxSweeps];
-//    RKPedestalVcpSweepHandle    inTheHoleSweeps[RKPedestalVcpMaxSweeps];
-//    int                         inTheHoleCount;
-//    int                         onDeckCount;
-//    int                         sweepCount;
-//    // Program set variables
-//    bool                        active;
-//    int                         i;                              // Sweep index for control
-//    int                         j;                              // Sweep index for marker
-//    int                         tic;                            // Counter of the run loop
-//    float                       elevationPrevious;
-//    float                       azimuthPrevious;
-//    float                       counterTargetElevation;         // Elevation control target
-//    float                       counterTargetAzimuth;           // Azimuth control target
-//    float                       counterMarkerAzimuth;           // Azimuth marker target
-//    float                       targetElevation;
-//    float                       targetAzimuth;                  // Target of end sweep: counter or transition aimuth
-//    float                       targetDiffAzimuthPrevious;
-//    float                       markerDiffAzimuthPrevious;
-//    float                       sweepMarkerElevation;           // Elevation marker
-//    float                       sweepElevation;                 // Elevation control
-//    float                       sweepAzimuth;                   // Azimuth control
-//    int                         progress;
-//    RKPedestalAction            lastAction;                     // store last action
-//} RKPedestalVcpHandle;
 
 typedef struct rk_pedzy {
     // User set variables

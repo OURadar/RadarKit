@@ -120,7 +120,7 @@ float pedestalGetRate(const float diff_deg, RKPedestalAxis axis) {
 //    }
 //}
 
-RKPedestalAction pedestalElevationPointNudge(RKPositionSteerEngine *engine, const float el_point, const float rate_az){
+RKPedestalAction pedestalElevationPointNudge(RKPositionSteerEngine *engine, const float el_point, const float rate_az) {
     float umin_diff_el;
     float min_diff_el;
     float rate_el;
@@ -180,6 +180,8 @@ static void *positionSteerer(void *_in) {
     k = 0;    // position index
     while (engine->state & RKEngineStateWantActive) {
         engine->tic++;
+
+        RKPositionSteerEngineUpdateStatusString(engine);
 
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
