@@ -60,9 +60,9 @@ typedef struct rk_pedzy {
     char                   latestCommand[RKMaximumCommandLength];
     RKRadar                *radar;
     float                  headingOffset;
-    bool                   vcpActive;
-    RKPedestalVcpHandle    *vcpHandle;
-    uint32_t               lastActionAge;
+//    bool                   vcpActive;
+//    RKPedestalVcpHandle    *vcpHandle;
+//    uint32_t               lastActionAge;
     char                   msg[4096];
 
     // Program set variables

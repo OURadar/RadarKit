@@ -29,6 +29,12 @@
 #define InstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
 #define InstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
 
+typedef bool RKScanRepeat;
+enum RKScanRepeat {
+    RKScanRepeatOnce         = false,
+    RKScanRepeatForever      = true
+};
+
 typedef int RKPedestalAxis;
 enum RKPedestalAxis {
     RKPedestalAxisElevation  = 0,
@@ -37,12 +43,12 @@ enum RKPedestalAxis {
 
 typedef int RKScanProgress;
 enum RKScanProgress {
-    RKScanProgressNone       = 0,        // Not active, ready for next sweep
-    RKScanProgressSetup      = 1,        // Getting ready
-    RKScanProgressReady      = 1 << 1,   // Ready for the next sweep
-    RKScanProgressMiddle     = 1 << 2,   // Middle of a sweep
-    RKScanProgressEnd        = 1 << 3,   // End of a sweep, waiting for pedestal to stop / reposition
-    RKScanProgressMarker     = 1 << 7    // Sweep complete marker
+    RKScanProgressNone       = 0,                                // Not active, ready for next sweep
+    RKScanProgressSetup      = 1,                                // Getting ready
+    RKScanProgressReady      = 1 << 1,                           // Ready for the next sweep
+    RKScanProgressMiddle     = 1 << 2,                           // Middle of a sweep
+    RKScanProgressEnd        = 1 << 3,                           // End of a sweep, waiting for pedestal to stop / reposition
+    RKScanProgressMarker     = 1 << 7                            // Sweep complete marker
 };
 
 typedef int RKScanOption;
@@ -66,9 +72,9 @@ enum RKScanMode {
 
 typedef int RKScanHitter;
 enum RKScanHitter {
-    RKScanAtBat              = 0,        // current vcp
-    RKScanPinch              = 1,        // vcp only once
-    RKScanLine               = 2,        // next vcp
+    RKScanAtBat              = 0,                               // current vcp
+    RKScanPinch              = 1,                               // vcp only once
+    RKScanLine               = 2,                               // next vcp
 };
 
 typedef struct rk_scan_path {
@@ -129,7 +135,6 @@ struct rk_position_steer_engine {
     pthread_t              threadId;
     double                 startTime;
     RKPedestalVcpHandle    vcpHandle;
-    bool                   vcpActive;
     int                    vcpIndex;
     int                    vcpSweepCount;
     struct timeval         currentTime;
@@ -157,6 +162,12 @@ void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *, const R
 
 int RKPositionSteerEngineStart(RKPositionSteerEngine *);
 int RKPositionSteerEngineStop(RKPositionSteerEngine *);
+
+void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
+void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const bool);
 
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine);
 

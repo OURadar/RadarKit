@@ -25,7 +25,7 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
     uint32_t index = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
     RKPosition *position = &engine->positionBuffer[index];
 
-    if (engine->vcpActive) {
+    if (engine->vcpHandle.active) {
         sprintf(string, "-- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %% ] --\n",
                 engine->vcpIndex,
                 engine->vcpSweepCount,
@@ -269,6 +269,50 @@ char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
 
+void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.active = false;
+}
+
+void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.progress = RKScanProgressNone;
+    engine->vcpHandle.sweepCount = 0;
+    engine->vcpHandle.onDeckCount = 0;
+    engine->vcpHandle.inTheHoleCount = 0;
+    engine->vcpHandle.i = 0;
+    engine->vcpHandle.j = 0;
+    engine->vcpHandle.active = true;
+}
+
+void RKPositionSteerEngineClearHole(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.inTheHoleCount = 0;
+    engine->vcpHandle.onDeckCount = 0;
+}
+
+void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.onDeckCount = 0;
+}
+
+void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanRepeat repeat) {
+    engine->vcpHandle.progress = RKScanProgressNone;
+    if (repeat) {
+        engine->vcpHandle.option |= RKScanOptionRepeat;
+    }
+    engine->vcpHandle.i = 0;
+    engine->vcpHandle.j = 0;
+    engine->vcpHandle.active = true;
+}
+
+void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
+    memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
+    V->sweepCount = V->onDeckCount;
+    V->onDeckCount = V->inTheHoleCount;
+    V->i = 0;
+    V->j = 0;
+    V->active = true;
+}
+
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) {
     float umin_diff_el;
     float umin_diff_az;
@@ -419,8 +463,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                 if (umin_diff_el < RKPedestalPositionTolerance) {
                     printf("Lock elevation axis.  param[1] = %.2f\n", action->param[1]);
                     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-                    // Mark the position as active (ready for radar to start counting sweep)
-                    //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     V->counterTargetAzimuth = 0;
                 } else {
                     //pedestalElevationPoint(engine, V->targetElevation, V->batterScans[V->i].azimuthSlew);
@@ -452,7 +494,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                 umin_diff_az = RKUMinDiff(pos->azimuthDegrees, V->targetAzimuth);
                 if (umin_diff_az < RKPedestalPositionTolerance) {
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-                    //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     V->counterTargetAzimuth = 0;
                 } else {
                     //pedestalAzimuthPoint(me, V->targetAzimuth, V->batterScans[V->i].elevationSlew);
@@ -466,7 +507,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                 V->sweepAzimuth = V->batterScans[V->i].azimuthStart;
                 V->sweepElevation = V->batterScans[V->i].elevationStart;
                 V->sweepMarkerElevation = V->batterScans[V->i].elevationStart;
-                //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                 printf("\033[1;33mReady for sweep %d - EL %.2f  @ crossover AZ %.2f\033[0m\n", V->i, action->sweepElevation, action->sweepAzimuth);
                 umin_diff_el = RKUMinDiff(V->sweepElevation, pos->elevationDegrees);
                 if (umin_diff_el > RKPedestalPositionTolerance) {
@@ -489,7 +529,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                 V->sweepMarkerElevation = V->batterScans[V->i].elevationStart;
                 umin_diff_el = RKUMinDiff(V->sweepElevation, pos->elevationDegrees);
                 if (umin_diff_el < RKPedestalPositionTolerance) {
-                    //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     if ((pos->elevationVelocityDegreesPerSecond > RKPedestalVelocityTolerance
                             || pos->elevationVelocityDegreesPerSecond < -RKPedestalVelocityTolerance)) {
                         action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
@@ -497,7 +536,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                         action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                         action->param[1] = V->batterScans[V->i].azimuthSlew;
                     }
-                    //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                     V->counterTargetAzimuth = 0;
                 }
                 break;
@@ -505,7 +543,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                 V->sweepAzimuth = V->batterScans[V->i].azimuthStart;
                 V->sweepElevation = V->batterScans[V->i].elevationStart;
                 V->sweepMarkerElevation = V->batterScans[V->i].elevationStart;
-                //pos->flag |= POSITION_FLAG_SCAN_ACTIVE;
                 V->targetAzimuth = V->batterScans[V->i].azimuthEnd - pos->azimuthDegrees;
                 if (V->batterScans[V->i].azimuthSlew > 0.0 && V->targetAzimuth < 0.0) {
                     V->targetAzimuth += 360.0;
@@ -571,8 +608,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                     (V->batterScans[V->i].azimuthSlew < 0.0f && V->counterTargetAzimuth <= V->targetAzimuth)) {
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                     V->progress = RKScanProgressEnd | RKScanProgressMarker;
-                    // Mark the position as inactive (for radar to stop counting sweep)
-                    //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                 }
                 // If the elevation axis is still moving and the previous command has been a while
                 if ((V->tic > 100 && (pos->elevationVelocityDegreesPerSecond < -0.05f ||
@@ -595,8 +630,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                     (V->batterScans[V->i].elevationSlew < 0.0f && V->counterTargetElevation <= V->targetElevation)) {
                     action->mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
                     V->progress = RKScanProgressEnd | RKScanProgressMarker;
-                    // Mark the position as inactive (for radar to stop counting sweep)
-                    //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                 }
                 // If the azimuth axis is still moving and the previous command has been a while
                 if (V->tic > 100 && (pos->azimuthVelocityDegreesPerSecond < -RKPedestalVelocityTolerance ||
@@ -672,8 +705,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                 //         action.mode[1] = INSTRUCT_MODE_RESET | INSTRUCT_AXIS_EL;
                 //     }
                 //     V->progress = VCP_PROGRESS_ENDED | VCP_PROGRESS_MARKER;
-                //     // Mark the position as inactive (for radar to stop counting sweep)
-                //     //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                 // } else if (V->option & VCP_OPTION_BRAKE_EL_DURING_SWEEP &&
                 //     // If the elevation axis is still moving and the previous command has been a while
                 //     (V->tic > 100 && (pos->vel_dps < -0.05f || pos->vel_dps > 0.05f))) {
@@ -716,7 +747,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                             V->active = false;
                             //action.mode[0] = INSTRUCT_AXIS_EL | INSTRUCT_STANDBY;
                             //action.mode[1] = INSTRUCT_AXIS_AZ | INSTRUCT_STANDBY;
-                            //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                         }
                     }
                     V->progress |= RKScanProgressReady;
@@ -739,7 +769,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
                         printf("VCP stops.\n");
                         V->active = false;
                         V->progress &= ~RKScanProgressMiddle;
-                        //pos->flag &= ~POSITION_FLAG_SCAN_ACTIVE;
                         break;
                     }
                 } else {

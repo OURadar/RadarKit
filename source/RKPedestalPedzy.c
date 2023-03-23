@@ -357,10 +357,6 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
      (radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0));
 
     me->client = RKClientInitWithDesc(desc);
-//    me->vcpHandle = pedestalVcpInit();
-//    if (me->vcpHandle == NULL) {
-//        exit(EXIT_FAILURE);
-//    }
     RKClientSetUserResource(me->client, me);
     RKClientSetGreetHandler(me->client, &RKPedestalPedzyGreet);
     RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
@@ -384,6 +380,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         return RKResultNoRadar;
     }
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
+    RKPositionSteerEngine *positionSteerEngine = me->radar->positionSteerEngine;
     RKClient *client = me->client;
 
     char cmd[16] = "";
@@ -425,16 +422,17 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         size_t size = snprintf(me->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
 
         // move pedzy command here
-//        if (!strncmp("stop", cmd, 4) || !strncmp("zero", cmd, 4)) {
-//            skipNetResponse = false;
-//            me->vcpHandle->active = false;
-//            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-//        } else if (!strncmp("go", cmd, 2) || !strncmp("run", cmd, 3)) {
-//            pedestalVcpArmSweeps(me->vcpHandle,RKPedestalVcpRepeat);
-//            printf("ACK. Go." RKEOL);
-//        } else if (!strncmp("once", cmd, 4)) {
-//            pedestalVcpArmSweeps(me->vcpHandle, RKPedestalVcpNoRepeat);
-//            printf("ACK. Once." RKEOL);
+        if (!strncmp("stop", cmd, 4) || !strncmp("zero", cmd, 4)) {
+            skipNetResponse = false;
+            RKPositionSteerEngineStopSweeps(positionSteerEngine);
+            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
+        } else if (!strncmp("go", cmd, 2) || !strncmp("run", cmd, 3)) {
+            RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatForever);
+            printf("ACK. Go." RKEOL);
+        } else if (!strncmp("once", cmd, 4)) {
+            //pedestalVcpArmSweeps(me->vcpHandle, RKPedestalVcpNoRepeat);
+            RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatOnce);
+            printf("ACK. Once." RKEOL);
 //        } else if ((!strncmp("vol", cmd, 3) || !strncmp("ivol", cmd, 4) || !strncmp("ovol", cmd, 4))) {
 //            // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
 //            if ( !me->vcpHandle->active || !strncmp("ivol", cmd, 4)) {
@@ -676,10 +674,10 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 //            pedestalPoint(me, fparams[1], fparams[0]);
 //            strncpy(response, me->msg, RKMaximumStringLength - 1);
 //
-//        } else {
-//            skipNetResponse = false;
-//            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-//        }
+        } else {
+            skipNetResponse = false;
+            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
+        }
 
         if (!skipNetResponse){
             while (responseIndex == me->responseIndex) {
@@ -1243,44 +1241,9 @@ int RKPedestalPedzyFree(RKPedestal input) {
 //    return action;
 //}
 //
-//void pedestalVcpArmSweeps(RKPedestalVcpHandle *V, const bool repeat) {
-//    V->progress = RKVcpProgressNone;
-//    if (repeat) {
-//        V->option |= RKVcpOptionNone;
-//    }
-//    V->active = true;
-//    V->i = 0;
-//    V->j = 0;
-//}
 //
-//void pedestalVcpClearSweeps(RKPedestalVcpHandle *V) {
-//    V->progress = RKVcpProgressNone;
-//    V->sweepCount = 0;
-//    V->onDeckCount = 0;
-//    V->inTheHoleCount = 0;
-//    V->i = 0;
-//    V->j = 0;
-//    V->active = true;
-//}
 //
-//void pedestalVcpClearHole(RKPedestalVcpHandle *V) {
-//    V->inTheHoleCount = 0;
-//    V->onDeckCount = 0;
-//}
 //
-//void pedestalVcpClearDeck(RKPedestalVcpHandle *V) {
-//    V->onDeckCount = 0;
-//}
-//
-//void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
-//    memcpy(V->batterSweeps, V->onDeckSweeps, V->onDeckCount * sizeof(RKPedestalVcpSweepHandle));
-//    memcpy(V->onDeckSweeps, V->inTheHoleSweeps, (V->onDeckCount+V->inTheHoleCount) * sizeof(RKPedestalVcpSweepHandle));
-//    V->sweepCount = V->onDeckCount;
-//    V->onDeckCount = V->inTheHoleCount;
-//    V->i = 0;
-//    V->j = 0;
-//    V->active = true;
-//}
 //
 //RKPedestalVcpSweepHandle pedestalVcpMakeSweep(RKVcpMode mode,
 //                       const float el_start, const float el_end,
