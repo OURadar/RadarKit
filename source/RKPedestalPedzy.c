@@ -455,7 +455,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
                 if (*cmd == 'p') {
                     //VcpMode = RKVcpModePPIAzimuthStep;
-
+                    mode = RKScanModePPIAzimuthStep;
                 } else if (*cmd == 'r') {
                     //VcpMode = RKVcpModeRHI;
                     mode = RKScanModeRHI;
@@ -486,9 +486,12 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 }
                 //pedestalVcpSummary(me->vcpHandle, me->msg);
                 RKPositionSteerEngineScanSummary(positionSteerEngine, me->msg);
-                printf("ACK. Volume added successfully." RKEOL);
+                strcpy(response, me->msg);
+                sprintf(response, "ACK. Volume added successfully." RKEOL);
+                printf("%s", response);
             } else {
-                printf("NAK. Some error occurred." RKEOL);
+                sprintf(response, "NAK. Some error occurred." RKEOL);
+                printf("%s", response);
             }
 
 //        } else if ((!strncmp("pp", cmd, 2) || !strncmp("ipp", cmd, 3) || !strncmp("opp", cmd, 3))) {
@@ -666,7 +669,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         }
 
-        if (!skipNetResponse){
+        if (!skipNetResponse) {
             while (responseIndex == me->responseIndex) {
                 usleep(10000);
                 if (++s % 100 == 0) {
