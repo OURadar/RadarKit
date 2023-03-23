@@ -316,6 +316,63 @@ void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
     V->active = true;
 }
 
+void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKPosition *position) {
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    if (V->active) {
+        const int i = V->i;
+        position->flag |= RKPositionFlagVCPActive;
+        // Sweep is active: data collection portion (i.e., exclude transitions)
+        if (V->progress & RKScanProgressReady ||
+            V->progress & RKScanProgressMiddle ||
+            V->batterScans[i].mode == RKScanModePPIAzimuthStep ||
+            V->batterScans[i].mode == RKScanModePPIContinuous) {
+            // Always active if any of the conditions above are met
+            position->flag |= RKPositionFlagScanActive;
+        }
+        // Point / sweep flag
+        switch (V->batterScans[i].mode) {
+            case RKScanModePPI:
+            case RKScanModeSector:
+            case RKScanModeNewSector:
+            case RKScanModePPIAzimuthStep:
+            case RKScanModePPIContinuous:
+                position->flag |= RKPositionFlagAzimuthSweep;
+                position->flag |= RKPositionFlagElevationPoint;
+                //pos->flag &= ~POSITION_FLAG_EL_SWEEP;
+                break;
+            case RKScanModeRHI:
+                position->flag |= RKPositionFlagAzimuthPoint;
+                position->flag |= RKPositionFlagElevationSweep;
+                //pos->flag &= ~POSITION_FLAG_AZ_SWEEP;
+                break;
+            default:
+                position->flag |= RKPositionFlagAzimuthPoint | RKPositionFlagElevationPoint;
+                break;
+        }
+        // Completion flag
+        if (V->progress & RKScanProgressMarker) {
+            V->progress ^= RKScanProgressMarker;
+            switch (V->batterScans[i].mode) {
+                case RKScanModePPI:
+                case RKScanModeSector:
+                case RKScanModeNewSector:
+                case RKScanModePPIAzimuthStep:
+                case RKScanModePPIContinuous:
+                    position->flag |= RKPositionFlagAzimuthComplete;
+                    break;
+                case RKScanModeRHI:
+                    position->flag |= RKPositionFlagElevationComplete;
+                    break;
+                default:
+                    break;
+            }
+        }
+    } else {
+        engine->vcpIndex = 0;
+        engine->vcpSweepCount = 0;
+    }
+}
+
 int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
     RKPedestalVcpHandle *V = &engine->vcpHandle;
     if (V->inTheHoleCount < RKMaximumScanCount - 1) {

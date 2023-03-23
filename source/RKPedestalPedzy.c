@@ -19,9 +19,10 @@ static int RKPedestalPedzyRead(RKClient *client) {
 
     RKRadar *radar = me->radar;
 
-    RKPedestalVcpHandle *vcpHandle = &radar->positionSteerEngine->vcpHandle;
+    //RKPedestalVcpHandle *vcpHandle = &radar->positionSteerEngine->vcpHandle;
+    // RKPositionFlag flag;
+    RKPositionSteerEngine *steerEngine = radar->positionSteerEngine;
 
-    RKPositionFlag flag;
 
     if (client->netDelimiter.type == 'p') {
         // The payload just read by RKClient
@@ -58,68 +59,20 @@ static int RKPedestalPedzyRead(RKClient *client) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
 
-        //
         // Add other flags based on radar->positionSteerEngine
-        //
-//        if (vcpHandle->active) {
-//            newPosition->flag |= RKPositionFlagVCPActive;
-//            // Sweep is active: data collection portion (i.e., exclude transitions)
-//            if (vcpHandle->progress & RKScanProgressReady ||
-//                vcpHandle->progress & RKScanProgressMiddle ||
-//                vcpHandle->batterSweeps[i].mode == RKVcpModePPIAzimuthStep ||
-//                vcpHandle->batterSweeps[i].mode == RKVcpModePPIContinuous) {
-//                // Always active if any of the conditions above are met
-//                newPosition->flag |= RKPositionFlagScanActive;
-//            }
-//            // Point / sweep flag
-//            switch (vcpHandle->batterSweeps[i].mode) {
-//                case RKVcpModePPI:
-//                case RKVcpModeSector:
-//                case RKVcpModeNewSector:
-//                case RKVcpModePPIAzimuthStep:
-//                case RKVcpModePPIContinuous:
-//                    newPosition->flag |= RKPositionFlagAzimuthSweep;
-//                    newPosition->flag |= RKPositionFlagElevationPoint;
-//                    //pos->flag &= ~POSITION_FLAG_EL_SWEEP;
-//                    break;
-//                case RKVcpModeRHI:
-//                    newPosition->flag |= RKPositionFlagAzimuthPoint;
-//                    newPosition->flag |= RKPositionFlagElevationSweep;
-//                    //pos->flag &= ~POSITION_FLAG_AZ_SWEEP;
-//                    break;
-//                default:
-//                    newPosition->flag |= RKPositionFlagAzimuthPoint | RKPositionFlagElevationPoint;
-//                    break;
-//            }
-//            // Completion flag
-//            if (vcpHandle->progress & RKScanProgressMarker) {
-//                vcpHandle->progress ^= RKScanProgressMarker;
-//                switch (vcpHandle->batterSweeps[i].mode) {
-//                    case RKVcpModePPI:
-//                    case RKVcpModeSector:
-//                    case RKVcpModeNewSector:
-//                    case RKVcpModePPIAzimuthStep:
-//                    case RKVcpModePPIContinuous:
-//                        newPosition->flag |= RKPositionFlagAzimuthComplete;
-//                        break;
-//                    case RKVcpModeRHI:
-//                        newPosition->flag |= RKPositionFlagElevationComplete;
-//                        break;
-//                    default:
-//                        break;
-//                }
-//            }
-//        } else {
-//            radar->positionSteerEngine.vcpIndex = 0;
-//            radar->positionSteerEngine.vcpSweepCount = 0;
-//        }
+        RKPositionSteerEngineUpdatePositionFlags(steerEngine, newPosition);
 
-//        RKPositionSteerEngineUpdatePositionFlags(radar->positionSteerEngine, newPosition);
-//        RKUpdatePositionFlags(radar, newPosition);
+        // Note to myself: Could consider adding something similar to the RKRadar abstraction layer
+        // That way, the thought process is consistent like RKSetPositionRead();
+        //
+        // RKUpdatePositionFlags(radar, newPosition);
+        //
+
         RKSetPositionReady(radar, newPosition);
 
         // Get the latest action, could be null
-        // RKPedestalAction *action = RKPositionSteerEngineGetAction();
+        // Same here, add one to the RKRadar layer?
+        RKPedestalAction *action = RKPositionSteerEngineGetAction(steerEngine);
         // if (action is not do nothing
         //
 

@@ -167,14 +167,17 @@ void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
 void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
 void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
 void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
+void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
 
 int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
 int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
+
 
 RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode,
                                              const float elevationStart, const float elevationEnd,
                                              const float azimuthStart, const float azimuthEnd, const float azimuthMark,
                                              const float rate);
+
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *);
 
 char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *);
