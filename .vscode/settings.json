@@ -15,8 +15,8 @@
   "C_Cpp_Runner.includePaths": [
     "${workspaceFolder}/headers/**",
     "headers",
-    "headers/RadarKit",
-    "/usr/local/opt/openssl@1.1/include"
+    "${HOMEBREW_PREFIX}/include",
+    "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
   "C_Cpp_Runner.includeSearch": [
     "*",
@@ -32,8 +32,8 @@
   ],
   "C_Cpp.default.includePath": [
     "headers",
-    "headers/RadarKit",
-    "/usr/local/opt/openssl@1.1/include"
+    "${HOMEBREW_PREFIX}/include",
+    "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
   "C_Cpp_Runner.cCompilerPath": "/usr/bin/clang",
   "C_Cpp_Runner.cppCompilerPath": "/usr/bin/clang++",

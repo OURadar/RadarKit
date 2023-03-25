@@ -1,18 +1,18 @@
 {
   "configurations": [
     {
-      "name": "macos-clang-x64",
+      "name": "macos-clang-arm64",
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/headers/**",
         "headers",
-        "headers/RadarKit",
-        "/usr/local/opt/openssl@1.1/include"
+        "${HOMEBREW_PREFIX}/include",
+        "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
       ],
       "compilerPath": "/usr/bin/clang",
       "cStandard": "gnu99",
       "cppStandard": "${default}",
-      "intelliSenseMode": "macos-clang-x64",
+      "intelliSenseMode": "macos-clang-arm64",
       "compilerArgs": []
     }
   ],
