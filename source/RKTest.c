@@ -2061,6 +2061,7 @@ void RKTestRamp(void) {
 }
 
 #pragma mark - Waveform Tests
+#pragma region Waveform Tests
 
 void RKTestMakeHops(void) {
     SHOW_FUNCTION_NAME
@@ -2217,7 +2218,10 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     RKWaveformFree(waveform);
 }
 
+#pragma endregion
+
 #pragma mark - Radar Signal Processing
+#pragma region Radar Signal Processing
 
 void RKTestPulseCompression(RKTestFlag flag) {
     SHOW_FUNCTION_NAME
@@ -2513,7 +2517,10 @@ void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), co
     }
 }
 
+#pragma endregion
+
 #pragma mark - Performance Tests
+#pragma region Performance Tests
 
 void RKTestPulseCompressionSpeed(const int offt) {
     SHOW_FUNCTION_NAME
@@ -2711,7 +2718,7 @@ void RKTestCacheWrite(void) {
         exit(EXIT_FAILURE);
     }
 
-#ifdef FUNDAMENTAL_CACHE_WRITE_TEST
+    #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
     RKRawDataRecorderSetCacheSize(fileEngine, 4);
     RKRawDataRecorderCacheWrite(fileEngine, bytes, 4);
@@ -2719,7 +2726,7 @@ void RKTestCacheWrite(void) {
     RKRawDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
     RKRawDataRecorderCacheFlush(fileEngine);
 
-#endif
+    #endif
 
     RKBuffer pulseBuffer;
     RKPulseBufferAlloc(&pulseBuffer, 8192, 100);
@@ -2766,7 +2773,10 @@ void RKTestCacheWrite(void) {
     RKRawDataRecorderFree(fileEngine);
 }
 
+#pragma endregion
+
 #pragma mark - Transceiver Emulator
+#pragma region Transceiver Emulator
 
 //
 // WARNING: Broken
@@ -3758,7 +3768,10 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
     return RKResultSuccess;
 }
 
+#pragma endregion
+
 #pragma mark - Pedestal Emulator
+#pragma region Pedestal Emulator
 
 void *RKTestPedestalRunLoop(void *input) {
     RKTestPedestal *pedestal = (RKTestPedestal *)input;
@@ -3800,7 +3813,7 @@ void *RKTestPedestalRunLoop(void *input) {
             azimuth = pedestal->scanAzimuth;
         }
 
-        // Get a vacation position to fill it in with the latest reading
+        // Get a vacant position to fill it in with the latest reading
         RKPosition *position = RKGetVacantPosition(radar);
         if (position == NULL) {
             usleep(1000);
@@ -4022,6 +4035,18 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         if (response != NULL) {
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
+    } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
+        k = sscanf(command, "%s %s", sval[0], sval[1]);
+        pedestal->speedAzimuth = atof(sval[1]);
+        if (response != NULL) {
+            sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
+        }
+    } else if (!strncmp(command, "eslew", 5)) {
+        k = sscanf(command, "%s %s", sval[0], sval[1]);
+        pedestal->speedElevation = atof(sval[1]);
+        if (response != NULL) {
+            sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedElevation);
+        }
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
@@ -4042,7 +4067,10 @@ int RKTestPedestalFree(RKPedestal pedestalReference) {
     return RKResultSuccess;
 }
 
+#pragma endregion
+
 #pragma mark - Health Relay Emulator
+#pragma region Health Relay Emulator
 
 void *RKTestHealthRelayRunLoop(void *input) {
     RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)input;
@@ -4180,6 +4208,8 @@ int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
     free(healthRelay);
     return RKResultSuccess;
 }
+
+#pragma endregion
 
 #pragma mark - Others
 
