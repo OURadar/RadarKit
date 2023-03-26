@@ -912,6 +912,10 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
 //    action.sweepElevation = V->sweepMarkerElevation;
 //    action.sweepAzimuth = V->sweepAzimuth;
 
+    if (engine->verbose > 2) {
+        RKLog("%s action = %02x.%02x\n", engine->name, action->mode[0], action->mode[1]);
+    }
+
     return action;
 }
 

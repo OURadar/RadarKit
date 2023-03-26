@@ -76,7 +76,6 @@ static int RKPedestalPedzyRead(RKClient *client) {
         // if (action is not do nothing
         //
 
-
     } else {
         // This the command acknowledgement, queue it up to feedback
         char *string = (char *)client->userPayload;
@@ -191,6 +190,7 @@ static int RKPedestalPedzyGreet(RKClient *client) {
 static void *pedestalHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
+    RKPositionSteerEngine *steerer = radar->positionEngine;
     RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum vcpActive;
@@ -214,8 +214,7 @@ static void *pedestalHealth(void *in) {
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
                 vcpActive = RKStatusEnumFault;
-            //} else if (position->flag & RKPositionFlagVCPActive) {
-            } else if (radar->positionSteerEngine->vcpHandle.active) {
+            } else if (steerer->vcpHandle.active) {
                 vcpActive = RKStatusEnumActive;
             } else {
                 vcpActive = RKStatusEnumStandby;
@@ -229,14 +228,15 @@ static void *pedestalHealth(void *in) {
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
         if (health) {
             double rate = RKGetPositionUpdateRate(radar);
-            sprintf(health->string,
-                    "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+            sprintf(health->string, "{"
+                    "\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
                     "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
                     "\"Pedestal Update\":\"%.3f Hz\", "
-                    "\"PedestalHealthEnd\":0}",
+                    "\"PedestalHealthEnd\":0"
+                    "}",
                     azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
                     elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
                     vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,

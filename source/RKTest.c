@@ -3776,6 +3776,7 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
 void *RKTestPedestalRunLoop(void *input) {
     RKTestPedestal *pedestal = (RKTestPedestal *)input;
     RKRadar *radar = pedestal->radar;
+    RKPositionSteerEngine *steeven = radar->positionSteerEngine;
 
     float azimuth = 0.0f;
     float elevation = 0.0f;
@@ -3820,15 +3821,21 @@ void *RKTestPedestalRunLoop(void *input) {
             continue;
         }
         position->tic = tic++;
-        position->elevationDegrees = elevation;
         position->azimuthDegrees = azimuth;
+        position->elevationDegrees = elevation;
         position->azimuthVelocityDegreesPerSecond = pedestal->speedAzimuth;
         position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
         position->flag |= RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
 
+        // Add other flags based on radar->positionSteerEngine
+        RKPositionSteerEngineUpdatePositionFlags(steeven, position);
+
+        // Get the latest action, could be null
+        RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven);
+
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
-            position->sweepElevationDegrees = pedestal->scanElevation;
             position->sweepAzimuthDegrees = 0.0f;
+            position->sweepElevationDegrees = pedestal->scanElevation;
             position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
         } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
             position->sweepAzimuthDegrees = pedestal->scanAzimuth;
@@ -3851,6 +3858,7 @@ void *RKTestPedestalRunLoop(void *input) {
         } else if (scanEndRHI) {
             scanEndRHI = false;
         }
+
         RKSetPositionReady(radar, position);
 
         // Report health

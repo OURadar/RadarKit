@@ -1322,30 +1322,31 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
         if (array[k] == 0) {
             continue;
         }
+        const int verbose = array[k];
         switch (k) {
             case '0':
-                RKClockSetVerbose(radar->positionClock, array[k]);
+                RKClockSetVerbose(radar->positionClock, verbose);
                 break;
             case '1':
-                RKClockSetVerbose(radar->pulseClock, array[k]);
+                RKClockSetVerbose(radar->pulseClock, verbose);
                 break;
             case 'a':
-                RKPositionEngineSetVerbose(radar->positionEngine, array[k]);
+                RKPositionEngineSetVerbose(radar->positionEngine, verbose);
                 break;
             case 'b':
-                RKPositionSteerEngineSetVerbose(radar->positionSteerEngine, array[k]);
+                RKPositionSteerEngineSetVerbose(radar->positionSteerEngine, verbose);
                 break;
             case 'm':
-                RKMomentEngineSetVerbose(radar->momentEngine, array[k]);
+                RKMomentEngineSetVerbose(radar->momentEngine, verbose);
                 break;
             case 'p':
-                RKPulseEngineSetVerbose(radar->pulseEngine, array[k]);
+                RKPulseEngineSetVerbose(radar->pulseEngine, verbose);
                 break;
             case 'r':
-                RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, array[k]);
+                RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, verbose);
                 break;
             case 's':
-                RKSweepEngineSetVerbose(radar->sweepEngine, array[k]);
+                RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
                 break;
             default:
                 break;
