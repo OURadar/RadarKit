@@ -4090,8 +4090,16 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedElevation);
         }
-    } else if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
+    } else if (!strncmp("pp", command, 2)
+        || !strncmp("ipp", command, 3)
+        || !strncmp("opp", command, 3)
+        || !strncmp("rr", command, 2)
+        || !strncmp("irr", command, 3)
+        || !strncmp("orr", command, 3)) {
         RKPositionSteerEngineExecuteString(steeven, command, response);
+    } else if (!strncmp(command, "summ", 4)) {
+        RKPositionSteerEngineScanSummary(steeven, response);
+        sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
