@@ -3778,6 +3778,7 @@ void *RKTestPedestalRunLoop(void *input) {
     RKRadar *radar = pedestal->radar;
     RKPositionSteerEngine *steeven = radar->positionSteerEngine;
 
+    int k;
     float azimuth = 0.0f;
     float elevation = 0.0f;
     double dt = 0.0;
@@ -3790,6 +3791,8 @@ void *RKTestPedestalRunLoop(void *input) {
 
     pedestal->state |= RKEngineStateWantActive;
     pedestal->state &= ~RKEngineStateActivating;
+
+    char *response = (char *)malloc(4096);
 
     gettimeofday(&t1, NULL);
 
@@ -3830,8 +3833,31 @@ void *RKTestPedestalRunLoop(void *input) {
         // Add other flags based on radar->positionSteerEngine
         RKPositionSteerEngineUpdatePositionFlags(steeven, position);
 
-        // Get the latest action, could be null
+        // Get the latest action, could be no action
         RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven);
+        char axis = 'e';
+        char string[64];
+        for (k = 0; k < 2; k++) {
+            RKPedestalInstructType instruct = action->mode[k];
+            float value = action->param[k];
+            if (instruct == 0) {
+                continue;
+            }
+            if (InstructIsElevation(instruct)) {
+                axis = 'e';
+            } else {
+                axis = 'a';
+            }
+            if (InstructIsSlew(instruct)) {
+                sprintf(string, "%cslew %.2f" RKEOL, axis, value);
+            } else if (InstructIsPoint(instruct)) {
+                sprintf(string, "%cpoint %.2f" RKEOL, axis, value);
+            } else if (InstructIsStandby(instruct)) {
+                sprintf(string, "%cstop" RKEOL, axis);
+            }
+            printf("string = '%s'\n", string);
+            RKTestPedestalExec(pedestal, string, response);
+        }
 
         if (pedestal->scanMode == RKTestPedestalScanModePPI) {
             position->sweepAzimuthDegrees = 0.0f;
@@ -3938,6 +3964,8 @@ void *RKTestPedestalRunLoop(void *input) {
         t1 = t0;
     }
 
+    free(response);
+
     pedestal->state ^= RKEngineStateActive;
     return NULL;
 }
@@ -3975,7 +4003,8 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKRadar *radar = pedestal->radar;
 
     int k;
-    char sval[4][64];
+    char cparams[4][256] = {"", "", "", ""};
+    const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
@@ -4014,24 +4043,24 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
     } else if (!strncmp(command, "ppi", 3)) {
-        k = sscanf(command, "%s %s %s", sval[0], sval[1], sval[2]);
+        k = sscanf(command, "%s %s %s", cparams[0], cparams[1], cparams[2]);
         if (k == 3) {
             pedestal->scanMode = RKTestPedestalScanModePPI;
             pedestal->commandCount++;
-            pedestal->scanElevation = atof(sval[1]);
-            pedestal->speedAzimuth = atof(sval[2]);
+            pedestal->scanElevation = atof(cparams[1]);
+            pedestal->speedAzimuth = atof(cparams[2]);
         }
         if (response != NULL) {
             sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f deg/sec" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "rhi", 3)) {
-        k = sscanf(command, "%s %s %s %s", sval[0], sval[1], sval[2], sval[3]);
+        k = sscanf(command, "%s %s %s %s", cparams[0], cparams[1], cparams[2], cparams[3]);
         if (k == 4) {
             pedestal->scanMode = RKTestPedestalScanModeRHI;
             pedestal->commandCount++;
-            pedestal->scanAzimuth = atof(sval[1]);
-            pedestal->speedElevation = atof(sval[3]);
-            sscanf(sval[2], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
+            pedestal->scanAzimuth = atof(cparams[1]);
+            pedestal->speedElevation = atof(cparams[3]);
+            sscanf(cparams[2], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
         }
         if (response != NULL) {
             sprintf(response, "ACK. RHI mode set at AZ %.2f over %.2f-%.2f deg @ %.2f deg/sec" RKEOL,
@@ -4044,17 +4073,21 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
-        k = sscanf(command, "%s %s", sval[0], sval[1]);
-        pedestal->speedAzimuth = atof(sval[1]);
+        k = sscanf(command, "%s %s", cparams[0], cparams[1]);
+        pedestal->speedAzimuth = atof(cparams[1]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "eslew", 5)) {
-        k = sscanf(command, "%s %s", sval[0], sval[1]);
-        pedestal->speedElevation = atof(sval[1]);
+        k = sscanf(command, "%s %s", cparams[0], cparams[1]);
+        pedestal->speedElevation = atof(cparams[1]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedElevation);
         }
+    } else if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
+        k = sscanf(command, "%s %s", cparams[0], cparams[1]);
+        char *elevations = cparams[1];
+
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
@@ -4264,73 +4297,18 @@ void RKTestCommandQueue(void) {
 
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
+
 }
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    // For Bird bath ZCal
-    // o  A pedestal command to scan 360-deg at 90-deg EL
-    // o  Wait for a sweep to complete
-    // o  Stop the pedestal
-    // o  Get the sweep, derive average ZDR
-    // o  Derive ZCal
-
-    // For SunCal
-    // o  Get time of day --> elevation of the Sun
-    // o  Pedestal command to scan 360-deg at Sun's EL
-    // o  Wait for a sweep to complete
-    // o  Find the peak of Sh + Sv
-    // o  Derive heading
-
-    // RadarKit should not know what is the pedestal command
-    // One option: Have user fill in the task variables:
-    // - Pedestal command for RKPedestalExec()
-    // - Transceiver command for RKTransceiverExec()
-    // - HealthRelay command for RKHealthRelayExec()
-    // - Sweep end flag is defined here so waiting for a sweep complete is okay
-    //   - Have the task sub-routine detect if the sweep is progressing as expected
-    // - Stop command for RKPedestalExec()
-    // - Stop command for RKTransceiverExec()
-    // - Stop command for RKHealthRelayExec()
-    // - Task function to modify pref.conf or user definied config file
-
-    // Modify a few bytes
-    FILE *fid = fopen("/Users/boonleng/Downloads/rkr/PX10K-20190827-203331.rkr", "r+");
-    if (fid == NULL) {
-        RKLog("Error. Unable to open file.\n");
-        return;
+    const char command[] = "pp 2,4,6,8,10 10 25";
+    char cparams[4][256] = {"", "", "", ""};
+    printf("command = %s\n", command);
+    int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
+    for (int k = 0; k < n; k++) {
+        printf("cparam[%d] = '%s'\n", k, cparams[k]);
     }
-    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    if (fread(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
-        RKLog("Error. Failed reading file header.\n");
-        fclose(fid);
-        return;
-    }
-
-    RKLog("PRT = %.4e\n", fileHeader->config.prt[0]);
-    RKLog("SNRThreshold = %.4f dB\n", fileHeader->config.SNRThreshold);
-    RKLog("SQIThreshold = %.4f\n", fileHeader->config.SQIThreshold);
-
-    RKPulseHeader *pulseHeader = (RKPulseHeader *)malloc(sizeof(RKPulseHeader));
-    if (fread(pulseHeader, sizeof(RKPulseHeader), 1, fid) == 0) {
-        RKLog("Error. Failed reading pulse header.\n");
-        fclose(fid);
-        return;
-    }
-
-    RKLog("RKPulse capacity / gateCount = %u / %u\n", pulseHeader->capacity, pulseHeader->gateCount);
-
-    // Change some values
-    fileHeader->config.prt[0] = 1.0 / 1450.0;
-
-    rewind(fid);
-    if (fwrite(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
-        RKLog("Error. Failed writing file header.\n");
-    }
-
-    // Forward to the end of file
-    fseek(fid, 0L, SEEK_END);
-    fclose(fid);
 }
 
 #pragma mark -
