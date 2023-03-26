@@ -35,7 +35,7 @@ char *RKGetBackgroundColorOfIndex(const int i) {
     static int s = 3;
     static char str[4][32];
     s = s == 3 ? 0 : s + 1;
-    snprintf(str[s], 31, "\033[38;5;15;48;5;%dm", colors[i % sizeof(colors)]);
+    snprintf(str[s], 31, "\033[97;48;5;%dm", colors[i % sizeof(colors)]);
     return str[s];
 }
 
