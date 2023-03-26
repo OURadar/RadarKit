@@ -172,6 +172,7 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPositio
 int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
 int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
 
+int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *, const char *, char *);
 
 RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode,
                                              const float elevationStart, const float elevationEnd,

@@ -407,6 +407,97 @@ int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKSc
     return RKResultSuccess;
 }
 
+int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char *command, char *response) {
+    // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
+    char args[4][256] = {"", "", "", ""};
+    const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
+
+    bool immediatelyDo = false;
+    bool onlyOnce = false;
+
+    float azimuthStart, azimuthEnd, azimuthMark, elevationStart, elevationEnd, rate;
+
+    RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
+
+    if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
+        if (n < 1) {
+            sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
+            printf("%s", response);
+            return RKResultIncompleteScanDescription;
+        }
+
+        char *elevations = args[0];
+        char *azimuth = args[1];
+        const char comma[] = ",";
+
+        if (!engine->vcpHandle.active) {
+            immediatelyDo = true;
+        }
+
+        if (!strncmp("pp", command, 2)) {
+            RKPositionSteerEngineClearHole(engine);
+        } else if (!strncmp("ipp", command, 3)) {
+            RKPositionSteerEngineClearSweeps(engine);
+            immediatelyDo = true;
+        } else if (!strncmp("opp", command, 3)) {
+            RKPositionSteerEngineClearDeck(engine);
+            onlyOnce = true;
+        }
+
+        if (n == 1) {
+            azimuthStart = 0.0f;
+            azimuthEnd = 0.0f;
+        }
+        if (n > 1) {
+            azimuthStart = atof(azimuth);
+        } else {
+            azimuthEnd = 0.0f;
+        }
+        azimuthMark = azimuthEnd;
+        if (n > 2) {
+            rate = atof(args[2]);
+        } else {
+            rate = RKDefaultScanSpeed;
+        }
+
+        char *token = strtok(elevations, comma);
+
+        int k = 0;
+        bool everythingOkay = true;
+        while (token != NULL && k++ < 50) {
+            int m = sscanf(token, "%f", &elevationStart);
+            if (m == 0) {
+                everythingOkay = false;
+                break;
+            }
+            elevationEnd = elevationStart;
+            azimuthEnd = azimuthStart;
+
+            RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPIAzimuthStep, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
+
+            if (onlyOnce) {
+                RKPositionSteerEngineAddPinchSweep(engine, scan);
+            } else{
+                RKPositionSteerEngineAddLineupSweep(engine, scan);
+            }
+            token = strtok(NULL, comma);
+        }
+
+        if (everythingOkay) {
+            if (immediatelyDo) {
+                RKPositionSteerEngineNextHitter(engine);
+            }
+            RKPositionSteerEngineScanSummary(engine, response);
+            sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
+            printf("%s", response);
+        } else {
+            printf("NAK. Some error occurred." RKEOL);
+        }
+    }
+
+    return RKResultSuccess;
+}
+
 RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode mode,
                                              const float elevationStart, const float elevationEnd,
                                              const float azimuthStart, const float azimuthEnd, const float azimuthMark,

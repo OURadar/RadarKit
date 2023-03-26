@@ -96,6 +96,7 @@
 #define RKUserParameterCount                 8                                 //
 #define RKMaximumScanCount                   256                               //
 #define RKPedestalActionBufferDepth          8                                 //
+#define RKDefaultScanSpeed                   18.0                              //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -323,6 +324,7 @@ N(RKResultIncompleteHealthRelay) \
 N(RKResultIncompleteControl) \
 N(RKResultIncompleteWaveformCalibration) \
 N(RKResultIncompleteProductDescription) \
+N(RKResultIncompleteScanDescription) \
 N(RKResultErrorCreatingOperatorRoutine) \
 N(RKResultErrorCreatingOperatorCommandRoutine) \
 N(RKResultErrorCreatingClientRoutine) \

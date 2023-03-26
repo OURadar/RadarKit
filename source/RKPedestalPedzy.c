@@ -332,12 +332,13 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     RKClient *client = me->client;
 
     char cparams[4][256] = {"", "", "", ""};
-    float az_start, az_end, az_mark, el_start, el_end, rate;
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
 
     bool skipNetResponse = true;
     bool immediatelyDo = false;
     bool onlyOnce = false;
+
+    float az_start, az_end, az_mark, el_start, el_end, rate;
 
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
@@ -462,6 +463,12 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
        } else if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
 
+            if (n < 1) {
+                sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
+                printf("%s", response);
+                return 1;
+            }
+
            char *elevations = cparams[0];
            char *azimuth = cparams[1];
            const char comma[] = ",";
@@ -479,11 +486,6 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 RKPositionSteerEngineClearDeck(positionSteerEngine);
             }
 
-            if (n < 1) {
-                sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
-                printf("%s", response);
-                return 1;
-            }
             if (n == 1) {
                 az_start = 0.0f;
                 az_end = 0.0f;

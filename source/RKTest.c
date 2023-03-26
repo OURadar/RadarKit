@@ -4001,10 +4001,20 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
 int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *response) {
     RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
     RKRadar *radar = pedestal->radar;
+    RKPositionSteerEngine *steeven = radar->positionSteerEngine;
 
     int k;
     char cparams[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
+
+    bool skipNetResponse = true;
+    bool immediatelyDo = false;
+    bool onlyOnce = false;
+
+    float az_start, az_end, az_mark, el_start, el_end, rate;
+
+    RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
+        cparams[0], cparams[1], cparams[2], cparams[3]);
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
@@ -4043,24 +4053,22 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
     } else if (!strncmp(command, "ppi", 3)) {
-        k = sscanf(command, "%s %s %s", cparams[0], cparams[1], cparams[2]);
-        if (k == 3) {
+        if (n == 2) {
             pedestal->scanMode = RKTestPedestalScanModePPI;
             pedestal->commandCount++;
-            pedestal->scanElevation = atof(cparams[1]);
-            pedestal->speedAzimuth = atof(cparams[2]);
+            pedestal->scanElevation = atof(cparams[0]);
+            pedestal->speedAzimuth = atof(cparams[1]);
         }
         if (response != NULL) {
             sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f deg/sec" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "rhi", 3)) {
-        k = sscanf(command, "%s %s %s %s", cparams[0], cparams[1], cparams[2], cparams[3]);
-        if (k == 4) {
+        if (n == 3) {
             pedestal->scanMode = RKTestPedestalScanModeRHI;
             pedestal->commandCount++;
-            pedestal->scanAzimuth = atof(cparams[1]);
-            pedestal->speedElevation = atof(cparams[3]);
-            sscanf(cparams[2], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
+            pedestal->scanAzimuth = atof(cparams[0]);
+            pedestal->speedElevation = atof(cparams[2]);
+            sscanf(cparams[1], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
         }
         if (response != NULL) {
             sprintf(response, "ACK. RHI mode set at AZ %.2f over %.2f-%.2f deg @ %.2f deg/sec" RKEOL,
@@ -4073,21 +4081,17 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
-        k = sscanf(command, "%s %s", cparams[0], cparams[1]);
-        pedestal->speedAzimuth = atof(cparams[1]);
+        pedestal->speedAzimuth = atof(cparams[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "eslew", 5)) {
-        k = sscanf(command, "%s %s", cparams[0], cparams[1]);
-        pedestal->speedElevation = atof(cparams[1]);
+        pedestal->speedElevation = atof(cparams[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedElevation);
         }
     } else if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
-        k = sscanf(command, "%s %s", cparams[0], cparams[1]);
-        char *elevations = cparams[1];
-
+        RKPositionSteerEngineExecuteString(steeven, command, response);
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
