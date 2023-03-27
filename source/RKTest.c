@@ -3836,12 +3836,12 @@ void *RKTestPedestalRunLoop(void *input) {
         // Get the latest action, could be no action
         RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven, position);
 
-        RKLog("%s EL%5.2f @ %5.2f °/s   AZ%5.2f @ %5.2f °/s    action = '%s%s%s'\n", pedestal->name,
-            position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
-            position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
-            RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
-            RKPedestalActionString(action),
-            RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
+        // RKLog("%s EL%5.2f @ %5.2f °/s   AZ%5.2f @ %5.2f °/s    action = '%s%s%s'\n", pedestal->name,
+        //     position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
+        //     position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
+        //     RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
+        //     RKPedestalActionString(action),
+        //     RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
 
         // Translate action into string command. This is only necessary in RKTestPedestal. Pedzy can natively ingest RKPedestalAction
         char axis = 'e';
@@ -3919,7 +3919,19 @@ void *RKTestPedestalRunLoop(void *input) {
 
         // Posiiton change
         azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
+        if (azimuth >= 360.0f) {
+            azimuth -= 360.0f;
+        } else if (azimuth < 0.0f) {
+            azimuth += 360.0f;
+        }
+
         elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+        if (elevation > 180.0f) {
+            elevation -= 360.0f;
+        } else if (elevation < -180.0f) {
+            elevation += 360.0f;
+        }
+
         // if (pedestal->scanMode == RKTestPedestalScanModePPI) {
         //     azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
         //     if (azimuth >= 360.0f) {
