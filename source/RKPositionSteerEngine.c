@@ -8,6 +8,15 @@
 
 #include <RadarKit/RKPositionSteerEngine.h>
 
+// #pragma mark - Private Functions
+
+// void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *);
+// void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
+// void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
+// void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
+// void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
+// void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
+
 #pragma mark - Internal Functions
 
 static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engine) {
@@ -63,99 +72,6 @@ float pedestalGetRate(const float delta, RKPedestalAxis axis) {
     return delta < 0.0f ? -rate : rate;
 }
 
-//int pedestalElevationPoint(RKPositionSteerEngine *engine, const float el_point, const float rate_az){
-//    float umin_diff_el;
-//    float min_diff_el;
-//    float rate_el;
-//
-//    //RKPosition *pos = RKGetLatestPosition(me->radar);
-//    uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-//    RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
-//
-//    RKPedestalAction action;
-//    action.mode[0] = RKPedestalInstructTypeNone;
-//    action.mode[1] = RKPedestalInstructTypeNone;
-//    action.param[0] = 0.0f;
-//    action.param[1] = 0.0f;
-//    action.sweepElevation = el_point;
-//    action.sweepAzimuth = pos->azimuthDegrees;
-//    umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//    int i = 0;
-//    while (umin_diff_el > RKPedestalPositionTolerance && i < RKPedestalPointTimeOut) {
-//
-//        // pos = RKGetLatestPosition(me->radar);
-//        uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-//        RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
-//        umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//        if (umin_diff_el > RKPedestalPositionTolerance){
-//            action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//            rate_el = pedestalGetRate(umin_diff_el, RKPedestalPointElevation);
-//            min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
-//            if (min_diff_el >= 0.0f){
-//                action.param[0] = rate_el;
-//            }else{
-//                action.param[0] = -rate_el;
-//            }
-//        } else{
-//            action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//            action.param[0] = 0.0f;
-//        }
-//        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//        action.param[1] = rate_az;
-//        // printf("EL point %.2f | AZ slew %.2f dps\n",pos->elevationDegrees,rate_az);
-//        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//        i++;
-//        usleep(20000);
-//    }
-//    action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//    action.param[0] = 0.0f;
-//    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//    action.param[1] = rate_az;
-//    // pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//
-//    printf("%s","Elevation point finish.");
-//    if (i < RKPedestalPointTimeOut){
-//        return 0;
-//    }else{
-//        return 1;
-//    }
-//}
-
-// RKPedestalAction pedestalElevationPointNudge(RKPositionSteerEngine *engine, const float el_point, const float rate_az) {
-//     float umin_diff_el;
-//     float min_diff_el;
-//     float rate_el;
-
-//     // RKPosition *pos = RKGetLatestPosition(me->radar);
-//     uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-//     RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
-
-//     RKPedestalAction action;
-//     action.mode[0] = RKPedestalInstructTypeNone;
-//     action.mode[1] = RKPedestalInstructTypeNone;
-//     action.param[0] = 0.0f;
-//     action.param[1] = 0.0f;
-//     action.sweepElevation = el_point;
-//     action.sweepAzimuth = pos->azimuthDegrees;
-//     umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//     if (umin_diff_el > RKPedestalPositionTolerance){
-//         action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//         rate_el = pedestalGetRate(umin_diff_el, RKPedestalAxisElevation);
-//         min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
-//         if (min_diff_el >= 0.0f){
-//             action.param[0] = rate_el;
-//         }else{
-//             action.param[0] = -rate_el;
-//         }
-//     } else{
-//         action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//         action.param[0] = 0.0f;
-//     }
-//     action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//     action.param[1] = rate_az;
-//     return action;
-// }
-
 void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
     memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
     memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
@@ -164,6 +80,73 @@ void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
     V->i = 0;
     V->j = 0;
     V->active = true;
+}
+
+void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.active = false;
+}
+
+void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.progress = RKScanProgressNone;
+    engine->vcpHandle.sweepCount = 0;
+    engine->vcpHandle.onDeckCount = 0;
+    engine->vcpHandle.inTheHoleCount = 0;
+    engine->vcpHandle.i = 0;
+    engine->vcpHandle.j = 0;
+    engine->vcpHandle.active = true;
+}
+
+void RKPositionSteerEngineClearHole(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.inTheHoleCount = 0;
+    engine->vcpHandle.onDeckCount = 0;
+}
+
+void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *engine) {
+    engine->vcpHandle.onDeckCount = 0;
+}
+
+void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
+    memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
+    V->sweepCount = V->onDeckCount;
+    V->onDeckCount = V->inTheHoleCount;
+    V->i = 0;
+    V->j = 0;
+    V->active = true;
+}
+
+void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanRepeat repeat) {
+    engine->vcpHandle.progress = RKScanProgressNone;
+    if (repeat == RKScanRepeatForever) {
+        engine->vcpHandle.option |= RKScanOptionRepeat;
+    }
+    engine->vcpHandle.i = 0;
+    engine->vcpHandle.j = 0;
+    engine->vcpHandle.active = true;
+}
+
+int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    if (V->inTheHoleCount < RKMaximumScanCount - 1) {
+        V->inTheHoleScans[V->inTheHoleCount++] = scan;
+        V->onDeckScans[V->onDeckCount++] = scan;
+    } else {
+        RKLog("%s Error. Cannot add more scans.  V->inTheHoleCount = %d\n", engine->name, V->inTheHoleCount);
+        return RKResultTooBig;
+    }
+    return RKResultSuccess;
+}
+
+int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    if (V->onDeckCount < RKMaximumScanCount - 1) {
+        V->onDeckScans[V->onDeckCount++] = scan;
+    } else {
+        RKLog("%s Error. Cannot add more scans.  V->inTheHoleCount = %d\n", engine->name, V->inTheHoleCount);
+        return RKResultTooBig;
+    }
+    return RKResultSuccess;
 }
 
 #pragma mark - Delegate Workers
@@ -272,54 +255,6 @@ int RKPositionSteerEngineStop(RKPositionSteerEngine *engine) {
     return RKResultSuccess;
 }
 
-char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *engine) {
-    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
-}
-
-void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *engine) {
-    engine->vcpHandle.active = false;
-}
-
-void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *engine) {
-    engine->vcpHandle.progress = RKScanProgressNone;
-    engine->vcpHandle.sweepCount = 0;
-    engine->vcpHandle.onDeckCount = 0;
-    engine->vcpHandle.inTheHoleCount = 0;
-    engine->vcpHandle.i = 0;
-    engine->vcpHandle.j = 0;
-    engine->vcpHandle.active = true;
-}
-
-void RKPositionSteerEngineClearHole(RKPositionSteerEngine *engine) {
-    engine->vcpHandle.inTheHoleCount = 0;
-    engine->vcpHandle.onDeckCount = 0;
-}
-
-void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *engine) {
-    engine->vcpHandle.onDeckCount = 0;
-}
-
-void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanRepeat repeat) {
-    engine->vcpHandle.progress = RKScanProgressNone;
-    if (repeat == RKScanRepeatForever) {
-        engine->vcpHandle.option |= RKScanOptionRepeat;
-    }
-    engine->vcpHandle.i = 0;
-    engine->vcpHandle.j = 0;
-    engine->vcpHandle.active = true;
-}
-
-void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
-    memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
-    memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
-    V->sweepCount = V->onDeckCount;
-    V->onDeckCount = V->inTheHoleCount;
-    V->i = 0;
-    V->j = 0;
-    V->active = true;
-}
-
 void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKPosition *position) {
     RKPedestalVcpHandle *V = &engine->vcpHandle;
     if (V->active) {
@@ -377,157 +312,9 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
     }
 }
 
-int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
-    if (V->inTheHoleCount < RKMaximumScanCount - 1) {
-        V->inTheHoleScans[V->inTheHoleCount++] = scan;
-        V->onDeckScans[V->onDeckCount++] = scan;
-    } else {
-        RKLog("%s Error. Cannot add more scans.  V->inTheHoleCount = %d\n", engine->name, V->inTheHoleCount);
-        return RKResultTooBig;
-    }
-    return RKResultSuccess;
-}
-
-//
-//int pedestalVcpAddPinchSweep(RKPedestalVcpHandle *V, RKPedestalVcpSweepHandle sweep) {
-//    if (V->onDeckCount < RKPedestalVcpMaxSweeps - 1) {
-//        V->onDeckSweeps[V->onDeckCount++] = sweep;
-//    } else {
-//        fprintf(stderr, "Cannot add more tilts. Currently %d.\n", V->onDeckCount);
-//        return 1;
-//    }
-//    return 0;
-//}
-
-int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
-    if (V->onDeckCount < RKMaximumScanCount - 1) {
-        V->onDeckScans[V->onDeckCount++] = scan;
-    } else {
-        RKLog("%s Error. Cannot add more scans.  V->inTheHoleCount = %d\n", engine->name, V->inTheHoleCount);
-        return RKResultTooBig;
-    }
-    return RKResultSuccess;
-}
-
-int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char *command, char *response) {
-    // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
-    char args[4][256] = {"", "", "", ""};
-    const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
-
-    bool immediatelyDo = false;
-    bool onlyOnce = false;
-
-    float azimuthStart, azimuthEnd, azimuthMark, elevationStart, elevationEnd, rate;
-
-    RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
-
-    if (response == NULL) {
-        response = (char *)engine->response;
-    }
-
-    if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
-        if (n < 1) {
-            sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
-            printf("%s", response);
-            return RKResultIncompleteScanDescription;
-        }
-
-        char *elevations = args[0];
-        char *azimuth = args[1];
-        const char comma[] = ",";
-
-        if (!engine->vcpHandle.active) {
-            immediatelyDo = true;
-        }
-
-        if (!strncmp("pp", command, 2)) {
-            RKPositionSteerEngineClearHole(engine);
-        } else if (!strncmp("ipp", command, 3)) {
-            RKPositionSteerEngineClearSweeps(engine);
-            immediatelyDo = true;
-        } else if (!strncmp("opp", command, 3)) {
-            RKPositionSteerEngineClearDeck(engine);
-            onlyOnce = true;
-        }
-
-        if (n == 1) {
-            azimuthStart = 0.0f;
-            azimuthEnd = 0.0f;
-        }
-        if (n > 1) {
-            azimuthStart = atof(azimuth);
-        } else {
-            azimuthEnd = 0.0f;
-        }
-        azimuthMark = azimuthEnd;
-        if (n > 2) {
-            rate = atof(args[2]);
-        } else {
-            rate = RKDefaultScanSpeed;
-        }
-
-        char *token = strtok(elevations, comma);
-
-        int k = 0;
-        bool everythingOkay = true;
-        while (token != NULL && k++ < 50) {
-            int m = sscanf(token, "%f", &elevationStart);
-            if (m == 0) {
-                everythingOkay = false;
-                break;
-            }
-            elevationEnd = elevationStart;
-            azimuthEnd = azimuthStart;
-
-            RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPIAzimuthStep, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
-
-            if (onlyOnce) {
-                RKPositionSteerEngineAddPinchSweep(engine, scan);
-            } else{
-                RKPositionSteerEngineAddLineupSweep(engine, scan);
-            }
-            token = strtok(NULL, comma);
-        }
-
-        if (everythingOkay) {
-            if (immediatelyDo) {
-                RKPositionSteerEngineNextHitter(engine);
-            }
-            RKPositionSteerEngineScanSummary(engine, response);
-            sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-            printf("%s", response);
-        } else {
-            printf("NAK. Some error occurred." RKEOL);
-        }
-    }
-
-    return RKResultSuccess;
-}
-
-RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode mode,
-                                             const float elevationStart, const float elevationEnd,
-                                             const float azimuthStart, const float azimuthEnd, const float azimuthMark,
-                                             const float rate) {
-    RKScanPath sweep = {
-        .mode = mode,
-        .azimuthStart   = azimuthStart,
-        .azimuthEnd     = azimuthEnd,
-        .azimuthMark    = azimuthMark,
-        .azimuthSlew    = rate,
-        .elevationStart = elevationStart,
-        .elevationEnd   = elevationEnd,
-        .elevationSlew  = rate
-    };
-    return sweep;
-}
-
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
     float diff_el;
     float diff_az;
-    float diff_vel_el;
-    float diff_vel_az;
     float umin_diff_el;
     float umin_diff_az;
     float umin_diff_vel_el;
@@ -687,12 +474,19 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
                     printf("Lock elevation axis.  param[1] = %.2f\n", action->param[1]);
                     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     V->counterTargetAzimuth = 0;
+                    V->progress = RKScanProgressMiddle;
+                    V->tic = 0;
                 } else {
                     //pedestalElevationPoint(engine, V->targetElevation, V->batterScans[V->i].azimuthSlew);
                     //action = pedestalElevationPointNudge(engine, V->targetElevation, V->batterScans[V->i].azimuthSlew);
                     //
                     //  Replace with returning actions... I think we need additional states
                     //
+                    if (V->tic > RKPedestalActionPeriod) {
+                        action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                        action->param[0] = pedestalGetRate(diff_el, RKPedestalAxisElevation);
+                        V->tic = 0;
+                    }
                 }
                 break;
             case RKScanModeRHI:
@@ -708,6 +502,16 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
                     //
                     //  Replace with returning actions... I think we need additional states
                     //
+                    // if (V->tic > RKPedestalActionPeriod) {
+                    //     action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                    //     action->mode[0] = pedestalGetRate(diff_el, RKPedestalAxisElevation);
+                    //     action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    //     action->mode[1] = pedestalGetRate(diff_az, RKPedestalAxisAzimuth);
+                    //     V->tic = 0;
+                    // }
+                } else {
+                    // V->progress = RKScanProgressMiddle;
+                    // V->tic = 0;
                 }
                 V->targetElevation = V->batterScans[V->i].elevationEnd - V->batterScans[V->i].elevationStart;
                 V->targetAzimuth = V->batterScans[V->i].azimuthStart;
@@ -1016,6 +820,118 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
     return action;
 }
 
+int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char *command, char *response) {
+    // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
+    char args[4][256] = {"", "", "", ""};
+    const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
+
+    bool immediatelyDo = false;
+    bool onlyOnce = false;
+
+    float azimuthStart, azimuthEnd, azimuthMark, elevationStart, elevationEnd, rate;
+
+    RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
+
+    if (response == NULL) {
+        response = (char *)engine->response;
+    }
+
+    if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
+        if (n < 1) {
+            sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
+            printf("%s", response);
+            return RKResultIncompleteScanDescription;
+        }
+
+        char *elevations = args[0];
+        char *azimuth = args[1];
+        const char comma[] = ",";
+
+        if (!engine->vcpHandle.active) {
+            immediatelyDo = true;
+        }
+
+        if (!strncmp("pp", command, 2)) {
+            RKPositionSteerEngineClearHole(engine);
+        } else if (!strncmp("ipp", command, 3)) {
+            RKPositionSteerEngineClearSweeps(engine);
+            immediatelyDo = true;
+        } else if (!strncmp("opp", command, 3)) {
+            RKPositionSteerEngineClearDeck(engine);
+            onlyOnce = true;
+        }
+
+        if (n == 1) {
+            azimuthStart = 0.0f;
+            azimuthEnd = 0.0f;
+        }
+        if (n > 1) {
+            azimuthStart = atof(azimuth);
+        } else {
+            azimuthEnd = 0.0f;
+        }
+        azimuthMark = azimuthEnd;
+        if (n > 2) {
+            rate = atof(args[2]);
+        } else {
+            rate = RKDefaultScanSpeed;
+        }
+
+        char *token = strtok(elevations, comma);
+
+        int k = 0;
+        bool everythingOkay = true;
+        while (token != NULL && k++ < 50) {
+            int m = sscanf(token, "%f", &elevationStart);
+            if (m == 0) {
+                everythingOkay = false;
+                break;
+            }
+            elevationEnd = elevationStart;
+            azimuthEnd = azimuthStart;
+
+            RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPIAzimuthStep, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
+
+            if (onlyOnce) {
+                RKPositionSteerEngineAddPinchSweep(engine, scan);
+            } else{
+                RKPositionSteerEngineAddLineupSweep(engine, scan);
+            }
+            token = strtok(NULL, comma);
+        }
+
+        if (everythingOkay) {
+            if (immediatelyDo) {
+                RKPositionSteerEngineNextHitter(engine);
+            }
+            RKPositionSteerEngineScanSummary(engine, response);
+            sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
+            printf("%s", response);
+        } else {
+            printf("NAK. Some error occurred." RKEOL);
+        }
+    }
+
+    return RKResultSuccess;
+}
+
+RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode mode,
+                                             const float elevationStart, const float elevationEnd,
+                                             const float azimuthStart, const float azimuthEnd, const float azimuthMark,
+                                             const float rate) {
+    RKScanPath sweep = {
+        .mode = mode,
+        .azimuthStart   = azimuthStart,
+        .azimuthEnd     = azimuthEnd,
+        .azimuthMark    = azimuthMark,
+        .azimuthSlew    = rate,
+        .elevationStart = elevationStart,
+        .elevationEnd   = elevationEnd,
+        .elevationSlew  = rate
+    };
+    return sweep;
+}
+
 static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKScanHitter linetag) {
     char prefix[8];
     switch (linetag){
@@ -1032,7 +948,7 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
             break;
     }
 
-    for (int i=0; i<count; i++) {
+    for (int i = 0; i < count; i++) {
         switch (scanPaths[i].mode) {
             case RKScanModePPI:
                 sprintf(string + strlen(string), "%s%d : PPI E%.2f @ %.2f deg/s",
@@ -1089,4 +1005,8 @@ void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *engine, char *strin
         makeSweepMessage(V->onDeckScans, string, V->onDeckCount, RKScanPinch);
     }
     makeSweepMessage(V->inTheHoleScans, string, V->inTheHoleCount, RKScanLine);
+}
+
+char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *engine) {
+    return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

@@ -154,17 +154,8 @@ void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *, const R
 int RKPositionSteerEngineStart(RKPositionSteerEngine *);
 int RKPositionSteerEngineStop(RKPositionSteerEngine *);
 
-void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *);
-void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
-void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
-void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
-void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
-void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
 void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *, RKPosition *);
-
-int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
-int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
 
 int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *, const char *, char *);
 
@@ -173,9 +164,8 @@ RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode,
                                              const float azimuthStart, const float azimuthEnd, const float azimuthMark,
                                              const float rate);
 
+void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *, char *);
 
 char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *);
-
-void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *, char *);
 
 #endif
