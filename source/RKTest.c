@@ -13,14 +13,14 @@
 #define RKSIMD_TEST_DESC_FORMAT             "%65s"
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
 #define RKSIMD_TEST_RESULT(clr, str, res)   clr ? \
-    printf(RKSIMD_TEST_DESC_FORMAT " : %s.\033[0m\n", str, res ? "\033[32msuccessful" : "\033[31mfailed") : \
+    printf(RKSIMD_TEST_DESC_FORMAT " : %s." RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") : \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
-#define OXSTR(x)                       x ? "\033[32mo\033[0m" : "\033[31mx\033[0m"
+#define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
 #define PEDESTAL_SAMPLING_TIME         0.01
 #define HEALTH_RELAY_SAMPLING_TIME     0.1
 
 #define TEST_RESULT(clr, str, res)   clr ? \
-printf("%s %s\033[0m\n", str, res ? "\033[32mokay" : "\033[31mtoo high") : \
+printf("%s %s" RKNoColor "\n", str, res ? RKGreenColor "okay" : RKRedColor "too high") : \
 printf("%s %s\n", str, res ? "okay" : "too high");
 
 #pragma mark - Static Functions
@@ -4003,15 +4003,8 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKRadar *radar = pedestal->radar;
     RKPositionSteerEngine *steeven = radar->positionSteerEngine;
 
-    int k;
     char cparams[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
-
-    bool skipNetResponse = true;
-    bool immediatelyDo = false;
-    bool onlyOnce = false;
-
-    float az_start, az_end, az_mark, el_start, el_end, rate;
 
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
         cparams[0], cparams[1], cparams[2], cparams[3]);
