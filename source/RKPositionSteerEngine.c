@@ -38,28 +38,29 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-float pedestalGetRate(const float diff_deg, RKPedestalAxis axis) {
+float pedestalGetRate(const float delta, RKPedestalAxis axis) {
     float rate = 0.0f;
+    float speed = fabsf(delta);
     if (axis == RKPedestalAxisAzimuth) {
-        if (diff_deg >= 20.0f) {
+        if (speed >= 20.0f) {
             rate = 30.0f;
-        } else if (diff_deg >= 10.0f) {
+        } else if (speed >= 10.0f) {
             rate = 20.0f;
-        } else if (diff_deg >= 5.0f) {
+        } else if (speed >= 5.0f) {
             rate = 10.0f;
-        } else if (diff_deg < 5.0f) {
+        } else if (speed < 5.0f) {
             rate = 3.0f;
         }
     } else if (axis == RKPedestalAxisElevation) {
-        if (diff_deg >= 20.0f) {
+        if (speed >= 20.0f) {
             rate = 15.0f;
-        } else if (diff_deg >= 7.0f) {
+        } else if (speed >= 7.0f) {
             rate = 10.0f;
-        } else if (diff_deg < 7.0f) {
+        } else if (speed < 7.0f) {
             rate = 3.0f;
         }
     }
-    return rate;
+    return delta < 0.0f ? -rate : rate;
 }
 
 //int pedestalElevationPoint(RKPositionSteerEngine *engine, const float el_point, const float rate_az){
@@ -120,40 +121,40 @@ float pedestalGetRate(const float diff_deg, RKPedestalAxis axis) {
 //    }
 //}
 
-RKPedestalAction pedestalElevationPointNudge(RKPositionSteerEngine *engine, const float el_point, const float rate_az) {
-    float umin_diff_el;
-    float min_diff_el;
-    float rate_el;
+// RKPedestalAction pedestalElevationPointNudge(RKPositionSteerEngine *engine, const float el_point, const float rate_az) {
+//     float umin_diff_el;
+//     float min_diff_el;
+//     float rate_el;
 
-    // RKPosition *pos = RKGetLatestPosition(me->radar);
-    uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-    RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
+//     // RKPosition *pos = RKGetLatestPosition(me->radar);
+//     uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
+//     RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
 
-    RKPedestalAction action;
-    action.mode[0] = RKPedestalInstructTypeNone;
-    action.mode[1] = RKPedestalInstructTypeNone;
-    action.param[0] = 0.0f;
-    action.param[1] = 0.0f;
-    action.sweepElevation = el_point;
-    action.sweepAzimuth = pos->azimuthDegrees;
-    umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-    if (umin_diff_el > RKPedestalPositionTolerance){
-        action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-        rate_el = pedestalGetRate(umin_diff_el, RKPedestalAxisElevation);
-        min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
-        if (min_diff_el >= 0.0f){
-            action.param[0] = rate_el;
-        }else{
-            action.param[0] = -rate_el;
-        }
-    } else{
-        action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-        action.param[0] = 0.0f;
-    }
-    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-    action.param[1] = rate_az;
-    return action;
-}
+//     RKPedestalAction action;
+//     action.mode[0] = RKPedestalInstructTypeNone;
+//     action.mode[1] = RKPedestalInstructTypeNone;
+//     action.param[0] = 0.0f;
+//     action.param[1] = 0.0f;
+//     action.sweepElevation = el_point;
+//     action.sweepAzimuth = pos->azimuthDegrees;
+//     umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
+//     if (umin_diff_el > RKPedestalPositionTolerance){
+//         action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+//         rate_el = pedestalGetRate(umin_diff_el, RKPedestalAxisElevation);
+//         min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
+//         if (min_diff_el >= 0.0f){
+//             action.param[0] = rate_el;
+//         }else{
+//             action.param[0] = -rate_el;
+//         }
+//     } else{
+//         action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+//         action.param[0] = 0.0f;
+//     }
+//     action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+//     action.param[1] = rate_az;
+//     return action;
+// }
 
 void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
     memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
@@ -173,6 +174,9 @@ static void *positionSteerer(void *_in) {
     int k;
 
     RKLog("%s Started.   mem = %s B   positionIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->positionIndex);
+
+    // Make vcpHandle seems like it has been forever since the last instruction
+    engine->vcpHandle.tic = 99999;
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
@@ -520,20 +524,21 @@ RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode mode,
 }
 
 RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
+    float diff_el;
+    float diff_az;
+    float diff_vel_el;
+    float diff_vel_az;
     float umin_diff_el;
     float umin_diff_az;
     float umin_diff_vel_el;
     float umin_diff_vel_az;
-
-    //RKPosition *pos = RKGetLatestPosition(me->radar);
-    // uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-    // RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
 
     RKPedestalAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKPedestalAction));
     engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
 
     RKPedestalVcpHandle *V = &engine->vcpHandle;
+    V->option |= RKScanOptionVerbose;
 
     if (V->sweepCount == 0 || V->active == false) {
         return action;
@@ -554,7 +559,14 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
         marker_diff_az += 360.0f;
     }
 
-    RKLog("%s progress = %d\n", engine->name, V->progress);
+    diff_el = RKMinDiff(V->batterScans[V->i].elevationStart, pos->elevationDegrees);
+    diff_az = RKMinDiff(V->batterScans[V->i].azimuthEnd, pos->azimuthDegrees);
+    umin_diff_el = diff_el < 0.0f ? -diff_el : diff_el;
+    umin_diff_az = diff_az < 0.0f ? -diff_az : diff_az;
+
+
+    RKLog("%s progress = %d   tic = %d   del %.2f |%.2f|   daz %.2f |%.2f|\n",
+        engine->name, V->progress, V->tic, diff_el, umin_diff_el, diff_az, umin_diff_az);
 
     if (V->progress == RKScanProgressNone) {
         // Clear the sweep start mark
@@ -565,35 +577,42 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
             case RKScanModeNewSector:
             case RKScanModeSpeedDown:
             case RKScanModeRHI:
+                V->progress = RKScanProgressSetup;
                 break;
             case RKScanModePPI:
             case RKScanModePPIAzimuthStep:
             case RKScanModePPIContinuous:
-                umin_diff_el = RKUMinDiff(V->batterScans[V->i].elevationStart, pos->elevationDegrees);
-                if (umin_diff_el > RKPedestalPositionTolerance){
+                if (umin_diff_el > RKPedestalPositionTolerance) {
                     //pedestalElevationPoint(engine, V->batterScans[V->i].elevationStart, V->batterScans[V->i].azimuthSlew);
                     //action = pedestalElevationPointNudge(engine, V->batterScans[V->i].elevationStart, V->batterScans[V->i].azimuthSlew);
                     //
                     //  Replace with returning actions... I think we need additional states
                     //
-                }else{
+                    if (V->tic > RKPedestalActionPeriod) {
+                        action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                        action->param[0] = pedestalGetRate(diff_el, RKPedestalAxisElevation);
+                        V->tic = 0;
+                    }
+                } else {
                     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->param[0] = 0.0f;
                     action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->param[1] = V->batterScans[V->i].azimuthSlew;
+                    V->progress = RKScanProgressSetup;
+                    V->tic = 0;
                 }
                 break;
             default:
                 break;
         }
         // Setup the start
-        V->progress = RKScanProgressSetup;
-        V->tic = 0;
+        //V->progress = RKScanProgressSetup;
+        // V->tic = 0;
 
     } else if (V->progress == RKScanProgressSetup) {
         // Compute the position difference from the target
-        umin_diff_el = RKUMinDiff(V->batterScans[V->i].elevationStart, pos->elevationDegrees);
-        umin_diff_az = RKUMinDiff(V->batterScans[V->i].azimuthStart, pos->azimuthDegrees);
+        // umin_diff_el = RKUMinDiff(V->batterScans[V->i].elevationStart, pos->elevationDegrees);
+        // umin_diff_az = RKUMinDiff(V->batterScans[V->i].azimuthStart, pos->azimuthDegrees);
         // Declare ready when certain conditions are met
         switch (V->batterScans[V->i].mode) {
             case RKScanModeNewSector:
@@ -1008,10 +1027,6 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
 
 //    action.sweepElevation = V->sweepMarkerElevation;
 //    action.sweepAzimuth = V->sweepAzimuth;
-
-    if (engine->verbose > 2) {
-        RKLog("%s action = %02x.%02x\n", engine->name, action->mode[0], action->mode[1]);
-    }
 
     return action;
 }

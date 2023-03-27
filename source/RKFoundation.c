@@ -2107,14 +2107,18 @@ char *RKPedestalActionString(const RKPedestalAction *action) {
     size_t length;
     *string = '\0';
     for (int i = 0; i < 2; i++) {
-        if (action->mode[i] != RKPedestalInstructTypeNone) {
+        if (RKInstructIsNone(action->mode[i])) {
+            if (i == 0) {
+                sprintf(string, "none");
+            }
+        } else {
             length = strlen(string);
             if (length) {
                 sprintf(string + length, "   ");
             }
             length = strlen(string); snprintf(string + length, 1024 - length, "%s",
                 RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
-            length = strlen(string); snprintf(string + length, 1024 - length, "%s",
+            length = strlen(string); snprintf(string + length, 1024 - length, " %s",
                 RKInstructIsPoint(action->mode[i])   ? "point"   : (
                 RKInstructIsSlew(action->mode[i])    ? "slew"    : (
                 RKInstructIsStandby(action->mode[i]) ? "standby" : (
@@ -2124,8 +2128,6 @@ char *RKPedestalActionString(const RKPedestalAction *action) {
             if (RKInstructIsPoint(action->mode[i]) || RKInstructIsSlew(action->mode[i])) {
                 length = strlen(string); snprintf(string + length, 1024 - length, " %.1f", action->param[i]);
             }
-        } else {
-            sprintf(string, "none");
         }
     }
     return (char *)string;

@@ -3787,7 +3787,7 @@ void *RKTestPedestalRunLoop(void *input) {
     bool scanStartEndPPI = false;
     bool scanStartRHI = false;
     bool scanEndRHI = false;
-    bool elTransition = false;
+    //bool elTransition = false;
 
     pedestal->state |= RKEngineStateWantActive;
     pedestal->state &= ~RKEngineStateActivating;
@@ -3836,8 +3836,12 @@ void *RKTestPedestalRunLoop(void *input) {
         // Get the latest action, could be no action
         RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven, position);
 
-        RKLog("%s E%.2f A%.2f action = '%s'\n", pedestal->name,
-            position->elevationCounter, position->azimuthDegrees, RKPedestalActionString(action));
+        RKLog("%s EL%5.2f @ %5.2f °/s   AZ%5.2f @ %5.2f °/s    action = '%s%s%s'\n", pedestal->name,
+            position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
+            position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
+            RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
+            RKPedestalActionString(action),
+            RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
 
         // Translate action into string command. This is only necessary in RKTestPedestal. Pedzy can natively ingest RKPedestalAction
         char axis = 'e';
@@ -3845,7 +3849,7 @@ void *RKTestPedestalRunLoop(void *input) {
         for (k = 0; k < 2; k++) {
             RKPedestalInstructType instruct = action->mode[k];
             float value = action->param[k];
-            if (instruct == 0) {
+            if (RKInstructIsNone(instruct)) {
                 continue;
             }
             if (RKInstructIsElevation(instruct)) {
@@ -3854,13 +3858,12 @@ void *RKTestPedestalRunLoop(void *input) {
                 axis = 'a';
             }
             if (RKInstructIsSlew(instruct)) {
-                sprintf(string, "%cslew %.2f" RKEOL, axis, value);
+                sprintf(string, "%cslew %.1f", axis, value);
             } else if (RKInstructIsPoint(instruct)) {
-                sprintf(string, "%cpoint %.2f" RKEOL, axis, value);
+                sprintf(string, "%cpoint %.1f", axis, value);
             } else if (RKInstructIsStandby(instruct)) {
-                sprintf(string, "%cstop" RKEOL, axis);
+                sprintf(string, "%cstop", axis);
             }
-            RKLog("%s Pedestal command = '%s'\n", pedestal->name, string);
             RKTestPedestalExec(pedestal, string, response);
         }
 
@@ -3915,50 +3918,52 @@ void *RKTestPedestalRunLoop(void *input) {
         }
 
         // Posiiton change
-        if (pedestal->scanMode == RKTestPedestalScanModePPI) {
-            azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
-            if (azimuth >= 360.0f) {
-                azimuth -= 360.0f;
-            } else if (azimuth < 0.0f) {
-                azimuth += 360.0f;
-            }
-            // Transition over 0 degree
-            if (pedestal->speedAzimuth > 0.0f && azimuth < 5.0f && position->azimuthDegrees > 355.0f) {
-                scanStartEndPPI = true;
-            } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
-                scanStartEndPPI = true;
-            }
-            if (scanStartEndPPI &&
-                azimuth > pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME &&
-                azimuth < 360.0f - pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME) {
-                fprintf(stderr, "Unexpected. azimuth = %.2f   position->azimuthDegrees = %.2f   speed = %.2f\n",
-                        azimuth, position->azimuthDegrees, pedestal->speedAzimuth);
-            }
-        } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
-            if (elTransition) {
-                elevation -= 2.0f * pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
-            } else {
-                elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
-            }
-            if (elevation > 180.0f) {
-                elevation -= 360.0f;
-            } else if (elevation < -180.0f) {
-                elevation += 360.0f;
-            }
-            if (pedestal->speedElevation > 0.0f) {
-                if (elevation > pedestal->rhiElevationEnd) {
-                    scanEndRHI = true;
-                    elTransition = true;
-                    position->flag &= ~RKPositionFlagScanActive;
-                } else if (elevation < pedestal->rhiElevationStart) {
-                    scanStartRHI = true;
-                    elTransition = false;
-                    position->flag |= RKPositionFlagScanActive;
-                }
-            }
-        } else if (pedestal->scanMode == RKTestPedestalScanModeBadPedestal) {
-            azimuth = (float)rand() * 360.0f / RAND_MAX;
-        }
+        azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
+        elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+        // if (pedestal->scanMode == RKTestPedestalScanModePPI) {
+        //     azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
+        //     if (azimuth >= 360.0f) {
+        //         azimuth -= 360.0f;
+        //     } else if (azimuth < 0.0f) {
+        //         azimuth += 360.0f;
+        //     }
+        //     // Transition over 0 degree
+        //     if (pedestal->speedAzimuth > 0.0f && azimuth < 5.0f && position->azimuthDegrees > 355.0f) {
+        //         scanStartEndPPI = true;
+        //     } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
+        //         scanStartEndPPI = true;
+        //     }
+        //     if (scanStartEndPPI &&
+        //         azimuth > pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME &&
+        //         azimuth < 360.0f - pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME) {
+        //         fprintf(stderr, "Unexpected. azimuth = %.2f   position->azimuthDegrees = %.2f   speed = %.2f\n",
+        //                 azimuth, position->azimuthDegrees, pedestal->speedAzimuth);
+        //     }
+        // } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
+        //     if (elTransition) {
+        //         elevation -= 2.0f * pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+        //     } else {
+        //         elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+        //     }
+        //     if (elevation > 180.0f) {
+        //         elevation -= 360.0f;
+        //     } else if (elevation < -180.0f) {
+        //         elevation += 360.0f;
+        //     }
+        //     if (pedestal->speedElevation > 0.0f) {
+        //         if (elevation > pedestal->rhiElevationEnd) {
+        //             scanEndRHI = true;
+        //             elTransition = true;
+        //             position->flag &= ~RKPositionFlagScanActive;
+        //         } else if (elevation < pedestal->rhiElevationStart) {
+        //             scanStartRHI = true;
+        //             elTransition = false;
+        //             position->flag |= RKPositionFlagScanActive;
+        //         }
+        //     }
+        // } else if (pedestal->scanMode == RKTestPedestalScanModeBadPedestal) {
+        //     azimuth = (float)rand() * 360.0f / RAND_MAX;
+        // }
 
         // Wait to simulate sampling time
         do {
@@ -3966,6 +3971,19 @@ void *RKTestPedestalRunLoop(void *input) {
             dt = RKTimevalDiff(t0, t1);
             usleep(1000);
         } while (pedestal->state & RKEngineStateWantActive && dt < PEDESTAL_SAMPLING_TIME);
+
+        // Update speed
+        if (fabs(pedestal->speedTargetAzimuth) > 5.0f) {
+            pedestal->speedAzimuth = 0.5f * pedestal->speedTargetAzimuth + 0.5f * pedestal->speedAzimuth;
+        } else {
+            pedestal->speedAzimuth = 0.8f * pedestal->speedTargetAzimuth + 0.2f * pedestal->speedAzimuth;
+        }
+        if (fabs(pedestal->speedTargetElevation) > 5.0f) {
+            pedestal->speedElevation = 0.5f * pedestal->speedTargetElevation + 0.5f * pedestal->speedElevation;
+        } else {
+            pedestal->speedElevation = 0.8f * pedestal->speedTargetElevation + 0.2f * pedestal->speedElevation;
+        }
+
         t1 = t0;
     }
 
@@ -4050,6 +4068,16 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         if (response != NULL) {
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
+    } else if (!strncmp(command, "astop", 5)) {
+        pedestal->speedTargetElevation = 0.0f;
+        if (response != NULL) {
+            sprintf(response, "ACK. Azimuth stopped." RKEOL);
+        }
+    } else if (!strncmp(command, "estop", 5)) {
+        pedestal->speedTargetElevation = 0.0f;
+        if (response != NULL) {
+            sprintf(response, "ACK. Elevation stopped." RKEOL);
+        }
     } else if (!strncmp(command, "ppi", 3)) {
         if (n == 2) {
             pedestal->scanMode = RKTestPedestalScanModePPI;
@@ -4058,7 +4086,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
             pedestal->speedAzimuth = atof(cparams[1]);
         }
         if (response != NULL) {
-            sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f deg/sec" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
+            sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f °/s" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "rhi", 3)) {
         if (n == 3) {
@@ -4079,14 +4107,14 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
-        pedestal->speedAzimuth = atof(cparams[0]);
+        pedestal->speedTargetAzimuth = atof(cparams[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "eslew", 5)) {
-        pedestal->speedElevation = atof(cparams[0]);
+        pedestal->speedTargetElevation = atof(cparams[0]);
         if (response != NULL) {
-            sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedElevation);
+            sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->speedElevation);
         }
     } else if (!strncmp("pp", command, 2)
         || !strncmp("ipp", command, 3)
