@@ -419,6 +419,10 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
 
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
 
+    if (response == NULL) {
+        response = (char *)engine->response;
+    }
+
     if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
         if (n < 1) {
             sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
@@ -515,15 +519,15 @@ RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode mode,
     return sweep;
 }
 
-RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) {
+RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
     float umin_diff_el;
     float umin_diff_az;
     float umin_diff_vel_el;
     float umin_diff_vel_az;
 
     //RKPosition *pos = RKGetLatestPosition(me->radar);
-    uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
-    RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
+    // uint32_t latestPositionIndex = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
+    // RKPosition *pos = &engine->positionBuffer[latestPositionIndex];
 
     RKPedestalAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKPedestalAction));
@@ -549,6 +553,8 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine) 
     if (marker_diff_az < 0.0f) {
         marker_diff_az += 360.0f;
     }
+
+    RKLog("%s progress = %d\n", engine->name, V->progress);
 
     if (V->progress == RKScanProgressNone) {
         // Clear the sweep start mark
@@ -1083,9 +1089,4 @@ void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *engine, char *strin
         makeSweepMessage(V->onDeckScans, string, V->onDeckCount, RKScanPinch);
     }
     makeSweepMessage(V->inTheHoleScans, string, V->inTheHoleCount, RKScanLine);
-        printf("================================================\n"
-               "VCP Summary:\n"
-               "------------\n"
-               "%s"
-               "================================================\n", string);
 }

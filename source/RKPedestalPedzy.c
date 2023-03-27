@@ -71,7 +71,8 @@ static int RKPedestalPedzyRead(RKClient *client) {
 
         // Get the latest action, could be null
         // Same here, add one to the RKRadar layer?
-        RKPedestalAction *action = RKPositionSteerEngineGetAction(steerEngine);
+        RKPedestalAction *action = RKPositionSteerEngineGetAction(steerEngine, newPosition);
+
         char axis = 'e';
         char string[64];
         for (int k = 0; k < 2; k++) {
@@ -80,16 +81,16 @@ static int RKPedestalPedzyRead(RKClient *client) {
             if (instruct == 0) {
                 continue;
             }
-            if (InstructIsElevation(instruct)) {
+            if (RKInstructIsElevation(instruct)) {
                 axis = 'e';
             } else {
                 axis = 'a';
             }
-            if (InstructIsSlew(instruct)) {
+            if (RKInstructIsSlew(instruct)) {
                 sprintf(string, "%cslew %.2f" RKEOL, axis, value);
-            } else if (InstructIsPoint(instruct)) {
+            } else if (RKInstructIsPoint(instruct)) {
                 sprintf(string, "%cpoint %.2f" RKEOL, axis, value);
-            } else if (InstructIsStandby(instruct)) {
+            } else if (RKInstructIsStandby(instruct)) {
                 sprintf(string, "%cstop" RKEOL, axis);
             }
             printf("string = '%s'\n", string);
@@ -175,12 +176,12 @@ static int RKPedestalPedzyGreet(RKClient *client) {
 //                    for (i = 0; i < 2; i++) {
 //                        if (action.mode[i] != RKPedestalInstructTypeNone) {
 //                            RKLog("action.mode[%d] %s%s%s%s%s%s %.2f\n", i,
-//                               InstructIsAzimuth(action.mode[i]) ? "AZ"       : "EL",
-//                               InstructIsPoint(action.mode[i])   ? " point"   : "",
-//                               InstructIsSlew(action.mode[i])    ? " slew"    : "",
-//                               InstructIsStandby(action.mode[i]) ? " standby" : "",
-//                               InstructIsEnable(action.mode[i])  ? " enable"  : "",
-//                               InstructIsDisable(action.mode[i]) ? " disable" : "",
+//                               RKInstructIsAzimuth(action.mode[i]) ? "AZ"       : "EL",
+//                               RKInstructIsPoint(action.mode[i])   ? " point"   : "",
+//                               RKInstructIsSlew(action.mode[i])    ? " slew"    : "",
+//                               RKInstructIsStandby(action.mode[i]) ? " standby" : "",
+//                               RKInstructIsEnable(action.mode[i])  ? " enable"  : "",
+//                               RKInstructIsDisable(action.mode[i]) ? " disable" : "",
 //                               action.param[i]);
 //                        }
 //                    }

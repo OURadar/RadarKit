@@ -53,9 +53,6 @@ typedef struct rk_test_transceiver {
     unsigned int   waveformCacheIndex;
 	RKCommand      customCommand;
     pthread_t      tidRunLoop;
-    RKEngineState  state;
-    RKRadar        *radar;
-    size_t         memoryUsage;
     bool           simFault;
     bool           transmitting;
     int            chunkSize;
@@ -66,6 +63,9 @@ typedef struct rk_test_transceiver {
     char           playbackFolder[RKMaximumFolderPathLength];
     RKFileHeader   fileHeaderCache;
     RKPulseHeader  pulseHeaderCache;
+    RKEngineState  state;
+    RKRadar        *radar;
+    size_t         memoryUsage;
     RKByte         dump[1024 * 1024];
 } RKTestTransceiver;
 
@@ -85,6 +85,7 @@ typedef struct rk_test_pedestal {
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
+    RKByte         dump[1024 * 1024];
 } RKTestPedestal;
 
 typedef struct rk_test_health_relay {
@@ -95,6 +96,7 @@ typedef struct rk_test_health_relay {
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
+    RKByte         dump[1024 * 1024];
 } RKTestHealthRelay;
 
 #pragma mark - Test By Number

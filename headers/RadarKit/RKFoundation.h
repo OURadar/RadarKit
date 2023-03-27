@@ -64,6 +64,15 @@
 
 #define RKSingleWrapTo2PI(x)   ((x) < -M_PI ? ((x) + 2.0f * M_PI) : ((x) >= M_PI ? ((x) - 2.0f * M_PI) : (x)))
 
+#define RKInstructIsAzimuth(i)     ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisAzimuth)
+#define RKInstructIsElevation(i)   ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisElevation)
+#define RKInstructIsTest(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeTest)
+#define RKInstructIsSlew(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeSlew)
+#define RKInstructIsPoint(i)       ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModePoint)
+#define RKInstructIsStandby(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeStandby)
+#define RKInstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
+#define RKInstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
+
 typedef struct RKGlobalParameterStruct {
     char             program[32];                                // Name of the program in log
     char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
@@ -178,5 +187,8 @@ RKCommandQueue *RKCommandQueueInit(const uint8_t, const bool);
 RKCommand *RKCommandQueuePop(RKCommandQueue *);
 int RKCommandQueuePush(RKCommandQueue *, RKCommand *);
 int RKCommandQueueFree(RKCommandQueue *);
+
+// RKPedestalActionString
+char *RKPedestalActionString(const RKPedestalAction *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

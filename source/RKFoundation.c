@@ -2101,3 +2101,32 @@ int RKCommandQueueFree(RKCommandQueue *queue) {
     free(queue);
     return RKResultSuccess;
 }
+
+char *RKPedestalActionString(const RKPedestalAction *action) {
+    static char string[1024];
+    size_t length;
+    *string = '\0';
+    for (int i = 0; i < 2; i++) {
+        if (action->mode[i] != RKPedestalInstructTypeNone) {
+            length = strlen(string);
+            if (length) {
+                sprintf(string + length, "   ");
+            }
+            length = strlen(string); snprintf(string + length, 1024 - length, "%s",
+                RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
+            length = strlen(string); snprintf(string + length, 1024 - length, "%s",
+                RKInstructIsPoint(action->mode[i])   ? "point"   : (
+                RKInstructIsSlew(action->mode[i])    ? "slew"    : (
+                RKInstructIsStandby(action->mode[i]) ? "standby" : (
+                RKInstructIsEnable(action->mode[i])  ? "enable"  : (
+                RKInstructIsDisable(action->mode[i]) ? "disable" : ""
+                )))));
+            if (RKInstructIsPoint(action->mode[i]) || RKInstructIsSlew(action->mode[i])) {
+                length = strlen(string); snprintf(string + length, 1024 - length, " %.1f", action->param[i]);
+            }
+        } else {
+            sprintf(string, "none");
+        }
+    }
+    return (char *)string;
+}

@@ -16,8 +16,8 @@
     printf(RKSIMD_TEST_DESC_FORMAT " : %s." RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") : \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
 #define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
-#define PEDESTAL_SAMPLING_TIME         0.01
-#define HEALTH_RELAY_SAMPLING_TIME     0.1
+#define PEDESTAL_SAMPLING_TIME         0.1
+#define HEALTH_RELAY_SAMPLING_TIME     0.2
 
 #define TEST_RESULT(clr, str, res)   clr ? \
 printf("%s %s" RKNoColor "\n", str, res ? RKGreenColor "okay" : RKRedColor "too high") : \
@@ -3834,7 +3834,12 @@ void *RKTestPedestalRunLoop(void *input) {
         RKPositionSteerEngineUpdatePositionFlags(steeven, position);
 
         // Get the latest action, could be no action
-        RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven);
+        RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven, position);
+
+        RKLog("%s E%.2f A%.2f action = '%s'\n", pedestal->name,
+            position->elevationCounter, position->azimuthDegrees, RKPedestalActionString(action));
+
+        // Translate action into string command. This is only necessary in RKTestPedestal. Pedzy can natively ingest RKPedestalAction
         char axis = 'e';
         char string[64];
         for (k = 0; k < 2; k++) {
@@ -3843,19 +3848,19 @@ void *RKTestPedestalRunLoop(void *input) {
             if (instruct == 0) {
                 continue;
             }
-            if (InstructIsElevation(instruct)) {
+            if (RKInstructIsElevation(instruct)) {
                 axis = 'e';
             } else {
                 axis = 'a';
             }
-            if (InstructIsSlew(instruct)) {
+            if (RKInstructIsSlew(instruct)) {
                 sprintf(string, "%cslew %.2f" RKEOL, axis, value);
-            } else if (InstructIsPoint(instruct)) {
+            } else if (RKInstructIsPoint(instruct)) {
                 sprintf(string, "%cpoint %.2f" RKEOL, axis, value);
-            } else if (InstructIsStandby(instruct)) {
+            } else if (RKInstructIsStandby(instruct)) {
                 sprintf(string, "%cstop" RKEOL, axis);
             }
-            printf("string = '%s'\n", string);
+            RKLog("%s Pedestal command = '%s'\n", pedestal->name, string);
             RKTestPedestalExec(pedestal, string, response);
         }
 
@@ -3998,7 +4003,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     return (RKPedestal)pedestal;
 }
 
-int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *response) {
+int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _Nullable *response) {
     RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
     RKRadar *radar = pedestal->radar;
     RKPositionSteerEngine *steeven = radar->positionSteerEngine;
@@ -4091,8 +4096,12 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         || !strncmp("orr", command, 3)) {
         RKPositionSteerEngineExecuteString(steeven, command, response);
     } else if (!strncmp(command, "summ", 4)) {
-        RKPositionSteerEngineScanSummary(steeven, response);
-        sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
+        if (response != NULL) {
+            RKPositionSteerEngineScanSummary(steeven, response);
+            sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
+        } else {
+            RKLog("%s Unable to relay summary\n", pedestal->name);
+        }
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"

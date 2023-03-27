@@ -20,15 +20,6 @@
 #define RKPedestalVelocityTolerance    1.0f
 #define RKPedestalPointTimeOut         1500
 
-#define InstructIsAzimuth(i)     ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisAzimuth)
-#define InstructIsElevation(i)   ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisElevation)
-#define InstructIsTest(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeTest)
-#define InstructIsSlew(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeSlew)
-#define InstructIsPoint(i)       ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModePoint)
-#define InstructIsStandby(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeStandby)
-#define InstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
-#define InstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
-
 typedef bool RKScanRepeat;
 enum RKScanRepeat {
     RKScanRepeatNone                             = false,
@@ -140,6 +131,7 @@ struct rk_position_steer_engine {
     struct timeval         statusTriggerTime;
     RKPedestalAction       actions[RKPedestalActionBufferDepth];
     int                    actionIndex;
+    RKByte                 response[RKMaximumStringLength];
 
     // Status / health
     size_t                 memoryUsage;
@@ -168,6 +160,7 @@ void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
 void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
 void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
 void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
+RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *, RKPosition *);
 
 int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
 int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
@@ -179,7 +172,6 @@ RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode,
                                              const float azimuthStart, const float azimuthEnd, const float azimuthMark,
                                              const float rate);
 
-RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *);
 
 char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *);
 

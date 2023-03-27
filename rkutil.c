@@ -991,13 +991,14 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
-        if (systemPreferences->prf <= 20.0f) {
-            RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
-        } else if (systemPreferences->prf <= 100.0f) {
-            RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
-        } else {
-            RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
-        }
+        // if (systemPreferences->prf <= 20.0f) {
+        //     RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
+        // } else if (systemPreferences->prf <= 100.0f) {
+        //     RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
+        // } else {
+        //     RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
+        // }
+        RKExecuteCommand(myRadar, "p pp 2,4,6 0 18", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
