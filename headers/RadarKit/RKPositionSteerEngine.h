@@ -105,7 +105,7 @@ typedef struct rk_scan_state {
     float                       sweepMarkerElevation;                          // Elevation marker
     float                       sweepElevation;                                // Elevation control
     float                       sweepAzimuth;                                  // Azimuth control
-    int                         progress;                                      //
+    RKScanProgress              progress;                                      //
     RKPedestalAction            lastAction;                                    // store last action
 } RKPedestalVcpHandle;
 

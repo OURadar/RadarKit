@@ -44,6 +44,8 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
         sprintf(string, "-- [ VCP inactive ] --\n");
     }
 
+    // printf("%s\n", string);
+
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
@@ -277,12 +279,10 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
             case RKScanModePPIContinuous:
                 position->flag |= RKPositionFlagAzimuthSweep;
                 position->flag |= RKPositionFlagElevationPoint;
-                //pos->flag &= ~POSITION_FLAG_EL_SWEEP;
                 break;
             case RKScanModeRHI:
                 position->flag |= RKPositionFlagAzimuthPoint;
                 position->flag |= RKPositionFlagElevationSweep;
-                //pos->flag &= ~POSITION_FLAG_AZ_SWEEP;
                 break;
             default:
                 position->flag |= RKPositionFlagAzimuthPoint | RKPositionFlagElevationPoint;
@@ -306,6 +306,8 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
                     break;
             }
         }
+        position->sweepElevationDegrees = V->sweepElevation;
+        position->sweepAzimuthDegrees = V->sweepAzimuth;
     } else {
         engine->vcpIndex = 0;
         engine->vcpSweepCount = 0;
@@ -698,7 +700,8 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
                 g = target_diff_az - V->targetDiffAzimuthPrevious;
                 if (V->counterTargetAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
                     if (V->option & RKScanOptionVerbose) {
-                        RKLog("Warning. Target cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterScans[V->i].azimuthEnd, pos->azimuthDegrees, V->targetDiffAzimuthPrevious, target_diff_az);
+                        RKLog("%s Target cross over for AZ %.2f detected @ %.2f.  %.2f %.2f\n", engine->name,
+                            V->batterScans[V->i].azimuthEnd, pos->azimuthDegrees, V->targetDiffAzimuthPrevious, target_diff_az);
                     }
                     V->progress |= RKScanProgressEnd;
                     V->counterTargetAzimuth = 0;
@@ -706,7 +709,8 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
                 g = marker_diff_az - V->markerDiffAzimuthPrevious;
                 if (V->counterMarkerAzimuth > 180.0f && (g < -350.0f || g > 350.0f)) {
                     if (V->option & RKScanOptionVerbose) {
-                        RKLog("Warning. Marker cross over for %.2f detected @ %.2f.  %.2f %.2f\n", V->batterScans[V->i].azimuthMark, pos->azimuthDegrees, V->markerDiffAzimuthPrevious, marker_diff_az);
+                        RKLog("%s Marker cross over for AZ %.2f detected @ %.2f.  %.2f %.2f\n",engine->name,
+                            V->batterScans[V->i].azimuthMark, pos->azimuthDegrees, V->markerDiffAzimuthPrevious, marker_diff_az);
                     }
                     V->progress |= RKScanProgressMarker;
                     V->counterMarkerAzimuth = 0;
@@ -799,11 +803,18 @@ RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, 
         //printf("wait for pedestal to slow down\n");
     } // if (V->progress == ...)
 
-    RKLog("%s prog 0x%02x   tic = %3d   EL %5.2f @ %5.2f °/s (%.2f, %.1f)   AZ %5.2f @ %5.2f °/s (%.2f, %.1f)   M%d   action = '%s%s%s'\n",
-        engine->name, V->progress, V->tic,
+    RKLog("%s %s%s%s%s  T%3d  EL %.2f / %.2f @ %5.1f °/s (%.2f, %.1f)   AZ%7.2f @ %5.2f °/s (%.2f, %.1f)  M%d %s '%s%s%s'\n",
+        engine->name,
+        V->progress & RKScanProgressMarker ? "M" : ".",
+        V->progress & RKScanProgressSetup  ? "s" : ".",
+        V->progress & RKScanProgressMiddle ? "m" : ".",
+        V->progress & RKScanProgressEnd ?    "e" : ".",
+        V->tic,
+        pos->sweepElevationDegrees,
         pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond, diff_el, V->counterTargetElevation,
         pos->azimuthDegrees, pos->azimuthVelocityDegreesPerSecond, diff_az, V->counterTargetAzimuth,
         V->batterScans[V->i].mode,
+        pos->flag & RKPositionFlagAzimuthComplete ? "C" : "",
         RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
         RKPedestalActionString(action),
         RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
