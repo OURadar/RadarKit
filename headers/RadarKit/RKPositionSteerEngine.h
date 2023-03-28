@@ -37,7 +37,7 @@ typedef int RKScanProgress;
 enum RKScanProgress {
     RKScanProgressNone                           = 0,                          // Not active, ready for next sweep
     RKScanProgressSetup                          = 1,                          // Getting ready
-    RKScanProgressReady                          = 1 << 1,                     // Ready for the next sweep
+    RKScanProgressReady                          = 1 << 1,                     // Ready for the next sweep (deprecating)
     RKScanProgressMiddle                         = 1 << 2,                     // Middle of a sweep
     RKScanProgressEnd                            = 1 << 3,                     // End of a sweep, waiting for pedestal to stop / reposition
     RKScanProgressMarker                         = 1 << 7                      // Sweep complete marker
@@ -101,9 +101,9 @@ typedef struct rk_scan_state {
     float                       targetElevation;                               //
     float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
     float                       markerAzimuth;                                 // Marker of end sweep
-    float                       sweepMarkerElevation;                          // Elevation marker
-    float                       sweepElevation;                                // Elevation control
-    float                       sweepAzimuth;                                  // Azimuth control
+    float                       sweepMarkerElevation;                          // Elevation marker   (deprecating)
+    float                       sweepElevation;                                // Elevation control  (deprecating)
+    float                       sweepAzimuth;                                  // Azimuth control    (deprecating)
     RKScanProgress              progress;                                      //
     RKScanAction            lastAction;                                    // store last action
 } RKPedestalVcpHandle;

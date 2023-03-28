@@ -40,7 +40,7 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-float pedestalGetRate(const float delta, RKPedestalAxis axis) {
+float RKPositionSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
     float rate = 0.0f;
     float speed = fabsf(delta);
     if (axis == RKPedestalAxisAzimuth) {
@@ -63,16 +63,6 @@ float pedestalGetRate(const float delta, RKPedestalAxis axis) {
         }
     }
     return delta < 0.0f ? -rate : rate;
-}
-
-void pedestalVcpNextHitter(RKPedestalVcpHandle *V) {
-    memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
-    memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
-    V->sweepCount = V->onDeckCount;
-    V->onDeckCount = V->inTheHoleCount;
-    V->i = 0;
-    V->j = 0;
-    V->active = true;
 }
 
 void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *engine) {
@@ -107,6 +97,9 @@ void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
     V->i = 0;
     V->j = 0;
     V->active = true;
+    V->targetElevation = V->batterScans[0].elevationStart;
+    V->targetAzimuth = V->batterScans[0].azimuthStart;
+    V->markerAzimuth = V->batterScans[0].azimuthMark;
 }
 
 void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanRepeat repeat) {
@@ -254,17 +247,14 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
     RKPedestalVcpHandle *V = &engine->vcpHandle;
     if (V->active) {
         const int i = V->i;
+        const RKScanMode mode = V->batterScans[i].mode;
         position->flag |= RKPositionFlagVCPActive;
         // Sweep is active: data collection portion (i.e., exclude transitions)
-        if (V->progress & RKScanProgressReady ||
-            V->progress & RKScanProgressMiddle ||
-            V->batterScans[i].mode == RKScanModePPIAzimuthStep ||
-            V->batterScans[i].mode == RKScanModePPIContinuous) {
-            // Always active if any of the conditions above are met
+        if (V->progress & RKScanProgressMiddle) {
             position->flag |= RKPositionFlagScanActive;
         }
         // Point / sweep flag
-        switch (V->batterScans[i].mode) {
+        switch (mode) {
             case RKScanModePPI:
             case RKScanModeSector:
             case RKScanModeNewSector:
@@ -283,7 +273,7 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
         }
         // Completion flag
         if (V->progress & RKScanProgressMarker) {
-            switch (V->batterScans[i].mode) {
+            switch (mode) {
                 case RKScanModePPI:
                 case RKScanModeSector:
                 case RKScanModeNewSector:
@@ -298,15 +288,15 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
                     break;
             }
         }
-        position->sweepElevationDegrees = V->sweepElevation;
-        position->sweepAzimuthDegrees = V->sweepAzimuth;
+        position->sweepElevationDegrees = V->targetElevation;
+        position->sweepAzimuthDegrees = V->targetAzimuth;
     } else {
         engine->vcpIndex = 0;
         engine->vcpSweepCount = 0;
     }
 }
 
-RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
+RKScanAction *RKPositionSteerEngineGetActionV1(RKPositionSteerEngine *engine, RKPosition *pos) {
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
     engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
@@ -330,11 +320,21 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
     // if (V->progress == RKScanProgressNone) {
     //     V->progress = RKScanProgressSetup;
     // } else if (V->progress == RKScanProgressSetup) {
-    //     V->progress = RKScanProgressReady;
-    // } else if (V->progress & RKScanProgressReady) {
     //     V->progress = RKScanProgressMiddle;
-    // } else if (V->progress & RKScanProgressMiddle) {
+    // }
+    //
+    // if (V->progress & RKScanProgressMiddle) {
     //     V->progress |= RKScanProgressMarker;
+    // }
+    //
+    // if (V->progress & RKScanProgressMarker) {
+    //     V->progress =^ RKScanProgressMarker;
+    //     ... for consumer to know a sweep cross the marker
+    // }
+    //
+    // if (V->progress & RKScanProgressEnd) {
+    //     V->progress =^ RKScanProgressEnd;
+    //     ... get the next scan path, jump to RKScanProgressSetup
     // }
 
     if (V->progress == RKScanProgressNone) {
@@ -377,25 +377,25 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
             case RKScanModePPIAzimuthStep:
             case RKScanModePPIContinuous:
                 // Only wait for the EL axis
-                if (udel < RKPedestalPositionTolerance && fabs(pos->elevationVelocityDegreesPerSecond) < RKPedestalVelocityTolerance) {
-                    V->sweepAzimuth = V->batterScans[V->i].azimuthStart;
-                    V->sweepElevation = V->batterScans[V->i].elevationStart;
-                    V->sweepMarkerElevation = V->batterScans[V->i].elevationStart;
-                    printf("\033[1;32mFirst start for sweep %d - EL %.2f  @ crossover AZ %.2f   udaz=%.2f\033[0m\n", V->i, V->sweepElevation, V->sweepAzimuth, udaz);
-                    V->progress = RKScanProgressReady;
-                } else if (udel >= RKPedestalPositionTolerance) {
-                    if (V->tic > RKPedestalActionPeriod) {
-                        action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                        action->param[0] = pedestalGetRate(del, RKPedestalAxisElevation);
-                        V->tic = 0;
-                    }
-                } else {
-                    action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-                    action->param[0] = 0.0f;
-                    action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                    action->param[1] = V->batterScans[V->i].azimuthSlew;
-                    V->tic = 0;
-                }
+                // if (udel < RKPedestalPositionTolerance && fabs(pos->elevationVelocityDegreesPerSecond) < RKPedestalVelocityTolerance) {
+                //     V->sweepAzimuth = V->batterScans[V->i].azimuthStart;
+                //     V->sweepElevation = V->batterScans[V->i].elevationStart;
+                //     V->sweepMarkerElevation = V->batterScans[V->i].elevationStart;
+                //     printf("\033[1;32mFirst start for sweep %d - EL %.2f  @ crossover AZ %.2f   udaz=%.2f\033[0m\n", V->i, V->sweepElevation, V->sweepAzimuth, udaz);
+                //     V->progress = RKScanProgressReady;
+                // } else if (udel >= RKPedestalPositionTolerance) {
+                //     if (V->tic > RKPedestalActionPeriod) {
+                //         action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                //         action->param[0] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
+                //         V->tic = 0;
+                //     }
+                // } else {
+                //     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                //     action->param[0] = 0.0f;
+                //     action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                //     action->param[1] = V->batterScans[V->i].azimuthSlew;
+                //     V->tic = 0;
+                // }
                 // if (V->tic > RKPedestalPointTimeOut) {
                 //     printf("Too long to stabilize  tic = %d / %d   udel=%.2f  udaz=%.2f  vel=%.2f  vaz=%.2f\n",
                 //         V->tic, RKPedestalPointTimeOut, udel, udaz, pos->elevationVelocityDegreesPerSecond, pos->azimuthVelocityDegreesPerSecond);
@@ -443,7 +443,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                     //
                     if (V->tic > RKPedestalActionPeriod) {
                         action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                        action->param[0] = pedestalGetRate(del, RKPedestalAxisElevation);
+                        action->param[0] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
                         V->tic = 0;
                     }
                 }
@@ -456,9 +456,9 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                     //
                     // if (V->tic > RKPedestalActionPeriod) {
                     //     action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                    //     action->mode[0] = pedestalGetRate(del, RKPedestalAxisElevation);
+                    //     action->mode[0] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
                     //     action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                    //     action->mode[1] = pedestalGetRate(daz, RKPedestalAxisAzimuth);
+                    //     action->mode[1] = RKPositionSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                     //     V->tic = 0;
                     // }
                 } else {
@@ -490,7 +490,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                 if (udel > RKPedestalPositionTolerance) {
                     if (V->tic > RKPedestalActionPeriod) {
                         action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                        action->param[0] = pedestalGetRate(del, RKPedestalAxisElevation);
+                        action->param[0] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
                         V->tic = 0;
                     }
                 } else if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
@@ -729,7 +729,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
         }
         if (V->i == 0) {
             if (V->option & RKScanOptionRepeat) {
-                pedestalVcpNextHitter(&engine->vcpHandle);
+                RKPositionSteerEngineNextHitter(engine);
                 RKLog("%s VCP repeats.\n", engine->name);
             } else {
                 RKLog("%s VCP stops.\n", engine->name);
@@ -749,6 +749,175 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
 
 //    action.sweepElevation = V->sweepMarkerElevation;
 //    action.sweepAzimuth = V->sweepAzimuth;
+
+    return action;
+}
+
+RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
+    RKScanAction *action = &engine->actions[engine->actionIndex];
+    memset(action, 0, sizeof(RKScanAction));
+    engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
+
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
+
+    if (V->sweepCount == 0 || V->active == false) {
+        return action;
+    }
+
+    float g;
+
+    const float del = RKMinDiff(V->targetElevation, pos->elevationDegrees);
+    const float daz = RKMinDiff(V->targetAzimuth, pos->azimuthDegrees);
+    const float udel = fabs(del);
+    const float udaz = fabs(daz);
+
+    // if (V->progress == RKScanProgressNone) {
+    //     V->progress = RKScanProgressSetup;
+    // } else if (V->progress == RKScanProgressSetup) {
+    //     V->progress = RKScanProgressMiddle;
+    // }
+    //
+    // if (V->progress & RKScanProgressMiddle) {
+    //     V->progress |= RKScanProgressMarker;
+    // }
+    //
+    // if (V->progress & RKScanProgressMarker) {
+    //     V->progress ^= RKScanProgressMarker;
+    //     ... for consumer to know a sweep cross the marker
+    // }
+    //
+    // if (V->progress & RKScanProgressEnd) {
+    //     V->progress ^= RKScanProgressEnd;
+    //     ... get the next scan path, jump to RKScanProgressSetup
+    // }
+
+    const RKScanPath *scan = &V->batterScans[V->i];
+
+    if (V->progress == RKScanProgressNone) {
+        V->progress = RKScanProgressSetup;
+        switch (scan->mode) {
+            case RKScanModePPIAzimuthStep:
+                V->progress |= RKScanProgressMiddle;
+            break;
+        }
+    } else if (V->progress & RKScanProgressSetup) {
+        // RKLog("%s %s   %s\n", engine->name,
+        //     RKVariableInString("targetAzimuth", &V->targetAzimuth, RKValueTypeFloat),
+        //     RKVariableInString("markerAzimuth", &V->markerAzimuth, RKValueTypeFloat)
+        // );
+        switch (scan->mode) {
+            case RKScanModePPIAzimuthStep:
+                if (udel > RKPedestalPositionTolerance) {
+                    if (V->tic > RKPedestalActionPeriod) {
+                        action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                        action->param[0] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        V->tic = 0;
+                    }
+                } else {
+                    action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action->param[0] = 0.0f;
+                    action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action->param[1] = scan->azimuthSlew;
+                    printf("\033[1;33mReady for sweep %d - EL %.2f @ crossover AZ %.2f\033[0m\n",
+                        V->i, V->targetElevation, V->targetAzimuth);
+                    V->progress ^= RKScanProgressSetup;
+                    V->tic = 0;
+                }
+                break;
+            default:
+                break;
+        }
+    } // if (V->progress == ...
+
+    if (V->progress & RKScanProgressMiddle) {
+        switch (scan->mode) {
+            case RKScanModePPIAzimuthStep:
+                if (pos->azimuthVelocityDegreesPerSecond == 0.0f) {
+                    break;
+                }
+                // Check for a cross-over trigger
+                bool targetCrossover = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, V->targetAzimuth);
+                if (targetCrossover) {
+                    #if defined(DEBUG_GET_ACTION)
+                    if (V->option & RKScanOptionVerbose) {
+                        RKLog("%s Target cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                            V->targetAzimuth, pos->azimuthDegrees, V->azimuthPrevious);
+                    }
+                    #endif
+                    V->progress |= RKScanProgressEnd;
+                    V->counterTargetAzimuth = 0;
+                }
+                bool markerCrossover = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, V->markerAzimuth);
+                if (markerCrossover) {
+                    #if defined(DEBUG_GET_ACTION)
+                    if (V->option & RKScanOptionVerbose) {
+                        RKLog("%s Marker cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                            V->markerAzimuth, pos->azimuthDegrees, V->azimuthPrevious);
+                    }
+                    #endif
+                    V->progress |= RKScanProgressMarker;
+                }
+                g = RKUMinDiff(pos->azimuthDegrees, V->azimuthPrevious);
+                V->counterTargetAzimuth += g;
+                V->counterMarkerAzimuth += g;
+                break;
+            default:
+                break;
+        }
+    }
+
+    RKPositionSteerEngineUpdatePositionFlags(engine, pos);
+
+    RKLog("%s %s%s%s%s  T%3d  EL %.2f / %.2f @ %5.1f °/s (%.2f, %.1f)   AZ%7.2f @ %5.2f °/s (%.2f, %.1f)  M%d '%s%s%s'\n",
+        engine->name,
+        V->progress & RKScanProgressSetup  ? RKMonokaiOrange "S" RKNoColor : ".",
+        V->progress & RKScanProgressMiddle ? "m" : ".",
+        V->progress & RKScanProgressMarker ? RKMonokaiGreen "M" RKNoColor : ".",
+        V->progress & RKScanProgressEnd    ? RKMonokaiGreen "E" RKNoColor : ".",
+        V->tic,
+        pos->sweepElevationDegrees,
+        pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond, del, V->counterTargetElevation,
+        pos->azimuthDegrees, pos->azimuthVelocityDegreesPerSecond, daz, V->counterTargetAzimuth,
+        V->batterScans[V->i].mode,
+        RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
+        RKPedestalActionString(action),
+        RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
+
+    if (V->progress & RKScanProgressMarker) {
+        V->progress ^= RKScanProgressMarker;
+    }
+
+    if (V->progress & RKScanProgressEnd) {
+        V->progress ^= RKScanProgressEnd;
+        // Ended the sweep, check for completeness
+        switch (scan->mode) {
+            case RKScanModePPIAzimuthStep:
+                // Sweep ended, go to the next sweep
+                V->i = RKNextModuloS(V->i, V->sweepCount);
+                V->targetElevation = V->batterScans[V->i].elevationStart;
+                V->targetAzimuth = V->batterScans[V->i].azimuthStart;
+                V->markerAzimuth = V->batterScans[V->i].azimuthMark;
+                break;
+            case RKScanModePPIContinuous:
+                break;
+            default:
+                break;
+        }
+        if (V->i == 0) {
+            if (V->option & RKScanOptionRepeat) {
+                RKPositionSteerEngineNextHitter(engine);
+                RKLog("%s VCP repeats.\n", engine->name);
+            } else {
+                RKLog("%s VCP stops.\n", engine->name);
+                V->active = false;
+            }
+        }
+        V->progress |= RKScanProgressSetup;
+    }
+
+    V->azimuthPrevious = pos->azimuthDegrees;
+    V->elevationPrevious = pos->elevationDegrees;
+    V->tic++;
 
     return action;
 }
