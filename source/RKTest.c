@@ -16,7 +16,7 @@
     printf(RKSIMD_TEST_DESC_FORMAT " : %s." RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") : \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
 #define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
-#define PEDESTAL_SAMPLING_TIME         0.04
+#define PEDESTAL_SAMPLING_TIME         0.1
 #define HEALTH_RELAY_SAMPLING_TIME     0.2
 
 #define TEST_RESULT(clr, str, res)   clr ? \
@@ -3966,8 +3966,10 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
     char cparams[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
 
+    #if defined(DEBUG_TEST_PEDESTAL_EXEC)
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
         cparams[0], cparams[1], cparams[2], cparams[3]);
+    #endif
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
