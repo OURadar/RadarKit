@@ -260,6 +260,7 @@ char *RKStripEscapeSequence(const char *line);
 
 float RKMinDiff(const float minuend, const float subtrahend);
 float RKUMinDiff(const float minuend, const float subtrahend);
+float RKModulo360Diff(const float minuend, const float subtrahend);
 bool RKAngularCrossOver(const float a1, const float a2, const float crossover);
 
 //
