@@ -99,9 +99,9 @@ typedef struct rk_scan_state {
     float                       counterTargetAzimuth;                          // Azimuth control target
     float                       counterMarkerAzimuth;                          // Azimuth marker target
     float                       targetElevation;                               //
-    float                       targetAzimuth;                                 // Target of end sweep: counter or transition aimuth
-    float                       targetDiffAzimuthPrevious;                     //
-    float                       markerDiffAzimuthPrevious;                     //
+    float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
+    float                       targetModuloDiffAzimuthPrevious;               //
+    float                       markerModuloDiffAzimuthPrevious;               //
     float                       sweepMarkerElevation;                          // Elevation marker
     float                       sweepElevation;                                // Elevation control
     float                       sweepAzimuth;                                  // Azimuth control

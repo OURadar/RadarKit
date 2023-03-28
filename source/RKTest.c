@@ -16,7 +16,7 @@
     printf(RKSIMD_TEST_DESC_FORMAT " : %s." RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") : \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
 #define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
-#define PEDESTAL_SAMPLING_TIME         0.1
+#define PEDESTAL_SAMPLING_TIME         0.04
 #define HEALTH_RELAY_SAMPLING_TIME     0.2
 
 #define TEST_RESULT(clr, str, res)   clr ? \
@@ -3867,31 +3867,31 @@ void *RKTestPedestalRunLoop(void *input) {
             RKTestPedestalExec(pedestal, string, response);
         }
 
-        if (pedestal->scanMode == RKTestPedestalScanModePPI) {
-            position->sweepAzimuthDegrees = 0.0f;
-            position->sweepElevationDegrees = pedestal->scanElevation;
-            position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
-        } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
-            position->sweepAzimuthDegrees = pedestal->scanAzimuth;
-            position->sweepElevationDegrees = 0.0f;
-            position->flag |= RKPositionFlagScanActive | RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
-        } else {
-            position->sweepAzimuthDegrees = 0.0f;
-            position->sweepElevationDegrees = 0.0f;
-        }
-        if (scanStartEndPPI) {
-            scanStartEndPPI = false;
-            position->flag |= RKPositionFlagAzimuthComplete;
-            if (pedestal->verbose > 1) {
-                RKLog("%s scanStartEndPPI\n", pedestal->name);
-            }
-        }
-        if (scanStartRHI) {
-            scanStartRHI = false;
-            position->flag |= RKPositionFlagElevationComplete;
-        } else if (scanEndRHI) {
-            scanEndRHI = false;
-        }
+        // if (pedestal->scanMode == RKTestPedestalScanModePPI) {
+        //     position->sweepAzimuthDegrees = 0.0f;
+        //     position->sweepElevationDegrees = pedestal->scanElevation;
+        //     position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+        // } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
+        //     position->sweepAzimuthDegrees = pedestal->scanAzimuth;
+        //     position->sweepElevationDegrees = 0.0f;
+        //     position->flag |= RKPositionFlagScanActive | RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
+        // } else {
+        //     position->sweepAzimuthDegrees = 0.0f;
+        //     position->sweepElevationDegrees = 0.0f;
+        // }
+        // if (scanStartEndPPI) {
+        //     scanStartEndPPI = false;
+        //     position->flag |= RKPositionFlagAzimuthComplete;
+        //     if (pedestal->verbose > 1) {
+        //         RKLog("%s scanStartEndPPI\n", pedestal->name);
+        //     }
+        // }
+        // if (scanStartRHI) {
+        //     scanStartRHI = false;
+        //     position->flag |= RKPositionFlagElevationComplete;
+        // } else if (scanEndRHI) {
+        //     scanEndRHI = false;
+        // }
 
         RKSetPositionReady(radar, position);
 
