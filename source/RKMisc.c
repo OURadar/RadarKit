@@ -1036,11 +1036,11 @@ float RKModulo360Diff(const float m, const float s) {
 
 bool RKAngularCrossOver(const float a1, const float a2, const float crossover) {
     float d1 = RKMinDiff(a1, crossover);
-    if (d1 == 0.0f) {
+    if (fabs(d1) <= 0.0001f) {
         return true;
     }
     float d2 = RKMinDiff(a2, crossover);
-    if (d1 * d2 < 0.0 && fabsf(d1) < 10.0f) {
+    if (d1 * d2 < 0.0f && fabsf(d1) < 10.0f) {
         return true;
     }
     return false;

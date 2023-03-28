@@ -3806,6 +3806,13 @@ void *RKTestPedestalRunLoop(void *input) {
 
     int commandCount = pedestal->commandCount;
 
+    float elevationLeft = 0.0f;
+    float elevationWalk = 0.0f;
+    float elevationHead = 0.0f;
+    float elevationTail = 0.0f;
+
+    float speedAzimuthRun = 0.0f;
+
     while (pedestal->state & RKEngineStateWantActive) {
         if (commandCount != pedestal->commandCount) {
             commandCount = pedestal->commandCount;
@@ -3915,10 +3922,31 @@ void *RKTestPedestalRunLoop(void *input) {
         } else {
             pedestal->speedAzimuth = 0.8f * pedestal->speedTargetAzimuth + 0.2f * pedestal->speedAzimuth;
         }
-        if (fabs(pedestal->speedTargetElevation) > 5.0f) {
-            pedestal->speedElevation = 0.5f * pedestal->speedTargetElevation + 0.5f * pedestal->speedElevation;
-        } else {
-            pedestal->speedElevation = 0.8f * pedestal->speedTargetElevation + 0.2f * pedestal->speedElevation;
+        // if (fabs(pedestal->speedTargetElevation) > 5.0f) {
+        //     pedestal->speedElevation = 0.5f * pedestal->speedTargetElevation + 0.5f * pedestal->speedElevation;
+        // } else {
+        //     pedestal->speedElevation = 0.8f * pedestal->speedTargetElevation + 0.2f * pedestal->speedElevation;
+        // }
+        if (pedestal->speedElevation != pedestal->speedTargetElevation) {
+            if (elevationLeft == 0.0f) {
+                elevationTail = pedestal->speedTargetElevation;
+                elevationHead = pedestal->speedElevation;
+                elevationWalk = fabs(pedestal->speedTargetElevation - pedestal->speedElevation) > 10.0f ? 0.5f : 0.2f;
+                elevationLeft = elevationWalk;
+            }
+            float alpha = elevationLeft / elevationWalk;
+            if (alpha < 0.05f) {
+                pedestal->speedElevation = pedestal->speedTargetElevation;
+                elevationLeft = 0.0f;
+            } else {
+                // pedestal->speedElevation = alpha * elevationHead + (1.0 - alpha) * elevationTail;
+                pedestal->speedElevation = elevationTail + alpha * (elevationHead - elevationTail);
+                elevationLeft -= PEDESTAL_SAMPLING_TIME;
+            }
+            // RKLog("%s %s %s\n", pedestal->name,
+            //     RKVariableInString("alpha", &alpha, RKValueTypeFloat),
+            //     RKVariableInString("elevationWalk", &elevationWalk, RKValueTypeFloat)
+            //     );
         }
 
         t1 = t0;
@@ -4283,13 +4311,10 @@ void RKTestSingleCommand(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    const char command[] = "pp 2,4,6,8,10 10 25";
-    char cparams[4][256] = {"", "", "", ""};
-    printf("command = %s\n", command);
-    int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
-    for (int k = 0; k < n; k++) {
-        printf("cparam[%d] = '%s'\n", k, cparams[k]);
-    }
+    float a0 = 0.0f;
+    float a1 = 5.0f;
+    bool cross = RKAngularCrossOver(a0, a1, 0.0f);
+    printf("a0 = %.2f  a1 = %.2f  cross = %s\n", a0, a1, cross ? "true" : "false");
 }
 
 #pragma mark -

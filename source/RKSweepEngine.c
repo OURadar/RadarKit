@@ -728,7 +728,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     RKRay *S = rays[0];
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
-    RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    RKConfig *config = &engine->configBuffer[T->header.configIndex];
     RKMomentList overallMomentList = 0;
     RKBaseProductList overallBaseProductList = 0;
 
