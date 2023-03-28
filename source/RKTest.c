@@ -3784,10 +3784,6 @@ void *RKTestPedestalRunLoop(void *input) {
     double dt = 0.0;
     struct timeval t0, t1;
     unsigned long tic = 19760520;
-    bool scanStartEndPPI = false;
-    bool scanStartRHI = false;
-    bool scanEndRHI = false;
-    //bool elTransition = false;
 
     pedestal->state |= RKEngineStateWantActive;
     pedestal->state &= ~RKEngineStateActivating;
@@ -3831,10 +3827,10 @@ void *RKTestPedestalRunLoop(void *input) {
         position->flag |= RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
 
         // Add other flags based on radar->positionSteerEngine
-        RKPositionSteerEngineUpdatePositionFlags(steeven, position);
+        //RKPositionSteerEngineUpdatePositionFlags(steeven, position);
 
         // Get the latest action, could be no action
-        RKPedestalAction *action = RKPositionSteerEngineGetAction(steeven, position);
+        RKScanAction *action = RKPositionSteerEngineGetAction(steeven, position);
 
         // RKLog("%s EL%5.2f @ %5.2f °/s   AZ%5.2f @ %5.2f °/s    action = '%s%s%s'\n", pedestal->name,
         //     position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
@@ -3843,7 +3839,7 @@ void *RKTestPedestalRunLoop(void *input) {
         //     RKPedestalActionString(action),
         //     RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
 
-        // Translate action into string command. This is only necessary in RKTestPedestal. Pedzy can natively ingest RKPedestalAction
+        // Translate action into string command. This is only necessary in RKTestPedestal. Pedzy can natively ingest RKScanAction
         char axis = 'e';
         char string[64];
         for (k = 0; k < 2; k++) {
@@ -3866,32 +3862,6 @@ void *RKTestPedestalRunLoop(void *input) {
             }
             RKTestPedestalExec(pedestal, string, response);
         }
-
-        // if (pedestal->scanMode == RKTestPedestalScanModePPI) {
-        //     position->sweepAzimuthDegrees = 0.0f;
-        //     position->sweepElevationDegrees = pedestal->scanElevation;
-        //     position->flag |= RKPositionFlagScanActive | RKPositionFlagAzimuthSweep | RKPositionFlagElevationPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
-        // } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
-        //     position->sweepAzimuthDegrees = pedestal->scanAzimuth;
-        //     position->sweepElevationDegrees = 0.0f;
-        //     position->flag |= RKPositionFlagScanActive | RKPositionFlagElevationSweep | RKPositionFlagAzimuthPoint | RKPositionFlagScanActive | RKPositionFlagVCPActive;
-        // } else {
-        //     position->sweepAzimuthDegrees = 0.0f;
-        //     position->sweepElevationDegrees = 0.0f;
-        // }
-        // if (scanStartEndPPI) {
-        //     scanStartEndPPI = false;
-        //     position->flag |= RKPositionFlagAzimuthComplete;
-        //     if (pedestal->verbose > 1) {
-        //         RKLog("%s scanStartEndPPI\n", pedestal->name);
-        //     }
-        // }
-        // if (scanStartRHI) {
-        //     scanStartRHI = false;
-        //     position->flag |= RKPositionFlagElevationComplete;
-        // } else if (scanEndRHI) {
-        //     scanEndRHI = false;
-        // }
 
         RKSetPositionReady(radar, position);
 
@@ -3931,51 +3901,6 @@ void *RKTestPedestalRunLoop(void *input) {
         } else if (elevation < -180.0f) {
             elevation += 360.0f;
         }
-
-        // if (pedestal->scanMode == RKTestPedestalScanModePPI) {
-        //     azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
-        //     if (azimuth >= 360.0f) {
-        //         azimuth -= 360.0f;
-        //     } else if (azimuth < 0.0f) {
-        //         azimuth += 360.0f;
-        //     }
-        //     // Transition over 0 degree
-        //     if (pedestal->speedAzimuth > 0.0f && azimuth < 5.0f && position->azimuthDegrees > 355.0f) {
-        //         scanStartEndPPI = true;
-        //     } else if (pedestal->speedAzimuth < 0.0f && azimuth > 355.0f && position->azimuthDegrees < 5.0f) {
-        //         scanStartEndPPI = true;
-        //     }
-        //     if (scanStartEndPPI &&
-        //         azimuth > pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME &&
-        //         azimuth < 360.0f - pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME) {
-        //         fprintf(stderr, "Unexpected. azimuth = %.2f   position->azimuthDegrees = %.2f   speed = %.2f\n",
-        //                 azimuth, position->azimuthDegrees, pedestal->speedAzimuth);
-        //     }
-        // } else if (pedestal->scanMode == RKTestPedestalScanModeRHI) {
-        //     if (elTransition) {
-        //         elevation -= 2.0f * pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
-        //     } else {
-        //         elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
-        //     }
-        //     if (elevation > 180.0f) {
-        //         elevation -= 360.0f;
-        //     } else if (elevation < -180.0f) {
-        //         elevation += 360.0f;
-        //     }
-        //     if (pedestal->speedElevation > 0.0f) {
-        //         if (elevation > pedestal->rhiElevationEnd) {
-        //             scanEndRHI = true;
-        //             elTransition = true;
-        //             position->flag &= ~RKPositionFlagScanActive;
-        //         } else if (elevation < pedestal->rhiElevationStart) {
-        //             scanStartRHI = true;
-        //             elTransition = false;
-        //             position->flag |= RKPositionFlagScanActive;
-        //         }
-        //     }
-        // } else if (pedestal->scanMode == RKTestPedestalScanModeBadPedestal) {
-        //     azimuth = (float)rand() * 360.0f / RAND_MAX;
-        // }
 
         // Wait to simulate sampling time
         do {

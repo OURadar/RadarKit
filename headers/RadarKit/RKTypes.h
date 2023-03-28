@@ -1270,12 +1270,12 @@ typedef union rk_position {
     RKByte               bytes[128];
 } RKPosition;
 
-typedef struct rk_pedestal_action {
+typedef struct rk_scan_action {
     RKPedestalInstructType   mode[2];                                          // One mode for EL and the other for AZ
     float                    param[2];
     float                    sweepElevation;
     float                    sweepAzimuth;
-} RKPedestalAction;
+} RKScanAction;
 
 typedef union rk_pulse_header {
     struct {

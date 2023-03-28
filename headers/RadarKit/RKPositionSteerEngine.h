@@ -19,7 +19,7 @@
 #define RKPedestalPositionTolerance    0.3f
 #define RKPedestalVelocityTolerance    1.0f
 #define RKPedestalPointTimeOut         1500
-#define RKPedestalActionPeriod         10
+#define RKPedestalActionPeriod         3
 
 typedef bool RKScanRepeat;
 enum RKScanRepeat {
@@ -105,7 +105,7 @@ typedef struct rk_scan_state {
     float                       sweepElevation;                                // Elevation control
     float                       sweepAzimuth;                                  // Azimuth control
     RKScanProgress              progress;                                      //
-    RKPedestalAction            lastAction;                                    // store last action
+    RKScanAction            lastAction;                                    // store last action
 } RKPedestalVcpHandle;
 
 typedef struct rk_position_steer_engine RKPositionSteerEngine;
@@ -129,7 +129,7 @@ struct rk_position_steer_engine {
     struct timeval         currentTime;
     struct timeval         statusPeriod;
     struct timeval         statusTriggerTime;
-    RKPedestalAction       actions[RKPedestalActionBufferDepth];
+    RKScanAction           actions[RKPedestalActionBufferDepth];
     int                    actionIndex;
     RKByte                 response[RKMaximumStringLength];
 
@@ -154,7 +154,7 @@ int RKPositionSteerEngineStart(RKPositionSteerEngine *);
 int RKPositionSteerEngineStop(RKPositionSteerEngine *);
 
 void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
-RKPedestalAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *, RKPosition *);
+RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *, RKPosition *);
 
 int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *, const char *, char *);
 

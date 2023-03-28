@@ -2766,8 +2766,8 @@ float RKGetPositionUpdateRate(RKRadar *radar) {
     return (float)n / (radar->positions[i].timeDouble - radar->positions[o].timeDouble);
 }
 
-RKPedestalAction *RKGetPedestalAction(RKRadar *radar) {
-    return RKPositionSteerEngineGetAction(radar->positionSteerEngine);
+RKScanAction *RKGetScanAction(RKRadar *radar, RKPosition *position) {
+    return RKPositionSteerEngineGetAction(radar->positionSteerEngine, position);
 }
 
 #pragma mark - Pulses

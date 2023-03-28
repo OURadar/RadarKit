@@ -190,6 +190,6 @@ int RKCommandQueuePush(RKCommandQueue *, RKCommand *);
 int RKCommandQueueFree(RKCommandQueue *);
 
 // RKPedestalActionString
-char *RKPedestalActionString(const RKPedestalAction *);
+char *RKPedestalActionString(const RKScanAction *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

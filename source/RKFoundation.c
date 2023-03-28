@@ -2102,7 +2102,7 @@ int RKCommandQueueFree(RKCommandQueue *queue) {
     return RKResultSuccess;
 }
 
-char *RKPedestalActionString(const RKPedestalAction *action) {
+char *RKPedestalActionString(const RKScanAction *action) {
     static char string[1024];
     size_t length;
     *string = '\0';

@@ -304,7 +304,7 @@ RKPosition *RKGetVacantPosition(RKRadar *);                                     
 void RKSetPositionReady(RKRadar *, RKPosition *);                                                  // Declare the position is ready
 RKPosition *RKGetLatestPosition(RKRadar *);                                                        // Get the latest position from the radar
 float RKGetPositionUpdateRate(RKRadar *);                                                          // Get the position report rate
-RKPedestalAction *RKGetPedestalAction(RKRadar *);                                                  // Get the action for pedestal
+RKScanAction *RKGetScanAction(RKRadar *, RKPosition *);                                            // Get the action for pedestal
 
 // Pulses
 RKPulse *RKGetVacantPulse(RKRadar *);                                                              // Get a vacant slot for storing pulse data
