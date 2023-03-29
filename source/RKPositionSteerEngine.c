@@ -157,7 +157,15 @@ int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKSc
 static void *positionSteerer(void *_in) {
     RKPositionSteerEngine *engine = (RKPositionSteerEngine *)_in;
 
-    int k;
+    int j, k, s;
+    float theta, rate;
+
+    RKPosition *new;
+    RKPosition *old;
+
+	// Update the engine state
+	engine->state |= RKEngineStateWantActive;
+	engine->state ^= RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B   positionIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->positionIndex);
 
@@ -167,15 +175,48 @@ static void *positionSteerer(void *_in) {
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
 
+    // Wait until there is something ingested
+    s = 0;
+    engine->state |= RKEngineStateSleep0;
+    while (engine->tic < engine->radarDescription->positionBufferDepth / 8 && engine->state & RKEngineStateWantActive) {
+        usleep(1000);
+        if (++s % 200 == 0 && engine->verbose > 1) {
+            RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.001f);
+        }
+    }
+    engine->state ^= RKEngineStateSleep0;
+    engine->state |= RKEngineStateActive;
+
     k = 0;
     while (engine->state & RKEngineStateWantActive) {
-        engine->tic++;
+        // Wait until a position arrives
+        engine->state |= RKEngineStateSleep1;
+        s = 0;
+        while (k == *engine->positionIndex &&  engine->state & RKEngineStateWantActive) {
+            usleep(10000);
+            if (++s % 100 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 1/%.1f s   k = %d   positionIndex = %d\n",
+                      engine->name, (float)s * 0.001f, k , *engine->positionIndex);
+            }
+        }
+        engine->state ^= RKEngineStateSleep1;
 
-        RKPositionSteerEngineUpdateStatusString(engine);
+        if (engine->tic % 10 == 0) {
+            j = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
+            new = &engine->positionBuffer[j];
+            j = RKPreviousNModuloS(j, engine->radarDescription->positionBufferDepth / 8, engine->radarDescription->positionBufferDepth);
+            old = &engine->positionBuffer[j];
+            theta = new->timeDouble - old->timeDouble;
+            rate = (float)(engine->radarDescription->positionBufferDepth / 8) / theta;
+            s = (int)ceilf(RKPedestalActionPeriod * rate);
+            if (engine->vcpHandle.toc != s) {
+                engine->vcpHandle.toc = s;
+                RKLog("%s Position rate = %.1f Hz   toc -> %d\n", engine->name, rate, s);
+            }
+        }
 
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
-        usleep(10000);
     }
 
     return NULL;
@@ -194,7 +235,7 @@ RKPositionSteerEngine *RKPositionSteerEngineInit(void) {
     sprintf(engine->vcpHandle.name, "VCP");
     engine->vcpHandle.option = RKScanOptionRepeat | RKScanOptionVerbose;
     engine->vcpHandle.active = false;
-    engine->vcpHandle.toc = 5;
+    engine->vcpHandle.toc = 3;
     engine->memoryUsage = sizeof(RKPositionSteerEngine);
     engine->state = RKEngineStateAllocated;
     return engine;
@@ -230,7 +271,7 @@ int RKPositionSteerEngineStart(RKPositionSteerEngine *engine) {
     }
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
-    engine->state |= RKEngineStateActivating;
+    engine->state |= RKEngineStateActivating | RKEngineStateWantActive;
     if (pthread_create(&engine->threadId, NULL, positionSteerer, engine) != 0) {
         RKLog("%s Error. Failed to start.\n", engine->name);
         return RKResultFailedToStartRingPulseWatcher;
@@ -315,6 +356,8 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
 
+    engine->tic++;
+
     RKScanObject *V = &engine->vcpHandle;
 
     if (V->sweepCount == 0 || V->active == false) {
@@ -394,10 +437,19 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                         action->param[a] = RKPositionSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                         V->tic = 0;
                         a++;
+                    } else if (pos->azimuthVelocityDegreesPerSecond > 0.0f) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+                        action->mode[a] = 0.0f;
+                        V->tic = 0;
+                        a++;
                     }
                     if (udel >= RKPedestalPositionTolerance) {
                         action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
                         action->param[a] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        V->tic = 0;
+                    } else if (pos->elevationVelocityDegreesPerSecond > 0.0f) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                        action->mode[a] = 0.0f;
                         V->tic = 0;
                     }
                 }
