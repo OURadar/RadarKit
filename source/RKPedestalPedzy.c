@@ -404,7 +404,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 int m = sscanf(token, "%16s %16s %16s %16s %16s", st, cparams[0], cparams[1], cparams[2], cparams[3]);
                 if (m < 2) {
                     printf("NAK. Ill-defined VOL." RKEOL);
-                    return RKResultFailedToSetVcp;
+                    return RKResultFailedToSetVCP;
                 }
                 if (sscanf(cparams[0], "%f,%f", &el_start, &el_end) == 1) {
                     el_end = el_start;
@@ -421,7 +421,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
                 if (*st == 'p') {
                     //VcpMode = RKVcpModePPIAzimuthStep;
-                    mode = RKScanModePPIAzimuthStep;
+                    mode = RKScanModePPI;
                 } else if (*st == 'r') {
                     //VcpMode = RKVcpModeRHI;
                     mode = RKScanModeRHI;
@@ -433,7 +433,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                     everythingOkay = false;
                     //pedestalVcpClearSweeps(me->vcpHandle);
                     RKPositionSteerEngineClearSweeps(positionSteerEngine);
-                    return RKResultFailedToSetVcp;
+                    return RKResultFailedToSetVCP;
                 }
 
                 RKScanPath scan = RKPositionSteerEngineMakeScanPath(mode, el_start, el_end, az_start, az_end, az_mark, rate);
@@ -516,7 +516,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 el_end = el_start;
                 az_end = az_start;
 
-                RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPIAzimuthStep, el_start, el_end, az_start, az_end, az_mark, rate);
+                RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPI, el_start, el_end, az_start, az_end, az_mark, rate);
 
                 if (onlyOnce) {
                     //pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModePPIAzimuthStep, el_start, el_end, az_start, az_end, az_mark, rate));

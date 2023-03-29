@@ -373,7 +373,7 @@ N(RKResultFailedToCreateUnitWorker) \
 N(RKResultFailedToStartHostWatcher) \
 N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
-N(RKResultFailedToSetVcp) \
+N(RKResultFailedToSetVCP) \
 N(RKResultFailedToAddHost) \
 N(RKResultFailedToFindProductId) \
 N(RKResultFailedToOpenFileForProduct) \

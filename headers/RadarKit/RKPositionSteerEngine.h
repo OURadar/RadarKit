@@ -19,7 +19,7 @@
 #define RKPedestalPositionTolerance    0.3f
 #define RKPedestalVelocityTolerance    1.0f
 #define RKPedestalPointTimeOut         1500
-#define RKPedestalActionPeriod         0.05
+#define RKPedestalActionPeriod         0.1
 
 typedef bool RKScanRepeat;
 enum RKScanRepeat {
@@ -55,11 +55,8 @@ typedef int RKScanMode;
 enum RKScanMode {
     RKScanModeNone,
     RKScanModeRHI,
-    RKScanModeSector,          // RKScanModeNewSector
     RKScanModePPI,
-    RKScanModePPIAzimuthStep,
-    RKScanModePPIContinuous,   // deprecating
-    RKScanModeNewSector,       // deprccating
+    RKScanModeSector,
     RKScanModeSpeedDown        // need to learn more
 };
 
