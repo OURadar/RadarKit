@@ -16,7 +16,7 @@
     printf(RKSIMD_TEST_DESC_FORMAT " : %s." RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") : \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s.\n", str, res ? "successful" : "failed");
 #define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
-#define PEDESTAL_SAMPLING_TIME         0.1
+#define PEDESTAL_SAMPLING_TIME         0.05
 #define HEALTH_RELAY_SAMPLING_TIME     0.2
 
 #define TEST_RESULT(clr, str, res)   clr ? \
@@ -3842,10 +3842,6 @@ void *RKTestPedestalRunLoop(void *input) {
     RKSpline splinePositionAzimuth = RKSplineDefault;
     RKSpline splineSpeedAzimuth = RKSplineDefault;
 
-    RKScanAction scan;
-
-    float speedAzimuthRun = 0.0f;
-
     while (pedestal->state & RKEngineStateWantActive) {
         if (commandCount != pedestal->commandCount) {
             commandCount = pedestal->commandCount;
@@ -3927,7 +3923,7 @@ void *RKTestPedestalRunLoop(void *input) {
 
         // Position / speed change
         if (pedestal->actionAzimuth == RKAxisActionPosition) {
-            azimuth = updateSpline(&splinePositionAzimuth, azimuth, pedestal->positionTargetAzimuth);
+            azimuth = updateSpline(&splinePositionAzimuth, azimuth, pedestal->targetAzimuth);
         //} else if (pedestal->actionAzimuth == RKAxisActionSpeed) {
         } else {
             azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
@@ -3936,12 +3932,12 @@ void *RKTestPedestalRunLoop(void *input) {
             } else if (azimuth < 0.0f) {
                 azimuth += 360.0f;
             }
-            pedestal->speedAzimuth = updateSpline(&splineSpeedAzimuth, pedestal->speedAzimuth, pedestal->speedTargetAzimuth);
+            pedestal->speedAzimuth = updateSpline(&splineSpeedAzimuth, pedestal->speedAzimuth, pedestal->targetSpeedAzimuth);
         }
-        pedestal->positionAzimuth = azimuth;
+        pedestal->azimuth = azimuth;
 
         if (pedestal->actionElevation == RKAxisActionPosition) {
-            elevation = updateSpline(&splinePositionElevation, elevation, pedestal->positionTargetElevation);
+            elevation = updateSpline(&splinePositionElevation, elevation, pedestal->targetElevation);
         //} else if (pedestal->actionElevation == RKAxisActionSpeed) {
         } else {
             elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
@@ -3950,9 +3946,9 @@ void *RKTestPedestalRunLoop(void *input) {
             } else if (elevation < -180.0f) {
                 elevation += 360.0f;
             }
-            pedestal->speedElevation = updateSpline(&splineSpeedElevation, pedestal->speedElevation, pedestal->speedTargetElevation);
+            pedestal->speedElevation = updateSpline(&splineSpeedElevation, pedestal->speedElevation, pedestal->targetSpeedElevation);
         }
-        pedestal->positionElevation = elevation;
+        pedestal->elevation = elevation;
 
         // Wait to simulate sampling time
         do {
@@ -4006,10 +4002,10 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
 
-    //#if defined(DEBUG_TEST_PEDESTAL_EXEC)
+    #if defined(DEBUG_TEST_PEDESTAL_EXEC)
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
         args[0], args[1], args[2], args[3]);
-    //#endif
+    #endif
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
@@ -4041,20 +4037,31 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
     } else if (!strncmp(command, "stop", 4)) {
         pedestal->actionElevation = RKAxisActionStop;
         pedestal->actionAzimuth = RKAxisActionStop;
-        pedestal->speedElevation = 0.0f;
-        pedestal->speedAzimuth = 0.0f;
+        pedestal->targetSpeedElevation = 0.0f;
+        pedestal->targetSpeedAzimuth = 0.0f;
+        RKPositionSteerEngineStopSweeps(radar->positionSteerEngine);
         if (response != NULL) {
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
+    } else if (!strncmp(command, "go", 2) || !strncmp("run", command, 3)) {
+        RKPositionSteerEngineArmSweeps(radar->positionSteerEngine, RKScanRepeatForever);
+        if (response != NULL) {
+            sprintf(response, "ACK. Go." RKEOL);
+        }
+    } else if (!strncmp(command, "once", 4)) {
+        RKPositionSteerEngineArmSweeps(radar->positionSteerEngine, RKScanRepeatNone);
+        if (response != NULL) {
+            sprintf(response, "ACK. Once." RKEOL);
+        }
     } else if (!strncmp(command, "astop", 5)) {
         pedestal->actionAzimuth = RKAxisActionStop;
-        pedestal->speedTargetAzimuth = 0.0f;
+        pedestal->targetSpeedAzimuth = 0.0f;
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth stopped." RKEOL);
         }
     } else if (!strncmp(command, "estop", 5)) {
         pedestal->actionElevation = RKAxisActionStop;
-        pedestal->speedTargetElevation = 0.0f;
+        pedestal->targetSpeedElevation = 0.0f;
         if (response != NULL) {
             sprintf(response, "ACK. Elevation stopped." RKEOL);
         }
@@ -4064,23 +4071,54 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
+        if (n == 0) {
+            sprintf(response, "NAK. Use as 'aslew [AZ_RATE]" RKEOL);
+            return RKResultFailedToExecuteCommand;
+        }
         pedestal->actionAzimuth = RKAxisActionSpeed;
-        pedestal->speedTargetAzimuth = atof(args[0]);
+        pedestal->targetSpeedAzimuth = atof(args[0]);
         if (response != NULL) {
-            sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
+            sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->targetSpeedAzimuth);
         }
     } else if (!strncmp(command, "eslew", 5)) {
+        if (n == 0) {
+            sprintf(response, "NAK. Use as 'eslew [AZ_RATE]" RKEOL);
+            return RKResultFailedToExecuteCommand;
+        }
         pedestal->actionElevation = RKAxisActionSpeed;
-        pedestal->speedTargetElevation = atof(args[0]);
+        pedestal->targetSpeedElevation = atof(args[0]);
         if (response != NULL) {
-            sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->speedElevation);
+            sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->targetSpeedElevation);
+        }
+    } else if (!strncmp("azi", command, 3) || !strncmp("apos", command, 4) || !strncmp("apoint", command, 6)) {
+        if (n == 0) {
+            sprintf(response, "NAK. Use as 'azi/apos/apoint [AZ_POSITION]" RKEOL);
+            return RKResultFailedToExecuteCommand;
+        }
+        pedestal->actionAzimuth = RKAxisActionPosition;
+        pedestal->targetAzimuth = atof(args[0]);
+        if (response != NULL) {
+            sprintf(response, "ACK. Azimuth to %.1f" RKEOL, pedestal->targetAzimuth);
+        }
+    } else if (!strncmp("ele", command, 3) || !strncmp("epos", command, 4) || !strncmp("epoint", command, 6)) {
+        if (n == 0) {
+            sprintf(response, "NAK. Use as 'ele/epos/epoint [EL_POSITION]" RKEOL);
+            return RKResultFailedToExecuteCommand;
+        }
+        pedestal->actionElevation = RKAxisActionPosition;
+        pedestal->targetElevation = atof(args[0]);
+        if (response != NULL) {
+            sprintf(response, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
         }
     } else if (!strncmp("pp", command, 2)
         || !strncmp("ipp", command, 3)
         || !strncmp("opp", command, 3)
         || !strncmp("rr", command, 2)
         || !strncmp("irr", command, 3)
-        || !strncmp("orr", command, 3)) {
+        || !strncmp("orr", command, 3)
+        || !strncmp("vol", command, 3)
+        || !strncmp("ivol", command, 4)
+        || !strncmp("ovol", command, 4)) {
         RKPositionSteerEngineExecuteString(steeven, command, response);
     } else if (!strncmp(command, "summ", 4)) {
         if (response != NULL) {

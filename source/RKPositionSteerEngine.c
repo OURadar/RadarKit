@@ -12,7 +12,7 @@
 
 static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engine) {
     char *string;
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
 
     // Status string
     string = engine->statusBuffer[engine->statusBufferIndex];
@@ -36,13 +36,12 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
 
     RKScanAction *action = &engine->actions[engine->actionIndex];
 
-    sprintf(string, "%s%s%s%s  T%3d  EL %.2f / %.2f @ %5.1f °/s   AZ%7.2f @ %5.2f °/s   M%d '%s%s%s'",
+    sprintf(string, "%s%s%s%s  T%3d  EL %.2f @ %5.1f °/s   AZ%7.2f @ %5.2f °/s   M%d '%s%s%s'",
         V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
         V->progress & RKScanProgressMiddle ? "m" : ".",
         V->progress & RKScanProgressMarker ? (rkGlobalParameters.showColor ? RKMonokaiGreen "M" RKNoColor : "M") : ".",
         V->progress & RKScanProgressEnd    ? (rkGlobalParameters.showColor ? RKMonokaiGreen "E" RKNoColor : "E") : ".",
         V->tic,
-        position->sweepElevationDegrees,
         position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
         position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
         V->batterScans[V->i].mode,
@@ -50,31 +49,35 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
         RKPedestalActionString(action),
         RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
 
-    RKLog(">%s %s\n", engine->name, string);
+    // RKLog(">%s %s\n", engine->name, string);
 
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
 float RKPositionSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
     float rate = 0.0f;
-    float speed = fabsf(delta);
+    float gamma = fabsf(delta);
     if (axis == RKPedestalAxisAzimuth) {
-        if (speed >= 20.0f) {
+        if (gamma >= 20.0f) {
             rate = 30.0f;
-        } else if (speed >= 10.0f) {
+        } else if (gamma >= 10.0f) {
             rate = 20.0f;
-        } else if (speed >= 5.0f) {
+        } else if (gamma >= 5.0f) {
             rate = 10.0f;
-        } else if (speed < 5.0f) {
+        } else if (gamma >= 2.0f) {
             rate = 3.0f;
+        } else {
+            rate = 1.0f;
         }
     } else if (axis == RKPedestalAxisElevation) {
-        if (speed >= 20.0f) {
+        if (gamma >= 20.0f) {
             rate = 15.0f;
-        } else if (speed >= 7.0f) {
+        } else if (gamma >= 7.0f) {
             rate = 10.0f;
-        } else if (speed < 7.0f) {
+        } else if (gamma >= 2.0f) {
             rate = 3.0f;
+        } else {
+            rate = 1.0f;
         }
     }
     return delta < 0.0f ? -rate : rate;
@@ -104,7 +107,7 @@ void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *engine) {
 }
 
 void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
     memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
     memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
     V->sweepCount = V->onDeckCount;
@@ -125,7 +128,7 @@ void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanR
 }
 
 int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
     if (V->inTheHoleCount < RKMaximumScanCount - 1) {
         V->inTheHoleScans[V->inTheHoleCount++] = scan;
         V->onDeckScans[V->onDeckCount++] = scan;
@@ -137,7 +140,7 @@ int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKS
 }
 
 int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
     if (V->onDeckCount < RKMaximumScanCount - 1) {
         V->onDeckScans[V->onDeckCount++] = scan;
     } else {
@@ -191,6 +194,7 @@ RKPositionSteerEngine *RKPositionSteerEngineInit(void) {
     sprintf(engine->vcpHandle.name, "VCP");
     engine->vcpHandle.option = RKScanOptionRepeat | RKScanOptionVerbose;
     engine->vcpHandle.active = false;
+    engine->vcpHandle.toc = 5;
     engine->memoryUsage = sizeof(RKPositionSteerEngine);
     engine->state = RKEngineStateAllocated;
     return engine;
@@ -256,7 +260,7 @@ int RKPositionSteerEngineStop(RKPositionSteerEngine *engine) {
 }
 
 void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKPosition *position) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
     if (V->active) {
         const RKScanPath *scan = &V->batterScans[V->i];
         position->flag |= RKPositionFlagVCPActive;
@@ -311,16 +315,13 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
 
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
 
     if (V->sweepCount == 0 || V->active == false) {
         return action;
     }
 
-    // const float del = RKMinDiff(V->targetElevation, pos->elevationDegrees);
-    // const float daz = RKMinDiff(V->targetAzimuth, pos->azimuthDegrees);
-    // const float udel = fabs(del);
-    // const float udaz = fabs(daz);
+    const bool verbose = V->option & RKScanOptionVerbose;
 
     float del = 0.0f;
     float daz = 0.0f;
@@ -363,7 +364,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                 V->progress |= RKScanProgressMiddle;
             break;
         }
-    } else if (V->progress & RKScanProgressSetup && V->tic >= RKPedestalActionPeriod) {
+    } else if (V->progress & RKScanProgressSetup && V->tic >= V->toc) {
         // RKLog("%s %s   %s\n", engine->name,
         //     RKVariableInString("targetAzimuth", &V->targetAzimuth, RKValueTypeFloat),
         //     RKVariableInString("markerAzimuth", &V->markerAzimuth, RKValueTypeFloat)
@@ -380,8 +381,10 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                     action->param[0] = scan->elevationSlew;
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                     action->param[1] = 0.0f;
-                    RKLog("%s Info. Ready for sweep %d - AZ %.2f @ crossover EL %.2f\033[m\n", engine->name,
-                        V->i, scan->azimuthStart, scan->elevationEnd);
+                    if (verbose) {
+                        RKLog("%s Info. Ready for sweep %d - AZ %.2f @ crossover EL %.2f\033[m\n", engine->name,
+                            V->i, scan->azimuthStart, scan->elevationEnd);
+                    }
                     V->progress |= RKScanProgressMiddle;
                     V->progress ^= RKScanProgressSetup;
                     V->tic = 0;
@@ -408,8 +411,10 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                     action->param[0] = 0.0f;
                     action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->param[1] = scan->azimuthSlew;
-                    RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\033[m\n", engine->name,
-                        V->i, scan->elevationStart, scan->azimuthMark);
+                    if (verbose) {
+                        RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\033[m\n", engine->name,
+                            V->i, scan->elevationStart, scan->azimuthMark);
+                    }
                     V->progress ^= RKScanProgressSetup;
                     V->tic = 0;
                 } else {
@@ -431,38 +436,35 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
             case RKScanModeRHI:
                 cross = RKAngularCrossOver(pos->elevationDegrees, V->elevationPrevious, scan->elevationEnd);
                 if (cross) {
-                    if (V->option & RKScanOptionVerbose) {
+                    V->progress |= RKScanProgressEnd;
+                    V->progress ^= RKScanProgressMiddle;
+                    if (verbose) {
                         RKLog("%s Target cross detected @ EL %.2f [%.2f -> %.2f]\n", engine->name,
                             scan->elevationEnd, V->elevationPrevious, pos->elevationDegrees);
                     }
-                    V->progress ^= RKScanProgressMiddle;
-                    V->progress |= RKScanProgressEnd;
                 }
                 break;
             case RKScanModePPIAzimuthStep:
+                // If the action was just sent, pedestal has not yet accelerated
                 if (pos->azimuthVelocityDegreesPerSecond == 0.0f) {
                     break;
                 }
                 // Check for a cross-over trigger
                 cross = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, scan->azimuthEnd);
                 if (cross) {
-                    #if defined(DEBUG_GET_ACTION)
-                    if (V->option & RKScanOptionVerbose) {
-                        RKLog("%s Target cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
-                            V->targetAzimuth, V->azimuthPrevious, pos->azimuthDegrees);
-                    }
-                    #endif
                     V->progress |= RKScanProgressEnd;
+                    if (verbose) {
+                        RKLog("%s Target cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                            scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
+                    }
                 }
                 cross = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, scan->azimuthMark);
                 if (cross) {
-                    #if defined(DEBUG_GET_ACTION)
-                    if (V->option & RKScanOptionVerbose) {
-                        RKLog("%s Marker cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
-                            V->markerAzimuth, V->azimuthPrevious, pos->azimuthDegrees);
-                    }
-                    #endif
                     V->progress |= RKScanProgressMarker;
+                    if (verbose) {
+                        RKLog("%s Marker cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                            scan->azimuthMark, V->azimuthPrevious, pos->azimuthDegrees);
+                    }
                 }
                 break;
             default:
@@ -486,9 +488,6 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
             case RKScanModePPIAzimuthStep:
                 // Sweep ended, go to the next sweep
                 V->i = RKNextModuloS(V->i, V->sweepCount);
-                // V->targetElevation = V->batterScans[V->i].elevationStart;
-                // V->targetAzimuth = V->batterScans[V->i].azimuthStart;
-                // V->markerAzimuth = V->batterScans[V->i].azimuthMark;
                 break;
             default:
                 break;
@@ -768,7 +767,7 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
 
 
 void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *engine, char *string) {
-    RKPedestalVcpHandle *V = &engine->vcpHandle;
+    RKScanObject *V = &engine->vcpHandle;
     string[0] = '\0';
     makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
     if (memcmp(V->inTheHoleScans, V->onDeckScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath))) {

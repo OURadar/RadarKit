@@ -73,16 +73,16 @@ typedef struct rk_test_pedestal {
     unsigned long  counter;
     int            commandCount;
 
-    float          positionAzimuth;
-    float          positionTargetAzimuth;
+    float          azimuth;
     float          speedAzimuth;
-    float          speedTargetAzimuth;
+    float          targetAzimuth;
+    float          targetSpeedAzimuth;
     RKAxisAction   actionAzimuth;
 
-    float          positionElevation;
-    float          positionTargetElevation;
+    float          elevation;
     float          speedElevation;
-    float          speedTargetElevation;
+    float          targetElevation;
+    float          targetSpeedElevation;
     RKAxisAction   actionElevation;
 
     pthread_t      tidRunLoop;

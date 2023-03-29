@@ -19,7 +19,7 @@
 #define RKPedestalPositionTolerance    0.3f
 #define RKPedestalVelocityTolerance    1.0f
 #define RKPedestalPointTimeOut         1500
-#define RKPedestalActionPeriod         2
+#define RKPedestalActionPeriod         0.05
 
 typedef bool RKScanRepeat;
 enum RKScanRepeat {
@@ -94,42 +94,12 @@ typedef struct rk_scan_state {
     int                         i;                                             // Sweep index for control
     int                         j;                                             // Sweep index for marker
     int                         tic;                                           // Counter of the run loop
+    int                         toc;                                           //
     float                       elevationPrevious;                             //
     float                       azimuthPrevious;                               //
-    // float                       counterTargetElevation;                        // Elevation control target  (deprecating)
-    // float                       counterTargetAzimuth;                          // Azimuth control target    (deprecating)
-    // float                       counterMarkerAzimuth;                          // Azimuth marker target     (deprecating)
-    // float                       targetElevation;                               //
-    // float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
-    // float                       markerAzimuth;                                 // Marker of end sweep
-    // float                       sweepMarkerElevation;                          // Elevation marker   (deprecating)
-    // float                       sweepElevation;                                // Elevation control  (deprecating)
-    // float                       sweepAzimuth;                                  // Azimuth control    (deprecating)
     RKScanProgress              progress;                                      //
     RKScanAction                lastAction;                                    // store last action
-} RKPedestalVcpHandle;
-
-typedef struct rk_scan_control {
-    RKName                      name;
-    RKScanOption                option;
-    RKScanPath                  batterScans[RKMaximumScanCount];
-    RKScanPath                  onDeckScans[RKMaximumScanCount];
-    RKScanPath                  inTheHoleScans[RKMaximumScanCount];
-    int                         inTheHoleCount;
-    int                         onDeckCount;
-    int                         sweepCount;
-    bool                        active;
-    int                         i;                                             // Sweep index for control
-    int                         j;                                             // Sweep index for marker
-    int                         tic;                                           // Counter of the run loop
-    float                       elevationPrevious;                             //
-    float                       azimuthPrevious;                               //
-    // float                       targetElevation;                               //
-    // float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
-    // float                       markerAzimuth;                                 // Marker of end sweep
-    RKScanProgress              progress;                                      //
-    RKScanAction                lastAction;                                    // store last action
-} RKScanControl;
+} RKScanObject;
 
 typedef struct rk_position_steer_engine RKPositionSteerEngine;
 
@@ -146,8 +116,7 @@ struct rk_position_steer_engine {
     // Program set variables
     pthread_t              threadId;
     double                 startTime;
-    RKPedestalVcpHandle    vcpHandle;
-    RKScanControl          scanControl;
+    RKScanObject    vcpHandle;
     int                    vcpIndex;              // deprecating
     int                    vcpSweepCount;         // deprecating
     struct timeval         currentTime;
