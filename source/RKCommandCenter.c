@@ -675,11 +675,28 @@ int socketStreamHandler(RKOperator *O) {
             user->timeLastOut = time;
             user->ticForStatusStream++;
         } else if (k == RKStreamASCIIArtVCP) {
-            // Stream "8" - VCP engine
+            // Stream "8" - RKSteerEngine (no skipping)
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamASCIIArtVCP) {
                 user->streamsInProgress = RKStreamASCIIArtVCP;
             }
-            //endIndex = RKPreviousModuloS(user->radar->pedestal->, RKBufferSSlotCount);
+            j = 0;
+            k = 0;
+            endIndex = RKPreviousModuloS(user->radar->positionSteerEngine->statusBufferIndex, RKBufferSSlotCount);
+            while (user->steerStatusIndex != endIndex && k < RKMaximumPacketSize - 200) {
+                c = user->radar->positionSteerEngine->statusBuffer[user->steerStatusIndex];
+                k += sprintf(user->string + k, "%s\n", c);
+                user->steerStatusIndex = RKNextModuloS(user->steerStatusIndex, RKBufferSSlotCount);
+                j++;
+            }
+            if (j) {
+                // Take out the last '\n', replace it with somethign else + EOL
+                snprintf(user->string + k - 1, RKMaximumPacketSize - k - 1, "" RKEOL);
+                O->delimTx.type = RKNetworkPacketTypePlainText;
+                O->delimTx.size = k + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+                user->timeLastOut = time;
+                user->ticForStatusStream++;
+            }
         }
 
         // Send another set of controls if the radar controls have changed.

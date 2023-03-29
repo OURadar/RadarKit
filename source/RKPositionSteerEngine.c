@@ -12,7 +12,7 @@
 
 static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engine) {
     char *string;
-    //RKPedestalVcpHandle *vcpHandle = engine->vcpHandle;
+    RKPedestalVcpHandle *V = &engine->vcpHandle;
 
     // Status string
     string = engine->statusBuffer[engine->statusBufferIndex];
@@ -21,21 +21,36 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
     string[RKStatusStringLength - 1] = '\0';
     string[RKStatusStringLength - 2] = '#';
 
-//    RKPosition *position = RKGetLatestPosition(engine->radar);
     uint32_t index = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
     RKPosition *position = &engine->positionBuffer[index];
 
-    if (engine->vcpHandle.active) {
-        sprintf(string, "-- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %% ] --\n",
-                engine->scanControl.i,
-                engine->scanControl.sweepCount,
-                position->elevationDegrees,
-                position->azimuthDegrees);
-    } else {
-        sprintf(string, "-- [ VCP inactive ] --\n");
-    }
+    // if (engine->vcpHandle.active) {
+    //     sprintf(string, "-- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %% ] --\n",
+    //             engine->scanControl.i,
+    //             engine->scanControl.sweepCount,
+    //             position->elevationDegrees,
+    //             position->azimuthDegrees);
+    // } else {
+    //     sprintf(string, "-- [ VCP inactive ] --\n");
+    // }
 
-    // printf("%s\n", string);
+    RKScanAction *action = &engine->actions[engine->actionIndex];
+
+    sprintf(string, "%s%s%s%s  T%3d  EL %.2f / %.2f @ %5.1f °/s   AZ%7.2f @ %5.2f °/s   M%d '%s%s%s'",
+        V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
+        V->progress & RKScanProgressMiddle ? "m" : ".",
+        V->progress & RKScanProgressMarker ? (rkGlobalParameters.showColor ? RKMonokaiGreen "M" RKNoColor : "M") : ".",
+        V->progress & RKScanProgressEnd    ? (rkGlobalParameters.showColor ? RKMonokaiGreen "E" RKNoColor : "E") : ".",
+        V->tic,
+        position->sweepElevationDegrees,
+        position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
+        position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
+        V->batterScans[V->i].mode,
+        RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
+        RKPedestalActionString(action),
+        RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
+
+    // RKLog(">%s %s\n", engine->name, string);
 
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
@@ -299,7 +314,6 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
 RKScanAction *RKPositionSteerEngineGetActionV1(RKPositionSteerEngine *engine, RKPosition *pos) {
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
-    engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
 
     RKPedestalVcpHandle *V = &engine->vcpHandle;
 
@@ -748,12 +762,10 @@ RKScanAction *RKPositionSteerEngineGetActionV1(RKPositionSteerEngine *engine, RK
         //printf("wait for pedestal to slow down\n");
     } // if (V->progress == ...)
 
-    V->azimuthPrevious = pos->azimuthDegrees;
+    engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
     V->elevationPrevious = pos->elevationDegrees;
+    V->azimuthPrevious = pos->azimuthDegrees;
     V->tic++;
-
-//    action.sweepElevation = V->sweepMarkerElevation;
-//    action.sweepAzimuth = V->sweepAzimuth;
 
     return action;
 }
@@ -762,7 +774,6 @@ RKScanAction *RKPositionSteerEngineGetActionV1(RKPositionSteerEngine *engine, RK
 RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
-    engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
 
     RKPedestalVcpHandle *V = &engine->vcpHandle;
 
@@ -878,20 +889,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
 
     RKPositionSteerEngineUpdatePositionFlags(engine, pos);
 
-    RKLog("%s %s%s%s%s  T%3d  EL %.2f / %.2f @ %5.1f °/s   AZ%7.2f @ %5.2f °/s   M%d '%s%s%s'\n",
-        engine->name,
-        V->progress & RKScanProgressSetup  ? RKMonokaiOrange "S" RKNoColor : ".",
-        V->progress & RKScanProgressMiddle ? "m" : ".",
-        V->progress & RKScanProgressMarker ? RKMonokaiGreen "M" RKNoColor : ".",
-        V->progress & RKScanProgressEnd    ? RKMonokaiGreen "E" RKNoColor : ".",
-        V->tic,
-        pos->sweepElevationDegrees,
-        pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond,
-        pos->azimuthDegrees, pos->azimuthVelocityDegreesPerSecond,
-        V->batterScans[V->i].mode,
-        RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
-        RKPedestalActionString(action),
-        RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
+    RKPositionSteerEngineUpdateStatusString(engine);
 
     if (V->progress & RKScanProgressMarker) {
         V->progress ^= RKScanProgressMarker;
@@ -925,8 +923,9 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
         V->progress |= RKScanProgressSetup;
     }
 
-    V->azimuthPrevious = pos->azimuthDegrees;
+    engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
     V->elevationPrevious = pos->elevationDegrees;
+    V->azimuthPrevious = pos->azimuthDegrees;
     V->tic++;
 
     return action;

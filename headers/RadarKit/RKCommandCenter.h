@@ -28,7 +28,7 @@ typedef struct rk_user {
     double                           timeLastIn;                                                   // Time since the last command was received
     uint32_t                         statusIndex;                                                  // The index to radar status
     uint32_t                         healthIndex;                                                  // The index to health
-    uint32_t                         archerStatusIndex;                                            // The index to RKPedestalPedzy->statusBuffer
+    uint32_t                         steerStatusIndex;                                             // The index to RKSteerEngine->statusBuffer
     uint32_t                         rayStatusIndex;                                               // The index to RKMomentEngine->raySatusBuffer
     uint32_t                         pulseIndex;                                                   // The index to the latest pulse
     uint32_t                         rayIndex;                                                     // The index to the latest ray
@@ -60,7 +60,7 @@ typedef struct rk_command_center {
     RKName                           name;
     int                              verbose;
     RKRadar                          *radars[RKCommandCenterMaxRadars];
-    
+
     // Program set variables
     bool                             relayMode;
     bool                             suspendHandler;
@@ -68,7 +68,7 @@ typedef struct rk_command_center {
     int                              radarCount;
     RKUser                           users[RKCommandCenterMaxConnections];
     pthread_mutex_t                  mutex;
-    
+
     // Status / health
     size_t                           memoryUsage;
 } RKCommandCenter;

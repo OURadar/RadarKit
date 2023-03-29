@@ -1307,6 +1307,9 @@ RKStream RKStreamFromString(const char * string) {
             case '7':
                 flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtHealth;
                 break;
+            case '8':
+                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtVCP;
+                break;
             case 'x':
                 flag |= RKStreamStatusTerminalChange;
                 break;
