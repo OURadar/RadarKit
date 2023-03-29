@@ -3928,7 +3928,8 @@ void *RKTestPedestalRunLoop(void *input) {
         // Position / speed change
         if (pedestal->actionAzimuth == RKAxisActionPosition) {
             azimuth = updateSpline(&splinePositionAzimuth, azimuth, pedestal->positionTargetAzimuth);
-        } else if (pedestal->actionAzimuth == RKAxisActionSpeed) {
+        //} else if (pedestal->actionAzimuth == RKAxisActionSpeed) {
+        } else {
             azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
             if (azimuth >= 360.0f) {
                 azimuth -= 360.0f;
@@ -3941,7 +3942,8 @@ void *RKTestPedestalRunLoop(void *input) {
 
         if (pedestal->actionElevation == RKAxisActionPosition) {
             elevation = updateSpline(&splinePositionElevation, elevation, pedestal->positionTargetElevation);
-        } else if (pedestal->actionElevation == RKAxisActionSpeed) {
+        //} else if (pedestal->actionElevation == RKAxisActionSpeed) {
+        } else {
             elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
             if (elevation > 180.0f) {
                 elevation -= 360.0f;
@@ -4001,13 +4003,13 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
     RKRadar *radar = pedestal->radar;
     RKPositionSteerEngine *steeven = radar->positionSteerEngine;
 
-    char cparams[4][256] = {"", "", "", ""};
-    const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
+    char args[4][256] = {"", "", "", ""};
+    const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
 
-    #if defined(DEBUG_TEST_PEDESTAL_EXEC)
+    //#if defined(DEBUG_TEST_PEDESTAL_EXEC)
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
-        cparams[0], cparams[1], cparams[2], cparams[3]);
-    #endif
+        args[0], args[1], args[2], args[3]);
+    //#endif
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
@@ -4046,7 +4048,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         }
     } else if (!strncmp(command, "astop", 5)) {
         pedestal->actionAzimuth = RKAxisActionStop;
-        pedestal->speedTargetElevation = 0.0f;
+        pedestal->speedTargetAzimuth = 0.0f;
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth stopped." RKEOL);
         }
@@ -4063,13 +4065,13 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         }
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
         pedestal->actionAzimuth = RKAxisActionSpeed;
-        pedestal->speedTargetAzimuth = atof(cparams[0]);
+        pedestal->speedTargetAzimuth = atof(args[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "eslew", 5)) {
         pedestal->actionElevation = RKAxisActionSpeed;
-        pedestal->speedTargetElevation = atof(cparams[0]);
+        pedestal->speedTargetElevation = atof(args[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->speedElevation);
         }
@@ -4091,8 +4093,8 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         sprintf(response,
                 "Commands:\n"
                 UNDERLINE("help") " - Help list\n"
-                UNDERLINE("ppi") " [EL] [AZ_RATE] - PPI scan at elevation EL at AZ_RATE deg/s.\n"
-                UNDERLINE("rhi") " [AZ] [EL_START,EL_END] [EL_RATE] - RHI at AZ over EL_START to EL_END.\n"
+                UNDERLINE("pp") " [EL,EL,...] [AZ_MARK] [AZ_RATE] - PPI scan at elevation EL at AZ_RATE deg/s.\n"
+                UNDERLINE("rr") " [AZ,AZ,...] [EL_START,EL_END] [EL_RATE] - RHI at AZ over EL_START to EL_END.\n"
                 );
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);

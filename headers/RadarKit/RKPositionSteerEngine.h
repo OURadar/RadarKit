@@ -99,9 +99,9 @@ typedef struct rk_scan_state {
     // float                       counterTargetElevation;                        // Elevation control target  (deprecating)
     // float                       counterTargetAzimuth;                          // Azimuth control target    (deprecating)
     // float                       counterMarkerAzimuth;                          // Azimuth marker target     (deprecating)
-    float                       targetElevation;                               //
-    float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
-    float                       markerAzimuth;                                 // Marker of end sweep
+    // float                       targetElevation;                               //
+    // float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
+    // float                       markerAzimuth;                                 // Marker of end sweep
     // float                       sweepMarkerElevation;                          // Elevation marker   (deprecating)
     // float                       sweepElevation;                                // Elevation control  (deprecating)
     // float                       sweepAzimuth;                                  // Azimuth control    (deprecating)
@@ -124,9 +124,9 @@ typedef struct rk_scan_control {
     int                         tic;                                           // Counter of the run loop
     float                       elevationPrevious;                             //
     float                       azimuthPrevious;                               //
-    float                       targetElevation;                               //
-    float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
-    float                       markerAzimuth;                                 // Marker of end sweep
+    // float                       targetElevation;                               //
+    // float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
+    // float                       markerAzimuth;                                 // Marker of end sweep
     RKScanProgress              progress;                                      //
     RKScanAction                lastAction;                                    // store last action
 } RKScanControl;

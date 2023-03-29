@@ -998,7 +998,8 @@ int main(int argc, const char **argv) {
         // } else {
         //     RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
         // }
-        RKExecuteCommand(myRadar, "p pp 2,4,6 15 -50", NULL);
+        // RKExecuteCommand(myRadar, "p pp 2,4,6 15 -50", NULL);
+        RKExecuteCommand(myRadar, "p rr 0,20 10,20,30 10", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
