@@ -53,13 +53,14 @@ enum RKScanOption {
 
 typedef int RKScanMode;
 enum RKScanMode {
-    RKScanModeRHI                                = 1,
-    RKScanModeSector                             = 2,
-    RKScanModePPI                                = 3,
-    RKScanModePPIAzimuthStep                     = 4,
-    RKScanModePPIContinuous                      = 5,
-    RKScanModeNewSector                          = 6,
-    RKScanModeSpeedDown                          = 7
+    RKScanModeNone
+    RKScanModeRHI
+    RKScanModeSector          // RKScanModeNewSector
+    RKScanModePPI
+    RKScanModePPIAzimuthStep
+    RKScanModePPIContinuous   // deprecating
+    RKScanModeNewSector       // deprccating
+    RKScanModeSpeedDown       // need to learn more
 };
 
 typedef int RKScanHitter;
