@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "lldb",
       "request": "launch",
-      "args": ["-vs1"],
+      "args": [],
       "cwd": "/Users/boonleng/Developer/radarkit",
       "program": "/Users/boonleng/Developer/radarkit/build/Debug/outDebug"
     },
@@ -14,7 +14,9 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${fileDirname}/${fileBasenameNoExtension}",
-      "args": ["-vs1"],
+      "args": [
+        "-vs1"
+      ],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

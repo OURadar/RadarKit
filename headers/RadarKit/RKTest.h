@@ -15,14 +15,14 @@
 #define RKTestWaveformCacheCount 2
 
 typedef int RKTestFlag;
-enum {
+enum RKTestFlag {
     RKTestFlagNone         = 0,
     RKTestFlagVerbose      = 1,
     RKTestFlagShowResults  = 1 << 1
 };
 
 typedef int RKTestSIMDFlag;
-enum {
+enum RKTestSIMDFlag {
     RKTestSIMDFlagNull                       = 0,
     RKTestSIMDFlagShowNumbers                = 1,
     RKTestSIMDFlagPerformanceTestArithmetic  = 1 << 1,
@@ -30,14 +30,12 @@ enum {
     RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
 };
 
-typedef int RKTestPedestalScanMode;
-enum {
-    RKTestPedestalScanModeNull,
-    RKTestPedestalScanModePPI,
-    RKTestPedestalScanModeRHI,
-    RKTestPedestalScanModeBadPedestal
+typedef int RKAxisAction;
+enum RKAxisAction {
+    RKAxisActionStop,
+    RKAxisActionSpeed,
+    RKAxisActionPosition
 };
-
 typedef struct rk_test_transceiver {
     RKName         name;
     int            verbose;
@@ -72,17 +70,21 @@ typedef struct rk_test_transceiver {
 typedef struct rk_test_pedestal {
     RKName         name;
     int            verbose;
-    long           counter;
-    int            scanMode;
+    unsigned long  counter;
     int            commandCount;
-    float          scanElevation;
-    float          scanAzimuth;
+
+    float          positionAzimuth;
+    float          positionTargetAzimuth;
     float          speedAzimuth;
-    float          speedElevation;
     float          speedTargetAzimuth;
+    RKAxisAction   actionAzimuth;
+
+    float          positionElevation;
+    float          positionTargetElevation;
+    float          speedElevation;
     float          speedTargetElevation;
-    float          rhiElevationStart;
-    float          rhiElevationEnd;
+    RKAxisAction   actionElevation;
+
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;

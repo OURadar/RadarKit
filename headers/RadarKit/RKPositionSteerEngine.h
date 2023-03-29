@@ -81,7 +81,7 @@ typedef struct rk_scan_path {
 } RKScanPath;
 
 typedef struct rk_scan_state {
-    char                        name[64];
+    RKName                      name;
     RKScanOption                option;
     RKScanPath                  batterScans[RKMaximumScanCount];
     RKScanPath                  onDeckScans[RKMaximumScanCount];
@@ -95,18 +95,40 @@ typedef struct rk_scan_state {
     int                         tic;                                           // Counter of the run loop
     float                       elevationPrevious;                             //
     float                       azimuthPrevious;                               //
-    float                       counterTargetElevation;                        // Elevation control target
-    float                       counterTargetAzimuth;                          // Azimuth control target
-    float                       counterMarkerAzimuth;                          // Azimuth marker target
+    // float                       counterTargetElevation;                        // Elevation control target  (deprecating)
+    // float                       counterTargetAzimuth;                          // Azimuth control target    (deprecating)
+    // float                       counterMarkerAzimuth;                          // Azimuth marker target     (deprecating)
     float                       targetElevation;                               //
     float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
     float                       markerAzimuth;                                 // Marker of end sweep
-    float                       sweepMarkerElevation;                          // Elevation marker   (deprecating)
-    float                       sweepElevation;                                // Elevation control  (deprecating)
-    float                       sweepAzimuth;                                  // Azimuth control    (deprecating)
+    // float                       sweepMarkerElevation;                          // Elevation marker   (deprecating)
+    // float                       sweepElevation;                                // Elevation control  (deprecating)
+    // float                       sweepAzimuth;                                  // Azimuth control    (deprecating)
     RKScanProgress              progress;                                      //
-    RKScanAction            lastAction;                                    // store last action
+    RKScanAction                lastAction;                                    // store last action
 } RKPedestalVcpHandle;
+
+typedef struct rk_scan_control {
+    RKName                      name;
+    RKScanOption                option;
+    RKScanPath                  batterScans[RKMaximumScanCount];
+    RKScanPath                  onDeckScans[RKMaximumScanCount];
+    RKScanPath                  inTheHoleScans[RKMaximumScanCount];
+    int                         inTheHoleCount;
+    int                         onDeckCount;
+    int                         sweepCount;
+    bool                        active;
+    int                         i;                                             // Sweep index for control
+    int                         j;                                             // Sweep index for marker
+    int                         tic;                                           // Counter of the run loop
+    float                       elevationPrevious;                             //
+    float                       azimuthPrevious;                               //
+    float                       targetElevation;                               //
+    float                       targetAzimuth;                                 // Target of end sweep: counter or transition azimuth
+    float                       markerAzimuth;                                 // Marker of end sweep
+    RKScanProgress              progress;                                      //
+    RKScanAction                lastAction;                                    // store last action
+} RKScanControl;
 
 typedef struct rk_position_steer_engine RKPositionSteerEngine;
 
@@ -124,8 +146,9 @@ struct rk_position_steer_engine {
     pthread_t              threadId;
     double                 startTime;
     RKPedestalVcpHandle    vcpHandle;
-    int                    vcpIndex;
-    int                    vcpSweepCount;
+    RKScanControl          scanControl;
+    int                    vcpIndex;              // deprecating
+    int                    vcpSweepCount;         // deprecating
     struct timeval         currentTime;
     struct timeval         statusPeriod;
     struct timeval         statusTriggerTime;
@@ -153,7 +176,18 @@ void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *, const R
 int RKPositionSteerEngineStart(RKPositionSteerEngine *);
 int RKPositionSteerEngineStop(RKPositionSteerEngine *);
 
-void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
+void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
+void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
+void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
+void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
+int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
+int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
+
+// void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
+
+RKScanAction *RKPositionSteerEngineGetActionV1(RKPositionSteerEngine *, RKPosition *);
 RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *, RKPosition *);
 
 int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *, const char *, char *);

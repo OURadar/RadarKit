@@ -23,6 +23,13 @@
 printf("%s %s" RKNoColor "\n", str, res ? RKGreenColor "okay" : RKRedColor "too high") : \
 printf("%s %s\n", str, res ? "okay" : "too high");
 
+typedef struct rk_spline {
+    float head;
+    float tail;
+    float walk;
+    float left;
+} RKSpline;
+
 #pragma mark - Static Functions
 
 static void RKTestCallback(void *in) {
@@ -33,6 +40,28 @@ static void RKTestCallback(void *in) {
 // Compare two filenames alphabetically
 static int string_cmp_by_filename(const void *a, const void *b) {
     return strcmp((char *)a, (char *)b);
+}
+
+static float updateSpline(RKSpline *spline, const float value, const float target) {
+    float result;
+    if (value == target) {
+        return value;
+    }
+    if (spline->left == 0.0f) {
+        spline->tail = target;
+        spline->head = value;
+        spline->walk = fabs(target - value) > 10.0f ? 0.5f : 0.2f;
+        spline->left = spline->walk;
+    }
+    const float alpha = spline->left / spline->walk;
+    if (alpha < 0.05f) {
+        result = spline->tail;
+        spline->left = 0.0f;
+    } else {
+        result = spline->tail + alpha * (spline->head - spline->tail);
+        spline->left -= PEDESTAL_SAMPLING_TIME;
+    }
+    return result;
 }
 
 #pragma mark - Test Wrapper and Help Text
@@ -3773,6 +3802,8 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
 #pragma mark - Pedestal Emulator
 #pragma region Pedestal Emulator
 
+#define RKSplineDefault   { .left = 0.0 }
+
 void *RKTestPedestalRunLoop(void *input) {
     RKTestPedestal *pedestal = (RKTestPedestal *)input;
     RKRadar *radar = pedestal->radar;
@@ -3806,18 +3837,18 @@ void *RKTestPedestalRunLoop(void *input) {
 
     int commandCount = pedestal->commandCount;
 
-    float elevationLeft = 0.0f;
-    float elevationWalk = 0.0f;
-    float elevationHead = 0.0f;
-    float elevationTail = 0.0f;
+    RKSpline splinePositionElevation = RKSplineDefault;
+    RKSpline splineSpeedElevation = RKSplineDefault;
+    RKSpline splinePositionAzimuth = RKSplineDefault;
+    RKSpline splineSpeedAzimuth = RKSplineDefault;
+
+    RKScanAction scan;
 
     float speedAzimuthRun = 0.0f;
 
     while (pedestal->state & RKEngineStateWantActive) {
         if (commandCount != pedestal->commandCount) {
             commandCount = pedestal->commandCount;
-            elevation = pedestal->scanElevation;
-            azimuth = pedestal->scanAzimuth;
         }
 
         // Get a vacant position to fill it in with the latest reading
@@ -3894,20 +3925,32 @@ void *RKTestPedestalRunLoop(void *input) {
             }
         }
 
-        // Posiiton change
-        azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
-        if (azimuth >= 360.0f) {
-            azimuth -= 360.0f;
-        } else if (azimuth < 0.0f) {
-            azimuth += 360.0f;
+        // Position / speed change
+        if (pedestal->actionAzimuth == RKAxisActionPosition) {
+            azimuth = updateSpline(&splinePositionAzimuth, azimuth, pedestal->positionTargetAzimuth);
+        } else if (pedestal->actionAzimuth == RKAxisActionSpeed) {
+            azimuth += pedestal->speedAzimuth * PEDESTAL_SAMPLING_TIME;
+            if (azimuth >= 360.0f) {
+                azimuth -= 360.0f;
+            } else if (azimuth < 0.0f) {
+                azimuth += 360.0f;
+            }
+            pedestal->speedAzimuth = updateSpline(&splineSpeedAzimuth, pedestal->speedAzimuth, pedestal->speedTargetAzimuth);
         }
+        pedestal->positionAzimuth = azimuth;
 
-        elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
-        if (elevation > 180.0f) {
-            elevation -= 360.0f;
-        } else if (elevation < -180.0f) {
-            elevation += 360.0f;
+        if (pedestal->actionElevation == RKAxisActionPosition) {
+            elevation = updateSpline(&splinePositionElevation, elevation, pedestal->positionTargetElevation);
+        } else if (pedestal->actionElevation == RKAxisActionSpeed) {
+            elevation += pedestal->speedElevation * PEDESTAL_SAMPLING_TIME;
+            if (elevation > 180.0f) {
+                elevation -= 360.0f;
+            } else if (elevation < -180.0f) {
+                elevation += 360.0f;
+            }
+            pedestal->speedElevation = updateSpline(&splineSpeedElevation, pedestal->speedElevation, pedestal->speedTargetElevation);
         }
+        pedestal->positionElevation = elevation;
 
         // Wait to simulate sampling time
         do {
@@ -3915,39 +3958,6 @@ void *RKTestPedestalRunLoop(void *input) {
             dt = RKTimevalDiff(t0, t1);
             usleep(1000);
         } while (pedestal->state & RKEngineStateWantActive && dt < PEDESTAL_SAMPLING_TIME);
-
-        // Update speed
-        if (fabs(pedestal->speedTargetAzimuth) > 5.0f) {
-            pedestal->speedAzimuth = 0.5f * pedestal->speedTargetAzimuth + 0.5f * pedestal->speedAzimuth;
-        } else {
-            pedestal->speedAzimuth = 0.8f * pedestal->speedTargetAzimuth + 0.2f * pedestal->speedAzimuth;
-        }
-        // if (fabs(pedestal->speedTargetElevation) > 5.0f) {
-        //     pedestal->speedElevation = 0.5f * pedestal->speedTargetElevation + 0.5f * pedestal->speedElevation;
-        // } else {
-        //     pedestal->speedElevation = 0.8f * pedestal->speedTargetElevation + 0.2f * pedestal->speedElevation;
-        // }
-        if (pedestal->speedElevation != pedestal->speedTargetElevation) {
-            if (elevationLeft == 0.0f) {
-                elevationTail = pedestal->speedTargetElevation;
-                elevationHead = pedestal->speedElevation;
-                elevationWalk = fabs(pedestal->speedTargetElevation - pedestal->speedElevation) > 10.0f ? 0.5f : 0.2f;
-                elevationLeft = elevationWalk;
-            }
-            float alpha = elevationLeft / elevationWalk;
-            if (alpha < 0.05f) {
-                pedestal->speedElevation = pedestal->speedTargetElevation;
-                elevationLeft = 0.0f;
-            } else {
-                // pedestal->speedElevation = alpha * elevationHead + (1.0 - alpha) * elevationTail;
-                pedestal->speedElevation = elevationTail + alpha * (elevationHead - elevationTail);
-                elevationLeft -= PEDESTAL_SAMPLING_TIME;
-            }
-            // RKLog("%s %s %s\n", pedestal->name,
-            //     RKVariableInString("alpha", &alpha, RKValueTypeFloat),
-            //     RKVariableInString("elevationWalk", &elevationWalk, RKValueTypeFloat)
-            //     );
-        }
 
         t1 = t0;
     }
@@ -4027,58 +4037,38 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
             sprintf(response, "0" RKEOL);
         }
     } else if (!strncmp(command, "stop", 4)) {
-        pedestal->scanMode = RKTestPedestalScanModeNull;
-        pedestal->scanElevation = 0.0f;
-        pedestal->scanAzimuth = 0.0f;
+        pedestal->actionElevation = RKAxisActionStop;
+        pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->speedElevation = 0.0f;
         pedestal->speedAzimuth = 0.0f;
         if (response != NULL) {
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
     } else if (!strncmp(command, "astop", 5)) {
+        pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->speedTargetElevation = 0.0f;
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth stopped." RKEOL);
         }
     } else if (!strncmp(command, "estop", 5)) {
+        pedestal->actionElevation = RKAxisActionStop;
         pedestal->speedTargetElevation = 0.0f;
         if (response != NULL) {
             sprintf(response, "ACK. Elevation stopped." RKEOL);
         }
-    } else if (!strncmp(command, "ppi", 3)) {
-        if (n == 2) {
-            pedestal->scanMode = RKTestPedestalScanModePPI;
-            pedestal->commandCount++;
-            pedestal->scanElevation = atof(cparams[0]);
-            pedestal->speedAzimuth = atof(cparams[1]);
-        }
-        if (response != NULL) {
-            sprintf(response, "ACK. PPI mode set at EL %.2f @ %.2f °/s" RKEOL, pedestal->scanElevation, pedestal->speedAzimuth);
-        }
-    } else if (!strncmp(command, "rhi", 3)) {
-        if (n == 3) {
-            pedestal->scanMode = RKTestPedestalScanModeRHI;
-            pedestal->commandCount++;
-            pedestal->scanAzimuth = atof(cparams[0]);
-            pedestal->speedElevation = atof(cparams[2]);
-            sscanf(cparams[1], "%f,%f", &pedestal->rhiElevationStart, &pedestal->rhiElevationEnd);
-        }
-        if (response != NULL) {
-            sprintf(response, "ACK. RHI mode set at AZ %.2f over %.2f-%.2f deg @ %.2f deg/sec" RKEOL,
-                    pedestal->scanAzimuth, pedestal->rhiElevationStart, pedestal->rhiElevationEnd, pedestal->speedElevation);
-        }
     } else if (!strncmp(command, "bad", 3)) {
-        pedestal->scanMode = RKTestPedestalScanModeBadPedestal;
         pedestal->commandCount++;
         if (response != NULL) {
             sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
         }
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
+        pedestal->actionAzimuth = RKAxisActionSpeed;
         pedestal->speedTargetAzimuth = atof(cparams[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->speedAzimuth);
         }
     } else if (!strncmp(command, "eslew", 5)) {
+        pedestal->actionElevation = RKAxisActionSpeed;
         pedestal->speedTargetElevation = atof(cparams[0]);
         if (response != NULL) {
             sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->speedElevation);
