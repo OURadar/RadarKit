@@ -14,7 +14,9 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${fileDirname}/rkutil",
-      "args": ["-vs1"],
+      "args": [
+        "-vs1"
+      ],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

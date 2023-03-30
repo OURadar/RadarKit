@@ -736,7 +736,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         RKScanMode mode = RKScanModeSpeedDown;
 
-        RKLog("%s Bare string = '%s'\n", engine->name, engine->scanString);
         k = 0;
         token = strtok(engine->scanString, slash);
         while (token != NULL && k++ < 100) {
@@ -761,11 +760,19 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
                 break;
             }
             o = sscanf(args[0], "%f,%f", &elevationStart, &elevationEnd);
-            if (o == 1) {
+            if (o < 1) {
+                sprintf(response, "NAK. Ill-defined volume component.   o = %d" RKEOL, o);
+                everythingOkay = false;
+                break;
+            } else if (o == 1) {
                 elevationEnd = elevationStart;
             }
-            o = scanf(args[1], "%f,%f,%f", &azimuthStart, &azimuthEnd, &azimuthMark);
-            if (o == 2) {
+            o = sscanf(args[1], "%f,%f,%f", &azimuthStart, &azimuthEnd, &azimuthMark);
+            if (o < 1) {
+                sprintf(response, "NAK. Ill-defined volume component.   o = %d" RKEOL, o);
+                everythingOkay = false;
+                break;
+            } else if (o == 2) {
                 azimuthMark = azimuthEnd;
             } else if (o == 1) {
                 azimuthEnd = azimuthStart;
@@ -784,8 +791,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             token = strtok(NULL, slash);
         }
 
-        RKLog("%s vol parsed.\n", engine->name);
-
     }
 
     if (everythingOkay) {
@@ -799,10 +804,8 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         RKStripTail(engine->dump);
         RKLog("%s %s\n", engine->name, engine->dump);
     } else {
-        sprintf(response, "NAK. Errors occurred." RKEOL);
         return RKResultFailedToSetVCP;
     }
-    RKLog("%s success\n", engine->name);
 
     return RKResultSuccess;
 }
