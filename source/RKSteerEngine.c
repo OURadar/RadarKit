@@ -231,6 +231,8 @@ static void *steerer(void *_in) {
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
 
+    engine->state ^= RKEngineStateActive;
+
     return NULL;
 }
 
@@ -827,6 +829,8 @@ RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
     return sweep;
 }
 
+#define RKDigitWidth(v, n)  (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)
+
 static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKScanHitter linetag) {
     char prefix[8];
     switch (linetag){
@@ -843,10 +847,35 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
             break;
     }
 
+    // First pass, get the maximum column width necessary for E and A
+    char format[80];
+    int es = 0;
+    int ee = 0;
+    int ev = 0;
+    int as = 0;
+    int am = 0;
+    int ae = 0;
+    int av = 0;
+    const int n = 1;
+    for (int i = 0; i < count; i++) {
+        // int w1 = sprintf(format, "%.1f", scanPaths[i].azimuthSlew);
+        // int w2 = RKDigitWidth(scanPaths[i].azimuthSlew, 1);
+        // printf("w1 = %d   w2 = %d\n", w1, w2);
+        es = MAX(es, RKDigitWidth(scanPaths[i].elevationStart, n));
+        ee = MAX(es, RKDigitWidth(scanPaths[i].elevationEnd, n));
+        ev = MAX(ev, RKDigitWidth(scanPaths[i].elevationSlew, n));
+        as = MAX(as, RKDigitWidth(scanPaths[i].azimuthStart, n));
+        am = MAX(am, RKDigitWidth(scanPaths[i].azimuthMark, n));
+        ae = MAX(ae, RKDigitWidth(scanPaths[i].azimuthEnd, n));
+        av = MAX(av, RKDigitWidth(scanPaths[i].azimuthSlew, n));
+    }
+
+    // Second pass, actually print it out using the consitent column width
     for (int i = 0; i < count; i++) {
         switch (scanPaths[i].mode) {
             case RKScanModePPI:
-                sprintf(string + strlen(string), "%s%d : PPI E%.2f A%.2f @ %.2f deg/s",
+                sprintf(format, "%%s%%d : PPI EL %%%d.1f   AZ %%%d.1f   @ %%%d.1f deg/s", es, am, av);
+                sprintf(string + strlen(string), format,
                         prefix,
                         i,
                         scanPaths[i].elevationStart,
@@ -854,7 +883,8 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
                         scanPaths[i].azimuthSlew);
                 break;
             case RKScanModeRHI:
-                sprintf(string + strlen(string), "%s%d : RHI A%.2f E%.2f-%.2f @ %.2f deg/s",
+                sprintf(format, "%%s%%d : RHI AZ %%%d.1f   EZ %%%d.1f-%%%d.1f   @ %%%d.1f deg/s", as, es, ee, ev);
+                sprintf(string + strlen(string), format,
                         prefix,
                         i,
                         scanPaths[i].azimuthStart,
@@ -863,7 +893,8 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
                         scanPaths[i].elevationSlew);
                 break;
             case RKScanModeSector:
-                sprintf(string + strlen(string), "%s%d : SEC E%.2f A%.2f-%.2f @ %.2f deg/s",
+                sprintf(format, "%%s%%d : SEC EL %%%d.1f   AZ %%%d.1f-%%%d.1f   @ %%%d.1f deg/s", es, as, ae, av);
+                sprintf(string + strlen(string), format,
                         prefix,
                         i,
                         scanPaths[i].elevationStart,
