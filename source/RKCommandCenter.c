@@ -681,9 +681,9 @@ int socketStreamHandler(RKOperator *O) {
             }
             j = 0;
             k = 0;
-            endIndex = RKPreviousModuloS(user->radar->positionSteerEngine->statusBufferIndex, RKBufferSSlotCount);
+            endIndex = RKPreviousModuloS(user->radar->steerEngine->statusBufferIndex, RKBufferSSlotCount);
             while (user->steerStatusIndex != endIndex && k < RKMaximumPacketSize - 200) {
-                c = user->radar->positionSteerEngine->statusBuffer[user->steerStatusIndex];
+                c = user->radar->steerEngine->statusBuffer[user->steerStatusIndex];
                 k += sprintf(user->string + k, "%s\n", c);
                 user->steerStatusIndex = RKNextModuloS(user->steerStatusIndex, RKBufferSSlotCount);
                 j++;

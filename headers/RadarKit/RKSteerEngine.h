@@ -1,6 +1,6 @@
 
 //
-//  RKPositionSteerEngine.h
+//  RKSteerEngine.h
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 3/21/23.
@@ -98,7 +98,7 @@ typedef struct rk_scan_state {
     RKScanAction                lastAction;                                    // store last action
 } RKScanObject;
 
-typedef struct rk_position_steer_engine RKPositionSteerEngine;
+typedef struct rk_position_steer_engine RKSteerEngine;
 
 struct rk_position_steer_engine {
     // User set variables
@@ -127,40 +127,40 @@ struct rk_position_steer_engine {
     float                  lag;
 };
 
-RKPositionSteerEngine *RKPositionSteerEngineInit(void);
-void RKPositionSteerEngineFree(RKPositionSteerEngine *);
+RKSteerEngine *RKSteerEngineInit(void);
+void RKSteerEngineFree(RKSteerEngine *);
 
-void RKPositionSteerEngineSetVerbose(RKPositionSteerEngine *, const int);
-void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *, const RKRadarDesc *,
+void RKSteerEngineSetVerbose(RKSteerEngine *, const int);
+void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *, const RKRadarDesc *,
                                                 RKPosition *, uint32_t *,
                                                 RKConfig *,   uint32_t *);
 
-int RKPositionSteerEngineStart(RKPositionSteerEngine *);
-int RKPositionSteerEngineStop(RKPositionSteerEngine *);
+int RKSteerEngineStart(RKSteerEngine *);
+int RKSteerEngineStop(RKSteerEngine *);
 
-void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *);
-void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *);
-void RKPositionSteerEngineClearHole(RKPositionSteerEngine *);
-void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *);
-void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *);
-void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *, const RKScanRepeat);
-int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *, const RKScanPath);
-int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *, const RKScanPath);
+void RKSteerEngineStopSweeps(RKSteerEngine *);
+void RKSteerEngineClearSweeps(RKSteerEngine *);
+void RKSteerEngineClearHole(RKSteerEngine *);
+void RKSteerEngineClearDeck(RKSteerEngine *);
+void RKSteerEngineNextHitter(RKSteerEngine *);
+void RKSteerEngineArmSweeps(RKSteerEngine *, const RKScanRepeat);
+int RKSteerEngineAddLineupSweep(RKSteerEngine *, const RKScanPath);
+int RKSteerEngineAddPinchSweep(RKSteerEngine *, const RKScanPath);
 
-// void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *, RKPosition *);
+// void RKSteerEngineUpdatePositionFlags(RKSteerEngine *, RKPosition *);
 
-RKScanAction *RKPositionSteerEngineGetActionV1(RKPositionSteerEngine *, RKPosition *);
-RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *, RKPosition *);
+RKScanAction *RKSteerEngineGetActionV1(RKSteerEngine *, RKPosition *);
+RKScanAction *RKSteerEngineGetAction(RKSteerEngine *, RKPosition *);
 
-int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *, const char *, char *);
+int RKSteerEngineExecuteString(RKSteerEngine *, const char *, char *);
 
-RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode,
+RKScanPath RKSteerEngineMakeScanPath(RKScanMode,
                                              const float elevationStart, const float elevationEnd,
                                              const float azimuthStart, const float azimuthEnd, const float azimuthMark,
                                              const float rate);
 
-void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *, char *);
+void RKSteerEngineScanSummary(RKSteerEngine *, char *);
 
-char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *);
+char *RKSteerEngineStatusString(RKSteerEngine *);
 
 #endif

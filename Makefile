@@ -27,7 +27,7 @@ ifeq ($(MACHINE), x86_64)
 	CFLAGS += -mfpmath=sse
 endif
 
-CFLAGS += -I headers -I headers/RadarKit -fPIC
+CFLAGS += -Iheaders -Iheaders/RadarKit -fPIC
 
 LDFLAGS = -L./
 
@@ -49,7 +49,7 @@ OBJS += RKFileManager.o RKHostMonitor.o
 OBJS += RKConfig.o
 OBJS += RKWaveform.o
 OBJS += RKHealthEngine.o
-OBJS += RKPositionEngine.o RKPositionSteerEngine.o
+OBJS += RKPositionEngine.o RKSteerEngine.o
 OBJS += RKPulseEngine.o RKPulseRingFilter.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
@@ -105,7 +105,7 @@ showinfo:
 	@echo $(ECHO_FLAG) "HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m"
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
-	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJS_PATH):
 	mkdir -p $@

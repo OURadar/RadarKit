@@ -17,7 +17,7 @@
 #include <RadarKit/RKHealthEngine.h>
 #include <RadarKit/RKCalibrator.h>
 #include <RadarKit/RKPositionEngine.h>
-#include <RadarKit/RKPositionSteerEngine.h>
+#include <RadarKit/RKSteerEngine.h>
 #include <RadarKit/RKPulseEngine.h>
 #include <RadarKit/RKPulseRingFilter.h>
 #include <RadarKit/RKMomentEngine.h>
@@ -119,7 +119,7 @@ struct rk_radar {
     RKFFTModule                      *fftModule;
     RKHealthEngine                   *healthEngine;
     RKPositionEngine                 *positionEngine;
-    RKPositionSteerEngine            *positionSteerEngine;
+    RKSteerEngine                    *steerEngine;
     RKPulseEngine                    *pulseEngine;
     RKPulseRingFilterEngine          *pulseRingFilterEngine;
     RKMomentEngine                   *momentEngine;

@@ -19,9 +19,9 @@ static int RKPedestalPedzyRead(RKClient *client) {
 
     RKRadar *radar = me->radar;
 
-    //RKPedestalVcpHandle *vcpHandle = &radar->positionSteerEngine->vcpHandle;
+    //RKPedestalVcpHandle *vcpHandle = &radar->steerEngine->vcpHandle;
     // RKPositionFlag flag;
-    RKPositionSteerEngine *steerEngine = radar->positionSteerEngine;
+    RKSteerEngine *steerEngine = radar->steerEngine;
 
     if (client->netDelimiter.type == 'p') {
         // The payload just read by RKClient
@@ -58,8 +58,8 @@ static int RKPedestalPedzyRead(RKClient *client) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
 
-        // Add other flags based on radar->positionSteerEngine
-        //RKPositionSteerEngineUpdatePositionFlags(steerEngine, newPosition);
+        // Add other flags based on radar->steerEngine
+        //RKSteerEngineUpdatePositionFlags(steerEngine, newPosition);
 
         // Note to myself: Could consider adding something similar to the RKRadar abstraction layer
         // That way, the thought process is consistent like RKSetPositionRead();
@@ -71,7 +71,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
 
         // Get the latest action, could be null
         // Same here, add one to the RKRadar layer?
-        RKScanAction *action = RKPositionSteerEngineGetAction(steerEngine, newPosition);
+        RKScanAction *action = RKSteerEngineGetAction(steerEngine, newPosition);
 
         char axis = 'e';
         char string[64];
@@ -127,91 +127,10 @@ static int RKPedestalPedzyGreet(RKClient *client) {
 
 #pragma mark - Delegate Workers
 
-//static void *pedestalVcpEngine(void *in) {
-//    int i, k;
-//    RKPedestalPedzy *me = (RKPedestal)in;
-//    RKRadar *radar = me->radar;
-//    RKClient *client = me->client;
-//    RKPedestalVcpHandle *vcpHandle = me->vcpHandle;
-//    RKStatusEnum vcpActive;
-//
-//    gettimeofday(&RKPedestalVcpCurrentTime, NULL);
-//    timerclear(&RKPedestalVcpStatusTriggerTime);
-//    timerclear(&RKPedestalVcpStatusPeriod);
-//    RKPedestalVcpStatusPeriod.tv_sec = RKPedestalVcpStatusPeriodMS / 1000;
-//    RKPedestalVcpStatusPeriod.tv_usec = (RKPedestalVcpStatusPeriodMS % 1000) * 1000;
-//    timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
-//    RKPedestalAction action;
-//
-//    k = radar->positionIndex;
-//
-//    while (me->client->state < RKClientStateDisconnecting) {
-//        gettimeofday(&RKPedestalVcpCurrentTime, NULL);
-//        if (me->client->state < RKClientStateConnected) {
-//            vcpActive = RKStatusEnumInvalid;
-//        } else {
-//            //
-//            //   To be replaced with continuous position data ... -boonleng
-//            //
-//            RKPosition *position = RKGetLatestPosition(radar);
-//            if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
-//                vcpActive = RKStatusEnumFault;
-//            } else if (position->flag & RKPositionFlagVCPActive) {
-//                vcpActive = RKStatusEnumActive;
-//            } else {
-//                vcpActive = RKStatusEnumStandby;
-//            }
-//
-//            if (vcpHandle->active){
-//                // put vcp get action here
-//                action = pedestalVcpGetAction(me);
-//                // action.sweepElevation = vcpHandle->batterSweeps[vcpHandle->i].elevationStart;
-//                // action.sweepAzimuth = vcpHandle->batterSweeps[vcpHandle->i].azimuthStart;
-//                vcpHandle->lastAction = action;
-//                // Call the control handler based on the suggested action
-//                if (action.mode[0] != RKPedestalInstructTypeNone || action.mode[1] != RKPedestalInstructTypeNone) {
-//                    // P->control(P->ped, action);
-//                    pedestalVcpSendAction(client->sd, me->latestCommand, &action);
-//
-//                    for (i = 0; i < 2; i++) {
-//                        if (action.mode[i] != RKPedestalInstructTypeNone) {
-//                            RKLog("action.mode[%d] %s%s%s%s%s%s %.2f\n", i,
-//                               RKInstructIsAzimuth(action.mode[i]) ? "AZ"       : "EL",
-//                               RKInstructIsPoint(action.mode[i])   ? " point"   : "",
-//                               RKInstructIsSlew(action.mode[i])    ? " slew"    : "",
-//                               RKInstructIsStandby(action.mode[i]) ? " standby" : "",
-//                               RKInstructIsEnable(action.mode[i])  ? " enable"  : "",
-//                               RKInstructIsDisable(action.mode[i]) ? " disable" : "",
-//                               action.param[i]);
-//                        }
-//                    }
-//                    me->lastActionAge = 0;
-//                }
-//            }
-//            if (timercmp(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusTriggerTime, >=)) {
-//                timeradd(&RKPedestalVcpCurrentTime, &RKPedestalVcpStatusPeriod, &RKPedestalVcpStatusTriggerTime);
-//                if (vcpHandle->active) {
-//                    printf("                 -- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %d ] --\n",
-//                           vcpHandle->i,
-//                           vcpHandle->sweepCount,
-//                        position->elevationDegrees,
-//                        position->azimuthDegrees,
-//                           vcpHandle->progress);
-//                } else {
-//                    printf("                 -- [ VCP inactive ] --\n");
-//                }
-//            }
-//        }
-//        usleep(20000);
-//        me->lastActionAge++;
-//    }
-//    return (void *)NULL;
-//}
-
 static void *pedestalHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
-    RKPositionSteerEngine *steerer = radar->positionSteerEngine;
+    RKSteerEngine *steerer = radar->steerEngine;
     RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum vcpActive;
@@ -329,7 +248,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         return RKResultNoRadar;
     }
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
-    RKPositionSteerEngine *positionSteerEngine = me->radar->positionSteerEngine;
+    RKSteerEngine *steerEngine = me->radar->steerEngine;
     RKClient *client = me->client;
 
     bool skipNetResponse = true;
@@ -345,10 +264,10 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else if (!strncmp("go", command, 2) || !strncmp("run", command, 3)) {
-        RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatForever);
+        RKSteerEngineArmSweeps(steerEngine, RKScanRepeatForever);
         sprintf(response, "ACK. Go." RKEOL);
     } else if (!strncmp("once", command, 4)) {
-        RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatNone);
+        RKSteerEngineArmSweeps(steerEngine, RKScanRepeatNone);
         sprintf(response, "ACK. Once." RKEOL);
     } else if (!strncmp("pp", command, 2) ||
                 !strncmp("ipp", command, 3) ||
@@ -359,9 +278,9 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 !strncmp("vol", command, 3) ||
                 !strncmp("ivol", command, 4) ||
                 !strncmp("ovol", command, 4)) {
-        RKPositionSteerEngineExecuteString(positionSteerEngine, command, response);
+        RKSteerEngineExecuteString(steerEngine, command, response);
     } else if (!strncmp("summ", command, 4)) {
-        RKPositionSteerEngineScanSummary(positionSteerEngine, response);
+        RKSteerEngineScanSummary(steerEngine, response);
         sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
     } else {
         if (client->verbose) {
@@ -379,7 +298,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
         // Commands that need to be forwarded to Pedzy
         if (!strncmp("stop", command, 4) || !strncmp("zero", command, 4)) {
             skipNetResponse = false;
-            RKPositionSteerEngineStopSweeps(positionSteerEngine);
+            RKSteerEngineStopSweeps(steerEngine);
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         } else {
             skipNetResponse = false;
@@ -417,291 +336,3 @@ int RKPedestalPedzyFree(RKPedestal input) {
     free(me);
     return RKResultSuccess;
 }
-
-//
-//
-//
-//
-//void pedestalVcpSendAction(int sd, char *ship, RKPedestalAction *act) {
-//    sprintf(ship, "%c", 0x0f);
-//    memcpy(ship + 1, act, sizeof(RKPedestalAction));
-//    strncpy(ship + 1 + sizeof(RKPedestalAction), RKEOL, 2);
-//    // printf("EL %.2f dps| AZ %.2f dps \n",act->param[0],act->param[1]);
-//    RKNetworkSendPackets(sd, ship, sizeof(RKPedestalAction) + 3, NULL);
-//}
-//
-
-//
-//
-//
-//int pedestalPoint(RKPedestalPedzy *me, const float el_point, const float az_point){
-//    float umin_diff_el;
-//    float umin_diff_az;
-//    float min_diff_el;
-//    float min_diff_az;
-//    float rate_el;
-//    float rate_az;
-//    RKPosition *pos = RKGetLatestPosition(me->radar);
-//    RKPedestalAction action;
-//    action.mode[0] = RKPedestalInstructTypeNone;
-//    action.mode[1] = RKPedestalInstructTypeNone;
-//    action.param[0] = 0.0f;
-//    action.param[1] = 0.0f;
-//    action.sweepElevation = el_point;
-//    action.sweepAzimuth = az_point;
-//
-//    umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//    umin_diff_az = RKUMinDiff(az_point, pos->azimuthDegrees);
-//    int i = 0;
-//    while ((umin_diff_el > RKPedestalPositionRoom || umin_diff_az > RKPedestalPositionRoom)
-//        && i < RKPedestalPointTimeOut) {
-//
-//        pos = RKGetLatestPosition(me->radar);
-//        umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//        if (umin_diff_el > RKPedestalPositionRoom){
-//            action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//            rate_el = pedestalGetRate( umin_diff_el, RKPedestalPointElevation );
-//            min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
-//            if (min_diff_el >= 0.0f){
-//                action.param[0] = rate_el;
-//            }else{
-//                action.param[0] = -rate_el;
-//            }
-//        } else{
-//            action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
-//            action.param[0] = 0.0f;
-//        }
-//
-//        umin_diff_az = RKUMinDiff(az_point, pos->azimuthDegrees);
-//        if (umin_diff_az > RKPedestalPositionRoom){
-//            action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//            rate_az = pedestalGetRate( umin_diff_az, RKPedestalPointAzimuth );
-//            min_diff_az = RKMinDiff(az_point, pos->azimuthDegrees);
-//            if (min_diff_az >= 0.0f){
-//                action.param[1] = rate_az;
-//            }else{
-//                action.param[1] = -rate_az;
-//            }
-//        } else{
-//            action.mode[1] = RKPedestalInstructTypeAxisAzimuth | RKPedestalInstructTypeModeStandby;
-//            action.param[1] = 0.0f;
-//        }
-//        // printf("EL point %.2f | AZ point %.2f \n",pos->elevationDegrees,pos->azimuthDegrees);
-//        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//        i++;
-//        usleep(20000);
-//    }
-//    action.mode[0] = RKPedestalInstructTypeAxisElevation | RKPedestalInstructTypeModeStandby;
-//    action.param[0] = 0.0f;
-//    action.mode[1] = RKPedestalInstructTypeAxisAzimuth | RKPedestalInstructTypeModeStandby;
-//    action.param[1] = 0.0f;
-//    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//    printf("%s","Point finish.");
-//    if (i < RKPedestalPointTimeOut){
-//        return 0;
-//    }else{
-//        return 1;
-//    }
-//}
-//
-//int pedestalAzimuthPoint(RKPedestalPedzy *me, const float az_point, const float rate_el){
-//    float umin_diff_az;
-//    float min_diff_az;
-//    float rate_az;
-//    RKPosition *pos = RKGetLatestPosition(me->radar);
-//    RKPedestalAction action;
-//    action.mode[0] = RKPedestalInstructTypeNone;
-//    action.mode[1] = RKPedestalInstructTypeNone;
-//    action.param[0] = 0.0f;
-//    action.param[1] = 0.0f;
-//    action.sweepElevation = pos->elevationDegrees;
-//    action.sweepAzimuth = az_point;
-//    umin_diff_az = RKUMinDiff(az_point, pos->azimuthDegrees);
-//    int i = 0;
-//    while (umin_diff_az > RKPedestalPositionRoom && i < RKPedestalPointTimeOut) {
-//        pos = RKGetLatestPosition(me->radar);
-//        umin_diff_az = RKUMinDiff(az_point, pos->azimuthDegrees);
-//        if (umin_diff_az > RKPedestalPositionRoom){
-//            action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//            rate_az = pedestalGetRate( umin_diff_az, RKPedestalPointAzimuth );
-//            min_diff_az = RKMinDiff(az_point, pos->azimuthDegrees);
-//            if (min_diff_az >= 0.0f){
-//                action.param[1] = rate_az;
-//            }else{
-//                action.param[1] = -rate_az;
-//            }
-//        } else{
-//            action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-//            action.param[1] = 0.0f;
-//        }
-//        action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//        action.param[0] = rate_el;
-//        // printf("EL slew %.2f | AZ point %.2f dps\n",rate_el,pos->azimuthDegrees);
-//        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//        i++;
-//        usleep(20000);
-//    }
-//    action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//    action.param[0] = rate_el;
-//    action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-//    action.param[1] = 0.0f;
-//    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//    printf("%s","Azimuth point finish.");
-//    if (i < RKPedestalPointTimeOut){
-//        return 0;
-//    }else{
-//        return 1;
-//    }
-//}
-//
-//int pedestalElevationPoint(RKPedestalPedzy *me, const float el_point, const float rate_az){
-//    float umin_diff_el;
-//    float min_diff_el;
-//    float rate_el;
-//    RKPosition *pos = RKGetLatestPosition(me->radar);
-//    RKPedestalAction action;
-//    action.mode[0] = RKPedestalInstructTypeNone;
-//    action.mode[1] = RKPedestalInstructTypeNone;
-//    action.param[0] = 0.0f;
-//    action.param[1] = 0.0f;
-//    action.sweepElevation = el_point;
-//    action.sweepAzimuth = pos->azimuthDegrees;
-//    umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//    int i = 0;
-//    while (umin_diff_el > RKPedestalPositionRoom && i < RKPedestalPointTimeOut) {
-//
-//        pos = RKGetLatestPosition(me->radar);
-//        umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//        if (umin_diff_el > RKPedestalPositionRoom){
-//            action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//            rate_el = pedestalGetRate(umin_diff_el, RKPedestalPointElevation);
-//            min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
-//            if (min_diff_el >= 0.0f){
-//                action.param[0] = rate_el;
-//            }else{
-//                action.param[0] = -rate_el;
-//            }
-//        } else{
-//            action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//            action.param[0] = 0.0f;
-//        }
-//        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//        action.param[1] = rate_az;
-//        // printf("EL point %.2f | AZ slew %.2f dps\n",pos->elevationDegrees,rate_az);
-//        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//        i++;
-//        usleep(20000);
-//    }
-//    action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//    action.param[0] = 0.0f;
-//    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//    action.param[1] = rate_az;
-//    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//
-//    printf("%s","Elevation point finish.");
-//    if (i < RKPedestalPointTimeOut){
-//        return 0;
-//    }else{
-//        return 1;
-//    }
-//}
-//
-//
-//RKPedestalAction pedestalAzimuthPointNudge(RKPedestalPedzy *me, const float az_point, const float rate_el){
-//    float umin_diff_az;
-//    float min_diff_az;
-//    float rate_az;
-//    RKPosition *pos = RKGetLatestPosition(me->radar);
-//    RKPedestalAction action;
-//    action.mode[0] = RKPedestalInstructTypeNone;
-//    action.mode[1] = RKPedestalInstructTypeNone;
-//    action.param[0] = 0.0f;
-//    action.param[1] = 0.0f;
-//    action.sweepElevation = pos->elevationDegrees;
-//    action.sweepAzimuth = az_point;
-//    umin_diff_az = RKUMinDiff(az_point, pos->azimuthDegrees);
-//    if (umin_diff_az > RKPedestalPositionRoom){
-//        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//        rate_az = pedestalGetRate( umin_diff_az, RKPedestalPointAzimuth );
-//        min_diff_az = RKMinDiff(az_point, pos->azimuthDegrees);
-//        if (min_diff_az >= 0.0f){
-//            action.param[1] = rate_az;
-//        }else{
-//            action.param[1] = -rate_az;
-//        }
-//    } else{
-//        action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-//        action.param[1] = 0.0f;
-//    }
-//    action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//    action.param[0] = rate_el;
-//    return action;
-//}
-//
-//
-//RKPedestalAction pedestalElevationPointNudge(RKPedestalPedzy *me, const float el_point, const float rate_az){
-//    float umin_diff_el;
-//    float min_diff_el;
-//    float rate_el;
-//    RKPosition *pos = RKGetLatestPosition(me->radar);
-//    RKPedestalAction action;
-//    action.mode[0] = RKPedestalInstructTypeNone;
-//    action.mode[1] = RKPedestalInstructTypeNone;
-//    action.param[0] = 0.0f;
-//    action.param[1] = 0.0f;
-//    action.sweepElevation = el_point;
-//    action.sweepAzimuth = pos->azimuthDegrees;
-//    umin_diff_el = RKUMinDiff(el_point, pos->elevationDegrees);
-//    if (umin_diff_el > RKPedestalPositionRoom){
-//        action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//        rate_el = pedestalGetRate( umin_diff_el, RKPedestalPointElevation );
-//        min_diff_el = RKMinDiff(el_point, pos->elevationDegrees);
-//        if (min_diff_el >= 0.0f){
-//            action.param[0] = rate_el;
-//        }else{
-//            action.param[0] = -rate_el;
-//        }
-//    } else{
-//        action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//        action.param[0] = 0.0f;
-//    }
-//    action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//    action.param[1] = rate_az;
-//    return action;
-//}
-//
-//int pedestalSlowDown(RKPedestalPedzy *me){
-//    float umin_diff_vel_el;
-//    float umin_diff_vel_az;
-//    RKPosition *pos = RKGetLatestPosition(me->radar);
-//    RKPedestalAction action;
-//
-//    umin_diff_vel_el = RKUMinDiff(0.0f, pos->elevationVelocityDegreesPerSecond);
-//    umin_diff_vel_az = RKUMinDiff(0.0f, pos->azimuthVelocityDegreesPerSecond);
-//    int tic = 0;
-//    while ((umin_diff_vel_el > RKPedestalVelocityRoom || umin_diff_vel_az > RKPedestalVelocityRoom) && tic < RKPedestalPointTimeOut) {
-//        pos = RKGetLatestPosition(me->radar);
-//        umin_diff_vel_el = RKUMinDiff(0.0f, pos->elevationVelocityDegreesPerSecond);
-//        umin_diff_vel_az = RKUMinDiff(0.0f, pos->azimuthVelocityDegreesPerSecond);
-//        action.mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-//        action.param[0] = pos->elevationVelocityDegreesPerSecond * 0.8;
-//        action.mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-//        action.param[1] = pos->azimuthVelocityDegreesPerSecond * 0.8;
-//        printf("EL slew %.2f | AZ slew %.2f dps\n",
-//            pos->elevationVelocityDegreesPerSecond, pos->azimuthVelocityDegreesPerSecond);
-//        pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//        tic++;
-//        usleep(20000);
-//    }
-//    action.mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-//    action.param[0] = 0;
-//    action.mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-//    action.param[1] = 0;
-//    pedestalVcpSendAction(me->client->sd, me->latestCommand, &action);
-//    printf("%s","SlowDown finish.");
-//    if (tic < RKPedestalPointTimeOut) {
-//        return 0;
-//    } else {
-//        return 1;
-//    }
-//}

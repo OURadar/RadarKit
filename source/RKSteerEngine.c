@@ -1,16 +1,16 @@
 //
-//  RKPositionSteerEngine.c
+//  RKSteerEngine.c
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 3/21/23.
 //  Copyright (c) 2023 Boonleng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKPositionSteerEngine.h>
+#include <RadarKit/RKSteerEngine.h>
 
 #pragma mark - Internal Functions
 
-static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engine) {
+static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
     char *string;
     RKScanObject *V = &engine->vcpHandle;
 
@@ -44,7 +44,7 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-float RKPositionSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
+float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
     float rate = 0.0f;
     float gamma = fabsf(delta);
     if (axis == RKPedestalAxisAzimuth) {
@@ -73,11 +73,11 @@ float RKPositionSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
     return delta < 0.0f ? -rate : rate;
 }
 
-void RKPositionSteerEngineStopSweeps(RKPositionSteerEngine *engine) {
+void RKSteerEngineStopSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.active = false;
 }
 
-void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *engine) {
+void RKSteerEngineClearSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.progress = RKScanProgressNone;
     engine->vcpHandle.sweepCount = 0;
     engine->vcpHandle.onDeckCount = 0;
@@ -87,16 +87,16 @@ void RKPositionSteerEngineClearSweeps(RKPositionSteerEngine *engine) {
     engine->vcpHandle.active = true;
 }
 
-void RKPositionSteerEngineClearHole(RKPositionSteerEngine *engine) {
+void RKSteerEngineClearHole(RKSteerEngine *engine) {
     engine->vcpHandle.inTheHoleCount = 0;
     engine->vcpHandle.onDeckCount = 0;
 }
 
-void RKPositionSteerEngineClearDeck(RKPositionSteerEngine *engine) {
+void RKSteerEngineClearDeck(RKSteerEngine *engine) {
     engine->vcpHandle.onDeckCount = 0;
 }
 
-void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
+void RKSteerEngineNextHitter(RKSteerEngine *engine) {
     RKScanObject *V = &engine->vcpHandle;
     memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
     memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
@@ -107,7 +107,7 @@ void RKPositionSteerEngineNextHitter(RKPositionSteerEngine *engine) {
     V->active = true;
 }
 
-void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanRepeat repeat) {
+void RKSteerEngineArmSweeps(RKSteerEngine *engine, const RKScanRepeat repeat) {
     engine->vcpHandle.progress = RKScanProgressNone;
     if (repeat == RKScanRepeatForever) {
         engine->vcpHandle.option |= RKScanOptionRepeat;
@@ -117,7 +117,7 @@ void RKPositionSteerEngineArmSweeps(RKPositionSteerEngine *engine, const RKScanR
     engine->vcpHandle.active = true;
 }
 
-int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
+int RKSteerEngineAddLineupSweep(RKSteerEngine *engine, const RKScanPath scan) {
     RKScanObject *V = &engine->vcpHandle;
     if (V->inTheHoleCount < RKMaximumScanCount - 1) {
         V->inTheHoleScans[V->inTheHoleCount++] = scan;
@@ -129,7 +129,7 @@ int RKPositionSteerEngineAddLineupSweep(RKPositionSteerEngine *engine, const RKS
     return RKResultSuccess;
 }
 
-int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKScanPath scan) {
+int RKSteerEngineAddPinchSweep(RKSteerEngine *engine, const RKScanPath scan) {
     RKScanObject *V = &engine->vcpHandle;
     if (V->onDeckCount < RKMaximumScanCount - 1) {
         V->onDeckScans[V->onDeckCount++] = scan;
@@ -145,7 +145,7 @@ int RKPositionSteerEngineAddPinchSweep(RKPositionSteerEngine *engine, const RKSc
 #pragma mark - Delegate Workers
 
 static void *steerer(void *_in) {
-    RKPositionSteerEngine *engine = (RKPositionSteerEngine *)_in;
+    RKSteerEngine *engine = (RKSteerEngine *)_in;
 
     int j, k, s;
     float theta, rate;
@@ -238,9 +238,9 @@ static void *steerer(void *_in) {
 
 #pragma mark - Life Cycle
 
-RKPositionSteerEngine *RKPositionSteerEngineInit(void) {
-    RKPositionSteerEngine *engine = (RKPositionSteerEngine *)malloc(sizeof(RKPositionSteerEngine));
-    memset(engine, 0, sizeof(RKPositionSteerEngine));
+RKSteerEngine *RKSteerEngineInit(void) {
+    RKSteerEngine *engine = (RKSteerEngine *)malloc(sizeof(RKSteerEngine));
+    memset(engine, 0, sizeof(RKSteerEngine));
     sprintf(engine->name, "%s<PositionSteerer>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionSteerEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
@@ -248,25 +248,25 @@ RKPositionSteerEngine *RKPositionSteerEngineInit(void) {
     engine->vcpHandle.option = RKScanOptionRepeat;
     engine->vcpHandle.active = false;
     engine->vcpHandle.toc = 3;
-    engine->memoryUsage = sizeof(RKPositionSteerEngine);
+    engine->memoryUsage = sizeof(RKSteerEngine);
     engine->state = RKEngineStateAllocated;
     return engine;
 }
 
-void RKPositionSteerEngineFree(RKPositionSteerEngine *engine) {
+void RKSteerEngineFree(RKSteerEngine *engine) {
     free(engine);
 }
 
 #pragma mark - Properties
 
-void RKPositionSteerEngineSetVerbose(RKPositionSteerEngine *engine, const int verbose) {
+void RKSteerEngineSetVerbose(RKSteerEngine *engine, const int verbose) {
     engine->verbose = verbose;
     if (verbose > 1) {
         engine->vcpHandle.option |= RKScanOptionVerbose;
     }
 }
 
-void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *engine, const RKRadarDesc *desc,
+void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *engine, const RKRadarDesc *desc,
                                                 RKPosition *positionBuffer, uint32_t *positionIndex,
                                                 RKConfig   *configBuffer,   uint32_t *configIndex) {
     engine->radarDescription    = (RKRadarDesc *)desc;
@@ -279,7 +279,7 @@ void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *engine, c
 
 #pragma mark - Interactions
 
-int RKPositionSteerEngineStart(RKPositionSteerEngine *engine) {
+int RKSteerEngineStart(RKSteerEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
         RKLog("%s Error. Not properly wired.\n", engine->name);
         return RKResultEngineNotWired;
@@ -297,7 +297,7 @@ int RKPositionSteerEngineStart(RKPositionSteerEngine *engine) {
     return RKResultSuccess;
 }
 
-int RKPositionSteerEngineStop(RKPositionSteerEngine *engine) {
+int RKSteerEngineStop(RKSteerEngine *engine) {
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
@@ -315,7 +315,7 @@ int RKPositionSteerEngineStop(RKPositionSteerEngine *engine) {
     return RKResultSuccess;
 }
 
-void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKPosition *position) {
+void RKSteerEngineUpdatePositionFlags(RKSteerEngine *engine, RKPosition *position) {
     RKScanObject *V = &engine->vcpHandle;
     if (V->active) {
         const RKScanPath *scan = &V->batterScans[V->i];
@@ -358,7 +358,7 @@ void RKPositionSteerEngineUpdatePositionFlags(RKPositionSteerEngine *engine, RKP
     }
 }
 
-RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPosition *pos) {
+RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
 
@@ -440,7 +440,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                 } else {
                     if (udaz >= RKPedestalPositionTolerance) {
                         action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                        action->param[a] = RKPositionSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
+                        action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                         V->tic = 0;
                         a++;
                     } else if (pos->azimuthVelocityDegreesPerSecond > 0.0f) {
@@ -451,7 +451,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                     }
                     if (udel >= RKPedestalPositionTolerance) {
                         action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                        action->param[a] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                         V->tic = 0;
                     } else if (pos->elevationVelocityDegreesPerSecond > 0.0f) {
                         action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
@@ -476,7 +476,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
                     V->tic = 0;
                 } else {
                     action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                    action->param[0] = RKPositionSteerEngineGetRate(del, RKPedestalAxisElevation);
+                    action->param[0] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     V->tic = 0;
                 }
                 break;
@@ -528,9 +528,9 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
         }
     }
 
-    RKPositionSteerEngineUpdatePositionFlags(engine, pos);
+    RKSteerEngineUpdatePositionFlags(engine, pos);
 
-    RKPositionSteerEngineUpdateStatusString(engine);
+    RKSteerEngineUpdateStatusString(engine);
 
     if (V->progress & RKScanProgressMarker) {
         V->progress ^= RKScanProgressMarker;
@@ -542,7 +542,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
         V->i = RKNextModuloS(V->i, V->sweepCount);
         if (V->i == 0) {
             if (V->option & RKScanOptionRepeat) {
-                RKPositionSteerEngineNextHitter(engine);
+                RKSteerEngineNextHitter(engine);
                 RKLog("%s VCP repeats.\n", engine->name);
             } else {
                 RKLog("%s VCP stops.\n", engine->name);
@@ -560,7 +560,7 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
     return action;
 }
 
-int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char *command, char *response) {
+int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char *response) {
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
 
@@ -593,12 +593,12 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
         }
 
         if (!strncmp("pp", command, 2)) {
-            RKPositionSteerEngineClearHole(engine);
+            RKSteerEngineClearHole(engine);
         } else if (!strncmp("ipp", command, 3)) {
-            RKPositionSteerEngineClearSweeps(engine);
+            RKSteerEngineClearSweeps(engine);
             immediatelyDo = true;
         } else if (!strncmp("opp", command, 3)) {
-            RKPositionSteerEngineClearDeck(engine);
+            RKSteerEngineClearDeck(engine);
             onlyOnce = true;
         }
 
@@ -635,12 +635,12 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
             elevationEnd = elevationStart;
             azimuthEnd = azimuthStart;
 
-            RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPI, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
+            RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePPI, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
 
             if (onlyOnce) {
-                RKPositionSteerEngineAddPinchSweep(engine, scan);
+                RKSteerEngineAddPinchSweep(engine, scan);
             } else{
-                RKPositionSteerEngineAddLineupSweep(engine, scan);
+                RKSteerEngineAddLineupSweep(engine, scan);
             }
             token = strtok(NULL, comma);
         }
@@ -655,12 +655,12 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
         }
 
         if (!strncmp("rr", command, 2)) {
-            RKPositionSteerEngineClearHole(engine);
+            RKSteerEngineClearHole(engine);
         } else if (!strncmp("irr", command, 3)) {
-            RKPositionSteerEngineClearSweeps(engine);
+            RKSteerEngineClearSweeps(engine);
             immediatelyDo = true;
         } else if (!strncmp("orr", command, 3)) {
-            RKPositionSteerEngineClearDeck(engine);
+            RKSteerEngineClearDeck(engine);
             onlyOnce = true;
         }
 
@@ -694,13 +694,13 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
             azimuthEnd = azimuthStart;
 
             RKScanPath scan = flip ?
-                RKPositionSteerEngineMakeScanPath(RKScanModeRHI, elevationEnd, elevationStart, azimuthStart, 0, 0, -rate) :
-                RKPositionSteerEngineMakeScanPath(RKScanModeRHI, elevationStart, elevationEnd, azimuthStart, 0, 0, rate);
+                RKSteerEngineMakeScanPath(RKScanModeRHI, elevationEnd, elevationStart, azimuthStart, 0, 0, -rate) :
+                RKSteerEngineMakeScanPath(RKScanModeRHI, elevationStart, elevationEnd, azimuthStart, 0, 0, rate);
 
             if (onlyOnce) {
-                RKPositionSteerEngineAddPinchSweep(engine, scan);
+                RKSteerEngineAddPinchSweep(engine, scan);
             } else{
-                RKPositionSteerEngineAddLineupSweep(engine, scan);
+                RKSteerEngineAddLineupSweep(engine, scan);
             }
             token = strtok(NULL, comma);
             flip = !flip;
@@ -714,12 +714,12 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
         }
 
         if (!strncmp("vol", command, 3)) {
-            RKPositionSteerEngineClearHole(engine);
+            RKSteerEngineClearHole(engine);
         } else if (!strncmp("ivol", command, 4)) {
-            RKPositionSteerEngineClearSweeps(engine);
+            RKSteerEngineClearSweeps(engine);
             immediatelyDo = true;
         } else if (!strncmp("ovol", command, 4)) {
-            RKPositionSteerEngineClearDeck(engine);
+            RKSteerEngineClearDeck(engine);
             onlyOnce = true;
         }
 
@@ -775,12 +775,12 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
                 break;
             }
 
-            RKScanPath scan = RKPositionSteerEngineMakeScanPath(mode, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
+            RKScanPath scan = RKSteerEngineMakeScanPath(mode, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
 
             if (onlyOnce) {
-                RKPositionSteerEngineAddPinchSweep(engine, scan);
+                RKSteerEngineAddPinchSweep(engine, scan);
             } else {
-                RKPositionSteerEngineAddLineupSweep(engine, scan);
+                RKSteerEngineAddLineupSweep(engine, scan);
             }
 
             token = strtok(NULL, delimiters);
@@ -790,9 +790,9 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
 
     if (everythingOkay) {
         if (immediatelyDo) {
-            RKPositionSteerEngineNextHitter(engine);
+            RKSteerEngineNextHitter(engine);
         }
-        RKPositionSteerEngineScanSummary(engine, response);
+        RKSteerEngineScanSummary(engine, response);
         int k = sprintf(engine->dump, "Scan object created.\n");
         RKIndentCopy(engine->dump + k, response, 31);
         RKStripTail(engine->dump);
@@ -806,7 +806,7 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
     return RKResultSuccess;
 }
 
-RKScanPath RKPositionSteerEngineMakeScanPath(RKScanMode mode,
+RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
                                              const float elevationStart, const float elevationEnd,
                                              const float azimuthStart, const float azimuthEnd, const float azimuthMark,
                                              const float rate) {
@@ -879,7 +879,7 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
 }
 
 
-void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *engine, char *string) {
+void RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     RKScanObject *V = &engine->vcpHandle;
     string[0] = '\0';
     makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
@@ -889,6 +889,6 @@ void RKPositionSteerEngineScanSummary(RKPositionSteerEngine *engine, char *strin
     makeSweepMessage(V->inTheHoleScans, string, V->inTheHoleCount, RKScanLine);
 }
 
-char *RKPositionSteerEngineStatusString(RKPositionSteerEngine *engine) {
+char *RKSteerEngineStatusString(RKSteerEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }

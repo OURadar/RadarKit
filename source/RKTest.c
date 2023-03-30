@@ -3807,7 +3807,7 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
 void *RKTestPedestalRunLoop(void *input) {
     RKTestPedestal *pedestal = (RKTestPedestal *)input;
     RKRadar *radar = pedestal->radar;
-    RKPositionSteerEngine *steeven = radar->positionSteerEngine;
+    RKSteerEngine *steeven = radar->steerEngine;
 
     int k;
     float azimuth = 0.0f;
@@ -3860,11 +3860,11 @@ void *RKTestPedestalRunLoop(void *input) {
         position->elevationVelocityDegreesPerSecond = pedestal->speedElevation;
         position->flag |= RKPositionFlagAzimuthEnabled | RKPositionFlagElevationEnabled;
 
-        // Add other flags based on radar->positionSteerEngine
-        //RKPositionSteerEngineUpdatePositionFlags(steeven, position);
+        // Add other flags based on radar->steerEngine
+        //RKSteerEngineUpdatePositionFlags(steeven, position);
 
         // Get the latest action, could be no action
-        RKScanAction *action = RKPositionSteerEngineGetAction(steeven, position);
+        RKScanAction *action = RKSteerEngineGetAction(steeven, position);
 
         // RKLog("%s EL%5.2f @ %5.2f °/s   AZ%5.2f @ %5.2f °/s    action = '%s%s%s'\n", pedestal->name,
         //     position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
@@ -3997,7 +3997,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
 int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _Nullable *response) {
     RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
     RKRadar *radar = pedestal->radar;
-    RKPositionSteerEngine *steeven = radar->positionSteerEngine;
+    RKSteerEngine *steeven = radar->steerEngine;
 
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
@@ -4039,17 +4039,17 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedElevation = 0.0f;
         pedestal->targetSpeedAzimuth = 0.0f;
-        RKPositionSteerEngineStopSweeps(radar->positionSteerEngine);
+        RKSteerEngineStopSweeps(radar->steerEngine);
         if (response != NULL) {
             sprintf(response, "ACK. Pedestal stopped." RKEOL);
         }
     } else if (!strncmp(command, "go", 2) || !strncmp("run", command, 3)) {
-        RKPositionSteerEngineArmSweeps(radar->positionSteerEngine, RKScanRepeatForever);
+        RKSteerEngineArmSweeps(radar->steerEngine, RKScanRepeatForever);
         if (response != NULL) {
             sprintf(response, "ACK. Go." RKEOL);
         }
     } else if (!strncmp(command, "once", 4)) {
-        RKPositionSteerEngineArmSweeps(radar->positionSteerEngine, RKScanRepeatNone);
+        RKSteerEngineArmSweeps(radar->steerEngine, RKScanRepeatNone);
         if (response != NULL) {
             sprintf(response, "ACK. Once." RKEOL);
         }
@@ -4119,10 +4119,10 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
                !strncmp("vol", command, 3) ||
                !strncmp("ivol", command, 4) ||
                !strncmp("ovol", command, 4)) {
-        RKPositionSteerEngineExecuteString(steeven, command, response);
+        RKSteerEngineExecuteString(steeven, command, response);
     } else if (!strncmp(command, "summ", 4)) {
         if (response != NULL) {
-            RKPositionSteerEngineScanSummary(steeven, response);
+            RKSteerEngineScanSummary(steeven, response);
             sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
         } else {
             RKLog("%s Unable to relay summary\n", pedestal->name);
