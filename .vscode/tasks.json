@@ -2,8 +2,8 @@
   "tasks": [
     {
       "type": "cppbuild",
-      "label": "C/C++: gcc build rkutil",
-      "command": "/usr/bin/gcc",
+      "label": "clang build rkutil",
+      "command": "/usr/bin/clang",
       "args": [
         "-fdiagnostics-color=always",
         "-I${headers}",

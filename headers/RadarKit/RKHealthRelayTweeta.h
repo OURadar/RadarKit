@@ -3,7 +3,7 @@
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 1/28/17.
-//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
+//  Copyright © 2017-2023 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_HealthRelayTweeta__
@@ -14,15 +14,15 @@
 #define RKHealthRelayTweetaFeedbackDepth   8
 
 typedef struct rk_tweeta {
-    // User defined variables
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKHealthRelayTweetaFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumCommandLength];
+    RKRadar                *radar;
     bool                   handlingEvent;
     bool                   toggleEvent;
     pthread_t              tidBackground;
-    RKRadar                *radar;
+    RKByte                 dump[1024 * 1024];
 } RKHealthRelayTweeta;
 
 RKHealthRelay RKHealthRelayTweetaInit(RKRadar *, void *);

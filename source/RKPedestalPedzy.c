@@ -13,14 +13,19 @@
 
 #pragma mark - Internal Functions
 
-static int RKPedestalPedzyRead(RKClient *client) {
+static ssize_t pedestalPedzySendAction(int sd, char *ship, RKScanAction *act) {
+    sprintf(ship, "%c", 0x0f);
+    memcpy(ship + 1, act, sizeof(RKScanAction));
+    strncpy(ship + 1 + sizeof(RKScanAction), RKEOL, 2);
+    return RKNetworkSendPackets(sd, ship, sizeof(RKScanAction) + 3, NULL);
+}
+
+static int pedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
 
     RKRadar *radar = me->radar;
 
-    //RKPedestalVcpHandle *vcpHandle = &radar->steerEngine->vcpHandle;
-    // RKPositionFlag flag;
     RKSteerEngine *steerEngine = radar->steerEngine;
 
     if (client->netDelimiter.type == 'p') {
@@ -67,11 +72,11 @@ static int RKPedestalPedzyRead(RKClient *client) {
         // RKUpdatePositionFlags(radar, newPosition);
         //
 
-        RKSetPositionReady(radar, newPosition);
-
         // Get the latest action, could be null
         // Same here, add one to the RKRadar layer?
         RKScanAction *action = RKSteerEngineGetAction(steerEngine, newPosition);
+
+        RKSetPositionReady(radar, newPosition);
 
         char axis = 'e';
         char string[64];
@@ -93,9 +98,10 @@ static int RKPedestalPedzyRead(RKClient *client) {
             } else if (RKInstructIsStandby(instruct)) {
                 sprintf(string, "%cstop" RKEOL, axis);
             }
-            printf("string = '%s'\n", string);
             // RKPedestalPedzyExec(me, string, response);
+            // RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         }
+        pedestalPedzySendAction(client->sd, me->latestCommand, action);
 
     } else {
         // This the command acknowledgement, queue it up to feedback
@@ -114,7 +120,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
     return RKResultSuccess;
 }
 
-static int RKPedestalPedzyGreet(RKClient *client) {
+static int pedestalPedzyGreet(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
     RKRadar *radar = me->radar;
@@ -127,7 +133,7 @@ static int RKPedestalPedzyGreet(RKClient *client) {
 
 #pragma mark - Delegate Workers
 
-static void *pedestalHealth(void *in) {
+static void *pedestalPedzyHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
     RKSteerEngine *steerer = radar->steerEngine;
@@ -149,7 +155,6 @@ static void *pedestalHealth(void *in) {
             elEnum = RKStatusEnumInvalid;
         } else {
             RKPosition *position = RKGetLatestPosition(radar);
-            RKLog("position = %.2f %.2f\n", position->azimuthDegrees, position->elevationDegrees);
             azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
@@ -226,19 +231,14 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
 
     me->client = RKClientInitWithDesc(desc);
     RKClientSetUserResource(me->client, me);
-    RKClientSetGreetHandler(me->client, &RKPedestalPedzyGreet);
-    RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
+    RKClientSetGreetHandler(me->client, &pedestalPedzyGreet);
+    RKClientSetReceiveHandler(me->client, &pedestalPedzyRead);
     RKClientStart(me->client, false);
 
-    if (pthread_create(&me->tidPedestalMonitor, NULL, pedestalHealth, me) != 0) {
+    if (pthread_create(&me->tidBackground, NULL, pedestalPedzyHealth, me) != 0) {
         RKLog("%s Error. Failed to start a pedestal monitor.\n", me->client->name);
         return (void *)RKResultFailedToStartPedestalMonitor;
     }
-
-//    if (pthread_create(&me->tidVcpEngine, NULL, pedestalVcpEngine, me) != 0) {
-//        RKLog("%s Error. Failed to start a pedestal vcp engine.\n", me->client->name);
-//        return (void *)RKResultFailedToStartpedestalVcpEngine;
-//    }
 
     return (RKPedestal)me;
 }
