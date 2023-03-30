@@ -13,10 +13,8 @@
       "name": "C/C++: gcc-11 build and debug active file",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${fileDirname}/${fileBasenameNoExtension}",
-      "args": [
-        "-vs1"
-      ],
+      "program": "${fileDirname}/rkutil",
+      "args": ["-vs1"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],
