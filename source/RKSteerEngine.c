@@ -244,7 +244,7 @@ RKSteerEngine *RKSteerEngineInit(void) {
     RKSteerEngine *engine = (RKSteerEngine *)malloc(sizeof(RKSteerEngine));
     memset(engine, 0, sizeof(RKSteerEngine));
     sprintf(engine->name, "%s<PositionSteerer>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionSteerEngine) : "",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSteerEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     sprintf(engine->vcpHandle.name, "VCP");
     engine->vcpHandle.option = RKScanOptionRepeat;
@@ -483,6 +483,44 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 }
                 break;
             case RKScanModeSector:
+                del = RKMinDiff(scan->elevationStart, pos->elevationDegrees);
+                daz = RKMinDiff(scan->azimuthStart, pos->azimuthDegrees);
+                udel = fabs(del);
+                udaz = fabs(daz);
+                if (udel < RKPedestalPositionTolerance && udaz < RKPedestalPositionTolerance) {
+                    action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action->param[0] = scan->azimuthSlew;
+                    action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action->param[1] = 0.0f;
+                    if (verbose) {
+                        RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\033[m\n", engine->name,
+                            V->i, scan->elevationStart, scan->azimuthEnd);
+                    }
+                    V->progress |= RKScanProgressMiddle;
+                    V->progress ^= RKScanProgressSetup;
+                    V->tic = 0;
+                } else {
+                    if (udaz >= RKPedestalPositionTolerance) {
+                        action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                        action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
+                        V->tic = 0;
+                        a++;
+                    } else if (pos->azimuthVelocityDegreesPerSecond > 0.0f) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+                        action->mode[a] = 0.0f;
+                        V->tic = 0;
+                        a++;
+                    }
+                    if (udel >= RKPedestalPositionTolerance) {
+                        action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                        action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        V->tic = 0;
+                    } else if (pos->elevationVelocityDegreesPerSecond > 0.0f) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                        action->mode[a] = 0.0f;
+                        V->tic = 0;
+                    }
+                }
                 break;
             default:
                 break;
@@ -492,6 +530,10 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     if (V->progress & RKScanProgressMiddle) {
         switch (scan->mode) {
             case RKScanModeRHI:
+                // If the action was just sent, pedestal has not yet accelerated
+                if (pos->elevationVelocityDegreesPerSecond == 0.0f) {
+                    break;
+                }
                 cross = RKAngularCrossOver(pos->elevationDegrees, V->elevationPrevious, scan->elevationEnd);
                 if (cross) {
                     V->progress |= RKScanProgressEnd;
@@ -522,6 +564,20 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     if (verbose) {
                         RKLog("%s Marker cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
                             scan->azimuthMark, V->azimuthPrevious, pos->azimuthDegrees);
+                    }
+                }
+                break;
+            case RKScanModeSector:
+                // If the action was just sent, pedestal has not yet accelerated
+                if (pos->azimuthVelocityDegreesPerSecond == 0.0f) {
+                    break;
+                }
+                cross = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, scan->azimuthEnd);
+                if (cross) {
+                    V->progress |= RKScanProgressEnd | RKScanProgressMarker;
+                    if (verbose) {
+                        RKLog("%s Target cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                            scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
                     }
                 }
                 break;

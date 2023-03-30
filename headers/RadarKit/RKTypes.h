@@ -399,7 +399,7 @@ enum RKEngineColor {
     RKEngineColorPulseCompressionEngine = 7,
     RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
-    RKEngineColorPositionSteerEngine = 15,
+    RKEngineColorSteerEngine = 3,
     RKEngineColorMomentEngine = 15,
     RKEngineColorHealthEngine = 1,
     RKEngineColorDataRecorder = 12,

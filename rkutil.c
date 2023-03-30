@@ -994,7 +994,9 @@ int main(int argc, const char **argv) {
         // RKExecuteCommand(myRadar, "p pp 2,4,6 15 -50", NULL);
         // RKExecuteCommand(myRadar, "p rr 0,20 10,20,30 10", NULL);
         // RKExecuteCommand(myRadar, "p vol p 2 15 -50/p 4 15 -50/p 6 15 -50/p 8 15 -50/p 10 15 -50", NULL);
-        RKExecuteCommand(myRadar, "p vol s 2 15,45 25/s 4 45,15 -25", NULL);
+        // RKExecuteCommand(myRadar, "p vol s 2 5,25 25/s 4 45,15 -25", NULL);
+        // RKExecuteCommand(myRadar, "p vol s 2 355,325 -25/s 4 325,355 25", NULL);
+        RKExecuteCommand(myRadar, "p vol s 2 270,0 25/s 4 0,270 -25/s 6 270,0 25/s 8 0,270 -25", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
