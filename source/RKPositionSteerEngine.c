@@ -24,19 +24,9 @@ static void RKPositionSteerEngineUpdateStatusString(RKPositionSteerEngine *engin
     uint32_t index = RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth);
     RKPosition *position = &engine->positionBuffer[index];
 
-    // if (engine->vcpHandle.active) {
-    //     sprintf(string, "-- [ VCP sweep %d / %d -- elevation = %.2f -- azimuth = %.2f -- prog %% ] --\n",
-    //             engine->scanControl.i,
-    //             engine->scanControl.sweepCount,
-    //             position->elevationDegrees,
-    //             position->azimuthDegrees);
-    // } else {
-    //     sprintf(string, "-- [ VCP inactive ] --\n");
-    // }
-
     RKScanAction *action = &engine->actions[engine->actionIndex];
 
-    sprintf(string, "%s%s%s%s  T%3d  EL %.2f @ %5.1f °/s   AZ%7.2f @ %5.2f °/s   M%d '%s%s%s'",
+    sprintf(string, "%s%s%s%s  T%3d  EL%5.2f @ %5.1f °/s   AZ%7.2f @ %5.1f °/s   M%d '%s%s%s'",
         V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
         V->progress & RKScanProgressMiddle ? "m" : ".",
         V->progress & RKScanProgressMarker ? (rkGlobalParameters.showColor ? RKMonokaiGreen "M" RKNoColor : "M") : ".",
@@ -225,13 +215,15 @@ static void *steerer(void *_in) {
         if (timercmp(&currentTime, &triggerTime, >=)) {
             timeradd(&currentTime, &period, &triggerTime);
             RKScanObject *V = &engine->vcpHandle;
-            if (V->active) {
-                printf("                 -- [ VCP sweep %d / %d -- prog %d ] --\n",
-                        V->i,
-                        V->sweepCount,
-                        V->progress);
-            } else {
-                printf("                 -- [ VCP inactive ] --\n");
+            if (V->option & RKScanOptionVerbose) {
+                if (V->active) {
+                    printf("                 -- [ VCP sweep %d / %d -- prog %d ] --\n",
+                            V->i,
+                            V->sweepCount,
+                            V->progress);
+                } else {
+                    printf("                 -- [ VCP inactive ] --\n");
+                }
             }
         }
 
@@ -253,7 +245,7 @@ RKPositionSteerEngine *RKPositionSteerEngineInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionSteerEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     sprintf(engine->vcpHandle.name, "VCP");
-    engine->vcpHandle.option = RKScanOptionRepeat | RKScanOptionVerbose;
+    engine->vcpHandle.option = RKScanOptionRepeat;
     engine->vcpHandle.active = false;
     engine->vcpHandle.toc = 3;
     engine->memoryUsage = sizeof(RKPositionSteerEngine);
@@ -269,6 +261,9 @@ void RKPositionSteerEngineFree(RKPositionSteerEngine *engine) {
 
 void RKPositionSteerEngineSetVerbose(RKPositionSteerEngine *engine, const int verbose) {
     engine->verbose = verbose;
+    if (verbose > 1) {
+        engine->vcpHandle.option |= RKScanOptionVerbose;
+    }
 }
 
 void RKPositionSteerEngineSetInputOutputBuffers(RKPositionSteerEngine *engine, const RKRadarDesc *desc,
@@ -566,7 +561,6 @@ RKScanAction *RKPositionSteerEngineGetAction(RKPositionSteerEngine *engine, RKPo
 }
 
 int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char *command, char *response) {
-    // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
 
@@ -575,13 +569,17 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
 
     float azimuthStart, azimuthEnd, azimuthMark, elevationStart, elevationEnd, rate;
 
-    RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
+    if (engine->verbose > 1 && (*command == 'r' || *command == 'p')) {
+        RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
+    }
 
     if (response == NULL) {
         response = (char *)engine->response;
     }
 
     if (!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3)) {
+
+        // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
 
         if (n < 2) {
             sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
@@ -659,6 +657,8 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
 
     } else if (!strncmp("rr", command, 2) || !strncmp("irr", command, 3) || !strncmp("orr", command, 3)) {
 
+        // rr 0,20 10,20,30 10 - RHI at elevations [0, 20] degs, azimuths [10, 20, 30], speed 10 deg/s
+
         if (n < 2) {
             sprintf(response, "NAK. Ill-defined RHI array, n = %d" RKEOL, n);
             printf("%s", response);
@@ -726,8 +726,11 @@ int RKPositionSteerEngineExecuteString(RKPositionSteerEngine *engine, const char
                 RKPositionSteerEngineNextHitter(engine);
             }
             RKPositionSteerEngineScanSummary(engine, response);
+            k = sprintf(engine->dump, "Scan object created.\n");
+            RKIndentCopy(engine->dump + k, response, 31);
+            RKStripTail(engine->dump);
+            RKLog("%s %s\n", engine->name, engine->dump);
             sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-            printf("%s", response);
         } else {
             sprintf(response, "NAK. Errors occurred." RKEOL);
         }

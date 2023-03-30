@@ -111,17 +111,12 @@ struct rk_position_steer_engine {
     uint8_t                verbose;
 
     // Program set variables
-    pthread_t              threadId;
-    double                 startTime;
-    RKScanObject    vcpHandle;
-    int                    vcpIndex;              // deprecating
-    int                    vcpSweepCount;         // deprecating
-    struct timeval         currentTime;
-    struct timeval         statusPeriod;
-    struct timeval         statusTriggerTime;
+    RKScanObject           vcpHandle;
     RKScanAction           actions[RKPedestalActionBufferDepth];
     int                    actionIndex;
-    RKByte                 response[RKMaximumStringLength];
+    char                   response[RKMaximumStringLength];
+    char                   dump[RKMaximumStringLength];
+    pthread_t              threadId;
 
     // Status / health
     size_t                 memoryUsage;
