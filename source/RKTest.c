@@ -4007,6 +4007,10 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         args[0], args[1], args[2], args[3]);
     #endif
 
+    if (response == NULL) {
+        response = (char *)pedestal->dump;
+    }
+
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
             pedestal->state ^= RKEngineStateWantActive;
@@ -4022,9 +4026,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         pedestal->state |= RKEngineStateDeactivating;
         pthread_join(pedestal->tidRunLoop, NULL);
         pedestal->state ^= RKEngineStateDeactivating;
-        if (response != NULL) {
-            sprintf(response, "ACK. Pedestal stopped." RKEOL);
-        }
+        sprintf(response, "ACK. Pedestal stopped." RKEOL);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", pedestal->name);
         }
@@ -4040,36 +4042,24 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         pedestal->targetSpeedElevation = 0.0f;
         pedestal->targetSpeedAzimuth = 0.0f;
         RKSteerEngineStopSweeps(radar->steerEngine);
-        if (response != NULL) {
-            sprintf(response, "ACK. Pedestal stopped." RKEOL);
-        }
+        sprintf(response, "ACK. Pedestal stopped." RKEOL);
     } else if (!strncmp(command, "go", 2) || !strncmp("run", command, 3)) {
         RKSteerEngineArmSweeps(radar->steerEngine, RKScanRepeatForever);
-        if (response != NULL) {
-            sprintf(response, "ACK. Go." RKEOL);
-        }
+        sprintf(response, "ACK. Go." RKEOL);
     } else if (!strncmp(command, "once", 4)) {
         RKSteerEngineArmSweeps(radar->steerEngine, RKScanRepeatNone);
-        if (response != NULL) {
-            sprintf(response, "ACK. Once." RKEOL);
-        }
+        sprintf(response, "ACK. Once." RKEOL);
     } else if (!strncmp(command, "astop", 5)) {
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedAzimuth = 0.0f;
-        if (response != NULL) {
-            sprintf(response, "ACK. Azimuth stopped." RKEOL);
-        }
+        sprintf(response, "ACK. Azimuth stopped." RKEOL);
     } else if (!strncmp(command, "estop", 5)) {
         pedestal->actionElevation = RKAxisActionStop;
         pedestal->targetSpeedElevation = 0.0f;
-        if (response != NULL) {
-            sprintf(response, "ACK. Elevation stopped." RKEOL);
-        }
+        sprintf(response, "ACK. Elevation stopped." RKEOL);
     } else if (!strncmp(command, "bad", 3)) {
         pedestal->commandCount++;
-        if (response != NULL) {
-            sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
-        }
+        sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
         if (n == 0) {
             sprintf(response, "NAK. Use as 'aslew [AZ_RATE]" RKEOL);
@@ -4077,9 +4067,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         }
         pedestal->actionAzimuth = RKAxisActionSpeed;
         pedestal->targetSpeedAzimuth = atof(args[0]);
-        if (response != NULL) {
-            sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->targetSpeedAzimuth);
-        }
+        sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->targetSpeedAzimuth);
     } else if (!strncmp(command, "eslew", 5)) {
         if (n == 0) {
             sprintf(response, "NAK. Use as 'eslew [AZ_RATE]" RKEOL);
@@ -4087,9 +4075,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         }
         pedestal->actionElevation = RKAxisActionSpeed;
         pedestal->targetSpeedElevation = atof(args[0]);
-        if (response != NULL) {
-            sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->targetSpeedElevation);
-        }
+        sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->targetSpeedElevation);
     } else if (!strncmp("azi", command, 3) || !strncmp("apos", command, 4) || !strncmp("apoint", command, 6)) {
         if (n == 0) {
             sprintf(response, "NAK. Use as 'azi/apos/apoint [AZ_POSITION]" RKEOL);
@@ -4097,9 +4083,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         }
         pedestal->actionAzimuth = RKAxisActionPosition;
         pedestal->targetAzimuth = atof(args[0]);
-        if (response != NULL) {
-            sprintf(response, "ACK. Azimuth to %.1f" RKEOL, pedestal->targetAzimuth);
-        }
+        sprintf(response, "ACK. Azimuth to %.1f" RKEOL, pedestal->targetAzimuth);
     } else if (!strncmp("ele", command, 3) || !strncmp("epos", command, 4) || !strncmp("epoint", command, 6)) {
         if (n == 0) {
             sprintf(response, "NAK. Use as 'ele/epos/epoint [EL_POSITION]" RKEOL);
@@ -4107,9 +4091,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         }
         pedestal->actionElevation = RKAxisActionPosition;
         pedestal->targetElevation = atof(args[0]);
-        if (response != NULL) {
-            sprintf(response, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
-        }
+        sprintf(response, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
     } else if (!strncmp("pp", command, 2) ||
                !strncmp("ipp", command, 3) ||
                !strncmp("opp", command, 3) ||
@@ -4121,12 +4103,8 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
                !strncmp("ovol", command, 4)) {
         RKSteerEngineExecuteString(steeven, command, response);
     } else if (!strncmp(command, "summ", 4)) {
-        if (response != NULL) {
-            RKSteerEngineScanSummary(steeven, response);
-            sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
-        } else {
-            RKLog("%s Unable to relay summary\n", pedestal->name);
-        }
+        RKSteerEngineScanSummary(steeven, response);
+        sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
     /*
     } else if (!strncmp("spoint", command, 6)) {
         // Point
@@ -4156,7 +4134,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
                 UNDERLINE("help") " - Help list\n"
                 UNDERLINE("pp") " [EL,EL,...] [AZ_MARK] [AZ_RATE] - PPI scan at elevation EL at AZ_RATE deg/s.\n"
                 UNDERLINE("rr") " [AZ,AZ,...] [EL_START,EL_END] [EL_RATE] - RHI at AZ over EL_START to EL_END.\n"
-                );
+                RKEOL);
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }

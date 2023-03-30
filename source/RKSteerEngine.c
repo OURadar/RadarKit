@@ -217,12 +217,12 @@ static void *steerer(void *_in) {
             RKScanObject *V = &engine->vcpHandle;
             if (V->option & RKScanOptionVerbose) {
                 if (V->active) {
-                    printf("                 -- [ VCP sweep %d / %d -- prog %d ] --\n",
+                    fprintf(stderr, "                 -- [ VCP sweep %d / %d -- prog %d ] --\n",
                             V->i,
                             V->sweepCount,
                             V->progress);
                 } else {
-                    printf("                 -- [ VCP inactive ] --\n");
+                    fprintf(stderr, "                 -- [ VCP inactive ] --\n");
                 }
             }
         }
@@ -588,7 +588,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
 
         if (n < 2) {
-            sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
+            sprintf(response, "NAK. Ill-defined PPI array.   n = %d" RKEOL, n);
             return RKResultIncompleteScanDescription;
         }
 
@@ -626,9 +626,9 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         int k = 0;
         while (token != NULL && k++ < 50) {
-            int m = sscanf(token, "%f", &elevationStart);
+            const int m = sscanf(token, "%f", &elevationStart);
             if (m == 0) {
-                sprintf(response, "NAK. Ill-defined PPI array, m = %d" RKEOL, m);
+                sprintf(response, "NAK. Ill-defined PPI component.   m = %d" RKEOL, m);
                 everythingOkay = false;
                 break;
             }
@@ -650,7 +650,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         // rr 0,20 10,20,30 10 - RHI at elevations [0, 20] degs, azimuths [10, 20, 30], speed 10 deg/s
 
         if (n < 2) {
-            sprintf(response, "NAK. Ill-defined RHI array, n = %d" RKEOL, n);
+            sprintf(response, "NAK. Ill-defined RHI array.   n = %d" RKEOL, n);
             return RKResultIncompleteScanDescription;
         }
 
@@ -676,7 +676,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         int m = sscanf(elevations, "%f,%f", &elevationStart, &elevationEnd);
         if (m < 2) {
-            sprintf(response, "NAK. Ill-defined RHI array, m = %d" RKEOL, m);
+            sprintf(response, "NAK. Ill-defined RHI component.   m = %d" RKEOL, m);
             everythingOkay = false;
         }
 
@@ -685,9 +685,9 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         int k = 0;
         bool flip = false;
         while (token != NULL && everythingOkay && k++ < 180) {
-            int m = sscanf(token, "%f", &azimuthStart);
-            if (m == 0) {
-                sprintf(response, "NAK. Ill-defined RHI array, m = %d" RKEOL, m);
+            const int o = sscanf(token, "%f", &azimuthStart);
+            if (o == 0) {
+                sprintf(response, "NAK. Ill-defined RHI component.   o = %d" RKEOL, m);
                 everythingOkay = false;
                 break;
             }
@@ -709,7 +709,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     } else if (!strncmp("vol", command, 3) || !strncmp("ivol", command, 3) || !strncmp("ovol", command, 3)) {
 
         if (n < 2) {
-            sprintf(response, "NAK. Ill-defined scan." RKEOL);
+            sprintf(response, "NAK. Ill-defined volume array." RKEOL);
             return RKResultIncompleteScanDescription;
         }
 
@@ -723,27 +723,40 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             onlyOnce = true;
         }
 
-        const char delimiters[] = "/";
-        char *token = strchr(command, ' ');
-        char cp[strlen(command)];
-        char st[4];
+        const char slash[] = "/";
+        char symbol[4];
         int o;
 
+        int k = 0;
+        char *token = strchr(command, ' ');
         do {
             token++;
-        } while (*token == ' ');
-        strcpy(cp, token);
-
-        token = strtok(cp, delimiters);
+        } while (*token == ' ' && k++ < 10);
+        strncpy(engine->scanString, token, RKMaximumStringLength - 1);
 
         RKScanMode mode = RKScanModeSpeedDown;
 
-        int k = 0;
+        RKLog("%s Bare string = '%s'\n", engine->name, engine->scanString);
+        k = 0;
+        token = strtok(engine->scanString, slash);
         while (token != NULL && k++ < 100) {
             // parse in the usual way
-            const int m = sscanf(token, "%3s %16s %16s %16s", st, args[0], args[1], args[2]);
+            const int m = sscanf(token, "%3s %16s %16s %16s", symbol, args[0], args[1], args[2]);
             if (m < 2) {
-                sprintf(response, "NAK. Ill-defined scan." RKEOL);
+                sprintf(response, "NAK. Ill-defined volume component.   m = %d" RKEOL, m);
+                everythingOkay = false;
+                break;
+            }
+            if (*symbol == 'p') {
+                mode = RKScanModePPI;
+            } else if (*symbol == 'r') {
+                mode = RKScanModeRHI;
+            } else if (*symbol == 's') {
+                mode = RKScanModeSector;
+            } else if (*symbol == 'b') {
+                mode = RKScanModeSpeedDown;
+            } else {
+                RKLog("%s Error. Scan mode '%s' not undersood.\n", engine->name, symbol);
                 everythingOkay = false;
                 break;
             }
@@ -759,21 +772,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
                 azimuthMark = azimuthStart;
             }
             rate = atof(args[2]);
-            printf("EL %.2f-%.2f°   AZ %.2f-%.2f°/%.2f° @ %.2f °/s\n", elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
-
-            if (*st == 'p') {
-                mode = RKScanModePPI;
-            } else if (*st == 'r') {
-                mode = RKScanModeRHI;
-            } else if (*st == 's') {
-                mode = RKScanModeSector;
-            } else if (*st == 'b') {
-                mode = RKScanModeSpeedDown;
-            } else {
-                RKLog("%s Error. Scan mode '%s' not undersood.\n", engine->name, st);
-                everythingOkay = false;
-                break;
-            }
 
             RKScanPath scan = RKSteerEngineMakeScanPath(mode, elevationStart, elevationEnd, azimuthStart, azimuthEnd, azimuthMark, rate);
 
@@ -783,8 +781,10 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
                 RKSteerEngineAddLineupSweep(engine, scan);
             }
 
-            token = strtok(NULL, delimiters);
+            token = strtok(NULL, slash);
         }
+
+        RKLog("%s vol parsed.\n", engine->name);
 
     }
 
@@ -793,15 +793,16 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             RKSteerEngineNextHitter(engine);
         }
         RKSteerEngineScanSummary(engine, response);
+        sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
         int k = sprintf(engine->dump, "Scan object created.\n");
         RKIndentCopy(engine->dump + k, response, 31);
         RKStripTail(engine->dump);
         RKLog("%s %s\n", engine->name, engine->dump);
-        sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
     } else {
         sprintf(response, "NAK. Errors occurred." RKEOL);
         return RKResultFailedToSetVCP;
     }
+    RKLog("%s success\n", engine->name);
 
     return RKResultSuccess;
 }

@@ -114,6 +114,7 @@ struct rk_position_steer_engine {
     RKScanObject           vcpHandle;
     RKScanAction           actions[RKPedestalActionBufferDepth];
     int                    actionIndex;
+    char                   scanString[RKMaximumStringLength];
     char                   response[RKMaximumStringLength];
     char                   dump[RKMaximumStringLength];
     pthread_t              threadId;
