@@ -28,14 +28,11 @@ typedef struct rk_pedzy {
     char                   latestCommand[RKMaximumCommandLength];
     RKRadar                *radar;
     float                  headingOffset;
-//    bool                   vcpActive;
-//    RKPedestalVcpHandle    *vcpHandle;
-//    uint32_t               lastActionAge;
     char                   msg[4096];
+    RKByte                 dump[1024 * 1024];
 
     // Program set variables
     pthread_t              tidPedestalMonitor;
-    //pthread_t              tidVcpEngine;
 
     // Status / health
     char                   statusBuffer[RKBufferSSlotCount][RKStatusStringLength];

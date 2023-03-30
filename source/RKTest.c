@@ -4110,15 +4110,15 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         if (response != NULL) {
             sprintf(response, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
         }
-    } else if (!strncmp("pp", command, 2)
-        || !strncmp("ipp", command, 3)
-        || !strncmp("opp", command, 3)
-        || !strncmp("rr", command, 2)
-        || !strncmp("irr", command, 3)
-        || !strncmp("orr", command, 3)
-        || !strncmp("vol", command, 3)
-        || !strncmp("ivol", command, 4)
-        || !strncmp("ovol", command, 4)) {
+    } else if (!strncmp("pp", command, 2) ||
+               !strncmp("ipp", command, 3) ||
+               !strncmp("opp", command, 3) ||
+               !strncmp("rr", command, 2) ||
+               !strncmp("irr", command, 3) ||
+               !strncmp("orr", command, 3) ||
+               !strncmp("vol", command, 3) ||
+               !strncmp("ivol", command, 4) ||
+               !strncmp("ovol", command, 4)) {
         RKPositionSteerEngineExecuteString(steeven, command, response);
     } else if (!strncmp(command, "summ", 4)) {
         if (response != NULL) {
@@ -4127,6 +4127,29 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         } else {
             RKLog("%s Unable to relay summary\n", pedestal->name);
         }
+    /*
+    } else if (!strncmp("spoint", command, 6)) {
+        // Point
+        if (n < 1) {
+            sprintf(response, "NAK. Use as: %s [AZ] [EL]" RKEOL, cmd);
+            return RKResultFailedToExecuteCommand;
+        }
+        fparams[0] = atof(args[0]);
+        if (n > 1) {
+            fparams[1] = atof(args[1]);
+            snprintf(response, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg, EL:%.2f deg." RKEOL,
+                    fparams[0],
+                    fparams[1]
+                    );
+        } else {
+            RKPosition *pos = RKGetLatestPosition(me->radar);
+            snprintf(response, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg." RKEOL,
+                    fparams[0]
+                    );
+        }
+        pedestalPoint(me, fparams[1], fparams[0]);
+        strncpy(response, me->msg, RKMaximumStringLength - 1);
+    */
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"

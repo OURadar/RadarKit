@@ -332,335 +332,55 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
     RKPositionSteerEngine *positionSteerEngine = me->radar->positionSteerEngine;
     RKClient *client = me->client;
 
-    char cparams[4][256] = {"", "", "", ""};
-    const int n = sscanf(command, "%*s %256s %256s %256s %256s", cparams[0], cparams[1], cparams[2], cparams[3]);
-
     bool skipNetResponse = true;
-    bool immediatelyDo = false;
-    bool onlyOnce = false;
 
-    float az_start, az_end, az_mark, el_start, el_end, rate;
+    if (response == NULL) {
+        response = (char *)me->dump;
+    }
 
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
     }
+
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
+    } else if (!strncmp("go", command, 2) || !strncmp("run", command, 3)) {
+        RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatForever);
+        sprintf(response, "ACK. Go." RKEOL);
+    } else if (!strncmp("once", command, 4)) {
+        RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatNone);
+        sprintf(response, "ACK. Once." RKEOL);
+    } else if (!strncmp("pp", command, 2) ||
+                !strncmp("ipp", command, 3) ||
+                !strncmp("opp", command, 3) ||
+                !strncmp("rr", command, 2) ||
+                !strncmp("irr", command, 3) ||
+                !strncmp("orr", command, 3) ||
+                !strncmp("vol", command, 3) ||
+                !strncmp("ivol", command, 4) ||
+                !strncmp("ovol", command, 4)) {
+        RKPositionSteerEngineExecuteString(positionSteerEngine, command, response);
+    } else if (!strncmp("summ", command, 4)) {
+        RKPositionSteerEngineScanSummary(positionSteerEngine, response);
+        sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
     } else {
         if (client->verbose) {
             RKLog("%s Current client->state = 0x%08x", client->name, client->state);
         }
         if (client->state != RKClientStateConnected) {
             RKLog("%s Pedestal not connected for command '%s'.\n", client->name, command);
-            if (response != NULL) {
-                sprintf(response, "NAK. Pedestal not connected." RKEOL);
-            }
+            sprintf(response, "NAK. Pedestal not connected." RKEOL);
             return RKResultClientNotConnected;
         }
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
         size_t size = snprintf(me->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
 
-        // move pedzy command here
+        // Commands that need to be forwarded to Pedzy
         if (!strncmp("stop", command, 4) || !strncmp("zero", command, 4)) {
             skipNetResponse = false;
             RKPositionSteerEngineStopSweeps(positionSteerEngine);
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        } else if (!strncmp("go", command, 2) || !strncmp("run", command, 3)) {
-            RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatForever);
-            printf("ACK. Go." RKEOL);
-        } else if (!strncmp("once", command, 4)) {
-            //pedestalVcpArmSweeps(me->vcpHandle, RKPedestalVcpNoRepeat);
-            RKPositionSteerEngineArmSweeps(positionSteerEngine, RKScanRepeatNone);
-            printf("ACK. Once." RKEOL);
-        } else if ((!strncmp("vol", command, 3) || !strncmp("ivol", command, 4) || !strncmp("ovol", command, 4))) {
-            // vol s 10.0 10.0,90.0 20.0/p 45.0 30.0 20.0/q 0.0 30.0 10.0/r 0.0,45.0 270.0 5.0
-            if (!positionSteerEngine->vcpHandle.active || !strncmp("ivol", command, 4)) {
-                immediatelyDo = true;
-                //pedestalVcpClearSweeps(positionSteerEngine->vcpHandle);
-                RKPositionSteerEngineClearSweeps(positionSteerEngine);
-            } else if (!strncmp("vol", command, 3)) {
-                //pedestalVcpClearHole(positionSteerEngine->vcpHandle);
-                RKPositionSteerEngineClearHole(positionSteerEngine);
-            } else if (!strncmp("ovol", command, 4)) {
-                onlyOnce = true;
-                //pedestalVcpClearDeck(positionSteerEngine->vcpHandle);
-                RKPositionSteerEngineClearDeck(positionSteerEngine);
-            }
-            const char delimiters[] = "/";
-            char *token;
-            char cp[strlen(command)];
-            char st[4];
-            //strcpy(cp, &command[4]);
-            strcpy(cp, strchr(command, ' '));
-            token = strtok(cp, delimiters);
-
-            bool everythingOkay = true;
-            //int VcpMode = RKVcpModeSpeedDown;
-            RKScanMode mode = RKScanModeSpeedDown;
-            while (token != NULL) {
-                // parse in the usual way
-                //                                                    elevation   azimuth     rate        ???
-                int m = sscanf(token, "%16s %16s %16s %16s %16s", st, cparams[0], cparams[1], cparams[2], cparams[3]);
-                if (m < 2) {
-                    printf("NAK. Ill-defined VOL." RKEOL);
-                    return RKResultFailedToSetVCP;
-                }
-                if (sscanf(cparams[0], "%f,%f", &el_start, &el_end) == 1) {
-                    el_end = el_start;
-                }
-                m = sscanf(cparams[1], "%f,%f,%f", &az_start, &az_end, &az_mark);
-                if (m == 1) {
-                    az_end = az_start;
-                    az_mark = az_start;
-                } else if (m == 2) {
-                    az_mark = az_end;
-                }
-                rate = atof(cparams[2]);
-                printf("EL %.2f-%.2f°   AZ %.2f-%.2f°/%.2f° @ %.2f dps\n", el_start, el_end, az_start, az_end, az_mark, rate);
-
-                if (*st == 'p') {
-                    //VcpMode = RKVcpModePPIAzimuthStep;
-                    mode = RKScanModePPI;
-                } else if (*st == 'r') {
-                    //VcpMode = RKVcpModeRHI;
-                    mode = RKScanModeRHI;
-                } else if (*st == 'b') {
-                    //VcpMode = RKVcpModeSpeedDown;
-                    mode = RKScanModeSpeedDown;
-                } else {
-                    printf("NAK. Ill-defined VOL." RKEOL);
-                    everythingOkay = false;
-                    //pedestalVcpClearSweeps(me->vcpHandle);
-                    RKPositionSteerEngineClearSweeps(positionSteerEngine);
-                    return RKResultFailedToSetVCP;
-                }
-
-                RKScanPath scan = RKPositionSteerEngineMakeScanPath(mode, el_start, el_end, az_start, az_end, az_mark, rate);
-
-                if (onlyOnce) {
-                    //pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(VcpMode, el_start, el_end, az_start, az_end, az_mark, rate));
-                    RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
-                } else {
-                    //pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(VcpMode, el_start, el_end, az_start, az_end, az_mark, rate));
-                    RKPositionSteerEngineAddLineupSweep(positionSteerEngine, scan);
-                }
-                token = strtok(NULL, delimiters);
-            }
-            if (everythingOkay) {
-                //me->vcpHandle->active = true;  // already implied in NextHitter
-                if (immediatelyDo) {
-                    //pedestalVcpNextHitter(me->vcpHandle);
-                    RKPositionSteerEngineNextHitter(positionSteerEngine);
-                }
-                //pedestalVcpSummary(me->vcpHandle, me->msg);
-                RKPositionSteerEngineScanSummary(positionSteerEngine, response);
-                sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-                printf("%s", response);
-            } else {
-                sprintf(response, "NAK. Some error occurred." RKEOL);
-                printf("%s", response);
-            }
-
-       } else if ((!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3))) {
-
-            if (n < 1) {
-                sprintf(response, "NAK. Ill-defined PPI array, n = %d" RKEOL, n);
-                printf("%s", response);
-                return 1;
-            }
-
-           char *elevations = cparams[0];
-           char *azimuth = cparams[1];
-           const char comma[] = ",";
-
-            if (!positionSteerEngine->vcpHandle.active || !strncmp("ipp", command, 3)) {
-                immediatelyDo = true;
-                //pedestalVcpClearSweeps(me->vcpHandle);
-                RKPositionSteerEngineClearSweeps(positionSteerEngine);
-            } else if (!strncmp("pp", command, 2)) {
-                //pedestalVcpClearHole(me->vcpHandle);
-                RKPositionSteerEngineClearHole(positionSteerEngine);
-            } else if (!strncmp("opp", command, 3)) {
-                onlyOnce = true;
-                //pedestalVcpClearDeck(me->vcpHandle);
-                RKPositionSteerEngineClearDeck(positionSteerEngine);
-            }
-
-            if (n == 1) {
-                az_start = 0.0f;
-                az_end = 0.0f;
-            }
-            if (n > 1) {
-                az_start = atof(azimuth);
-            } else {
-                az_start = 0.0f;
-            }
-            az_mark = az_start;
-            if (n > 2) {
-                rate = atof(cparams[2]);
-            } else {
-                rate = 18.0;
-            }
-
-            char *token = strtok(elevations, comma);
-
-            int k = 0;
-            bool everythingOkay = true;
-            while (token != NULL && k++ < 50) {
-                int m = sscanf(token, "%f", &el_start);
-                if (m == 0) {
-                    everythingOkay = false;
-                    break;
-                }
-                el_end = el_start;
-                az_end = az_start;
-
-                RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModePPI, el_start, el_end, az_start, az_end, az_mark, rate);
-
-                if (onlyOnce) {
-                    //pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModePPIAzimuthStep, el_start, el_end, az_start, az_end, az_mark, rate));
-                    RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
-                } else{
-                    //pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModePPIAzimuthStep, el_start, el_end, az_start, az_end, az_mark, rate));
-                    RKPositionSteerEngineAddLineupSweep(positionSteerEngine, scan);
-                }
-                token = strtok(NULL, comma);
-            }
-
-            if (everythingOkay) {
-                if (immediatelyDo) {
-                    //pedestalVcpNextHitter(me->vcpHandle);
-                    RKPositionSteerEngineNextHitter(positionSteerEngine);
-                }
-                //pedestalVcpSummary(me->vcpHandle, me->msg);
-                RKPositionSteerEngineScanSummary(positionSteerEngine, response);
-                sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-                printf("%s", response);
-            } else {
-                printf("NAK. Some error occurred." RKEOL);
-            }
-
-       } else if ((!strncmp("rr", command, 2) || !strncmp("irr", command, 3) || !strncmp("orr", command, 3))) {
-
-            char *elevation = cparams[0];
-            char *azimuths = cparams[1];
-            const char comma[] = ",";
-
-            if (!positionSteerEngine->vcpHandle.active || !strncmp("irr", command, 3)) {
-                immediatelyDo = true;
-                // pedestalVcpClearSweeps(me->vcpHandle);
-                RKPositionSteerEngineClearSweeps(positionSteerEngine);
-            } else if (!strncmp("rr", command, 2)) {
-                // pedestalVcpClearHole(me->vcpHandle);
-                RKPositionSteerEngineClearHole(positionSteerEngine);
-
-            } else if (!strncmp("orr", command, 3)) {
-                onlyOnce = true;
-                //pedestalVcpClearDeck(me->vcpHandle);
-                RKPositionSteerEngineClearDeck(positionSteerEngine);
-            }
-
-            if (n < 2) {
-                printf("NAK. Ill-defined RHI array, n = %d" RKEOL, n);
-                return 1;
-            }
-            if (n > 2) {
-                rate = atof(cparams[2]);
-            } else {
-                rate = 18.0;
-            }
-            int m = sscanf(elevation, "%f,%f", &el_start, &el_end);
-            if (m < 2) {
-                printf("NAK. Ill-defined RHI array, m = %d" RKEOL, n);
-                return 1;
-            }
-
-            char *token = strtok(azimuths, comma);
-
-            int k = 0;
-            bool everythingOkay = true;
-            bool RHIFlip = false;
-            while (token != NULL && k++ < 180) {
-                int m = sscanf(token, "%f", &az_start);
-                if (m == 0) {
-                    everythingOkay = false;
-                    break;
-                }
-                az_end = az_start;
-                // el_start = P->limit(P->ped, el_start, INSTRUCT_MODE_POINT | INSTRUCT_AXIS_EL);
-                // el_end = P->limit(P->ped, el_end, INSTRUCT_MODE_POINT | INSTRUCT_AXIS_EL);
-                // az_start = P->limit(P->ped, az_start, INSTRUCT_MODE_POINT | INSTRUCT_AXIS_AZ);
-                // az_end = az_start;
-                // rate = P->limit(P->ped, rate, INSTRUCT_MODE_SLEW | INSTRUCT_AXIS_EL);
-
-                if (onlyOnce) {
-                    if (RHIFlip) {
-                        //pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
-                        RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModeRHI, el_end, el_start, az_start, az_end, 0.0f, -rate);
-                        RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
-                    } else {
-                        //pedestalVcpAddPinchSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
-                        RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate);
-                        RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
-                    }
-                } else {
-                    if (RHIFlip) {
-                        //pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_end, el_start, az_start, az_end, 0.0f, -rate));
-                        RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModeRHI, el_end, el_start, az_start, az_end, 0.0f, -rate);
-                        RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
-                    } else {
-                        //pedestalVcpAddLineupSweep(me->vcpHandle, pedestalVcpMakeSweep(RKVcpModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate));
-                        RKScanPath scan = RKPositionSteerEngineMakeScanPath(RKScanModeRHI, el_start, el_end, az_start, az_end, 0.0f, rate);
-                        RKPositionSteerEngineAddPinchSweep(positionSteerEngine, scan);
-                    }
-                }
-                RHIFlip = !RHIFlip;
-                token = strtok(NULL, comma);
-            }
-            if (everythingOkay) {
-                if (immediatelyDo) {
-                    //pedestalVcpNextHitter(me->vcpHandle);
-                    RKPositionSteerEngineNextHitter(positionSteerEngine);
-                }
-                //pedestalVcpSummary(me->vcpHandle, me->msg);
-                //printf("ACK. Volume added successfully." RKEOL);
-                RKPositionSteerEngineScanSummary(positionSteerEngine, response);
-                sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-                printf("%s", response);
-            } else {
-                printf("NAK. Some error occurred." RKEOL);
-            }
-
-        } else if (!strncmp("summ", command, 4)) {
-            //pedestalVcpSummary(me->vcpHandle, me->msg);
-            //strncpy(response, me->msg, RKMaximumStringLength - 1);
-            RKPositionSteerEngineScanSummary(positionSteerEngine, response);
-
-        // } else if (!strncmp("spoint", cmd, 6)) {
-        //     // Point
-        //     if (n < 1) {
-        //         sprintf(me->msg, "NAK. Use as: %s [AZ] [EL]" RKEOL, cmd);
-        //         strncpy(response, me->msg, RKMaximumStringLength - 1);
-        //         return RKResultFailedToExecuteCommand;
-        //     }
-        //     fparams[0] = atof(cparams[0]);
-        //     if (n > 1) {
-        //         fparams[1] = atof(cparams[1]);
-        //         snprintf(me->msg, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg, EL:%.2f deg." RKEOL,
-        //                 fparams[0],
-        //                 fparams[1]
-        //                 );
-        //     } else {
-        //         RKPosition *pos = RKGetLatestPosition(me->radar);
-        //         fparams[1] = pos->elevationDegrees;
-        //         snprintf(me->msg, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg." RKEOL,
-        //                 fparams[0]
-        //                 );
-        //     }
-        //     pedestalPoint(me, fparams[1], fparams[0]);
-        //     strncpy(response, me->msg, RKMaximumStringLength - 1);
-
         } else {
             skipNetResponse = false;
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
@@ -678,16 +398,13 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
                 }
             }
             if (responseIndex == me->responseIndex) {
-                if (response != NULL) {
-                    sprintf(response, "NAK. Timeout." RKEOL);
-                }
+                sprintf(response, "NAK. Timeout." RKEOL);
                 return RKResultTimeout;
             }
-            if (response != NULL) {
-                strcpy(response, me->responses[responseIndex]);
-            }
+            strcpy(response, me->responses[responseIndex]);
         }
     }
+
     return RKResultSuccess;
 }
 
