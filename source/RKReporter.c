@@ -148,7 +148,8 @@ void *reporter(void *in) {
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
-//                    pulse->header.s |= RKPulseStatusStreamed;
+                    // The following line causes a horse raise issue. Don't want to use mutex for pulses
+                    // pulse->header.s |= RKPulseStatusStreamed;
                     p = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 }
             }
@@ -312,7 +313,7 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
               rkGlobalParameters.showColor ? RKNoColor : "");
         return;
     }
-    
+
     if (engine->verbose) {
         RKLog("%s %s\n", engine->name, message);
     }
@@ -349,7 +350,8 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     engine->rayStride = 1;
     engine->memoryUsage = sizeof(RKReporter);
     if (strlen(host) == 0 || host == NULL) {
-        sprintf(engine->host, "http://localhost:8000");
+        // sprintf(engine->host, "http://localhost:8000");
+        sprintf(engine->host, "nohost");
     } else {
         strncpy(engine->host, host, RKNameLength);
     }
@@ -406,6 +408,10 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
 
 void RKReporterStart(RKReporter *engine) {
     RKLog("%s Starting ...\n", engine->name);
+    if (!strcmp(engine->host, "nohost")) {
+        RKLog(">%s Not running until it is official\n", engine->name);
+        return;
+    }
     RKLog(">%s host = %s%s:%d%s%s\n", engine->name,
           rkGlobalParameters.showColor ? (engine->ws->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
           engine->ws->host, engine->ws->port, engine->ws->path,

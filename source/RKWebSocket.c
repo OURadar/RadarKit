@@ -179,6 +179,10 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     int r;
     char *c;
     struct hostent *entry = gethostbyname(W->host);
+    if (entry == NULL) {
+        RKLog("%s Error. Failed to resolve '%s'\n", W->name, W->host);
+        return -1;
+    }
     c = inet_ntoa(*((struct in_addr *)entry->h_addr_list[0]));
     if (c) {
         strcpy(W->ip, c);

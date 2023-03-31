@@ -114,7 +114,6 @@ static void *sweepManager(void *in) {
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
 
-    //int momentCount = __builtin_popcount(sweep->header.base & engine->baseProductList);
     int productCount = __builtin_popcount(sweep->header.baseProductList & engine->baseProductList);
 
     // Base products
