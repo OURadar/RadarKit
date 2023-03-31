@@ -915,17 +915,21 @@ int RKIndentCopy(char *dst, char *src, const int width) {
         k = sprintf(dst, "%s", src);
         return k;
     }
-    char indent[width + 1];
-    memset(indent, ' ', width);
-    indent[width] = '\0';
+    size_t w;
     do {
         e = strchr(s, '\n');
         if (e) {
-            *e = '\0';
-            k += sprintf(dst + k, "%s%s\n", indent, s);
+            w = e - s + 1;
+            memset(dst + k, ' ', width);
+            memcpy(dst + k + width, s, w);
+            k += width + w;
             s = e + 1;
         }
     } while (e != NULL);
+    *(dst + k) = '\0';
+    char indent[width + 1];
+    memset(indent, ' ', width);
+    indent[width] = '\0';
     k += sprintf(dst + k, "%s%s", indent, s);
     return k;
 }

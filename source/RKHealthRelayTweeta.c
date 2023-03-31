@@ -102,15 +102,21 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     return (RKHealthRelay)me;
 }
 
-int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *response) {
+int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char _Nullable *response) {
     if (input == NULL) {
         return RKResultNoRadar;
     }
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClient *client = me->client;
+
+    if (response == NULL) {
+        response = (char *)me->dump;
+    }
+
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
     }
+
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
@@ -136,14 +142,10 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
             }
         }
         if (responseIndex == me->responseIndex) {
-            if (response != NULL) {
-                sprintf(response, "NAK. Timeout." RKEOL);
-            }
+            sprintf(response, "NAK. Timeout." RKEOL);
             return RKResultTimeout;
         }
-        if (response != NULL) {
-            strcpy(response, me->responses[responseIndex]);
-        }
+        strcpy(response, me->responses[responseIndex]);
     }
     return RKResultSuccess;
 }

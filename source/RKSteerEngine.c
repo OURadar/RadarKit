@@ -618,7 +618,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     return action;
 }
 
-int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char *response) {
+int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char _Nullable *response) {
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
 
@@ -636,9 +636,8 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     }
 
     if (response == NULL) {
-        RKLog("%s response cannot be NULL\n", engine->name);
+        response = engine->dump;
     }
-    // char *response = feedback == NULL ? (char *)engine->response : feedback;
 
     bool everythingOkay = true;
 
@@ -665,16 +664,14 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         char *azimuth = args[1];
         const char comma[] = ",";
 
-        if (n == 1) {
-            azimuthStart = 0.0f;
-            azimuthEnd = 0.0f;
-        }
+        azimuthStart = 0.0f;
+        azimuthEnd = 0.0f;
         if (n > 1) {
-            azimuthStart = atof(azimuth);
+            azimuthMark = atof(azimuth);
         } else {
-            azimuthEnd = 0.0f;
+            azimuthMark = 0.0f;
         }
-        azimuthMark = azimuthEnd;
+        int m = sscanf(elevations, "%f,%f", &azimuthEnd, &elevationEnd);
         if (n > 2) {
             rate = atof(args[2]);
         } else {
@@ -857,11 +854,14 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             RKSteerEngineNextHitter(engine);
         }
         RKSteerEngineScanSummary(engine, response);
-        sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
+
         int k = sprintf(engine->dump, "Scan object created.\n");
         RKIndentCopy(engine->dump + k, response, 31);
         RKStripTail(engine->dump);
         RKLog("%s %s\n", engine->name, engine->dump);
+
+        sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
+        // sprintf(response, "ACK. Volume added successfully" RKEOL);
     } else {
         return RKResultFailedToSetVCP;
     }

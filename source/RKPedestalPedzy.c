@@ -243,19 +243,17 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     return (RKPedestal)me;
 }
 
-int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
+int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *response) {
     if (input == NULL) {
         return RKResultNoRadar;
     }
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
-    RKSteerEngine *steerEngine = me->radar->steerEngine;
     RKClient *client = me->client;
 
-    bool skipNetResponse = true;
+    RKSteerEngine *steerEngine = me->radar->steerEngine;
 
-    // char *response = feedback == NULL ? (char *)me->dump : feedback;
     if (response == NULL) {
-        RKLog("RKPedestalPedzyExec response cannot be NULL\n");
+        response = me->dump;
     }
 
     if (client->verbose > 1) {
@@ -298,31 +296,26 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
         // Commands that need to be forwarded to Pedzy
         if (!strncmp("stop", command, 4) || !strncmp("zero", command, 4)) {
-            skipNetResponse = false;
             RKSteerEngineStopSweeps(steerEngine);
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         } else {
-            skipNetResponse = false;
             RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         }
-
-        if (!skipNetResponse) {
-            while (responseIndex == me->responseIndex) {
-                usleep(10000);
-                if (++s % 100 == 0) {
-                    RKLog("%s Waited %.2f s for response to '%s'.\n", client->name, (float)s * 0.01f, command);
-                }
-                if ((float)s * 0.01f >= 3.0f) {
-                    RKLog("%s should time out.\n", client->name);
-                    break;
-                }
+        while (responseIndex == me->responseIndex) {
+            usleep(10000);
+            if (++s % 100 == 0) {
+                RKLog("%s Waited %.2f s for response to '%s'.\n", client->name, (float)s * 0.01f, command);
             }
-            if (responseIndex == me->responseIndex) {
-                sprintf(response, "NAK. Timeout." RKEOL);
-                return RKResultTimeout;
+            if ((float)s * 0.01f >= 3.0f) {
+                RKLog("%s should time out.\n", client->name);
+                break;
             }
-            strcpy(response, me->responses[responseIndex]);
         }
+        if (responseIndex == me->responseIndex) {
+            sprintf(response, "NAK. Timeout." RKEOL);
+            return RKResultTimeout;
+        }
+        strcpy(response, me->responses[responseIndex]);
     }
 
     return RKResultSuccess;
