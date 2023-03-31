@@ -1,19 +1,34 @@
 {
   "configurations": [
     {
-      "name": "macos-clang-arm64",
+      "name": "macos-clang",
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/headers/**",
         "headers",
-        "${HOMEBREW_PREFIX}/include",
-        "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
+        "/usr/local/include",
+        "/usr/local/opt/openssl@1.1/include"
       ],
       "compilerPath": "/usr/bin/clang",
       "cStandard": "gnu99",
       "cppStandard": "${default}",
-      "intelliSenseMode": "macos-clang-arm64",
+      "intelliSenseMode": "macos-clang-x64",
       "compilerArgs": []
+    },
+    {
+      "name": "macos-clang-arm",
+      "includePath": [
+        "/opt/homebrew/include",
+        "/opt/homebrew/opt/openssl@1.1/include"
+      ],
+      "defines": [],
+      "macFrameworkPath": [
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+      ],
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "macos-clang-arm64"
     }
   ],
   "version": 4

@@ -14,7 +14,7 @@ endif
 #CFLAGS += -DDEBUG_WAVEFORM_NORMALIZATION
 #CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 
-CFLAGS += -std=gnu99
+CFLAGS += -std=c17
 CFLAGS += -Woverlength-strings
 CFLAGS += -Wall -Wno-unknown-pragmas
 
