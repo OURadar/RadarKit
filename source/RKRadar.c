@@ -2103,6 +2103,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
     int k;
     char sval1[RKMaximumStringLength];
     char sval2[RKMaximumStringLength];
+    char message[RKMaximumStringLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     double fval1 = 0.0;
@@ -2404,7 +2405,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     do {
                         k++;
                     } while (commandString[k] == ' ');
-                    radar->healthRelayExec(radar->healthRelay, commandString + k, string);
+                    radar->healthRelayExec(radar->healthRelay, commandString + k, string == NULL ? message : string);
                 }
                 break;
 
@@ -2420,7 +2421,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 do {
                     k++;
                 } while (commandString[k] == ' ');
-                radar->pedestalExec(radar->pedestal, commandString + k, string);
+                radar->pedestalExec(radar->pedestal, commandString + k, string == NULL ? message : string);
                 break;
 
             case 't':
@@ -2435,7 +2436,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 do {
                     k++;
                 } while (commandString[k] == ' ');
-                radar->transceiverExec(radar->transceiver, commandString + k, string);
+                radar->transceiverExec(radar->transceiver, commandString + k, string == NULL ? message : string);
                 break;
 
             case 'r':

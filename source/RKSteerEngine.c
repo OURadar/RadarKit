@@ -636,8 +636,9 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     }
 
     if (response == NULL) {
-        response = (char *)engine->response;
+        RKLog("%s response cannot be NULL\n", engine->name);
     }
+    // char *response = feedback == NULL ? (char *)engine->response : feedback;
 
     bool everythingOkay = true;
 

@@ -39,18 +39,18 @@ enum RKAxisAction {
 typedef struct rk_test_transceiver {
     RKName         name;
     int            verbose;
+    long           counter;
+
     int            sleepInterval;
     int            gateCapacity;
     int            gateCount;
     float          gateSizeMeters;
-    long           counter;
     double         fs;
     double         prt;
     RKByte         sprt;
     RKWaveform     *waveformCache[RKTestWaveformCacheCount];
     unsigned int   waveformCacheIndex;
 	RKCommand      customCommand;
-    pthread_t      tidRunLoop;
     bool           simFault;
     bool           transmitting;
     int            chunkSize;
@@ -61,6 +61,8 @@ typedef struct rk_test_transceiver {
     char           playbackFolder[RKMaximumFolderPathLength];
     RKFileHeader   fileHeaderCache;
     RKPulseHeader  pulseHeaderCache;
+
+    pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
@@ -71,7 +73,6 @@ typedef struct rk_test_pedestal {
     RKName         name;
     int            verbose;
     unsigned long  counter;
-    int            commandCount;
 
     float          azimuth;
     float          speedAzimuth;
@@ -96,6 +97,7 @@ typedef struct rk_test_health_relay {
     RKName         name;
     int            verbose;
     long           counter;
+
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;

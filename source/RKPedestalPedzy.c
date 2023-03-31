@@ -253,8 +253,9 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
 
     bool skipNetResponse = true;
 
+    // char *response = feedback == NULL ? (char *)me->dump : feedback;
     if (response == NULL) {
-        response = (char *)me->dump;
+        RKLog("RKPedestalPedzyExec response cannot be NULL\n");
     }
 
     if (client->verbose > 1) {

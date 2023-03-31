@@ -3835,18 +3835,12 @@ void *RKTestPedestalRunLoop(void *input) {
 
     pedestal->state |= RKEngineStateActive;
 
-    int commandCount = pedestal->commandCount;
-
     RKSpline splinePositionElevation = RKSplineDefault;
     RKSpline splineSpeedElevation = RKSplineDefault;
     RKSpline splinePositionAzimuth = RKSplineDefault;
     RKSpline splineSpeedAzimuth = RKSplineDefault;
 
     while (pedestal->state & RKEngineStateWantActive) {
-        if (commandCount != pedestal->commandCount) {
-            commandCount = pedestal->commandCount;
-        }
-
         // Get a vacant position to fill it in with the latest reading
         RKPosition *position = RKGetVacantPosition(radar);
         if (position == NULL) {
@@ -3994,7 +3988,7 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
     return (RKPedestal)pedestal;
 }
 
-int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _Nullable *response) {
+int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *response) {
     RKTestPedestal *pedestal = (RKTestPedestal *)pedestalReference;
     RKRadar *radar = pedestal->radar;
     RKSteerEngine *steeven = radar->steerEngine;
@@ -4007,9 +4001,15 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         args[0], args[1], args[2], args[3]);
     #endif
 
-    if (response == NULL) {
-        response = (char *)pedestal->dump;
-    }
+    // char *response;
+    // if (feedback == NULL) {
+    //     response = (char *)pedestal->dump;
+    //     RKLog("%s '%s' local dump\n", pedestal->name, command);
+    // } else {
+    //     response = feedback;
+    // }
+
+    //char *response = feedback == NULL ? (char *)pedestal->dump : feedback;
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
@@ -4058,7 +4058,6 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char _
         pedestal->targetSpeedElevation = 0.0f;
         sprintf(response, "ACK. Elevation stopped." RKEOL);
     } else if (!strncmp(command, "bad", 3)) {
-        pedestal->commandCount++;
         sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
         if (n == 0) {
