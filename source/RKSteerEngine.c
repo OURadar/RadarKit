@@ -671,7 +671,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         } else {
             azimuthMark = 0.0f;
         }
-        int m = sscanf(elevations, "%f,%f", &azimuthEnd, &elevationEnd);
         if (n > 2) {
             rate = atof(args[2]);
         } else {
