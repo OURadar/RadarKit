@@ -65,8 +65,7 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    // snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %d / %d [%d]  %s %08x",
-    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %s %d / %d  %08x",
+    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
              (unsigned long)position->i,
              rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
              rkGlobalParameters.showColor ? RKNoColor : "",
@@ -78,11 +77,27 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
              position->elevationDegrees,
              position->elevationVelocityDegreesPerSecond,
              position->sweepElevationDegrees,
-             RKPositionVcpFlagCompleteString(position->flag),
-             engine->vcpI,
-             engine->vcpSweepCount,
-             // &engine->pedestal.vcpHandle->onDeckCount,
              position->flag);
+    //
+    // There is a memory leak here, maybe the capacity?
+    //
+    // snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %s %d / %d  %08x",
+    //          (unsigned long)position->i,
+    //          rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+    //          rkGlobalParameters.showColor ? RKNoColor : "",
+    //          position->azimuthDegrees,
+    //          position->azimuthVelocityDegreesPerSecond,
+    //          position->sweepAzimuthDegrees,
+    //          rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
+    //          rkGlobalParameters.showColor ? RKNoColor : "",
+    //          position->elevationDegrees,
+    //          position->elevationVelocityDegreesPerSecond,
+    //          position->sweepElevationDegrees,
+    //          RKPositionVcpFlagCompleteString(position->flag),
+    //          engine->vcpI,
+    //          engine->vcpSweepCount,
+    //          // &engine->pedestal.vcpHandle->onDeckCount,
+    //          position->flag);
 
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
