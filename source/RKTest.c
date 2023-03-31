@@ -4343,8 +4343,7 @@ void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
     char string[RKStatusStringLength];
     int i = RKStatusBarWidth / 2;
-    memset(string, '.', RKStatusBarWidth);
-    string[i] = '#';
+
     RKPosition *position = (RKPosition *)malloc(sizeof(RKPosition));
     memset(position, 0, sizeof(RKPosition));
     position->i = 3467810394325528110;
@@ -4357,7 +4356,13 @@ void RKTestExperiment(void) {
     position->sweepElevationDegrees = 2.01048251e-19;
     position->flag = 541073584;
 
-    i = snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
+    uint32_t positionIndex = 300;
+
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = '#';
+    i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", positionIndex);
+
+    i += snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
             (unsigned long)position->i,
             rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
             rkGlobalParameters.showColor ? RKNoColor : "",
@@ -4371,7 +4376,7 @@ void RKTestExperiment(void) {
             position->sweepElevationDegrees,
             position->flag);
     printf("%s\n", string);
-    printf("i = %d\n", i);
+    printf("i = %d   strlen = %d\n", i, (int)strlen(string));
     free(position);
 }
 

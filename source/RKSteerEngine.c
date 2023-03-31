@@ -445,7 +445,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                         V->tic = 0;
                         a++;
-                    } else if (pos->azimuthVelocityDegreesPerSecond > 0.0f) {
+                    } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) > 0.0f) {
                         action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                         action->mode[a] = 0.0f;
                         V->tic = 0;
@@ -455,7 +455,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
                         action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                         V->tic = 0;
-                    } else if (pos->elevationVelocityDegreesPerSecond > 0.0f) {
+                    } else if (fabsf(pos->elevationVelocityDegreesPerSecond) > 0.0f) {
                         action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                         action->mode[a] = 0.0f;
                         V->tic = 0;
@@ -505,7 +505,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                         V->tic = 0;
                         a++;
-                    } else if (pos->azimuthVelocityDegreesPerSecond > 0.0f) {
+                    } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) > 0.0f) {
                         action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                         action->mode[a] = 0.0f;
                         V->tic = 0;
@@ -515,7 +515,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
                         action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                         V->tic = 0;
-                    } else if (pos->elevationVelocityDegreesPerSecond > 0.0f) {
+                    } else if (fabsf(pos->elevationVelocityDegreesPerSecond) > 0.0f) {
                         action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                         action->mode[a] = 0.0f;
                         V->tic = 0;
