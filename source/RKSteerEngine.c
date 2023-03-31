@@ -639,6 +639,16 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         response = engine->dump;
     }
 
+    if (!strncmp("pp", command, 2) || !strncmp("rr", command, 2) || !strncmp("vol", command, 3)) {
+        RKSteerEngineClearHole(engine);
+    } else if (*command == 'i') {
+        RKSteerEngineClearSweeps(engine);
+        immediatelyDo = true;
+    } else if (*command == 'o') {
+        RKSteerEngineClearDeck(engine);
+        onlyOnce = true;
+    }
+
     bool everythingOkay = true;
 
     if (!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3)) {
@@ -648,16 +658,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         if (n < 2) {
             sprintf(response, "NAK. Ill-defined PPI array.   n = %d" RKEOL, n);
             return RKResultIncompleteScanDescription;
-        }
-
-        if (!strncmp("pp", command, 2)) {
-            RKSteerEngineClearHole(engine);
-        } else if (!strncmp("ipp", command, 3)) {
-            RKSteerEngineClearSweeps(engine);
-            immediatelyDo = true;
-        } else if (!strncmp("opp", command, 3)) {
-            RKSteerEngineClearDeck(engine);
-            onlyOnce = true;
         }
 
         char *elevations = args[0];
@@ -680,7 +680,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         char *token = strtok(elevations, comma);
 
         int k = 0;
-        while (token != NULL && k++ < 50) {
+        while (token != NULL && k++ < 100) {
             const int m = sscanf(token, "%f", &elevationStart);
             if (m == 0) {
                 sprintf(response, "NAK. Ill-defined PPI component.   m = %d" RKEOL, m);
@@ -707,16 +707,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         if (n < 2) {
             sprintf(response, "NAK. Ill-defined RHI array.   n = %d" RKEOL, n);
             return RKResultIncompleteScanDescription;
-        }
-
-        if (!strncmp("rr", command, 2)) {
-            RKSteerEngineClearHole(engine);
-        } else if (!strncmp("irr", command, 3)) {
-            RKSteerEngineClearSweeps(engine);
-            immediatelyDo = true;
-        } else if (!strncmp("orr", command, 3)) {
-            RKSteerEngineClearDeck(engine);
-            onlyOnce = true;
         }
 
         char *elevations = args[0];
@@ -766,16 +756,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         if (n < 2) {
             sprintf(response, "NAK. Ill-defined volume array." RKEOL);
             return RKResultIncompleteScanDescription;
-        }
-
-        if (!strncmp("vol", command, 3)) {
-            RKSteerEngineClearHole(engine);
-        } else if (!strncmp("ivol", command, 4)) {
-            RKSteerEngineClearSweeps(engine);
-            immediatelyDo = true;
-        } else if (!strncmp("ovol", command, 4)) {
-            RKSteerEngineClearDeck(engine);
-            onlyOnce = true;
         }
 
         const char slash[] = "/";
@@ -842,7 +822,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             } else {
                 RKSteerEngineAddLineupSweep(engine, scan);
             }
-
             token = strtok(NULL, slash);
         }
 
@@ -860,7 +839,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         RKLog("%s %s\n", engine->name, engine->dump);
 
         sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-        // sprintf(response, "ACK. Volume added successfully" RKEOL);
     } else {
         return RKResultFailedToSetVCP;
     }

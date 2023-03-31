@@ -22,7 +22,7 @@ typedef struct rk_tweeta {
     bool                   handlingEvent;
     bool                   toggleEvent;
     pthread_t              tidBackground;
-    RKByte                 dump[8 * 1024];
+    RKByte                 dump[RKMaximumStringLength];
 } RKHealthRelayTweeta;
 
 RKHealthRelay RKHealthRelayTweetaInit(RKRadar *, void *);

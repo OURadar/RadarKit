@@ -2732,9 +2732,6 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
 }
 
 void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
-    if (position->flag & ~RKPositionFlagHardwareMask) {
-        RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
-    }
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
     if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
         struct timeval t;
