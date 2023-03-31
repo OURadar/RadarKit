@@ -253,7 +253,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
     RKSteerEngine *steerEngine = me->radar->steerEngine;
 
     if (response == NULL) {
-        response = me->dump;
+        response = (char *)me->dump;
     }
 
     if (client->verbose > 1) {
