@@ -174,6 +174,10 @@ int RKLog(const char *whatever, ...) {
 
 #pragma mark - Global Preferences
 
+void RKSetStatusColor(const bool color) {
+    rkGlobalParameters.statusColor = color;
+}
+
 void RKSetWantColor(const bool showColor) {
     rkGlobalParameters.showColor = showColor;
 }
@@ -195,7 +199,7 @@ int RKSetProgramName(const char *name) {
     if (strlen(name) >= RKNameLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.program, 32, "%s", name);
+    snprintf(rkGlobalParameters.program, 31, "%s", name);
     return RKResultSuccess;
 }
 

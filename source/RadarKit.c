@@ -15,6 +15,7 @@ RKGlobalParameters rkGlobalParameters = {
     .rootDataFolder = RKDefaultDataPath,
     .dailyLog = false,
     .showColor = true,
+    .statusColor = true,
     .mutex = PTHREAD_MUTEX_INITIALIZER,
     .stream = NULL
 };

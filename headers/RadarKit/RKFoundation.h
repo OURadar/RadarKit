@@ -81,7 +81,8 @@ typedef struct RKGlobalParameterStruct {
     char             rootDataFolder[256];                        // Root folder where iq, moment health and log files are stored
     bool             logTimeOnly;                                // Time stamp of log entries
     bool             dailyLog;                                   // Daily mode where log file is {logFolder}/YYYYMMDD.log
-    bool             showColor;                                  // Show colors
+    bool             showColor;                                  // Show colors on screen
+    bool             statusColor;                                  // Color terminal
     pthread_mutex_t  mutex;                                      // Mutual exclusive access
     FILE             *stream;                                    // Secondary output stream, can be NULL
 } RKGlobalParameters;
@@ -101,6 +102,7 @@ RKFloat RKComplexAbsSquare(const RKComplex);
 int RKLog(const char *, ...);
 
 // Presentation
+void RKSetStatusColor(const bool);
 void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
 void RKSetUseDailyLog(const bool);
