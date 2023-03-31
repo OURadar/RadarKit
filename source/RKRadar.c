@@ -828,11 +828,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Steer engine to make steer actions
     if (radar->desc.initFlags & RKInitFlagPositionSteerEngine) {
         // Position steer engine
-        RKLog("initializing RKSteerEngineInit");
         radar->steerEngine = RKSteerEngineInit();
         RKSteerEngineSetInputOutputBuffers(radar->steerEngine, &radar->desc,
-                                                   radar->positions, &radar->positionIndex,
-                                                   radar->configs, &radar->configIndex);
+                                           radar->positions, &radar->positionIndex,
+                                           radar->configs, &radar->configIndex);
         radar->memoryUsage += radar->steerEngine->memoryUsage;
         radar->state |= RKRadarStatePositionSteerEngineInitialized;
     }
