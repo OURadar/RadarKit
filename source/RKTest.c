@@ -4341,10 +4341,38 @@ void RKTestSingleCommand(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    float a0 = 0.0f;
-    float a1 = 5.0f;
-    bool cross = RKAngularCrossOver(a0, a1, 0.0f);
-    printf("a0 = %.2f  a1 = %.2f  cross = %s\n", a0, a1, cross ? "true" : "false");
+    char string[RKStatusStringLength];
+    int i = RKStatusBarWidth / 2;
+    memset(string, '.', RKStatusBarWidth);
+    string[i] = '#';
+    RKPosition *position = (RKPosition *)malloc(sizeof(RKPosition));
+    memset(position, 0, sizeof(RKPosition));
+    position->i = 3467810394325528110;
+    position->tic = 3544333439857146164;
+    position->azimuthDegrees = -45.5470505;
+    position->azimuthVelocityDegreesPerSecond = 5.82536408e-10;
+    position->sweepAzimuthDegrees = 4.20926627e-11;
+    position->elevationDegrees = 4.22402518e-05;
+    position->elevationVelocityDegreesPerSecond = 2.05986791e-19;
+    position->sweepElevationDegrees = 2.01048251e-19;
+    position->flag = 541073584;
+
+    i = snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
+            (unsigned long)position->i,
+            rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "",
+            position->azimuthDegrees,
+            position->azimuthVelocityDegreesPerSecond,
+            position->sweepAzimuthDegrees,
+            rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
+            rkGlobalParameters.showColor ? RKNoColor : "",
+            position->elevationDegrees,
+            position->elevationVelocityDegreesPerSecond,
+            position->sweepElevationDegrees,
+            position->flag);
+    printf("%s\n", string);
+    printf("i = %d\n", i);
+    free(position);
 }
 
 #pragma mark -

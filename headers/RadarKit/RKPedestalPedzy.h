@@ -24,7 +24,7 @@ typedef struct rk_pedzy {
     RKRadar                *radar;
     float                  headingOffset;
     pthread_t              tidBackground;
-    RKByte                 dump[1024 * 1024];
+    RKByte                 dump[8 * 1024];
 } RKPedestalPedzy;
 
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);

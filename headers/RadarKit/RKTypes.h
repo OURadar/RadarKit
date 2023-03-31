@@ -175,6 +175,14 @@
 (((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "R" : \
 (((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "S" : "U")))
 
+#define RKPositionAzimuthFlagColor(x) \
+(x & RKPositionFlagAzimuthError ? RKRedColor : \
+(x & RKPositionFlagAzimuthEnabled ? RKGreenColor : RKYellowColor))
+
+#define RKPositionElevationFlagColor(x) \
+(x & RKPositionFlagElevationError ? RKRedColor : \
+(x & RKPositionFlagElevationEnabled ? RKGreenColor : RKYellowColor))
+
 #pragma mark - Fundamental Types
 
 typedef uint8_t       RKByte;                                                  //

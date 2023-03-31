@@ -17,19 +17,6 @@ static void *pulseTagger(void *);
 
 #pragma mark - Helper Functions
 
-#define RKPositionAzimuthFlagColor(x)                           \
-(x & RKPositionFlagAzimuthError ? "\033[91m" :                  \
-(x & RKPositionFlagAzimuthEnabled ? "\033[92m" : "\033[93m"))
-
-#define RKPositionElevationFlagColor(x)                         \
-(x & RKPositionFlagElevationError ? "\033[91m" :                \
-(x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[93m"))
-
-#define RKPositionVcpFlagCompleteString(x)                         \
-(x & RKPositionFlagElevationComplete ? "\033[92msweepComplete" RKNoColor:          \
-(x & RKPositionFlagAzimuthComplete ? "\033[92msweepComplete" RKNoColor:            \
-(x & RKPositionFlagVCPActive ? "\033[93mVCPActive" RKNoColor: "\033[91mVCPinActive" RKNoColor)))
-
 static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     int i;
     char *string;
@@ -65,7 +52,7 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
+    snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
              (unsigned long)position->i,
              rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
              rkGlobalParameters.showColor ? RKNoColor : "",

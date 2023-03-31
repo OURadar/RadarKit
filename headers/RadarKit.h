@@ -17,6 +17,12 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
+//  4.0    - Q2 2023
+//         - Added RKSteerEngine for volume scanning actions
+//           - New types RKScan, RKScanMode, etc.
+//         - Added new stream '8'
+//         - Added new streaming control, see project 'pedzy'
+//
 //  3.2    - 02/25/2023
 //         - Added RKReporter for RadarHub communication
 //         - Added RKWebSocket, a built-from-scratch implementation
