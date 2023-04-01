@@ -620,7 +620,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
 
 int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char _Nullable *response) {
     char args[4][256] = {"", "", "", ""};
-    const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
+    const int n = sscanf(command, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
 
     bool immediatelyDo = false;
     if (!engine->vcpHandle.active) {

@@ -3554,7 +3554,6 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
     #endif
 
     if (flag & RKTextPreferencesDrawBackground) {
-        int n = 0;
         char temp[8196];
         int w = RKMergeColumns(temp, dots, labels, 4);
         // Another indent at the end and the two border chars
@@ -3574,7 +3573,6 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
             *e = '\0';
             m += sprintf(d + m, "|%s|\n", s);
             s = e + 1;
-            n++;
         }
         // Bottom border
         *(d + m++) = '+';

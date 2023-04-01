@@ -2818,7 +2818,6 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     int j, k, s;
     char *c, string[RKMaximumStringLength];
     long fpos, fsize;
-    long tic = 0;
     struct timeval t0, t1;
     bool even = true;
 
@@ -3034,12 +3033,10 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
 
             fpos = ftell(fid);
             even = !even;
-            tic++;
 
             if (j++ == transceiver->chunkSize) {
                 gettimeofday(&t0, NULL);
                 j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
-//                j = 10000;
                 usleep(j);
                 t1 = t0;
                 j = 0;
@@ -3994,7 +3991,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKSteerEngine *steeven = radar->steerEngine;
 
     char args[4][256] = {"", "", "", ""};
-    const int n = sscanf(command, "%*s %256s %256s %256s %256s", args[0], args[1], args[2], args[3]);
+    const int n = sscanf(command, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
 
     #if defined(DEBUG_TEST_PEDESTAL_EXEC)
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
@@ -4156,7 +4153,6 @@ void *RKTestHealthRelayRunLoop(void *input) {
     RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)input;
     RKRadar *radar = healthRelay->radar;
 
-    int n;
     float powerH, powerV;
     double latitude, longitude, heading;
     double dt = 0.0;
@@ -4204,12 +4200,10 @@ void *RKTestHealthRelayRunLoop(void *input) {
         }
 
         // Wait to simulate sampling time
-        n = 0;
         do {
             gettimeofday(&t0, NULL);
             dt = RKTimevalDiff(t0, t1);
             usleep(10000);
-            n++;
         } while (healthRelay->state & RKEngineStateWantActive && dt < HEALTH_RELAY_SAMPLING_TIME);
         t1 = t0;
     }

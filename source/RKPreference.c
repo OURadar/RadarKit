@@ -55,7 +55,7 @@ int RKPreferenceUpdate(RKPreference *preference) {
     int i = 0;
     int k = 0;
 	int m = 0;
-    while (k < RKPreferenceObjectCount) {
+    while (k < RKPreferenceObjectCount && i < 1000) {
         c = fgets(line, RKMaximumStringLength, fid);
         if (c == NULL) {
             break;
