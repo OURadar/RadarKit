@@ -3,11 +3,7 @@
   "C_Cpp_Runner.cStandard": "gnu99",
   "C_Cpp_Runner.cppStandard": "",
   "C_Cpp_Runner.msvcBatchPath": "",
-  "C_Cpp_Runner.warnings": [
-    "-Wall",
-    "-Wextra",
-    "-Wpedantic"
-  ],
+  "C_Cpp_Runner.warnings": ["-Wall", "-Wextra", "-Wpedantic"],
   "C_Cpp_Runner.enableWarnings": true,
   "C_Cpp_Runner.warningsAsError": false,
   "C_Cpp_Runner.compilerArgs": [],
@@ -18,10 +14,7 @@
     "${HOMEBREW_PREFIX}/include",
     "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
-  "C_Cpp_Runner.includeSearch": [
-    "*",
-    "**/*"
-  ],
+  "C_Cpp_Runner.includeSearch": ["*", "**/*"],
   "C_Cpp_Runner.excludeSearch": [
     "**/build",
     "**/build/**",
@@ -32,8 +25,8 @@
   ],
   "C_Cpp.default.includePath": [
     "headers",
-    "${HOMEBREW_PREFIX}/include",
-    "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
+    "${env:HOMEBREW_PREFIX}/include",
+    "${env:HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
   "C_Cpp_Runner.cCompilerPath": "/usr/bin/clang",
   "C_Cpp_Runner.cppCompilerPath": "/usr/bin/clang++",
@@ -44,10 +37,15 @@
     "**/templates/**/*.html": "django-html",
     "**/templates/**/*": "django-txt",
     "**/requirements{/**,*}.{txt,in}": "pip-requirements",
+    "*.c": "c",
     "__node_handle": "c",
     "string": "c",
     "iosfwd": "c",
     "radarkit.h": "c",
-    "param.h": "c"
-  }
+    "param.h": "c",
+    "stdbool.h": "c"
+  },
+  "C_Cpp.default.compilerPath": "/usr/bin/clang",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.cStandard": "c17"
 }
