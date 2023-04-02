@@ -202,7 +202,6 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
         *colon = '\0';
-        //sscanf(colon + 1, "%d", &desc.port);
         desc.port = atoi(colon + 1);
     } else {
         desc.port = 9554;

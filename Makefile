@@ -14,7 +14,7 @@ endif
 #CFLAGS += -DDEBUG_WAVEFORM_NORMALIZATION
 #CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 
-CFLAGS += -std=c17
+CFLAGS += -std=c11
 CFLAGS += -Woverlength-strings
 CFLAGS += -Wall -Wno-unknown-pragmas
 
@@ -32,13 +32,11 @@ CFLAGS += -Iheaders -Iheaders/RadarKit -fPIC
 LDFLAGS = -L./
 
 ifeq ($(KERNEL), Darwin)
-	CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
-	LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
-endif
-
-ifeq ($(MACHINE), arm64)
 	CFLAGS += -I${HOMEBREW_PREFIX}/include
+	CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
+
 	LDFLAGS += -L${HOMEBREW_PREFIX}/lib
+	LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
 endif
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
