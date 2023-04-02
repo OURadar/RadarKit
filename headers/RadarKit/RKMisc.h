@@ -12,6 +12,8 @@
 #ifndef __RadarKit_Misc__
 #define __RadarKit_Misc__
 
+#define __STDC_WANT_LIB_EXT1__ 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

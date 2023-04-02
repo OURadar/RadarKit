@@ -62,6 +62,15 @@ static int pedestalPedzyRead(RKClient *client) {
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
+        // Some integrity check
+        if (fabsf(newPosition->azimuthDegrees) > 360.0f || fabsf(newPosition->azimuthVelocityDegreesPerSecond) > 360.0f) {
+            RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
+                newPosition->azimuthDegrees, newPosition->azimuthVelocityDegreesPerSecond);
+        }
+       if (fabsf(newPosition->elevationDegrees) > 180.0f || fabsf(newPosition->elevationVelocityDegreesPerSecond) > 100.0f) {
+            RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
+                newPosition->elevationDegrees, newPosition->elevationVelocityDegreesPerSecond);
+        }
 
         // Add other flags based on radar->steerEngine
         //RKSteerEngineUpdatePositionFlags(steerEngine, newPosition);
@@ -78,29 +87,6 @@ static int pedestalPedzyRead(RKClient *client) {
 
         RKSetPositionReady(radar, newPosition);
 
-        char axis = 'e';
-        char string[64];
-        for (int k = 0; k < 2; k++) {
-            RKPedestalInstructType instruct = action->mode[k];
-            float value = action->param[k];
-            if (instruct == 0) {
-                continue;
-            }
-            if (RKInstructIsElevation(instruct)) {
-                axis = 'e';
-            } else {
-                axis = 'a';
-            }
-            if (RKInstructIsSlew(instruct)) {
-                sprintf(string, "%cslew %.2f" RKEOL, axis, value);
-            } else if (RKInstructIsPoint(instruct)) {
-                sprintf(string, "%cpoint %.2f" RKEOL, axis, value);
-            } else if (RKInstructIsStandby(instruct)) {
-                sprintf(string, "%cstop" RKEOL, axis);
-            }
-            // RKPedestalPedzyExec(me, string, response);
-            // RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        }
         pedestalPedzySendAction(client->sd, me->latestCommand, action);
 
     } else {
@@ -216,7 +202,8 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
         *colon = '\0';
-        sscanf(colon + 1, "%d", &desc.port);
+        //sscanf(colon + 1, "%d", &desc.port);
+        desc.port = atoi(colon + 1);
     } else {
         desc.port = 9554;
     }
@@ -269,14 +256,14 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         RKSteerEngineArmSweeps(steerEngine, RKScanRepeatNone);
         sprintf(response, "ACK. Once." RKEOL);
     } else if (!strncmp("pp", command, 2) ||
-                !strncmp("ipp", command, 3) ||
-                !strncmp("opp", command, 3) ||
-                !strncmp("rr", command, 2) ||
-                !strncmp("irr", command, 3) ||
-                !strncmp("orr", command, 3) ||
-                !strncmp("vol", command, 3) ||
-                !strncmp("ivol", command, 4) ||
-                !strncmp("ovol", command, 4)) {
+               !strncmp("ipp", command, 3) ||
+               !strncmp("opp", command, 3) ||
+               !strncmp("rr", command, 2) ||
+               !strncmp("irr", command, 3) ||
+               !strncmp("orr", command, 3) ||
+               !strncmp("vol", command, 3) ||
+               !strncmp("ivol", command, 4) ||
+               !strncmp("ovol", command, 4)) {
         RKSteerEngineExecuteString(steerEngine, command, response);
     } else if (!strncmp("summ", command, 4)) {
         RKSteerEngineScanSummary(steerEngine, response);

@@ -8,6 +8,8 @@
 #ifndef __RadarKit_Types__
 #define __RadarKit_Types__
 
+#define __STDC_WANT_LIB_EXT1__ 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

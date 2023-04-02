@@ -10,7 +10,7 @@
         "/usr/local/opt/openssl@1.1/include"
       ],
       "compilerPath": "/usr/bin/clang",
-      "cStandard": "c17",
+      "cStandard": "gnu99",
       "cppStandard": "${default}",
       "intelliSenseMode": "macos-clang-x64",
       "compilerArgs": ["-stdlib=libc++"]
@@ -29,7 +29,7 @@
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
       ],
       "compilerPath": "/usr/bin/clang",
-      "cStandard": "c17",
+      "cStandard": "c11",
       "cppStandard": "${default}",
       "intelliSenseMode": "macos-clang-arm64",
       "compilerArgs": ["-stdlib=libc++"]

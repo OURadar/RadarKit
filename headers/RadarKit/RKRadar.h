@@ -37,7 +37,7 @@
 sprintf(STRING, "                    radar->" rk_str(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
 typedef uint32_t RKRadarState;
-enum {
+enum RKRadarState {
     RKRadarStateRayBufferAllocated                   = (1 << 0),   // Data buffers
     RKRadarStateRawIQBufferAllocated                 = (1 << 1),   //
     RKRadarStateStatusBufferAllocated                = (1 << 2),   //
