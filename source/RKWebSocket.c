@@ -590,7 +590,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
         return NULL;
     }
     // Look for protocol https / http
-    if ((c = strstr(host, "https:")) != NULL) {
+    if (strstr(host, "https:") != NULL) {
         W->useSSL = true;
     } else {
         W->useSSL = false;
@@ -598,11 +598,10 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     // Look for port number at the end
     if ((c = strstr(host, "://")) != NULL) {
         c += 3;
-        n = strstr(c, ":");
     } else {
         c = (char *)host;
-        n = strstr(host, ":");
     }
+    n = strstr(c, ":");
     if (n == NULL) {
         W->port = 80;
         strcpy(W->host, host);

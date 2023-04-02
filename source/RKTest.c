@@ -815,7 +815,7 @@ void RKTestParseJSONString(void) {
     printf("jsonString =\n%s\n", jsonString);
 
     c = jsonString;
-    c = RKJSONGetElement(element, c);
+    RKJSONGetElement(element, c);
     printf(RKMonokaiYellow "%s" RKNoColor " (%d)\n\n", element, (int)strlen(element));
 
     // Test parsing key-value pair from an array
@@ -1283,6 +1283,10 @@ void RKTestReadIQ(const char *filename) {
     RKWaveform *waveform = NULL;
 
     readsize = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
+    if (readsize < 0) {
+        RKLog("Error. Unable to read RKFileHeader.   fread() returned %d\n", readsize);
+        return;
+    }
     if (fileHeader->version <= 4) {
         RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
         return;
@@ -1382,6 +1386,9 @@ void RKTestReadIQ(const char *filename) {
         startTime = pulse->header.time.tv_sec;
         tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
         tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
+        if (tr > 30) {
+            fprintf(stderr, "Warning. Time string is getting long at %lu.\n", tr);
+        }
         // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
         if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
             for (j = 0; j < 2; j++) {

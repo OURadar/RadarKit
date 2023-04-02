@@ -233,17 +233,21 @@ static void *systemInspectorRunLoop(void *in) {
         // Only do this if the radar has a pulse position combiner
         if (radar->positions && radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
             pedestalOkay = positionRate == 0.0f ? false : true;
-            // Position active / standby
-            health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
-            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                pedestalEnum = RKStatusEnumStandby;
+            if (!pedestalOkay) {
+                pedestalEnum = RKStatusEnumInvalid;
             } else {
-                if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
-                    RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
-                    pedestalEnum = RKStatusEnumActive;
-                } else {
+                // Position active / standby
+                health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
                     pedestalEnum = RKStatusEnumStandby;
+                } else {
+                    if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
+                        RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
+                        pedestalEnum = RKStatusEnumActive;
+                    } else {
+                        pedestalEnum = RKStatusEnumStandby;
+                    }
                 }
             }
         } else {

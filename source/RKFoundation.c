@@ -1830,7 +1830,7 @@ bool RKAnyCritical(const char *string, const bool showEnum, char *firstKey, char
 //     char *firstKey             - (nullable) the key of first critical value
 //     char *firstValue           - (nullable) the object value of the first critical key
 //
-bool RKFindCondition(const char *string, const RKStatusEnum target, const bool showEnum, char *firstKey, char *firstValue) {
+bool RKFindCondition(const char *string, const RKStatusEnum target, const bool showEnum, char _Nullable *firstKey, char _Nullable *firstValue) {
     if (string == NULL || strlen(string) == 0) {
         return false;
     }

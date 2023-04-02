@@ -47,9 +47,8 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     float *x;
 
     // Open a file
-    //if ((j = nc_create(product->header.suggestedFilename, NC_MODE, &ncid)) > 0) {
     if ((j = nc_create(filename, NC_MODE, &ncid)) > 0) {
-        RKLog("Error. Unable to create %s", filename);
+        RKLog("Error. Unable to create %s   nc_create returned %d\n", filename, j);
         return RKResultFailedToOpenFileForProduct;
     }
    
