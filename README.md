@@ -52,12 +52,6 @@ Follow these steps to get the project
    brew install fftw netcdf openssl
    ```
 
-   or
-
-   ```shell
-   brew install netcdf
-   ```
-
    ##### Special Notes About NetCDF shared library
 
    Some operating systems require the following line in your shell profile for the netcdf shared library to be found.
