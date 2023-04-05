@@ -54,7 +54,7 @@ float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
             rate = 20.0f;
         } else if (gamma >= 5.0f) {
             rate = 10.0f;
-        } else if (gamma >= 2.0f) {
+        } else if (gamma >= 1.5f) {
             rate = 3.0f;
         } else {
             rate = 1.0f;
@@ -64,7 +64,7 @@ float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
             rate = 15.0f;
         } else if (gamma >= 7.0f) {
             rate = 10.0f;
-        } else if (gamma >= 2.0f) {
+        } else if (gamma >= 1.5f) {
             rate = 3.0f;
         } else {
             rate = 1.0f;
@@ -477,8 +477,13 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     V->progress ^= RKScanProgressSetup;
                     V->tic = 0;
                 } else {
-                    action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                    action->param[0] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
+                    if (engine->vcpHandle.option & RKScanOptionUsePoint) {
+                        action->mode[0] = RKPedestalInstructTypeModePoint | RKPedestalInstructTypeAxisElevation;
+                        action->param[0] = scan->elevationStart;
+                    } else {
+                        action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                        action->param[0] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
+                    }
                     V->tic = 0;
                 }
                 break;
@@ -501,8 +506,11 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     V->tic = 0;
                 } else {
                     if (udaz >= RKPedestalPositionTolerance) {
-                        action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                        action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
+                        if (engine->vcpHandle.option & RKScanOptionUsePoint) {
+                        } else {
+                            action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                            action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
+                        }
                         V->tic = 0;
                         a++;
                     } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) > 0.0f) {
@@ -512,8 +520,11 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         a++;
                     }
                     if (udel >= RKPedestalPositionTolerance) {
-                        action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
-                        action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        if (engine->vcpHandle.option & RKScanOptionUsePoint) {
+                        } else {
+                            action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                            action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        }
                         V->tic = 0;
                     } else if (fabsf(pos->elevationVelocityDegreesPerSecond) > 0.0f) {
                         action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;

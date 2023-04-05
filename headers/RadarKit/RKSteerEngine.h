@@ -48,7 +48,8 @@ enum RKScanOption {
     RKScanOptionNone                             = 0,
     RKScanOptionBrakeElevationDuringSweep        = 1,
     RKScanOptionRepeat                           = 1 << 1,
-    RKScanOptionVerbose                          = 1 << 2
+    RKScanOptionVerbose                          = 1 << 2,
+    RKScanOptionUsePoint                         = 1 << 3
 };
 
 typedef int RKScanMode;
@@ -78,7 +79,7 @@ typedef struct rk_scan_path {
     float                       elevationSlew;                                 // Elevation slew speed
 } RKScanPath;
 
-typedef struct rk_scan_state {
+typedef struct rk_scan_object {
     RKName                      name;
     RKScanOption                option;
     RKScanPath                  batterScans[RKMaximumScanCount];
