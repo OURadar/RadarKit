@@ -593,7 +593,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 }
                 cross = RKAngularCrossOver(pos->elevationDegrees, V->elevationPrevious, scan->elevationEnd);
                 if (cross) {
-                    V->progress |= RKScanProgressEnd;
+                    V->progress |= RKScanProgressEnd|RKScanProgressMarker;
                     V->progress ^= RKScanProgressMiddle;
                     if (verbose) {
                         RKLog("%s Target cross detected @ EL %.2f [%.2f -> %.2f]\n", engine->name,
