@@ -533,6 +533,52 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     }
                 }
                 break;
+            case RKScanModePoint:
+                del = RKMinDiff(scan->elevationStart, pos->elevationDegrees);
+                daz = RKMinDiff(scan->azimuthStart, pos->azimuthDegrees);
+                udel = fabs(del);
+                udaz = fabs(daz);
+                if (udel < RKPedestalPositionTolerance && udaz < RKPedestalPositionTolerance) {
+                    action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action->param[0] = scan->azimuthSlew;
+                    action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action->param[1] = 0.0f;
+                    if (verbose) {
+                        RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\033[m\n", engine->name,
+                            V->i, scan->elevationStart, scan->azimuthEnd);
+                    }
+                    V->progress |= RKScanProgressEnd;
+                    V->progress ^= RKScanProgressSetup;
+                    V->tic = 0;
+                } else {
+                    if (udaz >= RKPedestalPositionTolerance) {
+                        if (engine->vcpHandle.option & RKScanOptionUsePoint) {
+                        } else {
+                            action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                            action->param[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
+                        }
+                        V->tic = 0;
+                        a++;
+                    } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) > 0.0f) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+                        action->mode[a] = 0.0f;
+                        V->tic = 0;
+                        a++;
+                    }
+                    if (udel >= RKPedestalPositionTolerance) {
+                        if (engine->vcpHandle.option & RKScanOptionUsePoint) {
+                        } else {
+                            action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
+                            action->param[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
+                        }
+                        V->tic = 0;
+                    } else if (fabsf(pos->elevationVelocityDegreesPerSecond) > 0.0f) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                        action->mode[a] = 0.0f;
+                        V->tic = 0;
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -592,6 +638,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     }
                 }
                 break;
+            case RKScanModePoint:
             default:
                 break;
         }

@@ -58,6 +58,7 @@ enum RKScanMode {
     RKScanModeRHI,
     RKScanModePPI,
     RKScanModeSector,
+    RKScanModePoint,
     RKScanModeSpeedDown        // need to learn more
 };
 
