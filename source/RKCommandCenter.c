@@ -1541,7 +1541,7 @@ int socketInitialHandler(RKOperator *O) {
     user->asciiArtStride = 4;
     user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
-    struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+    struct winsize terminalSize = {.ws_col = 80, .ws_row = 40};
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
     RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d   Iid = %d...\n", engine->name, O->name,
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row, O->iid);

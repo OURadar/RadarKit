@@ -543,16 +543,16 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 udel = fabs(del);
                 udaz = fabs(daz);
                 if (udel < RKPedestalPositionTolerance && udaz < RKPedestalPositionTolerance) {
-                    action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                    action->param[0] = scan->azimuthSlew;
+                    action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+                    action->param[0] = 0.0;
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->param[1] = 0.0f;
                     if (verbose) {
                         RKLog("%s Info. Point to EL %.2f  AZ %.2f\n", engine->name,
                             scan->elevationStart, scan->azimuthStart);
                     }
-                    V->progress |= RKScanProgressEnd;
                     V->progress ^= RKScanProgressSetup;
+                    V->progress |= RKScanProgressEnd;
                     V->tic = 0;
                 } else {
                     if (udel >= RKPedestalPositionTolerance) {
@@ -710,7 +710,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
     if (!strncmp("pp", command, 2) || !strncmp("rr", command, 2) || !strncmp("vol", command, 3)) {
         RKSteerEngineClearHole(engine);
-    } else if (*command == 'i') {
+    } else if (*command == 'i' || !strncmp("spoint", command, 6)) {
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
     } else if (*command == 'o') {
@@ -893,6 +893,13 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             }
             token = strtok(NULL, slash);
         }
+
+    } else if (!strncmp("spoint", command, 6)) {
+
+        const float elevation = atof(args[0]);
+        const float azimuth = atof(args[1]);
+        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 0.0f, 30.0f);
+        RKSteerEngineAddPinchSweep(engine, scan);
 
     }
 

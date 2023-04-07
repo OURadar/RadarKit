@@ -4103,7 +4103,8 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
                !strncmp("orr", command, 3) ||
                !strncmp("vol", command, 3) ||
                !strncmp("ivol", command, 4) ||
-               !strncmp("ovol", command, 4)) {
+               !strncmp("ovol", command, 4) ||
+               !strncmp("spoint", command, 6)) {
         RKSteerEngineExecuteString(steeven, command, response);
     } else if (!strncmp(command, "summ", 4)) {
         RKSteerEngineScanSummary(steeven, response);
