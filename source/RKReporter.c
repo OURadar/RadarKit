@@ -438,7 +438,9 @@ void RKReporterStop(RKReporter *engine) {
     do {
         usleep(10000);
     } while (engine->state & RKEngineStateActive && s++ < 300);
-    RKLog("%s Disconnecting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
-    RKWebSocketStop(engine->ws);
+    if (engine->ws->wantActive) {
+        RKLog("%s Disconnecting %s:%s ...\n", engine->name, engine->ws->host, engine->ws->path);
+        RKWebSocketStop(engine->ws);
+    }
     RKLog("%s Stopped.\n", engine->name);
 }

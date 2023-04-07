@@ -2468,6 +2468,14 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 }
                 break;
 
+            case 'v':  // VCP stuff
+                k = 0;
+                do {
+                    k++;
+                } while (commandString[k] == ' ');
+                RKSteerEngineExecuteString(radar->steerEngine, commandString + k, string);
+                break;
+
             case 'b':  // Button event
             case 'y':  // Start everything
             case 'z':  // Stop everything
