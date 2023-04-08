@@ -250,7 +250,7 @@ RKSteerEngine *RKSteerEngineInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSteerEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     sprintf(engine->vcpHandle.name, "VCP");
-    engine->vcpHandle.option = RKScanOptionRepeat;
+    engine->vcpHandle.option = RKScanOptionRepeat | RKScanOptionUsePoint;
     engine->vcpHandle.active = false;
     engine->vcpHandle.toc = 3;
     engine->memoryUsage = sizeof(RKSteerEngine);
@@ -469,10 +469,13 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 del = RKMinDiff(scan->elevationStart, pos->elevationDegrees);
                 udel = fabs(del);
                 if (udel < RKPedestalPositionTolerance) {
-                    action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-                    action->param[0] = 0.0f;
-                    action->mode[1] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
-                    action->param[1] = scan->azimuthSlew;
+                    if (!(V->option & RKScanOptionUsePoint)) {
+                        action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                        action->param[a] = 0.0f;
+                        a++;
+                    }
+                    action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
+                    action->param[a] = scan->azimuthSlew;
                     if (verbose) {
                         RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\n", engine->name,
                             V->i, scan->elevationStart, scan->azimuthMark);
