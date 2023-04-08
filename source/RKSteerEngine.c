@@ -64,7 +64,7 @@ float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
             rate = 15.0f;
         } else if (gamma >= 7.0f) {
             rate = 10.0f;
-        } else if (gamma >= 1.5f) {
+        } else if (gamma >= 0.8f) {
             rate = 3.0f;
         } else {
             rate = 1.0f;
