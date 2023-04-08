@@ -4345,7 +4345,7 @@ void RKTestSingleCommand(void) {
 
 }
 
-void RKTestExperiment(void) {
+void RKTestMakePositionStatusString(void) {
     SHOW_FUNCTION_NAME
     char string[RKStatusStringLength];
     int i = RKStatusBarWidth / 2;
@@ -4384,6 +4384,15 @@ void RKTestExperiment(void) {
     printf("%s\n", string);
     printf("i = %d   strlen = %d\n", i, (int)strlen(string));
     free(position);
+}
+
+void RKTestExperiment(void) {
+    int k = 11;
+    int depth = 10000;
+    int stride = 500;
+    int i = RKPreviousNModuloS(k, stride, depth);
+    printf("k = %d   depth = %d   RKPreviousNModuloS(%d, %d) = %d\n",
+        k, depth, k, stride, i);
 }
 
 #pragma mark -
