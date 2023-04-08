@@ -174,6 +174,10 @@ int RKLog(const char *whatever, ...) {
 
 #pragma mark - Global Preferences
 
+void RKSetStatusColor(const bool color) {
+    rkGlobalParameters.statusColor = color;
+}
+
 void RKSetWantColor(const bool showColor) {
     rkGlobalParameters.showColor = showColor;
 }
@@ -195,7 +199,7 @@ int RKSetProgramName(const char *name) {
     if (strlen(name) >= RKNameLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.program, 32, "%s", name);
+    snprintf(rkGlobalParameters.program, 31, "%s", name);
     return RKResultSuccess;
 }
 
@@ -1307,6 +1311,9 @@ RKStream RKStreamFromString(const char * string) {
             case '7':
                 flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtHealth;
                 break;
+            case '8':
+                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtVCP;
+                break;
             case 'x':
                 flag |= RKStreamStatusTerminalChange;
                 break;
@@ -1823,7 +1830,7 @@ bool RKAnyCritical(const char *string, const bool showEnum, char *firstKey, char
 //     char *firstKey             - (nullable) the key of first critical value
 //     char *firstValue           - (nullable) the object value of the first critical key
 //
-bool RKFindCondition(const char *string, const RKStatusEnum target, const bool showEnum, char *firstKey, char *firstValue) {
+bool RKFindCondition(const char *string, const RKStatusEnum target, const bool showEnum, char _Nullable *firstKey, char _Nullable *firstValue) {
     if (string == NULL || strlen(string) == 0) {
         return false;
     }
@@ -2100,4 +2107,35 @@ int RKCommandQueueFree(RKCommandQueue *queue) {
     free(queue->buffer);
     free(queue);
     return RKResultSuccess;
+}
+
+char *RKPedestalActionString(const RKScanAction *action) {
+    static char string[1024];
+    size_t length;
+    *string = '\0';
+    for (int i = 0; i < 2; i++) {
+        if (RKInstructIsNone(action->mode[i])) {
+            if (i == 0) {
+                sprintf(string, "none");
+            }
+        } else {
+            length = strlen(string);
+            if (length) {
+                sprintf(string + length, "   ");
+            }
+            length = strlen(string); snprintf(string + length, 1024 - length, "%s",
+                RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
+            length = strlen(string); snprintf(string + length, 1024 - length, " %s",
+                RKInstructIsPoint(action->mode[i])   ? "point"   : (
+                RKInstructIsSlew(action->mode[i])    ? "slew"    : (
+                RKInstructIsStandby(action->mode[i]) ? "standby" : (
+                RKInstructIsEnable(action->mode[i])  ? "enable"  : (
+                RKInstructIsDisable(action->mode[i]) ? "disable" : ""
+                )))));
+            if (RKInstructIsPoint(action->mode[i]) || RKInstructIsSlew(action->mode[i])) {
+                length = strlen(string); snprintf(string + length, 1024 - length, " %.1f", action->param[i]);
+            }
+        }
+    }
+    return (char *)string;
 }

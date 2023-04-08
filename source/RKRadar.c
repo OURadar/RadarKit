@@ -233,17 +233,21 @@ static void *systemInspectorRunLoop(void *in) {
         // Only do this if the radar has a pulse position combiner
         if (radar->positions && radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
             pedestalOkay = positionRate == 0.0f ? false : true;
-            // Position active / standby
-            health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
-            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                pedestalEnum = RKStatusEnumStandby;
+            if (!pedestalOkay) {
+                pedestalEnum = RKStatusEnumInvalid;
             } else {
-                if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
-                    RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
-                    pedestalEnum = RKStatusEnumActive;
-                } else {
+                // Position active / standby
+                health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
                     pedestalEnum = RKStatusEnumStandby;
+                } else {
+                    if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
+                        RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
+                        pedestalEnum = RKStatusEnumActive;
+                    } else {
+                        pedestalEnum = RKStatusEnumStandby;
+                    }
                 }
             }
         } else {
@@ -825,6 +829,17 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->state |= RKRadarStatePositionEngineInitialized;
     }
 
+    // Steer engine to make steer actions
+    if (radar->desc.initFlags & RKInitFlagPositionSteerEngine) {
+        // Position steer engine
+        radar->steerEngine = RKSteerEngineInit();
+        RKSteerEngineSetInputOutputBuffers(radar->steerEngine, &radar->desc,
+                                           radar->positions, &radar->positionIndex,
+                                           radar->configs, &radar->configIndex);
+        radar->memoryUsage += radar->steerEngine->memoryUsage;
+        radar->state |= RKRadarStatePositionSteerEngineInitialized;
+    }
+
     // Signal processor performs pulse compression, calculates moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         // FFT module
@@ -1062,6 +1077,10 @@ int RKFree(RKRadar *radar) {
         RKPositionEngineFree(radar->positionEngine);
         radar->positionEngine = NULL;
     }
+    if (radar->state & RKRadarStatePositionSteerEngineInitialized) {
+        RKSteerEngineFree(radar->steerEngine);
+        radar->steerEngine = NULL;
+    }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineFree(radar->momentEngine);
         radar->momentEngine = NULL;
@@ -1270,6 +1289,9 @@ int RKSetVerbosity(RKRadar *radar, const int verbose) {
     if (radar->positionEngine) {
         RKPositionEngineSetVerbose(radar->positionEngine, verbose);
     }
+    if (radar->steerEngine) {
+        RKSteerEngineSetVerbose(radar->steerEngine, verbose);
+    }
     if (radar->pulseEngine) {
         RKPulseEngineSetVerbose(radar->pulseEngine, verbose);
     }
@@ -1303,27 +1325,31 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
         if (array[k] == 0) {
             continue;
         }
+        const int verbose = array[k];
         switch (k) {
             case '0':
-                RKClockSetVerbose(radar->positionClock, array[k]);
+                RKClockSetVerbose(radar->positionClock, verbose);
                 break;
             case '1':
-                RKClockSetVerbose(radar->pulseClock, array[k]);
+                RKClockSetVerbose(radar->pulseClock, verbose);
                 break;
             case 'a':
-                RKPositionEngineSetVerbose(radar->positionEngine, array[k]);
+                RKPositionEngineSetVerbose(radar->positionEngine, verbose);
+                break;
+            case 'b':
+                RKSteerEngineSetVerbose(radar->steerEngine, verbose);
                 break;
             case 'm':
-                RKMomentEngineSetVerbose(radar->momentEngine, array[k]);
+                RKMomentEngineSetVerbose(radar->momentEngine, verbose);
                 break;
             case 'p':
-                RKPulseEngineSetVerbose(radar->pulseEngine, array[k]);
+                RKPulseEngineSetVerbose(radar->pulseEngine, verbose);
                 break;
             case 'r':
-                RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, array[k]);
+                RKPulseRingFilterEngineSetVerbose(radar->pulseRingFilterEngine, verbose);
                 break;
             case 's':
-                RKSweepEngineSetVerbose(radar->sweepEngine, array[k]);
+                RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
                 break;
             default:
                 break;
@@ -1677,6 +1703,9 @@ int RKGoLive(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
         RKPositionEngineStart(radar->positionEngine);
     }
+    if (radar->desc.initFlags & RKInitFlagPositionSteerEngine) {
+        RKSteerEngineStart(radar->steerEngine);
+    }
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
         if (radar->desc.initFlags & RKInitFlagManuallyAssignCPU) {
             // Main thread uses 1 CPU. Start the others from 1.
@@ -1761,6 +1790,7 @@ int RKGoLive(RKRadar *radar) {
             return RKResultIncompletePedestal;
         }
         radar->pedestal = radar->pedestalInit(radar, radar->pedestalInitInput);
+        radar->positionEngine->pedestal = radar->pedestal;
         if (radar->pedestal == NULL) {
             RKLog("Error. Unable to start the pedestal.\n");
             pthread_mutex_unlock(&radar->mutex);
@@ -1937,6 +1967,10 @@ int RKStop(RKRadar *radar) {
         RKPositionEngineStop(radar->positionEngine);
         radar->state ^= RKRadarStatePositionEngineInitialized;
     }
+    if (radar->state & RKRadarStatePositionSteerEngineInitialized) {
+        RKSteerEngineStop(radar->steerEngine);
+        radar->state ^= RKRadarStatePositionSteerEngineInitialized;
+    }
     if (radar->state & RKRadarStateMomentEngineInitialized) {
         RKMomentEngineStop(radar->momentEngine);
         radar->state ^= RKRadarStateMomentEngineInitialized;
@@ -2072,6 +2106,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
     int k;
     char sval1[RKMaximumStringLength];
     char sval2[RKMaximumStringLength];
+    char message[RKMaximumStringLength];
     memset(sval1, 0, sizeof(sval1));
     memset(sval2, 0, sizeof(sval2));
     double fval1 = 0.0;
@@ -2313,7 +2348,8 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "\n"
                                 HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
                                 "    e.g.,\n"
-                                "        v 2:2:20 180 - a volume at EL 2° to 20° at 2° steps, AZ slew at 180°/s\n"
+                                "        v pp 2,4,6,8,10 340 18 - PPI scans at EL 2°,4°,6°,8°,10°, transition at 340°, slew at 18°/s\n"
+                                "        v rr 0,30 10,20,30,40 18 - RHI scans at EL 0-30°, AZ 10°,20°,30°,40°, slew at 18°/s\n"
                                 "\n"
                                 HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                                 "\n"
@@ -2373,7 +2409,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     do {
                         k++;
                     } while (commandString[k] == ' ');
-                    radar->healthRelayExec(radar->healthRelay, commandString + k, string);
+                    radar->healthRelayExec(radar->healthRelay, commandString + k, string == NULL ? message : string);
                 }
                 break;
 
@@ -2389,7 +2425,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 do {
                     k++;
                 } while (commandString[k] == ' ');
-                radar->pedestalExec(radar->pedestal, commandString + k, string);
+                radar->pedestalExec(radar->pedestal, commandString + k, string == NULL ? message : string);
                 break;
 
             case 't':
@@ -2404,7 +2440,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 do {
                     k++;
                 } while (commandString[k] == ' ');
-                radar->transceiverExec(radar->transceiver, commandString + k, string);
+                radar->transceiverExec(radar->transceiver, commandString + k, string == NULL ? message : string);
                 break;
 
             case 'r':
@@ -2431,6 +2467,14 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             (radar->rawDataRecorder->rawDataType == RKRawDataTypeFromTransceiver ? "recording raw I/Q" :
                              (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording I/Q" : "in unknown state")));
                 }
+                break;
+
+            case 'v':  // VCP stuff
+                k = 0;
+                do {
+                    k++;
+                } while (commandString[k] == ' ');
+                RKSteerEngineExecuteString(radar->steerEngine, commandString + k, string);
                 break;
 
             case 'b':  // Button event
@@ -2701,9 +2745,6 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
 }
 
 void RKSetPositionReady(RKRadar *radar, RKPosition *position) {
-    if (position->flag & ~RKPositionFlagHardwareMask) {
-        RKLog("Error. Ingested a position with a flag (0x%08x) outside of allowable value.\n", position->flag);
-    }
     position->timeDouble = RKClockGetTime(radar->positionClock, (double)position->tic, &position->time);
     if ((radar->desc.initFlags & RKInitFlagShowClockOffset) && (position->tic % 5 == 0)) {
         struct timeval t;
@@ -2722,7 +2763,7 @@ RKPosition *RKGetLatestPosition(RKRadar *radar) {
     RKPosition *position = &radar->positions[index];
     int k = 0;
     while (!(position->flag & RKPositionFlagReady) && k++ < radar->desc.positionBufferDepth) {
-        index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
+        index = RKPreviousModuloS(index, radar->desc.positionBufferDepth);
         position = &radar->positions[index];
     }
     return position;
@@ -2733,6 +2774,10 @@ float RKGetPositionUpdateRate(RKRadar *radar) {
     uint32_t i = RKPreviousModuloS(radar->positionIndex, radar->desc.positionBufferDepth);
     uint32_t o = RKPreviousNModuloS(radar->positionIndex, n, radar->desc.positionBufferDepth);
     return (float)n / (radar->positions[i].timeDouble - radar->positions[o].timeDouble);
+}
+
+RKScanAction *RKGetScanAction(RKRadar *radar, RKPosition *position) {
+    return RKSteerEngineGetAction(radar->steerEngine, position);
 }
 
 #pragma mark - Pulses
@@ -3522,7 +3567,6 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
     #endif
 
     if (flag & RKTextPreferencesDrawBackground) {
-        int n = 0;
         char temp[8196];
         int w = RKMergeColumns(temp, dots, labels, 4);
         // Another indent at the end and the two border chars
@@ -3542,7 +3586,6 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
             *e = '\0';
             m += sprintf(d + m, "|%s|\n", s);
             s = e + 1;
-            n++;
         }
         // Bottom border
         *(d + m++) = '+';
@@ -3556,4 +3599,8 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
     }
 
     return m;
+}
+
+int RKArcherOverview(char *text, const char *json, const RKTextPreferences flag) {
+    return 0;
 }

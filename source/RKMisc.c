@@ -46,7 +46,8 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
     static int s = 3;
     static char str[4][32];
     s = s == 3 ? 0 : s + 1;
-    snprintf(str[k], 31, "\033[97;48;5;%dm", 16 + i * 36 + j * 6 + k);
+    int f = j > 2 ? 0 : 15;
+    snprintf(str[k], 31, "\033[38;5;%d;48;5;%dm", f, 16 + i * 36 + j * 6 + k);
     return str[k];
 }
 
@@ -914,17 +915,21 @@ int RKIndentCopy(char *dst, char *src, const int width) {
         k = sprintf(dst, "%s", src);
         return k;
     }
-    char indent[width + 1];
-    memset(indent, ' ', width);
-    indent[width] = '\0';
+    size_t w;
     do {
         e = strchr(s, '\n');
         if (e) {
-            *e = '\0';
-            k += sprintf(dst + k, "%s%s\n", indent, s);
+            w = e - s + 1;
+            memset(dst + k, ' ', width);
+            memcpy(dst + k + width, s, w);
+            k += width + w;
             s = e + 1;
         }
     } while (e != NULL);
+    *(dst + k) = '\0';
+    char indent[width + 1];
+    memset(indent, ' ', width);
+    indent[width] = '\0';
     k += sprintf(dst + k, "%s%s", indent, s);
     return k;
 }
@@ -1028,10 +1033,18 @@ float RKUMinDiff(const float m, const float s) {
     return d;
 }
 
+float RKModulo360Diff(const float m, const float s) {
+    float d = m - s;
+    return d < 0.0f ? d + 360.0f : d;
+}
+
 bool RKAngularCrossOver(const float a1, const float a2, const float crossover) {
     float d1 = RKMinDiff(a1, crossover);
+    if (fabs(d1) <= 0.0001f) {
+        return true;
+    }
     float d2 = RKMinDiff(a2, crossover);
-    if (d1 * d2 < 0.0 && fabsf(d1) < 10.0f) {
+    if (d1 * d2 < 0.0f && fabsf(d1) < 10.0f) {
         return true;
     }
     return false;

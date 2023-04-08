@@ -665,24 +665,38 @@ int socketStreamHandler(RKOperator *O) {
                       engine->name, O->name, user->rayIndex, endIndex);
             } // if (ray) ...
         } else if (k == RKStreamASCIIArtHealth) {
-            // Stream "7" - ASCII art of reflectivity
+            // Stream "7" - Health Overview
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamASCIIArtHealth) {
                 user->streamsInProgress = RKStreamASCIIArtHealth;
             }
             health = RKGetLatestHealth(user->radar);
             k = RKHealthOverview(user->string, health->string, user->textPreferences | RKTextPreferencesDrawBackground);
-            /*
-            O->delimTx.type = RKNetworkPacketTypePlainText;
-            O->delimTx.size = k + 1;
-            // Special case to avoid character 007, which is a beep.
-            if ((O->delimTx.size & 0xFF) == 0x07) {
-                O->delimTx.size++;
-            }
-            RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
-            */
             RKOperatorSendPackets(O, user->string, k, NULL);
             user->timeLastOut = time;
             user->ticForStatusStream++;
+        } else if (k == RKStreamASCIIArtVCP) {
+            // Stream "8" - RKSteerEngine (no skipping)
+            if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamASCIIArtVCP) {
+                user->streamsInProgress = RKStreamASCIIArtVCP;
+            }
+            j = 0;
+            k = 0;
+            endIndex = RKPreviousModuloS(user->radar->steerEngine->statusBufferIndex, RKBufferSSlotCount);
+            while (user->steerStatusIndex != endIndex && k < RKMaximumPacketSize - 200) {
+                c = user->radar->steerEngine->statusBuffer[user->steerStatusIndex];
+                k += sprintf(user->string + k, "%s\n", c);
+                user->steerStatusIndex = RKNextModuloS(user->steerStatusIndex, RKBufferSSlotCount);
+                j++;
+            }
+            if (j) {
+                // Take out the last '\n', replace it with somethign else + EOL
+                snprintf(user->string + k - 1, RKMaximumPacketSize - k - 1, "" RKEOL);
+                O->delimTx.type = RKNetworkPacketTypePlainText;
+                O->delimTx.size = k + 1;
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
+                user->timeLastOut = time;
+                user->ticForStatusStream++;
+            }
         }
 
         // Send another set of controls if the radar controls have changed.
@@ -1527,7 +1541,7 @@ int socketInitialHandler(RKOperator *O) {
     user->asciiArtStride = 4;
     user->ascopeMode = 0;
     pthread_mutex_init(&user->mutex, NULL);
-    struct winsize terminalSize = {.ws_col = 0, .ws_row = 0};
+    struct winsize terminalSize = {.ws_col = 80, .ws_row = 40};
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
     RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d   Iid = %d...\n", engine->name, O->name,
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row, O->iid);

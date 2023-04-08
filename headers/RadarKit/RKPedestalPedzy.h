@@ -6,7 +6,7 @@
 //  Many features here are specific the pedzy and may not apply to your situations
 //
 //  Created by Boonleng Cheong on 1/3/17.
-//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
+//  Copyright © 2017-2023 Boonleng Cheong. All rights reserved.
 //
 
 #ifndef __RadarKit_PedestalPedzy__
@@ -17,16 +17,14 @@
 #define RKPedestalPedzyFeedbackDepth   8
 
 typedef struct rk_pedzy {
-    // User set variables
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumCommandLength];
     RKRadar                *radar;
     float                  headingOffset;
-
-    // Program set variables
-    pthread_t              tidPedestalMonitor;
+    pthread_t              tidBackground;
+    RKByte                 dump[RKMaximumStringLength];
 } RKPedestalPedzy;
 
 RKPedestal RKPedestalPedzyInit(RKRadar *, void *);

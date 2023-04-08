@@ -8,6 +8,8 @@
 #ifndef __RadarKit_Types__
 #define __RadarKit_Types__
 
+#define __STDC_WANT_LIB_EXT1__ 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -94,6 +96,9 @@
 #define RKMaximumSymbolLength                8                                 // String length includes the terminating character!
 #define RKMaximumFileExtensionLength         8                                 // String length includes the terminating character!
 #define RKUserParameterCount                 8                                 //
+#define RKMaximumScanCount                   256                               //
+#define RKPedestalActionBufferDepth          8                                 //
+#define RKDefaultScanSpeed                   18.0                              //
 
 #define RKDefaultDataPath                    "data"
 #define RKDataFolderIQ                       "iq"
@@ -171,6 +176,14 @@
 (((x) & RKMarkerScanTypeMask) == RKMarkerScanTypePPI ? "P" : \
 (((x) & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "R" : \
 (((x) & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint ? "S" : "U")))
+
+#define RKPositionAzimuthFlagColor(x) \
+(x & RKPositionFlagAzimuthError ? RKRedColor : \
+(x & RKPositionFlagAzimuthEnabled ? RKGreenColor : RKYellowColor))
+
+#define RKPositionElevationFlagColor(x) \
+(x & RKPositionFlagElevationError ? RKRedColor : \
+(x & RKPositionFlagElevationEnabled ? RKGreenColor : RKYellowColor))
 
 #pragma mark - Fundamental Types
 
@@ -321,6 +334,7 @@ N(RKResultIncompleteHealthRelay) \
 N(RKResultIncompleteControl) \
 N(RKResultIncompleteWaveformCalibration) \
 N(RKResultIncompleteProductDescription) \
+N(RKResultIncompleteScanDescription) \
 N(RKResultErrorCreatingOperatorRoutine) \
 N(RKResultErrorCreatingOperatorCommandRoutine) \
 N(RKResultErrorCreatingClientRoutine) \
@@ -369,7 +383,7 @@ N(RKResultFailedToCreateUnitWorker) \
 N(RKResultFailedToStartHostWatcher) \
 N(RKResultFailedToStartHostPinger) \
 N(RKResultFailedToExecuteCommand) \
-N(RKResultFailedToSetVcp) \
+N(RKResultFailedToSetVCP) \
 N(RKResultFailedToAddHost) \
 N(RKResultFailedToFindProductId) \
 N(RKResultFailedToOpenFileForProduct) \
@@ -395,7 +409,8 @@ enum RKEngineColor {
     RKEngineColorPulseCompressionEngine = 7,
     RKEngineColorPulseRingFilterEngine = 3,
     RKEngineColorPositionEngine = 4,
-    RKEngineColorMomentEngine = 9,
+    RKEngineColorSteerEngine = 3,
+    RKEngineColorMomentEngine = 15,
     RKEngineColorHealthEngine = 1,
     RKEngineColorDataRecorder = 12,
     RKEngineColorSweepEngine = 18,
@@ -479,9 +494,9 @@ enum RKPositionFlag {
     RKPositionFlagElevationSweep                 = (1 << 24),                  //  8
     RKPositionFlagElevationPoint                 = (1 << 25),                  //  9
     RKPositionFlagElevationComplete              = (1 << 26),                  // 10
+    RKPositionFlagHardwareMask                   = 0x0FFFFFFF,                 // Bits from pedzy
     RKPositionFlagScanActive                     = (1 << 28),
     RKPositionFlagVCPActive                      = (1 << 29),
-    RKPositionFlagHardwareMask                   = 0x3FFFFFFF,
     RKPositionFlagUsed                           = (1 << 30),
     RKPositionFlagReady                          = (1 << 31),
     RKPositionFlagAzimuthModeMask                = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
@@ -592,11 +607,12 @@ enum RKInitFlag {
     RKInitFlagAllocHealthNodes                   = 0x00004000,                 // 1 << 14
     RKInitFlagReserved1                          = 0x00008000,                 // 1 << 15
     RKInitFlagPulsePositionCombiner              = 0x00010000,                 // 1 << 16
-    RKInitFlagSignalProcessor                    = 0x00020000,                 // 1 << 17
+    RKInitFlagPositionSteerEngine                = 0x00020000,                 // 1 << 17
+    RKInitFlagSignalProcessor                    = 0x00040000,                 // 1 << 18
     RKInitFlagRelay                              = 0x00007703,                 // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
-    RKInitFlagIQPlayback                         = 0x00027701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
-    RKInitFlagAllocEverything                    = 0x00037F01,
-    RKInitFlagAllocEverythingQuiet               = 0x00037F00,
+    RKInitFlagIQPlayback                         = 0x00047701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
+    RKInitFlagAllocEverything                    = 0x00077F01,
+    RKInitFlagAllocEverythingQuiet               = 0x00077F00,
 };
 
 // The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021
@@ -898,6 +914,7 @@ enum RKStream {
     RKStreamStatusBuffers                        = 6,                          // Buffer overview
     RKStreamASCIIArtZ                            = 7,                          // Are you ASCII me?
     RKStreamASCIIArtHealth                       = 8,                          // Health in ASCII art
+    RKStreamASCIIArtVCP                          = 9,                          // VCP in ASCII art
     RKStreamStatusAll                            = 0xFF,                       //
     RKStreamHealthInJSON                         = (1 << 5),                   // Health in JSON
     RKStreamStatusEngineBinary                   = (1 << 6),                   // WIP: Status of various engines
@@ -1263,12 +1280,12 @@ typedef union rk_position {
     RKByte               bytes[128];
 } RKPosition;
 
-typedef struct rk_pedestal_action {
+typedef struct rk_scan_action {
     RKPedestalInstructType   mode[2];                                          // One mode for EL and the other for AZ
     float                    param[2];
     float                    sweepElevation;
     float                    sweepAzimuth;
-} RKPedestalAction;
+} RKScanAction;
 
 typedef union rk_pulse_header {
     struct {

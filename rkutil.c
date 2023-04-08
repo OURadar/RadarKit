@@ -16,7 +16,7 @@ typedef struct user_params {
     RKRadarDesc              desc;
     RKName                   pedzyHost;
     RKName                   tweetaHost;
-    RKName                   remoteHost;
+    RKName                   radarhubHost;
     RKName                   relayHost;
     RKName                   ringFilter;
     RKName                   momentMethod;
@@ -332,7 +332,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",            user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RemoteHost",          user->remoteHost,           RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHost",        user->radarhubHost,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -415,6 +415,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"dir"               , required_argument, NULL, 'D'},
         {"host"              , required_argument, NULL, 'H'},
         {"port"              , required_argument, NULL, 'P'},
+        {"relay"             , required_argument, NULL, 'L'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
         {"engine-verbose"    , required_argument, NULL, 'V'},
@@ -429,7 +430,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"help"              , no_argument      , NULL, 'h'},
         {"interpulse-period" , required_argument, NULL, 'i'},
         {"pedzy-host"        , required_argument, NULL, 'p'},
-        {"relay"             , required_argument, NULL, 'r'},
+        {"radarhub-host"     , required_argument, NULL, 'r'},
         {"simulate"          , optional_argument, NULL, 's'},
         {"tweeta-host"       , required_argument, NULL, 't'},
         {"version"           , no_argument      , NULL, 'u'},
@@ -473,12 +474,12 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     }
 
     // Second pass: now we go through the rest of them (all of them except doing nothing for 'v')
-    // s = 0;
-    // for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
-    //     struct option *o = &long_options[k];
-    //     s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
-    // }
     #if defined(DEBUG)
+    s = 0;
+    for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
+        struct option *o = &long_options[k];
+        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+    }
     printf("str = %s\n", str);
     #endif
     optind = 1;
@@ -504,7 +505,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'H':
-                strncpy(user->remoteHost, optarg, sizeof(user->remoteHost));
+                strncpy(user->radarhubHost, optarg, sizeof(user->radarhubHost));
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':
@@ -898,7 +899,7 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->remoteHost);
+    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->radarhubHost);
     if (reporter == NULL) {
         RKLog("Error. Unable to initiate reporter\n");
     } else {
@@ -991,13 +992,12 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
-        if (systemPreferences->prf <= 20.0f) {
-            RKExecuteCommand(myRadar, "p ppi 3 2.0", NULL);
-        } else if (systemPreferences->prf <= 100.0f) {
-            RKExecuteCommand(myRadar, "p ppi 3 5", NULL);
-        } else {
-            RKExecuteCommand(myRadar, "p ppi 3 60", NULL);
-        }
+        RKExecuteCommand(myRadar, "p pp 2,4,6,8,10,12 15 -50", NULL);
+        // RKExecuteCommand(myRadar, "p rr 0,20 10,20,30 10", NULL);
+        // RKExecuteCommand(myRadar, "p vol p 2 15 -50/p 4 15 -50/p 6 15 -50/p 8 15 -50/p 10 15 -50", NULL);
+        // RKExecuteCommand(myRadar, "p vol s 2 5,25 25/s 4 45,15 -25", NULL);
+        // RKExecuteCommand(myRadar, "p vol s 2 355,325 -25/s 4 325,355 25", NULL);
+        // RKExecuteCommand(myRadar, "p vol s 2 270,0 25/s 4 0,270 -25/s 6 270,0 25/s 8 0,270 -25", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 

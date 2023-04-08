@@ -17,6 +17,7 @@
 #include <RadarKit/RKHealthEngine.h>
 #include <RadarKit/RKCalibrator.h>
 #include <RadarKit/RKPositionEngine.h>
+#include <RadarKit/RKSteerEngine.h>
 #include <RadarKit/RKPulseEngine.h>
 #include <RadarKit/RKPulseRingFilter.h>
 #include <RadarKit/RKMomentEngine.h>
@@ -36,7 +37,7 @@
 sprintf(STRING, "                    radar->" rk_str(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
 typedef uint32_t RKRadarState;
-enum {
+enum RKRadarState {
     RKRadarStateRayBufferAllocated                   = (1 << 0),   // Data buffers
     RKRadarStateRawIQBufferAllocated                 = (1 << 1),   //
     RKRadarStateStatusBufferAllocated                = (1 << 2),   //
@@ -56,17 +57,17 @@ enum {
     RKRadarStatePulseCompressionEngineInitialized    = (1 << 16),  // Engines
     RKRadarStatePulseRingFilterEngineInitialized     = (1 << 17),  //
     RKRadarStatePositionEngineInitialized            = (1 << 18),  //
-    RKRadarStateHealthEngineInitialized              = (1 << 19),  //
-    RKRadarStateMomentEngineInitialized              = (1 << 20),  //
-    RKRadarStateSweepEngineInitialized               = (1 << 21),  //
-    RKRadarStateFileRecorderInitialized              = (1 << 22),  //
-    RKRadarStateHealthLoggerInitialized              = (1 << 23),  //
-    RKRadarStateFileManagerInitialized               = (1 << 24),  //
-    RKRadarStateHealthRelayInitialized               = (1 << 25),  //
-    RKRadarStateTransceiverInitialized               = (1 << 26),  //
-    RKRadarStatePedestalInitialized                  = (1 << 27),  //
-    RKRadarStateHostMonitorInitialized               = (1 << 28),  //
-    RKRadarStateReserved7                            = (1 << 29),  //
+    RKRadarStatePositionSteerEngineInitialized       = (1 << 19),  //
+    RKRadarStateHealthEngineInitialized              = (1 << 20),  //
+    RKRadarStateMomentEngineInitialized              = (1 << 21),  //
+    RKRadarStateSweepEngineInitialized               = (1 << 22),  //
+    RKRadarStateFileRecorderInitialized              = (1 << 23),  //
+    RKRadarStateHealthLoggerInitialized              = (1 << 24),  //
+    RKRadarStateFileManagerInitialized               = (1 << 25),  //
+    RKRadarStateHealthRelayInitialized               = (1 << 26),  //
+    RKRadarStateTransceiverInitialized               = (1 << 27),  //
+    RKRadarStatePedestalInitialized                  = (1 << 28),  //
+    RKRadarStateHostMonitorInitialized               = (1 << 29),  //
     RKRadarStateRadarRelayInitialized                = (1 << 30),  //
     RKRadarStateLive                                 = (1 << 31)   //
 };
@@ -118,6 +119,7 @@ struct rk_radar {
     RKFFTModule                      *fftModule;
     RKHealthEngine                   *healthEngine;
     RKPositionEngine                 *positionEngine;
+    RKSteerEngine                    *steerEngine;
     RKPulseEngine                    *pulseEngine;
     RKPulseRingFilterEngine          *pulseRingFilterEngine;
     RKMomentEngine                   *momentEngine;
@@ -302,6 +304,7 @@ RKPosition *RKGetVacantPosition(RKRadar *);                                     
 void RKSetPositionReady(RKRadar *, RKPosition *);                                                  // Declare the position is ready
 RKPosition *RKGetLatestPosition(RKRadar *);                                                        // Get the latest position from the radar
 float RKGetPositionUpdateRate(RKRadar *);                                                          // Get the position report rate
+RKScanAction *RKGetScanAction(RKRadar *, RKPosition *);                                            // Get the action for pedestal
 
 // Pulses
 RKPulse *RKGetVacantPulse(RKRadar *);                                                              // Get a vacant slot for storing pulse data
@@ -336,5 +339,6 @@ void RKShowOffsets(RKRadar *, char *);                                          
 // ASCII Art
 int RKBufferOverview(char *, RKRadar *, const RKTextPreferences);                                  // Do you ASCII? :)
 int RKHealthOverview(char *, const char *, const RKTextPreferences);
+int RKArcherOverview(char *, const char *, const RKTextPreferences);
 
 #endif /* defined(__RadarKit_RKRadar__) */

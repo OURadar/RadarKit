@@ -179,6 +179,10 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     int r;
     char *c;
     struct hostent *entry = gethostbyname(W->host);
+    if (entry == NULL) {
+        RKLog("%s Error. Failed to resolve '%s'\n", W->name, W->host);
+        return -1;
+    }
     c = inet_ntoa(*((struct in_addr *)entry->h_addr_list[0]));
     if (c) {
         strcpy(W->ip, c);
@@ -267,19 +271,19 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     // This block is now hardcoded for default secret key, should replace ...
     if (strcmp(W->secret, "RadarHub123456789abcde") == 0 &&
         strcmp(W->digest, "O9QKgAZPEwFaLSqyFPYMHcGBp5g=")) {
-        fprintf(stderr, "Error. R->digest = %s\n", W->digest);
+        fprintf(stderr, "Error. W->digest = %s\n", W->digest);
         fprintf(stderr, "Error. Unexpected digest.\n");
         return -1;
     }
 
     if (strcasecmp(W->upgrade, "WebSocket")) {
-        fprintf(stderr, "Error. R->upgrade = %s\n", W->upgrade);
+        fprintf(stderr, "Error. W->upgrade = %s\n", W->upgrade);
         fprintf(stderr, "Error. Connection is not websocket.\n");
         return -1;
     }
 
     if (strcasecmp(W->connection, "upgrade")) {
-        fprintf(stderr, "Error. R->connection = %s\n", W->connection);
+        fprintf(stderr, "Error. W->connection = %s\n", W->connection);
         fprintf(stderr, "Error. Connection did not get upgraded.\n");
         return -1;
     }
@@ -586,7 +590,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
         return NULL;
     }
     // Look for protocol https / http
-    if ((c = strstr(host, "https:")) != NULL) {
+    if (strstr(host, "https:") != NULL) {
         W->useSSL = true;
     } else {
         W->useSSL = false;
@@ -594,11 +598,10 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     // Look for port number at the end
     if ((c = strstr(host, "://")) != NULL) {
         c += 3;
-        n = strstr(c, ":");
     } else {
         c = (char *)host;
-        n = strstr(host, ":");
     }
+    n = strstr(c, ":");
     if (n == NULL) {
         W->port = 80;
         strcpy(W->host, host);

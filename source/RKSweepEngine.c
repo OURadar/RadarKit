@@ -114,7 +114,6 @@ static void *sweepManager(void *in) {
     char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
     char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
 
-    //int momentCount = __builtin_popcount(sweep->header.base & engine->baseProductList);
     int productCount = __builtin_popcount(sweep->header.baseProductList & engine->baseProductList);
 
     // Base products
@@ -728,7 +727,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     RKRay *S = rays[0];
     RKRay *T = rays[1];
     RKRay *E = rays[n - 1];
-    RKConfig *config = &engine->configBuffer[S->header.configIndex];
+    RKConfig *config = &engine->configBuffer[T->header.configIndex];
     RKMomentList overallMomentList = 0;
     RKBaseProductList overallBaseProductList = 0;
 

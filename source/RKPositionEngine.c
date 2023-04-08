@@ -17,14 +17,6 @@ static void *pulseTagger(void *);
 
 #pragma mark - Helper Functions
 
-#define RKPositionAzimuthFlagColor(x)                           \
-(x & RKPositionFlagAzimuthError ? "\033[91m" :                  \
-(x & RKPositionFlagAzimuthEnabled ? "\033[92m" : "\033[93m"))
-
-#define RKPositionElevationFlagColor(x)                         \
-(x & RKPositionFlagElevationError ? "\033[91m" :                \
-(x & RKPositionFlagElevationEnabled ? "\033[92m" : "\033[93m"))
-
 static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     int i;
     char *string;
@@ -60,19 +52,39 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i,RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %08x",
+    snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
              (unsigned long)position->i,
-             rkGlobalParameters.showColor ? RKPositionAzimuthFlagColor(position->flag) : "",
-             rkGlobalParameters.showColor ? RKNoColor : "",
+             rkGlobalParameters.statusColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+             rkGlobalParameters.statusColor ? RKNoColor : "",
              position->azimuthDegrees,
              position->azimuthVelocityDegreesPerSecond,
              position->sweepAzimuthDegrees,
-             rkGlobalParameters.showColor ? RKPositionElevationFlagColor(position->flag) : "",
-             rkGlobalParameters.showColor ? RKNoColor : "",
+             rkGlobalParameters.statusColor ? RKPositionElevationFlagColor(position->flag) : "",
+             rkGlobalParameters.statusColor ? RKNoColor : "",
              position->elevationDegrees,
              position->elevationVelocityDegreesPerSecond,
              position->sweepElevationDegrees,
              position->flag);
+    //
+    // There is a memory leak here, maybe the capacity?
+    //
+    // snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]  %s %d / %d  %08x",
+    //          (unsigned long)position->i,
+    //          rkGlobalParameters.statusColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+    //          rkGlobalParameters.statusColor ? RKNoColor : "",
+    //          position->azimuthDegrees,
+    //          position->azimuthVelocityDegreesPerSecond,
+    //          position->sweepAzimuthDegrees,
+    //          rkGlobalParameters.statusColor ? RKPositionElevationFlagColor(position->flag) : "",
+    //          rkGlobalParameters.statusColor ? RKNoColor : "",
+    //          position->elevationDegrees,
+    //          position->elevationVelocityDegreesPerSecond,
+    //          position->sweepElevationDegrees,
+    //          RKPositionVcpFlagCompleteString(position->flag),
+    //          engine->vcpI,
+    //          engine->vcpSweepCount,
+    //          // &engine->pedestal.vcpHandle->onDeckCount,
+    //          position->flag);
 
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }

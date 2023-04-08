@@ -3,23 +3,30 @@
 //  RadarKit
 //
 //  Created by Boonleng Cheong on 1/4/17.
-//  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
+//
+//  Significant contributions from Ming-Duan Tze in 2023
+//
+//  Copyright © 2017-2023 Boonleng Cheong. All rights reserved.
 //
 
 #include <RadarKit/RKPedestalPedzy.h>
 
-// Internal Functions
-
-static int RKPedestalPedzyRead(RKClient *);
-static int RKPedestalPedzyGreet(RKClient *);
-static void *pedestalHealth(void *);
-
 #pragma mark - Internal Functions
 
-static int RKPedestalPedzyRead(RKClient *client) {
+static ssize_t pedestalPedzySendAction(int sd, char *ship, RKScanAction *act) {
+    sprintf(ship, "%c", 0x0f);
+    memcpy(ship + 1, act, sizeof(RKScanAction));
+    strncpy(ship + 1 + sizeof(RKScanAction), RKEOL, 2);
+    return RKNetworkSendPackets(sd, ship, sizeof(RKScanAction) + 3, NULL);
+}
+
+static int pedestalPedzyRead(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
+
     RKRadar *radar = me->radar;
+
+    RKSteerEngine *steerEngine = radar->steerEngine;
 
     if (client->netDelimiter.type == 'p') {
         // The payload just read by RKClient
@@ -30,7 +37,6 @@ static int RKPedestalPedzyRead(RKClient *client) {
                   position->tic,
                   position->flag, position->elevationDegrees, position->azimuthDegrees, *radar->positionEngine->positionIndex);
         }
-
         // Get a vacant slot for position from Radar, copy over the data, then set it ready
         RKPosition *newPosition = RKGetVacantPosition(radar);
         if (newPosition == NULL) {
@@ -56,7 +62,33 @@ static int RKPedestalPedzyRead(RKClient *client) {
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
+        // Some integrity check
+        if (fabsf(newPosition->azimuthDegrees) > 360.0f || fabsf(newPosition->azimuthVelocityDegreesPerSecond) > 360.0f) {
+            RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
+                newPosition->azimuthDegrees, newPosition->azimuthVelocityDegreesPerSecond);
+        }
+       if (fabsf(newPosition->elevationDegrees) > 180.0f || fabsf(newPosition->elevationVelocityDegreesPerSecond) > 100.0f) {
+            RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
+                newPosition->elevationDegrees, newPosition->elevationVelocityDegreesPerSecond);
+        }
+
+        // Add other flags based on radar->steerEngine
+        //RKSteerEngineUpdatePositionFlags(steerEngine, newPosition);
+
+        // Note to myself: Could consider adding something similar to the RKRadar abstraction layer
+        // That way, the thought process is consistent like RKSetPositionRead();
+        //
+        // RKUpdatePositionFlags(radar, newPosition);
+        //
+
+        // Get the latest action, could be null
+        // Same here, add one to the RKRadar layer?
+        RKScanAction *action = RKSteerEngineGetAction(steerEngine, newPosition);
+
         RKSetPositionReady(radar, newPosition);
+
+        pedestalPedzySendAction(client->sd, me->latestCommand, action);
+
     } else {
         // This the command acknowledgement, queue it up to feedback
         char *string = (char *)client->userPayload;
@@ -74,7 +106,7 @@ static int RKPedestalPedzyRead(RKClient *client) {
     return RKResultSuccess;
 }
 
-static int RKPedestalPedzyGreet(RKClient *client) {
+static int pedestalPedzyGreet(RKClient *client) {
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
     RKRadar *radar = me->radar;
@@ -87,9 +119,10 @@ static int RKPedestalPedzyGreet(RKClient *client) {
 
 #pragma mark - Delegate Workers
 
-static void *pedestalHealth(void *in) {
+static void *pedestalPedzyHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
+    RKSteerEngine *steerer = radar->steerEngine;
     RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum vcpActive;
@@ -112,7 +145,7 @@ static void *pedestalHealth(void *in) {
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
                 vcpActive = RKStatusEnumFault;
-            } else if (position->flag & RKPositionFlagVCPActive) {
+            } else if (steerer->vcpHandle.active) {
                 vcpActive = RKStatusEnumActive;
             } else {
                 vcpActive = RKStatusEnumStandby;
@@ -122,17 +155,19 @@ static void *pedestalHealth(void *in) {
             azEnum = RKStatusEnumNormal;
             elEnum = RKStatusEnumNormal;
         }
+
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
         if (health) {
             double rate = RKGetPositionUpdateRate(radar);
-            sprintf(health->string,
-                    "{\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+            sprintf(health->string, "{"
+                    "\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
                     "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
                     "\"Pedestal Update\":\"%.3f Hz\", "
-                    "\"PedestalHealthEnd\":0}",
+                    "\"PedestalHealthEnd\":0"
+                    "}",
                     azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
                     elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
                     vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
@@ -156,7 +191,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     }
     memset(me, 0, sizeof(RKPedestalPedzy));
     me->radar = radar;
-    
+
     // Pedzy uses a TCP socket server at port 9000.
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
@@ -167,7 +202,7 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
         *colon = '\0';
-        sscanf(colon + 1, "%d", &desc.port);
+        desc.port = atoi(colon + 1);
     } else {
         desc.port = 9554;
     }
@@ -181,13 +216,12 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
      (radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0));
 
     me->client = RKClientInitWithDesc(desc);
-
     RKClientSetUserResource(me->client, me);
-    RKClientSetGreetHandler(me->client, &RKPedestalPedzyGreet);
-    RKClientSetReceiveHandler(me->client, &RKPedestalPedzyRead);
+    RKClientSetGreetHandler(me->client, &pedestalPedzyGreet);
+    RKClientSetReceiveHandler(me->client, &pedestalPedzyRead);
     RKClientStart(me->client, false);
 
-    if (pthread_create(&me->tidPedestalMonitor, NULL, pedestalHealth, me) != 0) {
+    if (pthread_create(&me->tidBackground, NULL, pedestalPedzyHealth, me) != 0) {
         RKLog("%s Error. Failed to start a pedestal monitor.\n", me->client->name);
         return (void *)RKResultFailedToStartPedestalMonitor;
     }
@@ -195,32 +229,64 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     return (RKPedestal)me;
 }
 
-int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
+int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *response) {
     if (input == NULL) {
         return RKResultNoRadar;
     }
     RKPedestalPedzy *me = (RKPedestalPedzy *)input;
     RKClient *client = me->client;
+
+    RKSteerEngine *steerEngine = me->radar->steerEngine;
+
+    if (response == NULL) {
+        response = (char *)me->dump;
+    }
+
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
     }
+
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
+    } else if (!strncmp("go", command, 2) || !strncmp("run", command, 3)) {
+        RKSteerEngineArmSweeps(steerEngine, RKScanRepeatForever);
+        sprintf(response, "ACK. Go." RKEOL);
+    } else if (!strncmp("once", command, 4)) {
+        RKSteerEngineArmSweeps(steerEngine, RKScanRepeatNone);
+        sprintf(response, "ACK. Once." RKEOL);
+    } else if (!strncmp("pp", command, 2) ||
+               !strncmp("ipp", command, 3) ||
+               !strncmp("opp", command, 3) ||
+               !strncmp("rr", command, 2) ||
+               !strncmp("irr", command, 3) ||
+               !strncmp("orr", command, 3) ||
+               !strncmp("vol", command, 3) ||
+               !strncmp("ivol", command, 4) ||
+               !strncmp("ovol", command, 4)) {
+        RKSteerEngineExecuteString(steerEngine, command, response);
+    } else if (!strncmp("summ", command, 4)) {
+        RKSteerEngineScanSummary(steerEngine, response);
+        sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
     } else {
         if (client->verbose) {
             RKLog("%s Current client->state = 0x%08x", client->name, client->state);
         }
         if (client->state != RKClientStateConnected) {
             RKLog("%s Pedestal not connected for command '%s'.\n", client->name, command);
-            if (response != NULL) {
-                sprintf(response, "NAK. Pedestal not connected." RKEOL);
-            }
+            sprintf(response, "NAK. Pedestal not connected." RKEOL);
             return RKResultClientNotConnected;
         }
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
         size_t size = snprintf(me->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
-        RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
+
+        // Commands that need to be forwarded to Pedzy
+        if (!strncmp("stop", command, 4) || !strncmp("zero", command, 4)) {
+            RKSteerEngineStopSweeps(steerEngine);
+            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
+        } else {
+            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
+        }
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {
@@ -232,15 +298,12 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char *response) {
             }
         }
         if (responseIndex == me->responseIndex) {
-            if (response != NULL) {
-                sprintf(response, "NAK. Timeout." RKEOL);
-            }
+            sprintf(response, "NAK. Timeout." RKEOL);
             return RKResultTimeout;
         }
-        if (response != NULL) {
-            strcpy(response, me->responses[responseIndex]);
-        }
+        strcpy(response, me->responses[responseIndex]);
     }
+
     return RKResultSuccess;
 }
 

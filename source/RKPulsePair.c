@@ -167,6 +167,9 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     //printf("gateCount = %d   K = %d\n", gateCount, K);
 
+    const RKFloat zero = 0.0f;
+    const RKVec zero_pf = _rk_mm_set1_pf(zero);
+
     //
     //  ACF
     //
@@ -379,6 +382,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         r0a = (RKVec *)space->aR[p][0];
         for (k = 0; k < K; k++) {
             *vi = _rk_mm_sub_pf(*r0a, _rk_mm_add_pf(_rk_mm_mul_pf(*mi, *mi), _rk_mm_mul_pf(*mq, *mq)));
+            *vq = zero_pf;
             mi++;
             mq++;
             vi++;
@@ -386,7 +390,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
             r0a++;
         }
     }
-    
+
     // Cross-channel
     RKZeroOutIQZ(&space->C[0], space->capacity);
 
@@ -403,7 +407,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     }
     RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
                   space->aR[1][0], 1.0f / (float)(count), gateCount);                                            // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
-    
+
     // Mark the calculated moments
     space->calculatedMoments = RKMomentListHm
                              | RKMomentListVm
@@ -696,7 +700,7 @@ int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
         char line[RKMaximumStringLength];
         RKIQZ *X = (RKIQZ *)malloc(RKMaximumPulsesPerRay * sizeof(RKIQZ));
         const int gateShown = 8;
-        
+
         // Go through both polarizations
         for (p = 0; p < 2; p++) {
             printf((

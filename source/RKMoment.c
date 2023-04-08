@@ -175,9 +175,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     float SNRh, SNRv;
     float SNRThreshold, SQIThreshold;
 
-    // Censor SNR < -20 dB
-    SNRThreshold = powf(10.0f, 0.1f * (-20.0f));
-
     // Grab the relevant data from scratch space for float to 16-bit quantization
     RKFloat *iHmi  = space->mX[0].i;      int16_t *oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
     RKFloat *iHmq  = space->mX[0].q;      int16_t *oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);

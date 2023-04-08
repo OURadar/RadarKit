@@ -15,14 +15,14 @@
 #define RKTestWaveformCacheCount 2
 
 typedef int RKTestFlag;
-enum {
+enum RKTestFlag {
     RKTestFlagNone         = 0,
     RKTestFlagVerbose      = 1,
     RKTestFlagShowResults  = 1 << 1
 };
 
 typedef int RKTestSIMDFlag;
-enum {
+enum RKTestSIMDFlag {
     RKTestSIMDFlagNull                       = 0,
     RKTestSIMDFlagShowNumbers                = 1,
     RKTestSIMDFlagPerformanceTestArithmetic  = 1 << 1,
@@ -30,32 +30,27 @@ enum {
     RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
 };
 
-typedef int RKTestPedestalScanMode;
-enum {
-    RKTestPedestalScanModeNull,
-    RKTestPedestalScanModePPI,
-    RKTestPedestalScanModeRHI,
-    RKTestPedestalScanModeBadPedestal
+typedef int RKAxisAction;
+enum RKAxisAction {
+    RKAxisActionStop,
+    RKAxisActionSpeed,
+    RKAxisActionPosition
 };
-
 typedef struct rk_test_transceiver {
     RKName         name;
     int            verbose;
+    long           counter;
+
     int            sleepInterval;
     int            gateCapacity;
     int            gateCount;
     float          gateSizeMeters;
-    long           counter;
     double         fs;
     double         prt;
     RKByte         sprt;
     RKWaveform     *waveformCache[RKTestWaveformCacheCount];
     unsigned int   waveformCacheIndex;
 	RKCommand      customCommand;
-    pthread_t      tidRunLoop;
-    RKEngineState  state;
-    RKRadar        *radar;
-    size_t         memoryUsage;
     bool           simFault;
     bool           transmitting;
     int            chunkSize;
@@ -66,35 +61,48 @@ typedef struct rk_test_transceiver {
     char           playbackFolder[RKMaximumFolderPathLength];
     RKFileHeader   fileHeaderCache;
     RKPulseHeader  pulseHeaderCache;
-    RKByte         dump[1024 * 1024];
+
+    pthread_t      tidRunLoop;
+    RKEngineState  state;
+    RKRadar        *radar;
+    size_t         memoryUsage;
+    RKByte         dump[RKMaximumStringLength];
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {
     RKName         name;
     int            verbose;
-    long           counter;
-    int            scanMode;
-    int            commandCount;
-    float          scanElevation;
-    float          scanAzimuth;
+    unsigned long  counter;
+
+    float          azimuth;
     float          speedAzimuth;
+    float          targetAzimuth;
+    float          targetSpeedAzimuth;
+    RKAxisAction   actionAzimuth;
+
+    float          elevation;
     float          speedElevation;
-    float          rhiElevationStart;
-    float          rhiElevationEnd;
+    float          targetElevation;
+    float          targetSpeedElevation;
+    RKAxisAction   actionElevation;
+
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
+    RKByte         dump[RKMaximumStringLength];
 } RKTestPedestal;
 
 typedef struct rk_test_health_relay {
     RKName         name;
     int            verbose;
     long           counter;
+
     pthread_t      tidRunLoop;
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
+    RKByte         dump[RKMaximumStringLength];
 } RKTestHealthRelay;
 
 #pragma mark - Test By Number

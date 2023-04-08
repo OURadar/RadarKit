@@ -64,6 +64,16 @@
 
 #define RKSingleWrapTo2PI(x)   ((x) < -M_PI ? ((x) + 2.0f * M_PI) : ((x) >= M_PI ? ((x) - 2.0f * M_PI) : (x)))
 
+#define RKInstructIsAzimuth(i)     ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisAzimuth)
+#define RKInstructIsElevation(i)   ((i & RKPedestalInstructTypeAxisMask) == RKPedestalInstructTypeAxisElevation)
+#define RKInstructIsNone(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeNone)
+#define RKInstructIsTest(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeTest)
+#define RKInstructIsSlew(i)        ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeSlew)
+#define RKInstructIsPoint(i)       ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModePoint)
+#define RKInstructIsStandby(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeStandby)
+#define RKInstructIsDisable(i)     ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeDisable)
+#define RKInstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
+
 typedef struct RKGlobalParameterStruct {
     char             program[32];                                // Name of the program in log
     char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
@@ -71,7 +81,8 @@ typedef struct RKGlobalParameterStruct {
     char             rootDataFolder[256];                        // Root folder where iq, moment health and log files are stored
     bool             logTimeOnly;                                // Time stamp of log entries
     bool             dailyLog;                                   // Daily mode where log file is {logFolder}/YYYYMMDD.log
-    bool             showColor;                                  // Show colors
+    bool             showColor;                                  // Show colors on screen
+    bool             statusColor;                                  // Color terminal
     pthread_mutex_t  mutex;                                      // Mutual exclusive access
     FILE             *stream;                                    // Secondary output stream, can be NULL
 } RKGlobalParameters;
@@ -91,6 +102,7 @@ RKFloat RKComplexAbsSquare(const RKComplex);
 int RKLog(const char *, ...);
 
 // Presentation
+void RKSetStatusColor(const bool);
 void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
 void RKSetUseDailyLog(const bool);
@@ -178,5 +190,8 @@ RKCommandQueue *RKCommandQueueInit(const uint8_t, const bool);
 RKCommand *RKCommandQueuePop(RKCommandQueue *);
 int RKCommandQueuePush(RKCommandQueue *, RKCommand *);
 int RKCommandQueueFree(RKCommandQueue *);
+
+// RKPedestalActionString
+char *RKPedestalActionString(const RKScanAction *);
 
 #endif /* defined(__RadarKit_RKFoundation__) */

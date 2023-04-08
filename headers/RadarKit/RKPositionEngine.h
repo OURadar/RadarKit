@@ -81,6 +81,8 @@ struct rk_position_engine {
     uint64_t               tic;
     float                  lag;
     size_t                 memoryUsage;
+    int                    vcpI;
+    int                    vcpSweepCount;
 };
 
 
@@ -99,4 +101,4 @@ int RKPositionEngineStop(RKPositionEngine *);
 char *RKPositionEngineStatusString(RKPositionEngine *);
 char *RKPositionEnginePositionString(RKPositionEngine *);
 
-#endif /* __RadarKit_RKPedestal__ */
+#endif

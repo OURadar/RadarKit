@@ -35,21 +35,21 @@ static void RKPulseEngineUpdateStatusString(RKPulseEngine *engine) {
 
     // Engine lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
-                                    rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+                                    rkGlobalParameters.statusColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    rkGlobalParameters.statusColor ? RKNoColor : "",
                                     useCompact ? " " : "");
-    
+
     RKPulseWorker *worker;
 
     // State: 0 - green, 1 - yellow, 2 - red
     int s1 = -1, s0 = 0;
-    
+
     // Lag from each core
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
         s0 = (worker->lag > RKLagRedThreshold ? 2 : (worker->lag > RKLagOrangeThreshold ? 1 : 0));
-        if (s1 != s0 && rkGlobalParameters.showColor) {
+        if (s1 != s0 && rkGlobalParameters.statusColor) {
             s1 = s0;
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
@@ -67,7 +67,7 @@ static void RKPulseEngineUpdateStatusString(RKPulseEngine *engine) {
     for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 5; c++) {
         worker = &engine->workers[c];
         s0 = (worker->dutyCycle > RKDutyCyleRedThreshold ? 2 : (worker->dutyCycle > RKDutyCyleOrangeThreshold ? 1 : 0));
-        if (s1 != s0 && rkGlobalParameters.showColor) {
+        if (s1 != s0 && rkGlobalParameters.statusColor) {
             s1 = s0;
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
@@ -78,13 +78,13 @@ static void RKPulseEngineUpdateStatusString(RKPulseEngine *engine) {
             i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
         }
     }
-    if (rkGlobalParameters.showColor) {
+    if (rkGlobalParameters.statusColor) {
         i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
     }
 
     // Almost full count
     //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
-    
+
     // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 5) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
@@ -282,14 +282,14 @@ static void *pulseEngineCore(void *_in) {
         sched_setaffinity(0, sizeof(cpuset), &cpuset);
         pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
     }
-    
+
 #endif
 
     RKBuffer localPulseBuffer;
     RKPulseBufferAlloc(&localPulseBuffer, engine->radarDescription->pulseCapacity, 1);
-    
+
     const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, engine->radarDescription->pulseCapacity)));
-    
+
     RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
     // Allocate local resources, use k to keep track of the total allocation
@@ -329,7 +329,7 @@ static void *pulseEngineCore(void *_in) {
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
-    
+
     // The last index of the pulse buffer for this core (i.e., increment by one will get c)
     uint32_t i0 = engine->radarDescription->pulseBufferDepth - engine->coreCount + c;
 
@@ -436,10 +436,10 @@ static void *pulseEngineCore(void *_in) {
                 scratch->planBackwardInPlace = engine->fftModule->plans[planIndex].backwardInPlace;
                 scratch->planBackwardOutPlace = engine->fftModule->plans[planIndex].backwardOutPlace;
                 scratch->planSize = engine->fftModule->plans[planIndex].size;
-                
+
                 // Now we actually compress
                 engine->compressor(scratch);
-                
+
                 // Copy over the parameters used
                 for (p = 0; p < 2; p++) {
                     pulse->parameters.planIndices[p][j] = planIndex;
@@ -516,7 +516,7 @@ static void *pulseEngineCore(void *_in) {
     RKPulseBufferFree(localPulseBuffer);
 
     RKLog(">%s %s Stopped.\n", engine->name, me->name);
-    
+
     return NULL;
 }
 
@@ -537,14 +537,14 @@ static void *pulseWatcher(void *_in) {
         RKLog("Error. No processing core?\n");
         return NULL;
     }
-    
+
     RKPulse *pulse;
     RKPulse *pulseToSkip;
-    
+
     // Update the engine state
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
-    
+
     // Spin off N workers to process I/Q pulses
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
     for (c = 0; c < engine->coreCount; c++) {
@@ -670,7 +670,7 @@ static void *pulseWatcher(void *_in) {
                                                                  engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 engine->planIndices[k][j] = planIndex;
                 engine->fftModule->plans[planIndex].count++;
-                
+
             }
         }
 
@@ -689,14 +689,14 @@ static void *pulseWatcher(void *_in) {
             engine->workers[c].tic++;
         }
         c = RKNextModuloS(c, engine->coreCount);
-        
+
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
             RKPulseEngineUpdateStatusString(engine);
         }
-    
+
         engine->tic++;
 
         // Update k to catch up for the next watch

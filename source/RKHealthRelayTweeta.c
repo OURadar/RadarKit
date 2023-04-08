@@ -10,20 +10,20 @@
 
 #pragma mark - Internal Functions
 
-static int RKHealthRelayTweetaRead(RKClient *client) {
+static int healthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKRadar *radar = me->radar;
-    
+
     char *string = (char *)client->userPayload;
     char *stringValue;
-    
+
     if (client->netDelimiter.type == 's') {
         // The payload just read by RKClient
         if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
             printf("%s\n", string);
         }
-        
+
         // Get a vacant slot for health from Radar, copy over the data, then set it ready
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         if (health == NULL) {
@@ -32,13 +32,13 @@ static int RKHealthRelayTweetaRead(RKClient *client) {
         }
         strncpy(health->string, string, RKMaximumStringLength - 1);
         RKStripTail(health->string);
-        
+
         // Handle a special event from a push button
         if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL && !strcasecmp(stringValue, "short")) {
             RKLog("%s event %s\n", client->name, stringValue);
             RKPerformMasterTaskInBackground(radar, "b");
         }
-        
+
         RKSetHealthReady(radar, health);
     } else {
         // This the command acknowledgement, queue it up to feedback
@@ -53,7 +53,7 @@ static int RKHealthRelayTweetaRead(RKClient *client) {
             }
         }
     }
-    
+
     return RKResultSuccess;
 }
 
@@ -94,23 +94,29 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
      (radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0));
 
     me->client = RKClientInitWithDesc(desc);
-    
+
     RKClientSetUserResource(me->client, me);
-    RKClientSetReceiveHandler(me->client, &RKHealthRelayTweetaRead);
+    RKClientSetReceiveHandler(me->client, &healthRelayTweetaRead);
     RKClientStart(me->client, false);
 
     return (RKHealthRelay)me;
 }
 
-int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *response) {
+int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char _Nullable *response) {
     if (input == NULL) {
         return RKResultNoRadar;
     }
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)input;
     RKClient *client = me->client;
+
+    if (response == NULL) {
+        response = (char *)me->dump;
+    }
+
     if (client->verbose > 1) {
         RKLog("%s Received '%s'", client->name, command);
     }
+
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {
@@ -136,14 +142,10 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char *resp
             }
         }
         if (responseIndex == me->responseIndex) {
-            if (response != NULL) {
-                sprintf(response, "NAK. Timeout." RKEOL);
-            }
+            sprintf(response, "NAK. Timeout." RKEOL);
             return RKResultTimeout;
         }
-        if (response != NULL) {
-            strcpy(response, me->responses[responseIndex]);
-        }
+        strcpy(response, me->responses[responseIndex]);
     }
     return RKResultSuccess;
 }

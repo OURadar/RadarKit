@@ -271,7 +271,7 @@ static void *healthConsolidator(void *_in) {
         health->flag = RKHealthFlagReady;
 
         if (engine->verbose > 2) {
-            RKLog("%s", string);
+            RKLog("%s (i = %d)", string, i);
         }
 
 		engine->tic++;

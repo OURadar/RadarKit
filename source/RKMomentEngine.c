@@ -37,9 +37,9 @@ static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
 
     // Engine lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
-                                    rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
+                                    rkGlobalParameters.statusColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
-                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    rkGlobalParameters.statusColor ? RKNoColor : "",
                                     useCompact ? " " : "");
 
     RKMomentWorker *worker;
@@ -51,7 +51,7 @@ static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
     for (c = 0; c < engine->coreCount; c++) {
         worker = &engine->workers[c];
         s0 = (worker->lag > RKLagRedThreshold ? 2 : (worker->lag > RKLagOrangeThreshold ? 1 : 0));
-        if (s1 != s0 && rkGlobalParameters.showColor) {
+        if (s1 != s0 && rkGlobalParameters.statusColor) {
             s1 = s0;
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
@@ -69,7 +69,7 @@ static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
     for (c = 0; c < engine->coreCount && i < RKStatusStringLength - RKStatusBarWidth - 20; c++) {
         worker = &engine->workers[c];
         s0 = (worker->dutyCycle > RKDutyCyleRedThreshold ? 2 : (worker->dutyCycle > RKDutyCyleOrangeThreshold ? 1 : 0));
-        if (s1 != s0 && rkGlobalParameters.showColor) {
+        if (s1 != s0 && rkGlobalParameters.statusColor) {
             s1 = s0;
             i += snprintf(string + i, RKStatusStringLength - i, "%s",
                           s0 == 2 ? RKBaseRedColor : (s0 == 1 ? RKBaseYellowColor : RKBaseGreenColor));
@@ -80,13 +80,13 @@ static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
             i += snprintf(string + i, RKStatusStringLength - i, " %02.0f", 99.49f * worker->dutyCycle);
         }
     }
-    if (rkGlobalParameters.showColor) {
+    if (rkGlobalParameters.statusColor) {
         i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
     }
 
     // Almost full count
     //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
-    
+
     // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 20) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
@@ -185,9 +185,9 @@ static void *momentCore(void *in) {
     if (rkGlobalParameters.showColor) {
         sprintf(me->name + k, RKNoColor);
     }
-    
+
 #if defined(_GNU_SOURCE)
-    
+
     if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
         // Set my CPU core
         cpu_set_t cpuset;
@@ -203,7 +203,7 @@ static void *momentCore(void *in) {
     RKPulse *pulse;
     RKConfig *config;
     RKScratch *space = NULL;
-    
+
     // Allocate local resources and keep track of the total allocation
     //pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     //uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
@@ -232,7 +232,7 @@ static void *momentCore(void *in) {
     RKConfig *previousConfig = (RKConfig *)malloc(sizeof(RKConfig));
     memset(previousConfig, 0, sizeof(RKConfig));
     mem += sizeof(RKConfig);
-    
+
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
     gettimeofday(&t2, NULL);
@@ -256,7 +256,7 @@ static void *momentCore(void *in) {
     // Log my initial state
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
-    
+
     RKLog(">%s %s Started.   mem = %s B   lagCount = %d   fftOrder = %d   i0 = %s   ci = %d\n",
           engine->name, me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, engine->processorFFTOrder, RKIntegerToCommaStyleString(io), ci);
 
@@ -396,7 +396,7 @@ static void *momentCore(void *in) {
             // Show the info only if config has changed
             if (engine->verbose && configHasChanged) {
                 pthread_mutex_lock(&engine->mutex);
-                
+
                 RKFilterAnchor *filterAnchors = config->waveform->filterAnchors[0];
                 RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain[0] = %.2f   samplingAdj = %.2f\n",
                       engine->name, me->name,
@@ -439,7 +439,7 @@ static void *momentCore(void *in) {
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
         } while (k < path.length);
-        
+
         // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             if (ie != i) {
@@ -526,7 +526,7 @@ static void *momentCore(void *in) {
     if (engine->verbose > 1) {
         RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
     }
-    
+
     RKScratchFree(space);
     free(previousConfig);
     free(busyPeriods);
@@ -638,7 +638,7 @@ static void *pulseGatherer(void *_in) {
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
-        
+
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
@@ -739,7 +739,7 @@ static void *pulseGatherer(void *_in) {
             // Keep counting up
             count++;
         }
-        
+
         // Check finished rays
         ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
         while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
@@ -760,7 +760,7 @@ static void *pulseGatherer(void *_in) {
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
-    
+
     // Wait for workers to return
     for (c = 0; c < engine->coreCount; c++) {
         RKMomentWorker *worker = &engine->workers[c];
@@ -825,9 +825,9 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
     engine->pulseIndex        = pulseIndex;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
-    
+
     size_t bytes;
-    
+
 //    if (engine->planIndices != NULL) {
 //        free(engine->planIndices);
 //    }
