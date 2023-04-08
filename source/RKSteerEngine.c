@@ -710,11 +710,15 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
     if (!strncmp("pp", command, 2) || !strncmp("rr", command, 2) || !strncmp("vol", command, 3)) {
         RKSteerEngineClearHole(engine);
-    } else if (*command == 'i' || !strncmp("spoint", command, 6)) {
+    } else if (*command == 'i') {
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
     } else if (*command == 'o') {
         RKSteerEngineClearDeck(engine);
+        onlyOnce = true;
+    } else if (!strncmp("spoint", command, 6)) {
+        RKSteerEngineStopSweeps(engine);
+        immediatelyDo = true;
         onlyOnce = true;
     }
 
