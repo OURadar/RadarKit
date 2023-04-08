@@ -19,7 +19,7 @@
 #define RKPedestalPositionTolerance    0.3f
 #define RKPedestalVelocityTolerance    0.5f
 #define RKPedestalPointTimeOut         1500
-#define RKPedestalActionPeriod         0.1
+#define RKPedestalActionPeriod         0.05
 
 typedef bool RKScanRepeat;
 enum RKScanRepeat {

@@ -695,10 +695,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     const int n = sscanf(command, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
 
     bool immediatelyDo = false;
-    if (!engine->vcpHandle.active) {
-        immediatelyDo = true;
-    }
-
     bool onlyOnce = false;
 
     float azimuthStart, azimuthEnd, azimuthMark, elevationStart, elevationEnd, rate;
@@ -913,7 +909,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
     if (everythingOkay) {
         RKSteerEngineStart(engine);
-        if (immediatelyDo) {
+        if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
             RKSteerEngineNextHitter(engine);
         }
         RKSteerEngineScanSummary(engine, response);
