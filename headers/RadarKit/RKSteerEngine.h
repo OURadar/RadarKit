@@ -142,6 +142,7 @@ int RKSteerEngineStart(RKSteerEngine *);
 int RKSteerEngineStop(RKSteerEngine *);
 
 void RKSteerEngineStopSweeps(RKSteerEngine *);
+void RKSteerEngineStartSweeps(RKSteerEngine *);
 void RKSteerEngineClearSweeps(RKSteerEngine *);
 void RKSteerEngineClearHole(RKSteerEngine *);
 void RKSteerEngineClearDeck(RKSteerEngine *);

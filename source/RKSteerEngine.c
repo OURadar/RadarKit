@@ -77,6 +77,10 @@ void RKSteerEngineStopSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.active = false;
 }
 
+void RKSteerEngineStartSweeps(RKSteerEngine *engine) {
+    engine->vcpHandle.active = true;
+}
+
 void RKSteerEngineClearSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.progress = RKScanProgressNone;
     engine->vcpHandle.sweepCount = 0;
@@ -84,7 +88,6 @@ void RKSteerEngineClearSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.inTheHoleCount = 0;
     engine->vcpHandle.i = 0;
     engine->vcpHandle.j = 0;
-    engine->vcpHandle.active = true;
 }
 
 void RKSteerEngineClearHole(RKSteerEngine *engine) {
@@ -718,6 +721,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         onlyOnce = true;
     } else if (!strncmp("spoint", command, 6)) {
         RKSteerEngineStopSweeps(engine);
+        RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
         onlyOnce = true;
     }
@@ -908,6 +912,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     }
 
     if (everythingOkay) {
+        RKSteerEngineStart(engine);
         if (immediatelyDo) {
             RKSteerEngineNextHitter(engine);
         }
