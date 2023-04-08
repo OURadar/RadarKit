@@ -2345,15 +2345,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "        s 2 - streams the product summary header\n"
                                 "        s 3 - streams the overall system status\n"
                                 "        s zvwd - streams Z, V, W and D\n"
-                                "\n"
-                                HIGHLIGHT("v") " - Sets a simple VCP (coming soon)\n"
-                                "    e.g.,\n"
-                                "        v pp 2,4,6,8,10 340 18 - PPI scans at EL 2°,4°,6°,8°,10°, transition at 340°, slew at 18°/s\n"
-                                "        v rr 0,30 10,20,30,40 18 - RHI scans at EL 0-30°, AZ 10°,20°,30°,40°, slew at 18°/s\n"
-                                "\n"
-                                HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
-                                "\n"
-                                HIGHLIGHT("z") " - Everything stops\n"
                                 "\n");
 
                     k += sprintf(string + k,
@@ -2392,6 +2383,17 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     } else {
                         k += sprintf(string + k, "    INFO: Health Relay not set.\n");
                     }
+
+                    k += sprintf(string + k,
+                                 HIGHLIGHT("v") " - Sets a simple VCP\n"
+                                 "    e.g.,\n"
+                                 "        v pp 2,4,6,8,10 340 18 - PPI scans at EL 2°,4°,6°,8°,10°, transition at 340°, slew at 18°/s\n"
+                                 "        v rr 0,30 10,20,30,40 18 - RHI scans at EL 0-30°, AZ 10°,20°,30°,40°, slew at 18°/s\n"
+                                 "\n"
+                                 HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
+                                 "\n"
+                                 HIGHLIGHT("z") " - Everything stops\n"
+                                 "\n");
 
                     sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
 
