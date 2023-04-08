@@ -250,7 +250,7 @@ RKSteerEngine *RKSteerEngineInit(void) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSteerEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     sprintf(engine->vcpHandle.name, "VCP");
-    engine->vcpHandle.option = RKScanOptionRepeat | RKScanOptionUsePoint;
+    engine->vcpHandle.option = RKScanOptionRepeat;
     engine->vcpHandle.active = false;
     engine->vcpHandle.toc = 3;
     engine->memoryUsage = sizeof(RKSteerEngine);
