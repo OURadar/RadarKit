@@ -14,7 +14,12 @@ char *RKGetColorOfIndex(const int i) {
     const uint8_t colors[] = {197, 214, 226, 46, 50, 33, 99, 164};
     static int k = 3;
     static char str[4][32];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&lock);
     k = k == 3 ? 0 : k + 1;
+    pthread_mutex_unlock(&lock);
+
     snprintf(str[k], 31, "\033[38;5;%dm", colors[i % sizeof(colors)]);
     return str[k];
 }
@@ -32,11 +37,16 @@ char *RKGetBackgroundColorOfIndex(const int i) {
          99,  57,  90, 162, 241,
         236
     };
-    static int s = 3;
+    static int k = 3;
     static char str[4][32];
-    s = s == 3 ? 0 : s + 1;
-    snprintf(str[s], 31, "\033[97;48;5;%dm", colors[i % sizeof(colors)]);
-    return str[s];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&lock);
+    k = k == 3 ? 0 : k + 1;
+    pthread_mutex_unlock(&lock);
+
+    snprintf(str[k], 31, "\033[97;48;5;%dm", colors[i % sizeof(colors)]);
+    return str[k];
 }
 
 char *RKGetBackgroundColorOfCubeIndex(const int c) {
@@ -45,8 +55,16 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
     int k = c % 10;
     static int s = 3;
     static char str[4][32];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&lock);
     s = s == 3 ? 0 : s + 1;
+<<<<<<< Updated upstream
     snprintf(str[k], 31, "\033[97;48;5;%dm", 16 + i * 36 + j * 6 + k);
+=======
+    pthread_mutex_unlock(&lock);
+    int f = j > 2 ? 0 : 15;
+    snprintf(str[k], 31, "\033[38;5;%d;48;5;%dm", f, 16 + i * 36 + j * 6 + k);
+>>>>>>> Stashed changes
     return str[k];
 }
 
@@ -149,7 +167,10 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
 char *RKGetValueOfKey(const char *string, const char *key) {
     static char valueStrings[8][256];
     static int k = 7;
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&lock);
     k = k == 7 ? 0 : k + 1;
+    pthread_mutex_unlock(&lock);
     char *s, *e;
     size_t len;
     char *valueString = valueStrings[k];
@@ -506,29 +527,32 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     char *string = stringBuffer[ibuf];
 
-    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    pthread_mutex_lock(&lock);
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    pthread_mutex_unlock(&lock);
 
-    sprintf(string, "%llu", num);
-    if (num < 1000) {
+    i = sprintf(string, "%llu", num);
+    if (i <= 3) {
         return string;
-    } else {
-        k = (int)(strlen(string) - 1) / 3;
-        i = (int)(strlen(string) + k);
-        j = 1;
-        string[i] = '\0';
-        while (i > 0) {
-            i--;
-            string[i] = string[i - k];
-            if (j > 3) {
-                j = 0;
-                string[i] = ',';
-                k--;
-            }
-            j++;
+    }
+
+    k = (int)(strlen(string) - 1) / 3;
+    i = (int)(strlen(string) + k);
+    j = 1;
+    string[i] = '\0';
+    while (i > 0) {
+        i--;
+        string[i] = string[i - k];
+        if (j > 3) {
+            j = 0;
+            string[i] = ',';
+            k--;
         }
+        j++;
     }
     return string;
 }
@@ -537,15 +561,19 @@ char *RKIntegerToCommaStyleString(const long long num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     char *string = stringBuffer[ibuf];
 
-    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    pthread_mutex_lock(&lock);
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    pthread_mutex_unlock(&lock);
 
     i = sprintf(string, "%lld", num);
     if (i <= 3) {
         return string;
     }
+
     k = (int)(strlen(string) - 1) / 3;
     i = (int)(strlen(string) + k);
     j = 1;
@@ -566,10 +594,13 @@ char *RKIntegerToCommaStyleString(const long long num) {
 char *RKIntegerToHexStyleString(const long long num) {
     static int ibuf = 0;
     static char stringBuffer[16][32];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     char *string = stringBuffer[ibuf];
 
-    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    pthread_mutex_lock(&lock);
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    pthread_mutex_unlock(&lock);
 
     sprintf(string, "0x%04llx", num);
 
@@ -584,14 +615,19 @@ char *RKFloatToCommaStyleString(const double num) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[16][32];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
     char *string = stringBuffer[ibuf];
 
-    ibuf = ibuf == 15 ? 0 : ibuf + 1; string[31] = '\0';
+    pthread_mutex_lock(&lock);
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    pthread_mutex_unlock(&lock);
 
     i = sprintf(string, "%.3f", num);
     if (i <= 7) {
         return string;
     }
+
     k = (int)(strlen(string) - 5) / 3;
     i = (int)(strlen(string) + k);
     j = 1;
