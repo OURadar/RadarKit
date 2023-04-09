@@ -774,10 +774,14 @@ char *RKStringFromValue(const void *value, RKValueType type) {
 char *RKVariableInString(const char *name, const void *value, RKValueType type) {
     static int ibuf = 0;
     static RKName stringBuffer[16];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-    char *string = stringBuffer[ibuf]; string[RKNameLength - 1] = '\0';
+    char *string = stringBuffer[ibuf];
+    memset(string, 0, RKNameLength);
 
+    pthread_mutex_lock(&lock);
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    pthread_mutex_unlock(&lock);
 
     char *c = RKStringFromValue(value, type);
     bool b = *((bool *)value);
