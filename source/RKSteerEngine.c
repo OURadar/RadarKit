@@ -159,9 +159,9 @@ static void *steerer(void *_in) {
     struct timeval currentTime, triggerTime;
     struct timeval period = {.tv_sec = 2, .tv_usec = 0};
 
-	// Update the engine state
-	engine->state |= RKEngineStateWantActive;
-	engine->state ^= RKEngineStateActivating;
+    // Update the engine state
+    engine->state |= RKEngineStateWantActive;
+    engine->state ^= RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B   positionIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->positionIndex);
 
@@ -386,8 +386,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
 
     // if (V->progress == RKScanProgressNone) {
     //     ... do some basic setup, immediately go to next
-    //     ... note: one position data is used
     //     ... V->progress = RKScanProgressSetup;
+    //     ... note: one position payload is used
     // } else if (V->progress == RKScanProgressSetup) {
     //     ... do some logic to determine:
     //     ... V->progress = RKScanProgressMiddle;
@@ -400,7 +400,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     //
     // if (V->progress & RKScanProgressMarker) {
     //     V->progress ^= RKScanProgressMarker;
-    //     ... for consumer to know a sweep cross the marker
+    //     ... for consumer to know a position just crosses the marker
     // }
     //
     // if (V->progress & RKScanProgressEnd) {
@@ -436,7 +436,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                     action->param[1] = 0.0f;
                     if (verbose) {
-                        RKLog("%s Info. Ready for sweep %d - AZ %.2f @ crossover EL %.2f\n", engine->name,
+                        RKLog("%s Info. Ready for RHI sweep %d - AZ %.2f° @ crossover EL %.2f°\n", engine->name,
                             V->i, scan->azimuthStart, scan->elevationEnd);
                     }
                     V->progress |= RKScanProgressMiddle;
@@ -477,7 +477,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->param[a] = scan->azimuthSlew;
                     if (verbose) {
-                        RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\n", engine->name,
+                        RKLog("%s Info. Ready for PPI sweep %d - EL %.2f° @ crossover AZ %.2f°\n", engine->name,
                             V->i, scan->elevationStart, scan->azimuthMark);
                     }
                     V->progress ^= RKScanProgressSetup;
@@ -504,7 +504,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->param[1] = 0.0f;
                     if (verbose) {
-                        RKLog("%s Info. Ready for sweep %d - EL %.2f @ crossover AZ %.2f\n", engine->name,
+                        RKLog("%s Info. Ready for SEC sweep %d - EL %.2f° @ crossover AZ %.2f°\n", engine->name,
                             V->i, scan->elevationStart, scan->azimuthEnd);
                     }
                     V->progress |= RKScanProgressMiddle;
@@ -554,7 +554,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->param[1] = 0.0f;
                     if (verbose) {
-                        RKLog("%s Info. Point to EL %.2f  AZ %.2f\n", engine->name,
+                        RKLog("%s Info. Point to EL %.2f°  AZ %.2f°\n", engine->name,
                             scan->elevationStart, scan->azimuthStart);
                     }
                     V->progress ^= RKScanProgressSetup;
@@ -610,7 +610,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     V->progress |= RKScanProgressEnd | RKScanProgressMarker;
                     V->progress ^= RKScanProgressMiddle;
                     if (verbose) {
-                        RKLog("%s Target cross detected @ EL %.2f [%.2f -> %.2f]\n", engine->name,
+                        RKLog("%s End crossover detected @ EL %.2f° [%.2f° -> %.2f°]\n", engine->name,
                             scan->elevationEnd, V->elevationPrevious, pos->elevationDegrees);
                     }
                 }
@@ -625,7 +625,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (cross) {
                     V->progress |= RKScanProgressEnd;
                     if (verbose) {
-                        RKLog("%s Target cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                        RKLog("%s End crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
                             scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
                     }
                 }
@@ -633,7 +633,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (cross) {
                     V->progress |= RKScanProgressMarker;
                     if (verbose) {
-                        RKLog("%s Marker cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                        RKLog("%s Marker crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
                             scan->azimuthMark, V->azimuthPrevious, pos->azimuthDegrees);
                     }
                 }
@@ -647,7 +647,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (cross) {
                     V->progress |= RKScanProgressEnd | RKScanProgressMarker;
                     if (verbose) {
-                        RKLog("%s Target cross detected @ AZ %.2f [%.2f -> %.2f]\n", engine->name,
+                        RKLog("%s Target crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
                             scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
                     }
                 }
@@ -718,7 +718,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     } else if (*command == 'o') {
         RKSteerEngineClearDeck(engine);
         onlyOnce = true;
-    } else if (!strncmp("spoint", command, 6)) {
+    } else if (!strncmp("point", command, 5)) {
         RKSteerEngineStopSweeps(engine);
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;

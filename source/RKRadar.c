@@ -2358,7 +2358,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     } else {
                         k += sprintf(string + k, "    INFO: Transceiver not set.\n");
                     }
-                    printf("%s\n", sval1);
 
                     k += sprintf(string + k,
                                  HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with 'p' goes to the pedestal module\n"
@@ -2385,10 +2384,28 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     }
 
                     k += sprintf(string + k,
-                                 HIGHLIGHT("v") " - Sets a simple VCP\n"
-                                 "    e.g.,\n"
-                                 "        v pp 2,4,6,8,10 340 18 - PPI scans at EL 2°,4°,6°,8°,10°, transition at 340°, slew at 18°/s\n"
-                                 "        v rr 0,30 10,20,30,40 18 - RHI scans at EL 0-30°, AZ 10°,20°,30°,40°, slew at 18°/s\n"
+                                 HIGHLIGHT("v") " [COMMAND] [PARAMETER] - Sets a VCP. Most command PARAMETER values are arranged in the order of\n"
+                                 "                          elevation (range/set), azimuth (range/set), rate. The COMMAND value can\n"
+                                 "                          be 'pp', 'rr', or 'vol' and more details are in the following:\n"
+                                 "    pp [EL_SET] [AZ] [AZ_VEL] - adds a volume of PPIs at EL_SET, transition at AZ, slew at AZ_VEL\n"
+                                 "                              - if AZ is not provided, the default is 0°\n"
+                                 "                              - if AZ_VEL is not provided, the default is 18°/s\n"
+                                 "        e.g.,\n"
+                                 "            v pp 2,4,6,8,10\n"
+                                 "            v pp 2,4,6,8,10 340\n"
+                                 "            v pp 2,4,6,8,10 340 18\n"
+                                 "    rr [EL_RANGE] [AZ_SET] [EL_VEL] - adds a volume of RHIs at EL_RANGE, azimuths AZ_SET, slew at EL_VEL\n"
+                                 "                                    - if EL_VEL is not provided, the default is 18°/s\n"
+                                 "        e.g.,\n"
+                                 "            v rr 0,30 10,20,30,40\n"
+                                 "            v rr 0,30 10,20,30,40 18\n"
+                                 "    vol [VOL_SPECIFIER] - adds a volume sweeps\n"
+                                 "        where VOL_SPECIFIER is a /-delimited list of the following commands\n"
+                                 "            p [EL] [AZ] [AZ_VEL] - add a PPI step scan with a crossover of AZ\n"
+                                 "            r [EL_RANGE] [AZ] [EL_VEL] - add an RHI sweep of EL_RANGE at fixed AZ\n"
+                                 "            s [EL] [AZ_RANGE] [AZ_VEL] - add a sector sweep of fixed EL at AZ_RANGE\n"
+                                 "        e.g.,\n"
+                                 "            v vol p 4.0 30 20/s 10 10,90 20/r 0,45 270 10\n"
                                  "\n"
                                  HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                                  "\n"
