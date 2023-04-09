@@ -4105,7 +4105,9 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
                !strncmp("ivol", command, 4) ||
                !strncmp("ovol", command, 4) ||
                !strncmp("spoint", command, 6)) {
-        int k = sprintf(response, "DEPRECATION WARNING: For future, use the 'v' command for RadarKit VCP engine\n");
+        int k = sprintf(response,
+                        RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
+                        "    Use the 'v' command for RadarKit VCP engine\n");
         RKSteerEngineExecuteString(steeven, command, response + k);
     } else if (!strncmp(command, "summ", 4)) {
         RKSteerEngineScanSummary(steeven, response);
