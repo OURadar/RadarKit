@@ -86,7 +86,6 @@ void RKSteerEngineClearSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.onDeckCount = 0;
     engine->vcpHandle.inTheHoleCount = 0;
     engine->vcpHandle.i = 0;
-    engine->vcpHandle.j = 0;
 }
 
 void RKSteerEngineClearHole(RKSteerEngine *engine) {
@@ -105,7 +104,6 @@ void RKSteerEngineNextHitter(RKSteerEngine *engine) {
     V->sweepCount = V->onDeckCount;
     V->onDeckCount = V->inTheHoleCount;
     V->i = 0;
-    V->j = 0;
     V->active = true;
 }
 
@@ -115,7 +113,6 @@ void RKSteerEngineArmSweeps(RKSteerEngine *engine, const RKScanRepeat repeat) {
         engine->vcpHandle.option |= RKScanOptionRepeat;
     }
     engine->vcpHandle.i = 0;
-    engine->vcpHandle.j = 0;
     engine->vcpHandle.active = true;
 }
 

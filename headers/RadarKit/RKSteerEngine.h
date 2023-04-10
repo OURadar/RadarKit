@@ -90,7 +90,6 @@ typedef struct rk_scan_object {
     int                         sweepCount;
     bool                        active;
     int                         i;                                             // Sweep index for control
-    int                         j;                                             // Sweep index for marker
     int                         tic;                                           // Counter of the run loop
     int                         toc;                                           //
     float                       elevationPrevious;                             //
