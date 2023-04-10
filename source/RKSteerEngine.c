@@ -102,7 +102,7 @@ void RKSteerEngineClearDeck(RKSteerEngine *engine) {
 void RKSteerEngineNextHitter(RKSteerEngine *engine) {
     RKScanObject *V = &engine->vcpHandle;
     memcpy(V->batterScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath));
-    memcpy(V->onDeckScans, V->inTheHoleScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath));
+    memcpy(V->onDeckScans, V->inTheHoleScans, V->inTheHoleCount * sizeof(RKScanPath));
     V->sweepCount = V->onDeckCount;
     V->onDeckCount = V->inTheHoleCount;
     V->i = 0;
@@ -122,7 +122,7 @@ void RKSteerEngineArmSweeps(RKSteerEngine *engine, const RKScanRepeat repeat) {
 
 int RKSteerEngineAddLineupSweep(RKSteerEngine *engine, const RKScanPath scan) {
     RKScanObject *V = &engine->vcpHandle;
-    if (V->inTheHoleCount < RKMaximumScanCount - 1) {
+    if (V->inTheHoleCount < RKMaximumScanCount) {
         V->inTheHoleScans[V->inTheHoleCount++] = scan;
         V->onDeckScans[V->onDeckCount++] = scan;
     } else {
@@ -134,16 +134,14 @@ int RKSteerEngineAddLineupSweep(RKSteerEngine *engine, const RKScanPath scan) {
 
 int RKSteerEngineAddPinchSweep(RKSteerEngine *engine, const RKScanPath scan) {
     RKScanObject *V = &engine->vcpHandle;
-    if (V->onDeckCount < RKMaximumScanCount - 1) {
+    if (V->onDeckCount < RKMaximumScanCount) {
         V->onDeckScans[V->onDeckCount++] = scan;
     } else {
-        RKLog("%s Error. Cannot add more scans.  V->inTheHoleCount = %d\n", engine->name, V->inTheHoleCount);
+        RKLog("%s Error. Cannot add more scans.  V->onDeckScans = %d\n", engine->name, V->onDeckScans);
         return RKResultTooBig;
     }
     return RKResultSuccess;
 }
-
-// RKScanAction *RKPedestal
 
 #pragma mark - Delegate Workers
 
