@@ -2493,7 +2493,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 do {
                     k++;
                 } while (commandString[k] == ' ');
-                RKSteerEngineExecuteString(radar->steerEngine, commandString + k, string);
+                RKSteerEngineAddVolumeByString(radar->steerEngine, commandString + k, string);
                 break;
 
             case 'b':  // Button event

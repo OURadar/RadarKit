@@ -40,7 +40,6 @@ enum RKScanProgress {
     RKScanProgressReady                          = 1 << 1,                     // Ready for the next sweep (deprecating)
     RKScanProgressMiddle                         = 1 << 2,                     // Middle of a sweep
     RKScanProgressEnd                            = 1 << 3,                     // End of a sweep, waiting for pedestal to stop / reposition
-    RKScanProgressMarker                         = 1 << 7                      // Sweep complete marker
 };
 
 typedef int RKScanOption;
@@ -156,11 +155,11 @@ int RKSteerEngineAddPinchSweep(RKSteerEngine *, const RKScanPath);
 RKScanAction *RKSteerEngineGetActionV1(RKSteerEngine *, RKPosition *);
 RKScanAction *RKSteerEngineGetAction(RKSteerEngine *, RKPosition *);
 
-int RKSteerEngineExecuteString(RKSteerEngine *, const char *, char *);
+int RKSteerEngineAddVolumeByString(RKSteerEngine *, const char *, char *);
 
 RKScanPath RKSteerEngineMakeScanPath(RKScanMode,
                                              const float elevationStart, const float elevationEnd,
-                                             const float azimuthStart, const float azimuthEnd, const float azimuthMark,
+                                             const float azimuthStart, const float azimuthEnd,
                                              const float rate);
 
 void RKSteerEngineScanSummary(RKSteerEngine *, char *);
