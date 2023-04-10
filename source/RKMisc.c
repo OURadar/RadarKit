@@ -717,7 +717,8 @@ void RKPreparePath(const char *filename) {
         free(path);
         return;
     }
-    if ((dir = opendir(path)) == NULL) {
+    dir = opendir(path);
+    if (dir == NULL) {
         // Recursively create paths that do not exist
         strncpy(path, filename, 1023);
         c = path;
@@ -729,7 +730,8 @@ void RKPreparePath(const char *filename) {
             *c = '\0';
             //printf("path = |%s|  n = %zu\n", path, (size_t)(c - path));
             if (strlen(path)) {
-                if ((dir = opendir(path)) == NULL) {
+                dir = opendir(path);
+                if (dir == NULL) {
                     //printf("mkdir %s\n", path);
                     if (mkdir(path, 0755)) {
                         fprintf(stderr, "Error creating directory '%s'\n", path);
