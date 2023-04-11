@@ -16,7 +16,7 @@ RKGlobalParameters rkGlobalParameters = {
     .dailyLog = false,
     .showColor = true,
     .statusColor = true,
-    .mutex = PTHREAD_MUTEX_INITIALIZER,
+    .lock = PTHREAD_MUTEX_INITIALIZER,
     .stream = NULL
 };
 

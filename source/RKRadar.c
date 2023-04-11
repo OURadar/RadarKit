@@ -1672,7 +1672,7 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
     if (radar->state & RKRadarStateLive) {
         RKPulseRingFilterEngineShowFilterSummary(radar->pulseRingFilterEngine);
     } else {
-        RKLog("Initial Pulse ring filter set to %s%s%s\n",
+        RKLog("Initial pulse ring filter set to %s%s%s\n",
               rkGlobalParameters.showColor ? "\033[4m" : "",
               filter->name,
               rkGlobalParameters.showColor ? "\033[24m" : "");

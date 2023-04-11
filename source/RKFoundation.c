@@ -136,6 +136,8 @@ int RKLog(const char *whatever, ...) {
         fflush(rkGlobalParameters.stream);
     }
     // Write the string to a file if specified
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&lock);
     FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
         if (strlen(rkGlobalParameters.logFolder)) {
@@ -167,6 +169,7 @@ int RKLog(const char *whatever, ...) {
         fprintf(logFileID, "%s", msg);
         fclose(logFileID);
     }
+    pthread_mutex_unlock(&lock);
     free(filename);
     free(msg);
     return 0;

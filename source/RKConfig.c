@@ -24,15 +24,15 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     for (k = 0; k < RKMaximumFilterCount; k++) {
         memset(stringBuffer[k], 0, RKStatusStringLength * sizeof(char));
     }
-    
+
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
-    pthread_mutex_lock(&rkGlobalParameters.mutex);
+    pthread_mutex_lock(&rkGlobalParameters.lock);
 
     RKConfig *newConfig = &configs[*configIndex];
     RKConfig *oldConfig = &configs[RKPreviousModuloS(*configIndex, configBufferDepth)];
 
     const RKIdentifier configId = newConfig->i + configBufferDepth;
-    
+
     //RKLog("--- RKConfigAdvance()   Id = %llu ---\n", configId);
 
     RKWaveform *waveform;
@@ -54,7 +54,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer[0], "New Sweep   EL %.2f°   AZ %.2f°   %s%s%s   %s",
+				sprintf(stringBuffer[0], "New sweep   EL %.2f°   AZ %.2f°   %s%s%s   %s",
                         newConfig->sweepElevation,
                         newConfig->sweepAzimuth,
                         rkGlobalParameters.showColor ? RKDeepPinkColor : "",
@@ -250,7 +250,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     newConfig->i = configId;
     *configIndex = RKNextModuloS(*configIndex, configBufferDepth);
 
-    pthread_mutex_unlock(&rkGlobalParameters.mutex);
+    pthread_mutex_unlock(&rkGlobalParameters.lock);
 }
 
 RKConfig *RKConfigWithId(RKConfig *configs, uint32_t configBufferDepth, uint64_t id) {
