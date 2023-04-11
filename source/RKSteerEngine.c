@@ -26,7 +26,7 @@ static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
 
     RKScanAction *action = &engine->actions[engine->actionIndex];
 
-    sprintf(string, "%s%s%s  T%3d  EL%6.2f° @ %5.1f °/s   AZ%7.2f @ %5.1f °/s   M%d '%s%s%s'",
+    sprintf(string, "%s%s%s  T%08d  EL%6.2f° @ %+5.1f°/s   AZ%7.2f @ %+5.1f°/s   M%d '%s%s%s'",
         V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
         V->progress & RKScanProgressMiddle ? "m" : ".",
         V->progress & RKScanProgressEnd    ? (rkGlobalParameters.showColor ? RKMonokaiGreen "E" RKNoColor : "E") : ".",
@@ -361,11 +361,25 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
 
+    int a = 0;
+
     engine->tic++;
 
     RKScanObject *V = &engine->vcpHandle;
 
     if (V->sweepCount == 0 || V->active == false) {
+        if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+            action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+            action->value[a] = 0.0f;
+            V->tic = 0;
+            a++;
+        }
+        if (fabs(pos->azimuthVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+            action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+            action->value[a] = 0.0f;
+            V->tic = 0;
+        }
+        V->progress = RKScanProgressNone;
         RKSteerEngineUpdateStatusString(engine);
         return action;
     }
@@ -398,7 +412,6 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     //     ... get the next scan path, jump to RKScanProgressSetup
     // }
 
-    int a = 0;
     const RKScanPath *scan = &V->batterScans[V->i];
 
     if (V->progress == RKScanProgressNone) {
@@ -448,8 +461,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         RKLog("%s Info. Ready for RHI sweep %d - AZ %.2f° @ crossover EL %.2f°\n", engine->name,
                             V->i, scan->azimuthStart, scan->elevationEnd);
                     }
-                    V->progress |= RKScanProgressMiddle;
                     V->progress ^= RKScanProgressSetup;
+                    V->progress |= RKScanProgressMiddle;
                 }
                 break;
             case RKScanModePPI:
@@ -482,6 +495,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                             V->i, scan->elevationStart, scan->azimuthEnd);
                     }
                     V->progress ^= RKScanProgressSetup;
+                    V->progress |= RKScanProgressMiddle;
                 }
                 break;
             case RKScanModeSector:
@@ -522,12 +536,13 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (udel < RKPedestalPositionTolerance && udaz < RKPedestalPositionTolerance) {
                     action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->value[0] = scan->azimuthSlew;
+                    V->tic = 0;
                     if (verbose) {
                         RKLog("%s Info. Ready for SEC sweep %d - EL %.2f° @ crossover AZ %.2f°\n", engine->name,
                             V->i, scan->elevationStart, scan->azimuthEnd);
                     }
-                    V->progress |= RKScanProgressMiddle;
                     V->progress ^= RKScanProgressSetup;
+                    V->progress |= RKScanProgressMiddle;
                 }
                 break;
             case RKScanModePoint:
@@ -572,7 +587,6 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     }
                     V->progress ^= RKScanProgressSetup;
                     V->progress |= RKScanProgressEnd;
-                    V->tic = 0;
                 }
                 break;
             default:
@@ -589,8 +603,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 }
                 cross = RKAngularCrossOver(pos->elevationDegrees, V->elevationPrevious, scan->elevationEnd);
                 if (cross) {
-                    V->progress |= RKScanProgressEnd;
                     V->progress ^= RKScanProgressMiddle;
+                    V->progress |= RKScanProgressEnd;
                     if (verbose) {
                         RKLog("%s End crossover detected @ EL %.2f° [%.2f° -> %.2f°]\n", engine->name,
                             scan->elevationEnd, V->elevationPrevious, pos->elevationDegrees);
@@ -669,6 +683,7 @@ int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, c
 
     bool immediatelyDo = false;
     bool onlyOnce = false;
+    bool created = false;
 
     float azimuthStart, azimuthEnd, elevationStart, elevationEnd, rate;
 
@@ -693,7 +708,26 @@ int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, c
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
         onlyOnce = true;
+    } else if (!strncmp("stop", command, 4)) {
+        RKSteerEngineStopSweeps(engine);
+        sprintf(response, "ACK. Volume stopped." RKEOL);
+        return RKResultSuccess;
+    } else if (!strncmp("start", command, 5)) {
+        RKSteerEngineStartSweeps(engine);
+        RKSteerEngineScanSummary(engine, response);
+        sprintf(response + strlen(response), "ACK. Volume resumed." RKEOL);
+        return RKResultSuccess;
+    } else if (!strncmp("summ", command, 4)) {
+        RKSteerEngineScanSummary(engine, response);
+        sprintf(response + strlen(response), "VCP active: %s\n", engine->vcpHandle.active ? "true" : "false");
+        sprintf(response + strlen(response), "ACK. Volume summary retrieved successfully." RKEOL);
+        return RKResultSuccess;
+    } else {
+        sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, command);
+        return RKResultFailedToExecuteCommand;
     }
+
+    // The rest of the function assumes a volume will be created
 
     bool everythingOkay = true;
 
@@ -745,6 +779,8 @@ int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, c
             token = strtok(NULL, comma);
         }
 
+        created = true;
+
     } else if (!strncmp("rr", command, 2) || !strncmp("irr", command, 3) || !strncmp("orr", command, 3)) {
 
         // rr 0,20 10,20,30 10 - RHI at elevations [0, 20] degs, azimuths [10, 20, 30], speed 10 deg/s
@@ -795,6 +831,8 @@ int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, c
             token = strtok(NULL, comma);
             flip = !flip;
         }
+
+        created = true;
 
     } else if (!strncmp("vol", command, 3) || !strncmp("ivol", command, 3) || !strncmp("ovol", command, 3)) {
 
@@ -867,6 +905,8 @@ int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, c
             token = strtok(NULL, slash);
         }
 
+        created = true;
+
     } else if (!strncmp("point", command, 5)) {
 
         const float elevation = atof(args[0]);
@@ -877,18 +917,19 @@ int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, c
     }
 
     if (everythingOkay) {
-        RKSteerEngineStart(engine);
         if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
             RKSteerEngineNextHitter(engine);
         }
         RKSteerEngineScanSummary(engine, response);
 
-        int k = sprintf(engine->dump, "Scan object created.\n");
-        RKIndentCopy(engine->dump + k, response, 31);
-        RKStripTail(engine->dump);
-        RKLog("%s %s\n", engine->name, engine->dump);
+        if (created) {
+            int k = sprintf(engine->dump, "Scan object created.\n");
+            RKIndentCopy(engine->dump + k, response, 31);
+            RKStripTail(engine->dump);
+            RKLog("%s %s\n", engine->name, engine->dump);
 
-        sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
+            sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
+        }
     } else {
         return RKResultFailedToSetVCP;
     }
