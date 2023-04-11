@@ -3876,7 +3876,7 @@ void *RKTestPedestalRunLoop(void *input) {
         char string[64];
         for (k = 0; k < 2; k++) {
             RKPedestalInstructType instruct = action->mode[k];
-            float value = action->param[k];
+            float value = action->value[k];
             if (RKInstructIsNone(instruct)) {
                 continue;
             }
@@ -4104,7 +4104,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
                !strncmp("vol", command, 3) ||
                !strncmp("ivol", command, 4) ||
                !strncmp("ovol", command, 4) ||
-               !strncmp("spoint", command, 6)) {
+               !strncmp("point", command, 5)) {
         int k = sprintf(response,
                         RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                         "    Use the 'v' command for RadarKit VCP engine\n");

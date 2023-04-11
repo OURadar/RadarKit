@@ -2137,7 +2137,7 @@ char *RKPedestalActionString(const RKScanAction *action) {
                 RKInstructIsDisable(action->mode[i]) ? "disable" : ""
                 )))));
             if (RKInstructIsPoint(action->mode[i]) || RKInstructIsSlew(action->mode[i])) {
-                length = strlen(string); snprintf(string + length, 1024 - length, " %.1f", action->param[i]);
+                length = strlen(string); snprintf(string + length, 1024 - length, " %.1f", action->value[i]);
             }
         }
     }

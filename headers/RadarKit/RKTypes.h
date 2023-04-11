@@ -1282,7 +1282,7 @@ typedef union rk_position {
 
 typedef struct rk_scan_action {
     RKPedestalInstructType   mode[2];                                          // One mode for EL and the other for AZ
-    float                    param[2];
+    float                    value[2];
     float                    sweepElevation;
     float                    sweepAzimuth;
 } RKScanAction;

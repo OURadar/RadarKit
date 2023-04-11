@@ -262,7 +262,8 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
                !strncmp("orr", command, 3) ||
                !strncmp("vol", command, 3) ||
                !strncmp("ivol", command, 4) ||
-               !strncmp("ovol", command, 4)) {
+               !strncmp("ovol", command, 4) ||
+               !strncmp("point", command, 5)) {
         int k = sprintf(response,
                         RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                         "    Use the 'v' command for RadarKit VCP engine\n");
