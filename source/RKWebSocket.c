@@ -323,6 +323,7 @@ void *transporter(void *in) {
 
     uint32_t origin = 0;
     uint32_t total = 0;
+    uint32_t *p32;
 
     W->tic = 1;
 
@@ -478,7 +479,8 @@ void *transporter(void *in) {
                     char *word = words[rand() % 8];
                     r = RKWebSocketPing(W, word, (int)strlen(word));
                     if (W->verbose > 1) {
-                        ws_mask_key key = {.u32 = *((uint32_t *)&W->frame[2])};
+                        p32 = (uint32_t *)&W->frame[2];
+                        ws_mask_key key = {.u32 = *p32};
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
@@ -500,7 +502,8 @@ void *transporter(void *in) {
                     memcpy(message, anchor, h->len); message[h->len] = '\0';
                     RKWebSocketPong(W, message, h->len);
                     if (W->verbose > 1) {
-                        ws_mask_key key = {.u32 = *((uint32_t *)&W->frame[2])};
+                        p32 = (uint32_t *)&W->frame[2];
+                        ws_mask_key key = {.u32 = *p32};
                         for (i = 0; i < 4; i++) {
                             uword[i] = W->frame[6 + i] ^ key.code[i % 4];
                         }
