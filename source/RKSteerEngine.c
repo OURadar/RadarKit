@@ -29,7 +29,7 @@ static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
 
     RKScanAction *action = &engine->actions[engine->actionIndex];
 
-    sprintf(string, "%s%s%s  %08d  %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f @ %+5.1f°/s [%6.2f]   %s%s%s  %s%s%s",
+    sprintf(string, "%s%s%s %08d   %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f @ %+5.1f°/s [%6.2f]   %s%s%s   %s%s%s",
         V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
         V->progress & RKScanProgressMiddle ? "m" : ".",
         V->progress & RKScanProgressEnd    ? (rkGlobalParameters.showColor ? RKMonokaiGreen "E" RKNoColor : "E") : ".",

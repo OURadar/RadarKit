@@ -4112,29 +4112,6 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     } else if (!strncmp(command, "summ", 4)) {
         RKSteerEngineScanSummary(steeven, response);
         sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
-    /*
-    } else if (!strncmp("spoint", command, 6)) {
-        // Point
-        if (n < 1) {
-            sprintf(response, "NAK. Use as: %s [AZ] [EL]" RKEOL, cmd);
-            return RKResultFailedToExecuteCommand;
-        }
-        fparams[0] = atof(args[0]);
-        if (n > 1) {
-            fparams[1] = atof(args[1]);
-            snprintf(response, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg, EL:%.2f deg." RKEOL,
-                    fparams[0],
-                    fparams[1]
-                    );
-        } else {
-            RKPosition *pos = RKGetLatestPosition(me->radar);
-            snprintf(response, RKMaximumStringLength - 1, "ACK. Pointing AZ:%.2f deg." RKEOL,
-                    fparams[0]
-                    );
-        }
-        pedestalPoint(me, fparams[1], fparams[0]);
-        strncpy(response, me->msg, RKMaximumStringLength - 1);
-    */
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
@@ -4143,8 +4120,6 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
                 UNDERLINE("eslew") " [V] - Azimuth slew at V eg/s\n"
                 UNDERLINE("astop") " - Azimuth stops\n"
                 UNDERLINE("estop") " - Elevation stops\n"
-//                UNDERLINE("pp") " [EL,EL,...] [AZ_MARK] [AZ_RATE] - PPI scan at elevation EL at AZ_RATE deg/s.\n"
-//                UNDERLINE("rr") " [AZ,AZ,...] [EL_START,EL_END] [EL_RATE] - RHI at AZ over EL_START to EL_END.\n"
                 RKEOL);
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
