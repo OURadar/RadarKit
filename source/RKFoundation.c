@@ -2120,7 +2120,7 @@ char *RKPedestalActionString(const RKScanAction *action) {
     for (int i = 0; i < 2; i++) {
         if (RKInstructIsNone(action->mode[i])) {
             if (i == 0) {
-                sprintf(string, "none");
+                sprintf(string, "(none)");
             }
         } else {
             length = strlen(string);

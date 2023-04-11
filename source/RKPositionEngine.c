@@ -52,18 +52,18 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
+    snprintf(string + i, RKStatusStringLength - i, " %010lu  %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f° @ %+6.1f°/s [%6.2f°]   %08x",
              (unsigned long)position->i,
-             rkGlobalParameters.statusColor ? RKPositionAzimuthFlagColor(position->flag) : "",
-             rkGlobalParameters.statusColor ? RKNoColor : "",
-             position->azimuthDegrees,
-             position->azimuthVelocityDegreesPerSecond,
-             position->sweepAzimuthDegrees,
              rkGlobalParameters.statusColor ? RKPositionElevationFlagColor(position->flag) : "",
              rkGlobalParameters.statusColor ? RKNoColor : "",
              position->elevationDegrees,
              position->elevationVelocityDegreesPerSecond,
              position->sweepElevationDegrees,
+             rkGlobalParameters.statusColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+             rkGlobalParameters.statusColor ? RKNoColor : "",
+             position->azimuthDegrees,
+             position->azimuthVelocityDegreesPerSecond,
+             position->sweepAzimuthDegrees,
              position->flag);
     //
     // There is a memory leak here, maybe the capacity?

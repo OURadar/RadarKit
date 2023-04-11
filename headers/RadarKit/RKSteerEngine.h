@@ -21,6 +21,11 @@
 #define RKPedestalPointTimeOut         1500
 #define RKPedestalActionPeriod         0.05
 
+#define RKScanModeString(x) x == RKScanModeRHI ? "RHI" : ( \
+x == RKScanModePPI ? "PPI" : ( \
+x == RKScanModeSector ? "SEC" : ( \
+x == RKScanModePoint ? "Point" : "UNK")))
+
 typedef bool RKScanRepeat;
 enum RKScanRepeat {
     RKScanRepeatNone                             = false,

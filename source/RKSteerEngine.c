@@ -26,14 +26,24 @@ static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
 
     RKScanAction *action = &engine->actions[engine->actionIndex];
 
-    sprintf(string, "%s%s%s  T%08d  EL%6.2f° @ %+5.1f°/s   AZ%7.2f @ %+5.1f°/s   M%d '%s%s%s'",
+    sprintf(string, "%s%s%s  %08d  %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f @ %+5.1f°/s [%6.2f]   %s%s%s  %s%s%s",
         V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
         V->progress & RKScanProgressMiddle ? "m" : ".",
         V->progress & RKScanProgressEnd    ? (rkGlobalParameters.showColor ? RKMonokaiGreen "E" RKNoColor : "E") : ".",
         V->tic,
-        position->elevationDegrees, position->elevationVelocityDegreesPerSecond,
-        position->azimuthDegrees, position->azimuthVelocityDegreesPerSecond,
-        V->batterScans[V->i].mode,
+        rkGlobalParameters.statusColor ? RKPositionElevationFlagColor(position->flag) : "",
+        rkGlobalParameters.statusColor ? RKNoColor : "",
+        position->elevationDegrees,
+        position->elevationVelocityDegreesPerSecond,
+        position->sweepElevationDegrees,
+        rkGlobalParameters.statusColor ? RKPositionAzimuthFlagColor(position->flag) : "",
+        rkGlobalParameters.statusColor ? RKNoColor : "",
+        position->azimuthDegrees,
+        position->azimuthVelocityDegreesPerSecond,
+        position->sweepAzimuthDegrees,
+        V->active && rkGlobalParameters.showColor ? RKDeepPinkColor : "",
+        V->active ? RKScanModeString(V->batterScans[V->i].mode) : " - ",
+        V->active && rkGlobalParameters.showColor ? RKNoColor : "",
         RKInstructIsNone(action->mode[0]) ? "" : RKMonokaiGreen,
         RKPedestalActionString(action),
         RKInstructIsNone(action->mode[0]) ? "" : RKNoColor);
@@ -996,7 +1006,7 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
     for (int i = 0; i < count; i++) {
         switch (scanPaths[i].mode) {
             case RKScanModePPI:
-                sprintf(format, "%%7s%%d : PPI EL %%%d.1f   AZ %%%d.1f   @ %%%d.1f deg/s\n", es, ae, av);
+                sprintf(format, "%%7s%%d : PPI EL %%%d.1f°   AZ %%%d.1f°   @ %%%d.1f°/s\n", es, ae, av);
                 sprintf(string + strlen(string), format,
                         prefix,
                         i,
@@ -1005,7 +1015,7 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
                         scanPaths[i].azimuthSlew);
                 break;
             case RKScanModeRHI:
-                sprintf(format, "%%7s%%d : RHI AZ %%%d.1f   EZ %%%d.1f-%%%d.1f   @ %%%d.1f deg/s\n", as, es, ee, ev);
+                sprintf(format, "%%7s%%d : RHI AZ %%%d.1f°   EZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", as, es, ee, ev);
                 sprintf(string + strlen(string), format,
                         prefix,
                         i,
@@ -1015,7 +1025,7 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
                         scanPaths[i].elevationSlew);
                 break;
             case RKScanModeSector:
-                sprintf(format, "%%7s%%d : SEC EL %%%d.1f   AZ %%%d.1f-%%%d.1f   @ %%%d.1f deg/s\n", es, as, ae, av);
+                sprintf(format, "%%7s%%d : SEC EL %%%d.1f°   AZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", es, as, ae, av);
                 sprintf(string + strlen(string), format,
                         prefix,
                         i,
