@@ -154,7 +154,7 @@ int RKSteerEngineAddPinchSweep(RKSteerEngine *, const RKScanPath);
 RKScanAction *RKSteerEngineGetActionV1(RKSteerEngine *, RKPosition *);
 RKScanAction *RKSteerEngineGetAction(RKSteerEngine *, RKPosition *);
 
-int RKSteerEngineAddVolumeByString(RKSteerEngine *, const char *, char *);
+int RKSteerEngineExecuteString(RKSteerEngine *, const char *, char *);
 
 RKScanPath RKSteerEngineMakeScanPath(RKScanMode,
                                              const float elevationStart, const float elevationEnd,

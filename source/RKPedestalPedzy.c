@@ -267,7 +267,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         int k = sprintf(response,
                         RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                         "    Use the 'v' command for RadarKit VCP engine\n");
-        RKSteerEngineAddVolumeByString(steerEngine, command, response + k);
+        RKSteerEngineExecuteString(steerEngine, command, response + k);
     } else if (!strncmp("summ", command, 4)) {
         RKSteerEngineScanSummary(steerEngine, response);
         sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);

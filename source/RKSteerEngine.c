@@ -653,9 +653,9 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
 
     RKSteerEngineUpdateStatusString(engine);
 
+    // Sweep ended, go to the next sweep
     if (V->progress & RKScanProgressEnd) {
         V->progress ^= RKScanProgressEnd;
-        // Sweep ended, go to the next sweep
         V->i = RKNextModuloS(V->i, V->sweepCount);
         if (V->i == 0) {
             if (V->option & RKScanOptionRepeat) {
@@ -677,7 +677,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     return action;
 }
 
-int RKSteerEngineAddVolumeByString(RKSteerEngine *engine, const char *command, char _Nullable *response) {
+int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char _Nullable *response) {
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
 
