@@ -16,8 +16,11 @@ endif
 
 CFLAGS += -O2
 CFLAGS += -std=c11
+CFLAGS += -Wall
+# CFLAGS += -Wextra
+# CFLAGS += -Wpedantic
 CFLAGS += -Woverlength-strings
-CFLAGS += -Wall -Wno-unknown-pragmas
+CFLAGS += -Wno-unknown-pragmas
 
 ifeq ($(HOMEBREW_PREFIX), )
 	ifeq ($(MACHINE), arm64)

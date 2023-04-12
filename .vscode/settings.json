@@ -5,6 +5,8 @@
   "C_Cpp_Runner.msvcBatchPath": "",
   "C_Cpp_Runner.warnings": [
     "-Wall",
+    "-Wextra",
+    "-Wpedantic",
     "-Wno-unknown-pragmas",
     "-Woverlength-strings"
   ],
