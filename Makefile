@@ -127,9 +127,9 @@ clean:
 	rm -rf *.dSYM
 
 install:
-	cp -rp headers/RadarKit headers/RadarKit.h /usr/local/include/
-	cp -p $(RKLIB) /usr/local/lib/
+	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/
+	cp -p $(RKLIB) ${HOMEBREW_PREFIX}/lib/
 
 uninstall:
-	rm -rf /usr/local/include/RadarKit.h /usr/local/include/RadarKit
-	rm -rf /usr/local/lib/$(RKLIB)
+	rm -rf ${HOMEBREW_PREFIX}/include/RadarKit.h ${HOMEBREW_PREFIX}/include/RadarKit
+	rm -rf ${HOMEBREW_PREFIX}/lib/$(RKLIB)

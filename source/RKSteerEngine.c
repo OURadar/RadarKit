@@ -279,8 +279,8 @@ void RKSteerEngineSetVerbose(RKSteerEngine *engine, const int verbose) {
 }
 
 void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *engine, const RKRadarDesc *desc,
-                                                RKPosition *positionBuffer, uint32_t *positionIndex,
-                                                RKConfig   *configBuffer,   uint32_t *configIndex) {
+                                        RKPosition *positionBuffer, uint32_t *positionIndex,
+                                        RKConfig   *configBuffer,   uint32_t *configIndex) {
     engine->radarDescription    = (RKRadarDesc *)desc;
     engine->positionBuffer      = positionBuffer;
     engine->positionIndex       = positionIndex;
@@ -648,7 +648,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (cross) {
                     V->progress |= RKScanProgressEnd;
                     if (verbose) {
-                        RKLog("%s Target crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
+                        RKLog("%s End crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
                             scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
                     }
                 }
