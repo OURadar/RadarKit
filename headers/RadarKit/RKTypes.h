@@ -686,7 +686,7 @@ enum {
 
 // Used to be RKBaseMomentList; -boonleng 6/1/2021
 typedef uint32_t RKBaseProductList;
-enum {
+enum RKBaseProductList {
     RKBaseProductListNone                        = 0,                          // None
     RKBaseProductListUInt8Z                      = 1,                          // Display Z - Reflectivity dBZ
     RKBaseProductListUInt8V                      = (1 << 1),                   // Display V - Velocity
@@ -733,7 +733,7 @@ enum {
 };
 
 typedef uint8_t RKBaseProductIndex;
-enum {
+enum RKBaseProductIndex {
     RKBaseProductIndexZ,
     RKBaseProductIndexV,
     RKBaseProductIndexW,
@@ -751,7 +751,7 @@ enum {
 };
 
 typedef uint8_t RKProductType;
-enum {
+enum RKProductType {
     RKProductTypeUnknown                         = 0,                          // Unspecified
     RKProductTypeCellMatch                       = 1,                          //
     RKProductTypePPI                             = (1 << 1),                   //
@@ -759,7 +759,7 @@ enum {
 };
 
 typedef uint32_t RKConfigKey;
-enum {
+enum RKConfigKey {
     RKConfigKeyNull,
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
@@ -790,7 +790,7 @@ enum {
 };
 
 typedef uint8_t RKHealthNode;
-enum {
+enum RKHealthNode {
     RKHealthNodeRadarKit,
     RKHealthNodeTransceiver,
     RKHealthNodePedestal,
@@ -808,7 +808,7 @@ enum {
 };
 
 typedef uint8_t RKScriptProperty;
-enum {
+enum RKScriptProperty {
     RKScriptPropertyNull                         = 0,
     RKScriptPropertyProduceZip                   = 1,
     RKScriptPropertyProduceTgz                   = (1 << 1),
@@ -845,7 +845,7 @@ enum {
 //                    (RKEngineStateChildAllocated | RKEngineStateChildProperlyWired | RKEngineStateAllocated | RKEngineStateProperlyWired)
 //
 typedef uint32_t RKEngineState;
-enum {
+enum RKEngineState {
     RKEngineStateNull                            = 0,                          // Nothing
     RKEngineStateSleep0                          = 1,                          // Usually for a wait just outside of the main while loop
     RKEngineStateSleep1                          = (1 << 1),                   // Stage 1 wait - usually waiting for pulse
