@@ -20,7 +20,11 @@ CFLAGS += -Woverlength-strings
 CFLAGS += -Wall -Wno-unknown-pragmas
 
 ifeq ($(HOMEBREW_PREFIX), )
-	HOMEBREW_PREFIX = /usr/local
+	ifeq ($(MACHINE), arm64)
+		HOMEBREW_PREFIX = /opt/homebrew
+	else
+		HOMEBREW_PREFIX = /usr/local
+	endif
 endif
 
 ifeq ($(MACHINE), x86_64)
@@ -126,7 +130,7 @@ clean:
 	rm -f $(OBJS_PATH)/*.o
 	rm -rf *.dSYM
 
-install:
+install: showinfo
 	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/
 	cp -p $(RKLIB) ${HOMEBREW_PREFIX}/lib/
 

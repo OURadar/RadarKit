@@ -430,7 +430,7 @@ enum RKEngineColor {
 };
 
 typedef uint32_t RKValueType;
-enum {
+enum RKValueType {
     RKValueTypeNull,
     RKValueTypeBool,
     RKValueTypeInt,
@@ -618,7 +618,7 @@ enum RKInitFlag {
 // The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021
 // Level 15 data type
 typedef uint32_t RKMomentList;
-enum {
+enum RKMomentList {
     RKMomentListNull                             = 0,                          //   none
     RKMomentListHm                               = 1,                          //   mXh      assume i
     RKMomentListHmi                              = 1,                          //   mXh i
@@ -654,7 +654,7 @@ enum {
 };
 
 typedef uint8_t RKMomentIndex;
-enum {
+enum RKMomentIndex {
     RKMomentIndexHmi,
     RKMomentIndexHmq,
     RKMomentIndexHR0,
@@ -873,7 +873,7 @@ enum RKEngineState {
 };
 
 typedef uint32_t RKStatusEnum;
-enum {
+enum RKStatusEnum {
     RKStatusEnumUnknown                          = -3,                         //
     RKStatusEnumOld                              = -3,                         //
     RKStatusEnumInvalid                          = -2,                         //

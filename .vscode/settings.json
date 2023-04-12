@@ -1,20 +1,19 @@
 {
   "C_Cpp_Runner.debuggerPath": "/usr/bin/lldb",
-  "C_Cpp_Runner.cStandard": "gnu99",
+  "C_Cpp_Runner.cStandard": "c11",
   "C_Cpp_Runner.cppStandard": "",
   "C_Cpp_Runner.msvcBatchPath": "",
   "C_Cpp_Runner.warnings": [
     "-Wall",
-    "-Wextra",
-    "-Wpedantic"
+    "-Wno-unknown-pragmas",
+    "-Woverlength-strings"
   ],
   "C_Cpp_Runner.enableWarnings": true,
   "C_Cpp_Runner.warningsAsError": false,
   "C_Cpp_Runner.compilerArgs": [],
   "C_Cpp_Runner.linkerArgs": [],
   "C_Cpp_Runner.includePaths": [
-    "${workspaceFolder}/headers/**",
-    "headers",
+    "${workspaceFolder}/headers",
     "${HOMEBREW_PREFIX}/include",
     "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
@@ -31,7 +30,7 @@
     "**/.vscode/**"
   ],
   "C_Cpp.default.includePath": [
-    "headers",
+    "${workspaceFolder}/headers",
     "${env:HOMEBREW_PREFIX}/include",
     "${env:HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
@@ -45,19 +44,9 @@
     "**/templates/**/*": "django-txt",
     "**/requirements{/**,*}.{txt,in}": "pip-requirements",
     "*.c": "c",
-    "__node_handle": "c",
-    "string": "c",
-    "iosfwd": "c",
-    "radarkit.h": "c",
-    "param.h": "c",
-    "stdbool.h": "c",
-    "rkpedestalpedzy.h": "c",
-    "rkradar.h": "c",
-    "rkfoundation.h": "c",
-    "rktypes.h": "c",
-    "rktypescompat.h": "c"
+    "*.h": "c"
   },
   "C_Cpp.default.compilerPath": "/usr/bin/clang",
-  "C_Cpp.default.cppStandard": "c++17",
-  "C_Cpp.default.cStandard": "c17"
+  "C_Cpp.default.cppStandard": "c++11",
+  "C_Cpp.default.cStandard": "c11"
 }

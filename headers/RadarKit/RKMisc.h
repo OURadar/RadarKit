@@ -95,10 +95,10 @@ static inline void
 CPU_ZERO(cpu_set_t *cs) { cs->count = 0; }
 
 static inline void
-CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
+CPU_SET(int num, cpu_set_t *cs) { cs->count |= ((uint32_t)1 << num); }
 
 static inline int
-CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
+CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & ((uint32_t)1 << num)); }
 
 int pthread_setaffinity_np(pthread_t thread, size_t cpu_size, cpu_set_t *cpu_set);
 
