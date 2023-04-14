@@ -124,7 +124,9 @@ void RKSteerEngineNextHitter(RKSteerEngine *engine) {
 void RKSteerEngineArmSweeps(RKSteerEngine *engine, const RKScanRepeat repeat) {
     engine->vcpHandle.progress = RKScanProgressNone;
     if (repeat == RKScanRepeatForever) {
-        engine->vcpHandle.option |= RKScanOptionRepeat;
+        RKSteerEngineSetScanRepeat(engine, true);
+    } else if (engine->vcpHandle.option & RKScanOptionRepeat) {
+        RKSteerEngineSetScanRepeat(engine, false);
     }
     engine->vcpHandle.i = 0;
     engine->vcpHandle.active = true;
@@ -288,6 +290,16 @@ void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *engine, const RKRadarDesc
     engine->configBuffer        = configBuffer;
     engine->configIndex         = configIndex;
     engine->state |= RKEngineStateProperlyWired;
+}
+
+void RKSteerEngineSetScanRepeat(RKSteerEngine *engine, const bool value) {
+    if (value) {
+        engine->vcpHandle.option |= RKScanOptionRepeat;
+        return;
+    }
+    if (engine->vcpHandle.option & RKScanOptionRepeat) {
+        engine->vcpHandle.option ^= RKScanOptionRepeat;
+    }
 }
 
 #pragma mark - Interactions
@@ -708,9 +720,10 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
     bool immediatelyDo = false;
     bool onlyOnce = false;
-    bool created = false;
 
     float azimuthStart, azimuthEnd, elevationStart, elevationEnd, rate;
+
+    size_t s;
 
     if (engine->verbose > 1 && (*command == 'r' || *command == 'p')) {
         RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
@@ -721,14 +734,18 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     }
 
     if (!strncmp("pp", command, 2) || !strncmp("rr", command, 2) || !strncmp("vol", command, 3)) {
+        RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearHole(engine);
     } else if (*command == 'i') {
+        RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
     } else if (*command == 'o') {
+        RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearDeck(engine);
         onlyOnce = true;
     } else if (!strncmp("home", command, 4) || !strncmp("point", command, 5)) {
+        RKSteerEngineSetScanRepeat(engine, false);
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
         onlyOnce = true;
@@ -737,18 +754,25 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         sprintf(response, "ACK. Volume stopped." RKEOL);
         return RKResultSuccess;
     } else if (!strncmp("start", command, 5) || !strncmp("go", command, 2)) {
+        s = sprintf(response, "ACK. Volume starts / resumes.\n\n");
+        s += RKSteerEngineScanSummary(engine, response + s);
+        sprintf(response + s - 1, RKEOL);
         RKSteerEngineStartSweeps(engine);
-        RKSteerEngineScanSummary(engine, response);
-        sprintf(response + strlen(response), "ACK. Volume resumed." RKEOL);
         return RKResultSuccess;
-    } else if (!strncmp("summ", command, 4) || !strncmp("status", command, 5)) {
-        RKSteerEngineScanSummary(engine, response);
-        sprintf(response + strlen(response), "active: %s   sweepCount = %u   onDeckCount = %u   inTheHoleCount = %u\n",
-            engine->vcpHandle.active ? "true" : "false",
-            engine->vcpHandle.sweepCount,
-            engine->vcpHandle.onDeckCount,
-            engine->vcpHandle.inTheHoleCount);
-        sprintf(response + strlen(response), "ACK. Volume summary retrieved successfully." RKEOL);
+    } else if (!strncmp("once", command, 4)) {
+        RKSteerEngineSetScanRepeat(engine, false);
+        s = sprintf(response, "ACK. Volume once.\n\n");
+        s += RKSteerEngineScanSummary(engine, response + s);
+        sprintf(response + s - 1, RKEOL);
+        RKSteerEngineStartSweeps(engine);
+    } else if (!strncmp("summ", command, 4) || !strncmp("stat", command, 4)) {
+        s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
+        s += RKSteerEngineScanSummary(engine, response + s);
+        sprintf(response + s, "%s   %s   %s   %s" RKEOL,
+            RKVariableInString("active", &engine->vcpHandle.active, RKValueTypeBool),
+            RKVariableInString("sweepCount", &engine->vcpHandle.sweepCount, RKValueTypeUInt16),
+            RKVariableInString("onDeckCount", &engine->vcpHandle.onDeckCount, RKValueTypeUInt16),
+            RKVariableInString("inTheHoleCount", &engine->vcpHandle.inTheHoleCount, RKValueTypeUInt16));
         return RKResultSuccess;
     } else {
         sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, command);
@@ -807,8 +831,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             token = strtok(NULL, comma);
         }
 
-        created = true;
-
     } else if (!strncmp("rr", command, 2) || !strncmp("irr", command, 3) || !strncmp("orr", command, 3)) {
 
         // rr 0,20 10,20,30 10 - RHI at elevations [0, 20] degs, azimuths [10, 20, 30], speed 10 deg/s
@@ -859,8 +881,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             token = strtok(NULL, comma);
             flip = !flip;
         }
-
-        created = true;
 
     } else if (!strncmp("vol", command, 3) || !strncmp("ivol", command, 3) || !strncmp("ovol", command, 3)) {
 
@@ -933,42 +953,41 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             token = strtok(NULL, slash);
         }
 
-        created = true;
-
     } else if (!strncmp("point", command, 5)) {
 
         const float elevation = atof(args[0]);
         const float azimuth = atof(args[1]);
 
-        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 30.0f);
+        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
-        created = true;
 
     } else if (!strncmp("home", command, 4)) {
 
         const float azimuth = -engine->radarDescription->heading;
         const float elevation = 0.0f;
-        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 30.0f);
+        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
-        created = true;
 
     }
 
     if (valid) {
-        RKSteerEngineScanSummary(engine, response);
+        size_t s = sprintf(response, "ACK. Volume created.\n\n");
+
+        char *summary = response + s;
+
+        RKSteerEngineScanSummary(engine, response + s);
+        RKStripTail(response);
 
         if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
             RKSteerEngineNextHitter(engine);
         }
 
-        if (created) {
-            int k = sprintf(engine->dump, "Scan object created. %u %u %u\n", engine->vcpHandle.sweepCount, engine->vcpHandle.onDeckCount, engine->vcpHandle.inTheHoleCount);
-            RKIndentCopy(engine->dump + k, response, 31);
-            RKStripTail(engine->dump);
-            RKLog("%s %s\n", engine->name, engine->dump);
+        int k = sprintf(engine->dump, "New volume\n");
+        RKIndentCopy(engine->dump + k, summary, 31);
+        RKStripTail(engine->dump);
+        RKLog("%s %s\n", engine->name, engine->dump);
 
-            sprintf(response + strlen(response), "ACK. Volume added successfully." RKEOL);
-        }
+        strcat(response, RKEOL);
     } else {
         return RKResultFailedToSetVCP;
     }
@@ -994,18 +1013,34 @@ RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
 
 #define RKDigitWidth(v, n)  (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)
 
+static char *scanModeString(const enum RKScanMode mode) {
+    switch (mode) {
+        case RKScanModePPI:
+            return "PPI";
+        case RKScanModeRHI:
+            return "RHI";
+        case RKScanModeSector:
+            return "SEC";
+        case RKScanModePoint:
+            return "SPT";
+        default:
+            return "UNK";
+    }
+    return "NAN";
+}
+
 static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int count, const RKScanHitter linetag) {
     size_t k = 0;
     char prefix[8];
     switch (linetag){
         case RKScanAtBat:
-            strncpy(prefix, "       ", 8);
+            strncpy(prefix, "      ", 8);
             break;
         case RKScanPinch:
-            strncpy(prefix, "PINCH  ", 8);
+            strncpy(prefix, "PINCH ", 8);
             break;
         case RKScanLine:
-            strncpy(prefix, "LINEUP ", 8);
+            strncpy(prefix, "LINEUP", 8);
             break;
         default:
             break;
@@ -1034,52 +1069,43 @@ static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int co
 
     // Second pass, actually print it out using the consitent column width
     for (int i = 0; i < count; i++) {
+        k += sprintf(string + k, "%-7s %d : %s%s%s",
+                     prefix,
+                     i,
+                     rkGlobalParameters.statusColor ? RKMonokaiPink : "",
+                     scanModeString(scanPaths[i].mode),
+                     rkGlobalParameters.statusColor ? RKNoColor : "");
         switch (scanPaths[i].mode) {
             case RKScanModePPI:
-                sprintf(format, "%%7s%%d : PPI EL %%%d.1f°   AZ %%%d.1f°   @ %%%d.1f°/s\n", es, ae, av);
+                sprintf(format, " EL %%%d.1f°   AZ %%%d.1f°   @ %%%d.1f°/s\n", es, ae, av);
                 k += sprintf(string + k, format,
-                             prefix,
-                             i,
                              scanPaths[i].elevationStart,
                              scanPaths[i].azimuthEnd,
                              scanPaths[i].azimuthSlew);
                 break;
             case RKScanModeRHI:
-                sprintf(format, "%%7s%%d : RHI AZ %%%d.1f°   EZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", as, es, ee, ev);
+                sprintf(format, " AZ %%%d.1f°   EZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", as, es, ee, ev);
                 k += sprintf(string + k, format,
-                             prefix,
-                             i,
                              scanPaths[i].azimuthStart,
                              scanPaths[i].elevationStart,
                              scanPaths[i].elevationEnd,
                              scanPaths[i].elevationSlew);
                 break;
             case RKScanModeSector:
-                sprintf(format, "%%7s%%d : SEC EL %%%d.1f°   AZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", es, as, ae, av);
+                sprintf(format, " EL %%%d.1f°   AZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", es, as, ae, av);
                 k += sprintf(string + k, format,
-                             prefix,
-                             i,
                              scanPaths[i].elevationStart,
                              scanPaths[i].azimuthStart,
                              scanPaths[i].azimuthEnd,
                              scanPaths[i].azimuthSlew);
                 break;
             case RKScanModePoint:
-                k += sprintf(string + k, "%7s%d PNT EL %.1f°   AZ %.1f°\n",
-                             prefix,
-                             i,
+                k += sprintf(string + k, " EL %.1f°   AZ %.1f°\n",
                              scanPaths[i].elevationStart,
                              scanPaths[i].azimuthStart);
                 break;
-            case RKScanModeSpeedDown:
-                k += sprintf(string + k, "%s%d : PPI_SLOWDOWN\n",
-                             prefix,
-                             i);
-                break;
             default:
-                k += sprintf(string + k, "%7s%d UNK EL %.1f° / %.1f°   AZ %.1f° / %.1f°\n",
-                             prefix,
-                             i,
+                k += sprintf(string + k, " EL %.1f° / %.1f°   AZ %.1f° / %.1f°\n",
                              scanPaths[i].elevationStart,
                              scanPaths[i].elevationEnd,
                              scanPaths[i].azimuthStart,
@@ -1091,13 +1117,14 @@ static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int co
 }
 
 
-void RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
+size_t RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     RKScanObject *V = &engine->vcpHandle;
     size_t s = makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
     if (V->onDeckCount != V->inTheHoleCount) {
         s += makeSweepMessage(V->onDeckScans, string + s, V->onDeckCount, RKScanPinch);
     }
-    makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
+    s += makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
+    return s;
 }
 
 char *RKSteerEngineStatusString(RKSteerEngine *engine) {

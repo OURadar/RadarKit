@@ -141,6 +141,7 @@ void RKSteerEngineSetVerbose(RKSteerEngine *, const int);
 void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *, const RKRadarDesc *,
                                                 RKPosition *, uint32_t *,
                                                 RKConfig *,   uint32_t *);
+void RKSteerEngineSetScanRepeat(RKSteerEngine *, const bool);
 
 int RKSteerEngineStart(RKSteerEngine *);
 int RKSteerEngineStop(RKSteerEngine *);
@@ -167,7 +168,7 @@ RKScanPath RKSteerEngineMakeScanPath(RKScanMode,
                                              const float azimuthStart, const float azimuthEnd,
                                              const float rate);
 
-void RKSteerEngineScanSummary(RKSteerEngine *, char *);
+size_t RKSteerEngineScanSummary(RKSteerEngine *, char *);
 
 char *RKSteerEngineStatusString(RKSteerEngine *);
 
