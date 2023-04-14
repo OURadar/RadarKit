@@ -728,7 +728,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     } else if (*command == 'o') {
         RKSteerEngineClearDeck(engine);
         onlyOnce = true;
-    } else if (!strncmp("point", command, 5)) {
+    } else if (!strncmp("home", command, 4) || !strncmp("point", command, 5)) {
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
         onlyOnce = true;
@@ -939,22 +939,17 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         const float elevation = atof(args[0]);
         const float azimuth = atof(args[1]);
-        // float a = atof(args[1]) - engine->radarDescription->heading;
-        // if (a < 0.0f) {
-        //     a += 360.0f;
-        // } else if (a > 360.f) {
-        //     a -= 360.0f;
-        // }
-        // const float azimuth = a;
 
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 30.0f);
         RKSteerEngineAddPinchSweep(engine, scan);
-        RKLog("%s Adding a point sweep (%.2f, %.2f)    valid = %s   onlyOnce = %s\n", engine->name,
-            elevation, azimuth,
-            valid ? "true" : "false",
-            onlyOnce ? "true" : "false");
-        RKLog(">%s onDeckCount = %u\n", engine->name, engine->vcpHandle.onDeckCount);
+        created = true;
 
+    } else if (!strncmp("home", command, 4)) {
+
+        const float azimuth = -engine->radarDescription->heading;
+        const float elevation = 0.0f;
+        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 30.0f);
+        RKSteerEngineAddPinchSweep(engine, scan);
         created = true;
 
     }
