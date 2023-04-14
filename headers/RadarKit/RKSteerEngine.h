@@ -45,6 +45,7 @@ enum RKScanProgress {
     RKScanProgressReady                          = 1 << 1,                     // Ready for the next sweep (deprecating)
     RKScanProgressMiddle                         = 1 << 2,                     // Middle of a sweep
     RKScanProgressEnd                            = 1 << 3,                     // End of a sweep, waiting for pedestal to stop / reposition
+    RKScanProgressStopPedestal                   = 1 << 4                      // Stop pedestal
 };
 
 typedef int RKScanOption;
