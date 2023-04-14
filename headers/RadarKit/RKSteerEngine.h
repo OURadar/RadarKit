@@ -91,9 +91,9 @@ typedef struct rk_scan_object {
     RKScanPath                  batterScans[RKMaximumScanCount];
     RKScanPath                  onDeckScans[RKMaximumScanCount];
     RKScanPath                  inTheHoleScans[RKMaximumScanCount];
-    int                         inTheHoleCount;
-    int                         onDeckCount;
-    int                         sweepCount;
+    uint16_t                    inTheHoleCount;
+    uint16_t                    onDeckCount;
+    uint16_t                    sweepCount;
     bool                        active;
     int                         i;                                             // Sweep index for control
     int                         tic;                                           // Counter of the run loop

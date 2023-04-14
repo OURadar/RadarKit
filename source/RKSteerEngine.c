@@ -381,6 +381,15 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
 
     RKScanObject *V = &engine->vcpHandle;
 
+    const bool verbose = V->option & RKScanOptionVerbose;
+
+    float del = 0.0f;
+    float daz = 0.0f;
+    float udel = 0.0f;
+    float udaz = 0.0f;
+
+    bool cross = false;
+
     if (V->active == false || V->sweepCount == 0) {
         if (V->progress & RKScanProgressStopPedestal) {
             RKLog("%s Stopping pedestal ...\n", engine->name);
@@ -398,18 +407,16 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
             V->progress ^= RKScanProgressStopPedestal;
             V->progress = RKScanProgressNone;
         }
+
         RKSteerEngineUpdateStatusString(engine);
+
+        engine->actionIndex = RKNextModuloS(engine->actionIndex, RKPedestalActionBufferDepth);
+        V->elevationPrevious = pos->elevationDegrees;
+        V->azimuthPrevious = pos->azimuthDegrees;
+        V->tic++;
+
         return action;
     }
-
-    const bool verbose = V->option & RKScanOptionVerbose;
-
-    float del = 0.0f;
-    float daz = 0.0f;
-    float udel = 0.0f;
-    float udaz = 0.0f;
-
-    bool cross = false;
 
     // if (V->progress == RKScanProgressNone) {
     //     ... do some basic setup, immediately go to next
@@ -736,7 +743,11 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         return RKResultSuccess;
     } else if (!strncmp("summ", command, 4) || !strncmp("status", command, 5)) {
         RKSteerEngineScanSummary(engine, response);
-        sprintf(response + strlen(response), "VCP active: %s\n", engine->vcpHandle.active ? "true" : "false");
+        sprintf(response + strlen(response), "active: %s   sweepCount = %u   onDeckCount = %u   inTheHoleCount = %u\n",
+            engine->vcpHandle.active ? "true" : "false",
+            engine->vcpHandle.sweepCount,
+            engine->vcpHandle.onDeckCount,
+            engine->vcpHandle.inTheHoleCount);
         sprintf(response + strlen(response), "ACK. Volume summary retrieved successfully." RKEOL);
         return RKResultSuccess;
     } else {
@@ -746,7 +757,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
     // The rest of the function assumes a volume will be created
 
-    bool everythingOkay = true;
+    bool valid = true;
 
     if (!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3)) {
 
@@ -780,7 +791,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             const int m = sscanf(token, "%f", &elevationStart);
             if (m == 0) {
                 sprintf(response, "NAK. Ill-defined PPI component.   m = %d" RKEOL, m);
-                everythingOkay = false;
+                valid = false;
                 break;
             }
             elevationEnd = elevationStart;
@@ -820,18 +831,18 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         int m = sscanf(elevations, "%f,%f", &elevationStart, &elevationEnd);
         if (m < 2) {
             sprintf(response, "NAK. Ill-defined RHI component.   m = %d" RKEOL, m);
-            everythingOkay = false;
+            valid = false;
         }
 
         char *token = strtok(azimuths, comma);
 
         int k = 0;
         bool flip = false;
-        while (token != NULL && everythingOkay && k++ < 180) {
+        while (token != NULL && valid && k++ < 180) {
             const int o = sscanf(token, "%f", &azimuthStart);
             if (o == 0) {
                 sprintf(response, "NAK. Ill-defined RHI component.   o = %d" RKEOL, m);
-                everythingOkay = false;
+                valid = false;
                 break;
             }
             azimuthEnd = azimuthStart;
@@ -878,7 +889,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             const int m = sscanf(token, "%3s %16s %16s %16s", symbol, args[0], args[1], args[2]);
             if (m < 2) {
                 sprintf(response, "NAK. Ill-defined volume component.   m = %d" RKEOL, m);
-                everythingOkay = false;
+                valid = false;
                 break;
             }
             if (*symbol == 'p') {
@@ -891,13 +902,13 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
                 mode = RKScanModeSpeedDown;
             } else {
                 RKLog("%s Error. Scan mode '%s' not undersood.\n", engine->name, symbol);
-                everythingOkay = false;
+                valid = false;
                 break;
             }
             o = sscanf(args[0], "%f,%f", &elevationStart, &elevationEnd);
             if (o < 1) {
                 sprintf(response, "NAK. Ill-defined volume component.   o = %d" RKEOL, o);
-                everythingOkay = false;
+                valid = false;
                 break;
             } else if (o == 1) {
                 elevationEnd = elevationStart;
@@ -905,7 +916,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             o = sscanf(args[1], "%f,%f", &azimuthStart, &azimuthEnd);
             if (o < 1) {
                 sprintf(response, "NAK. Ill-defined volume component.   o = %d" RKEOL, o);
-                everythingOkay = false;
+                valid = false;
                 break;
             } else if (o == 1) {
                 azimuthEnd = azimuthStart;
@@ -928,23 +939,35 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         const float elevation = atof(args[0]);
         const float azimuth = atof(args[1]);
+        // float a = atof(args[1]) - engine->radarDescription->heading;
+        // if (a < 0.0f) {
+        //     a += 360.0f;
+        // } else if (a > 360.f) {
+        //     a -= 360.0f;
+        // }
+        // const float azimuth = a;
 
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 30.0f);
-        RKLog("%s Adding a point command %.2f %.2f as a pinch sweep   onlyOnce = %s\n", engine->name, elevation, azimuth, onlyOnce ? "true" : "false");
         RKSteerEngineAddPinchSweep(engine, scan);
+        RKLog("%s Adding a point sweep (%.2f, %.2f)    valid = %s   onlyOnce = %s\n", engine->name,
+            elevation, azimuth,
+            valid ? "true" : "false",
+            onlyOnce ? "true" : "false");
+        RKLog(">%s onDeckCount = %u\n", engine->name, engine->vcpHandle.onDeckCount);
 
         created = true;
 
     }
 
-    if (everythingOkay) {
+    if (valid) {
+        RKSteerEngineScanSummary(engine, response);
+
         if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
             RKSteerEngineNextHitter(engine);
         }
-        RKSteerEngineScanSummary(engine, response);
 
         if (created) {
-            int k = sprintf(engine->dump, "Scan object created.\n");
+            int k = sprintf(engine->dump, "Scan object created. %u %u %u\n", engine->vcpHandle.sweepCount, engine->vcpHandle.onDeckCount, engine->vcpHandle.inTheHoleCount);
             RKIndentCopy(engine->dump + k, response, 31);
             RKStripTail(engine->dump);
             RKLog("%s %s\n", engine->name, engine->dump);
@@ -959,9 +982,9 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 }
 
 RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
-                                             const float elevationStart, const float elevationEnd,
-                                             const float azimuthStart, const float azimuthEnd,
-                                             const float rate) {
+                                     const float elevationStart, const float elevationEnd,
+                                     const float azimuthStart, const float azimuthEnd,
+                                     const float rate) {
     RKScanPath sweep = {
         .mode = mode,
         .azimuthStart   = azimuthStart,
@@ -976,7 +999,8 @@ RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
 
 #define RKDigitWidth(v, n)  (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)
 
-static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKScanHitter linetag) {
+static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int count, const RKScanHitter linetag) {
+    size_t k = 0;
     char prefix[8];
     switch (linetag){
         case RKScanAtBat:
@@ -1018,54 +1042,67 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
         switch (scanPaths[i].mode) {
             case RKScanModePPI:
                 sprintf(format, "%%7s%%d : PPI EL %%%d.1f°   AZ %%%d.1f°   @ %%%d.1f°/s\n", es, ae, av);
-                sprintf(string + strlen(string), format,
-                        prefix,
-                        i,
-                        scanPaths[i].elevationStart,
-                        scanPaths[i].azimuthEnd,
-                        scanPaths[i].azimuthSlew);
+                k += sprintf(string + k, format,
+                             prefix,
+                             i,
+                             scanPaths[i].elevationStart,
+                             scanPaths[i].azimuthEnd,
+                             scanPaths[i].azimuthSlew);
                 break;
             case RKScanModeRHI:
                 sprintf(format, "%%7s%%d : RHI AZ %%%d.1f°   EZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", as, es, ee, ev);
-                sprintf(string + strlen(string), format,
-                        prefix,
-                        i,
-                        scanPaths[i].azimuthStart,
-                        scanPaths[i].elevationStart,
-                        scanPaths[i].elevationEnd,
-                        scanPaths[i].elevationSlew);
+                k += sprintf(string + k, format,
+                             prefix,
+                             i,
+                             scanPaths[i].azimuthStart,
+                             scanPaths[i].elevationStart,
+                             scanPaths[i].elevationEnd,
+                             scanPaths[i].elevationSlew);
                 break;
             case RKScanModeSector:
                 sprintf(format, "%%7s%%d : SEC EL %%%d.1f°   AZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", es, as, ae, av);
-                sprintf(string + strlen(string), format,
-                        prefix,
-                        i,
-                        scanPaths[i].elevationStart,
-                        scanPaths[i].azimuthStart,
-                        scanPaths[i].azimuthEnd,
-                        scanPaths[i].azimuthSlew);
+                k += sprintf(string + k, format,
+                             prefix,
+                             i,
+                             scanPaths[i].elevationStart,
+                             scanPaths[i].azimuthStart,
+                             scanPaths[i].azimuthEnd,
+                             scanPaths[i].azimuthSlew);
+                break;
+            case RKScanModePoint:
+                k += sprintf(string + k, "%7s%d PNT EL %.1f°   AZ %.1f°\n",
+                             prefix,
+                             i,
+                             scanPaths[i].elevationStart,
+                             scanPaths[i].azimuthStart);
                 break;
             case RKScanModeSpeedDown:
-                sprintf(string + strlen(string), "%s%d : PPI_SLOWDOWN\n",
-                        prefix,
-                        i);
+                k += sprintf(string + k, "%s%d : PPI_SLOWDOWN\n",
+                             prefix,
+                             i);
+                break;
             default:
+                k += sprintf(string + k, "%7s%d UNK EL %.1f° / %.1f°   AZ %.1f° / %.1f°\n",
+                             prefix,
+                             i,
+                             scanPaths[i].elevationStart,
+                             scanPaths[i].elevationEnd,
+                             scanPaths[i].azimuthStart,
+                             scanPaths[i].azimuthEnd);
                 break;
         }
     }
+    return k;
 }
 
 
 void RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     RKScanObject *V = &engine->vcpHandle;
-    string[0] = '\0';
-    RKLog("%s %u %u %u\n", engine->name, V->sweepCount, V->onDeckCount, V->inTheHoleCount);
-    makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
-    // if (memcmp(V->inTheHoleScans, V->onDeckScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath))) {
-    if (memcmp(V->inTheHoleScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath))) {
-        makeSweepMessage(V->onDeckScans, string, V->onDeckCount, RKScanPinch);
+    size_t s = makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
+    if (V->onDeckCount != V->inTheHoleCount) {
+        s += makeSweepMessage(V->onDeckScans, string + s, V->onDeckCount, RKScanPinch);
     }
-    makeSweepMessage(V->inTheHoleScans, string, V->inTheHoleCount, RKScanLine);
+    makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
 }
 
 char *RKSteerEngineStatusString(RKSteerEngine *engine) {
