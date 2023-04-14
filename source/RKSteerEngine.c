@@ -86,6 +86,7 @@ float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
 }
 
 void RKSteerEngineStopSweeps(RKSteerEngine *engine) {
+    engine->vcpHandle.progress = RKScanProgressStopPedestal;
     engine->vcpHandle.active = false;
 }
 
@@ -380,19 +381,23 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
 
     RKScanObject *V = &engine->vcpHandle;
 
-    if (V->sweepCount == 0 || V->active == false) {
-        if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
-            action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
-            action->value[a] = 0.0f;
-            V->tic = 0;
-            a++;
+    if (V->active == false || V->sweepCount == 0) {
+        if (V->progress & RKScanProgressStopPedestal) {
+            RKLog("%s Stopping pedestal ...\n", engine->name);
+            if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                action->value[a] = 0.0f;
+                V->tic = 0;
+                a++;
+            }
+            if (fabs(pos->azimuthVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
+                action->value[a] = 0.0f;
+                V->tic = 0;
+            }
+            V->progress ^= RKScanProgressStopPedestal;
+            V->progress = RKScanProgressNone;
         }
-        if (fabs(pos->azimuthVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
-            action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
-            action->value[a] = 0.0f;
-            V->tic = 0;
-        }
-        V->progress = RKScanProgressNone;
         RKSteerEngineUpdateStatusString(engine);
         return action;
     }
@@ -717,7 +722,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         RKSteerEngineClearDeck(engine);
         onlyOnce = true;
     } else if (!strncmp("point", command, 5)) {
-        RKSteerEngineStopSweeps(engine);
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
         onlyOnce = true;
@@ -725,12 +729,12 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         RKSteerEngineStopSweeps(engine);
         sprintf(response, "ACK. Volume stopped." RKEOL);
         return RKResultSuccess;
-    } else if (!strncmp("start", command, 5)) {
+    } else if (!strncmp("start", command, 5) || !strncmp("go", command, 2)) {
         RKSteerEngineStartSweeps(engine);
         RKSteerEngineScanSummary(engine, response);
         sprintf(response + strlen(response), "ACK. Volume resumed." RKEOL);
         return RKResultSuccess;
-    } else if (!strncmp("summ", command, 4)) {
+    } else if (!strncmp("summ", command, 4) || !strncmp("status", command, 5)) {
         RKSteerEngineScanSummary(engine, response);
         sprintf(response + strlen(response), "VCP active: %s\n", engine->vcpHandle.active ? "true" : "false");
         sprintf(response + strlen(response), "ACK. Volume summary retrieved successfully." RKEOL);
@@ -924,8 +928,12 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         const float elevation = atof(args[0]);
         const float azimuth = atof(args[1]);
+
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, 30.0f);
+        RKLog("%s Adding a point command %.2f %.2f as a pinch sweep   onlyOnce = %s\n", engine->name, elevation, azimuth, onlyOnce ? "true" : "false");
         RKSteerEngineAddPinchSweep(engine, scan);
+
+        created = true;
 
     }
 
@@ -1051,8 +1059,10 @@ static void makeSweepMessage(RKScanPath *scanPaths, char *string, int count, RKS
 void RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     RKScanObject *V = &engine->vcpHandle;
     string[0] = '\0';
+    RKLog("%s %u %u %u\n", engine->name, V->sweepCount, V->onDeckCount, V->inTheHoleCount);
     makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
-    if (memcmp(V->inTheHoleScans, V->onDeckScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath))) {
+    // if (memcmp(V->inTheHoleScans, V->onDeckScans, (V->onDeckCount + V->inTheHoleCount) * sizeof(RKScanPath))) {
+    if (memcmp(V->inTheHoleScans, V->onDeckScans, V->onDeckCount * sizeof(RKScanPath))) {
         makeSweepMessage(V->onDeckScans, string, V->onDeckCount, RKScanPinch);
     }
     makeSweepMessage(V->inTheHoleScans, string, V->inTheHoleCount, RKScanLine);
