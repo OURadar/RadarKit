@@ -96,9 +96,9 @@ void RKSteerEngineStartSweeps(RKSteerEngine *engine) {
 
 void RKSteerEngineClearSweeps(RKSteerEngine *engine) {
     engine->vcpHandle.progress = RKScanProgressNone;
-    engine->vcpHandle.sweepCount = 0;
-    engine->vcpHandle.onDeckCount = 0;
     engine->vcpHandle.inTheHoleCount = 0;
+    engine->vcpHandle.onDeckCount = 0;
+    engine->vcpHandle.sweepCount = 0;
     engine->vcpHandle.i = 0;
 }
 
@@ -812,20 +812,23 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
     // The rest of the function assumes a scan / volume will be created
     if (RKSteerCommandIsMotion(command)) {
-        RKSteerEngineSetScanRepeat(engine, true);
-        RKSteerEngineClearHole(engine);
+        if (motion == RKSteerCommandPoint) {
+            RKSteerEngineSetScanRepeat(engine, false);
+        } else {
+            RKSteerEngineSetScanRepeat(engine, true);
+        }
     } else {
         sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
         RKLog("%s Non-motion commands should not be here.\n", engine->name);
         return RKResultFailedToExecuteCommand;
     }
 
-    if (RKSteerCommandIsImmediate(command)) {
+    if (immediatelyDo) {
         RKSteerEngineClearSweeps(engine);
-    }
-
-    if (RKSteerCommandIsOnce(command)) {
+    } else if (onlyOnce) {
         RKSteerEngineClearDeck(engine);
+    } else {
+        RKSteerEngineClearHole(engine);
     }
 
     bool valid = true;
@@ -929,7 +932,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
             flip = !flip;
         }
 
-    //} else if (!strncmp("vol", type, 3) || !strncmp("ivol", type, 3) || !strncmp("ovol", type, 3)) {
     } else if (motion == RKSteerCommandVolume) {
 
         if (n < 2) {
