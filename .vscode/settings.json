@@ -19,10 +19,7 @@
     "${HOMEBREW_PREFIX}/include",
     "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
   ],
-  "C_Cpp_Runner.includeSearch": [
-    "*",
-    "**/*"
-  ],
+  "C_Cpp_Runner.includeSearch": ["*", "**/*"],
   "C_Cpp_Runner.excludeSearch": [
     "**/build",
     "**/build/**",
@@ -46,7 +43,22 @@
     "**/templates/**/*": "django-txt",
     "**/requirements{/**,*}.{txt,in}": "pip-requirements",
     "*.c": "c",
-    "*.h": "c"
+    "*.h": "c",
+    "__hash_table": "c",
+    "__tuple": "c",
+    "array": "c",
+    "type_traits": "c",
+    "forward_list": "c",
+    "limits": "c",
+    "ratio": "c",
+    "tuple": "c",
+    "variant": "c",
+    "chrono": "c",
+    "cstddef": "c",
+    "random": "c",
+    "compare": "c",
+    "functional": "c",
+    "utility": "c"
   },
   "C_Cpp.default.compilerPath": "/usr/bin/clang",
   "C_Cpp.default.cppStandard": "c++11",

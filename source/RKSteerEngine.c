@@ -155,6 +155,22 @@ int RKSteerEngineAddPinchSweep(RKSteerEngine *engine, const RKScanPath scan) {
     return RKResultSuccess;
 }
 
+RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
+                                     const float elevationStart, const float elevationEnd,
+                                     const float azimuthStart, const float azimuthEnd,
+                                     const float rate) {
+    RKScanPath sweep = {
+        .mode = mode,
+        .azimuthStart   = azimuthStart,
+        .azimuthEnd     = azimuthEnd,
+        .azimuthSlew    = rate,
+        .elevationStart = elevationStart,
+        .elevationEnd   = elevationEnd,
+        .elevationSlew  = rate
+    };
+    return sweep;
+}
+
 #pragma mark - Delegate Workers
 
 static void *steerer(void *_in) {
@@ -719,77 +735,101 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     return action;
 }
 
-int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char _Nullable *response) {
-    char args[4][256] = {"", "", "", ""};
-    const int n = sscanf(command, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
+enum RKSteerCommand RKSteerCommandFromString(const char *string) {
+    char token[64];
+    sscanf(string, "%63s %*s", token);
+    enum RKSteerCommand type = RKSteerCommandNone;
+    if (!strcmp("home", token)) {
+        type = RKSteerCommandHome;
+    } else if (!strcmp("point", token)) {
+        type = RKSteerCommandPoint;
+    } else if (!strcmp("pp", token)) {
+        type = RKSteerCommandPPISet;
+    } else if (!strcmp("ipp", token)) {
+        type = RKSteerCommandPPISet | RKSteerCommandImmediate;
+    } else if (!strcmp("opp", token)) {
+        type = RKSteerCommandPPISet | RKSteerCommandOnce;
+    } else if (!strcmp("rr", token)) {
+        type = RKSteerCommandRHISet;
+    } else if (!strcmp("irr", token)) {
+        type = RKSteerCommandRHISet | RKSteerCommandImmediate;
+    } else if (!strcmp("orr", token)) {
+        type = RKSteerCommandRHISet | RKSteerCommandOnce;
+    } else if (!strcmp("vol", token)) {
+        type = RKSteerCommandVolume;
+    } else if (!strcmp("ivol", token)) {
+        type = RKSteerCommandVolume | RKSteerCommandImmediate;
+    } else if (!strcmp("ovol", token)) {
+        type = RKSteerCommandVolume | RKSteerCommandOnce;
+    } else if (!strcmp("summ", token) && !strncmp("stat", token, 4)) {
+        type = RKSteerCommandSummary;
+    }
+    return type;
+}
 
-    bool immediatelyDo = false;
-    bool onlyOnce = false;
+bool RKSteerEngineIsExecutable(const char *string) {
+    return (RKSteerCommandFromString(string) & RKSteerCommandInstructionMask) != RKSteerCommandNone;
+}
+
+int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _Nullable *response) {
+    char args[4][256] = {"", "", "", ""};
+    const int n = sscanf(string, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
+    const enum RKSteerCommand command = RKSteerCommandFromString(string);
+    const bool immediatelyDo = RKSteerCommandIsImmediate(command);
+    const bool onlyOnce = RKSteerCommandIsOnce(command);
+
+    RKLog("%s command = 0x%04x\n", engine->name, command);
 
     float azimuthStart, azimuthEnd, elevationStart, elevationEnd, rate;
 
     size_t s;
 
-    if (engine->verbose > 1 && (*command == 'r' || *command == 'p')) {
-        RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
+    if (engine->verbose > 1 && RKSteerCommandIsMotion(command)) {
+        RKLog("%s command = '%x' -> ['%s', '%s', '%s', '%s']\n", engine->name, command, args[0], args[1], args[2], args[3]);
     }
 
     if (response == NULL) {
         response = engine->dump;
     }
 
-    if (!strncmp("pp", command, 2) || !strncmp("rr", command, 2) || !strncmp("vol", command, 3)) {
+    switch (command) {
+        case RKSteerCommandSummary:
+            s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
+            s += RKSteerEngineScanSummary(engine, response + s);
+            sprintf(response + s, "%s   %s   %s   %s" RKEOL,
+                RKVariableInString("active", &engine->vcpHandle.active, RKValueTypeBool),
+                RKVariableInString("sweepCount", &engine->vcpHandle.sweepCount, RKValueTypeUInt16),
+                RKVariableInString("onDeckCount", &engine->vcpHandle.onDeckCount, RKValueTypeUInt16),
+                RKVariableInString("inTheHoleCount", &engine->vcpHandle.inTheHoleCount, RKValueTypeUInt16));
+            return RKResultSuccess;
+            break;
+        default:
+            break;
+    }
+
+    enum RKSteerCommand motion = command & RKSteerCommandInstructionMask;
+
+    // The rest of the function assumes a scan / volume will be created
+    if (RKSteerCommandIsMotion(command)) {
         RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearHole(engine);
-    } else if (!strncmp("ipp", command, 3) || !strncmp("irr", command, 3) || !strncmp("ivol", command, 4)) {
-        RKSteerEngineSetScanRepeat(engine, true);
-        RKSteerEngineClearSweeps(engine);
-        immediatelyDo = true;
-    } else if (!strncmp("opp", command, 3) || !strncmp("orr", command, 3) || !strncmp("ovol", command, 4)) {
-        RKSteerEngineSetScanRepeat(engine, true);
-        RKSteerEngineClearDeck(engine);
-        onlyOnce = true;
-    } else if (!strncmp("home", command, 4) || !strncmp("point", command, 5)) {
-        RKSteerEngineSetScanRepeat(engine, false);
-        RKSteerEngineClearSweeps(engine);
-        immediatelyDo = true;
-        onlyOnce = true;
-    } else if (!strncmp("stop", command, 4)) {
-        RKSteerEngineStopSweeps(engine);
-        sprintf(response, "ACK. Volume stopped." RKEOL);
-        return RKResultSuccess;
-    } else if (!strncmp("start", command, 5) || !strncmp("run", command, 3) || !strncmp("go", command, 2)) {
-        RKSteerEngineArmSweeps(engine, RKScanRepeatForever);
-        s = sprintf(response, "ACK. Volume starts.\n\n");
-        s += RKSteerEngineScanSummary(engine, response + s);
-        sprintf(response + s - 1, RKEOL);
-        return RKResultSuccess;
-    } else if (!strncmp("once", command, 4)) {
-        RKSteerEngineArmSweeps(engine, RKScanRepeatNone);
-        RKLog("%s repeat = %s\n", engine->name, engine->vcpHandle.option & RKScanOptionRepeat ? "true" : "false");
-        s = sprintf(response, "ACK. Volume once.\n\n");
-        s += RKSteerEngineScanSummary(engine, response + s);
-        sprintf(response + s - 1, RKEOL);
-        return RKResultSuccess;
-    } else if (!strncmp("summ", command, 4) || !strncmp("stat", command, 4)) {
-        s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
-        s += RKSteerEngineScanSummary(engine, response + s);
-        sprintf(response + s, "%s   %s   %s   %s" RKEOL,
-            RKVariableInString("active", &engine->vcpHandle.active, RKValueTypeBool),
-            RKVariableInString("sweepCount", &engine->vcpHandle.sweepCount, RKValueTypeUInt16),
-            RKVariableInString("onDeckCount", &engine->vcpHandle.onDeckCount, RKValueTypeUInt16),
-            RKVariableInString("inTheHoleCount", &engine->vcpHandle.inTheHoleCount, RKValueTypeUInt16));
-        return RKResultSuccess;
     } else {
-        sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, command);
+        sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
+        RKLog("%s Non-motion commands should not be here.\n", engine->name);
         return RKResultFailedToExecuteCommand;
     }
 
-    // The rest of the function assumes a volume will be created
+    if (RKSteerCommandIsImmediate(command)) {
+        RKSteerEngineClearSweeps(engine);
+    }
+
+    if (RKSteerCommandIsOnce(command)) {
+        RKSteerEngineClearDeck(engine);
+    }
 
     bool valid = true;
 
-    if (!strncmp("pp", command, 2) || !strncmp("ipp", command, 3) || !strncmp("opp", command, 3)) {
+    if (motion == RKSteerCommandPPISet) {
 
         // pp 2,4,6,8,10 45 18 - PPI at elevations [2, 4, 6, 8, 10] degs, azimuth 45, speed 18 deg/s
 
@@ -837,7 +877,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             token = strtok(NULL, comma);
         }
 
-    } else if (!strncmp("rr", command, 2) || !strncmp("irr", command, 3) || !strncmp("orr", command, 3)) {
+    } else if (motion == RKSteerCommandRHISet) {
 
         // rr 0,20 10,20,30 10 - RHI at elevations [0, 20] degs, azimuths [10, 20, 30], speed 10 deg/s
 
@@ -888,7 +928,8 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             flip = !flip;
         }
 
-    } else if (!strncmp("vol", command, 3) || !strncmp("ivol", command, 3) || !strncmp("ovol", command, 3)) {
+    //} else if (!strncmp("vol", type, 3) || !strncmp("ivol", type, 3) || !strncmp("ovol", type, 3)) {
+    } else if (motion == RKSteerCommandVolume) {
 
         if (n < 2) {
             sprintf(response, "NAK. Ill-defined volume array." RKEOL);
@@ -900,10 +941,14 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         int o;
 
         int k = 0;
-        char *token = strchr(command, ' ');
+        char *token = strchr(string, ' ');
         do {
             token++;
         } while (*token == ' ' && k++ < 10);
+        if (*token == ' ') {
+            RKLog("%s Unxpected vol command string\n", engine->name);
+            return RKResultFailedToSetVCP;
+        }
         strncpy(engine->scanString, token, RKMaximumStringLength - 1);
 
         RKScanMode mode = RKScanModeSpeedDown;
@@ -959,7 +1004,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
             token = strtok(NULL, slash);
         }
 
-    } else if (!strncmp("point", command, 5)) {
+    } else if (motion == RKSteerCommandPoint) {
 
         const float elevation = atof(args[0]);
         const float azimuth = atof(args[1]);
@@ -967,7 +1012,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
 
-    } else if (!strncmp("home", command, 4)) {
+    } else if (motion == RKSteerCommandHome) {
 
         const float azimuth = -engine->radarDescription->heading;
         const float elevation = 0.0f;
@@ -998,22 +1043,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     }
 
     return RKResultSuccess;
-}
-
-RKScanPath RKSteerEngineMakeScanPath(RKScanMode mode,
-                                     const float elevationStart, const float elevationEnd,
-                                     const float azimuthStart, const float azimuthEnd,
-                                     const float rate) {
-    RKScanPath sweep = {
-        .mode = mode,
-        .azimuthStart   = azimuthStart,
-        .azimuthEnd     = azimuthEnd,
-        .azimuthSlew    = rate,
-        .elevationStart = elevationStart,
-        .elevationEnd   = elevationEnd,
-        .elevationSlew  = rate
-    };
-    return sweep;
 }
 
 #define RKDigitWidth(v, n)  (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)

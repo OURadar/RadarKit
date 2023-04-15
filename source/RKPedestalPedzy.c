@@ -240,31 +240,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
 
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
-    // } else if (!strncmp("go", command, 2) || !strncmp("run", command, 3)) {
-    //     RKSteerEngineArmSweeps(steerEngine, RKScanRepeatForever);
-    //     sprintf(response, "ACK. Go." RKEOL);
-    // } else if (!strncmp("once", command, 4)) {
-    //     RKSteerEngineArmSweeps(steerEngine, RKScanRepeatNone);
-    //     sprintf(response, "ACK. Once." RKEOL);
-    // } else if (!strncmp("summ", command, 4)) {
-    //     RKSteerEngineScanSummary(steerEngine, response);
-    //     sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
-    } else if (!strncmp("pp", command, 2) ||
-               !strncmp("ipp", command, 3) ||
-               !strncmp("opp", command, 3) ||
-               !strncmp("rr", command, 2) ||
-               !strncmp("irr", command, 3) ||
-               !strncmp("orr", command, 3) ||
-               !strncmp("vol", command, 3) ||
-               !strncmp("ivol", command, 4) ||
-               !strncmp("ovol", command, 4) ||
-               !strncmp("point", command, 5) ||
-               !strncmp("state", command, 5) ||
-               !strncmp("summ", command, 4) ||
-               !strncmp("start", command, 5) ||
-               !strncmp("once", command, 4) ||
-               !strncmp("run", command, 3) ||
-               !strncmp("go", command, 2)) {
+    } else if (RKSteerEngineIsExecutable(command)) {
         size_t s = sprintf(response,
                            RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                            "    Use the 'v' command for RadarKit VCP engine\n");
