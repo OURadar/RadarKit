@@ -4045,14 +4045,8 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedElevation = 0.0f;
         pedestal->targetSpeedAzimuth = 0.0f;
-        RKSteerEngineStopSweeps(radar->steerEngine);
+        // RKSteerEngineStopSweeps(radar->steerEngine);
         sprintf(response, "ACK. Pedestal stopped." RKEOL);
-    } else if (!strncmp(command, "go", 2) || !strncmp("run", command, 3)) {
-        RKSteerEngineArmSweeps(radar->steerEngine, RKScanRepeatForever);
-        sprintf(response, "ACK. Go." RKEOL);
-    } else if (!strncmp(command, "once", 4)) {
-        RKSteerEngineArmSweeps(radar->steerEngine, RKScanRepeatNone);
-        sprintf(response, "ACK. Once." RKEOL);
     } else if (!strncmp(command, "astop", 5)) {
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedAzimuth = 0.0f;
@@ -4104,14 +4098,17 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
                !strncmp("vol", command, 3) ||
                !strncmp("ivol", command, 4) ||
                !strncmp("ovol", command, 4) ||
-               !strncmp("point", command, 5)) {
-        int k = sprintf(response,
-                        RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
-                        "    Use the 'v' command for RadarKit VCP engine\n");
-        RKSteerEngineExecuteString(steeven, command, response + k);
-    } else if (!strncmp(command, "summ", 4)) {
-        RKSteerEngineScanSummary(steeven, response);
-        sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
+               !strncmp("point", command, 5) ||
+               !strncmp("state", command, 5) ||
+               !strncmp("summ", command, 4) ||
+               !strncmp("start", command, 5) ||
+               !strncmp("once", command, 4) ||
+               !strncmp("run", command, 3) ||
+               !strncmp("go", command, 2)) {
+        size_t s = sprintf(response,
+                           RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
+                           "    Use the 'v' command for RadarKit VCP engine\n");
+        RKSteerEngineExecuteString(steeven, command, response + s);
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"

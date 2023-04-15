@@ -741,11 +741,11 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
     if (!strncmp("pp", command, 2) || !strncmp("rr", command, 2) || !strncmp("vol", command, 3)) {
         RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearHole(engine);
-    } else if (*command == 'i') {
+    } else if (!strncmp("ipp", command, 3) || !strncmp("irr", command, 3) || !strncmp("ivol", command, 4)) {
         RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearSweeps(engine);
         immediatelyDo = true;
-    } else if (*command == 'o') {
+    } else if (!strncmp("opp", command, 3) || !strncmp("orr", command, 3) || !strncmp("ovol", command, 4)) {
         RKSteerEngineSetScanRepeat(engine, true);
         RKSteerEngineClearDeck(engine);
         onlyOnce = true;
@@ -758,18 +758,19 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         RKSteerEngineStopSweeps(engine);
         sprintf(response, "ACK. Volume stopped." RKEOL);
         return RKResultSuccess;
-    } else if (!strncmp("start", command, 5) || !strncmp("go", command, 2)) {
-        s = sprintf(response, "ACK. Volume starts / resumes.\n\n");
+    } else if (!strncmp("start", command, 5) || !strncmp("run", command, 3) || !strncmp("go", command, 2)) {
+        RKSteerEngineArmSweeps(engine, RKScanRepeatForever);
+        s = sprintf(response, "ACK. Volume starts.\n\n");
         s += RKSteerEngineScanSummary(engine, response + s);
         sprintf(response + s - 1, RKEOL);
-        RKSteerEngineStartSweeps(engine);
         return RKResultSuccess;
     } else if (!strncmp("once", command, 4)) {
-        RKSteerEngineSetScanRepeat(engine, false);
+        RKSteerEngineArmSweeps(engine, RKScanRepeatNone);
+        RKLog("%s repeat = %s\n", engine->name, engine->vcpHandle.option & RKScanOptionRepeat ? "true" : "false");
         s = sprintf(response, "ACK. Volume once.\n\n");
         s += RKSteerEngineScanSummary(engine, response + s);
         sprintf(response + s - 1, RKEOL);
-        RKSteerEngineStartSweeps(engine);
+        return RKResultSuccess;
     } else if (!strncmp("summ", command, 4) || !strncmp("stat", command, 4)) {
         s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
         s += RKSteerEngineScanSummary(engine, response + s);
@@ -1127,7 +1128,9 @@ size_t RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     if (V->onDeckCount != V->inTheHoleCount) {
         s += makeSweepMessage(V->onDeckScans, string + s, V->onDeckCount, RKScanPinch);
     }
-    s += makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
+    if (V->option & RKScanOptionRepeat) {
+        s += makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
+    }
     return s;
 }
 
