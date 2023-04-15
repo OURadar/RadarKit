@@ -982,7 +982,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
         char *summary = response + s;
 
         s += RKSteerEngineScanSummary(engine, response + s);
-        RKStripTail(response);
 
         if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
             RKSteerEngineNextHitter(engine);
@@ -990,6 +989,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         int k = sprintf(engine->dump, "New volume\n");
         RKIndentCopy(engine->dump + k, summary, 31);
+        RKStripTail(engine->dump);
         RKLog("%s %s\n", engine->name, engine->dump);
 
         if (immediatelyDo) {
