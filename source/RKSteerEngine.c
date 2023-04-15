@@ -1063,7 +1063,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
         char *summary = response + s;
 
-        RKSteerEngineScanSummary(engine, response + s);
+        s += RKSteerEngineScanSummary(engine, response + s);
         RKStripTail(response);
 
         if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
@@ -1074,7 +1074,11 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         RKIndentCopy(engine->dump + k, summary, 31);
         RKLog("%s %s\n", engine->name, engine->dump);
 
-        strcat(response, RKEOL);
+        if (immediatelyDo) {
+            sprintf(response + s, "ACK. Volume in effect." RKEOL);
+        } else {
+            sprintf(response + s, "ACK. Volume in queue." RKEOL);
+        }
     } else {
         return RKResultFailedToSetVCP;
     }
