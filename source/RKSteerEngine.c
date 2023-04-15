@@ -761,7 +761,7 @@ enum RKSteerCommand RKSteerCommandFromString(const char *string) {
         type = RKSteerCommandVolume | RKSteerCommandImmediate;
     } else if (!strcmp("ovol", token)) {
         type = RKSteerCommandVolume | RKSteerCommandOnce;
-    } else if (!strcmp("summ", token) && !strncmp("stat", token, 4)) {
+    } else if (!strcmp("summ", token) || !strncmp("stat", token, 4)) {
         type = RKSteerCommandSummary;
     }
     return type;
@@ -778,7 +778,8 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
     const bool immediatelyDo = RKSteerCommandIsImmediate(command);
     const bool onlyOnce = RKSteerCommandIsOnce(command);
 
-    RKLog("%s command = 0x%04x\n", engine->name, command);
+    RKLog("%s Interpreted %s\n", engine->name,
+        RKVariableInString("command", &command, RKValueTypeInt32InHex));
 
     float azimuthStart, azimuthEnd, elevationStart, elevationEnd, rate;
 
@@ -792,7 +793,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         response = engine->dump;
     }
 
-    switch (command) {
+    switch (command & RKSteerCommandInstructionMask) {
         case RKSteerCommandSummary:
             s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
             s += RKSteerEngineScanSummary(engine, response + s);
@@ -1018,6 +1019,11 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         const float elevation = 0.0f;
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
+
+    } else {
+
+        sprintf(response, "NAK. Nothing." RKEOL);
+        return RKResultFailedToSetVCP;
 
     }
 
