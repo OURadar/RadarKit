@@ -1268,10 +1268,10 @@ typedef union rk_position {
         float                azimuthDegrees;                                   // Decoded elevation
         float                elevationVelocityDegreesPerSecond;                // Decoded velocity of elevation
         float                azimuthVelocityDegreesPerSecond;                  // Decoded velocity of azimuth
-        float                elevationCounter;                                 // Progress counter (of target) of the elevation
-        float                elevationTarget;                                  // Targeted progress counter of the elevation
-        float                azimuthCounter;                                   // Progress counter (of target) of the azimuth
-        float                azimuthTarget;                                    // Targeted progress counter of the azimuth
+        float                reserved1;                                        //
+        float                reserved2;                                        //
+        float                reserved3;                                        //
+        float                reserved4;                                        //
         float                sweepElevationDegrees;                            // Set elevation for current sweep
         float                sweepAzimuthDegrees;                              // Set azimuth for current sweep
         struct timeval       time;                                             // Time in struct timeval

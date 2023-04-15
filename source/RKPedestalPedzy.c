@@ -72,17 +72,9 @@ static int pedestalPedzyRead(RKClient *client) {
                 newPosition->elevationDegrees, newPosition->elevationVelocityDegreesPerSecond);
         }
 
-        // Add other flags based on radar->steerEngine
-        //RKSteerEngineUpdatePositionFlags(steerEngine, newPosition);
-
         // Note to myself: Could consider adding something similar to the RKRadar abstraction layer
-        // That way, the thought process is consistent like RKSetPositionRead();
-        //
-        // RKUpdatePositionFlags(radar, newPosition);
-        //
+        // That way, the thought process is consistent like RKGetPulse(), RKGetRay(), etc.
 
-        // Get the latest action, could be null
-        // Same here, add one to the RKRadar layer?
         RKScanAction *action = RKSteerEngineGetAction(steerEngine, newPosition);
 
         RKSetPositionReady(radar, newPosition);

@@ -345,7 +345,7 @@ void RKSteerEngineUpdatePositionFlags(RKSteerEngine *engine, RKPosition *positio
     if (V->active) {
         const RKScanPath *scan = &V->batterScans[V->i];
         position->flag |= RKPositionFlagVCPActive;
-        // Sweep is active: data collection portion (i.e., exclude transitions)
+        // Sweep is active: data collection portion (i.e., exclude non-RKScanProgressMiddle)
         if (V->progress & RKScanProgressMiddle) {
             position->flag |= RKPositionFlagScanActive;
         }
@@ -360,8 +360,10 @@ void RKSteerEngineUpdatePositionFlags(RKSteerEngine *engine, RKPosition *positio
                 position->flag |= RKPositionFlagAzimuthPoint;
                 position->flag |= RKPositionFlagElevationSweep;
                 break;
-            default:
+            case RKScanModePoint:
                 position->flag |= RKPositionFlagAzimuthPoint | RKPositionFlagElevationPoint;
+                break;
+            default:
                 break;
         }
         // Completion flag
@@ -373,6 +375,9 @@ void RKSteerEngineUpdatePositionFlags(RKSteerEngine *engine, RKPosition *positio
                     break;
                 case RKScanModeRHI:
                     position->flag |= RKPositionFlagElevationComplete;
+                    break;
+                case RKScanModePoint:
+                    position->flag |= RKPositionFlagAzimuthComplete | RKPositionFlagElevationComplete;
                     break;
                 default:
                     break;
@@ -984,7 +989,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *command, char 
 
         int k = sprintf(engine->dump, "New volume\n");
         RKIndentCopy(engine->dump + k, summary, 31);
-        RKStripTail(engine->dump);
         RKLog("%s %s\n", engine->name, engine->dump);
 
         strcat(response, RKEOL);

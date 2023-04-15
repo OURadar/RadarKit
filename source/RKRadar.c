@@ -2758,6 +2758,8 @@ RKPosition *RKGetVacantPosition(RKRadar *radar) {
     }
     if (radar->state & RKRadarStateLive) {
         position->i += radar->desc.positionBufferDepth;
+        position->sweepElevationDegrees = 0.0f;
+        position->sweepAzimuthDegrees = 0.0f;
     }
     radar->positions[RKNextNModuloS(radar->positionIndex, radar->desc.positionBufferDepth / 8, radar->desc.positionBufferDepth)].flag = RKPositionFlagVacant;
     return position;
