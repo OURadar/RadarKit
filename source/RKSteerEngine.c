@@ -874,6 +874,10 @@ enum RKSteerCommand RKSteerCommandFromString(const char *string) {
         type = RKSteerCommandVolume | RKSteerCommandOnce;
     } else if (!strcmp("summ", token) || !strncmp("stat", token, 4)) {
         type = RKSteerCommandSummary;
+    } else if (!strcmp("start", token) || !strcmp("run", token) || !strcmp("go", token)) {
+        type = RKSteerCommandScanStart;
+    } else if (!strcmp("stop", token) || !strcmp("end", token)) {
+        type = RKSteerCommandScanStop;
     }
     return type;
 }
@@ -898,7 +902,9 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         response = engine->dump;
     }
 
-    switch (command & RKSteerCommandInstructionMask) {
+    enum RKSteerCommand motion = command & RKSteerCommandInstructionMask;
+
+    switch (motion) {
         case RKSteerCommandSummary:
             s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
             s += RKSteerEngineScanSummary(engine, response + s);
@@ -909,11 +915,25 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
                 RKVariableInString("inTheHoleCount", &engine->vcpHandle.inTheHoleCount, RKValueTypeUInt16));
             return RKResultSuccess;
             break;
+        case RKSteerCommandScanStart:
+            RKSteerEngineArmSweeps(engine, RKScanRepeatForever);
+            s = sprintf(response, "ACK. Volume starts.\n\n");
+            s += RKSteerEngineScanSummary(engine, response + s);
+            sprintf(response + s - 1, RKEOL);
+            return RKResultSuccess;
+            break;
+        case RKSteerCommandScanStop:
+            RKSteerEngineStopSweeps(engine);
+            sprintf(response, "ACK. Volume stopped." RKEOL);
+            return RKResultSuccess;
+            break;
+        case RKSteerCommandNone:
+            sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
+            return RKResultFailedToExecuteCommand;
+            break;
         default:
             break;
     }
-
-    enum RKSteerCommand motion = command & RKSteerCommandInstructionMask;
 
     // The rest of the function assumes a scan / volume will be created
     if (RKSteerCommandIsMotion(command)) {
