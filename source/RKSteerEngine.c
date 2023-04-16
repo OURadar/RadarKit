@@ -1110,8 +1110,6 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
     return RKResultSuccess;
 }
 
-#define RKDigitWidth(v, n)  (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)
-
 static char *scanModeString(const enum RKScanMode mode) {
     switch (mode) {
         case RKScanModePPI:
