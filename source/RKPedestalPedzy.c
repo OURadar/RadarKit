@@ -244,7 +244,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         size_t s = sprintf(response,
                            RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                            "    Use the 'v' command for RadarKit VCP engine\n");
-        RKSteerEngineExecuteString(steerEngine, command, response + s);
+        return RKSteerEngineExecuteString(steerEngine, command, response + s);
     } else {
         if (client->verbose) {
             RKLog("%s Current client->state = 0x%08x", client->name, client->state);
@@ -257,14 +257,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
         size_t size = snprintf(me->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
-
-        // Commands that need to be forwarded to Pedzy
-        if (!strncmp("stop", command, 4) || !strncmp("zero", command, 4)) {
-            RKSteerEngineStopSweeps(steerEngine);
-            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        } else {
-            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        }
+        RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {
@@ -281,7 +274,6 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         }
         strcpy(response, me->responses[responseIndex]);
     }
-
     return RKResultSuccess;
 }
 

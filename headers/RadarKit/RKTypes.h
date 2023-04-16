@@ -156,9 +156,11 @@
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKBaseRedColor : (x > RKDutyCyleOrangeThreshold ? RKBaseYellowColor : RKBaseGreenColor))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? RKBaseRedColor : (x > RKLagOrangeThreshold      ? RKBaseYellowColor : RKBaseGreenColor))
 
+#define RKDigitWidth(v, n)   (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)
+
 #define ITALIC(x)            "\033[3m" x "\033[23m"
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
-#define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[0m"
+#define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
 
 #define CLAMP(x, lo, hi)     MIN(MAX((x), (lo)), (hi))

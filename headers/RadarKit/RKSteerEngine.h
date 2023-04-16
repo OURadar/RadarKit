@@ -51,10 +51,9 @@ enum RKScanProgress {
 typedef int RKScanOption;
 enum RKScanOption {
     RKScanOptionNone                             = 0,
-    RKScanOptionBrakeElevationDuringSweep        = 1,
-    RKScanOptionRepeat                           = 1 << 1,
-    RKScanOptionVerbose                          = 1 << 2,
-    RKScanOptionUsePoint                         = 1 << 3
+    RKScanOptionRepeat                           = 1,
+    RKScanOptionVerbose                          = 1 << 1,
+    RKScanOptionUsePoint                         = 1 << 2
 };
 
 typedef int RKScanMode;
