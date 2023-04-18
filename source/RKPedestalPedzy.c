@@ -117,7 +117,7 @@ static void *pedestalPedzyHealth(void *in) {
     RKSteerEngine *steerer = radar->steerEngine;
     RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
-    RKStatusEnum vcpActive;
+    RKStatusEnum vcpStatusEnum;
     char azPosition[16];
     char elPosition[16];
     RKStatusEnum azEnum;
@@ -126,7 +126,7 @@ static void *pedestalPedzyHealth(void *in) {
         if (me->client->state < RKClientStateConnected) {
             azInterlockStatus = RKStatusEnumInvalid;
             elInterlockStatus = RKStatusEnumInvalid;
-            vcpActive = RKStatusEnumInvalid;
+            vcpStatusEnum = RKStatusEnumInvalid;
             sprintf(elPosition, "--.-- deg");
             sprintf(azPosition, "--.-- deg");
             azEnum = RKStatusEnumInvalid;
@@ -136,11 +136,11 @@ static void *pedestalPedzyHealth(void *in) {
             azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
-                vcpActive = RKStatusEnumFault;
+                vcpStatusEnum = RKStatusEnumFault;
             } else if (steerer->vcpHandle.active) {
-                vcpActive = RKStatusEnumActive;
+                vcpStatusEnum = RKStatusEnumActive;
             } else {
-                vcpActive = RKStatusEnumStandby;
+                vcpStatusEnum = RKStatusEnumStandby;
             }
             sprintf(elPosition, "%.2f deg", position->elevationDegrees);
             sprintf(azPosition, "%.2f deg", position->azimuthDegrees);
@@ -162,7 +162,7 @@ static void *pedestalPedzyHealth(void *in) {
                     "}",
                     azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
                     elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
-                    vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
+                    vcpStatusEnum == RKStatusEnumActive ? "true" : "false", vcpStatusEnum,
                     azPosition, azEnum,
                     elPosition, elEnum,
                     rate);

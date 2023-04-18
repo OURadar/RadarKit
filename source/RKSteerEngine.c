@@ -846,10 +846,10 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     return action;
 }
 
-enum RKSteerCommand RKSteerCommandFromString(const char *string) {
+RKSteerCommand RKSteerCommandFromString(const char *string) {
     char token[64];
     int s = sscanf(string, "%63s %*s", token);
-    enum RKSteerCommand type = RKSteerCommandNone;
+    RKSteerCommand type = RKSteerCommandNone;
     if (s == 0) {
         return type;
     } else if (!strcmp(token, "home")) {
@@ -889,7 +889,7 @@ bool RKSteerEngineIsExecutable(const char *string) {
 }
 
 int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _Nullable *response) {
-    const enum RKSteerCommand command = RKSteerCommandFromString(string);
+    const RKSteerCommand command = RKSteerCommandFromString(string);
     const bool immediatelyDo = RKSteerCommandIsImmediate(command);
     const bool onlyOnce = RKSteerCommandIsOnce(command);
 
@@ -908,7 +908,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
     bool valid = true;
     char symbol[4] = "";
     char args[4][256] = {"", "", "", ""};
-    enum RKSteerCommand motion = command & RKSteerCommandInstructionMask;
+    RKSteerCommand motion = command & RKSteerCommandInstructionMask;
 
     switch (motion) {
         case RKSteerCommandSummary:
@@ -1110,7 +1110,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
     return RKResultSuccess;
 }
 
-static char *scanModeString(const enum RKScanMode mode) {
+static char *scanModeString(const RKScanMode mode) {
     switch (mode) {
         case RKScanModePPI:
             return "PPI";
