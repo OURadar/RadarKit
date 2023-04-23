@@ -3552,6 +3552,10 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     RKTestTransceiver *transceiver = (RKTestTransceiver *)transceiverReference;
     RKRadar *radar = transceiver->radar;
 
+    if (response == NULL) {
+        response = transceiver->dump;
+    }
+
     int j, k;
     char *c;
     double bandwidth;
@@ -3565,9 +3569,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         if (transceiver->verbose) {
             RKLog("%s Warning. No I/Q processors for '%s'.", transceiver->name, command);
         }
-        if (response != NULL) {
-            sprintf(response, "NAK. No I/Q processors yet." RKEOL);
-        }
+        sprintf(response, "NAK. No I/Q processors yet." RKEOL);
         return RKResultFailedToExecuteCommand;
     }
 
@@ -3592,33 +3594,27 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 transceiver->state |= RKEngineStateDeactivating;
                 pthread_join(transceiver->tidRunLoop, NULL);
                 transceiver->state ^= RKEngineStateDeactivating;
-                if (response != NULL) {
-                    sprintf(response, "ACK. Transceiver stopped." RKEOL);
-                }
+                sprintf(response, "ACK. Transceiver stopped." RKEOL);
                 if (radar->desc.initFlags & RKInitFlagVerbose) {
                     RKLog("%s Stopped.\n", transceiver->name);
                 }
             }
             break;
         case 'h':
-            if (response != NULL) {
-                sprintf(response,
-                        "Commands:\n"
-                        UNDERLINE("help") " - Help list.\n"
-                        UNDERLINE("prt") " [value] - PRT set to value\n"
-                        UNDERLINE("z") " [value] - Sleep interval set to value.\n"
-                        );
-            }
+            sprintf(response,
+                    "Commands:\n"
+                    UNDERLINE("help") " - Help list.\n"
+                    UNDERLINE("prt") " [value] - PRT set to value\n"
+                    UNDERLINE("z") " [value] - Sleep interval set to value.\n"
+                    );
             break;
         case 'p':
             if (!strncmp(command, "prt", 3)) {
                 k = sscanf(command, "%s %lf", string, &value);
                 if (k == 2) {
                     transceiver->prt = value;
-                    if (response != NULL) {
-                        sprintf(response, "ACK. New PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
-                    }
-                } else if (response != NULL) {
+                    sprintf(response, "ACK. New PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                } else {
                     sprintf(response, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
                     break;
                 }
@@ -3626,10 +3622,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 k = sscanf(command, "%s %lf", string, &value);
                 if (k == 2) {
                     transceiver->prt = 1.0 / value;
-                    if (response != NULL) {
-                        sprintf(response, "ACK. New PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
-                    }
-                } else if (response != NULL) {
+                    sprintf(response, "ACK. New PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
+                } else {
                     sprintf(response, "ACK. Current PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
                     break;
                 }
@@ -3654,9 +3648,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         case 's':
             if (!strcmp(command, "stop")) {
                 RKLog("%s Stop transmitting.\n", transceiver->name);
-                if (response != NULL) {
-                    sprintf(response, "ACK. Transmitter Off." RKEOL);
-                }
+                sprintf(response, "ACK. Transmitter Off." RKEOL);
                 break;
             }
             transceiver->sleepInterval = atoi(command + 1);
@@ -3665,9 +3657,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         case 't':
             // Pretend a slow command
             RKPerformMasterTaskInBackground(radar, "w");
-            if (response != NULL) {
-                sprintf(response, "ACK. Command executed." RKEOL);
-            }
+            sprintf(response, "ACK. Command executed." RKEOL);
             break;
         case 'w':
             // Waveform
@@ -3735,7 +3725,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                         RKWaveformDownConvert(waveform);
                         RKWaveformDecimate(waveform, k);
                     }
-                } else if (response != NULL) {
+                } else {
                     sprintf(response, "NAK. Waveform '%s' not found." RKEOL, string);
                     return RKResultFailedToSetWaveform;
                 }
@@ -3748,10 +3738,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 RKLog("%s Warning. Waveform '%s' with %s samples not allowed (capacity = %s).\n", transceiver->name, string,
                       RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                 RKLog("%s Warning. Waveform not changed.\n", transceiver->name);
-                if (response != NULL) {
-                    sprintf(response, "NAK. Waveform '%s' with %s samples not allowed (capacity = %s)." RKEOL, string,
-                            RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
-                }
+                sprintf(response, "NAK. Waveform '%s' with %s samples not allowed (capacity = %s)." RKEOL, string,
+                        RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                 return RKResultFailedToSetWaveform;
             }
             // Next cache index
@@ -3763,9 +3751,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             transceiver->waveformCache[j] = waveform;
             transceiver->waveformCacheIndex = j;
             RKWaveformSummary(waveform);
-            if (response != NULL) {
-                sprintf(response, "ACK. Waveform '%s' loaded." RKEOL, c);
-            }
+            sprintf(response, "ACK. Waveform '%s' loaded." RKEOL, c);
             RKSetWaveform(radar, waveform);
             transceiver->transmitting = true;
             break;
@@ -3778,9 +3764,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             transceiver->transmitting = false;
             break;
         default:
-            if (response != NULL) {
-                sprintf(response, "NAK. Command not understood." RKEOL);
-            }
+            sprintf(response, "NAK. Command not understood." RKEOL);
             break;
     }
     return RKResultSuccess;
@@ -3997,6 +3981,10 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKRadar *radar = pedestal->radar;
     RKSteerEngine *steeven = radar->steerEngine;
 
+    if (response == NULL) {
+        response = pedestal->dump;
+    }
+
     char args[4][256] = {"", "", "", ""};
     const int n = sscanf(command, "%*s %255s %255s %255s %255s", args[0], args[1], args[2], args[3]);
 
@@ -4004,16 +3992,6 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKLog("%s command = '%s' -> ['%s', '%s', '%s', '%s']\n", pedestal->name, command,
         args[0], args[1], args[2], args[3]);
     #endif
-
-    // char *response;
-    // if (feedback == NULL) {
-    //     response = (char *)pedestal->dump;
-    //     RKLog("%s '%s' local dump\n", pedestal->name, command);
-    // } else {
-    //     response = feedback;
-    // }
-
-    //char *response = feedback == NULL ? (char *)pedestal->dump : feedback;
 
     if (!strcmp(command, "disconnect")) {
         if (pedestal->state & RKEngineStateWantActive) {
@@ -4045,7 +4023,6 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedElevation = 0.0f;
         pedestal->targetSpeedAzimuth = 0.0f;
-        // RKSteerEngineStopSweeps(radar->steerEngine);
         sprintf(response, "ACK. Pedestal stopped." RKEOL);
     } else if (!strncmp(command, "astop", 5)) {
         pedestal->actionAzimuth = RKAxisActionStop;
@@ -4089,26 +4066,11 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         pedestal->actionElevation = RKAxisActionPosition;
         pedestal->targetElevation = atof(args[0]);
         sprintf(response, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
-    } else if (!strncmp("pp", command, 2) ||
-               !strncmp("ipp", command, 3) ||
-               !strncmp("opp", command, 3) ||
-               !strncmp("rr", command, 2) ||
-               !strncmp("irr", command, 3) ||
-               !strncmp("orr", command, 3) ||
-               !strncmp("vol", command, 3) ||
-               !strncmp("ivol", command, 4) ||
-               !strncmp("ovol", command, 4) ||
-               !strncmp("point", command, 5) ||
-               !strncmp("state", command, 5) ||
-               !strncmp("summ", command, 4) ||
-               !strncmp("start", command, 5) ||
-               !strncmp("once", command, 4) ||
-               !strncmp("run", command, 3) ||
-               !strncmp("go", command, 2)) {
+    } else if (RKSteerEngineIsExecutable(command)) {
         size_t s = sprintf(response,
                            RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                            "    Use the 'v' command for RadarKit VCP engine\n");
-        RKSteerEngineExecuteString(steeven, command, response + s);
+        return RKSteerEngineExecuteString(steeven, command, response + s);
     } else if (!strcmp(command, "help")) {
         sprintf(response,
                 "Commands:\n"
@@ -4121,7 +4083,6 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
-
     return RKResultSuccess;
 }
 
@@ -4231,6 +4192,10 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
     RKTestHealthRelay *healthRelay = (RKTestHealthRelay *)healthRelayReference;
     RKRadar *radar = healthRelay->radar;
 
+    if (response == NULL) {
+        response = healthRelay->dump;
+    }
+
     if (!strcmp(command, "disconnect")) {
         if (healthRelay->state & RKEngineStateWantActive) {
             healthRelay->state ^= RKEngineStateWantActive;
@@ -4246,9 +4211,7 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
         healthRelay->state |= RKEngineStateDeactivating;
         pthread_join(healthRelay->tidRunLoop, NULL);
         healthRelay->state ^= RKEngineStateDeactivating;
-        if (response != NULL) {
-            sprintf(response, "ACK. Transceiver stopped." RKEOL);
-        }
+        sprintf(response, "ACK. Transceiver stopped." RKEOL);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", healthRelay->name);
         }
@@ -4257,7 +4220,7 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
                 "Commands:\n"
                 UNDERLINE("help") " - Help list\n"
                 );
-    } else if (response != NULL) {
+    } else {
         sprintf(response, "NAK. Command not understood." RKEOL);
     }
 
@@ -4362,12 +4325,10 @@ void RKTestMakePositionStatusString(void) {
 }
 
 void RKTestExperiment(void) {
-    int k = 11;
-    int depth = 10000;
-    int stride = 500;
-    int i = RKPreviousNModuloS(k, stride, depth);
-    printf("k = %d   depth = %d   RKPreviousNModuloS(%d, %d) = %d\n",
-        k, depth, k, stride, i);
+    SHOW_FUNCTION_NAME
+    const char *filename = "/data";
+    char *folder = RKFolderOfFilename(filename);
+    printf("filename = %s\nfolder = %s\n", filename, folder);
 }
 
 #pragma mark -

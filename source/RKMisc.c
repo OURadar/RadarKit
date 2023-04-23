@@ -813,6 +813,9 @@ char *RKFolderOfFilename(const char *filename) {
     if (s == NULL) {
         len = 1;
         strcpy(folder, ".");
+    } else if (s == filename) {
+        len = 1;
+        strcpy(folder, "/");
     } else {
         len = (size_t)(s - filename);
         strncpy(folder, filename, len);

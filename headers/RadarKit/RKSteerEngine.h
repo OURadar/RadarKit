@@ -24,7 +24,7 @@
 #define RKScanModeString(x) x == RKScanModeRHI ? "RHI" : ( \
 x == RKScanModePPI ? "PPI" : ( \
 x == RKScanModeSector ? "SEC" : ( \
-x == RKScanModePoint ? "Point" : "UNK")))
+x == RKScanModePoint ? "SPT" : "UNK")))
 
 typedef bool RKScanRepeat;
 enum RKScanRepeat {
@@ -51,10 +51,9 @@ enum RKScanProgress {
 typedef int RKScanOption;
 enum RKScanOption {
     RKScanOptionNone                             = 0,
-    RKScanOptionBrakeElevationDuringSweep        = 1,
-    RKScanOptionRepeat                           = 1 << 1,
-    RKScanOptionVerbose                          = 1 << 2,
-    RKScanOptionUsePoint                         = 1 << 3
+    RKScanOptionRepeat                           = 1,
+    RKScanOptionVerbose                          = 1 << 1,
+    RKScanOptionUsePoint                         = 1 << 2
 };
 
 typedef int RKScanMode;
@@ -73,6 +72,31 @@ enum RKScanHitter {
     RKScanPinch                                  = 1,                          // vcp only once
     RKScanLine                                   = 2,                          // next vcp
 };
+
+typedef int RKSteerCommand;
+enum RKSteerCommand {
+    RKSteerCommandNone,
+    RKSteerCommandHome,
+    RKSteerCommandPoint,
+    RKSteerCommandPPISet,
+    RKSteerCommandRHISet,
+    RKSteerCommandVolume,
+    RKSteerCommandMotionCount,
+    RKSteerCommandSummary,
+    RKSteerCommandScanStart,
+    RKSteerCommandScanStop,
+    RKSteerCommandOnce                           = (1 << 8),
+    RKSteerCommandImmediate                      = (1 << 9),
+    RKSteerCommandRelative                       = (1 << 10),
+    RKSteerCommandProperty4                      = (1 << 11),
+    RKSteerCommandPropertyMask                   = 0xFF00,                     // Bits > 8 for properties like once / immediate
+    RKSteerCommandInstructionMask                = 0x00FF
+};
+
+#define RKSteerCommandIsMotion(x)    (((x) & RKSteerCommandInstructionMask) < RKSteerCommandSummary)
+#define RKSteerCommandIsOnce(x)      ((x) & RKSteerCommandOnce)
+#define RKSteerCommandIsImmediate(x) ((x) & RKSteerCommandImmediate)
+#define RKSteerCommandIsRelative(x)  ((x) & RKSteerCommandRelative)
 
 typedef struct rk_scan_path {
     RKScanMode                  mode;                                          // Scan mode
@@ -146,6 +170,11 @@ void RKSteerEngineSetScanRepeat(RKSteerEngine *, const bool);
 int RKSteerEngineStart(RKSteerEngine *);
 int RKSteerEngineStop(RKSteerEngine *);
 
+// RKScanPath RKSteerEngineMakeScanPath(RKScanMode,
+//                                      const float elevationStart, const float elevationEnd,
+//                                      const float azimuthStart, const float azimuthEnd,
+//                                      const float rate);
+
 void RKSteerEngineStopSweeps(RKSteerEngine *);
 void RKSteerEngineStartSweeps(RKSteerEngine *);
 void RKSteerEngineClearSweeps(RKSteerEngine *);
@@ -161,12 +190,8 @@ int RKSteerEngineAddPinchSweep(RKSteerEngine *, const RKScanPath);
 RKScanAction *RKSteerEngineGetActionV1(RKSteerEngine *, RKPosition *);
 RKScanAction *RKSteerEngineGetAction(RKSteerEngine *, RKPosition *);
 
+bool RKSteerEngineIsExecutable(const char *);
 int RKSteerEngineExecuteString(RKSteerEngine *, const char *, char *);
-
-RKScanPath RKSteerEngineMakeScanPath(RKScanMode,
-                                             const float elevationStart, const float elevationEnd,
-                                             const float azimuthStart, const float azimuthEnd,
-                                             const float rate);
 
 size_t RKSteerEngineScanSummary(RKSteerEngine *, char *);
 

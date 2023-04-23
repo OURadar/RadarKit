@@ -117,7 +117,7 @@ static void *pedestalPedzyHealth(void *in) {
     RKSteerEngine *steerer = radar->steerEngine;
     RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
     RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
-    RKStatusEnum vcpActive;
+    RKStatusEnum vcpStatusEnum;
     char azPosition[16];
     char elPosition[16];
     RKStatusEnum azEnum;
@@ -126,7 +126,7 @@ static void *pedestalPedzyHealth(void *in) {
         if (me->client->state < RKClientStateConnected) {
             azInterlockStatus = RKStatusEnumInvalid;
             elInterlockStatus = RKStatusEnumInvalid;
-            vcpActive = RKStatusEnumInvalid;
+            vcpStatusEnum = RKStatusEnumInvalid;
             sprintf(elPosition, "--.-- deg");
             sprintf(azPosition, "--.-- deg");
             azEnum = RKStatusEnumInvalid;
@@ -136,11 +136,11 @@ static void *pedestalPedzyHealth(void *in) {
             azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             elInterlockStatus = position->flag & RKPositionFlagElevationSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
             if (position->flag & (RKPositionFlagAzimuthError | RKPositionFlagElevationError)) {
-                vcpActive = RKStatusEnumFault;
+                vcpStatusEnum = RKStatusEnumFault;
             } else if (steerer->vcpHandle.active) {
-                vcpActive = RKStatusEnumActive;
+                vcpStatusEnum = RKStatusEnumActive;
             } else {
-                vcpActive = RKStatusEnumStandby;
+                vcpStatusEnum = RKStatusEnumStandby;
             }
             sprintf(elPosition, "%.2f deg", position->elevationDegrees);
             sprintf(azPosition, "%.2f deg", position->azimuthDegrees);
@@ -162,7 +162,7 @@ static void *pedestalPedzyHealth(void *in) {
                     "}",
                     azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
                     elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
-                    vcpActive == RKStatusEnumActive ? "true" : "false", vcpActive,
+                    vcpStatusEnum == RKStatusEnumActive ? "true" : "false", vcpStatusEnum,
                     azPosition, azEnum,
                     elPosition, elEnum,
                     rate);
@@ -240,35 +240,11 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
 
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
-    // } else if (!strncmp("go", command, 2) || !strncmp("run", command, 3)) {
-    //     RKSteerEngineArmSweeps(steerEngine, RKScanRepeatForever);
-    //     sprintf(response, "ACK. Go." RKEOL);
-    // } else if (!strncmp("once", command, 4)) {
-    //     RKSteerEngineArmSweeps(steerEngine, RKScanRepeatNone);
-    //     sprintf(response, "ACK. Once." RKEOL);
-    // } else if (!strncmp("summ", command, 4)) {
-    //     RKSteerEngineScanSummary(steerEngine, response);
-    //     sprintf(response + strlen(response), "ACK. Summary retrieved" RKEOL);
-    } else if (!strncmp("pp", command, 2) ||
-               !strncmp("ipp", command, 3) ||
-               !strncmp("opp", command, 3) ||
-               !strncmp("rr", command, 2) ||
-               !strncmp("irr", command, 3) ||
-               !strncmp("orr", command, 3) ||
-               !strncmp("vol", command, 3) ||
-               !strncmp("ivol", command, 4) ||
-               !strncmp("ovol", command, 4) ||
-               !strncmp("point", command, 5) ||
-               !strncmp("state", command, 5) ||
-               !strncmp("summ", command, 4) ||
-               !strncmp("start", command, 5) ||
-               !strncmp("once", command, 4) ||
-               !strncmp("run", command, 3) ||
-               !strncmp("go", command, 2)) {
+    } else if (RKSteerEngineIsExecutable(command)) {
         size_t s = sprintf(response,
                            RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
                            "    Use the 'v' command for RadarKit VCP engine\n");
-        RKSteerEngineExecuteString(steerEngine, command, response + s);
+        return RKSteerEngineExecuteString(steerEngine, command, response + s);
     } else {
         if (client->verbose) {
             RKLog("%s Current client->state = 0x%08x", client->name, client->state);
@@ -281,14 +257,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
         size_t size = snprintf(me->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
-
-        // Commands that need to be forwarded to Pedzy
-        if (!strncmp("stop", command, 4) || !strncmp("zero", command, 4)) {
-            RKSteerEngineStopSweeps(steerEngine);
-            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        } else {
-            RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        }
+        RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         while (responseIndex == me->responseIndex) {
             usleep(10000);
             if (++s % 100 == 0) {
@@ -305,7 +274,6 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         }
         strcpy(response, me->responses[responseIndex]);
     }
-
     return RKResultSuccess;
 }
 
