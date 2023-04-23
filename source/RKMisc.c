@@ -808,14 +808,12 @@ char *RKLastNPartsOfPath(const char *path, const int n) {
 
 char *RKFolderOfFilename(const char *filename) {
     static char folder[1024];
-    size_t len;
     char *s = strrchr((char *)filename, '/');
     if (s == NULL) {
         strcpy(folder, ".");
     } else if (s == filename) {
         strcpy(folder, "/");
     } else {
-        len = (size_t)(s - filename);
         strncpy(folder, filename, sizeof(folder) - 1);
         folder[sizeof(folder) - 1] = '\0';
     }
