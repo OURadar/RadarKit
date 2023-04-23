@@ -811,16 +811,14 @@ char *RKFolderOfFilename(const char *filename) {
     size_t len;
     char *s = strrchr((char *)filename, '/');
     if (s == NULL) {
-        len = 1;
         strcpy(folder, ".");
     } else if (s == filename) {
-        len = 1;
         strcpy(folder, "/");
     } else {
         len = (size_t)(s - filename);
-        strncpy(folder, filename, len);
+        strncpy(folder, filename, sizeof(folder) - 1);
+        folder[sizeof(folder) - 1] = '\0';
     }
-    folder[len] = '\0';
     return folder;
 }
 
