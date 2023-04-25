@@ -353,7 +353,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
         // sprintf(engine->host, "http://localhost:8000");
         sprintf(engine->host, "nohost");
     } else {
-        strncpy(engine->host, host, RKNameLength);
+        strncpy(engine->host, host, sizeof(engine->host) - 1);
     }
     // Default streams
     engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
@@ -392,7 +392,7 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     engine->radar = radar;
     strcpy(engine->pathway, radar->desc.name);
     RKStringLower(engine->pathway);
-    sprintf(engine->address, "/ws/radar/%s/", engine->pathway);
+    snprintf(engine->address, sizeof(engine->address) - 1, "/ws/radar/%s/", engine->pathway);
     if (engine->verbose > 1) {
         RKLog("%s Setting up radar %s (%s @ %s)\n", engine->name, radar->desc.name, engine->host, engine->address);
     }

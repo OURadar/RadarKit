@@ -17,8 +17,8 @@ typedef struct rk_reporter {
     // User set variables
     RKName                           name;
     RKName                           host;
-    RKName                           pathway;
-    RKName                           address;
+    char                             pathway[RKNameLength];
+    char                             address[RKNameLength + 16];
     char                             welcome[RKMaximumStringLength];
     char                             control[RKMaximumStringLength];
     char                             message[RKMaximumStringLength];

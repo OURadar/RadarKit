@@ -505,7 +505,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'H':
-                strncpy(user->radarhubHost, optarg, sizeof(user->radarhubHost));
+                strncpy(user->radarhubHost, optarg, sizeof(user->radarhubHost) - 1);
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':

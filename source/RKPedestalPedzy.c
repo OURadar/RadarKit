@@ -16,7 +16,7 @@
 static ssize_t pedestalPedzySendAction(int sd, char *ship, RKScanAction *act) {
     sprintf(ship, "%c", 0x0f);
     memcpy(ship + 1, act, sizeof(RKScanAction));
-    strncpy(ship + 1 + sizeof(RKScanAction), RKEOL, 2);
+    strncpy(ship + 1 + sizeof(RKScanAction), RKEOL, 3);
     return RKNetworkSendPackets(sd, ship, sizeof(RKScanAction) + 3, NULL);
 }
 
