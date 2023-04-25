@@ -2286,7 +2286,7 @@ void RKTestPulseCompression(RKTestFlag flag) {
     RKComplex filter3[] = {{1.0f, 0.0f}, {0.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, -1.0f}};
     RKFilterAnchor anchor3 = RKFilterAnchorOfLengthAndMaxDataLength(4, 8);
 
-    for (k = 0; k < 4; k++) {
+    for (k = 0; k < 5; k++) {
         switch (k) {
             default:
                 // Default is impulse [1];
@@ -2297,10 +2297,14 @@ void RKTestPulseCompression(RKTestFlag flag) {
                 RKPulseEngineSetFilterTo11(radar->pulseEngine);
                 break;
             case 2:
+                // Three-tap running average [1, 2, 1]
+                RKPulseEngineSetFilterTo121(radar->pulseEngine);
+                break;
+            case 3:
                 // Change filter to filter #2: [1 + 1i]
                 RKPulseEngineSetFilter(radar->pulseEngine, filter2, anchor2, 0, 0);
                 break;
-            case 3:
+            case 4:
                 // Change filter to filter #3
                 RKPulseEngineSetFilter(radar->pulseEngine, filter3, anchor3, 0, 0);
                 break;
@@ -2324,7 +2328,7 @@ void RKTestPulseCompression(RKTestFlag flag) {
         RKSetPulseReady(radar, pulse);
 
         while (radar->state & RKRadarStateLive && (pulse->header.s & RKPulseStatusCompressed) == 0) {
-            usleep(1000);
+            usleep(10000);
         }
 
         F = radar->pulseEngine->filters[0][0];
