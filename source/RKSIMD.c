@@ -379,7 +379,7 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    const float q[4] = {1.0, -1.0, 1.0, -1.0};
+    const float q[4] = {-1.0, 1.0, -1.0, 1.0};
 	RKVec r, i, x;
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
@@ -503,7 +503,7 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
     }
 
 #else
-    
+
     RKInt16C *s = src;
     RKComplex *d = dst;
     for (k = 0; k < n; k++) {
