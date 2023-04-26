@@ -943,6 +943,22 @@ int RKPulseEngineSetFilterToImpulse(RKPulseEngine *engine) {
     return RKPulseEngineSetFilter(engine, filter, anchor, 0, 0);
 }
 
+int RKPulseEngineSetFilterTo12321(RKPulseEngine *engine) {
+    RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {3.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
+    RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
+    if (pulse == NULL) {
+        RKLog("%s Error. RKPulseEngineSetFilterTo*() should be called after pulse buffer is set\n", engine->name);
+        return RKResultNoPulseBuffer;
+    }
+    RKPulseEngineResetFilters(engine);
+    RKFilterAnchor anchor = RKFilterAnchorDefault;
+    anchor.length = sizeof(filter) / sizeof(RKComplex);
+    anchor.maxDataLength = pulse->header.capacity;
+    anchor.subCarrierFrequency = 0.0f;
+    anchor.filterGain = 12.8f;
+    return RKPulseEngineSetFilter(engine, filter, anchor, 0, 0);
+}
+
 int RKPulseEngineSetFilterTo121(RKPulseEngine *engine) {
     RKComplex filter[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;

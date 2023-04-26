@@ -90,6 +90,7 @@ int RKPulseEngineSetFilter(RKPulseEngine *,
                            const int group,
                            const int index);
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
+int RKPulseEngineSetFilterTo12321(RKPulseEngine *);
 int RKPulseEngineSetFilterTo121(RKPulseEngine *);
 int RKPulseEngineSetFilterTo11(RKPulseEngine *);
 

@@ -57,8 +57,8 @@ typedef struct rk_compression_scratch {
     RKIQZ                            *zo;                                          //
     unsigned int                     planSize;                                     // DFT plan size
     RKConfig                         *config;                                      //
-    RKComplex                        **filterSetValues;                            // Set of filter
-    uint16_t                         **filterSetDepths;                            // Filter size in the set
+    RKComplex                        **arrays;                                     // Array of arrays
+    uint16_t                         *arraySizes;                                  // Array sizes
 } RKCompressionScratch;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);
