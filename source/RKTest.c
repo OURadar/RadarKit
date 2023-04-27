@@ -4345,34 +4345,34 @@ void RKTestExperiment(void) {
     char str[80];
 
     float one = 1.0f;
-    float z4[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    float o4[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    float a4[] = {1.0f, 2.0f, -1.0f, -2.0f};
-    float b4[] = {2.0f, 1.0f, -2.0f, +1.0f};
+    float vz[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    float vo[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+    float va[] = {1.0f, 2.0f, -1.0f, -2.0f, 1.1f, 2.1f, -1.1f, -2.1f};
+    float vb[] = {2.0f, 1.0f, -2.0f, +1.0f, 2.1f, 1.1f, -2.1f, +1.1f};
     float e;
 
     float *f;
 
     memset(&a, 0, 4 * sizeof(float));
-    e = _array_delta(&a, z4, 4);
+    e = _array_delta(&a, vz, 4);
     f = (float *)&a;
     sprintf(str, "memset(0) ==? [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e);
     RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, str, e < 1.0e-2f);
 
     a = _rk_mm_set1_pf(one);
-    e = _array_delta(&a, o4, 4);
+    e = _array_delta(&a, vo, 4);
     f = (float *)&a;
     sprintf(str, "_rk_mm_set1_pf(one) ==? [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e);
     RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, str, e < 1.0e-2f);
 
-    a = _rk_mm_set_pf(a4);
-    e = _array_delta(&a, a4, 4);
+    a = _rk_mm_set_pf(va);
+    e = _array_delta(&a, va, 4);
     f = (float *)&a;
     sprintf(str, "_rk_mm_set_pf(a4) ==? [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e);
     RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, str, e < 1.0e-2f);
 
-    b = _rk_mm_set_pf(b4);
-    e = _array_delta(&b, b4, 4);
+    b = _rk_mm_set_pf(vb);
+    e = _array_delta(&b, vb, 4);
     f = (float *)&b;
     sprintf(str, "_rk_mm_set_pf(b4) ==? [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e);
     RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, str, e < 1.0e-2f);
@@ -4420,9 +4420,28 @@ void RKTestExperiment(void) {
     sprintf(str, "_rk_mm_max_pf(a, b) ==? [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e);
     RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, str, e < 1.0e-2f);
 
-    float32x2_t lo = vget_low_f32(a);
-    f = (float *)&lo;
-    printf("c = [ %4.1f %4.1f ]\n", f[0], f[1]);
+    // float32x2_t lo = vget_low_f32(a);
+    // f = (float *)&lo;
+    // printf("c = [ %4.1f %4.1f ]\n", f[0], f[1]);
+
+    float r7[] = {2.0f, 2.0f, -2.0f, -2.0f};
+    c = _rk_mm_movehdup_pf(a);
+    e = _array_delta(&c, r7, 4);
+    f = (float *)&c;
+    sprintf(str, "_rk_mm_movehdup_pf(a) ==? [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e);
+    RKSIMD_TEST_RESULT(rkGlobalParameters.showColor, str, e < 1.0e-2f);
+
+
+
+    f = (float *)&a;
+    // printf("a -> [ %4.1f %4.1f %4.1f %4.1f ]\n", f[0], f[1], f[2], f[3]);
+    printf("a -> [ %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f ]\n",
+        f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7]);
+    // RKVec z = __builtin_shufflevector(a, a, 0, 4, 2, 6);
+    RKVec z = __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6);
+    f = (float *)&z;
+    printf("  -> [ %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f %4.1f ]\n",
+        f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7]);
 
     // __builtin_shufflevector
 }
