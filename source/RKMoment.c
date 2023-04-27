@@ -333,15 +333,15 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     const int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
     // Convert float to 8-bit representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
-    RKSLHMAC   RKVec sl = _rk_mm_set1_pf(lhma[0]);  RKVec sh = _rk_mm_set1_pf(lhma[1]);  RKVec sm = _rk_mm_set1_pf(lhma[2]);  RKVec sa = _rk_mm_set1_pf(lhma[3]);
-    RKZLHMAC   RKVec zl = _rk_mm_set1_pf(lhma[0]);  RKVec zh = _rk_mm_set1_pf(lhma[1]);  RKVec zm = _rk_mm_set1_pf(lhma[2]);  RKVec za = _rk_mm_set1_pf(lhma[3]);
-    RKV2LHMAC  RKVec vl = _rk_mm_set1_pf(lhma[0]);  RKVec vh = _rk_mm_set1_pf(lhma[1]);  RKVec vm = _rk_mm_set1_pf(lhma[2]);  RKVec va = _rk_mm_set1_pf(lhma[3]);
-    RKWLHMAC   RKVec wl = _rk_mm_set1_pf(lhma[0]);  RKVec wh = _rk_mm_set1_pf(lhma[1]);  RKVec wm = _rk_mm_set1_pf(lhma[2]);  RKVec wa = _rk_mm_set1_pf(lhma[3]);
-    RKQLHMAC   RKVec ql = _rk_mm_set1_pf(lhma[0]);  RKVec qh = _rk_mm_set1_pf(lhma[1]);  RKVec qm = _rk_mm_set1_pf(lhma[2]);  RKVec qa = _rk_mm_set1_pf(lhma[3]);
-    RKDLHMAC   RKVec dl = _rk_mm_set1_pf(lhma[0]);  RKVec dh = _rk_mm_set1_pf(lhma[1]);  RKVec dm = _rk_mm_set1_pf(lhma[2]);  RKVec da = _rk_mm_set1_pf(lhma[3]);
-    RKPLHMAC   RKVec pl = _rk_mm_set1_pf(lhma[0]);  RKVec ph = _rk_mm_set1_pf(lhma[1]);  RKVec pm = _rk_mm_set1_pf(lhma[2]);  RKVec pa = _rk_mm_set1_pf(lhma[3]);
-    RKKLHMAC   RKVec kl = _rk_mm_set1_pf(lhma[0]);  RKVec kh = _rk_mm_set1_pf(lhma[1]);  RKVec km = _rk_mm_set1_pf(lhma[2]);  RKVec ka = _rk_mm_set1_pf(lhma[3]);
-    RKRLHMAC   RKVec rl = _rk_mm_set1_pf(lhma[0]);  RKVec rh = _rk_mm_set1_pf(lhma[1]);
+    RKSLHMAC   RKVec sl = _rk_mm_set1(lhma[0]);  RKVec sh = _rk_mm_set1(lhma[1]);  RKVec sm = _rk_mm_set1(lhma[2]);  RKVec sa = _rk_mm_set1(lhma[3]);
+    RKZLHMAC   RKVec zl = _rk_mm_set1(lhma[0]);  RKVec zh = _rk_mm_set1(lhma[1]);  RKVec zm = _rk_mm_set1(lhma[2]);  RKVec za = _rk_mm_set1(lhma[3]);
+    RKV2LHMAC  RKVec vl = _rk_mm_set1(lhma[0]);  RKVec vh = _rk_mm_set1(lhma[1]);  RKVec vm = _rk_mm_set1(lhma[2]);  RKVec va = _rk_mm_set1(lhma[3]);
+    RKWLHMAC   RKVec wl = _rk_mm_set1(lhma[0]);  RKVec wh = _rk_mm_set1(lhma[1]);  RKVec wm = _rk_mm_set1(lhma[2]);  RKVec wa = _rk_mm_set1(lhma[3]);
+    RKQLHMAC   RKVec ql = _rk_mm_set1(lhma[0]);  RKVec qh = _rk_mm_set1(lhma[1]);  RKVec qm = _rk_mm_set1(lhma[2]);  RKVec qa = _rk_mm_set1(lhma[3]);
+    RKDLHMAC   RKVec dl = _rk_mm_set1(lhma[0]);  RKVec dh = _rk_mm_set1(lhma[1]);  RKVec dm = _rk_mm_set1(lhma[2]);  RKVec da = _rk_mm_set1(lhma[3]);
+    RKPLHMAC   RKVec pl = _rk_mm_set1(lhma[0]);  RKVec ph = _rk_mm_set1(lhma[1]);  RKVec pm = _rk_mm_set1(lhma[2]);  RKVec pa = _rk_mm_set1(lhma[3]);
+    RKKLHMAC   RKVec kl = _rk_mm_set1(lhma[0]);  RKVec kh = _rk_mm_set1(lhma[1]);  RKVec km = _rk_mm_set1(lhma[2]);  RKVec ka = _rk_mm_set1(lhma[3]);
+    RKRLHMAC   RKVec rl = _rk_mm_set1(lhma[0]);  RKVec rh = _rk_mm_set1(lhma[1]);
     RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSh); RKVec *So_pf = (RKVec *)space->S[0];
     RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSv); RKVec *To_pf = (RKVec *)space->S[1];
     RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
@@ -353,16 +353,16 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexK);  RKVec *Ko_pf = (RKVec *)space->KDP;
     RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
     for (k = 0; k < K; k++) {
-        *So_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Si_pf++, sl), sh), sm), sa);
-        *To_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Ti_pf++, sl), sh), sm), sa);
-        *Zo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Zi_pf++, zl), zh), zm), za);
-        *Vo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Vi_pf++, vl), vh), vm), va);
-        *Wo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Wi_pf++, wl), wh), wm), wa);
-        *Qo_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Qi_pf++, ql), qh), qm), qa);
-        *Do_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Di_pf++, dl), dh), dm), da);
-        *Po_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Pi_pf++, pl), ph), pm), pa);
-        *Ko_pf++ = _rk_mm_add_pf(_rk_mm_mul_pf(_rk_mm_min_pf(_rk_mm_max_pf(*Ki_pf++, kl), kh), km), ka);
-        *Ro_pf++ = _rk_mm_min_pf(_rk_mm_max_pf(*Ri_pf++, rl), rh);
+        *So_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Si_pf++, sl), sh), sm), sa);
+        *To_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Ti_pf++, sl), sh), sm), sa);
+        *Zo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Zi_pf++, zl), zh), zm), za);
+        *Vo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Vi_pf++, vl), vh), vm), va);
+        *Wo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Wi_pf++, wl), wh), wm), wa);
+        *Qo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Qi_pf++, ql), qh), qm), qa);
+        *Do_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Di_pf++, dl), dh), dm), da);
+        *Po_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Pi_pf++, pl), ph), pm), pa);
+        *Ko_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Ki_pf++, kl), kh), km), ka);
+        *Ro_pf++ = _rk_mm_min(_rk_mm_max(*Ri_pf++, rl), rh);
     }
     // Convert to uint8 type
     Si = space->S[0];  uint8_t *su = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
