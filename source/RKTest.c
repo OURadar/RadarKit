@@ -10,8 +10,20 @@
 #include <getopt.h>
 
 #define RKFMT                               "%5d"
-#define RKSIMD_TEST_DESC_FORMAT             "%90s"
+#define RKSIMD_TEST_DESC_FORMAT_LONG        "%90s"
+#define RKSIMD_TEST_DESC_FORMAT_SHORT       "%60s"
+#if defined(__AVX__)
+#define RKSIMD_TEST_DESC_FORMAT RKSIMD_TEST_DESC_FORMAT_LONG
+#else
+#define RKSIMD_TEST_DESC_FORMAT RKSIMD_TEST_DESC_FORMAT_SHORT
+#endif
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
+#define RKSIMD_TEST_DESC_SHORT(str, desc, f, e) \
+    sprintf(str, desc " [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e)
+#define RKSIMD_TEST_DESC_LONG(str, desc, f, e) \
+    sprintf(str, desc " [ %4.1f %4.1f %4.1f %4.1f %5.2f %5.2f %5.2f %5.2f ] (%.2f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
+#define RKSIMD_TEST_DESC(str, desc, f, e) sizeof(RKVec) / sizeof(float) == 8 \
+    ? RKSIMD_TEST_DESC_LONG(str, desc, f, e) : RKSIMD_TEST_DESC_SHORT(str, desc, f, e)
 #define RKSIMD_TEST_RESULT(str, res)   rkGlobalParameters.showColor ? \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s" RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") : \
     printf(RKSIMD_TEST_DESC_FORMAT " : %s\n", str, res ? "successful" : "failed");
@@ -4340,11 +4352,6 @@ float _array_delta(const RKVec *x, const float *y, const int count) {
     return e;
 }
 
-#define RKSIMD_TEST_DESC(str, desc, f, e) \
-sizeof(RKVec) / sizeof(float) == 8 \
-    ? sprintf(str, desc " [ %4.1f %4.1f %4.1f %4.1f %5.2f %5.2f %5.2f %5.2f ] (%.2f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e) \
-    : sprintf(str, desc " [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e)
-
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
     const int n = sizeof(RKVec) / sizeof(float);
@@ -4359,7 +4366,9 @@ void RKTestExperiment(void) {
     RKVec a, b, c;
 
     RKComplex *in, *out;
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKMemoryAlignSize, 16 * sizeof(RKComplex)));
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKMemoryAlignSize, 16 * sizeof(RKComplex)));
+    memset(in, 0, 16 * sizeof(RKComplex));
     memset(out, 0, 16 * sizeof(RKComplex));
 
     char str[120];
@@ -4490,32 +4499,26 @@ void RKTestExperiment(void) {
 
     printf("\n");
 
-    in = (RKComplex *)&a;
+    memcpy(in, va, 4 * sizeof(RKComplex));
 
     float r20[] = {0.0f, 5.0f, 4.0f, 3.0f, 0.0f, 5.62f, 4.62f, 3.2f};
-    memcpy(out, &b, 4 * sizeof(RKComplex));
+    float r21[] = {4.0f, 3.0f, 0.0f, 5.0f, 4.62f, 3.2f, 0.0f, 5.62f};
+
+    memcpy(out, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymul(in, out, 4);
     e = _array_delta((RKVec *)out, r20, 8);
     f = (float *)out;
-    RKSIMD_TEST_DESC(str, "RKSIMD_iymul(a, b)", f, e);
+    RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iymul", f, e);
     RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
 
-    float r21[] = {4.0f, 3.0f, 0.0f, 5.0f, 4.62f, 3.2f, 0.0f, 5.62f};
-    memcpy(out, &b, 4 * sizeof(RKComplex));
+    memcpy(out, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymulc(in, out, 4);
     e = _array_delta((RKVec *)out, r21, 8);
-    RKSIMD_TEST_DESC(str, "RKSIMD_iymulc(a, b)", f, e);
+    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
     RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
 
-
-    // printf("o = [ %4.1f %4.1f  %4.1f %4.1f  %4.1f %4.1f  %4.1f %4.1f ]\n",
-    //     f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7]);
-    //
-    // float32x2_t lo = vget_low_f32(a);
-    // f = (float *)&lo;
-    // printf("c = [ %4.1f %4.1f ]\n", f[0], f[1]);
-
-    // free(out);
+    free(in);
+    free(out);
 }
 
 #pragma mark -

@@ -124,17 +124,17 @@ typedef __m128 RKVec;
 
 typedef float32x4_t RKVec;
 #define _rk_mm_set1(a)               vld1q_dup_f32((float *)&a)
-#define _rk_mm_load(a)               vld1q_f32(v)
+#define _rk_mm_load(a)               vld1q_f32(a)
 #define _rk_mm_add(a, b)             vaddq_f32(a, b)
 #define _rk_mm_sub(a, b)             vsubq_f32(a, b)
 #define _rk_mm_mul(a, b)             vmulq_f32(a, b)
-#define _rk_mm_div(a, b)             vmulq_f32(a, vrecpeq_f32(b))
+#define _rk_mm_div(a, b)             vdivq_f32(a, b)
 #define _rk_mm_min(a, b)             vminq_f32(a, b)
 #define _rk_mm_max(a, b)             vmaxq_f32(a, b)
 #define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
 #define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)
 #define _rk_mm_shuffle_flip(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2)
-#define _rk_mm_muladd_pf(a, b, c)    _mm_add_ps(_mm_mul_ps(a, b), c)
+#define _rk_mm_muladd(a, b, c)       vaddq_f32(vmulq_f32(a, b), c)
 #define _rk_mm_sqrt(a)               vsqrtq_f32(a)
 #define _rk_mm_rcp(a)                vrecpeq_f32(a)
 

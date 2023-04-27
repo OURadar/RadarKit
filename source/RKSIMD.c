@@ -364,7 +364,7 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     RKVec r, i, x;
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
-    #if !defined(_rk_mm_muladdsub_pf)
+    #if !defined(_rk_mm_muladdsub)
     const RKVec o = _rk_mm_load(_rk_flip_odd_sign_mask);         // [ -1   1  -1   1 ]
     #endif
 
@@ -373,11 +373,11 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 		i = _rk_mm_shuffle_odd(*s);                              // [  b   b   y   y ]
         x = _rk_mm_shuffle_flip(*d);                             // [  d   c   w   z ]
         i = _rk_mm_mul(i, x);                                    // [ bd  bc  yw  yz ]
-        #if defined(_rk_mm_muladdsub_pf)
-        *d = _rk_mm_muladdsub_pf(r, *d, i);                      // [a a x x] * [c d z w] -/+/-/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
-        #else
+        #if !defined(_rk_mm_muladdsub)
         i = _rk_mm_mul(i, o);                                    // [-bd  bc -yw  yz ]
-        *d = _rk_mm_muladd_pf(r, *d, i);                         // [a a x x] * [c d z w] + [-bd bc -yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+        *d = _rk_mm_muladd(r, *d, i);                            // [a a x x] * [c d z w] + [-bd bc -yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+        #else
+        *d = _rk_mm_muladdsub(r, *d, i);                         // [a a x x] * [c d z w] -/+/-/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
         #endif
         s++;
         d++;
@@ -400,11 +400,11 @@ void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 		i = _rk_mm_shuffle_odd(*s);                              // [  b   b   y   y ]
 		x = _rk_mm_shuffle_flip(*d);                             // [ -d   c  -w   z ]
 		i = _rk_mm_mul(i, x);                                    // [-bd  bc -yw  yz ]
-        #if defined(_rk_mm_muladdsub_pf)
-		*d = _rk_mm_muladdsub_pf(r, *d, i);                      // [a a x x] * [c -d z -w] -/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
-        #else
+        #if !defined(_rk_mm_muladdsub_pf)
         i = _rk_mm_mul(i, o);                                    // [ bd -bc  yw -yz ]
-        *d = _rk_mm_muladd_pf(r, *d, i);                         // [a a x x] * [c -d z -w] -/+/-/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
+        *d = _rk_mm_muladd(r, *d, i);                            // [a a x x] * [c -d z -w] -/+/-/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
+        #else
+		*d = _rk_mm_muladdsub_pf(r, *d, i);                      // [a a x x] * [c -d z -w] -/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
         #endif
 		s++;
 		d++;
