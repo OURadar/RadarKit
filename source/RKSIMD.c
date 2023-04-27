@@ -365,6 +365,26 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     RKVec r, i, x;
     RKVec *s = (RKVec *)src;                                     // [a  b  x  y ]
     RKVec *d = (RKVec *)dst;                                     // [c  d  z  w ]
+
+    #if defined(__ARM_NEON__)
+
+    // extract real and imaginary parts
+    float32x4_t a_real = vcombine_f32(vget_low_f32(*s), vget_low_f32(*(s + 2)));
+    float32x4_t a_imag = vcombine_f32(vget_high_f32(*s), vget_high_f32(*(s + 2)));
+    float32x4_t b_real = vcombine_f32(vget_low_f32(*d), vget_low_f32(*(b + 2)));
+    float32x4_t b_imag = vcombine_f32(vget_high_f32(*b), vget_high_f32(*(b + 2)));
+
+    // perform complex multiplication
+    float32x4_t res_real = vmlaq_f32(vmulq_f32(a_real, b_real), a_imag, b_imag);
+    float32x4_t res_imag = vmlsq_f32(vmulq_f32(a_imag, b_real), a_real, b_imag);
+
+    // combine real and imaginary parts
+    float32x4_t res = vcombine_f32(vget_low_f32(res_real), vget_low_f32(res_imag));
+    res = vcombine_f32(res, vget_high_f32(res_real));
+    res = vcombine_f32(res, vget_high_f32(res_imag));
+
+    #else
+
     for (k = 0; k < K; k++) {
         r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
         i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
@@ -375,15 +395,17 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
         d++;
     }
     return;
+
+    #endif
 }
 
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    const float q[4] = {-1.0, 1.0, -1.0, 1.0};
+    // const float q[4] = {-1.0f, 1.0f, -1.0f, 1.0f};
+    const float q[4] = {1.0f, -1.0f, 1.0f, -1.0f};
 	RKVec r, i, x;
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
-	//RKVec c = _rk_mm_set_pf(-1.0, 1.0, -1.0, 1.0);               // [  1  -1   1  -1 ]
     RKVec c = _rk_mm_set_pf(q);                                  // [  1  -1   1  -1 ]
 	for (k = 0; k < K; k++) {
         *d = _rk_mm_mul_pf(*d, c);                               // [  c  -d   z  -w ]
