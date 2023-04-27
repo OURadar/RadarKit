@@ -45,14 +45,13 @@
 typedef __m512 RKVec;
 typedef __m256i RKVecCvt;
 #define _rk_mm_set1_pf(a)            _mm512_set1_ps(a)
-//#define _rk_mm_set_pf(a, b, c, d)    _mm512_set_ps(a, b, c, d, a, b, c, d, a, b, c, d, a, b, c, d)
-#define _rk_mm_set_pf(v)             _mm512_set_ps(v[0], v[1], v[2], v[3], v[0], v[1], v[2], v[3], v[0], v[1], v[2], v[3], v[0], v[1], v[2], v[3])
+#define _rk_mm_set_pf(v)             _mm512_load_ps(v)
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm512_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm512_mul_ps(a, b)
 #define _rk_mm_div_pf(a, b)          _mm512_div_ps(a, b)
-#define _rk_mm_min_pf(a, b)          _mm512_min_ps(a, b)
-#define _rk_mm_max_pf(a, b)          _mm512_max_ps(a, b)
+#define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11, 13, 13, 15, 15)
+#define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14)
 #define _rk_mm_movehdup_pf(a)        _mm512_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm512_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm512_shuffle_ps(a, b, m)
@@ -61,6 +60,8 @@ typedef __m256i RKVecCvt;
 #define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
 #define _rk_mm_sqrt_pf(a)            _mm512_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm512_rcp_ps(a)
+#define _rk_mm_max_pf(a, b)          _mm512_max_ps(a, b)
+#define _rk_mm_min_pf(a, b)          _mm512_min_ps(a, b)
 //#if defined(_mm512_mul_ps)
 //#define _rk_mm_log10_pf(a)           _mm512_log10_ps(a)
 //#endif
@@ -70,8 +71,6 @@ typedef __m256i RKVecCvt;
 typedef __m256 RKVec;
 typedef __m128i RKVecCvt;
 #define _rk_mm_set1_pf(a)            _mm256_set1_ps(a)
-//#define _rk_mm_set_pf(a, b, c, d)    _mm256_set_ps(a, b, c, d, a, b, c, d)
-// #define _rk_mm_set_pf(v)    _mm256_set_ps(v[0], v[1], v[2], v[3], v[0], v[1], v[2], v[3])
 #define _rk_mm_set_pf(v)             _mm256_load_ps(v)
 #define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm256_sub_ps(a, b)
@@ -79,7 +78,10 @@ typedef __m128i RKVecCvt;
 #define _rk_mm_div_pf(a, b)          _mm256_div_ps(a, b)
 #define _rk_mm_min_pf(a, b)          _mm256_min_ps(a, b)
 #define _rk_mm_max_pf(a, b)          _mm256_max_ps(a, b)
+#define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7)
+#define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6)
 #define _rk_mm_movehdup_pf(a)        _mm256_movehdup_ps(a)
+//#define _rk_mm_moveldup_pf(a)        __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6)
 #define _rk_mm_moveldup_pf(a)        _mm256_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm256_shuffle_ps(a, b, m)
 //#define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_fmaddsub_ps(a, b, c)
@@ -99,8 +101,6 @@ typedef __m128i RKVecCvt;
 
 typedef __m128 RKVec;
 #define _rk_mm_set1_pf(a)            _mm_set1_ps(a)
-//#define _rk_mm_set_pf(a, b, c, d)    _mm_set_ps(a, b, c, d)
-// #define _rk_mm_set_pf(v)             _mm_set_ps(v[0], v[1], v[2], v[3])
 #define _rk_mm_set_pf(v)             _mm_load_ps(v)
 #define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm_sub_ps(a, b)
@@ -108,6 +108,8 @@ typedef __m128 RKVec;
 #define _rk_mm_div_pf(a, b)          _mm_div_ps(a, b)
 #define _rk_mm_min_pf(a, b)          _mm_min_ps(a, b)
 #define _rk_mm_max_pf(a, b)          _mm_max_ps(a, b)
+#define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
+#define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)
 #define _rk_mm_movehdup_pf(a)        _mm_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
 #define _rk_mm_shuffle_pf(a, b, m)   _mm_shuffle_ps(a, b, m)
@@ -129,16 +131,18 @@ typedef __m128 RKVec;
 #elif defined(__ARM_NEON__)
 
 typedef float32x4_t RKVec;
-#define _rk_mm_set1_pf(a)            vld1q_dup_f32(&a)                   //
-#define _rk_mm_set_pf(v)             vld1q_f32(v)                        //
-#define _rk_mm_add_pf(a, b)          vaddq_f32(a, b)                     //
-#define _rk_mm_sub_pf(a, b)          vsubq_f32(a, b)                     //
-#define _rk_mm_mul_pf(a, b)          vmulq_f32(a, b)                     //
-#define _rk_mm_div_pf(a, b)          vmulq_f32(a, vrecpeq_f32(b))        //
-#define _rk_mm_min_pf(a, b)          vminq_f32(a, b)                     //
-#define _rk_mm_max_pf(a, b)          vmaxq_f32(a, b)                     //
-#define _rk_mm_movehdup_pf(a)        vcombine_f32(vget_low_f32(a), vrev64_f32(vget_high_f32(a)))
-#define _rk_mm_moveldup_pf(a)        vrev64_f32(a)
+#define _rk_mm_set1_pf(a)            vld1q_dup_f32((float *)&a)
+#define _rk_mm_set_pf(v)             vld1q_f32(v)
+#define _rk_mm_add_pf(a, b)          vaddq_f32(a, b)
+#define _rk_mm_sub_pf(a, b)          vsubq_f32(a, b)
+#define _rk_mm_mul_pf(a, b)          vmulq_f32(a, b)
+#define _rk_mm_div_pf(a, b)          vmulq_f32(a, vrecpeq_f32(b))
+#define _rk_mm_min_pf(a, b)          vaddq_f32(a, b)
+#define _rk_mm_max_pf(a, b)          vaddq_f32(a, b)
+#define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
+#define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)
+#define _rk_mm_movehdup_pf(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
+#define _rk_mm_moveldup_pf(a)        __builtin_shufflevector(a, a, 0, 0, 2, 2)
 #define _rk_mm_shuffle_pf(a, b, m)   vaddq_f32(a, b)
 #define _rk_mm_fmaddsub_pf(a, b, c)  vaddq_f32(a, b)
 #define _rk_mm_unpacklo_epi16(a, b)  vaddq_f32(a, b)
