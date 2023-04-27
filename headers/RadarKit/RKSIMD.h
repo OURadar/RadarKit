@@ -45,33 +45,34 @@
 typedef __m512 RKVec;
 typedef __m256i RKVecCvt;
 #define _rk_mm_set1_pf(a)            _mm512_set1_ps(a)
-#define _rk_mm_set_pf(v)             _mm512_load_ps(v)
+#define _rk_mm_load_pf(a)            _mm512_load_ps(a)
 #define _rk_mm_add_pf(a, b)          _mm512_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm512_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm512_mul_ps(a, b)
 #define _rk_mm_div_pf(a, b)          _mm512_div_ps(a, b)
 #define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11, 13, 13, 15, 15)
 #define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14)
+#define _rk_mm_shuffle_flip(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14)
 #define _rk_mm_movehdup_pf(a)        _mm512_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm512_moveldup_ps(a)
-#define _rk_mm_shuffle_pf(a, b, m)   _mm512_shuffle_ps(a, b, m)
-//#define _rk_mm_fmaddsub_pf(a, b, c)  _mm512_fmaddsub_ps(a, b, c)
-#define _rk_mm_cvtepi16_epi32(a)     _mm512_cvtepi16_epi32(a)                // AVX512
-#define _rk_mm_cvtepi32_pf(a)        _mm512_cvtepi32_ps(a)                   // AVX512
+#if defined(__FMA__)
+#define _rk_mm_muladd_pf(a, b, c)    _mm512_fmadd_ps(a, b, c)
+#define _rk_mm_muladdsub_pf(a, b, c) _mm512_fmaddsub_ps(a, b, c)
+#else
+#define _rk_mm_muladd_pf(a, b, c)     _mm512_add_ps(_mm512_mul_ps(a, b), c)
+#define _rk_mm_muladdsub_pf(a, b, c)  _mm512_addsub_ps(_mm512_mul_ps(a, b), c)
+#endif
 #define _rk_mm_sqrt_pf(a)            _mm512_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm512_rcp_ps(a)
 #define _rk_mm_max_pf(a, b)          _mm512_max_ps(a, b)
 #define _rk_mm_min_pf(a, b)          _mm512_min_ps(a, b)
-//#if defined(_mm512_mul_ps)
-//#define _rk_mm_log10_pf(a)           _mm512_log10_ps(a)
-//#endif
 
 #elif defined(__AVX__)
 
 typedef __m256 RKVec;
 typedef __m128i RKVecCvt;
 #define _rk_mm_set1_pf(a)            _mm256_set1_ps(a)
-#define _rk_mm_set_pf(v)             _mm256_load_ps(v)
+#define _rk_mm_load_pf(a)            _mm256_load_ps(a)
 #define _rk_mm_add_pf(a, b)          _mm256_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm256_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm256_mul_ps(a, b)
@@ -80,28 +81,24 @@ typedef __m128i RKVecCvt;
 #define _rk_mm_max_pf(a, b)          _mm256_max_ps(a, b)
 #define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7)
 #define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6)
+#define _rk_mm_shuffle_flip(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2, 5, 4, 7, 6)
 #define _rk_mm_movehdup_pf(a)        _mm256_movehdup_ps(a)
-//#define _rk_mm_moveldup_pf(a)        __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6)
 #define _rk_mm_moveldup_pf(a)        _mm256_moveldup_ps(a)
-#define _rk_mm_shuffle_pf(a, b, m)   _mm256_shuffle_ps(a, b, m)
-//#define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_fmaddsub_ps(a, b, c)
-//#define _rk_mm_fmsubadd_pf(a, b, c)  _mm256_fmsubadd_ps(a, b, c)
-#define _rk_mm_fmaddsub_pf(a, b, c)  _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
-#    if defined(__AVX2__)
-#        define _rk_mm_cvtepi16_epi32(a)     _mm256_cvtepi16_epi32(a)                 // AVX2
-#        define _rk_mm_cvtepi32_pf(a)        _mm256_cvtepi32_ps(a)                    // AVX
-#    endif
+#if defined(__FMA__)
+#define _rk_mm_muladd_pf(a, b, c)    _mm256_fmadd_ps(a, b, c)
+#define _rk_mm_muladdsub_pf(a, b, c) _mm256_fmaddsub_ps(a, b, c)
+#else
+#define _rk_mm_muladd_pf(a, b, c)     _mm256_add_ps(_mm256_mul_ps(a, b), c)
+#define _rk_mm_muladdsub_pf(a, b, c)  _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
+#endif
 #define _rk_mm_sqrt_pf(a)            _mm256_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm256_rcp_ps(a)
-//#if defined(_mm256_mul_ps)
-//#define _rk_mm_log10_pf(a)           _mm256_log10_ps(a)
-//#endif
 
 #elif defined(_EXPLICIT_INTRINSIC) || defined(__x86_64__)
 
 typedef __m128 RKVec;
 #define _rk_mm_set1_pf(a)            _mm_set1_ps(a)
-#define _rk_mm_set_pf(v)             _mm_load_ps(v)
+#define _rk_mm_load_pf(a)            _mm_load_ps(a)
 #define _rk_mm_add_pf(a, b)          _mm_add_ps(a, b)
 #define _rk_mm_sub_pf(a, b)          _mm_sub_ps(a, b)
 #define _rk_mm_mul_pf(a, b)          _mm_mul_ps(a, b)
@@ -110,29 +107,24 @@ typedef __m128 RKVec;
 #define _rk_mm_max_pf(a, b)          _mm_max_ps(a, b)
 #define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
 #define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)
+#define _rk_mm_shuffle_flip(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2)
 #define _rk_mm_movehdup_pf(a)        _mm_movehdup_ps(a)
 #define _rk_mm_moveldup_pf(a)        _mm_moveldup_ps(a)
-#define _rk_mm_shuffle_pf(a, b, m)   _mm_shuffle_ps(a, b, m)
-//#define _rk_mm_fmadd_pf(a, b, c)     _mm_add_ps(_mm_mul_ps(a, b), c)         // FMA
-//#define _rk_mm_fmadd_pf(a, b, c)     _mm_fmadd_ps(a, b, c)                   // FMA
-#define _rk_mm_fmaddsub_pf(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)      // SSE3
-//#define _rk_mm_fmaddsub_pf(a, b, c)  _mm_fmaddsub_ps(a, b, c)                // FMA
-//#define _rk_mm_fmsubadd_pf(a, b, c)  _mm_fmsubadd_ps(a, b, c)                // FMA
-#define _rk_mm_unpacklo_epi16(a, b)  _mm_unpacklo_epi16(a, b)                // SSE2
-#define _rk_mm_unpackhi_epi16(a, b)  _mm_unpackhi_epi16(a, b)                // SSE2
-#define _rk_mm_cvtepi16_epi32(a)     _mm_cvtepi16_epi32(a)                   // SSE4.1
-#define _rk_mm_cvtepi32_pf(a)        _mm_cvtepi32_ps(a)                      // SSE2
+#if defined(__FMA__)
+#define _rk_mm_muladd_pf(a, b, c)    _mm_fmadd_ps(a, b, c)
+#define _rk_mm_muladdsub_pf(a, b, c) _mm_fmaddsub_ps(a, b, c)
+#else
+#define _rk_mm_muladd_pf(a, b, c)     _mm_add_ps(_mm_mul_ps(a, b), c)
+#define _rk_mm_muladdsub_pf(a, b, c)  _mm_addsub_ps(_mm_mul_ps(a, b), c)
+#endif
 #define _rk_mm_sqrt_pf(a)            _mm_sqrt_ps(a)
 #define _rk_mm_rcp_pf(a)             _mm_rcp_ps(a)
-//#if defined(_mm_mul_ps)
-//#define _rk_mm_log10_pf(a)           _mm_log10_ps(a)
-//#endif
 
 #elif defined(__ARM_NEON__)
 
 typedef float32x4_t RKVec;
 #define _rk_mm_set1_pf(a)            vld1q_dup_f32((float *)&a)
-#define _rk_mm_set_pf(v)             vld1q_f32(v)
+#define _rk_mm_load_pf(a)            vld1q_f32(v)
 #define _rk_mm_add_pf(a, b)          vaddq_f32(a, b)
 #define _rk_mm_sub_pf(a, b)          vsubq_f32(a, b)
 #define _rk_mm_mul_pf(a, b)          vmulq_f32(a, b)
@@ -141,16 +133,13 @@ typedef float32x4_t RKVec;
 #define _rk_mm_max_pf(a, b)          vaddq_f32(a, b)
 #define _rk_mm_shuffle_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
 #define _rk_mm_shuffle_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)
+#define _rk_mm_shuffle_flip(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2)
 #define _rk_mm_movehdup_pf(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)
 #define _rk_mm_moveldup_pf(a)        __builtin_shufflevector(a, a, 0, 0, 2, 2)
-#define _rk_mm_shuffle_pf(a, b, m)   vaddq_f32(a, b)
-#define _rk_mm_fmaddsub_pf(a, b, c)  vaddq_f32(a, b)
-#define _rk_mm_unpacklo_epi16(a, b)  vaddq_f32(a, b)
-#define _rk_mm_unpackhi_epi16(a, b)  vaddq_f32(a, b)
-#define _rk_mm_cvtepi16_epi32(a)     vld1q_dup_f32(a)
-#define _rk_mm_cvtepi32_pf(a)        vcvtq(a)
+#define _rk_mm_muladd_pf(a, b, c)     _mm_add_ps(_mm_mul_ps(a, b), c)
+// #define _rk_mm_muladdsub_pf(a, b, c) vaddq_f32(vmulq_f32(a, b), c)
 #define _rk_mm_sqrt_pf(a)            vsqrtq_f32(a)
-#define _rk_mm_rcp_pf(a)             vsqrtq_f32(a)
+#define _rk_mm_rcp_pf(a)             vrecpeq_f32(a)
 
 #endif
 

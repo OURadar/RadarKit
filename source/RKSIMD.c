@@ -14,6 +14,9 @@
 
 #include <RadarKit/RKSIMD.h>
 
+const float _rk_flip_even_sign_mask[] = {1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
+const float _rk_flip_odd_sign_mask[] = {-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f};
+
 void RKSIMD_show_info(void) {
     printf(rkGlobalParameters.showColor ? UNDERLINE("SIMD Info:")"\n" : "SIMD Info:\n----------\n");
     #if defined(__SSE__) && defined(__SSE2__)
@@ -353,67 +356,56 @@ void RKSIMD_yconj(RKComplex *src, const int n) {
         *s = -*s;
         s += 2;
 	}
-    // for (int k = 0; k < n; k++) {
-    //     src->q = -src->q;
-    //     src++;
-    // }
 	return;
 }
 
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec r, i, x;
-    RKVec *s = (RKVec *)src;                                     // [a  b  x  y ]
-    RKVec *d = (RKVec *)dst;                                     // [c  d  z  w ]
-
-    #if defined(__ARM_NEON__)
-
-    // extract real and imaginary parts
-    float32x4_t a_real = vcombine_f32(vget_low_f32(*s), vget_low_f32(*(s + 2)));
-    float32x4_t a_imag = vcombine_f32(vget_high_f32(*s), vget_high_f32(*(s + 2)));
-    float32x4_t b_real = vcombine_f32(vget_low_f32(*d), vget_low_f32(*(b + 2)));
-    float32x4_t b_imag = vcombine_f32(vget_high_f32(*b), vget_high_f32(*(b + 2)));
-
-    // perform complex multiplication
-    float32x4_t res_real = vmlaq_f32(vmulq_f32(a_real, b_real), a_imag, b_imag);
-    float32x4_t res_imag = vmlsq_f32(vmulq_f32(a_imag, b_real), a_real, b_imag);
-
-    // combine real and imaginary parts
-    float32x4_t res = vcombine_f32(vget_low_f32(res_real), vget_low_f32(res_imag));
-    res = vcombine_f32(res, vget_high_f32(res_real));
-    res = vcombine_f32(res, vget_high_f32(res_imag));
-
-    #else
+	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
+	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
+    // #if !defined(_rk_mm_muladdsub_pf)
+    // const RKVec o = _rk_mm_load_pf(_rk_flip_odd_sign_mask);      // [ -1   1  -1   1 ]
+    // #endif
 
     for (k = 0; k < K; k++) {
-        r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
-        i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
-        x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
-        i = _rk_mm_mul_pf(i, x);                                 // [bd bc yw yz]
-        *d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+		r = _rk_mm_shuffle_even(*s);                             // [  a   a   x   x ]
+		i = _rk_mm_shuffle_odd(*s);                              // [  b   b   y   y ]
+        x = _rk_mm_shuffle_flip(*d);                             // [  d   c   w   z ]
+        i = _rk_mm_mul_pf(i, x);                                 // [ bd  bc  yw  yz ]
+        // #if defined(_rk_mm_muladdsub_pf)
+        *d = _rk_mm_muladdsub_pf(r, *d, i);                      // [a a x x] * [c d z w] -/+/-/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+        // #else
+        // i = _rk_mm_mul_pf(i, o);                                 // [-bd  bc -yw  yz ]
+        // *d = _rk_mm_muladd_pf(r, *d, i);                         // [a a x x] * [c d z w] + [-bd bc -yw yz] = [ac-bd ad+bc xz-yw xw+yz]
+        // #endif
         s++;
         d++;
     }
     return;
-
-    #endif
 }
 
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    // const float q[4] = {-1.0f, 1.0f, -1.0f, 1.0f};
-    const float q[4] = {1.0f, -1.0f, 1.0f, -1.0f};
 	RKVec r, i, x;
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
-    RKVec c = _rk_mm_set_pf(q);                                  // [  1  -1   1  -1 ]
+    const RKVec c = _rk_mm_load_pf(_rk_flip_even_sign_mask);     // [  1  -1   1  -1 ]
+    // #if !defined(_rk_mm_muladdsub_pf)
+    // const RKVec o = _rk_mm_load_pf(_rk_flip_odd_sign_mask);      // [ -1   1  -1   1 ]
+    // #endif
 	for (k = 0; k < K; k++) {
         *d = _rk_mm_mul_pf(*d, c);                               // [  c  -d   z  -w ]
-		r = _rk_mm_moveldup_pf(*s);                              // [  a   a   x   x ]
-		i = _rk_mm_movehdup_pf(*s);                              // [  b   b   y   y ]
-		x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [ -d   c  -w   z ]
+		r = _rk_mm_shuffle_even(*s);                             // [  a   a   x   x ]
+		i = _rk_mm_shuffle_odd(*s);                              // [  b   b   y   y ]
+		x = _rk_mm_shuffle_flip(*d);                             // [ -d   c  -w   z ]
 		i = _rk_mm_mul_pf(i, x);                                 // [-bd  bc -yw  yz ]
-		*d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c -d z -w] -/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
+        // #if defined(_rk_mm_muladdsub_pf)
+		*d = _rk_mm_muladdsub_pf(r, *d, i);                      // [a a x x] * [c -d z -w] -/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
+        // #else
+        // i = _rk_mm_mul_pf(i, o);                                 // [ bd -bc  yw -yz ]
+        // *d = _rk_mm_muladd_pf(r, *d, i);                         // [a a x x] * [c -d z -w] -/+/-/+ [-bd bc -yw yz] = [ac+bd bc-ad xz+yw yz-xw]
+        // #endif
 		s++;
 		d++;
 	}
@@ -421,47 +413,10 @@ void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
-	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-	RKVec r, i, x;
-	RKVec *s = (RKVec *)src;                                         // [a  b  x  y ]
-	RKVec *d = (RKVec *)dst;                                         // [c  d  z  w ]
 	if (c) {
-#if defined(_rk_mm_fmsubadd_pf)
-		for (k = 0; k < K; k++) {
-			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
-			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
-			x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
-			r = _rk_mm_mul_pf(r, *d);                                // [ac ad xz xw]
-			*d = _rk_mm_fmsubadd_pf(i, x, r);                        // [b b y y] * [d c w z] +/- [ac ad xz xw] = [bd+ac bc-ad yw+xz yz-xw]
-			s++;
-			d++;
-		}
-#else
-		RKComplex *y = dst;
-		for (k = 0; k < n; k++) {
-			y->q = -y->q;
-			y++;
-		}
-		for (k = 0; k < K; k++) {
-			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
-			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
-			x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
-			i = _rk_mm_mul_pf(i, x);                                 // [bd bc yw yz]
-			*d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
-			s++;
-			d++;
-		}
-#endif
+        return RKSIMD_iymulc(src, dst, n);
 	} else {
-		for (k = 0; k < K; k++) {
-			r = _rk_mm_moveldup_pf(*s);                              // [a  a  x  x ]
-			i = _rk_mm_movehdup_pf(*s);                              // [b  b  y  y ]
-			x = _rk_mm_shuffle_pf(*d, *d, _MM_SHUFFLE(2, 3, 0, 1));  // [d  c  w  z ]
-			i = _rk_mm_mul_pf(i, x);                                 // [bd bc yw yz]
-			*d = _rk_mm_fmaddsub_pf(r, *d, i);                       // [a a x x] * [c d z w] -/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
-			s++;
-			d++;
-		}
+		return RKSIMD_iymul(src, dst, n);
 	}
 	return;
 }
@@ -500,32 +455,6 @@ void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n) {
 
 void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
     int k;
-
-#if defined(__AVX512F__) || defined(__AVX2__)
-
-    RKVecCvt *s = (RKVecCvt *)src;
-    RKVec *d = (RKVec *)dst;
-    int K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    for (k = 0; k < K; k++) {
-        *d++ = _rk_mm_cvtepi32_pf(_rk_mm_cvtepi16_epi32(*s++));
-    }
-
-#elif defined(_EXPLICIT_INTRINSIC)
-
-    __m64 *s = (__m64 *)src;
-    __m128 *d = (__m128 *)dst;
-    __m64 z64 = _mm_setzero_si64();
-    __m128i z128i = _mm_setzero_si128();
-    __m128i t;
-    int K = (n * sizeof(RKFloat) + sizeof(__m64) - 1) / sizeof(__m64);
-    for (k = 0; k < K; k++) {
-        t = _mm_unpacklo_epi16(_mm_set_epi64(z64, *s++), z128i);
-        t = _mm_srai_epi32(_mm_slli_epi32(t, 16), 16);
-        *d++ = _mm_cvtepi32_ps(t);
-    }
-
-#else
-
     RKInt16C *s = src;
     RKComplex *d = dst;
     for (k = 0; k < n; k++) {
@@ -534,9 +463,6 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
         d++;
         s++;
     }
-
-#endif
-
     return;
 }
 
