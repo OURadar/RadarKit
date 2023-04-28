@@ -19,9 +19,9 @@
 #endif
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
 #define RKSIMD_TEST_DESC_SHORT(str, desc, f, e) \
-    sprintf(str, desc " [ %4.1f %4.1f %4.1f %4.1f ] (%.2f)", f[0], f[1], f[2], f[3], e)
+    sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f ] (%.2f)", f[0], f[1], f[2], f[3], e)
 #define RKSIMD_TEST_DESC_LONG(str, desc, f, e) \
-    sprintf(str, desc " [ %4.1f %4.1f %4.1f %4.1f %5.2f %5.2f %5.2f %5.2f ] (%.2f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
+    sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f ] (%.2f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
 #define RKSIMD_TEST_DESC(str, desc, f, e) sizeof(RKVec) / sizeof(float) == 8 \
     ? RKSIMD_TEST_DESC_LONG(str, desc, f, e) : RKSIMD_TEST_DESC_SHORT(str, desc, f, e)
 #define RKSIMD_TEST_RESULT(str, res)   rkGlobalParameters.showColor ? \
@@ -1736,16 +1736,17 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     int i;
     const int n = RKMemoryAlignSize / sizeof(RKFloat) * 2;
 
-    printf("\n==== Basic Test ====\n\n");
+    printf("\n==== Counting ====\n\n");
 
     for (i = 1; i <= 8; i++) {
         RKSIMD_show_count(i);
     }
 
+    printf("\n==== Numerical Tests ====\n\n");
+
     RKTestSIMDBasic();
 
-    printf("\n==== Advanced Test ====\n\n");
-
+    printf("\n==== Comparisons ====\n\n");
 
     // PKIQZ struct variables are usually allocated somewhere else
     RKIQZ s, d, c;
