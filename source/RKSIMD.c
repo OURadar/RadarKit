@@ -26,18 +26,26 @@ void RKSIMD_show_info(void) {
         rkGlobalParameters.showColor ? RKGreenColor : "", w, rkGlobalParameters.showColor ? RKNoColor : "",
         rkGlobalParameters.showColor ? RKGreenColor : "", s, rkGlobalParameters.showColor ? RKNoColor : "",
         RKVariableInString("n", &n, RKValueTypeInt));
-    #if defined(__SSE__) && defined(__SSE2__)
-    printf("SSE and SSE2 are active.\n");
+    #if defined(__SSE__)
+    printf("SSE is available\n");
+    #endif
+    #if defined(__SSE2__)
+    printf("SSE2 is available\n");
     #endif
     #if defined(__AVX__)
-    #  if defined(__AVX2__)
-    printf("AVX & AVX2 256-bit are active.\n");
-    #  else
-    printf("AVX 256-bit is active.\n");
-    #  endif
+    printf("AVX 256-bit is available\n");
+    #endif
+    #if defined(__AVX2__)
+    printf("AVX2 256-bit is available\n");
     #endif
     #if defined(__AVX512F__)
-    printf("AVX512F is active.\n");
+    printf("AVX512F is available\n");
+    #endif
+    #if defined(__ARM_NEON__)
+    printf("ARM NEON is available\n");
+    #endif
+    #if defined(__ALTIVEC__)
+    printf("Altivec is available\n");
     #endif
     return;
 }

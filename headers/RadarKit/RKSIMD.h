@@ -43,7 +43,6 @@
 // NOTE: Still need to define a lot of _mmXXX_XXX_pd equivalence for double precision calculations
 
 typedef __m512 RKVec;
-typedef __m256i RKVecCvt;
 #define _rk_mm_set1(a)               _mm512_set1_ps(a)
 #define _rk_mm_load(a)               _mm512_load_ps(a)
 #define _rk_mm_add(a, b)             _mm512_add_ps(a, b)
@@ -70,7 +69,6 @@ typedef __m256i RKVecCvt;
 #elif defined(__AVX__)
 
 typedef __m256 RKVec;
-typedef __m128i RKVecCvt;
 #define _rk_mm_set1(a)               _mm256_set1_ps(a)
 #define _rk_mm_load(a)               _mm256_load_ps(a)
 #define _rk_mm_add(a, b)             _mm256_add_ps(a, b)
