@@ -19,6 +19,13 @@ const float _rk_flip_odd_sign_mask[] = {-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -
 
 void RKSIMD_show_info(void) {
     printf(rkGlobalParameters.showColor ? UNDERLINE("SIMD Info:")"\n" : "SIMD Info:\n----------\n");
+    const size_t s = sizeof(RKVec);
+    const size_t w = s * 8;
+    const int n = sizeof(RKVec) / sizeof(RKFloat);
+    printf("sizeof(RKVec) = %s%zu%s bit\n              = %s%zu%s B (%s)\n",
+        rkGlobalParameters.showColor ? RKGreenColor : "", w, rkGlobalParameters.showColor ? RKNoColor : "",
+        rkGlobalParameters.showColor ? RKGreenColor : "", s, rkGlobalParameters.showColor ? RKNoColor : "",
+        RKVariableInString("n", &n, RKValueTypeInt));
     #if defined(__SSE__) && defined(__SSE2__)
     printf("SSE and SSE2 are active.\n");
     #endif
@@ -32,13 +39,6 @@ void RKSIMD_show_info(void) {
     #if defined(__AVX512F__)
     printf("AVX512F is active.\n");
     #endif
-    const size_t s = sizeof(RKVec);
-    const size_t w = s * 8;
-    const int n = sizeof(RKVec) / sizeof(RKFloat);
-    printf("sizeof(RKVec) = %s%zu%s bit\n              = %s%zu%s B (%s)\n",
-        rkGlobalParameters.showColor ? RKGreenColor : "", w, rkGlobalParameters.showColor ? RKNoColor : "",
-        rkGlobalParameters.showColor ? RKGreenColor : "", s, rkGlobalParameters.showColor ? RKNoColor : "",
-        RKVariableInString("n", &n, RKValueTypeInt));
     return;
 }
 
