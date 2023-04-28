@@ -11,7 +11,7 @@
 
 #define RKFMT                               "%5d"
 #define RKSIMD_TEST_DESC_FORMAT_LONG        "%90s"
-#define RKSIMD_TEST_DESC_FORMAT_SHORT       "%60s"
+#define RKSIMD_TEST_DESC_FORMAT_SHORT       "%64s"
 #if defined(__AVX__)
 #define RKSIMD_TEST_DESC_FORMAT RKSIMD_TEST_DESC_FORMAT_LONG
 #else
@@ -1551,6 +1551,184 @@ void RKTestRadarHub(void) {
 
 #pragma mark -
 
+float _array_delta(const RKVec *x, const float *y, const int count) {
+    float e = 0.0f;
+    float *a = (float *)x;
+    float *b = (float *)y;
+    for (int i = 0; i < count; i++) {
+        if (isfinite(a[i]) && isfinite(b[i])) {
+            e += fabsf(a[i] - b[i]);
+        }
+    }
+    return e;
+}
+
+void RKTestSIMDBasic(void) {
+    const float one = 1.0f;
+    const float vz[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    const float vo[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+    const float va[] = {1.0f, 2.0f, -1.0f, -2.0f, 1.1f, 2.1f, -1.1f, -2.1f};
+    const float vb[] = {2.0f, 1.0f, -2.0f, +1.0f, 2.1f, 1.1f, -2.1f, +1.1f};
+    const int n = sizeof(RKVec) / sizeof(float);
+
+    RKVec a, b, c;
+
+    RKComplex *in, *out;
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKMemoryAlignSize, 16 * sizeof(RKComplex)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKMemoryAlignSize, 16 * sizeof(RKComplex)));
+    memset(in, 0, 16 * sizeof(RKComplex));
+    memset(out, 0, 16 * sizeof(RKComplex));
+
+    char str[120];
+
+    float e;
+    float *f;
+
+    memset(&a, 0, n * sizeof(float));
+    e = _array_delta(&a, vz, n);
+    f = (float *)&a;
+    RKSIMD_TEST_DESC(str, "memset(0)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    a = _rk_mm_set1(one);
+    e = _array_delta(&a, vo, n);
+    f = (float *)&a;
+    RKSIMD_TEST_DESC(str, "_rk_mm_set1(one)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    a = _rk_mm_load(va);
+    e = _array_delta(&a, va, n);
+    f = (float *)&a;
+    RKSIMD_TEST_DESC(str, "_rk_mm_load(va)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    b = _rk_mm_load(vb);
+    e = _array_delta(&b, vb, n);
+    f = (float *)&b;
+    RKSIMD_TEST_DESC(str, "_rk_mm_load(vb)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    float r1[] = {3.0f, 3.0f, -3.0f, -1.0f, 3.2f, 3.2f, -3.2f, -1.0f};
+    float r2[] = {-1.0f, 1.0f, 1.0f, -3.0f, -1.0f, 1.0f, 1.0f, -3.2f};
+    float r3[] = {2.0f, 2.0f, 2.0f, -2.0f, 2.31f, 2.31f, 2.31f, -2.31f};
+    float r4[] = {0.5f, 2.0f, 0.5f, -2.0f, 0.5238f, 1.9091f, 0.5238f, -1.9091f};
+    float r5[] = {1.0f, 1.0f, -2.0f, -2.0f, 1.1f, 1.1f, -2.1f,-2.1f};
+    float r6[] = {2.0f, 2.0f, -1.0f, 1.0f, 2.1f, 2.1f, -1.1f, 1.1f};
+
+    c = _rk_mm_add(a, b);
+    e = _array_delta(&c, r1, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_add(a, b)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_sub(a, b);
+    e = _array_delta(&c, r2, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_sub(a, b)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_mul(a, b);
+    e = _array_delta(&c, r3, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_mul(a, b)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_div(a, b);
+    e = _array_delta(&c, r4, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_div(a, b)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_min(a, b);
+    e = _array_delta(&c, r5, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_min(a, b)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_max(a, b);
+    e = _array_delta(&c, r6, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_max(a, b)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    float r7[] = {2.0f, 2.0f, -2.0f, -2.0f, 2.1f, 2.1f, -2.1f, -2.1f};
+    float r8[] = {1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f};
+    float r9[] = {2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f};
+
+    c = _rk_mm_shuffle_odd(a);
+    e = _array_delta(&c, r7, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_odd(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_shuffle_even(a);
+    e = _array_delta(&c, r8, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_even(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    c = _rk_mm_shuffle_flip(a);
+    e = _array_delta(&c, r9, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_flip(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    #if defined(_rk_mm_movehdup)
+    c = _rk_mm_movehdup(a);
+    e = _array_delta(&c, r7, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_movehdup(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+    #endif
+
+    #if defined(_rk_mm_moveldup)
+    c = _rk_mm_moveldup(a);
+    e = _array_delta(&c, r8, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_moveldup(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+    #endif
+
+    //
+
+    float r10[] = {1.0f, 1.414f, NAN, NAN, 1.0488f, 1.4491f, NAN, NAN};
+    c = _rk_mm_sqrt(a);
+    e = _array_delta(&c, r10, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_sqrt(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    float r11[] = {1.0f, 0.5f, -1.0f, -0.5f, 0.9091f, 0.4762f, -0.9091f, -0.4762f};
+    c = _rk_mm_rcp(a);
+    e = _array_delta(&c, r11, n);
+    f = (float *)&c;
+    RKSIMD_TEST_DESC(str, "_rk_mm_rcp(a)", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    printf("\n");
+
+    memcpy(in, va, 4 * sizeof(RKComplex));
+
+    float r20[] = {0.0f, 5.0f, 4.0f, 3.0f, 0.0f, 5.62f, 4.62f, 3.2f};
+    float r21[] = {4.0f, 3.0f, 0.0f, 5.0f, 4.62f, 3.2f, 0.0f, 5.62f};
+
+    memcpy(out, vb, 4 * sizeof(RKComplex));
+    RKSIMD_iymul(in, out, 4);
+    e = _array_delta((RKVec *)out, r20, 8);
+    f = (float *)out;
+    RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iymul", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    memcpy(out, vb, 4 * sizeof(RKComplex));
+    RKSIMD_iymulc(in, out, 4);
+    e = _array_delta((RKVec *)out, r21, 8);
+    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
+    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
+
+    free(in);
+    free(out);
+}
+
 void RKTestSIMD(const RKTestSIMDFlag flag) {
     SHOW_FUNCTION_NAME
     RKSIMD_show_info();
@@ -1558,9 +1736,16 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
     int i;
     const int n = RKMemoryAlignSize / sizeof(RKFloat) * 2;
 
+    printf("\n==== Basic Test ====\n\n");
+
     for (i = 1; i <= 8; i++) {
         RKSIMD_show_count(i);
     }
+
+    RKTestSIMDBasic();
+
+    printf("\n==== Advanced Test ====\n\n");
+
 
     // PKIQZ struct variables are usually allocated somewhere else
     RKIQZ s, d, c;
@@ -4340,185 +4525,8 @@ void RKTestMakePositionStatusString(void) {
     free(position);
 }
 
-float _array_delta(const RKVec *x, const float *y, const int count) {
-    float e = 0.0f;
-    float *a = (float *)x;
-    float *b = (float *)y;
-    for (int i = 0; i < count; i++) {
-        if (isfinite(a[i]) && isfinite(b[i])) {
-            e += fabsf(a[i] - b[i]);
-        }
-    }
-    return e;
-}
-
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    const int n = sizeof(RKVec) / sizeof(float);
-    printf("Using %s\n", RKVariableInString("n", &n, RKValueTypeInt));
-
-    const float one = 1.0f;
-    const float vz[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    const float vo[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-    const float va[] = {1.0f, 2.0f, -1.0f, -2.0f, 1.1f, 2.1f, -1.1f, -2.1f};
-    const float vb[] = {2.0f, 1.0f, -2.0f, +1.0f, 2.1f, 1.1f, -2.1f, +1.1f};
-
-    RKVec a, b, c;
-
-    RKComplex *in, *out;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&in, RKMemoryAlignSize, 16 * sizeof(RKComplex)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKMemoryAlignSize, 16 * sizeof(RKComplex)));
-    memset(in, 0, 16 * sizeof(RKComplex));
-    memset(out, 0, 16 * sizeof(RKComplex));
-
-    char str[120];
-
-    float e;
-    float *f;
-
-    memset(&a, 0, n * sizeof(float));
-    e = _array_delta(&a, vz, n);
-    f = (float *)&a;
-    RKSIMD_TEST_DESC(str, "memset(0)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    a = _rk_mm_set1(one);
-    e = _array_delta(&a, vo, n);
-    f = (float *)&a;
-    RKSIMD_TEST_DESC(str, "_rk_mm_set1(one)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    a = _rk_mm_load(va);
-    e = _array_delta(&a, va, n);
-    f = (float *)&a;
-    RKSIMD_TEST_DESC(str, "_rk_mm_load(va)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    b = _rk_mm_load(vb);
-    e = _array_delta(&b, vb, n);
-    f = (float *)&b;
-    RKSIMD_TEST_DESC(str, "_rk_mm_load(vb)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    float r1[] = {3.0f, 3.0f, -3.0f, -1.0f, 3.2f, 3.2f, -3.2f, -1.0f};
-    float r2[] = {-1.0f, 1.0f, 1.0f, -3.0f, -1.0f, 1.0f, 1.0f, -3.2f};
-    float r3[] = {2.0f, 2.0f, 2.0f, -2.0f, 2.31f, 2.31f, 2.31f, -2.31f};
-    float r4[] = {0.5f, 2.0f, 0.5f, -2.0f, 0.5238f, 1.9091f, 0.5238f, -1.9091f};
-    float r5[] = {1.0f, 1.0f, -2.0f, -2.0f, 1.1f, 1.1f, -2.1f,-2.1f};
-    float r6[] = {2.0f, 2.0f, -1.0f, 1.0f, 2.1f, 2.1f, -1.1f, 1.1f};
-
-    c = _rk_mm_add(a, b);
-    e = _array_delta(&c, r1, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_add(a, b)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_sub(a, b);
-    e = _array_delta(&c, r2, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_sub(a, b)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_mul(a, b);
-    e = _array_delta(&c, r3, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_mul(a, b)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_div(a, b);
-    e = _array_delta(&c, r4, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_div(a, b)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_min(a, b);
-    e = _array_delta(&c, r5, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_min(a, b)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_max(a, b);
-    e = _array_delta(&c, r6, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_max(a, b)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    float r7[] = {2.0f, 2.0f, -2.0f, -2.0f, 2.1f, 2.1f, -2.1f, -2.1f};
-    float r8[] = {1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f};
-    float r9[] = {2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f};
-
-    c = _rk_mm_shuffle_odd(a);
-    e = _array_delta(&c, r7, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_odd(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_shuffle_even(a);
-    e = _array_delta(&c, r8, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_even(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    c = _rk_mm_shuffle_flip(a);
-    e = _array_delta(&c, r9, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_flip(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    #if defined(_rk_mm_movehdup)
-    c = _rk_mm_movehdup(a);
-    e = _array_delta(&c, r7, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_movehdup(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-    #endif
-
-    #if defined(_rk_mm_moveldup)
-    c = _rk_mm_moveldup(a);
-    e = _array_delta(&c, r8, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_moveldup(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-    #endif
-
-    //
-
-    float r10[] = {1.0f, 1.414f, NAN, NAN, 1.0488f, 1.4491f, NAN, NAN};
-    c = _rk_mm_sqrt(a);
-    e = _array_delta(&c, r10, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_sqrt(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    float r11[] = {1.0f, 0.5f, -1.0f, -0.5f, 0.9091f, 0.4762f, -0.9091f, -0.4762f};
-    c = _rk_mm_rcp(a);
-    e = _array_delta(&c, r11, n);
-    f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_rcp(a)", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    printf("\n");
-
-    memcpy(in, va, 4 * sizeof(RKComplex));
-
-    float r20[] = {0.0f, 5.0f, 4.0f, 3.0f, 0.0f, 5.62f, 4.62f, 3.2f};
-    float r21[] = {4.0f, 3.0f, 0.0f, 5.0f, 4.62f, 3.2f, 0.0f, 5.62f};
-
-    memcpy(out, vb, 4 * sizeof(RKComplex));
-    RKSIMD_iymul(in, out, 4);
-    e = _array_delta((RKVec *)out, r20, 8);
-    f = (float *)out;
-    RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iymul", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    memcpy(out, vb, 4 * sizeof(RKComplex));
-    RKSIMD_iymulc(in, out, 4);
-    e = _array_delta((RKVec *)out, r21, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
-    RKSIMD_TEST_RESULT(str, e < 1.0e-2f);
-
-    free(in);
-    free(out);
 }
 
 #pragma mark -

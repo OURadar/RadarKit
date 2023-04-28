@@ -32,7 +32,11 @@ void RKSIMD_show_info(void) {
     #if defined(__AVX512F__)
     printf("AVX512F is active.\n");
     #endif
-    printf("sizeof(RKVec) = %zu B (%zu RKFloats)\n", sizeof(RKVec), sizeof(RKVec) / sizeof(RKFloat));
+    const size_t s = sizeof(RKVec);
+    const int n = sizeof(RKVec) / sizeof(RKFloat);
+    printf("%s B (%s)\n",
+        RKVariableInString("sizeof(RKVec)", &s, RKValueTypeSize),
+        RKVariableInString("n", &n, RKValueTypeInt));
     return;
 }
 
