@@ -17,6 +17,10 @@
 const float _rk_flip_even_sign_mask[] = {1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
 const float _rk_flip_odd_sign_mask[]  = {-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f};
 
+size_t RKSIMD_size(void) {
+    return sizeof(RKVec);
+}
+
 void RKSIMD_show_info(void) {
     printf(rkGlobalParameters.showColor ? UNDERLINE("SIMD Info:")"\n" : "SIMD Info:\n----------\n");
     const size_t s = sizeof(RKVec);

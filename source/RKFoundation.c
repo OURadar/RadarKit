@@ -22,6 +22,10 @@ RKComplex RKComplexMultiply(const RKComplex a, const RKComplex b) {
     return (RKComplex){a.i * b.i - a.q * b.q, a.i * b.q + a.q * b.i};
 }
 
+RKComplex RKComplexConjugate(const RKComplex a) {
+    return (RKComplex){a.i, -a.q};
+}
+
 RKFloat RKComplexAbsSquare(const RKComplex a) {
     return (RKFloat)(a.i * a.i + a.q * a.q);
 }

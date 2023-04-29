@@ -244,6 +244,9 @@ uint32_t RKGetPulseCapacity(RKRadar *);
 void RKSetPulseTicsPerSeconds(RKRadar *, const double);
 void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
+// Filter array initializer
+int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *));
+
 // Pulse compressor
 int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *));
 

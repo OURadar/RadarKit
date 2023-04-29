@@ -96,6 +96,7 @@ extern const char * const rkResultStrings[];
 RKComplex RKComplexAdd(const RKComplex, const RKComplex);
 RKComplex RKComplexSubtract(const RKComplex, const RKComplex);
 RKComplex RKComplexMultiply(const RKComplex, const RKComplex);
+RKComplex RKComplexConjugate(const RKComplex);
 RKFloat RKComplexAbsSquare(const RKComplex);
 
 // Array

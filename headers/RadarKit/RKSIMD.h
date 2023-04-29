@@ -143,6 +143,8 @@ typedef float32x4_t RKVec;
 
 #endif
 
+size_t RKSIMD_size(void);
+
 void RKSIMD_show_info(void);
 void RKSIMD_show_count(const int n);
 

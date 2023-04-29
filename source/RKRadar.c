@@ -1525,7 +1525,7 @@ int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConf
     return RKResultSuccess;
 }
 
-int RKSetFilterChangeCallback(RKRadar *radar, void (*callback)(RKCompressionScratch *)) {
+int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *)) {
     if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
@@ -2817,6 +2817,7 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
+    pulse->header.configIndex = radar->configIndex;
     if (radar->state & RKRadarStateLive) {
         pulse->header.i += radar->desc.pulseBufferDepth;
         radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);

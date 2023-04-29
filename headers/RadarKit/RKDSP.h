@@ -60,7 +60,6 @@ typedef struct rk_compression_scratch {
     RKConfig                         *config;                                      //
     RKComplex                        **arrays;                                     // Array of arrays
     uint16_t                         *arraySizes;                                  // Array sizes
-    uint16_t                         tic;
 } RKCompressionScratch;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);

@@ -393,6 +393,8 @@ static void *pulseEngineCore(void *_in) {
         if (configIndex != pulse->header.configIndex) {
             configIndex = pulse->header.configIndex;
             scratch->config = &engine->configBuffer[configIndex];
+            scratch->filter = engine->filters[0][0];
+            scratch->filterAnchor = &engine->filterAnchors[0][0];
             engine->filterChangeCallback(scratch);
         }
 
