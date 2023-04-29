@@ -2554,37 +2554,37 @@ void RKTestPulseCompression(RKTestFlag flag) {
 
     RKGoLive(radar);
 
-    // Filter #2
-    RKComplex filter2[] = {{1.0f, 1.0f}};
-    RKFilterAnchor anchor2 = RKFilterAnchorDefaultWithMaxDataLength(8);
+    RKComplex filter1[] = {{1.0f, 0.0f}, {1.0f, 0.0f}};
+    RKComplex filter2[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
+    RKComplex filter3[] = {{1.0f, 0.0f}, {2.0f, 0.0f}, {3.0f, 0.0f}, {2.0f, 0.0f}, {1.0f, 0.0f}};
+    RKComplex filter4[] = {{1.0f, 1.0f}};
+    RKComplex filter5[] = {{1.0f, 0.0f}, {0.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, -1.0f}};
 
-    // Filter #3
-    RKComplex filter3[] = {{1.0f, 0.0f}, {0.0f, 1.0f}, {-1.0f, 0.0f}, {0.0f, -1.0f}};
-    RKFilterAnchor anchor3 = RKFilterAnchorOfLengthAndMaxDataLength(4, 8);
+    RKWaveform *waveform = NULL;
 
-    for (k = 0; k < 5; k++) {
+    for (k = 0; k < 6; k++) {
         switch (k) {
             default:
-                // Default is impulse [1];
-                RKPulseEngineSetFilterToImpulse(radar->pulseEngine);
+                waveform = RKWaveformInitAsImpulse();
                 break;
             case 1:
-                // Two-tap running average [1, 1]
-                RKPulseEngineSetFilterTo11(radar->pulseEngine);
+                waveform = RKWaveformInitFromSamples(filter1, sizeof(filter1) / sizeof(RKComplex));
                 break;
             case 2:
-                // Three-tap running average [1, 2, 1]
-                RKPulseEngineSetFilterTo121(radar->pulseEngine);
+                waveform = RKWaveformInitFromSamples(filter2, sizeof(filter2) / sizeof(RKComplex));
                 break;
             case 3:
-                // Change filter to filter #2: [1 + 1i]
-                RKPulseEngineSetGroupFilter(radar->pulseEngine, filter2, anchor2, 0, 0);
+                waveform = RKWaveformInitFromSamples(filter3, sizeof(filter3) / sizeof(RKComplex));
                 break;
             case 4:
-                // Change filter to filter #3
-                RKPulseEngineSetGroupFilter(radar->pulseEngine, filter3, anchor3, 0, 0);
+                waveform = RKWaveformInitFromSamples(filter4, sizeof(filter4) / sizeof(RKComplex));
+                break;
+            case 5:
+                waveform = RKWaveformInitFromSamples(filter5, sizeof(filter5) / sizeof(RKComplex));
                 break;
         }
+
+        RKSetWaveform(radar, waveform);
 
         pulse = RKGetVacantPulse(radar);
         pulse->header.gateCount = 6;
