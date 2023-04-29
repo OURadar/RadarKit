@@ -1656,22 +1656,22 @@ void RKTestSIMDBasic(void) {
     float r8[] = {1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f};
     float r9[] = {2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f};
 
-    c = _rk_mm_shuffle_odd(a);
+    c = _rk_mm_dup_odd(a);
     e = _array_delta(&c, r7, n);
     f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_odd(a)", f, e);
+    RKSIMD_TEST_DESC(str, "_rk_mm_dup_odd(a)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
 
-    c = _rk_mm_shuffle_even(a);
+    c = _rk_mm_dup_even(a);
     e = _array_delta(&c, r8, n);
     f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_even(a)", f, e);
+    RKSIMD_TEST_DESC(str, "_rk_mm_dup_even(a)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
 
-    c = _rk_mm_shuffle_flip(a);
+    c = _rk_mm_flip_odd_even(a);
     e = _array_delta(&c, r9, n);
     f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_shuffle_flip(a)", f, e);
+    RKSIMD_TEST_DESC(str, "_rk_mm_flip_odd_even(a)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
 
     #if defined(_rk_mm_movehdup)
