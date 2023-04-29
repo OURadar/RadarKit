@@ -939,13 +939,13 @@ int RKPulseEngineSetFilterToImpulse(RKPulseEngine *engine) {
     if (engine->verbose > 1) {
         RKLog("%s Setting impulse filter...", engine->name);
     }
-    RKComplex filter[] = {{1.0f, 0.0f}};
     RKPulse *pulse = (RKPulse *)engine->pulseBuffer;
     if (pulse == NULL) {
         RKLog("%s Error. RKPulseEngineSetFilterToImpulse() should be called after pulse buffer is set\n", engine->name);
         return RKResultNoPulseBuffer;
     }
     RKPulseEngineResetFilters(engine);
+    RKComplex filter[] = {{1.0f, 0.0f}};
     RKFilterAnchor anchor = RKFilterAnchorDefault;
     anchor.length = sizeof(filter) / sizeof(RKComplex);
     anchor.maxDataLength = pulse->header.capacity;

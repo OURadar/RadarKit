@@ -92,9 +92,6 @@ int RKPulseEngineSetGroupFilter(RKPulseEngine *,
                            const int index);
 int RKPulseEngineSetFilter(RKPulseEngine *, const RKComplex *, const RKFilterAnchor anchor);
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
-int RKPulseEngineSetFilterTo12321(RKPulseEngine *);
-int RKPulseEngineSetFilterTo121(RKPulseEngine *);
-int RKPulseEngineSetFilterTo11(RKPulseEngine *);
 
 int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);

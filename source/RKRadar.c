@@ -1492,24 +1492,9 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    RKPulseEngineSetFilterToImpulse(radar->pulseEngine);
-    if (radar->desc.initFlags & RKInitFlagVerbose) {
-        RKPulseEngineFilterSummary(radar->pulseEngine);
-    }
     RKWaveform *waveform = RKWaveformInitAsImpulse();
     return RKSetWaveform(radar, waveform);;
 }
-
-//int RKSetWaveformTo121(RKRadar *radar) {
-//    if (radar->pulseEngine == NULL) {
-//        return RKResultNoPulseCompressionEngine;
-//    }
-//    RKPulseEngineSetFilterTo121(radar->pulseEngine);
-//    if (radar->desc.initFlags & RKInitFlagVerbose) {
-//        RKPulseEngineFilterSummary(radar->pulseEngine);
-//    }
-//    return RKResultSuccess;
-//}
 
 int RKSetPRF(RKRadar *radar, const uint32_t prf) {
     RKAddConfig(radar, RKConfigKeyPRF, prf, RKConfigKeyNull);
