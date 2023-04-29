@@ -1585,6 +1585,8 @@ void RKTestSIMDBasic(void) {
     float e;
     float *f;
 
+    // Setting / loading values
+
     memset(&a, 0, n * sizeof(float));
     e = _array_delta(&a, vz, n);
     f = (float *)&a;
@@ -1608,6 +1610,8 @@ void RKTestSIMDBasic(void) {
     f = (float *)&b;
     RKSIMD_TEST_DESC(str, "_rk_mm_load(vb)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
+
+    // Basic arithmetic
 
     float r1[] = {3.0f, 3.0f, -3.0f, -1.0f, 3.2f, 3.2f, -3.2f, -1.0f};
     float r2[] = {-1.0f, 1.0f, 1.0f, -3.0f, -1.0f, 1.0f, 1.0f, -3.2f};
@@ -1652,6 +1656,8 @@ void RKTestSIMDBasic(void) {
     RKSIMD_TEST_DESC(str, "_rk_mm_max(a, b)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
 
+    // Element suffling
+
     float r7[] = {2.0f, 2.0f, -2.0f, -2.0f, 2.1f, 2.1f, -2.1f, -2.1f};
     float r8[] = {1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f};
     float r9[] = {2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f};
@@ -1690,7 +1696,7 @@ void RKTestSIMDBasic(void) {
     RKSIMD_TEST_RESULT(str, e < tiny);
     #endif
 
-    //
+    // math functions
 
     // _rk_mm_sqrt calculates the square root
     float r10[] = {1.0f, 1.414f, NAN, NAN, 1.0488f, 1.4491f, NAN, NAN};
@@ -1740,6 +1746,12 @@ void RKTestSIMDComplex(void) {
     RKSIMD_iymulc(src, dst, 4);
     e = _array_delta((RKVec *)dst, r21, 8);
     RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
+    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+
+    memcpy(dst, vb, 4 * sizeof(RKComplex));
+    RKSIMD_iymul_reg(src, dst, 4);
+    e = _array_delta((RKVec *)dst, r20, 8);
+    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymul_reg", f, e);
     RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
     free(src);

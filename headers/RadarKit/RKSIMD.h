@@ -51,17 +51,15 @@ typedef __m512 RKVec;
 #define _rk_mm_div(a, b)             _mm512_div_ps(a, b)
 #define _rk_mm_min(a, b)             _mm512_min_ps(a, b)
 #define _rk_mm_max(a, b)             _mm512_max_ps(a, b)
-#define _rk_mm_dup_odd(a)        _mm256_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 1, 1))
-#define _rk_mm_dup_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 0, 0))
-#define _rk_mm_flip_odd_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))
+#define _rk_mm_dup_odd(a)            _mm512_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 1, 1))              //
+#define _rk_mm_dup_even(a)           _mm512_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 0, 0))              //
+#define _rk_mm_flip_odd_even(a)      _mm512_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))              //
 #define _rk_mm_movehdup(a)           _mm512_movehdup_ps(a)
 #define _rk_mm_moveldup(a)           _mm512_moveldup_ps(a)
 #if defined(__FMA__)
 #define _rk_mm_muladd(a, b, c)       _mm512_fmadd_ps(a, b, c)
 #define _rk_mm_muladdsub(a, b, c)    _mm512_fmaddsub_ps(a, b, c)
-#else
-#define _rk_mm_muladd(a, b, c)       _mm512_add_ps(_mm512_mul_ps(a, b), c)
-#define _rk_mm_muladdsub(a, b, c)    _mm512_addsub_ps(_mm512_mul_ps(a, b), c)
+#define _rk_mm_mulsubadd(a, b, c)    _mm512_fmsubadd_ps(a, b, c)
 #endif
 #define _rk_mm_sqrt(a)               _mm512_sqrt_ps(a)
 #define _rk_mm_rcp(a)                _mm512_rcp_ps(a)
@@ -78,22 +76,20 @@ typedef __m256 RKVec;
 #define _rk_mm_min(a, b)             _mm256_min_ps(a, b)
 #define _rk_mm_max(a, b)             _mm256_max_ps(a, b)
 #if defined(__builtin_shufflevector)                                                               // macOS, x86_64 AVX, clang
-#define _rk_mm_dup_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7)         //
-#define _rk_mm_dup_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6)         //
-#define _rk_mm_flip_odd_even(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2, 5, 4, 7, 6)         //
+#define _rk_mm_dup_odd(a)            __builtin_shufflevector(a, a, 1, 1, 3, 3, 5, 5, 7, 7)         //
+#define _rk_mm_dup_even(a)           __builtin_shufflevector(a, a, 0, 0, 2, 2, 4, 4, 6, 6)         //
+#define _rk_mm_flip_odd_even(a)      __builtin_shufflevector(a, a, 1, 0, 3, 2, 5, 4, 7, 6)         //
 #else                                                                                              // Ubuntu/Others, x86_64, CC
-#define _rk_mm_dup_odd(a)        _mm256_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 1, 1))              //
-#define _rk_mm_dup_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 0, 0))              //
-#define _rk_mm_flip_odd_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))              //
+#define _rk_mm_dup_odd(a)             _mm256_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 1, 1))             //
+#define _rk_mm_dup_even(a)            _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 0, 0))             //
+#define _rk_mm_flip_odd_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))             //
 #endif
 #define _rk_mm_movehdup(a)           _mm256_movehdup_ps(a)                                         // Replaced by _rk_mm_dup_odd
 #define _rk_mm_moveldup(a)           _mm256_moveldup_ps(a)                                         // Replaced by _rk_mm_dup_even
 #if defined(__FMA__)
 #define _rk_mm_muladd(a, b, c)       _mm256_fmadd_ps(a, b, c)
 #define _rk_mm_muladdsub(a, b, c)    _mm256_fmaddsub_ps(a, b, c)
-#else
-#define _rk_mm_muladd(a, b, c)       _mm256_add_ps(_mm256_mul_ps(a, b), c)
-#define _rk_mm_muladdsub(a, b, c)    _mm256_addsub_ps(_mm256_mul_ps(a, b), c)
+#define _rk_mm_mulsubadd(a, b, c)    _mm256_fmsubadd_ps(a, b, c)
 #endif
 #define _rk_mm_sqrt(a)               _mm256_sqrt_ps(a)
 #define _rk_mm_rcp(a)                _mm256_rcp_ps(a)
@@ -110,22 +106,20 @@ typedef __m128 RKVec;
 #define _rk_mm_min(a, b)             _mm_min_ps(a, b)
 #define _rk_mm_max(a, b)             _mm_max_ps(a, b)
 #if defined(__builtin_shufflevector)                                                               // macOS, x86_64 SSE, clang
-#define _rk_mm_dup_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)                     //
-#define _rk_mm_dup_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)                     //
-#define _rk_mm_flip_odd_even(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2)                     //
+#define _rk_mm_dup_odd(a)            __builtin_shufflevector(a, a, 1, 1, 3, 3)                     //
+#define _rk_mm_dup_even(a)           __builtin_shufflevector(a, a, 0, 0, 2, 2)                     //
+#define _rk_mm_flip_odd_even(a)      __builtin_shufflevector(a, a, 1, 0, 3, 2)                     //
 #else                                                                                              // Ubuntu/Others, x86_64, CC
-#define _rk_mm_dup_odd(a)        _mm256_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 1, 1))              //
-#define _rk_mm_dup_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 0, 0))              //
-#define _rk_mm_flip_odd_even(a)       _mm256_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))              //
+#define _rk_mm_dup_odd(a)            _mm_shuffle_ps(a, a, _MM_SHUFFLE(3, 3, 1, 1))                 //
+#define _rk_mm_dup_even(a)           _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 2, 0, 0))                 //
+#define _rk_mm_flip_odd_even(a)      _mm_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1))                 //
 #endif
 #define _rk_mm_movehdup(a)           _mm_movehdup_ps(a)                                            // Replaced by _rk_mm_dup_odd
 #define _rk_mm_moveldup(a)           _mm_moveldup_ps(a)                                            // Replaced by _rk_mm_dup_even
 #if defined(__FMA__)
 #define _rk_mm_muladd(a, b, c)       _mm_fmadd_ps(a, b, c)
 #define _rk_mm_muladdsub(a, b, c)    _mm_fmaddsub_ps(a, b, c)
-#else
-#define _rk_mm_muladd(a, b, c)       _mm_add_ps(_mm_mul_ps(a, b), c)
-#define _rk_mm_muladdsub(a, b, c)    _mm_addsub_ps(_mm_mul_ps(a, b), c)
+#define _rk_mm_mulsubadd(a, b, c)    _mm_fmsubadd_ps(a, b, c)
 #endif
 #define _rk_mm_sqrt(a)               _mm_sqrt_ps(a)
 #define _rk_mm_rcp(a)                _mm_rcp_ps(a)
@@ -141,10 +135,9 @@ typedef float32x4_t RKVec;
 #define _rk_mm_div(a, b)             vdivq_f32(a, b)
 #define _rk_mm_min(a, b)             vminq_f32(a, b)
 #define _rk_mm_max(a, b)             vmaxq_f32(a, b)
-#define _rk_mm_dup_odd(a)        __builtin_shufflevector(a, a, 1, 1, 3, 3)                     // macOS, M1, clang
-#define _rk_mm_dup_even(a)       __builtin_shufflevector(a, a, 0, 0, 2, 2)                     //
-#define _rk_mm_flip_odd_even(a)       __builtin_shufflevector(a, a, 1, 0, 3, 2)                     //
-#define _rk_mm_muladd(a, b, c)       vaddq_f32(vmulq_f32(a, b), c)
+#define _rk_mm_dup_odd(a)            __builtin_shufflevector(a, a, 1, 1, 3, 3)                     // macOS, M1, clang
+#define _rk_mm_dup_even(a)           __builtin_shufflevector(a, a, 0, 0, 2, 2)                     //
+#define _rk_mm_flip_odd_even(a)      __builtin_shufflevector(a, a, 1, 0, 3, 2)                     //
 #define _rk_mm_sqrt(a)               vsqrtq_f32(a)
 #define _rk_mm_rcp(a)                vrecpeq_f32(a)
 
