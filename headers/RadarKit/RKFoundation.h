@@ -98,6 +98,11 @@ RKComplex RKComplexSubtract(const RKComplex, const RKComplex);
 RKComplex RKComplexMultiply(const RKComplex, const RKComplex);
 RKFloat RKComplexAbsSquare(const RKComplex);
 
+// Array
+void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int);
+void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int);
+void RKComplexArrayInPlaceMultiply(RKComplex *src, RKComplex *dst, const int);
+
 // Log
 int RKLog(const char *, ...);
 

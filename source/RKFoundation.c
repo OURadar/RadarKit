@@ -26,6 +26,29 @@ RKFloat RKComplexAbsSquare(const RKComplex a) {
     return (RKFloat)(a.i * a.i + a.q * a.q);
 }
 
+void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int count) {
+    for (int k = 0; k < count; k++) {
+        *dst = RKComplexAdd(*src, *dst);
+        dst++;
+        src++;
+    }
+}
+
+void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int count) {
+    for (int k = 0; k < count; k++) {
+        *dst = RKComplexSubtract(*src, *dst);
+        dst++;
+        src++;
+    }
+}
+
+void RKComplexArrayInPlaceMultiply(RKComplex *src, RKComplex *dst, const int count) {
+    for (int k = 0; k < count; k++) {
+        *dst = RKComplexMultiply(*src++, *dst);
+        dst++;
+    }
+}
+
 #pragma mark - Logger
 
 int RKLog(const char *whatever, ...) {

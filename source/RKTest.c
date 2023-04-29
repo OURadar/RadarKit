@@ -1754,6 +1754,12 @@ void RKTestSIMDComplex(void) {
     RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymul_reg", f, e);
     RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
+    memcpy(dst, vb, 4 * sizeof(RKComplex));
+    RKComplexArrayInPlaceMultiply(src, dst, 4);
+    e = _array_delta((RKVec *)dst, r20, 8);
+    RKSIMD_TEST_DESC_LONG(str, "RKComplexArrayMultiply", f, e);
+    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+
     free(src);
     free(dst);
 }
