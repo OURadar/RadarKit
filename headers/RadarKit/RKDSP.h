@@ -44,6 +44,7 @@ typedef struct rk_gaussian {
 // A scratch space for pulse compression
 //
 typedef struct rk_compression_scratch {
+    RKName                           name;                                         //
     RKPulse                          *pulse;                                       //
     RKComplex                        *filter;                                      //
     RKFilterAnchor                   *filterAnchor;                                //

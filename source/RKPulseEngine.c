@@ -123,6 +123,10 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 
 #pragma mark - Delegate Workers
 
+void RKBuiltInFilterChangeCallback(RKCompressionScratch *scratch) {
+    RKLog("%s Filter changed.", scratch->name);
+}
+
 void RKBuiltInCompressor(RKCompressionScratch *scratch) {
 
     int i, p;
@@ -136,13 +140,13 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
     inBound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
     outBound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
 
-#if DEBUG_PULSE_COMPRESSION
+    #if DEBUG_PULSE_COMPRESSION
 
     if (pulse->header.i % 1000 == 0) {
         RKLog("---- filter %d   o= %d   gateCount = %d   bound = %d\n", filterAnchor->name, filterAnchor->inputOrigin, pulse->header.gateCount, inBound);
     }
 
-#endif
+    #endif
 
     for (p = 0; p < 2; p++) {
        // Copy and convert the samples
@@ -163,18 +167,18 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
 
         //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseEngineShowBuffer(out, 8);
 
-#if RKPulseEngineMultiplyMethod == 1
+        #if RKPulseEngineMultiplyMethod == 1
 
         // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
         RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, scratch->planSize);
 
-#elif RKPulseEngineMultiplyMethod == 2
+        #elif RKPulseEngineMultiplyMethod == 2
 
         // In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
         RKSIMD_iyconj((RKComplex *)out, planSize);
         RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
 
-#elif RKPulseEngineMultiplyMethod == 3
+        #elif RKPulseEngineMultiplyMethod == 3
 
         // Deinterleave the RKComplex data into RKIQZ format, multiply using SIMD, then interleave the result back to RKComplex format
         RKSIMD_Complex2IQZ((RKComplex *)in, scratch->zi, planSize);
@@ -182,13 +186,13 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
         RKSIMD_izmul(zi, zo, planSize, true);
         RKSIMD_IQZ2Complex(zo, (RKComplex *)out, planSize);
 
-#else
+        #else
 
         // Regular multiplication and let compiler optimize with either -O1 -O2 or -Os
         RKSIMD_iyconj((RKComplex *)in, planSize);
         RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
 
-#endif
+        #endif
 
         //printf("in * out =\n"); RKPulseEngineShowBuffer(out, 8);
 
@@ -215,7 +219,7 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
             o++;
         }
 
-#ifdef DEBUG_PULSE_COMPRESSION
+        #ifdef DEBUG_PULSE_COMPRESSION
 
         pthread_mutex_lock(&engine->mutex);
         Y = RKGetComplexDataFromPulse(pulse, p);
@@ -227,7 +231,7 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
         RKShowArray(Z.q, "Zq", 8, 1);
         pthread_mutex_unlock(&engine->mutex);
 
-#endif
+        #endif
 
     } // for (p = 0; ...
 }
@@ -268,7 +272,7 @@ static void *pulseEngineCore(void *_in) {
         sprintf(me->name + k, RKNoColor);
     }
 
-#if defined(_GNU_SOURCE)
+    #if defined(_GNU_SOURCE)
 
     if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
         // Set my CPU core
@@ -279,7 +283,7 @@ static void *pulseEngineCore(void *_in) {
         pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
     }
 
-#endif
+    #endif
 
     RKBuffer localPulseBuffer;
     RKPulseBufferAlloc(&localPulseBuffer, engine->radarDescription->pulseCapacity, 1);
@@ -295,6 +299,7 @@ static void *pulseEngineCore(void *_in) {
         RKLog("%s Error. Unable to allocate a scratch space.\n", engine->name);
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
+    sprintf(scratch->name, "%s %s", engine->name, me->name);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
@@ -388,6 +393,7 @@ static void *pulseEngineCore(void *_in) {
         if (configIndex != pulse->header.configIndex) {
             configIndex = pulse->header.configIndex;
             scratch->config = &engine->configBuffer[configIndex];
+            engine->filterChangeCallback(scratch);
         }
 
         #ifdef DEBUG_IQ
@@ -727,6 +733,7 @@ RKPulseEngine *RKPulseEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
+    engine->filterChangeCallback = &RKBuiltInFilterChangeCallback;
     engine->compressor = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
@@ -754,6 +761,10 @@ void RKPulseEngineFree(RKPulseEngine *engine) {
 
 void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
     engine->verbose = verb;
+}
+
+void RKPulseEngineSetFilterChangeCallback(RKPulseEngine *engine, void (*callback)(RKCompressionScratch *)) {
+    engine->filterChangeCallback = callback;
 }
 
 //
@@ -866,7 +877,7 @@ int RKPulseEngineSetFilterGroupCount(RKPulseEngine *engine, const int groupCount
 //            - gain - filter gain in dB
 //     group - filter group to assign to
 //     index - index within the group to assign to
-int RKPulseEngineSetFilter(RKPulseEngine *engine, const RKComplex *filter, const RKFilterAnchor anchor, const int group, const int index) {
+int RKPulseEngineSetGroupFilter(RKPulseEngine *engine, const RKComplex *filter, const RKFilterAnchor anchor, const int group, const int index) {
     if (engine->pulseBuffer == NULL) {
         RKLog("Warning. Pulse buffer has not been set.\n");
         return RKResultNoPulseBuffer;
@@ -920,6 +931,10 @@ int RKPulseEngineSetFilter(RKPulseEngine *engine, const RKComplex *filter, const
     return RKResultSuccess;
 }
 
+int RKPulseEngineSetFilter(RKPulseEngine *engine, const RKComplex *filter, const RKFilterAnchor anchor) {
+    return RKPulseEngineSetGroupFilter(engine, filter, anchor, 0, 0);
+}
+
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *engine) {
     if (engine->verbose > 1) {
         RKLog("%s Setting impulse filter...", engine->name);
@@ -936,7 +951,7 @@ int RKPulseEngineSetFilterToImpulse(RKPulseEngine *engine) {
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
     anchor.filterGain = 0.0f;
-    return RKPulseEngineSetFilter(engine, filter, anchor, 0, 0);
+    return RKPulseEngineSetFilter(engine, filter, anchor);
 }
 
 int RKPulseEngineSetFilterTo12321(RKPulseEngine *engine) {
@@ -952,7 +967,7 @@ int RKPulseEngineSetFilterTo12321(RKPulseEngine *engine) {
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
     anchor.filterGain = 12.8f;
-    return RKPulseEngineSetFilter(engine, filter, anchor, 0, 0);
+    return RKPulseEngineSetFilter(engine, filter, anchor);
 }
 
 int RKPulseEngineSetFilterTo121(RKPulseEngine *engine) {
@@ -968,7 +983,7 @@ int RKPulseEngineSetFilterTo121(RKPulseEngine *engine) {
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
     anchor.filterGain = 7.78f;
-    return RKPulseEngineSetFilter(engine, filter, anchor, 0, 0);
+    return RKPulseEngineSetFilter(engine, filter, anchor);
 }
 
 int RKPulseEngineSetFilterTo11(RKPulseEngine *engine) {
@@ -984,7 +999,7 @@ int RKPulseEngineSetFilterTo11(RKPulseEngine *engine) {
     anchor.maxDataLength = pulse->header.capacity;
     anchor.subCarrierFrequency = 0.0f;
     anchor.filterGain = 3.01f;
-    return RKPulseEngineSetFilter(engine, filter, anchor, 0, 0);
+    return RKPulseEngineSetFilter(engine, filter, anchor);
 }
 
 #pragma mark - Interactions

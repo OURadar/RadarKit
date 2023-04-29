@@ -2043,7 +2043,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
         printf("Using %s gates\n", RKIntegerToCommaStyleString(RKMaximumGateCount));
 
         int k;
-        const int m = 10000;
+        const int m = 1000;
         struct timeval t1, t2;
 
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
@@ -2578,11 +2578,11 @@ void RKTestPulseCompression(RKTestFlag flag) {
                 break;
             case 3:
                 // Change filter to filter #2: [1 + 1i]
-                RKPulseEngineSetFilter(radar->pulseEngine, filter2, anchor2, 0, 0);
+                RKPulseEngineSetGroupFilter(radar->pulseEngine, filter2, anchor2, 0, 0);
                 break;
             case 4:
                 // Change filter to filter #3
-                RKPulseEngineSetFilter(radar->pulseEngine, filter3, anchor3, 0, 0);
+                RKPulseEngineSetGroupFilter(radar->pulseEngine, filter3, anchor3, 0, 0);
                 break;
         }
 

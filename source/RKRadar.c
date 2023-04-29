@@ -1425,7 +1425,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            r = RKPulseEngineSetFilter(radar->pulseEngine,
+            r = RKPulseEngineSetGroupFilter(radar->pulseEngine,
                                        filter,
                                        waveform->filterAnchors[k][j],
                                        k,
@@ -1537,6 +1537,14 @@ int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConf
         return RKResultNoMomentEngine;
     }
     radar->momentEngine->calibrator = calibrator;
+    return RKResultSuccess;
+}
+
+int RKSetFilterChangeCallback(RKRadar *radar, void (*callback)(RKCompressionScratch *)) {
+    if (radar->pulseEngine == NULL) {
+        return RKResultNoPulseCompressionEngine;
+    }
+    radar->pulseEngine->filterChangeCallback = callback;
     return RKResultSuccess;
 }
 

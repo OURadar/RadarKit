@@ -49,6 +49,7 @@ struct rk_pulse_engine {
     uint32_t                         filterCounts[RKMaximumWaveformCount];
     RKFilterAnchor                   filterAnchors[RKMaximumWaveformCount][RKMaximumFilterCount];
     RKComplex                        *filters[RKMaximumWaveformCount][RKMaximumFilterCount];
+    void                             (*filterChangeCallback)(RKCompressionScratch *);
     void                             (*compressor)(RKCompressionScratch *);
 
     // Program set variables
@@ -84,11 +85,12 @@ void RKPulseEngineSetCoreOrigin(RKPulseEngine *, const uint8_t);
 int RKPulseEngineResetFilters(RKPulseEngine *);
 int RKPulseEngineSetFilterCountOfGroup(RKPulseEngine *, const int group, const int count);
 int RKPulseEngineSetFilterGroupCount(RKPulseEngine *, const int groupCount);
-int RKPulseEngineSetFilter(RKPulseEngine *,
+int RKPulseEngineSetGroupFilter(RKPulseEngine *,
                            const RKComplex *filter,
                            const RKFilterAnchor anchor,
                            const int group,
                            const int index);
+int RKPulseEngineSetFilter(RKPulseEngine *, const RKComplex *, const RKFilterAnchor anchor);
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
 int RKPulseEngineSetFilterTo12321(RKPulseEngine *);
 int RKPulseEngineSetFilterTo121(RKPulseEngine *);
