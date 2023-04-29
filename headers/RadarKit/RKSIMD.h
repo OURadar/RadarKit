@@ -166,14 +166,13 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n);
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n);
 void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c);
 void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n);
-void RKSIMD_yconj(RKComplex *src, const int n);
+void RKSIMD_iyconj(RKComplex *src, const int n);
 void RKSIMD_ssadd(float *src, const float f, float *dst, const int n);
 void RKSIMD_iyscl(RKComplex *src, const float s, const int n);
 
 void RKSIMD_IQZ2Complex(RKIQZ *src, RKComplex *dst, const int n);
 void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n);
 void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n);
-void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n);
 
 void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n);
 void RKSIMD_clamp(RKFloat *src, const RKFloat min, const RKFloat max, const int n);

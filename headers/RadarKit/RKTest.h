@@ -26,8 +26,8 @@ enum RKTestSIMDFlag {
     RKTestSIMDFlagNull                       = 0,
     RKTestSIMDFlagShowNumbers                = 1,
     RKTestSIMDFlagPerformanceTestArithmetic  = 1 << 1,
-    RKTestSIMDFlagPerformanceTestConversion  = 1 << 2,
-    RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestConversion
+    RKTestSIMDFlagPerformanceTestDuplicate   = 1 << 2,
+    RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestDuplicate
 };
 
 typedef int RKAxisAction;

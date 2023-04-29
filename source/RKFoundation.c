@@ -26,19 +26,24 @@ RKFloat RKComplexAbsSquare(const RKComplex a) {
     return (RKFloat)(a.i * a.i + a.q * a.q);
 }
 
+void RKComplexArrayInConjugate(RKComplex *srcdst, const int count) {
+    for (int k = 0; k < count; k++) {
+        srcdst->q = -srcdst->q;
+        srcdst++;
+    }
+}
+
 void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int count) {
     for (int k = 0; k < count; k++) {
-        *dst = RKComplexAdd(*src, *dst);
+        *dst = RKComplexAdd(*src++, *dst);
         dst++;
-        src++;
     }
 }
 
 void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int count) {
     for (int k = 0; k < count; k++) {
-        *dst = RKComplexSubtract(*src, *dst);
+        *dst = RKComplexSubtract(*src++, *dst);
         dst++;
-        src++;
     }
 }
 

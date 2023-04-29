@@ -1732,32 +1732,49 @@ void RKTestSIMDComplex(void) {
 
     memcpy(src, va, 4 * sizeof(RKComplex));
 
-    float r20[] = {0.0f, 5.0f, 4.0f, 3.0f, 0.0f, 5.62f, 4.62f, 3.2f};
-    float r21[] = {4.0f, 3.0f, 0.0f, 5.0f, 4.62f, 3.2f, 0.0f, 5.62f};
+    float r20[] = {1.0f, -2.0f, -1.0f, 2.0f, 1.1f, -2.1f, -1.1f, 2.1f};
+    float r21[] = {0.0f, 5.0f, 4.0f, 3.0f, 0.0f, 5.62f, 4.62f, 3.2f};
+    float r22[] = {4.0f, 3.0f, 0.0f, 5.0f, 4.62f, 3.2f, 0.0f, 5.62f};
+
+    memcpy(dst, va, 4 * sizeof(RKComplex));
+    RKSIMD_iyconj(dst, 4);
+    e = _array_delta((RKVec *)dst, r20, 8);
+    f = (float *)dst;
+    RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iyconj", f, e);
+    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymul(src, dst, 4);
-    e = _array_delta((RKVec *)dst, r20, 8);
+    e = _array_delta((RKVec *)dst, r21, 8);
     f = (float *)dst;
     RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iymul", f, e);
     RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
-    RKSIMD_iymulc(src, dst, 4);
-    e = _array_delta((RKVec *)dst, r21, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
-
-    memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymul_reg(src, dst, 4);
-    e = _array_delta((RKVec *)dst, r20, 8);
+    e = _array_delta((RKVec *)dst, r21, 8);
     RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymul_reg", f, e);
     RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKComplexArrayInPlaceMultiply(src, dst, 4);
-    e = _array_delta((RKVec *)dst, r20, 8);
+    e = _array_delta((RKVec *)dst, r21, 8);
     RKSIMD_TEST_DESC_LONG(str, "RKComplexArrayMultiply", f, e);
+    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+
+    printf("\n");
+
+    memcpy(dst, vb, 4 * sizeof(RKComplex));
+    RKSIMD_iyconj(dst, 4);
+    RKSIMD_iymul(src, dst, 4);
+    e = _array_delta((RKVec *)dst, r22, 8);
+    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iyconj-iymul", f, e);
+    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+
+    memcpy(dst, vb, 4 * sizeof(RKComplex));
+    RKSIMD_iymulc(src, dst, 4);
+    e = _array_delta((RKVec *)dst, r22, 8);
+    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
     RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
     free(src);
@@ -2026,7 +2043,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
         printf("Using %s gates\n", RKIntegerToCommaStyleString(RKMaximumGateCount));
 
         int k;
-        const int m = 20000;
+        const int m = 10000;
         struct timeval t1, t2;
 
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
@@ -2047,17 +2064,24 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
             printf("Vectorized Complex Multiplication (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
+                RKComplexArrayInPlaceMultiply(cs, cd, RKMaximumGateCount);
+            }
+            gettimeofday(&t2, NULL);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+
+            gettimeofday(&t1, NULL);
+            for (k = 0; k < m; k++) {
                 RKSIMD_iymul_reg(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_iymul(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, sse)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2074,9 +2098,33 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
             }
             gettimeofday(&t2, NULL);
             printf("    E + izmul + D: " RKSIMD_TEST_TIME_FORMAT " ms (D, Multiply, I)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+
+            printf("Vectorized Complex Conjuate Multiplication (%dK loops):\n", m / 1000);
+            gettimeofday(&t1, NULL);
+            for (k = 0; k < m; k++) {
+                RKComplexArrayInConjugate(cd, RKMaximumGateCount);
+                RKComplexArrayInPlaceMultiply(cs, cd, RKMaximumGateCount);
+            }
+            gettimeofday(&t2, NULL);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (-O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+
+            gettimeofday(&t1, NULL);
+            for (k = 0; k < m; k++) {
+                RKSIMD_iyconj(cd, RKMaximumGateCount);
+                RKSIMD_iymul(cs, cd, RKMaximumGateCount);
+            }
+            gettimeofday(&t2, NULL);
+            printf("     conj + iymul: " RKSIMD_TEST_TIME_FORMAT " ms (sse)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+
+            gettimeofday(&t1, NULL);
+            for (k = 0; k < m; k++) {
+                RKSIMD_iymulc(cs, cd, RKMaximumGateCount);
+            }
+            gettimeofday(&t2, NULL);
+            printf("           iymulc: " RKSIMD_TEST_TIME_FORMAT " ms (sse)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
 
-        if (flag & RKTestSIMDFlagPerformanceTestConversion) {
+        if (flag & RKTestSIMDFlagPerformanceTestDuplicate) {
             printf("Copy (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2092,21 +2140,6 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
             }
             gettimeofday(&t2, NULL);
             printf("             zcpy: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
-
-            printf("Conversions (%dK loops):\n", m / 1000);
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_Int2Complex_reg(is, cd, RKMaximumGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
-
-            gettimeofday(&t1, NULL);
-            for (k = 0; k < m; k++) {
-                RKSIMD_Int2Complex(is, cd, RKMaximumGateCount);
-            }
-            gettimeofday(&t2, NULL);
-            printf("      cvtepi32_ps: " RKSIMD_TEST_TIME_FORMAT " ms (SIMD)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
 
         printf("\n==========================\n");

@@ -148,11 +148,7 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
        // Copy and convert the samples
         RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
         X += filterAnchor->inputOrigin;
-        if (filterAnchor->inputOrigin % RKMemoryAlignSize == 0) {
-            RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
-        } else {
-            RKSIMD_Int2Complex_reg(X, (RKComplex *)in, inBound);
-        }
+        RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
 
         // Zero pad the input; a filter is always zero-padded in the setter function.
         if (scratch->planSize > inBound) {
@@ -175,7 +171,7 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
 #elif RKPulseEngineMultiplyMethod == 2
 
         // In-place SIMD multiplication using two seperate SIMD calls (hand tune, second fastest)
-        RKSIMD_yconj((RKComplex *)out, planSize);
+        RKSIMD_iyconj((RKComplex *)out, planSize);
         RKSIMD_iymul((RKComplex *)in, (RKComplex *)out, planSize);
 
 #elif RKPulseEngineMultiplyMethod == 3
@@ -189,7 +185,7 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
 #else
 
         // Regular multiplication and let compiler optimize with either -O1 -O2 or -Os
-        RKSIMD_yconj((RKComplex *)in, planSize);
+        RKSIMD_iyconj((RKComplex *)in, planSize);
         RKSIMD_iymul_reg((RKComplex *)in, (RKComplex *)out, planSize);
 
 #endif

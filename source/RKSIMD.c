@@ -363,13 +363,14 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
     return;
 }
 
-void RKSIMD_yconj(RKComplex *src, const int n) {
-    RKFloat *s = (RKFloat *)src;
-    s++;
-	for (int k = 0; k < n; k++) {
-        *s = -*s;
-        s += 2;
-	}
+void RKSIMD_iyconj(RKComplex *src, const int n) {
+    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    const RKVec m = _rk_mm_load(_rk_flip_even_sign_mask);
+	RKVec *s = (RKVec *)src;
+    for (k = 0; k < K; k++) {
+        *s = _rk_mm_mul(*s, m);
+        s++;
+    }
 	return;
 }
 
@@ -469,14 +470,6 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
         d->q = (RKFloat)s->q;
         d++;
         s++;
-    }
-    return;
-}
-
-void RKSIMD_Int2Complex_reg(RKInt16C *src, RKComplex *dst, const int n) {
-    for (int i = 0; i < n; i++) {
-        dst[i].i = (RKFloat)src[i].i;
-        dst[i].q = (RKFloat)src[i].q;
     }
     return;
 }
