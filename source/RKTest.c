@@ -2073,14 +2073,14 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
                 RKComplexArrayInPlaceMultiply(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, -O)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_iymul_reg(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, -O)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("              reg: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2112,14 +2112,14 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
                 RKComplexArrayInPlaceMultiply(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (-O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKComplexArrayInPlaceConjugateMultiply(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("          reduced: " RKSIMD_TEST_TIME_FORMAT " ms (-O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("          reduced: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2145,7 +2145,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
                 memcpy(src->q, dst->q, RKMaximumGateCount * sizeof(RKFloat));
             }
             gettimeofday(&t2, NULL);
-            printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms (Compiler Optimized -O2)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
