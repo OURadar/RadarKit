@@ -75,16 +75,16 @@
 #define RKInstructIsEnable(i)      ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
 
 typedef struct RKGlobalParameterStruct {
-    char             program[32];                                // Name of the program in log
-    char             logfile[RKMaximumPathLength];               // Name of the log file. This is ignored when dailyLog = true
-    char             logFolder[256];                             // Log folder. This has priority, otherwise, logs are in {rootDataFolder}/log
-    char             rootDataFolder[256];                        // Root folder where iq, moment health and log files are stored
-    bool             logTimeOnly;                                // Time stamp of log entries
-    bool             dailyLog;                                   // Daily mode where log file is {logFolder}/YYYYMMDD.log
-    bool             showColor;                                  // Show colors on screen
-    bool             statusColor;                                // Color terminal
-    pthread_mutex_t  lock;                                      // Mutual exclusive access
-    FILE             *stream;                                    // Secondary output stream, can be NULL
+    char             program[32];                                                                  // Name of the program in log
+    char             logfile[RKMaximumPathLength];                                                 // Name of the log file. This is ignored when dailyLog = true
+    char             logFolder[256];                                                               // Log folder. This has priority, otherwise, logs are in {rootDataFolder}/log
+    char             rootDataFolder[256];                                                          // Root folder where iq, moment health and log files are stored
+    bool             logTimeOnly;                                                                  // Time stamp of log entries
+    bool             dailyLog;                                                                     // Daily mode where log file is {logFolder}/YYYYMMDD.log
+    bool             showColor;                                                                    // Show colors on screen
+    bool             statusColor;                                                                  // Color terminal
+    pthread_mutex_t  lock;                                                                         // Mutual exclusive access
+    FILE             *stream;                                                                      // Secondary output stream, can be NULL
 } RKGlobalParameters;
 
 extern RKGlobalParameters rkGlobalParameters;
@@ -100,10 +100,11 @@ RKComplex RKComplexConjugate(const RKComplex);
 RKFloat RKComplexAbsSquare(const RKComplex);
 
 // Array
-void RKComplexArrayInConjugate(RKComplex *srcdst, const int);
-void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int);
-void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int);
-void RKComplexArrayInPlaceMultiply(RKComplex *src, RKComplex *dst, const int);
+void RKComplexArrayInConjugate(RKComplex *srcdst, const int);                                      // srcdst = conj(srcdst)
+void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int);                          // dst = src + dst
+void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int);                     // dst = src - dst
+void RKComplexArrayInPlaceMultiply(RKComplex *src, RKComplex *dst, const int);                     // dst = src * dst
+void RKComplexArrayInPlaceConjugateMultiply(RKComplex *src, RKComplex *dst, const int);            // dst = src * conj(dst)
 
 // Log
 int RKLog(const char *, ...);

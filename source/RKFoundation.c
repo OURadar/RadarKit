@@ -30,6 +30,7 @@ RKFloat RKComplexAbsSquare(const RKComplex a) {
     return (RKFloat)(a.i * a.i + a.q * a.q);
 }
 
+// srcdst = srcdst
 void RKComplexArrayInConjugate(RKComplex *srcdst, const int count) {
     for (int k = 0; k < count; k++) {
         srcdst->q = -srcdst->q;
@@ -37,6 +38,7 @@ void RKComplexArrayInConjugate(RKComplex *srcdst, const int count) {
     }
 }
 
+// dst = src + dst
 void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int count) {
     for (int k = 0; k < count; k++) {
         *dst = RKComplexAdd(*src++, *dst);
@@ -44,6 +46,7 @@ void RKComplexArrayInPlaceAdd(RKComplex *src, RKComplex *dst, const int count) {
     }
 }
 
+// dst = src - dst
 void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int count) {
     for (int k = 0; k < count; k++) {
         *dst = RKComplexSubtract(*src++, *dst);
@@ -51,12 +54,22 @@ void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int cou
     }
 }
 
+// dst = src * dst
 void RKComplexArrayInPlaceMultiply(RKComplex *src, RKComplex *dst, const int count) {
     for (int k = 0; k < count; k++) {
         *dst = RKComplexMultiply(*src++, *dst);
         dst++;
     }
 }
+
+// dst = src * conj(dst)
+void RKComplexArrayInPlaceConjugateMultiply(RKComplex *src, RKComplex *dst, const int count) {
+    for (int k = 0; k < count; k++) {
+        *dst = RKComplexMultiply(*src++, RKComplexConjugate(*dst));
+        dst++;
+    }
+}
+
 
 #pragma mark - Logger
 
