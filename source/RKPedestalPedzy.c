@@ -242,11 +242,11 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
 
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
-    } else if (RKSteerEngineIsExecutable(command)) {
-        size_t s = sprintf(response,
-                           RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
-                           "    Use the 'v' command for RadarKit VCP engine\n");
-        return RKSteerEngineExecuteString(steerEngine, command, response + s);
+    // } else if (RKSteerEngineIsExecutable(command)) {
+    //     size_t s = sprintf(response,
+    //                        RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
+    //                        "    Use the 'v' command for RadarKit VCP engine\n");
+    //     return RKSteerEngineExecuteString(steerEngine, command, response + s);
     } else {
         if (client->verbose) {
             RKLog("%s Current client->state = 0x%08x", client->name, client->state);
