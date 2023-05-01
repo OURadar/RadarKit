@@ -79,7 +79,9 @@ static int pedestalPedzyRead(RKClient *client) {
 
         RKSetPositionReady(radar, newPosition);
 
-        pedestalPedzySendAction(client->sd, me->latestCommand, action);
+        if (action->mode[0] & RKPedestalInstructTypeModeMask) {
+            pedestalPedzySendAction(client->sd, me->latestCommand, action);
+        }
 
     } else {
         // This the command acknowledgement, queue it up to feedback
