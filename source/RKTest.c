@@ -247,10 +247,10 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestRadarHub();
             break;
         case 30:
-            RKTestSIMD(RKTestSIMDFlagNull);
+            RKTestSIMD(RKTestSIMDFlagNull, 0);
             break;
         case 31:
-            RKTestSIMD(RKTestSIMDFlagShowNumbers);
+            RKTestSIMD(RKTestSIMDFlagShowNumbers, 0);
             break;
         case 32:
             RKTestWindow();
@@ -322,7 +322,7 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestOneRaySpectra(RKSpectralMoment, 0);
             break;
         case 60:
-            RKTestSIMD(RKTestSIMDFlagPerformanceTestAll);
+            RKTestSIMD(RKTestSIMDFlagPerformanceTestAll, arg == NULL ? 0 : atoi((char *)arg));
             break;
         case 61:
             if (arg == NULL) {
@@ -1762,8 +1762,6 @@ void RKTestSIMDComplex(void) {
     RKSIMD_TEST_DESC_LONG(str, "RKComplexArrayMultiply", f, e);
     RKSIMD_TEST_RESULT_LONG(str, e < tiny);
 
-    printf("\n");
-
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iyconj(dst, 4);
     RKSIMD_iymul(src, dst, 4);
@@ -1787,7 +1785,7 @@ void RKTestSIMDComplex(void) {
     free(dst);
 }
 
-void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
+void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
     const int n = RKMemoryAlignSize / sizeof(RKFloat) * 2;
 
     int i;
@@ -2049,7 +2047,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
         printf("Using %s gates\n", RKIntegerToCommaStyleString(RKMaximumGateCount));
 
         int k;
-        const int m = 1000;
+        const int m = count == 0 ? 1000 : count;
         struct timeval t1, t2;
 
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
@@ -2169,7 +2167,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag) {
     free(cc);
 }
 
-void RKTestSIMD(const RKTestSIMDFlag flag) {
+void RKTestSIMD(const RKTestSIMDFlag flag, const int count) {
     SHOW_FUNCTION_NAME
     RKSIMD_show_info();
 
@@ -2189,7 +2187,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag) {
 
     printf("\n==== In-Place Out-Place Comparisons ====\n\n");
 
-    RKTestSIMDComparison(flag);
+    RKTestSIMDComparison(flag, count);
 }
 
 #pragma mark -

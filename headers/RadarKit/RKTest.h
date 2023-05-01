@@ -139,7 +139,7 @@ void RKTestRadarHub(void);
 
 #pragma mark - DSP Tests
 
-void RKTestSIMD(const RKTestSIMDFlag);
+void RKTestSIMD(const RKTestSIMDFlag, const int);
 void RKTestWindow(void);
 void RKTestHilbertTransform(void);
 void RKTestWriteFFTWisdom(const int);
