@@ -832,6 +832,9 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 RKLog("%s VCP repeats.\n", engine->name);
             } else {
                 RKLog("%s VCP stops.\n", engine->name);
+                if (V->sweepCount == 1 && V->batterScans[0].mode == RKScanModePoint) {
+                    RKSteerEngineClearSweeps(engine);
+                }
                 V->active = false;
             }
         }
@@ -1222,6 +1225,9 @@ size_t RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     }
     if (V->option & RKScanOptionRepeat) {
         s += makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
+    }
+    if (V->sweepCount == 0 && V->onDeckCount == 0 && V->inTheHoleCount == 0) {
+        s = sprintf(string, "(empty)\n");
     }
     return s;
 }
