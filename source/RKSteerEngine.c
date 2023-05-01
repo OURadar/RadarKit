@@ -855,7 +855,7 @@ RKSteerCommand RKSteerCommandFromString(const char *string) {
     } else if (!strcmp(token, "home")) {
         type = RKSteerCommandHome;
     } else if (!strcmp(token, "point")) {
-        type = RKSteerCommandPoint;
+        type = RKSteerCommandPoint | RKSteerCommandImmediate;
     } else if (!strcmp(token, "pp")) {
         type = RKSteerCommandPPISet;
     } else if (!strcmp(token, "ipp")) {
