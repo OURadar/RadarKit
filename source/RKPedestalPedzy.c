@@ -101,7 +101,7 @@ static int pedestalPedzyRead(RKClient *client) {
 }
 
 static int pedestalPedzyGreet(RKClient *client) {
-    RKLog("%s Pedzy @ %s connected.\n", client->name, client->hostIP, client->port);
+    RKLog("%s Pedzy @ %s:%d connected.\n", client->name, client->hostIP, client->port);
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
     RKRadar *radar = me->radar;
