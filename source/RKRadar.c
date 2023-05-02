@@ -1547,7 +1547,7 @@ int RKSetPulseCompressor(RKRadar *radar,
                          void (*freeRoutine)(RKCompressionScratch *)) {
     radar->pulseEngine->compressorInit = initRoutine;
     radar->pulseEngine->compressorExec = execRoutine;
-    radar->pulseEngine->compressorExec = freeRoutine;
+    radar->pulseEngine->compressorFree = freeRoutine;
     return RKResultSuccess;
 }
 

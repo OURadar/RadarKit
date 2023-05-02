@@ -248,7 +248,6 @@ void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *));
 
 // Pulse compressor
-//int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *));
 int RKSetPulseCompressor(RKRadar *radar,
                          void (*initRoutine)(RKCompressionScratch *),
                          void (*execRoutine)(RKCompressionScratch *),

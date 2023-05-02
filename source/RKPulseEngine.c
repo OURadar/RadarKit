@@ -316,9 +316,6 @@ static void *pulseEngineCore(void *_in) {
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     mem += 2 * nfft * sizeof(RKFloat);
-    if (engine->compressorInit) {
-        engine->compressorInit(scratch);
-    }
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -400,7 +397,8 @@ static void *pulseEngineCore(void *_in) {
             scratch->config = &engine->configBuffer[configIndex];
             scratch->filter = engine->filters[0][0];
             scratch->filterAnchor = &engine->filterAnchors[0][0];
-            engine->configChangeCallback(scratch);
+            //engine->configChangeCallback(scratch);
+            engine->compressorInit(scratch);
         }
 
         #ifdef DEBUG_IQ
