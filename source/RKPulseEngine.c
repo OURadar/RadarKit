@@ -124,7 +124,14 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 #pragma mark - Delegate Workers
 
 void RKBuiltInFilterChangeCallback(RKCompressionScratch *scratch) {
-    RKLog("%s Filter changed.", scratch->name);
+    RKWaveform *waveform = scratch->config->waveform;
+    RKLog("%s Filter changed. waveform @ %p", scratch->name, waveform);
+    if (waveform == NULL) {
+        return;
+    }
+    RKLog("%s %s", scratch->name,
+        RKVariableInString("waveform->count", &waveform->count, RKValueTypeUInt8)
+    );
 }
 
 void RKBuiltInCompressor(RKCompressionScratch *scratch) {
@@ -395,7 +402,7 @@ static void *pulseEngineCore(void *_in) {
             scratch->config = &engine->configBuffer[configIndex];
             scratch->filter = engine->filters[0][0];
             scratch->filterAnchor = &engine->filterAnchors[0][0];
-            engine->filterChangeCallback(scratch);
+            engine->configChangeCallback(scratch);
         }
 
         #ifdef DEBUG_IQ
@@ -440,6 +447,8 @@ static void *pulseEngineCore(void *_in) {
                 scratch->planBackwardInPlace = engine->fftModule->plans[planIndex].backwardInPlace;
                 scratch->planBackwardOutPlace = engine->fftModule->plans[planIndex].backwardOutPlace;
                 scratch->planSize = engine->fftModule->plans[planIndex].size;
+                scratch->waveformGroupdId = gid;
+                scratch->waveformFilterId = j;
 
                 // Now we actually compress
                 engine->compressor(scratch);
@@ -735,7 +744,7 @@ RKPulseEngine *RKPulseEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->filterChangeCallback = &RKBuiltInFilterChangeCallback;
+    engine->configChangeCallback = &RKBuiltInFilterChangeCallback;
     engine->compressor = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
@@ -766,7 +775,7 @@ void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
 }
 
 void RKPulseEngineSetFilterChangeCallback(RKPulseEngine *engine, void (*callback)(RKCompressionScratch *)) {
-    engine->filterChangeCallback = callback;
+    engine->configChangeCallback = callback;
 }
 
 //

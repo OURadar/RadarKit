@@ -49,7 +49,7 @@ struct rk_pulse_engine {
     uint32_t                         filterCounts[RKMaximumWaveformCount];
     RKFilterAnchor                   filterAnchors[RKMaximumWaveformCount][RKMaximumFilterCount];
     RKComplex                        *filters[RKMaximumWaveformCount][RKMaximumFilterCount];
-    void                             (*filterChangeCallback)(RKCompressionScratch *);
+    void                             (*configChangeCallback)(RKCompressionScratch *);
     void                             (*compressor)(RKCompressionScratch *);
 
     // Program set variables
@@ -101,6 +101,7 @@ char *RKPulseEnginePulseString(RKPulseEngine *);
 void RKPulseEngineFilterSummary(RKPulseEngine *);
 void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
+void RKBuiltInFilterChangeCallback(RKCompressionScratch *);
 void RKBuiltInCompressor(RKCompressionScratch *);
 
 #endif /* defined(__RadarKit_Pulse_Engine__) */
