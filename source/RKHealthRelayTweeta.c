@@ -58,7 +58,8 @@ static int healthRelayTweetaRead(RKClient *client) {
 }
 
 static int healthRelayTweetaGreet(RKClient *client) {
-    RKLog("%s Tweeta @ %s connected.\n", client->hostIP, client->port);
+    RKLog("%s Tweeta @ %s:%d connected.\n", client->name, client->hostIP, client->port);
+    // RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     return RKResultSuccess;
 }
 
