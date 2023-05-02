@@ -123,15 +123,10 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 
 #pragma mark - Delegate Workers
 
-void RKBuiltInFilterChangeCallback(RKCompressionScratch *scratch) {
+void RKBuiltInConfigChangeCallback(RKCompressionScratch *scratch) {
     RKWaveform *waveform = scratch->config->waveform;
-    RKLog("%s Filter changed. waveform @ %p", scratch->name, waveform);
-    if (waveform == NULL) {
-        return;
-    }
-    RKLog("%s %s", scratch->name,
-        RKVariableInString("waveform->count", &waveform->count, RKValueTypeUInt8)
-    );
+    RKLog("%s Config changed. waveform @ %p   %s", scratch->name, waveform,
+        waveform == NULL ? "" : RKVariableInString("waveform->count", &waveform->count, RKValueTypeUInt8));
 }
 
 void RKBuiltInCompressor(RKCompressionScratch *scratch) {
@@ -321,6 +316,9 @@ static void *pulseEngineCore(void *_in) {
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
     mem += 2 * nfft * sizeof(RKFloat);
+    if (engine->compressorInit) {
+        engine->compressorInit(scratch);
+    }
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -451,7 +449,7 @@ static void *pulseEngineCore(void *_in) {
                 scratch->waveformFilterId = j;
 
                 // Now we actually compress
-                engine->compressor(scratch);
+                engine->compressorExec(scratch);
 
                 // Copy over the parameters used
                 for (p = 0; p < 2; p++) {
@@ -519,6 +517,9 @@ static void *pulseEngineCore(void *_in) {
         RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
     }
 
+    if (engine->compressorFree) {
+        engine->compressorFree(scratch);
+    }
     free(scratch->zi);
     free(scratch->zo);
     free(scratch->inBuffer);
@@ -744,8 +745,8 @@ RKPulseEngine *RKPulseEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->configChangeCallback = &RKBuiltInFilterChangeCallback;
-    engine->compressor = &RKBuiltInCompressor;
+    engine->configChangeCallback = &RKBuiltInConfigChangeCallback;
+    engine->compressorExec = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;

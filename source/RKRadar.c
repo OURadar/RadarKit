@@ -1533,13 +1533,25 @@ int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *
     return RKResultSuccess;
 }
 
-int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
-    if (radar->pulseEngine == NULL) {
-        return RKResultNoPulseCompressionEngine;
-    }
-    radar->pulseEngine->compressor = compressor;
+// int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
+//     if (radar->pulseEngine == NULL) {
+//         return RKResultNoPulseCompressionEngine;
+//     }
+//     radar->pulseEngine->compressor = compressor;
+//     return RKResultSuccess;
+// }
+
+int RKSetPulseCompressor(RKRadar *radar,
+                         void (*initRoutine)(RKCompressionScratch *),
+                         void (*execRoutine)(RKCompressionScratch *),
+                         void (*freeRoutine)(RKCompressionScratch *)) {
+    radar->pulseEngine->compressorInit = initRoutine;
+    radar->pulseEngine->compressorExec = execRoutine;
+    radar->pulseEngine->compressorExec = freeRoutine;
     return RKResultSuccess;
 }
+
+
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {

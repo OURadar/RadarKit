@@ -195,21 +195,21 @@ int RKFree(RKRadar *radar);
 //
 #pragma mark - Hardware Hooks
 
-// Set the transceiver. Pass in function pointers: init, exec and free
+// Set the transceiver. Pass in function pointers: init, exec, and free
 int RKSetTransceiver(RKRadar *,
                      void *initInput,
                      RKTransceiver initRoutine(RKRadar *, void *),
                      int execRoutine(RKTransceiver, const char *, char *),
                      int freeRoutine(RKTransceiver));
 
-// Set the pedestal. Pass in function pointers: init, exec and free
+// Set the pedestal. Pass in function pointers: init, exec, and free
 int RKSetPedestal(RKRadar *,
                   void *initInput,
                   RKPedestal initRoutine(RKRadar *, void *),
                   int execRoutine(RKPedestal, const char *, char *),
                   int freeRoutine(RKPedestal));
 
-// Set the health relay. Pass in function pointers: init, exec and free
+// Set the health relay. Pass in function pointers: init, exec, and free
 int RKSetHealthRelay(RKRadar *,
                      void *initInput,
                      RKHealthRelay initRoutine(RKRadar *, void *),
@@ -248,7 +248,11 @@ void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *));
 
 // Pulse compressor
-int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *));
+//int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *));
+int RKSetPulseCompressor(RKRadar *radar,
+                         void (*initRoutine)(RKCompressionScratch *),
+                         void (*execRoutine)(RKCompressionScratch *),
+                         void (*freeRoutine)(RKCompressionScratch *));
 
 // Moment calibrator
 int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *));

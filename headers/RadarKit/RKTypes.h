@@ -197,6 +197,7 @@ typedef void *        RKTransceiver;                                           /
 typedef void *        RKPedestal;                                              //
 typedef void *        RKHealthRelay;                                           //
 typedef void *        RKMasterController;                                      //
+typedef void *        RKCompressor;                                            //
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
 typedef char          RKShortName[RKShortNameLength];                          // RKShortname x = char x[RKShortNameLength]
 typedef char          RKCommand[RKMaximumCommandLength];                       // RKCommand x = char x[RKCommandLength]

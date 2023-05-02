@@ -30,6 +30,8 @@ struct rk_pulse_worker {
     double                           dutyCycle;                                // Latest duty cycle estimate
     float                            lag;                                      // Relative lag from the latest index
     sem_t                            *sem;
+
+    RKCompressor                     compressor;
 };
 
 struct rk_pulse_engine {
@@ -50,7 +52,9 @@ struct rk_pulse_engine {
     RKFilterAnchor                   filterAnchors[RKMaximumWaveformCount][RKMaximumFilterCount];
     RKComplex                        *filters[RKMaximumWaveformCount][RKMaximumFilterCount];
     void                             (*configChangeCallback)(RKCompressionScratch *);
-    void                             (*compressor)(RKCompressionScratch *);
+    void                             (*compressorInit)(RKCompressionScratch *);
+    void                             (*compressorFree)(RKCompressionScratch *);
+    void                             (*compressorExec)(RKCompressionScratch *);
 
     // Program set variables
     int                              *filterGid;
@@ -92,6 +96,10 @@ int RKPulseEngineSetGroupFilter(RKPulseEngine *,
                            const int index);
 int RKPulseEngineSetFilter(RKPulseEngine *, const RKComplex *, const RKFilterAnchor anchor);
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
+int RKPulseEngineSetCompressor(RKPulseEngine *,
+                               void (*initRoutine)(RKCompressionScratch *),
+                               void (*execRoutine)(RKCompressionScratch *),
+                               void (*freeRoutine)(RKCompressionScratch *));
 
 int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);
@@ -101,7 +109,7 @@ char *RKPulseEnginePulseString(RKPulseEngine *);
 void RKPulseEngineFilterSummary(RKPulseEngine *);
 void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
-void RKBuiltInFilterChangeCallback(RKCompressionScratch *);
+void RKBuiltInConfigChangeCallback(RKCompressionScratch *);
 void RKBuiltInCompressor(RKCompressionScratch *);
 
 #endif /* defined(__RadarKit_Pulse_Engine__) */
