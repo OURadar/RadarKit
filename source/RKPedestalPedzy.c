@@ -108,10 +108,9 @@ static int pedestalPedzyGreet(RKClient *client) {
         RKLog("%s Resetting position clock.\n", me->client->name);
     }
     RKClockReset(radar->positionClock);
+    RKLog("%s Pedzy @ %s connected.\n", client->hostIP, client->port);
     return RKResultSuccess;
 }
-
-#pragma mark - Delegate Workers
 
 static void *pedestalPedzyHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;

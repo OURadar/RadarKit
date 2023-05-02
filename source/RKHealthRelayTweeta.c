@@ -57,6 +57,11 @@ static int healthRelayTweetaRead(RKClient *client) {
     return RKResultSuccess;
 }
 
+static int healthRelayTweetaGreet(RKClient *client) {
+    RKLog("%s Tweeta @ %s connected.\n", client->hostIP, client->port);
+    return RKResultSuccess;
+}
+
 #pragma mark - Protocol Implementations
 
 // Implementations
@@ -94,8 +99,8 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
      (radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0));
 
     me->client = RKClientInitWithDesc(desc);
-
     RKClientSetUserResource(me->client, me);
+    RKClientSetGreetHandler(me->client, &healthRelayTweetaGreet);
     RKClientSetReceiveHandler(me->client, &healthRelayTweetaRead);
     RKClientStart(me->client, false);
 
