@@ -62,12 +62,18 @@ static int pedestalPedzyRead(RKClient *client) {
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
+        // Correct overshooting elevation (only for overshooting greater than 180 which show -17X.X)
+        // keep 0 ~ -1.X as it was
+        if (newPosition->elevationDegrees < -90.0f) {
+            newPosition->elevationDegrees += 360.0f;
+        }
         // Some integrity check
         if (fabsf(newPosition->azimuthDegrees) > 360.0f || fabsf(newPosition->azimuthVelocityDegreesPerSecond) > 360.0f) {
             RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
                 newPosition->azimuthDegrees, newPosition->azimuthVelocityDegreesPerSecond);
         }
-       if (fabsf(newPosition->elevationDegrees) > 180.0f || fabsf(newPosition->elevationVelocityDegreesPerSecond) > 100.0f) {
+        // Some more margin for overshooting
+       if (fabsf(newPosition->elevationDegrees) > 200.0f || fabsf(newPosition->elevationVelocityDegreesPerSecond) > 100.0f) {
             RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
                 newPosition->elevationDegrees, newPosition->elevationVelocityDegreesPerSecond);
         }
