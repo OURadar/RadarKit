@@ -2862,6 +2862,7 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 }
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
+    pulse->header.configIndex = RKPreviousModuloS(radar->configIndex, radar->desc.configBufferDepth);
     if (radar->state & RKRadarStateLive) {
         pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
     }

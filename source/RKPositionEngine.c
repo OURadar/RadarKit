@@ -95,7 +95,7 @@ static void *pulseTagger(void *_in) {
     RKPositionEngine *engine = (RKPositionEngine *)_in;
 
     int i, j, k, s;
-    uint16_t c0, c1;
+    // uint16_t c0, c1;
     uint32_t gateCount;
 	struct timeval t0, t1;
 
@@ -134,9 +134,6 @@ static void *pulseTagger(void *_in) {
     }
     engine->state ^= RKEngineStateSleep0;
     engine->state |= RKEngineStateActive;
-
-    c0 = *engine->configIndex;
-    c1 = RKPreviousModuloS(c0, engine->radarDescription->configBufferDepth);
 
     pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
     gateCount = pulse->header.gateCount;
@@ -300,13 +297,7 @@ static void *pulseTagger(void *_in) {
                                     RKConfigKeyNull);
         }
 
-        if (c0 != *engine->configIndex) {
-            c0 = *engine->configIndex;
-            c1 = RKPreviousModuloS(c0, engine->radarDescription->configBufferDepth);
-        }
-
         pulse->header.marker = marker0;
-        pulse->header.configIndex = c1;
 
         marker1 = marker0;
 
