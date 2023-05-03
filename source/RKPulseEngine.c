@@ -397,10 +397,9 @@ static void *pulseEngineCore(void *_in) {
             scratch->config = &engine->configBuffer[configIndex];
             scratch->filter = engine->filters[0][0];
             scratch->filterAnchor = &engine->filterAnchors[0][0];
-            RKLog("%s Calling compressorInit() %s   %s ...\n", engine->name,
-                RKVariableInString("configIndex", &configIndex, RKValueTypeUInt16),
-                RKVariableInString("configId", &scratch->config->i, RKValueTypeIdentifier));
-            engine->compressorInit(scratch);
+            if (engine->compressorInit) {
+                engine->compressorInit(scratch);
+            }
         }
 
         #ifdef DEBUG_IQ
