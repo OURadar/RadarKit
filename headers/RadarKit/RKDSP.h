@@ -45,9 +45,10 @@ typedef struct rk_gaussian {
 //
 typedef struct rk_compression_scratch {
     RKName                           name;                                         //
+    uint8_t                          verbose;                                      //
     RKPulse                          *pulse;                                       //
-    RKComplex                        *filter;                                      //
-    RKFilterAnchor                   *filterAnchor;                                //
+    RKComplex                        *filter;                                      // (deprecating)
+    RKFilterAnchor                   *filterAnchor;                                // (deprecating)
     fftwf_plan                       planForwardInPlace;                           //
     fftwf_plan                       planForwardOutPlace;                          //
     fftwf_plan                       planBackwardInPlace;                          //
@@ -60,8 +61,8 @@ typedef struct rk_compression_scratch {
     RKConfig                         *config;                                      //
     RKComplex                        **arrays;                                     // Array of arrays
     uint16_t                         *arraySizes;                                  // Array sizes
-    uint16_t                         waveformGroupdId;
-    uint16_t                         waveformFilterId;
+    uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
+    uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use
     void                             *userResource;                                //
 } RKCompressionScratch;
 

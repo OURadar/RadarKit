@@ -67,7 +67,7 @@ typedef struct rk_moment_scratch {
     fftwf_complex                    **outBuffer;                                  //
     int8_t                           fftOrder;                                     // FFT order that was used to perform FFT. This will be copied over to rayHeader
     RKConfig                         *config;                                      // A reference to the radar configuration
-    RKMomentList                     calculatedMoments;                            // Calculated momoents
+    RKMomentList                     calculatedMoments;                            // Calculated moments
 } RKScratch;
 
 size_t RKScratchAlloc(RKScratch **, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool showNumbers);

@@ -301,7 +301,9 @@ static void *pulseEngineCore(void *_in) {
         RKLog("%s Error. Unable to allocate a scratch space.\n", engine->name);
         return (void *)RKResultFailedToAllocateFFTSpace;
     }
+    // Pass down some shared constants
     sprintf(scratch->name, "%s %s", engine->name, me->name);
+    scratch->verbose = engine->verbose;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
