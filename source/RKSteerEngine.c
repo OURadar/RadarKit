@@ -1226,7 +1226,7 @@ static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int co
 size_t RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     RKScanObject *V = &engine->vcpHandle;
     size_t s = makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
-    if (V->onDeckCount != V->inTheHoleCount) {
+    if (V->onDeckCount != V->inTheHoleCount || memcmp(V->onDeckScans, V->inTheHoleScans, RKMaximumScanCount * sizeof(RKScanPath))) {
         s += makeSweepMessage(V->onDeckScans, string + s, V->onDeckCount, RKScanPinch);
     }
     if (V->option & RKScanOptionRepeat) {
