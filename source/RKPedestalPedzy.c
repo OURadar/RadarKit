@@ -62,12 +62,18 @@ static int pedestalPedzyRead(RKClient *client) {
         } else if (newPosition->sweepAzimuthDegrees >= 360.0f) {
             newPosition->sweepAzimuthDegrees -= 360.0f;
         }
+        // Correct overshooting elevation (only for overshooting greater than 180 which show -17X.X)
+        // keep 0 ~ -1.X as it was
+        if (newPosition->elevationDegrees < -90.0f) {
+            newPosition->elevationDegrees += 360.0f;
+        }
         // Some integrity check
         if (fabsf(newPosition->azimuthDegrees) > 360.0f || fabsf(newPosition->azimuthVelocityDegreesPerSecond) > 360.0f) {
             RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
                 newPosition->azimuthDegrees, newPosition->azimuthVelocityDegreesPerSecond);
         }
-       if (fabsf(newPosition->elevationDegrees) > 180.0f || fabsf(newPosition->elevationVelocityDegreesPerSecond) > 100.0f) {
+        // Some more margin for overshooting
+       if (fabsf(newPosition->elevationDegrees) > 200.0f || fabsf(newPosition->elevationVelocityDegreesPerSecond) > 100.0f) {
             RKLog("%s Error. Unexpected azimuth reading %.1f° @ %.1f°/s\n", client->name,
                 newPosition->elevationDegrees, newPosition->elevationVelocityDegreesPerSecond);
         }
@@ -101,6 +107,7 @@ static int pedestalPedzyRead(RKClient *client) {
 }
 
 static int pedestalPedzyGreet(RKClient *client) {
+    RKLog("%s Pedzy @ %s:%d connected.\n", client->name, client->hostIP, client->port);
     // The shared user resource pointer
     RKPedestalPedzy *me = (RKPedestalPedzy *)client->userResource;
     RKRadar *radar = me->radar;
@@ -110,8 +117,6 @@ static int pedestalPedzyGreet(RKClient *client) {
     RKClockReset(radar->positionClock);
     return RKResultSuccess;
 }
-
-#pragma mark - Delegate Workers
 
 static void *pedestalPedzyHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
