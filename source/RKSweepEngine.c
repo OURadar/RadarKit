@@ -177,7 +177,9 @@ static void *sweepManager(void *in) {
                       rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
                       engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
     }
-    RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
+    if (engine->verbose) {
+        RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
+    }
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -269,7 +271,7 @@ static void *sweepManager(void *in) {
     RKSweepFree(sweep);
 
     // Show a summary of all the files created
-    if (engine->verbose && summarySize > 0) {
+    if (summarySize) {
         RKLog("%s %s", engine->name, summary);
     }
 
