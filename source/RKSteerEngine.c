@@ -1073,12 +1073,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
     } else if (motion == RKSteerCommandHome) {
 
-        float azimuth = -engine->radarDescription->heading;
-        if (azimuth < 0.0f) {
-            azimuth += 360.0f;
-        } else if (azimuth >= 360.0f) {
-            azimuth -= 360.0f;
-        }
+        const float azimuth = 360.0f - engine->radarDescription->heading;
         const float elevation = 0.0f;
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, elevation, azimuth, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
