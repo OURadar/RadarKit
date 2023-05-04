@@ -41,7 +41,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     int variableIdBeamwidth;
     int variableIdGateWidth;
     int variableIdData;
-    
+
     int tmpi;
     float tmpf;
     float *x;
@@ -51,7 +51,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
         RKLog("Error. Unable to create %s   nc_create returned %d\n", filename, j);
         return RKResultFailedToOpenFileForProduct;
     }
-   
+
     // Some global attributes
     const float zf = 0.0f;
     const float va = 0.25f * product->header.wavelength / product->header.prt[0];
@@ -69,7 +69,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
         nc_def_dim(ncid, "Beam", product->header.rayCount, &dimensionIds[0]);
     }
     nc_def_dim(ncid, "Gate", product->header.gateCount, &dimensionIds[1]);
-    
+
     // Define variables
     nc_def_var(ncid, "Azimuth", NC_FLOAT, 1, dimensionIds, &variableIdAzimuth);
     nc_def_var(ncid, "Elevation", NC_FLOAT, 1, dimensionIds, &variableIdElevation);
@@ -93,7 +93,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     nc_def_var_deflate(ncid, variableIdData, 1, 1, 3);
 
 #endif
-    
+
     // Global attributes - some are WDSS-II required
     nc_put_att_text(ncid, NC_GLOBAL, "TypeName", strlen(product->desc.name), product->desc.name);
     nc_put_att_text(ncid, NC_GLOBAL, "DataType", 9, "RadialSet");
@@ -180,7 +180,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     nc_put_att_float(ncid, NC_GLOBAL, "SQIThreshold-dB", floatType, 1, &product->header.SQIThreshold);
     put_global_text_att(ncid, "RadarKit-VCP-Definition", product->header.vcpDefinition);
     put_global_text_att(ncid, "Waveform", product->header.waveformName);
-    put_global_text_att(ncid, "CreatedBy", "RadarKit v" _RKVersionString);
+    put_global_text_att(ncid, "CreatedBy", "RadarKit v" __RKVersionString__);
     put_global_text_att(ncid, "ContactInformation", "https://arrc.ou.edu");
 
     // NetCDF definition ends here
@@ -238,7 +238,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
 #endif
 
     ncclose(ncid);
-    
+
     free(array1D);
 
     return RKResultSuccess;
@@ -247,7 +247,7 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
 void RKProductDimensionsFromFile(const char *filename, uint32_t *rayCount, uint32_t *gateCount) {
     int r;
     int ncid, tmpId;
-    
+
     MAKE_FUNCTION_NAME(name);
 
     // Early return if the file does not exist
@@ -255,13 +255,13 @@ void RKProductDimensionsFromFile(const char *filename, uint32_t *rayCount, uint3
         RKLog("Error. File %s does not exist.\n", filename);
         return;
     }
-    
+
     // Read the first file
     if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
         RKLog("%s Error opening file %s (%s)\n", name, filename, nc_strerror(r));
         return;
     }
-    
+
     // Dimensions
     size_t localRayCount = 0;
     size_t localGateCount = 0;
@@ -303,30 +303,30 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     int ncid, tmpId;
     float fv, *fp;
     int iv;
-    
+
     MAKE_FUNCTION_NAME(name);
-    
+
     size_t rayCount = 0;
     size_t gateCount = 0;
     RKName stringValue;
-    
+
     // Early return if the file does not exist
     if (!RKFilenameExists(filename)) {
         RKLog("Error. File %s does not exist.\n", filename);
         return;
     }
-    
+
     // Read the first file
     if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
         RKLog("%s Error opening file %s (%s)\n", name, filename, nc_strerror(r));
         return;
     }
-    
+
     // Some constants
     const nc_type floatType = sizeof(RKFloat) == sizeof(double) ? NC_DOUBLE : NC_FLOAT;
     const RKFloat folded = W2_RANGE_FOLDED;
     const RKFloat missing = W2_MISSING_DATA;
-    
+
     // Dimensions (for double check later)
     if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
         r = nc_inq_dimid(ncid, "azimuth", &tmpId);
@@ -363,7 +363,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
               (uint32_t)rayCount, (uint32_t)gateCount, product->header.rayCount, product->header.gateCount);
     }
     RKGetSymbolFromFilename(filename, product->desc.symbol);
-    
+
     // Global attributes
     getGlobalTextAttribute(product->desc.name, "TypeName", ncid);
     getGlobalTextAttribute(product->desc.unit, "Unit-value", ncid);
@@ -377,7 +377,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     getGlobalTextAttribute(product->header.radarName, "radarName-value", ncid);
     getGlobalTextAttribute(product->header.waveformName, "Waveform", ncid);
     getGlobalTextAttribute(product->header.vcpDefinition, "RadarKit-VCP-Definition", ncid);
-    
+
     r = nc_get_att_double(ncid, NC_GLOBAL, "LatitudeDouble", &product->header.latitude);
     if (r != NC_NOERR) {
         r = nc_get_att_float(ncid, NC_GLOBAL, "Latitude", &fv);
@@ -478,7 +478,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
               RKVariableInString("SystemZCalH", &product->header.systemZCal[0], RKValueTypeFloat),
               RKVariableInString("SystemZCalV", &product->header.systemZCal[1], RKValueTypeFloat));
     }
-    
+
     // Elevation array
     if ((r = nc_inq_varid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
         r = nc_inq_varid(ncid, "elevation", &tmpId);
@@ -488,7 +488,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     } else {
         RKLog("Warning. No elevation array.\n");
     }
-    
+
     // Azimuth array
     if ((r = nc_inq_varid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
         r = nc_inq_varid(ncid, "azimuth", &tmpId);
@@ -498,7 +498,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
     } else {
         RKLog("Warning. No azimuth array.\n");
     }
-    
+
     // Use the first element of gatewidth array as sweep gate size, it really does not change
     if (product->header.gateSizeMeters == 0.0f) {
         if ((r = nc_inq_varid(ncid, "GateWidth", &tmpId)) != NC_NOERR) {
@@ -511,7 +511,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
             product->header.gateSizeMeters = product->data[0];
         }
     }
-    
+
     // Data array
     r = nc_inq_varid(ncid, product->desc.name, &tmpId);
     if (r == NC_NOERR) {
@@ -527,7 +527,7 @@ void RKProductReadFileIntoBuffer(RKProduct *product, const char *filename, const
             RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
         }
     }
-    
+
     nc_close(ncid);
 }
 
@@ -541,7 +541,7 @@ RKProduct *RKProductFileReaderNC(const char *inputFile, const bool showInfo) {
     RKProductBufferAlloc(&product, 1, rayCount, gateCount);
 
     RKProductReadFileIntoBuffer(product, inputFile, showInfo);
-    
+
     return product;
 }
 
@@ -582,7 +582,7 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *firstFilena
         }
         RKProductReadFileIntoBuffer(&productCollection->products[k], list[k], false);
     }
-    
+
     return productCollection;
 }
 

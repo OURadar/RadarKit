@@ -7,9 +7,9 @@
 
 // These are meant to be defined during compile time, do not use these outside of RadarKit, see char *RKVersionString()
 #ifdef BETA_BRANCH
-#define _RKVersionBranch "b"
+#define _RKVersionBranch_ "b"
 #else
-#define _RKVersionBranch ""
+#define _RKVersionBranch_ ""
 #endif
 
-#define _RKVersionString "4.2" _RKVersionBranch
+#define __RKVersionString__  "4.2" _RKVersionBranch_
