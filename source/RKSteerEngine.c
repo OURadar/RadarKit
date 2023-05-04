@@ -1073,7 +1073,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
     } else if (motion == RKSteerCommandHome) {
 
-        const float azimuth = -engine->radarDescription->heading;
+        float azimuth = -engine->radarDescription->heading;
         if (azimuth < 0.0f) {
             azimuth += 360.0f;
         } else if (azimuth >= 360.0f) {
