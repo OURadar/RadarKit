@@ -33,7 +33,6 @@ endif
 ifeq ($(MACHINE), x86_64)
 	CFLAGS += -march=native
 	CFLAGS += -mfpmath=sse
-	# CFLAGS += -mfma
 endif
 
 CFLAGS += -Iheaders -Iheaders/RadarKit -fPIC
