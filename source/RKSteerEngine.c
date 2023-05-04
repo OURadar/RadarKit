@@ -856,7 +856,7 @@ RKSteerCommand RKSteerCommandFromString(const char *string) {
     if (s == 0) {
         return type;
     } else if (!strcmp(token, "home")) {
-        type = RKSteerCommandHome;
+        type = RKSteerCommandHome | RKSteerCommandImmediate;
     } else if (!strcmp(token, "point")) {
         type = RKSteerCommandPoint | RKSteerCommandImmediate;
     } else if (!strcmp(token, "pp")) {
@@ -1068,14 +1068,19 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         if (n != 2) {
             RKLog("%s Expected two arguments for point.   n = %d\n", engine->name, n);
         }
-        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, NAN);
+        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, elevation, azimuth, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
 
     } else if (motion == RKSteerCommandHome) {
 
-        const float azimuth = -engine->radarDescription->heading;
+        float azimuth = -engine->radarDescription->heading;
+        if (azimuth < 0.0f) {
+            azimuth += 360.0f;
+        } else if (azimuth >= 360.0f) {
+            azimuth -= 360.0f;
+        }
         const float elevation = 0.0f;
-        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, azimuth, elevation, azimuth, NAN);
+        RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, elevation, azimuth, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
 
     } else {
@@ -1091,7 +1096,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         char *summary = response + s;
 
         s += RKSteerEngineScanSummary(engine, response + s);
-
+        RKSteerEngineStartSweeps(engine);
         if (immediatelyDo || engine->vcpHandle.sweepCount == 0) {
             RKSteerEngineNextHitter(engine);
         }
