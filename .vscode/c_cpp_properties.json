@@ -14,7 +14,7 @@
       "cStandard": "${default}",
       "cppStandard": "${default}",
       "intelliSenseMode": "macos-clang-x86",
-      "compilerArgs": ["-stdlib=libc++"]
+      "compilerArgs": ["-march=native", "-mfpmath=sse"]
     },
     {
       "name": "macos-clang-arm64",
