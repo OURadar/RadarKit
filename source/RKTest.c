@@ -4355,10 +4355,11 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         sprintf(response,
                 "Commands:\n"
                 UNDERLINE("help") " - Help list\n"
-                UNDERLINE("aslew") " [V] - Azimuth slew at V eg/s\n"
-                UNDERLINE("eslew") " [V] - Azimuth slew at V eg/s\n"
+                UNDERLINE("aslew") " [VAZ] - Azimuth slew at VAZ °/s\n"
+                UNDERLINE("eslew") " [VEL] - Azimuth slew at VEL °/s\n"
                 UNDERLINE("astop") " - Azimuth stops\n"
                 UNDERLINE("estop") " - Elevation stops\n"
+                UNDERLINE("stop") " - Both axes stop\n"
                 RKEOL);
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);
