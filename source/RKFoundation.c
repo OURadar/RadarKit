@@ -269,7 +269,7 @@ int RKSetLogfileToDefault(void) {
 
 char *RKVersionString(void) {
     static char versionString[16];
-    sprintf(versionString, "%s", _RKVersionString);
+    sprintf(versionString, "%s", __RKVersionString__);
     return versionString;
 }
 
@@ -467,7 +467,7 @@ void RKShowBanner(const char *title, const char *color) {
 }
 
 void RKShowName(void) {
-    RKShowBanner("RadarKit " _RKVersionString, RKRadarKitColor);
+    RKShowBanner("RadarKit " __RKVersionString__, RKRadarKitColor);
 }
 
 void RKShowTypeSizes(void) {

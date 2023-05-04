@@ -1425,7 +1425,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            r = RKPulseEngineSetGroupFilter(radar->pulseEngine,
+            r = RKPulseEngineSetFilter(radar->pulseEngine,
                                        filter,
                                        waveform->filterAnchors[k][j],
                                        k,
@@ -1492,9 +1492,24 @@ int RKSetWaveformToImpulse(RKRadar *radar) {
     if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
+    RKPulseEngineSetFilterToImpulse(radar->pulseEngine);
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKPulseEngineFilterSummary(radar->pulseEngine);
+    }
     RKWaveform *waveform = RKWaveformInitAsImpulse();
     return RKSetWaveform(radar, waveform);;
 }
+
+//int RKSetWaveformTo121(RKRadar *radar) {
+//    if (radar->pulseEngine == NULL) {
+//        return RKResultNoPulseCompressionEngine;
+//    }
+//    RKPulseEngineSetFilterTo121(radar->pulseEngine);
+//    if (radar->desc.initFlags & RKInitFlagVerbose) {
+//        RKPulseEngineFilterSummary(radar->pulseEngine);
+//    }
+//    return RKResultSuccess;
+//}
 
 int RKSetPRF(RKRadar *radar, const uint32_t prf) {
     RKAddConfig(radar, RKConfigKeyPRF, prf, RKConfigKeyNull);
@@ -1525,33 +1540,13 @@ int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConf
     return RKResultSuccess;
 }
 
-int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *)) {
+int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
     if (radar->pulseEngine == NULL) {
         return RKResultNoPulseCompressionEngine;
     }
-    radar->pulseEngine->configChangeCallback = callback;
+    radar->pulseEngine->compressor = compressor;
     return RKResultSuccess;
 }
-
-// int RKSetPulseCompressor(RKRadar *radar, void (*compressor)(RKCompressionScratch *)) {
-//     if (radar->pulseEngine == NULL) {
-//         return RKResultNoPulseCompressionEngine;
-//     }
-//     radar->pulseEngine->compressor = compressor;
-//     return RKResultSuccess;
-// }
-
-int RKSetPulseCompressor(RKRadar *radar,
-                         void (*initRoutine)(RKCompressionScratch *),
-                         void (*execRoutine)(RKCompressionScratch *),
-                         void (*freeRoutine)(RKCompressionScratch *)) {
-    radar->pulseEngine->compressorInit = initRoutine;
-    radar->pulseEngine->compressorExec = execRoutine;
-    radar->pulseEngine->compressorFree = freeRoutine;
-    return RKResultSuccess;
-}
-
-
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {
@@ -2397,24 +2392,14 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                  "                              - if AZ_VEL is not provided, the default is 18°/s\n"
                                  "        e.g.,\n"
                                  "            v pp 2,4,6,8,10\n"
-                                 "            v pp 2,4,6,8,10 40\n"
-                                 "            v pp 2,4,6,8,10 40 18\n"
-                                 "    ipp [EL_SET] [AZ] [AZ_VEL] - similar to 'pp' but the VCP is immediately being replaced\n"
-                                 "    opp [EL_SET] [AZ] [AZ_VEL] - similar to 'pp' but only done once and the VCP does not change\n"
-                                 "        e.g.,\n"
-                                 "            v opp 90,90 40 18 - adds two PPI scans at EL 90°. Then, the volume resumes. This is a recommended\n"
-                                 "                                way add bird-bath scan with minimal interruption to the volume. Two scans here\n"
-                                 "                                as the first one contains a significant amount of EL transition radials.\n"
+                                 "            v pp 2,4,6,8,10 340\n"
+                                 "            v pp 2,4,6,8,10 340 18\n"
                                  "    rr [EL_RANGE] [AZ_SET] [EL_VEL] - adds a volume of RHIs at EL_RANGE, azimuths AZ_SET, slew at EL_VEL\n"
                                  "                                    - if EL_VEL is not provided, the default is 18°/s\n"
                                  "        e.g.,\n"
                                  "            v rr 0,30 10,20,30,40\n"
                                  "            v rr 0,30 10,20,30,40 18\n"
-                                 "    irr [EL_RANGE] [AZ_SET] [EL_VEL] - similar to 'rr' but the VCP is immediately being replaced\n"
-                                 "    orr [EL_RANGE] [AZ_SET] [EL_VEL] - similar to 'rr' only done once and the VCP does not change\n"
-                                 "        e.g.,\n"
-                                 "            v orr 0,60 10 18 - adds one RHI scans at EL 0-60°, AZ 10°\n"
-                                 "    vol [VOL_SPECIFIER] - adds a volume of sweeps (rarely applicable)\n"
+                                 "    vol [VOL_SPECIFIER] - adds a volume sweeps\n"
                                  "        where VOL_SPECIFIER is a /-delimited list of the following commands\n"
                                  "            p [EL] [AZ] [AZ_VEL] - add a PPI step scan with a crossover of AZ\n"
                                  "            r [EL_RANGE] [AZ] [EL_VEL] - add an RHI sweep of EL_RANGE at fixed AZ\n"
@@ -2425,8 +2410,6 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                  HIGHLIGHT("y") " - Everything goes, default waveform and VCP\n"
                                  "\n"
                                  HIGHLIGHT("z") " - Everything stops\n"
-                                 "\n\n"
-                                 "RadarKit " __RKVersionString__ " (" __VERSION__ ")\n"
                                  "\n");
 
                     sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
@@ -2874,7 +2857,6 @@ void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
 }
 
 void RKSetPulseReady(RKRadar *radar, RKPulse *pulse) {
-    pulse->header.configIndex = RKPreviousModuloS(radar->configIndex, radar->desc.configBufferDepth);
     if (radar->state & RKRadarStateLive) {
         pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
     }

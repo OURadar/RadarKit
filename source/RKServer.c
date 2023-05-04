@@ -76,7 +76,7 @@ void *RKServerRoutine(void *in) {
     }
 
     M->state = RKServerStateActive;
-    
+
     int             sid;
     fd_set          rfd;
     struct timeval  timeout;
@@ -135,13 +135,13 @@ void *RKServerRoutine(void *in) {
             }
         }
     } // while (M->state == RKServerStateActive) ...
-    
+
     if (M->verbose > 1) {
         RKLog("%s Returning ...\n", M->name);
     }
-    
+
     M->state = RKServerStateFree;
-    
+
     return NULL;
 }
 
@@ -309,10 +309,10 @@ void *RKOperatorRoutine(void *in) {
 
 
 void *RKOperatorCommandRoutine(void *in) {
-    
+
     RKOperator      *O = (RKOperator *)in;
     RKServer        *M = O->M;
-    
+
     while (true) {
         while (O->commandIndexRead == O->commandIndexWrite && M->state == RKServerStateActive && O->state == RKOperatorStateActive) {
             usleep(10000);
@@ -329,11 +329,11 @@ void *RKOperatorCommandRoutine(void *in) {
         }
         O->commandIndexRead = O->commandIndexRead == RKServerBufferDepth - 1 ? 0 : O->commandIndexRead + 1;
     }
-    
+
     if (M->verbose > 1) {
         RKLog(">%s %s Command routine returning ...\n", M->name, O->name);
     }
-    
+
     return NULL;
 }
 
@@ -388,7 +388,7 @@ RKOperator *RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     }
 
     pthread_mutex_unlock(&M->lock);
-    
+
     return O;
 }
 
@@ -411,7 +411,7 @@ int RKDefaultWelcomeHandler(RKOperator *O) {
     char msg[6 * RKMaximumStringLength];
 
     char *c = O->M->name;
-    
+
     int ii;
     // Count the characters between two escape characters
     if (*c == '\033') {
@@ -427,11 +427,11 @@ int RKDefaultWelcomeHandler(RKOperator *O) {
     } else {
         ii = RKMaximumStringLength - 1;
     }
-    
+
     int nlines = 2;
     char line_array[nlines][RKMaximumStringLength];
     snprintf(line_array[0], ii, "%s", c);
-    sprintf(line_array[1], _RKVersionString);
+    sprintf(line_array[1], __RKVersionString__);
     size_t max_len = 0, len;
     for (ii = 0; ii < nlines; ii++) {
         len = strlen(line_array[ii]);
@@ -487,7 +487,7 @@ RKServer *RKServerInit(void) {
 
     // Ignore broken pipe for clients that disconnect unexpectedly
     signal(SIGPIPE, SIG_IGN);
-    
+
     return M;
 }
 
@@ -590,11 +590,11 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
     FD_SET(O->sid, &efd);
 
     RKNetDelimiter *delimiter = &O->delimRx;
-    
+
     RKServer *M = O->M;
 
     const int blockLength = 4;
-    
+
     switch (format) {
 
         case RKNetworkMessageFormatHeaderDefinedSize:
@@ -678,7 +678,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
             }
             readOkay = true;
             break;
-            
+
         case RKNetworkMessageFormatConstantSize:
             k = 0;
             readCount = 0;
@@ -715,7 +715,7 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
             }
             readOkay = true;
             break;
-            
+
         case RKNetworkMessageFormatNewLine:
         default:
             // Nothing yet
@@ -771,15 +771,15 @@ ssize_t RKOperatorSendPackets(RKOperator *O, ...) {
         grandTotalSentSize += totalSentSize;
         payload = va_arg(arg, void *);
     }
-    
+
     va_end(arg);
-    
+
     pthread_mutex_unlock(&O->lock);
-    
+
     if (timeout_count >= RKSocketTimeCountOf10ms) {
         return RKResultTimeout;
     }
-    
+
     return grandTotalSentSize;
 }
 
