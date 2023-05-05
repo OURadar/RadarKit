@@ -77,10 +77,10 @@ int socketCommandHandler(RKOperator *O) {
 
     int j, k;
 
-    j = snprintf(user->commandResponse, RKMaximumPacketSize - 1, "%s %d radar:", engine->name, engine->radarCount);
+    j = snprintf(user->commandResponse, RKMaximumPacketSize, "%s %d radar:", engine->name, engine->radarCount);
     for (k = 0; k < engine->radarCount; k++) {
         RKRadar *radar = engine->radars[k];
-        j += snprintf(user->commandResponse + j, RKMaximumPacketSize - j - 1, " %s", radar->desc.name);
+        j += snprintf(user->commandResponse + j, RKMaximumPacketSize - j, " %s", radar->desc.name);
     }
 
     struct timeval t0;
@@ -328,7 +328,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Change radar
                     sscanf("%s", commandString + 1, sval1);
                     RKLog(">%s %s Selected radar %s\n", engine->name, O->name, sval1);
-                    snprintf(user->commandResponse, RKMaximumPacketSize - 1, "ACK. %s selected." RKEOL, sval1);
+                    snprintf(user->commandResponse, RKMaximumPacketSize, "ACK. %s selected." RKEOL, sval1);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
 
@@ -465,10 +465,10 @@ int socketStreamHandler(RKOperator *O) {
             // Stream "0" - Positions
             user->streamsInProgress = RKStreamStatusPositions;
             if (user->radar->positionEngine) {
-                k = snprintf(user->string, RKMaximumStringLength - 1, "%s" RKEOL,
+                k = snprintf(user->string, RKMaximumStringLength, "%s" RKEOL,
                              RKPositionEnginePositionString(user->radar->positionEngine));
             } else {
-                k = snprintf(user->string, RKMaximumStringLength - 1, "No position engine" RKEOL);
+                k = snprintf(user->string, RKMaximumStringLength, "No position engine" RKEOL);
             }
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
@@ -478,7 +478,7 @@ int socketStreamHandler(RKOperator *O) {
         } else if (k == RKStreamStatusPulses) {
             // Stream "1" - Pulses
             user->streamsInProgress = RKStreamStatusPulses;
-            k = snprintf(user->string, RKMaximumPacketSize - 1, "%s" RKEOL,
+            k = snprintf(user->string, RKMaximumPacketSize, "%s" RKEOL,
                          RKPulseEnginePulseString(user->radar->pulseEngine));
             O->delimTx.type = RKNetworkPacketTypePlainText;
             O->delimTx.size = k + 1;
@@ -509,7 +509,7 @@ int socketStreamHandler(RKOperator *O) {
         } else if (k == RKStreamStatusIngest) {
             // Stream "3" - Overall status
             user->streamsInProgress = RKStreamStatusIngest;
-            k = snprintf(user->string, RKMaximumPacketSize - 1, "%s %s %s %s %s" RKEOL,
+            k = snprintf(user->string, RKMaximumPacketSize, "%s %s %s %s %s" RKEOL,
                          RKPulseEngineStatusString(user->radar->pulseEngine),
                          RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),
@@ -528,7 +528,7 @@ int socketStreamHandler(RKOperator *O) {
                 sprintf(spacer, "%s | %s",
                         rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(15) : "",
                         rkGlobalParameters.showColor ? RKNoColor : "");
-                k = snprintf(user->string, RKMaximumPacketSize - 1, "%9s%s%9s%s%9s%s%9s%s%9s%s%9s\n",
+                k = snprintf(user->string, RKMaximumPacketSize, "%9s%s%9s%s%9s%s%9s%s%9s%s%9s\n",
                              user->radar->positionEngine->name, spacer,
                              user->radar->pulseEngine->name, spacer,
                              user->radar->momentEngine->name, spacer,
@@ -538,7 +538,7 @@ int socketStreamHandler(RKOperator *O) {
             } else {
                 k = 0;
             }
-            k += snprintf(user->string + k, RKMaximumPacketSize - k - 1,
+            k += snprintf(user->string + k, RKMaximumPacketSize - k,
                           "%04x - %04d       | "
                           "%04x - %05d [%d]  | "
                           "%04x - %04d [%d]   | "
@@ -690,7 +690,7 @@ int socketStreamHandler(RKOperator *O) {
             }
             if (j) {
                 // Take out the last '\n', replace it with somethign else + EOL
-                snprintf(user->string + k - 1, RKMaximumPacketSize - k - 1, "" RKEOL);
+                snprintf(user->string + k - 1, RKMaximumPacketSize - k, "" RKEOL);
                 O->delimTx.type = RKNetworkPacketTypePlainText;
                 O->delimTx.size = k + 1;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -802,7 +802,7 @@ int socketStreamHandler(RKOperator *O) {
             }
             if (j) {
                 // Take out the last '\n', replace it with somethign else + EOL
-                snprintf(user->string + k - 1, RKMaximumStringLength - k - 1, "" RKEOL);
+                snprintf(user->string + k - 1, RKMaximumStringLength - k, "" RKEOL);
                 O->delimTx.type = RKNetworkPacketTypeHealth;
                 O->delimTx.size = k;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -1545,7 +1545,7 @@ int socketInitialHandler(RKOperator *O) {
     ioctl(O->sid, TIOCGWINSZ, &terminalSize);
     RKLog(">%s %s Pul x %d   Ray x %d   Term %d x %d   Iid = %d...\n", engine->name, O->name,
           user->pulseDownSamplingRatio, user->rayDownSamplingRatio, terminalSize.ws_col, terminalSize.ws_row, O->iid);
-    snprintf(user->login, 63, "radarop");
+    snprintf(user->login, sizeof(user->login), "radarop");
     user->serverOperator = O;
 
     pthread_mutex_unlock(&engine->mutex);
@@ -1658,7 +1658,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
         char string[RKMaximumStringLength];
         for (k = 0; k < engine->radarCount; k++) {
             RKRadar *radar = engine->radars[k];
-            j += snprintf(string + j, RKMaximumStringLength - j - 1, "%d. %s\n", k, radar->desc.name);
+            j += snprintf(string + j, RKMaximumStringLength - j, "%d. %s\n", k, radar->desc.name);
         }
         printf("Remaining radars\n================\n%s", string);
     }

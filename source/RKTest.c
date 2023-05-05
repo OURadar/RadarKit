@@ -108,7 +108,7 @@ char *RKTestByNumberDescription(const int indent) {
     "19 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
     "20 - Reading a .rkc file; -T20 FILENAME\n"
     "21 - RKTestReviseLogicalValues()\n"
-    "22 - RKCommandQueue unit test\n"
+    "22 - RKPreparePath unit test\n"
     "23 - RKWebSocket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "25 - Connect to RadarHub - RKReporterInit()\n"
@@ -119,7 +119,8 @@ char *RKTestByNumberDescription(const int indent) {
     "33 - Hilbert transform\n"
     "34 - Optimize FFT performance and generate an fft-wisdom file\n"
     "35 - Show ring filter coefficients\n"
-    "36 - Show ramp types\n"
+    "36 - RKCommandQueue unit test\n"
+    "37 - Show ramp types\n"
     "\n"
     "40 - Make a frequency hopping sequence\n"
     "41 - Make a TFM waveform\n"
@@ -2410,7 +2411,7 @@ void RKTestWaveformWrite(void) {
     RKWaveformFrequencyHops(waveform, 20.0e6, 0.0, 16.0e6);
 
     char filename[160];
-    snprintf(filename, 159, "waveforms/%s.rkwav", waveform->name);
+    snprintf(filename, sizeof(filename), "waveforms/%s.rkwav", waveform->name);
     RKLog("Creating waveform file '%s' ...\n", filename);
     RKWaveformWriteFile(waveform, filename);
 
@@ -4366,10 +4367,11 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         sprintf(response,
                 "Commands:\n"
                 UNDERLINE("help") " - Help list\n"
-                UNDERLINE("aslew") " [V] - Azimuth slew at V eg/s\n"
-                UNDERLINE("eslew") " [V] - Azimuth slew at V eg/s\n"
+                UNDERLINE("aslew") " [VAZ] - Azimuth slew at VAZ °/s\n"
+                UNDERLINE("eslew") " [VEL] - Azimuth slew at VEL °/s\n"
                 UNDERLINE("astop") " - Azimuth stops\n"
                 UNDERLINE("estop") " - Elevation stops\n"
+                UNDERLINE("stop") " - Both axes stop\n"
                 RKEOL);
     } else if (response != NULL) {
         sprintf(response, "NAK. Command not understood." RKEOL);

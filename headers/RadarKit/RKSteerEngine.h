@@ -85,6 +85,7 @@ enum RKSteerCommand {
     RKSteerCommandSummary,
     RKSteerCommandScanStart,
     RKSteerCommandScanStop,
+    RKSteerCommandScanNext,
     RKSteerCommandOnce                           = (1 << 8),
     RKSteerCommandImmediate                      = (1 << 9),
     RKSteerCommandRelative                       = (1 << 10),

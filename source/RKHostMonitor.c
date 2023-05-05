@@ -95,7 +95,7 @@ static void *hostPinger(void *in) {
     socklen_t returnLength = sizeof(struct sockaddr);
     uint16_t receivedChecksum;
     uint16_t calculatedChecksum;
-    
+
     ssize_t r = 0;
     size_t txSize = RKHostMonitorPacketSize - sizeof(RKIPV4Header);
     size_t ipHeaderLength, offset;
@@ -106,7 +106,7 @@ static void *hostPinger(void *in) {
     // Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(me->name, RKShortNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
@@ -171,7 +171,7 @@ static void *hostPinger(void *in) {
         free(buff);
         return NULL;
     }
-    
+
     RKLog(">%s %s Started.   host = %s (%d.%d.%d.%d)   sd = %d\n",
           engine->name,
           me->name,
@@ -186,7 +186,7 @@ static void *hostPinger(void *in) {
     me->sequenceNumber = 1;
     me->identifier = rand() & 0xffff;
     gettimeofday(&me->latestTime, NULL);
-    
+
     uint32_t unreachCount = 0;
 
     while (engine->state & RKEngineStateWantActive) {
@@ -328,9 +328,9 @@ static void *hostPinger(void *in) {
                 me->hostStatus = RKHostStatusPartiallyReachable;
                 me->tic++;
             }
-            
+
             pthread_mutex_unlock(&engine->mutex);
-            
+
             // Wait less if this round failed.
             k = 0;
             while (k++ < 10 && engine->state & RKEngineStateWantActive) {
@@ -347,23 +347,23 @@ static void *hostPinger(void *in) {
             usleep(100000);
         }
     }
-    
+
     if (sd) {
         close(sd);
     }
     free(buff);
 
     RKLog(">%s %s Stopped.\n", engine->name, me->name);
-    
+
     return NULL;
 }
 
 static void *hostWatcher(void *in) {
     RKHostMonitor *engine = (RKHostMonitor *)in;
-    
+
     int k;
     bool anyTrue, allKnown, allReachable, anyReachable;
-    
+
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
@@ -381,11 +381,11 @@ static void *hostWatcher(void *in) {
 
 	for (k = 0; k < engine->workerCount; k++) {
         RKUnitMonitor *worker = &engine->workers[k];
-        
+
         worker->id = k;
         worker->parent = engine;
         worker->pingIntervalInSeconds = RKHostMonitorPingInterval;
-        
+
         // Workers that actually ping the hosts
         if (pthread_create(&worker->tid, NULL, hostPinger, worker) != 0) {
             RKLog(">%s Error. Failed to start a host pinger", engine->name);
@@ -401,12 +401,12 @@ static void *hostWatcher(void *in) {
     }
     engine->state ^= RKEngineStateSleep0;
     engine->state |= RKEngineStateActive;
-    
+
     RKLog("%s Started.   mem = %s B\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage));
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
-    
+
     // Wait another tic for the first ping to properly respond
     do {
         anyTrue = false;
@@ -419,7 +419,7 @@ static void *hostWatcher(void *in) {
 
     // Increase one more now that the children are going
     engine->tic = 2;
-    
+
     if (engine->verbose > 2) {
         for (k = 0; k < engine->workerCount; k++) {
             RKUnitMonitor *worker = &engine->workers[k];

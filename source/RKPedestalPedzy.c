@@ -256,7 +256,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         }
         int s = 0;
         uint32_t responseIndex = me->responseIndex;
-        size_t size = snprintf(me->latestCommand, RKMaximumCommandLength - 1, "%s" RKEOL, command);
+        size_t size = snprintf(me->latestCommand, RKMaximumCommandLength, "%s" RKEOL, command);
         RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
         while (responseIndex == me->responseIndex) {
             usleep(10000);

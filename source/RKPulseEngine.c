@@ -564,7 +564,7 @@ static void *pulseWatcher(void *_in) {
     memset(sem, 0, engine->coreCount * sizeof(sem_t *));
     for (c = 0; c < engine->coreCount; c++) {
         RKPulseWorker *worker = &engine->workers[c];
-        snprintf(worker->semaphoreName, 32, "rk-iq-%03d", c);
+        snprintf(worker->semaphoreName, sizeof(worker->semaphoreName), "rk-iq-%03d", c);
         sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
         if (sem[c] == SEM_FAILED) {
             if (engine->verbose > 1) {

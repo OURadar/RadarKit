@@ -156,7 +156,7 @@
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKBaseRedColor : (x > RKDutyCyleOrangeThreshold ? RKBaseYellowColor : RKBaseGreenColor))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? RKBaseRedColor : (x > RKLagOrangeThreshold      ? RKBaseYellowColor : RKBaseGreenColor))
 
-#define RKDigitWidth(v, n)   (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + (n) + 2)
+#define RKDigitWidth(v, n)   (int)(floorf(log10f(fabsf(v))) + ((v) < 0) + ((n) ? ((n) + 2) : 1))
 
 #define ITALIC(x)            "\033[3m" x "\033[23m"
 #define UNDERLINE(x)         "\033[4m" x "\033[24m"
@@ -1599,10 +1599,10 @@ typedef struct rk_task {
 } RKTask;
 
 typedef struct rk_command_queue {
-    uint8_t              head;                                                 // Head index (for push)
-    uint8_t              tail;                                                 // Tail index (for pop)
-    uint8_t              count;                                                // Number of elements that can be popped
-    uint8_t              depth;                                                // Buffer depth
+    uint16_t             head;                                                 // Head index (for push)
+    uint16_t             tail;                                                 // Tail index (for pop)
+    uint16_t             count;                                                // Number of elements that can be popped
+    uint16_t             depth;                                                // Buffer depth
     bool                 nonblocking;                                          // Non-blocking operations
     RKCommand            *buffer;                                              // Buffer
     pthread_mutex_t      lock;                                                 // Mutually exclusive access lock

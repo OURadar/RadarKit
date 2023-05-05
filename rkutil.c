@@ -444,7 +444,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
         struct option *o = &long_options[k];
-        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+        s += snprintf(str + s, sizeof(str) - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
     }
 
     // First pass: just check for verbosity level
@@ -478,7 +478,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     s = 0;
     for (k = 0; k < sizeof(long_options) / sizeof(struct option); k++) {
         struct option *o = &long_options[k];
-        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+        s += snprintf(str + s, sizeof(str) - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
     }
     printf("str = %s\n", str);
     #endif
@@ -987,7 +987,7 @@ int main(int argc, const char **argv) {
         //RKExecuteCommand(myRadar, "t w h040502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
-        RKExecuteCommand(myRadar, "t w h20052.5", NULL);
+        RKExecuteCommand(myRadar, "t w h20032.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
@@ -1025,7 +1025,7 @@ int main(int argc, const char **argv) {
         // Build a series of options for transceiver, only pass down the relevant parameters
         k = 0;
         if (strlen(systemPreferences->playbackFolder)) {
-            k += snprintf(cmd + k, RKMaximumCommandLength - k, " D %s", systemPreferences->playbackFolder);
+            k += snprintf(cmd + k, sizeof(cmd) - k, " D %s", systemPreferences->playbackFolder);
             cmd[RKMaximumCommandLength - 1] = '\0';
         }
         if (k == 0 && cmd[0] != '\0') {

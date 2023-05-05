@@ -883,6 +883,8 @@ RKSteerCommand RKSteerCommandFromString(const char *string) {
         type = RKSteerCommandScanStart;
     } else if (!strcmp(token, "stop") || !strcmp(token, "end")) {
         type = RKSteerCommandScanStop;
+    } else if (!strcmp(token, "next")) {
+        type = RKSteerCommandScanNext;
     }
     return type;
 }
@@ -935,6 +937,10 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
             RKSteerEngineStopSweeps(engine);
             sprintf(response, "ACK. Volume stopped." RKEOL);
             return RKResultSuccess;
+            break;
+        case RKSteerCommandScanNext:
+            RKSteerEngineNextHitter(engine);
+            sprintf(response, "ACK. Volume advanced." RKEOL);
             break;
         case RKSteerCommandNone:
             sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
@@ -1073,13 +1079,8 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
     } else if (motion == RKSteerCommandHome) {
 
-        float azimuth = -engine->radarDescription->heading;
-        if (azimuth < 0.0f) {
-            azimuth += 360.0f;
-        } else if (azimuth >= 360.0f) {
-            azimuth -= 360.0f;
-        }
         const float elevation = 0.0f;
+        const float azimuth = 360.0f - engine->radarDescription->heading;
         RKScanPath scan = RKSteerEngineMakeScanPath(RKScanModePoint, elevation, elevation, azimuth, azimuth, NAN);
         RKSteerEngineAddPinchSweep(engine, scan);
 
@@ -1225,7 +1226,7 @@ static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int co
 size_t RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
     RKScanObject *V = &engine->vcpHandle;
     size_t s = makeSweepMessage(V->batterScans, string, V->sweepCount, RKScanAtBat);
-    if (V->onDeckCount != V->inTheHoleCount) {
+    if (V->onDeckCount != V->inTheHoleCount || memcmp(V->onDeckScans, V->inTheHoleScans, RKMaximumScanCount * sizeof(RKScanPath))) {
         s += makeSweepMessage(V->onDeckScans, string + s, V->onDeckCount, RKScanPinch);
     }
     if (V->option & RKScanOptionRepeat) {

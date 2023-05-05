@@ -363,7 +363,7 @@ RKOperator *RKOperatorCreate(RKServer *M, int sid, const char *ip) {
     O->timeoutSeconds = 30;
     O->userResource = M->userResource;
     snprintf(O->ip, 48, "%s", ip);
-    snprintf(O->name, RKNameLength - 1, "%sO%d%s:%s",
+    snprintf(O->name, sizeof(O->name), "%sO%d%s:%s",
              rkGlobalParameters.showColor ? RKGetColorOfIndex(O->iid) : "",
              O->iid,
              rkGlobalParameters.showColor ? RKNoColor : "",

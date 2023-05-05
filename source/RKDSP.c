@@ -136,10 +136,9 @@ int RKBestStrideOfHopsV1(const int hopCount, const bool showNumbers) {
     if (showNumbers) {
         n = 0;
         char sequence[1024];
-        sequence[1023] = '\0';
         i = 0;
         for (k = 0; k < hopCount; k++) {
-            i += snprintf(sequence + i, 1023 - i, " %d", n);
+            i += snprintf(sequence + i, sizeof(sequence) - i, " %d", n);
             n = RKNextNModuloS(n, stride, hopCount);
         }
         printf("    Best stride = %d  ==> %s\n", stride, sequence);
@@ -155,16 +154,16 @@ static int _RKBestStrideOfHops(const int hopCount, const int bestStride) {
     int h[hopCount], s[hopCount], m[hopCount];
     int count = 3;
     int stride = 1;
-    
+
     float score, maxScore = 0.0f;
     const float a = 1.00f, b = 0.25f;
     bool used[hopCount];
     int u;
-    
+
     if (hopCount == 0) {
         return 0;
     }
-    
+
     for (i = 1; i < hopCount; i++) {
         // Figure out how many steps until the hop sequence is complete, i.e., return to the origin
         n = 0;
@@ -243,10 +242,9 @@ static int _RKBestStrideOfHops(const int hopCount, const int bestStride) {
     if (bestStride) {
         n = 0;
         char sequence[1024];
-        sequence[1023] = '\0';
         i = 0;
         for (k = 0; k < hopCount; k++) {
-            i += snprintf(sequence + i, 1023 - i, " %d", n);
+            i += snprintf(sequence + i, sizeof(sequence) - i, " %d", n);
             n = RKNextNModuloS(n, stride, hopCount);
         }
         printf("    Best stride = %d  ==> %s\n", stride, sequence);
@@ -484,7 +482,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFFTModule) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     module->verbose = verbose;
-    
+
     // DFT Wisdom
     sprintf(module->wisdomFile, RKFFTWisdomFile);
     if (RKFilenameExists(module->wisdomFile)) {
