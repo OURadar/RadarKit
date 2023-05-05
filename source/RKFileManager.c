@@ -140,6 +140,7 @@ static void refreshFileList(RKFileRemover *me) {
     int j, k;
     struct stat fileStat;
     char string[RKMaximumStringLength];
+    char format[32];
 
     RKPathname *folders = (RKPathname *)me->folders;
     RKPathname *filenames = (RKPathname *)me->filenames;
@@ -164,9 +165,11 @@ static void refreshFileList(RKFileRemover *me) {
     qsort(folders, folderCount, sizeof(RKPathname), string_cmp_by_pseudo_time);
 
     if (me->parent->verbose > 2) {
-        RKLog("%s %s Folders (%d):\n", me->parent->name, me->name, folderCount);
+        const int w = RKDigitWidth((float)folderCount, 0);
+        RKLog("%s %s Folders (%d)   w = %d:\n", me->parent->name, me->name, folderCount, w);
+        snprintf(format, sizeof(format), ">%%s %%s %%%dd. %%s/%%s\n", w);
         for (k = 0; k < folderCount; k++) {
-            RKLog(">%s %s  %d. %s/%s\n", me->parent->name, me->name, k, me->path, folders[k]);
+            RKLog(format, me->parent->name, me->name, k, me->path, folders[k]);
         }
     }
 
@@ -261,7 +264,7 @@ static void *fileRemover(void *in) {
 	// Initiate my name
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(me->name, RKShortNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(me->name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
@@ -459,7 +462,7 @@ static void *folderWatcher(void *in) {
         ""
     };
 
-#if defined(DEBUG_FILE_MANAGER)
+    #if defined(DEBUG_FILE_MANAGER)
 
     const int capacities[] = {
         100,
@@ -480,7 +483,7 @@ static void *folderWatcher(void *in) {
         0
     };
 
-#else
+    #else
 
     const int capacities[] = {
         24 * 3600 / 2 * 10,                // Assume a file every 2 seconds, 10 folders
@@ -501,7 +504,7 @@ static void *folderWatcher(void *in) {
         0
     };
 
-#endif
+    #endif
 
     const size_t sumOfLimits = limits[0] + limits[1] + limits[2];
 
@@ -522,11 +525,11 @@ static void *folderWatcher(void *in) {
         worker->parent = engine;
         worker->capacity = capacities[k];
         if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-            snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s/%s", engine->radarDescription->dataPath, folders[k]);
+            snprintf(worker->path, sizeof(worker->path), "%s/%s", engine->radarDescription->dataPath, folders[k]);
         } else if (strlen(engine->dataPath)) {
-            snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s/%s", engine->dataPath, folders[k]);
+            snprintf(worker->path, sizeof(worker->path), "%s/%s", engine->dataPath, folders[k]);
         } else {
-            snprintf(worker->path, RKMaximumFolderPathLength + 32, "%s", folders[k]);
+            snprintf(worker->path, sizeof(worker->path), "%s", folders[k]);
         }
 
         if (userLimits[k]) {
@@ -551,10 +554,8 @@ static void *folderWatcher(void *in) {
     char logPath[RKMaximumPathLength + 16] = RKLogFolder;
     if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
         snprintf(logPath, sizeof(logPath), "%s/" RKLogFolder, engine->radarDescription->dataPath);
-        logPath[sizeof(logPath) - 1] = '\0';
     } else if (strlen(engine->dataPath)) {
         snprintf(logPath, sizeof(logPath), "%s/" RKLogFolder, engine->dataPath);
-        logPath[sizeof(logPath) - 1] = '\0';
     }
 
     RKLog("%s Started.   mem = %s B  state = %x\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), engine->state);
@@ -821,7 +822,7 @@ int RKFileManagerAddFile(RKFileManager *engine, const char *filename, RKFileType
     me->usage += fileStat.st_size;
 
     if (engine->verbose > 2) {
-        RKLog("%s %s Added '%s'   %s B  ik%d\n", engine->name, me->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
+        RKLog("%s %s Added '%s'   %s B   k = %d\n", engine->name, me->name, filename, RKUIntegerToCommaStyleString(indexedStats[k].size), k);
     }
 
     me->count = RKNextModuloS(me->count, me->capacity);

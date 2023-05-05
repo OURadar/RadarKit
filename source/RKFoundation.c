@@ -230,7 +230,7 @@ int RKSetProgramName(const char *name) {
     if (strlen(name) >= RKNameLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.program, 31, "%s", name);
+    snprintf(rkGlobalParameters.program, sizeof(rkGlobalParameters.program), "%s", name);
     return RKResultSuccess;
 }
 
@@ -254,15 +254,15 @@ int RKSetLogfile(const char *filename) {
     } else if (strlen(filename) >= RKMaximumPathLength) {
         return 1;
     }
-    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength - 1, "%s", filename);
+    snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s", filename);
     return RKResultSuccess;
 }
 
 int RKSetLogfileToDefault(void) {
     if (strlen(rkGlobalParameters.rootDataFolder)) {
-        snprintf(rkGlobalParameters.logfile, RKMaximumPathLength - 1, "%s", RKDefaultLogfile);
+        snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s", RKDefaultLogfile);
     } else {
-        snprintf(rkGlobalParameters.logfile, RKMaximumPathLength - 1, "%s/%s", rkGlobalParameters.rootDataFolder, RKDefaultLogfile);
+        snprintf(rkGlobalParameters.logfile, RKMaximumPathLength, "%s/%s", rkGlobalParameters.rootDataFolder, RKDefaultLogfile);
     }
     return RKResultSuccess;
 }
@@ -491,6 +491,7 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(unsigned int)
     SHOW_SIZE(unsigned long)
     SHOW_SIZE(unsigned long long)
+    SHOW_SIZE(bool)
     SHOW_SIZE(int8_t)
     SHOW_SIZE(uint8_t)
     SHOW_SIZE(int16_t)
@@ -829,23 +830,23 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
 
     if (rkGlobalParameters.showColor) {
         if (type == RKValueTypeNull) {
-            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPinkColor "Null" RKNoColor, name);
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = " RKPinkColor "Null" RKNoColor, name);
         } else if (type == RKValueTypeBool) {
-            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
-            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
         } else {
-            snprintf(string, RKNameLength - 1, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
         }
     } else {
         if (type == RKValueTypeNull) {
-            snprintf(string, RKNameLength - 1, "%s = Null", name);
+            snprintf(string, RKNameLength, "%s = Null", name);
         } else if (type == RKValueTypeBool) {
-            snprintf(string, RKNameLength - 1, "%s = %s", name, (b) ? "True" : "False");
+            snprintf(string, RKNameLength, "%s = %s", name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
-            snprintf(string, RKNameLength - 1, "%s = '%s'", name, c);
+            snprintf(string, RKNameLength, "%s = '%s'", name, c);
         } else {
-            snprintf(string, RKNameLength - 1, "%s = %s", name, c);
+            snprintf(string, RKNameLength, "%s = %s", name, c);
         }
     }
     return string;
@@ -2100,7 +2101,7 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
 
 #pragma mark - Command Queue
 
-RKCommandQueue *RKCommandQueueInit(const uint8_t depth, const bool nonblocking) {
+RKCommandQueue *RKCommandQueueInit(const uint16_t depth, const bool nonblocking) {
     RKCommandQueue *queue = (RKCommandQueue *)malloc(sizeof(RKCommandQueue));
     if (queue == NULL) {
         RKLog("Error. Unable to allocate command queue.\n");
@@ -2168,8 +2169,8 @@ char *RKPedestalActionString(const RKScanAction *action) {
             if (length) {
                 length += sprintf(string + length, "   ");
             }
-            length += snprintf(string + length, 1024 - length, "%s", RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
-            length += snprintf(string + length, 1024 - length, " %s",
+            length += snprintf(string + length, sizeof(string) - length, "%s", RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
+            length += snprintf(string + length, sizeof(string) - length, " %s",
                     RKInstructIsStandby(action->mode[i]) ? "standby" : (
                     RKInstructIsPoint(action->mode[i])   ? "point"   : (
                     RKInstructIsSlew(action->mode[i])    ? "slew"    : (
@@ -2177,7 +2178,7 @@ char *RKPedestalActionString(const RKScanAction *action) {
                     RKInstructIsDisable(action->mode[i]) ? "disable" : ""))))
                 );
             if (RKInstructIsPoint(action->mode[i]) || RKInstructIsSlew(action->mode[i])) {
-                length += snprintf(string + length, 1024 - length, " %.1f", action->value[i]);
+                length += snprintf(string + length, sizeof(string) - length, " %.1f", action->value[i]);
             }
         }
     }

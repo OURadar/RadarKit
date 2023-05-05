@@ -20,7 +20,7 @@ char *RKGetColorOfIndex(const int i) {
     k = k == 3 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
 
-    snprintf(str[k], 31, "\033[38;5;%dm", colors[i % sizeof(colors)]);
+    snprintf(str[k], sizeof(str[0]), "\033[38;5;%dm", colors[i % sizeof(colors)]);
     return str[k];
 }
 
@@ -45,7 +45,7 @@ char *RKGetBackgroundColorOfIndex(const int i) {
     k = k == 3 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
 
-    snprintf(str[k], 31, "\033[97;48;5;%dm", colors[i % sizeof(colors)]);
+    snprintf(str[k], sizeof(str[0]), "\033[97;48;5;%dm", colors[i % sizeof(colors)]);
     return str[k];
 }
 
@@ -60,7 +60,7 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
     s = s == 3 ? 0 : s + 1;
     pthread_mutex_unlock(&lock);
     int f = j > 2 ? 0 : 15;
-    snprintf(str[k], 31, "\033[38;5;%d;48;5;%dm", f, 16 + i * 36 + j * 6 + k);
+    snprintf(str[k], sizeof(str[0]), "\033[38;5;%d;48;5;%dm", f, 16 + i * 36 + j * 6 + k);
     return str[k];
 }
 
@@ -833,20 +833,20 @@ char *RKPathStringByExpandingTilde(const char *path) {
     if (*c == '~') {
         char *home = getenv("HOME");
         if (home != NULL) {
-            k = snprintf(fullpath, 1024, "%s", getenv("HOME"));
+            k = snprintf(fullpath, sizeof(fullpath), "%s", getenv("HOME"));
             k--;
             if (fullpath[k] == '/') {
                 fullpath[k] = '\0';
             } else {
                 k++;
             }
-            snprintf(fullpath + k, 1024 - k, "/%s", c + 2);
+            snprintf(fullpath + k, sizeof(fullpath) - k, "/%s", c + 2);
         } else {
             fprintf(stderr, "Error. HOME environmental variable not set.\n");
-            snprintf(fullpath, 1024, "%s", c);
+            snprintf(fullpath, sizeof(fullpath), "%s", c);
         }
     } else {
-        snprintf(fullpath, 1024, "%s", c);
+        snprintf(fullpath, sizeof(fullpath), "%s", c);
     }
     return fullpath;
 }

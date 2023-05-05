@@ -173,7 +173,7 @@ static void *sweepManager(void *in) {
         if (engine->productBuffer[i].flag == RKProductStatusVacant) {
             continue;
         }
-        j += snprintf(summary + j, RKMaximumCommandLength - j - 1,
+        j += snprintf(summary + j, RKMaximumCommandLength - j,
                       rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
                       engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
     }
@@ -514,7 +514,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     sprintf(engine->name, "%s<ProductRecorder>%s",
             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSweepEngine) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
-    snprintf(engine->productFileExtension, RKMaximumFileExtensionLength - 1, "nc");
+    snprintf(engine->productFileExtension, RKMaximumFileExtensionLength, "nc");
     engine->state = RKEngineStateAllocated;
     engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;

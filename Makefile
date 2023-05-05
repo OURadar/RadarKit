@@ -4,7 +4,7 @@ KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 ifneq ($(GIT_BRANCH), master)
-	CFLAGS += -ggdb -DBETA_BRANCH
+	CFLAGS += -g -DBETA_BRANCH
 endif
 
 # Some other heavy debuggning flags

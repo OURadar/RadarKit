@@ -2543,7 +2543,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
 
             default:
                 if (string) {
-                    snprintf(string, RKMaximumStringLength - 1, "NAK. Unknown command '%s'." RKEOL, commandString);
+                    snprintf(string, RKMaximumStringLength, "NAK. Unknown command '%s'." RKEOL, commandString);
                 }
                 break;
         } // switch ...

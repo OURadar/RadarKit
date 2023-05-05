@@ -949,7 +949,7 @@ int main(int argc, const char **argv) {
     s = 0;
     for (k = 0; k < sizeof(options) / sizeof(struct option); k++) {
         struct option *o = &options[k];
-        s += snprintf(str + s, 1023 - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
+        s += snprintf(str + s, sizeof(str) - s, "%c%s", o->val, o->has_arg == required_argument ? ":" : (o->has_arg == optional_argument ? "::" : ""));
     }
     optind = 1;
     int opt, ind = 0;

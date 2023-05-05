@@ -2400,7 +2400,7 @@ void RKTestWaveformWrite(void) {
     RKWaveformFrequencyHops(waveform, 20.0e6, 0.0, 16.0e6);
 
     char filename[160];
-    snprintf(filename, 159, "waveforms/%s.rkwav", waveform->name);
+    snprintf(filename, sizeof(filename), "waveforms/%s.rkwav", waveform->name);
     RKLog("Creating waveform file '%s' ...\n", filename);
     RKWaveformWriteFile(waveform, filename);
 
