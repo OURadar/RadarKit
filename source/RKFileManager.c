@@ -137,8 +137,9 @@ static bool isFolderEmpty(const char *path) {
 }
 
 static void refreshFileList(RKFileRemover *me) {
-    int j, k;
+    int i, j, k;
     struct stat fileStat;
+    char command[RKMaximumPathLength + 8];
     char string[RKMaximumStringLength];
     char format[32];
 
@@ -149,6 +150,8 @@ static void refreshFileList(RKFileRemover *me) {
         RKLog("%s Not properly allocated.\n", me->name);
         return;
     }
+
+    RKFileManager *engine = me->parent;
 
     me->index = 0;
     me->count = 0;
@@ -167,15 +170,16 @@ static void refreshFileList(RKFileRemover *me) {
     if (me->parent->verbose > 2) {
         const int w = RKDigitWidth((float)folderCount, 0);
         RKLog("%s %s Folders (%d)   w = %d:\n", me->parent->name, me->name, folderCount, w);
-        snprintf(format, sizeof(format), ">%%s %%s %%%dd. %%s/%%s\n", w);
+        snprintf(format, sizeof(format), ">%%s %%s %%%dd. %%s\n", w);
         for (k = 0; k < folderCount; k++) {
-            RKLog(format, me->parent->name, me->name, k, me->path, folders[k]);
+            snprintf(string, sizeof(string), "%s/%s", me->path, folders[k]);
+            RKLog(format, me->parent->name, me->name, k, string);
         }
     }
 
     // Go through all files in the folders
     for (j = 0, k = 0; k < folderCount && me->count < me->capacity; k++) {
-        sprintf(string, "%s/%s", me->path, folders[k]);
+        snprintf(string, sizeof(string), "%s/%s", me->path, folders[k]);
         int count = listFilesInFolder(&filenames[me->count], me->capacity - me->count, string);
         if (me->parent->verbose > 1) {
             RKLog("%s %s %s (%s files)\n", me->parent->name, me->name, string, RKIntegerToCommaStyleString(count));
@@ -183,6 +187,18 @@ static void refreshFileList(RKFileRemover *me) {
         if (count < 0) {
             RKLog("%s %s Error. Unable to list files in %s\n", me->parent->name, me->name, string);
             return;
+        } else if (count == 0) {
+            RKLog(">%s %s Removing %s ...\n", engine->name, me->name, string);
+            i = snprintf(command, RKMaximumCommandLength, "rm -rf %s", string);
+            if (i < 0) {
+                RKLog("%s %s Error. Failed generating system command.\n", engine->name, me->name);
+                RKLog("%s %s Error. path = %s.\n", engine->name, me->name, string);
+                break;
+            }
+            i = system(command);
+            if (i) {
+                RKLog("Error. system(%s) -> %d   errno = %d\n", command, i, errno);
+            }
         } else if (count == me->capacity - me->count) {
             RKLog("%s %s Info. At capacity. Suggest keeping less data on main host.\n", me->parent->name, me->name);
         }
