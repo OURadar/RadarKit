@@ -84,9 +84,6 @@ static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
         i += snprintf(string + i, RKStatusStringLength - i, "%s", RKNoColor);
     }
 
-    // Almost full count
-    //i += snprintf(string + i, RKStatusStringLength - i, " [%d]", engine->almostFull);
-
     // Concluding string
     if (i > RKStatusStringLength - RKStatusBarWidth - 20) {
         memset(string + i, '#', RKStatusStringLength - i - 1);
@@ -373,29 +370,26 @@ static void *momentCore(void *in) {
             // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
             // The number 60 is for conversion of range from meters to kilometers in the range correction term.
             space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * engine->radarDescription->pulseToRayRatio)) + 60.0f;
-            // Call the calibrator to derive range calibration, ZCal and DCal
-            engine->calibrator(space, config);
             // Check if the config is identical to the previous one it has seen
-            bool configHasChanged =
-            previousConfig->prt[0] != config->prt[0] ||
-            previousConfig->SNRThreshold != config->SNRThreshold ||
-            previousConfig->SQIThreshold != config->SQIThreshold ||
-            previousConfig->systemDCal != config->systemDCal ||
-            previousConfig->systemPCal != config->systemPCal;
+            bool configHasChanged = false;
+            configHasChanged |= previousConfig->systemDCal != config->systemDCal;
+            configHasChanged |= previousConfig->systemPCal != config->systemPCal;
+            configHasChanged |= previousConfig->SNRThreshold != config->SNRThreshold;
+            configHasChanged |= previousConfig->SQIThreshold != config->SQIThreshold;
             for (p = 0; p < 2; p++) {
-                configHasChanged |=
-                previousConfig->noise[p] != config->noise[p] &&
-                previousConfig->systemZCal[p] != config->systemZCal[p];
-                configHasChanged |= previousConfig->waveformDecimate != config->waveformDecimate;
+                configHasChanged |= previousConfig->prt[p] != config->prt[p];
+                configHasChanged |= previousConfig->noise[p] != config->noise[p];
+                configHasChanged |= previousConfig->systemZCal[p] != config->systemZCal[p];
             }
+            configHasChanged |= previousConfig->waveformDecimate != config->waveformDecimate;
             // The rest of the constants
-            space->config = config;
             space->velocityFactor = 0.25f * engine->radarDescription->wavelength / config->prt[0] / M_PI;
             space->widthFactor = engine->radarDescription->wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
+            space->config = config;
             // Show the info only if config has changed
             if (engine->verbose && configHasChanged) {
-                pthread_mutex_lock(&engine->mutex);
+                pthread_mutex_lock(&rkGlobalParameters.lock);
 
                 RKFilterAnchor *filterAnchors = config->waveform->filterAnchors[0];
                 RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain[0] = %.2f   samplingAdj = %.2f\n",
@@ -424,9 +418,11 @@ static void *momentCore(void *in) {
                         }
                     }
                 }
-                pthread_mutex_unlock(&engine->mutex);
+                pthread_mutex_unlock(&rkGlobalParameters.lock);
             }
             memcpy(previousConfig, config, sizeof(RKConfig));
+            // Call the calibrator to derive range calibration, ZCal and DCal
+            engine->calibrator(space);
         }
 
         // Consolidate the pulse marker into ray marker

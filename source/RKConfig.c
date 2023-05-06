@@ -21,12 +21,14 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     char      format[RKStatusStringLength];
     int       w0 = 0, w1 = 0, w2 = 0;
 
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
     for (k = 0; k < RKMaximumFilterCount; k++) {
         memset(stringBuffer[k], 0, RKStatusStringLength * sizeof(char));
     }
 
     // Use exclusive access here to prevent multiple processes trying to change RKConfig too quickly
-    pthread_mutex_lock(&rkGlobalParameters.lock);
+    pthread_mutex_lock(&lock);
 
     RKConfig *newConfig = &configs[*configIndex];
     RKConfig *oldConfig = &configs[RKPreviousModuloS(*configIndex, configBufferDepth)];
@@ -250,7 +252,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     newConfig->i = configId;
     *configIndex = RKNextModuloS(*configIndex, configBufferDepth);
 
-    pthread_mutex_unlock(&rkGlobalParameters.lock);
+    pthread_mutex_unlock(&lock);
 }
 
 RKConfig *RKConfigWithId(RKConfig *configs, uint32_t configBufferDepth, uint64_t id) {

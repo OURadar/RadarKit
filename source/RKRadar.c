@@ -164,6 +164,7 @@ static void *systemInspectorRunLoop(void *in) {
             if (!shown) {
                 long mem = RKGetMemoryUsage();
                 mem *= 1024;
+                pthread_mutex_lock(&rkGlobalParameters.lock);
                 RKLog("%s %s B   %s B\n", engine->name,
                       RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
                       RKVariableInString("rusage", &mem, RKValueTypeLong));
@@ -179,6 +180,7 @@ static void *systemInspectorRunLoop(void *in) {
                       RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
                       RKVariableInString("pulseRate", &pulseRate, RKValueTypeDouble),
                       RKVariableInString("rayRate", &rayRate, RKValueTypeDouble));
+                pthread_mutex_unlock(&rkGlobalParameters.lock);
                 shown = true;
             }
         } else {
@@ -1550,8 +1552,6 @@ int RKSetPulseCompressor(RKRadar *radar,
     radar->pulseEngine->compressorFree = freeRoutine;
     return RKResultSuccess;
 }
-
-
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {
