@@ -8,9 +8,10 @@
 
 #include <RadarKit/RKCalibrator.h>
 
-void RKCalibratorSimple(RKScratch *space, RKConfig *config) {
+void RKCalibratorSimple(RKScratch *space) {
     int i, k, p;
     RKFloat r = 0.0f;
+    RKConfig *config = space->config;
     RKFilterAnchor *filterAnchors = config->waveformDecimate->filterAnchors[0];
     for (k = 0; k < config->waveformDecimate->count; k++) {
         //RKLog("RKCalibratorSimple: k=%d: %d ... %d\n", k, filterAnchors[k].outputOrigin, MIN(filterAnchors[k].outputOrigin + filterAnchors[k].maxDataLength, space->gateCount));

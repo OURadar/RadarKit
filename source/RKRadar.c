@@ -97,6 +97,7 @@ static void *systemInspectorRunLoop(void *in) {
     RKSimpleEngine *engine = (RKSimpleEngine *)in;
 
     int j, k, s;
+    char string[RKMaximumStringLength];
 
     bool shown = false;
 
@@ -163,24 +164,23 @@ static void *systemInspectorRunLoop(void *in) {
         if (radar->configIndex == 6) {
             if (!shown) {
                 long mem = RKGetMemoryUsage();
-                mem *= 1024;
-                pthread_mutex_lock(&rkGlobalParameters.lock);
-                RKLog("%s %s B   %s B\n", engine->name,
-                      RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
-                      RKVariableInString("rusage", &mem, RKValueTypeLong));
+                k = snprintf(string, sizeof(string), "%s B   %s B\n",
+                    RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
+                    RKVariableInString("rusage", &mem, RKValueTypeLong));
                 if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
                     dxduPosition = 1.0 / radar->positionClock->dx;
                     dxduPulse = 1.0 / radar->pulseClock->dx;
-                    RKLog(">%s %s   %s", engine->name,
-                          RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
-                          RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
+                    k += snprintf(string + k, sizeof(string) - k, "%31s%s   %s\n",
+                        "",
+                        RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
+                        RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
                 }
-                RKLog(">%s %s Hz   %s Hz   %s Hz\n",
-                      engine->name,
-                      RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
-                      RKVariableInString("pulseRate", &pulseRate, RKValueTypeDouble),
-                      RKVariableInString("rayRate", &rayRate, RKValueTypeDouble));
-                pthread_mutex_unlock(&rkGlobalParameters.lock);
+                k += snprintf(string + k, sizeof(string) - k, "%31s%s Hz   %s Hz   %s Hz",
+                    "",
+                    RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
+                    RKVariableInString("pulseRate", &pulseRate, RKValueTypeDouble),
+                    RKVariableInString("rayRate", &rayRate, RKValueTypeDouble));
+                RKLog("%s %s", engine->name, string);
                 shown = true;
             }
         } else {
@@ -1519,7 +1519,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
 }
 
-int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *)) {
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *)) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }

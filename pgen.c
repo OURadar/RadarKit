@@ -326,7 +326,7 @@ void proc(UserParams *arg) {
     // The gain difference is compensated here with a calibration factor if raw-sampling is at 1-MHz (150-m)
     // The number 60 is for conversion of range from meters to kilometers in the range correction term.
     space->samplingAdjustment = 10.0f * log10f(space->gateSizeMeters / (150.0f * fileHeader->desc.pulseToRayRatio)) + 60.0f;
-    RKCalibratorSimple(space, config);
+    RKCalibratorSimple(space);
     // The rest of the constants
     space->noise[0] = config->noise[0];
     space->noise[1] = config->noise[1];

@@ -1124,7 +1124,7 @@ long RKGetMemoryUsage(void) {
         fprintf(stderr, "Failed in getrusage().   errno = %d\n", errno);
         return -1;
     }
-    return usage.ru_maxrss;
+    return usage.ru_maxrss * 1024;
 }
 
 char *RKCountryFromPosition(const double latitude, const double longitude) {

@@ -254,7 +254,7 @@ int RKSetPulseCompressor(RKRadar *radar,
                          void (*freeRoutine)(RKCompressionScratch *));
 
 // Moment calibrator
-int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *, RKConfig *));
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *));
 
 // Moment processor
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);

@@ -12,6 +12,6 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKMoment.h>
 
-void RKCalibratorSimple(RKScratch *, RKConfig *);
+void RKCalibratorSimple(RKScratch *);
 
 #endif
