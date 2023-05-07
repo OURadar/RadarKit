@@ -17,13 +17,13 @@ enum RKMomentMask {
 };
 
 int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
-    
+
     int n, j, k, p;
-    
+
     // Get the start pulse to know the capacity
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
-	const int lagCount = space->userLagChoice == 0 ? MIN(pulseCount, space->lagCount) : MIN(space->userLagChoice + 1, space->lagCount);
+	const int lagCount = space->userLagChoice == 0 ? MIN(pulseCount, RKMaximumLagCount) : MIN(space->userLagChoice + 1, RKMaximumLagCount);
 
 	if (lagCount > pulseCount) {
 		RKLog("WARNING. Memory leak in RKMultiLag.\n");
@@ -32,23 +32,23 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
     //
     //  ACF
     //
-    
+
     // Go through each polarization
     for (p = 0; p < 2; p++) {
-        
+
         // Initializes the storage
         RKZeroOutIQZ(&space->mX[p], space->capacity);
         for (k = 0; k < lagCount; k++) {
             RKZeroOutIQZ(&space->R[p][k], space->capacity);
         }
-        
+
         RKIQZ *R = &space->R[p][0];
-        
+
         // Go through all pulses
         n = 0;
         do {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
-            
+
             RKSIMD_izadd(&Xn, &space->mX[p], gateCount);                                 // mX += X
             // Go through each lag
             for (k = 0; k < lagCount; k++) {
@@ -60,42 +60,42 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
             }
             n++;
         } while (n != pulseCount);
-        
+
         // Divide by n for the average
         RKSIMD_izscl(&space->mX[p], 1.0f / (float)n, gateCount);                         // mX /= n
-        
+
         // ACF
         for (k = 0; k < lagCount; k++) {
             RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)   (unbiased)
             RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                              // aR[k] = abs(R[k])
         }
-        
+
         // Mean and variance (2nd moment)
         RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                        // E{Xh} * E{Xh}' --> var  (step 1)
         RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                         // Rh[] - var     --> var  (step 2)
     }
-    
+
     // Cross-channel
     RKSIMD_zmul(&space->mX[0], &space->mX[1], &space->ts, gateCount, 1);                 // E{Xh} * E{Xv}'
-    
+
     // NOTE: At this point, one can use space->vX[0] & space->vX[1] as signal power for H & V, respectively.
     // However, within the isodop regions, the zero-Doppler power is may have been filtered out by the clutter filter
     // so S & R are biased unless the filter is turned off. This is a downside of clutter filter using mean removal
-    
+
     //
     //  CCF
     //
-    
+
     RKZeroOutFloat(space->gC, space->capacity);
-    
+
     const RKFloat N = (RKFloat)lagCount - 1;                                            // N = Number of lags minus one since 0 counts
     RKFloat w = 0.0f;
-    
+
     RKIQZ Xh, Xv;
 
     for (j = 0; j < 2 * lagCount - 1; j++) {
         k = j - lagCount + 1;
-        
+
         // Numerator
         if (k < 0) {
             Xh = RKGetSplitComplexDataFromPulse(pulses[ 0], 0);
@@ -120,7 +120,7 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
         }
         // Comment the following line to include the zero-Doppler signal
         RKSIMD_zabs(&space->C[j], space->aC[j], gateCount);                             // |E{Xh * Xv'} - E{Xh} * E{Xv}'| --> absC[ic]
-        
+
         w = (3.0f * N * N + 3.0f * N - 1.0f - 5.0f * (RKFloat)(k * k));
         for (n = 0; n < gateCount; n++) {
             space->gC[n] += w * logf(space->aC[j][n]);
@@ -160,7 +160,7 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
     //
     //  ACF & CCF to moments
     //
-    
+
 	RKFloat num, den, wsc;
 
     for (p = 0; p < 2; p++) {
@@ -348,7 +348,7 @@ int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 		free(line);
 		free(X);
 	}
-    
+
     return pulseCount;
-    
+
 }

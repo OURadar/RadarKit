@@ -13,14 +13,10 @@
 #pragma mark - Scratch Space
 
 // Allocate a scratch space for moment processors
-size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool showNumbers) {
+size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers) {
     if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat) != 0) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
-        return 0;
-    }
-    if (lagCount > RKMaximumLagCount) {
-        RKLog("Error. Lag count must not exceed the hard-coded limit %d\n", lagCount);
         return 0;
     }
     if ((1 << fftOrder) > RKMaximumGateCount) {
@@ -36,7 +32,6 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
 
     RKScratch *space = *buffer;
     space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
-    space->lagCount = lagCount;
     space->showNumbers = showNumbers;
 
     if (showNumbers) {
@@ -61,7 +56,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S2Z[k], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         memset(space->S2Z[k], 0, space->capacity * sizeof(RKFloat));
         bytes += 11;
-        for (j = 0; j < space->lagCount; j++) {
+        for (j = 0; j < RKMaximumLagCount; j++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
@@ -86,7 +81,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     memset(space->pcal, 0, space->capacity * sizeof(RKFloat));
 
     bytes += 10;
-    for (j = 0; j < 2 * space->lagCount - 1; j++) {
+    for (j = 0; j < 2 * RKMaximumLagCount - 1; j++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
@@ -124,7 +119,7 @@ void RKScratchFree(RKScratch *space) {
         free(space->Q[k]);
         free(space->SNR[k]);
         free(space->S2Z[k]);
-        for (j = 0; j < space->lagCount; j++) {
+        for (j = 0; j < RKMaximumLagCount; j++) {
             free(space->R[k][j].i);
             free(space->R[k][j].q);
             free(space->aR[k][j]);
@@ -144,7 +139,7 @@ void RKScratchFree(RKScratch *space) {
     free(space->userArray4);
     free(space->dcal);
     free(space->pcal);
-    for (j = 0; j < 2 * space->lagCount - 1; j++) {
+    for (j = 0; j < 2 * RKMaximumLagCount - 1; j++) {
         free(space->C[j].i);
         free(space->C[j].q);
         free(space->aC[j]);

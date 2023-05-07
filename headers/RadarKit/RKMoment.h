@@ -27,7 +27,6 @@ typedef struct rk_moment_scratch {
     uint32_t                         capacity;                                     // Capacity
     bool                             showNumbers;                                  // A flag for showing numbers
     uint8_t                          userLagChoice;                                // Number of lags in multi-lag estimator from user
-    uint8_t                          lagCount;                                     // Number of lags of R & C
     uint16_t                         gateCount;                                    // Gate count of the rays
     RKFloat                          gateSizeMeters;                               // Gate size in meters for range correction
     RKFloat                          samplingAdjustment;                           // Sampling adjustment going from pulse to ray conversion
@@ -70,7 +69,7 @@ typedef struct rk_moment_scratch {
     RKMomentList                     calculatedMoments;                            // Calculated moments
 } RKScratch;
 
-size_t RKScratchAlloc(RKScratch **, const uint32_t capacity, const uint8_t lagCount, const uint8_t fftOrder, const bool showNumbers);
+size_t RKScratchAlloc(RKScratch **, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers);
 void RKScratchFree(RKScratch *);
 
 int prepareScratch(RKScratch *);

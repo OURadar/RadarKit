@@ -248,7 +248,7 @@ void proc(UserParams *arg) {
     }
     mem += bytes;
     const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
-    bytes = RKScratchAlloc(&space, rayCapacity, RKMaximumLagCount, fftOrder, false);
+    bytes = RKScratchAlloc(&space, rayCapacity, fftOrder, false);
     if (bytes == 0 || space == NULL) {
         RKLog("Error. Unable to allocate memory for scratch space.\n");
         exit(EXIT_FAILURE);
