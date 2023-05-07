@@ -174,11 +174,11 @@ static void showHelp() {
            "    -T60\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
-           "%s (RadarKit %s)\n\n",
+           "%s / RadarKit " __RKVersionString__ " / " __VERSION__
+           "\n\n",
            name,
            RKTestByNumberDescription(9),
-           name,
-           RKVersionString());
+           name);
 }
 
 static void setSystemLevel(UserParams *user, const int level) {

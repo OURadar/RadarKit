@@ -2446,7 +2446,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                  "\n"
                                  HIGHLIGHT("z") " - Everything stops\n"
                                  "\n\n"
-                                 "RadarKit " __RKVersionString__ " (" __VERSION__ ")\n"
+                                 "RadarKit " __RKVersionString__ " / " __VERSION__ "\n"
                                  "\n");
 
                     sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
