@@ -22,7 +22,6 @@ typedef struct rk_pedzy {
     char                   responses[RKPedestalPedzyFeedbackDepth][RKMaximumStringLength];
     char                   latestCommand[RKMaximumCommandLength];
     RKRadar                *radar;
-    float                  headingOffset;
     pthread_t              tidBackground;
     RKByte                 dump[RKMaximumStringLength];
 } RKPedestalPedzy;
