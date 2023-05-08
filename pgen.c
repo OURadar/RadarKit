@@ -198,7 +198,7 @@ void proc(UserParams *arg) {
     RKPulse *pulses[RKMaximumPulsesPerRay];
     RKRay *rays[RKMaximumRaysPerSweep];
     RKProduct *product;
-    RKScratch *space;
+    RKMomentScratch *space;
 
     const RKBaseProductList momentList = RKBaseProductListFloatZVWDPR;
 
@@ -248,7 +248,7 @@ void proc(UserParams *arg) {
     }
     mem += bytes;
     const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
-    bytes = RKScratchAlloc(&space, rayCapacity, fftOrder, false);
+    bytes = RKMomentScratchAlloc(&space, rayCapacity, fftOrder, false);
     if (bytes == 0 || space == NULL) {
         RKLog("Error. Unable to allocate memory for scratch space.\n");
         exit(EXIT_FAILURE);
@@ -873,7 +873,7 @@ void proc(UserParams *arg) {
     RKPulseBufferFree(pulseBuffer);
     RKRayBufferFree(rayBuffer);
     RKProductBufferFree(product, 1);
-    RKScratchFree(space);
+    RKMomentScratchFree(space);
     RKFFTModuleFree(fftModule);
 
     for (k = 0; k < config->waveform->count; k++) {

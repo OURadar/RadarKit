@@ -12,8 +12,8 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKMoment.h>
 
-int RKPulsePair(RKScratch *, RKPulse **, const uint16_t);
-int RKPulsePairHop(RKScratch *, RKPulse **, const uint16_t);
-int RKPulsePairStaggeredPRT(RKScratch *, RKPulse **, const uint16_t);
+int RKPulsePair(RKMomentScratch *, RKPulse **, const uint16_t);
+int RKPulsePairHop(RKMomentScratch *, RKPulse **, const uint16_t);
+int RKPulsePairStaggeredPRT(RKMomentScratch *, RKPulse **, const uint16_t);
 
 #endif /* defined(__RadarKit_RKPulsePair__) */

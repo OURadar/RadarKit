@@ -16,7 +16,7 @@ enum RKMomentMask {
 	RKMomentMaskLag4 = 4
 };
 
-int RKMultiLag(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 
     int n, j, k, p;
 

@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKPulsePair.h>
 
-void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) {
+void RKUpdateRadarProductsInScratchSpace(RKMomentScratch *space, const int gateCount) {
     const RKFloat va = space->velocityFactor;
     const RKFloat wa = space->widthFactor;
     const RKFloat ten = 10.0f;
@@ -146,7 +146,7 @@ void RKUpdateRadarProductsInScratchSpace(RKScratch *space, const int gateCount) 
     }
 }
 
-int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) {
 
     //
     // Pulse-pair processing
@@ -511,7 +511,7 @@ int RKPulsePair(RKScratch *space, RKPulse **pulses, const uint16_t count) {
     return count;
 }
 
-int RKPulsePairStaggeredPRT(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+int RKPulsePairStaggeredPRT(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) {
 
     //
     // Staggered PRT processing
@@ -545,7 +545,7 @@ int RKPulsePairStaggeredPRT(RKScratch *space, RKPulse **pulses, const uint16_t c
     return 0;
 }
 
-int RKPulsePairHop(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) {
 
     //
     // Frequency Hopping processing

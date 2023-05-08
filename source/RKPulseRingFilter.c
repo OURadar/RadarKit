@@ -622,7 +622,10 @@ static void *pulseRingWatcher(void *_in) {
             }
             if (allDone) {
                 pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
-                pulse->header.s |= RKPulseStatusRingFiltered | RKPulseStatusRingProcessed;
+                if (engine->useFilter) {
+                    pulse->header.s |= RKPulseStatusRingFiltered;
+                }
+                pulse->header.s |= RKPulseStatusRingProcessed;
                 j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
             }
         }

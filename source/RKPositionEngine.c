@@ -332,6 +332,8 @@ static void *pulseTagger(void *_in) {
                   i, j);
         }
 
+        pulse->header.configIndex = RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth);
+
         pulse->header.s |= RKPulseStatusHasPosition;
 
 		engine->tic++;

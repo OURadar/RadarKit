@@ -135,6 +135,8 @@ void RKBuiltInCompressor(RKCompressionScratch *scratch) {
     RKPulse *pulse = scratch->pulse;
     RKComplex *filter = scratch->filter;
     RKFilterAnchor *filterAnchor = scratch->filterAnchor;
+    //RKComplex *filter = scratch->config->waveform->samples[scratch->waveformGroupdId]
+    //RKFilterAnchor *filterAnchor = &scratch->config->waveform->filterAnchors[scratch->waveformGroupdId][scratch->waveformFilterId];
     fftwf_complex *in = scratch->inBuffer;
     fftwf_complex *out = scratch->outBuffer;
     unsigned int inBound, outBound;

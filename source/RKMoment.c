@@ -13,7 +13,7 @@
 #pragma mark - Scratch Space
 
 // Allocate a scratch space for moment processors
-size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers) {
+size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers) {
     if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat) != 0) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
@@ -23,14 +23,14 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
         RKLog("Error. FFT order must not exceed the hard-coded limit %.0f\n", log2f((float)RKMaximumGateCount));
         return 0;
     }
-    *buffer = malloc(sizeof(RKScratch));
+    *buffer = malloc(sizeof(RKMomentScratch));
     if (*buffer == NULL) {
         RKLog("Error. Unable to allocate a momment scratch space.\n");
         return 0;
     }
-    memset(*buffer, 0, sizeof(RKScratch));
+    memset(*buffer, 0, sizeof(RKMomentScratch));
 
-    RKScratch *space = *buffer;
+    RKMomentScratch *space = *buffer;
     space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
     space->showNumbers = showNumbers;
 
@@ -41,7 +41,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     }
 
     int j, k;
-    size_t bytes = sizeof(RKScratch);
+    size_t bytes = sizeof(RKMomentScratch);
     for (k = 0; k < 2; k++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
@@ -105,7 +105,7 @@ size_t RKScratchAlloc(RKScratch **buffer, const uint32_t capacity, const uint8_t
     return bytes;
 }
 
-void RKScratchFree(RKScratch *space) {
+void RKMomentScratchFree(RKMomentScratch *space) {
     int j, k;
     for (k = 0; k < 2; k++) {
         free(space->mX[k].i);
@@ -157,14 +157,14 @@ void RKScratchFree(RKScratch *space) {
 
 #pragma mark -
 
-int prepareScratch(RKScratch *space) {
+int prepareScratch(RKMomentScratch *space) {
     space->fftOrder = -1;
     return 0;
 }
 
 // This function converts the float data calculated from a chosen processor to uint8_t type, which also represent
 // the display data for the front end
-int makeRayFromScratch(RKScratch *space, RKRay *ray) {
+int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
     int k;
     uint8_t *mask;
     float SNRh, SNRv;
@@ -433,6 +433,6 @@ int makeRayFromScratch(RKScratch *space, RKRay *ray) {
     return k;
 }
 
-int RKNullProcessor(RKScratch *space, RKPulse **pulses, const uint16_t count) {
+int RKNullProcessor(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) {
     return 0;
 }

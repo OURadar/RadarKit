@@ -1519,7 +1519,7 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
 }
 
-int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKScratch *)) {
+int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKMomentScratch *)) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }

@@ -45,9 +45,8 @@ typedef struct rk_gaussian {
 //
 typedef struct rk_compression_scratch {
     RKName                           name;                                         //
-    uint8_t                          verbose;                                      //
     RKPulse                          *pulse;                                       //
-    RKComplex                        *filter;                                      // (deprecating)
+    RKComplex                        *filter;                                      //
     RKFilterAnchor                   *filterAnchor;                                // (deprecating)
     fftwf_plan                       planForwardInPlace;                           //
     fftwf_plan                       planForwardOutPlace;                          //
@@ -59,11 +58,10 @@ typedef struct rk_compression_scratch {
     RKIQZ                            *zo;                                          //
     unsigned int                     planSize;                                     // DFT plan size
     RKConfig                         *config;                                      //
-    RKComplex                        **arrays;                                     // Array of arrays
-    uint16_t                         *arraySizes;                                  // Array sizes
     uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
     uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use
     void                             *userResource;                                //
+    int                              verbose;                                      //
 } RKCompressionScratch;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);

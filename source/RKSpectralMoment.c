@@ -13,16 +13,16 @@
 //
 // NOTE: This function is incomplete
 //
-int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 
     int g, j, k, p;
 
     RKPulse *pulse;
-    
+
     // Always choose an order that is slightly higher
     int offt = MIN(space->fftModule->count, (int)ceilf(log2f((float)pulseCount * 1.2f)));
     int planSize = space->fftModule->plans[offt].size;
-    
+
     //RKLog("%s -> %s",
     //      RKVariableInString("offt", &offt, RKValueTypeInt),
     //      RKVariableInString("planSize", &planSize, RKValueTypeInt));
@@ -34,14 +34,14 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
     // RKFloat sumW2Y2, sumW4Y2;
     RKFloat omega;
     RKFloat a, b, c, d;
-    
+
     const RKFloat sGain = ((RKFloat)pulseCount * (RKFloat)planSize);
     const RKFloat unitOmega = 2.0f * M_PI / (RKFloat)planSize;
     const RKFloat twoPi = 2.0f * M_PI;
 
     // Call conventional pulse pair to get the first-pass velocity estimate
     //RKPulsePair(space, pulses, pulseCount);
-    
+
     for (p = 0; p < 2; p++) {
         // I know, there are other ways to get the data in. Intuitively, one would expect Method 1,
         // which has less number of RKGetComplexDataFromPulse() calls would be beneficial but through
@@ -95,7 +95,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
         }
 
 #ifdef DEBUG_SPECTRAL_MOMENT
-    
+
         printf("\n");
 
 #endif
@@ -126,7 +126,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
             space->Q[p][g] = MIN(1.0f, space->SNR[p][g]);
             space->Z[p][g] = 10.0f * log10f(space->S[p][g]) + space->S2Z[p][g];
             space->V[p][g] = space->velocityFactor * omega;
-            
+
             // Gaussian fitting around the new x-axis
             //
             //        omega
@@ -188,7 +188,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
                 space->V[p][g] = NAN;
             }
         }
-        
+
 //        for (g = 0; g < space->gateCount; g++) {
 //            fftwf_complex *in = space->inBuffer[g];
 //            fftwf_complex *out = space->outBuffer[g];
@@ -216,7 +216,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
             //space->PhiDP =
         }
     }
-    
+
     // Update the use count and selected order
     space->fftModule->plans[offt].count += 2 * space->gateCount;
     space->fftOrder = offt;
@@ -227,7 +227,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
         char line[RKMaximumStringLength];
         RKIQZ *X = (RKIQZ *)malloc(RKMaximumPulsesPerRay * sizeof(RKIQZ));
         const int gateShown = 8;
-        
+
         // Go through both polarizations
         for (p = 0; p < 2; p++) {
             printf((rkGlobalParameters.showColor ? UNDERLINE("Channel %d (%s pol):") "\n" : "Channel %d (%s pol):\n"),
@@ -235,13 +235,13 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
             for (k = 0; k < pulseCount; k++) {
                 X[k] = RKGetSplitComplexDataFromPulse(pulses[k], p);
             }
-            
+
             /* A block ready for MATLAB
-             
+
              - Copy and paste X = [ 0+2j, 0+1j, ...
-             
+
              Then, all the previous calculations can be extremely easy.
-             
+
              g = 1; % gate 1
              mXh = mean(Xh, 2).'
              mXv = mean(Xv, 2).'
@@ -254,7 +254,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
              vXh = R0h - mXh .* conj(mXh)
              vXv = R0v - mXv .* conj(mXv)
              for g = 1:6, C(g) = xcorr(Xh(g, :), Xv(g, :), 0, 'unbiased'); end; disp(C)
-             
+
              */
             j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
             for (g = 0; g < space->gateCount; g++) {
@@ -265,7 +265,7 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
             }
             sprintf(line + j - 5, "]\n");
             printf("%s\n", line);
-            
+
             for (k = 0; k < pulseCount; k++) {
                 sprintf(variable, "  X[%d] = ", k);
                 RKShowVecIQZ(variable, &X[k], gateShown);
@@ -297,32 +297,32 @@ int RKSpectralMoment(RKScratch *space, RKPulse **pulses, const uint16_t pulseCou
         RKShowVecFloat("   ZDR = ", space->ZDR, gateShown);
         RKShowVecFloat(" PhiDP = ", space->PhiDP, gateShown);
         RKShowVecFloat(" RhoHV = ", space->RhoHV, gateShown);
-        
+
         printf(RKEOL);
         fflush(stdout);
-        
+
         free(X);
     }
 
     return pulseCount;
 }
 
-int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
-    
+int RKSpectralMoment2(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+
     int n, k, p;
-    
+
     // Get the start pulse to know the capacity
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const int lagCount = 2;
-    
+
     //
     //  ACF
     //
-    
+
     // Go through each polarization
     for (p = 0; p < 2; p++) {
-        
+
         // Initializes the storage
         RKZeroOutIQZ(&space->mX[p], space->capacity);
         for (k = 0; k < lagCount; k++) {
@@ -335,7 +335,7 @@ int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCo
         n = 0;
         do {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
-            
+
             RKSIMD_izadd(&Xn, &space->mX[p], gateCount);                                 // mX += X
             // Go through each lag
             for (k = 0; k < lagCount; k++) {
@@ -356,11 +356,11 @@ int RKSpectralMoment2(RKScratch *space, RKPulse **pulses, const uint16_t pulseCo
             RKSIMD_izscl(&R[k], 1.0 / ((float)(n - k)), gateCount);                      // R[k] /= (n - k)   (unbiased)
             RKSIMD_zabs(&R[k], space->aR[p][k], gateCount);                              // aR[k] = abs(R[k])
         }
-        
+
         // Mean and variance (2nd moment)
         RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                        // E{Xh} * E{Xh}' --> var  (step 1)
         RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                         // Rh[] - var     --> var  (step 2)
     }
-    
+
     return pulseCount;
 }

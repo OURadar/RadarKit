@@ -197,6 +197,7 @@ typedef void *        RKTransceiver;                                           /
 typedef void *        RKPedestal;                                              //
 typedef void *        RKHealthRelay;                                           //
 typedef void *        RKMasterController;                                      //
+typedef void *        RKUserResource;                                          //
 typedef void *        RKCompressor;                                            //
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
 typedef char          RKShortName[RKShortNameLength];                          // RKShortname x = char x[RKShortNameLength]
@@ -789,6 +790,7 @@ enum RKConfigKey {
     RKConfigKeyTransitionGateCount,
     RKConfigKeyUserIntegerParameters,
     RKConfigKeyUserFloatParameters,
+    RKConfigKeyUserResource,
     RKConfigKeyCount
 };
 
@@ -1219,6 +1221,7 @@ typedef union rk_config {
         RKName               waveformName;                                     // Waveform name
         RKWaveform           *waveform;                                        // Reference to the waveform storage
         RKWaveform           *waveformDecimate;                                // Reference to the waveform storage in Level-II sampling rate
+        RKUserResource       userResource;                                     // User resource (not yet)
         uint32_t             userIntegerParameters[RKUserParameterCount];      // User integer parameters (not yet)
         float                userFloatParameters[RKUserParameterCount];        // User float parameters (not yet)
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern

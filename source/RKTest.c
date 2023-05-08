@@ -2640,10 +2640,10 @@ void RKTestPulseCompression(RKTestFlag flag) {
     RKFree(radar);
 }
 
-void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int lag) {
+void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int lag) {
     SHOW_FUNCTION_NAME
     int k, p, n, g;
-    RKScratch *space;
+    RKMomentScratch *space;
     RKFFTModule *fftModule;
     RKBuffer pulseBuffer;
     const int gateCount = 6;
@@ -2652,7 +2652,7 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 
     RKLog("Allocating buffers ...\n");
 
-    RKScratchAlloc(&space, pulseCapacity, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    RKMomentScratchAlloc(&space, pulseCapacity, (uint8_t)ceilf(log2f((float)pulseCount)), true);
     fftModule = RKFFTModuleInit(pulseCapacity, 0);
     space->fftModule = fftModule;
     space->gateCount = gateCount;
@@ -2775,12 +2775,12 @@ void RKTestOneRay(int method(RKScratch *, RKPulse **, const uint16_t), const int
 
     RKLog("Deallocating buffers ...\n");
 
-    RKScratchFree(space);
+    RKMomentScratchFree(space);
     RKFFTModuleFree(fftModule);
     RKPulseBufferFree(pulseBuffer);
 }
 
-void RKTestOneRaySpectra(int method(RKScratch *, RKPulse **, const uint16_t), const int lag) {
+void RKTestOneRaySpectra(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int lag) {
     const float spec[][80] = {
         {0.0394, 0.0153, 0.0034, 0.0249, 0.0389, 0.0334, 0.0041, 0.0247, 0.0387, 0.0309, 0.0192, 0.0062, 0.0239, 0.0317, 0.0461, -0.0014, 0.0450, 0.0026, 0.0116, 0.0184, 0.0348, 0.0103, 0.0443, 0.0048, 0.0362, -0.0035, 0.0124, 0.0067, 0.0327, 0.0158, 0.0441, 0.0442, -0.0034, 0.0303, 0.0326, 0.0243, 0.0274, 0.0273, 0.0256, 0.0023, 0.0404, 0.0393, 0.0420, 0.0282, 0.0144, 0.0911, 0.2050, 0.4137, 0.4217, 0.4863, 0.2174, 0.0581, 0.0545, 0.0188, 0.0480, 0.0339, 0.0441, 0.0350, 0.0194, 0.0089, 0.0220, 0.0508, 0.0281, 0.0306, 0.0326, 0.0354, 0.0213, 0.0463, 0.0251, 0.0293, 0.0427, 0.0194, 0.0112, 0.0175, 0.0439, 0.0369, 0.0255, 0.0194, -0.0013, 0.0376},
         {0.0188, -0.0023, -0.0020, 0.0234, 0.0203, 0.0337, 0.0154, 0.0401, 0.0272, 0.0533, 0.0353, 0.0240, 0.0080, 0.0184, 0.0250, 0.0248, 0.0410, 0.0198, 0.0271, 0.0095, 0.0392, 0.0269, 0.0015, 0.0183, 0.0322, 0.0401, 0.0296, 0.0433, -0.0030, 0.0249, 0.0063, 0.0312, 0.0121, 0.0349, 0.0388, 0.0374, 0.0236, 0.0147, 0.0236, 0.0312, 0.0310, 0.0110, 0.0125, 0.0625, 0.1467, 0.2478, 0.5613, 0.4319, 0.3899, 0.1563, 0.0545, 0.0208, 0.0217, 0.0273, 0.0159, 0.0193, 0.0452, 0.0403, 0.0331, 0.0291, 0.0008, 0.0090, 0.0315, 0.0394, 0.0477, 0.0420, 0.0279, 0.0081, 0.0384, 0.0277, 0.0408, 0.0409, -0.0015, 0.0408, 0.0131, 0.0288, 0.0477, 0.0328, 0.0446, 0.0028},
@@ -2936,7 +2936,7 @@ void RKTestMomentProcessorSpeed(void) {
     SHOW_FUNCTION_NAME
     int i, j, k;
     RKFFTModule *fftModule;
-    RKScratch *space;
+    RKMomentScratch *space;
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
     const int testCount = 500;
@@ -2946,7 +2946,7 @@ void RKTestMomentProcessorSpeed(void) {
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
 
-    RKScratchAlloc(&space, pulseCapacity, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    RKMomentScratchAlloc(&space, pulseCapacity, (uint8_t)ceilf(log2f((float)pulseCount)), true);
     fftModule = RKFFTModuleInit(pulseCapacity, 0);
     space->fftModule = fftModule;
     space->gateCount = pulseCapacity;
@@ -2980,7 +2980,7 @@ void RKTestMomentProcessorSpeed(void) {
 
     double t, mint;
     struct timeval tic, toc;
-    int (*method)(RKScratch *, RKPulse **, const uint16_t);
+    int (*method)(RKMomentScratch *, RKPulse **, const uint16_t);
 
     RKRay *ray = RKGetRayFromBuffer(rayBuffer, 0);
 
@@ -3033,7 +3033,7 @@ void RKTestMomentProcessorSpeed(void) {
     }
 
     RKFFTModuleFree(fftModule);
-    RKScratchFree(space);
+    RKMomentScratchFree(space);
     free(pulseBuffer);
     free(rayBuffer);
 }

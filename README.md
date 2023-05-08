@@ -323,7 +323,6 @@ Follow these steps to get the project
 
 This example is extremely simple. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
-
 # Design Philosophy
 
 The three major hardware components of a radar: (i) a **digital transceiver**, (ii) a **pedestal**, and (iii) a **health relay** (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so that the RadarKit framework can be interfaced with other libraries, which are usually specific to the hardware and/or vendor design. It is the user responsibility to implement the appropriate interface routines to bridge the data transport and control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_, which are routines to allocate an object--akin to an object in object-oriented programming, althought RadarKit is a straight C framework, interact with the object and deallocate the object, respectively. The _exec_ routine has the form of accepting text command and producing text feedback. Some keywords for the command are already defined in the framework so user should not use them. They are intercepted prior to passing down to the _exec_ routine. Detailed usage on these functions will be discussed in detail later.
@@ -337,7 +336,6 @@ The **pedestal** is the hardware that is usually low speed, typically on the ord
 The **health relay** is the hardware that is also low speed, typically on the orders of 1 KBps. This is also the hardware that can be called an _auxiliary controller_, where everything else is interfaced through this relay and the health information is routinely probed through this controller. A RadarKit health structure `RKHealth` is defined in the framework. Multiple health node can be implemented. They provide health information using JSON strings through TCP/IP socket connections. If the interface software [tweeta] or [tweeto] is used, RadarKit can readily ingest auxiliary hardware health data through a TCP/IP network connection. Otherwise, an `RKHealthRelayTweeta` replacement can be implemented to provide same functionality. The RadarKit framework does not restrict this definition.
 
 Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
-
 
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
@@ -500,6 +498,28 @@ void RKAddControlAsLabelAndCommand(RKRadar *, const char *label, const char *com
 void RKClearControls(RKRadar *);                                                                   // Clear all controls
 void RKConcludeControls(RKRadar *);                                                                // Declare control setup complete
 ```
+
+### Progress of Pulse Header Status (`pulse->header.s`)
+
+| Status                                                   | Tasks                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------ |
+| `RKPulseStatusVacant`                                    | `RKTransceiver` gets a vacant slot and fills with data |
+| `RKPulseStatusHasIQ`                                     | `RKTransceiver` sets this                              |
+|                                                          | `RKPulseEngine` waits for this                         |
+| `RKPulseStatusInspected`                                 | `RKPulseEngine` sets this                              |
+| `RKPulseStatusCompressed` / `RKPulseStatusSkipped`       | `RKPulseEngine` sets this                              |
+| `RKPulseStatusDownSampled`                               | `RKPulseEngine` sets this                              |
+| `RKPulseStatusProcessed`                                 | `RKPulseEngine` sets this                              |
+|                                                          | `RKPulseRingFilter` waits for this                     |
+| `RKPulseStatusRingInspected`                             | `RKPulseRingFilter` sets this                          |
+| `RKPulseStatusRingFiltered` / `RKPulseStatusRingSkipped` | `RKPulseRingFilter` sets this                          |
+| `RKPulseStatusRingProcessed`                             | `RKPulseRingerFilter` sets this                        |
+|                                                          | `RKPositionEngine` waits for this                      |
+| `RKPulseStatusHasPosition`                               | `RKPositionEngine` sets this                           |
+| `RKPulseStatusReadyForMoments`                           | `RKMomentEngine` waits for this                        |
+|                                                          | `RKMomentEngine` waits for this                        |
+| `RKPulseStatusUsedForMoments`                            | `RKMomentEngine` sets this                             |
+| `RKPulseStatusRecorded`                                  | `RKSweepEngine` sets this                              |
 
 ### Accessing Data of Pulses / Rays (RKFoundation.h)
 
