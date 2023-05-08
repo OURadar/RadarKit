@@ -66,7 +66,7 @@ typedef struct rk_test_transceiver {
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
-    char           dump[RKMaximumStringLength];
+    char           response[RKMaximumStringLength];
 } RKTestTransceiver;
 
 typedef struct rk_test_pedestal {
@@ -90,7 +90,7 @@ typedef struct rk_test_pedestal {
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
-    char           dump[RKMaximumStringLength];
+    char           response[RKMaximumStringLength];
 } RKTestPedestal;
 
 typedef struct rk_test_health_relay {
@@ -102,7 +102,7 @@ typedef struct rk_test_health_relay {
     RKEngineState  state;
     RKRadar        *radar;
     size_t         memoryUsage;
-    char           dump[RKMaximumStringLength];
+    char           response[RKMaximumStringLength];
 } RKTestHealthRelay;
 
 #pragma mark - Test By Number

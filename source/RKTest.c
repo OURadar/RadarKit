@@ -3845,7 +3845,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
     RKRadar *radar = transceiver->radar;
 
     if (response == NULL) {
-        response = transceiver->dump;
+        response = transceiver->response;
     }
 
     int j, k;
@@ -4274,7 +4274,7 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
     RKSteerEngine *steeven = radar->steerEngine;
 
     if (response == NULL) {
-        response = pedestal->dump;
+        response = pedestal->response;
     }
 
     char args[4][256] = {"", "", "", ""};
@@ -4486,7 +4486,7 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
     RKRadar *radar = healthRelay->radar;
 
     if (response == NULL) {
-        response = healthRelay->dump;
+        response = healthRelay->response;
     }
 
     if (!strcmp(command, "disconnect")) {

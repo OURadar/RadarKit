@@ -45,6 +45,7 @@ typedef struct rk_gaussian {
 //
 typedef struct rk_compression_scratch {
     RKName                           name;                                         //
+    uint8_t                          verbose;                                      //
     RKPulse                          *pulse;                                       //
     RKComplex                        *filter;                                      //
     RKFilterAnchor                   *filterAnchor;                                // (deprecating)
@@ -60,8 +61,7 @@ typedef struct rk_compression_scratch {
     RKConfig                         *config;                                      //
     uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
     uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use
-    void                             *userResource;                                //
-    int                              verbose;                                      //
+    RKUserResource                   userResource;                                 //
 } RKCompressionScratch;
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);

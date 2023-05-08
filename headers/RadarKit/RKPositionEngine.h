@@ -54,12 +54,12 @@ struct rk_position_engine {
     // User set variables
     RKName                 name;
     RKRadarDesc            *radarDescription;
-    RKBuffer               pulseBuffer;
-    uint32_t               *pulseIndex;
-    RKPosition             *positionBuffer;
-    uint32_t               *positionIndex;
     RKConfig               *configBuffer;
     uint32_t               *configIndex;
+    RKPosition             *positionBuffer;
+    uint32_t               *positionIndex;
+    RKBuffer               pulseBuffer;
+    uint32_t               *pulseIndex;
     uint8_t                verbose;
     RKPedestal             pedestal;
     RKPedestal             (*hardwareInit)(void *);

@@ -992,7 +992,7 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
-        RKExecuteCommand(myRadar, "p pp 2,4,6,8,10,12 15 -50", NULL);
+        RKExecuteCommand(myRadar, "v pp 2,4,6,8,10,12 15 -36", NULL);
         // RKExecuteCommand(myRadar, "p rr 0,20 10,20,30 10", NULL);
         // RKExecuteCommand(myRadar, "p vol p 2 15 -50/p 4 15 -50/p 6 15 -50/p 8 15 -50/p 10 15 -50", NULL);
         // RKExecuteCommand(myRadar, "p vol s 2 5,25 25/s 4 45,15 -25", NULL);

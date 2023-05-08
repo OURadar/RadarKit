@@ -24,9 +24,10 @@ enum {
 // A scratch space for moment processor
 //
 typedef struct rk_moment_scratch {
+    RKName                           name;                                         //
+    uint8_t                          verbose;                                      //
     uint32_t                         capacity;                                     // Capacity
     bool                             showNumbers;                                  // A flag for showing numbers
-    uint8_t                          lagCount;
     uint8_t                          userLagChoice;                                // Number of lags in multi-lag estimator from user
     uint16_t                         gateCount;                                    // Gate count of the rays
     RKFloat                          gateSizeMeters;                               // Gate size in meters for range correction
@@ -68,6 +69,7 @@ typedef struct rk_moment_scratch {
     int8_t                           fftOrder;                                     // FFT order that was used to perform FFT. This will be copied over to rayHeader
     RKConfig                         *config;                                      // A reference to the radar configuration
     RKMomentList                     calculatedMoments;                            // Calculated moments
+    RKUserResource                   userResource;                                 //
 } RKMomentScratch;
 
 size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers);

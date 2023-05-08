@@ -403,6 +403,10 @@ static void *pulseEngineCore(void *_in) {
             scratch->filterAnchor = &engine->filterAnchors[0][0];
             if (engine->compressorInit) {
                 engine->compressorInit(scratch);
+                // Add another configuration
+                RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
+                                        RKConfigKeyUserResource, scratch->userResource,
+                                        RKConfigKeyNull);
             }
         }
 

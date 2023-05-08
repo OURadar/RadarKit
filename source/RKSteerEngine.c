@@ -178,7 +178,7 @@ int RKSteerEngineAddPPISet(RKSteerEngine *engine, const char *string, const bool
     float azimuthStart, azimuthEnd, elevationStart, elevationEnd, rate;
 
     if (response == NULL) {
-        response = engine->dump;
+        response = engine->response;
     }
 
     if (n < 2) {
@@ -231,7 +231,7 @@ int RKSteerEngineAddRHISet(RKSteerEngine *engine, const char *string, const bool
     float azimuthStart, elevationStart, elevationEnd, rate;
 
     if (response == NULL) {
-        response = engine->dump;
+        response = engine->response;
     }
 
     if (n < 2) {
@@ -899,12 +899,11 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
     const bool onlyOnce = RKSteerCommandIsOnce(command);
 
     if (response == NULL) {
-        response = engine->dump;
+        response = engine->response;
     }
 
     RKLog("%s Interpreted %s\n", engine->name,
         RKVariableInString("command", &command, RKValueTypeInt32InHex));
-
 
     int s;
     int result;

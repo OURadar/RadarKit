@@ -116,7 +116,7 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char _Null
     RKClient *client = me->client;
 
     if (response == NULL) {
-        response = (char *)me->dump;
+        response = (char *)me->response;
     }
 
     if (client->verbose > 1) {

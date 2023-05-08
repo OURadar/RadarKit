@@ -236,7 +236,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
     RKClient *client = me->client;
 
     if (response == NULL) {
-        response = (char *)me->dump;
+        response = (char *)me->response;
     }
 
     if (client->verbose > 1) {

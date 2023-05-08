@@ -10,6 +10,7 @@
 #define __RadarKit_Pulse_Engine__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKConfig.h>
 #include <RadarKit/RKDSP.h>
 
 typedef struct rk_pulse_worker RKPulseWorker;
