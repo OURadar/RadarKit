@@ -10,7 +10,7 @@
 #define __RadarKit_PulsePair__
 
 #include <RadarKit/RKFoundation.h>
-#include <RadarKit/RKMoment.h>
+#include <RadarKit/RKScratch.h>
 
 int RKPulsePair(RKMomentScratch *, RKPulse **, const uint16_t);
 int RKPulsePairHop(RKMomentScratch *, RKPulse **, const uint16_t);

@@ -41,28 +41,8 @@ typedef struct rk_gaussian {
 } RKGaussian;
 
 //
-// A scratch space for pulse compression
 //
-typedef struct rk_compression_scratch {
-    RKName                           name;                                         //
-    uint8_t                          verbose;                                      //
-    RKPulse                          *pulse;                                       //
-    RKComplex                        *filter;                                      //
-    RKFilterAnchor                   *filterAnchor;                                // (deprecating)
-    fftwf_plan                       planForwardInPlace;                           //
-    fftwf_plan                       planForwardOutPlace;                          //
-    fftwf_plan                       planBackwardInPlace;                          //
-    fftwf_plan                       planBackwardOutPlace;                         //
-    fftwf_complex                    *inBuffer;                                    //
-    fftwf_complex                    *outBuffer;                                   //
-    RKIQZ                            *zi;                                          //
-    RKIQZ                            *zo;                                          //
-    unsigned int                     planSize;                                     // DFT plan size
-    RKConfig                         *config;                                      //
-    uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
-    uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use
-    RKUserResource                   userResource;                                 //
-} RKCompressionScratch;
+//
 
 float RKGetSignedMinorSectorInDegrees(const float angle1, const float angle2);
 float RKGetMinorSectorInDegrees(const float angle1, const float angle2);

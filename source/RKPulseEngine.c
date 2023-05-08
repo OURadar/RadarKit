@@ -296,30 +296,12 @@ static void *pulseEngineCore(void *_in) {
 
     RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
-    // Allocate local resources, use k to keep track of the total allocation
-    // Avoid fftwf_malloc() here so that non-avx-enabled libfftw is compatible
-    RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
-    if (scratch == NULL) {
-        RKLog("%s Error. Unable to allocate a scratch space.\n", engine->name);
-        return (void *)RKResultFailedToAllocateFFTSpace;
-    }
+    RKCompressionScratch *scratch;
+    size_t mem = RKCompressionScratchAlloc(&scratch, nfft);
+
     // Pass down some shared constants
     sprintf(scratch->name, "%s %s", engine->name, me->name);
     scratch->verbose = engine->verbose;
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
-    if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
-        RKLog("Error. Unable to allocate resources for FFTW.\n");
-        return (void *)RKResultFailedToAllocateFFTSpace;
-    }
-    size_t mem = 2 * nfft * sizeof(fftwf_complex);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
-    if (scratch->zi == NULL || scratch->zo == NULL) {
-        RKLog("Error. Unable to allocate resources for FFTW.\n");
-        return (void *)RKResultFailedToAllocateFFTSpace;
-    }
-    mem += 2 * nfft * sizeof(RKFloat);
 
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -527,13 +509,14 @@ static void *pulseEngineCore(void *_in) {
     if (engine->compressorFree) {
         engine->compressorFree(scratch);
     }
-    free(scratch->zi);
-    free(scratch->zo);
-    free(scratch->inBuffer);
-    free(scratch->outBuffer);
-    free(scratch);
+    // free(scratch->zi);
+    // free(scratch->zo);
+    // free(scratch->inBuffer);
+    // free(scratch->outBuffer);
+    // free(scratch);
     free(busyPeriods);
     free(fullPeriods);
+    RKCompressionScratchFree(scratch);
     RKPulseBufferFree(localPulseBuffer);
 
     RKLog(">%s %s Stopped.\n", engine->name, me->name);
