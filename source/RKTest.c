@@ -4619,6 +4619,17 @@ void RKTestMakePositionStatusString(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
+    RKRadarDesc desc;
+    memset(&desc, 0, sizeof(RKRadarDesc));
+    desc.initFlags = RKInitFlagAllocEverything | RKInitFlagSignalProcessor;
+    desc.pulseCapacity = 1599;
+    desc.pulseToRayRatio = 1;
+    desc.configBufferDepth = 10;
+    desc.healthBufferDepth = 10;
+    desc.positionBufferDepth = 500;
+    desc.pulseBufferDepth = 5000;
+    desc.rayBufferDepth = 1500;
+    RKInitWithDesc(desc);
 }
 
 #pragma mark -

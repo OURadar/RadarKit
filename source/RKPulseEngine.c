@@ -292,12 +292,10 @@ static void *pulseEngineCore(void *_in) {
     RKBuffer localPulseBuffer;
     RKPulseBufferAlloc(&localPulseBuffer, engine->radarDescription->pulseCapacity, 1);
 
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, engine->radarDescription->pulseCapacity)));
-
     RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
     RKCompressionScratch *scratch;
-    size_t mem = RKCompressionScratchAlloc(&scratch, nfft);
+    size_t mem = RKCompressionScratchAlloc(&scratch, engine->radarDescription->pulseCapacity);
 
     // Pass down some shared constants
     sprintf(scratch->name, "%s %s", engine->name, me->name);
@@ -332,8 +330,8 @@ static void *pulseEngineCore(void *_in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   nfft = %s   ci = %d\n",
-          engine->name, me->name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), RKIntegerToCommaStyleString(nfft), ci);
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
+          engine->name, me->name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 

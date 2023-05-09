@@ -13,8 +13,8 @@
 #pragma mark - Scratch Space
 
 // Allocate a scratch space for pulse compression
-size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity) {
-    if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat) != 0) {
+size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose) {
+    if (capacity == 0 || capacity != (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat)) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
         return 0;
@@ -26,10 +26,11 @@ size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t c
     }
     memset(*buffer, 0, sizeof(RKCompressionScratch));
 
-    const unsigned long nfft = 1 << (int)ceilf(log2f((float)capacity));
+    const uint32_t nfft = 1 << (int)ceilf(log2f((float)capacity));
 
     RKCompressionScratch *scratch = (RKCompressionScratch *)*buffer;
     scratch->capacity = capacity;
+    scratch->verbose = verbose;
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
@@ -56,8 +57,8 @@ void RKCompressionScratchFree(RKCompressionScratch *scratch) {
 }
 
 // Allocate a scratch space for moment processors
-size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const bool showNumbers) {
-    if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat) != 0) {
+size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t verbose) {
+    if (capacity == 0 || capacity != (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat)) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
         return 0;
@@ -69,17 +70,13 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
     }
     memset(*buffer, 0, sizeof(RKMomentScratch));
 
-    const unsigned long nfft = 1 << (int)ceilf(log2f((float)RKMaximumPulsesPerRay));
+    const uint32_t nfft = 1 << (int)ceilf(log2f((float)RKMaximumPulsesPerRay));
 
     RKMomentScratch *space = *buffer;
-    //space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
-    if (capacity != (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat)) {
-        RKLog("Error. RKMomentScratchAlloc() %zu\n", capacity);
-    }
     space->capacity = capacity;
-    space->showNumbers = showNumbers;
+    space->verbose = verbose;
 
-    if (showNumbers) {
+    if (space->verbose) {
         RKLog("Info. %s <-- %s",
               RKVariableInString("space->capacity", &space->capacity, RKValueTypeUInt32),
               RKVariableInString("capacity", &capacity, RKValueTypeUInt32));

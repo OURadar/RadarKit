@@ -442,6 +442,15 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     RKLog("Initializing ... 0x%08x %s", desc.initFlags, desc.dataPath);
 
+    // Some basic check
+    uint32_t goodPulseCapacity = (uint32_t)ceilf(((float)desc.pulseCapacity * sizeof(RKFloat) / RKMemoryAlignSize / desc.pulseToRayRatio))
+                               * RKMemoryAlignSize * desc.pulseToRayRatio / sizeof(RKFloat);
+    if (desc.pulseCapacity != goodPulseCapacity) {
+        RKLog("Error. Recommend setting pulseCapacity %s -> %s\n",
+            RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(goodPulseCapacity));
+        exit(EXIT_FAILURE);
+    }
+
     // Allocate self
     bytes = sizeof(RKRadar);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&radar, RKMemoryAlignSize, bytes))

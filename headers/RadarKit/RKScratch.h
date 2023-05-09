@@ -53,7 +53,6 @@ typedef struct rk_moment_scratch {
     RKName                           name;                                         //
     uint8_t                          verbose;                                      //
     uint32_t                         capacity;                                     // Capacity
-    bool                             showNumbers;                                  // A flag for showing numbers
     uint8_t                          userLagChoice;                                // Number of lags in multi-lag estimator from user
     uint16_t                         gateCount;                                    // Gate count of the rays
     RKFloat                          gateSizeMeters;                               // Gate size in meters for range correction
@@ -98,10 +97,10 @@ typedef struct rk_moment_scratch {
     RKUserResource                   userResource;                                 //
 } RKMomentScratch;
 
-size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t);
+size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t);
 void RKCompressionScratchFree(RKCompressionScratch *);
 
-size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t capacity, const bool showNumbers);
+size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t, const uint8_t);
 void RKMomentScratchFree(RKMomentScratch *);
 
 int prepareScratch(RKMomentScratch *);
