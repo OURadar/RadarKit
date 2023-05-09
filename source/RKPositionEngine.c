@@ -351,8 +351,8 @@ RKPositionEngine *RKPositionEngineInit() {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
     sprintf(engine->name, "%s<PulsePositioner>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+        rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionEngine) : "",
+        rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine);
     engine->state = RKEngineStateAllocated;
     return engine;

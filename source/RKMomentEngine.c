@@ -167,21 +167,23 @@ static void *momentCore(void *in) {
     sem_t *sem = me->sem;
 
     // Initiate my name
+    RKShortName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(me->name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(me->name + k, "M%02d", c);
+        k += sprintf(name + k, "M%02d", c);
     } else {
-        k += sprintf(me->name + k, "M%d", c);
+        k += sprintf(name + k, "M%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(me->name + k, RKNoColor);
+        sprintf(name + k, RKNoColor);
     }
+    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
 
 #if defined(_GNU_SOURCE)
 
@@ -202,24 +204,24 @@ static void *momentCore(void *in) {
     RKMomentScratch *space = NULL;
 
     // Allocate local resources and keep track of the total allocation
-    //pulse = RKGetPulseFromBuffer(engine->pulseBuffer, 0);
-    //uint32_t capacity = (uint32_t)ceilf((float)pulse->header.capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
     ray = RKGetRayFromBuffer(engine->rayBuffer, 0);
     const uint32_t capacity = (uint32_t)ceilf((float)ray->header.capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
-    size_t mem = RKMomentScratchAlloc(&space, capacity, engine->verbose > 3);
-    if (space == NULL) {
-        RKLog("%s %s Error. Unable to allocate resources for duty cycle calculation\n", engine->name, me->name);
+    size_t mem = RKMomentScratchAlloc(&space, capacity, engine->verbose, me->name);
+    if (space == NULL || mem == 0) {
         exit(EXIT_FAILURE);
     }
-	if (engine->userLagChoice != 0) {
-		space->userLagChoice = engine->userLagChoice;
-	}
+
+    // Pass down other parameters in scratch space
+    space->config = &engine->configBuffer[0];
     space->fftModule = engine->fftModule;
+    space->userLagChoice = engine->userLagChoice;
+
+    // Business calculation
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
-        RKLog("%s %s Error. Unable to allocate resources for duty cycle calculation\n", engine->name, me->name);
+        RKLog("%s Error. Unable to allocate resources for duty cycle calculation\n", me->name);
         exit(EXIT_FAILURE);
     }
     mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
@@ -254,8 +256,8 @@ static void *momentCore(void *in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   lagCount = %d   fftOrder = %d   i0 = %s   ci = %d\n",
-          engine->name, me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, engine->processorFFTOrder, RKIntegerToCommaStyleString(io), ci);
+    RKLog(">%s Started.   mem = %s B   lagCount = %d   fftOrder = %d   i0 = %s   ci = %d\n",
+          me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, engine->processorFFTOrder, RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -288,7 +290,7 @@ static void *momentCore(void *in) {
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             if (sem_wait(sem)) {
-                RKLog("Error. Failed in sem_wait(). errno = %d\n", errno);
+                RKLog("%s Error. Failed in sem_wait(). errno = %d\n", me->name, errno);
             }
         } else {
             while (tic == me->tic && engine->state & RKEngineStateWantActive) {
@@ -309,7 +311,7 @@ static void *momentCore(void *in) {
         // The index path of the source of this ray
         path = engine->momentSource[io];
         if (path.origin > engine->radarDescription->pulseBufferDepth || path.length > engine->radarDescription->pulseBufferDepth) {
-            RKLog("%s Warning. Unexpected path->origin = %d   path->length = %d   io = %d\n", engine->name, path.origin, path.length, io);
+            RKLog("%s Warning. Unexpected path->origin = %d   path->length = %d   io = %d\n", me->name, path.origin, path.length, io);
             path.origin = 0;
             path.length = 1;
         }
@@ -392,22 +394,22 @@ static void *momentCore(void *in) {
                 pthread_mutex_lock(&rkGlobalParameters.lock);
 
                 RKFilterAnchor *filterAnchors = config->waveform->filterAnchors[0];
-                RKLog("%s %s systemZCal = %.2f   ZCal = %.2f  sensiGain[0] = %.2f   samplingAdj = %.2f\n",
-                      engine->name, me->name,
+                RKLog("%s systemZCal = %.2f   ZCal = %.2f  sensiGain[0] = %.2f   samplingAdj = %.2f\n",
+                      me->name,
                       config->systemZCal[0], config->ZCal[0][0], filterAnchors[0].sensitivityGain, space->samplingAdjustment);
-                RKLog(">%s %s RCor @ filterCount = %d   capacity = %s   C%02d\n",
-                      engine->name, me->name,
+                RKLog(">%s RCor @ filterCount = %d   capacity = %s   C%02d\n",
+                      me->name,
                       config->waveform->count,
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
-                RKLog(">%s %s PRF = %s Hz -> Va = %.2f m/s/rad\n",
-                      engine->name, me->name,
+                RKLog(">%s PRF = %s Hz -> Va = %.2f m/s/rad\n",
+                      me->name,
                       RKFloatToCommaStyleString(1.0f / config->prt[0]), space->velocityFactor);
                 if (engine->verbose > 1) {
                     for (p = 0; p < 2; p++) {
                         for (k = 0; k < config->waveform->count; k++) {
-                            RKLog(">%s %s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
-                                  engine->name, me->name, k,
+                            RKLog(">%s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
+                                  me->name, k,
                                   p == 0 ? "H" : (p == 1 ? "V" : "-"),
                                   config->systemZCal[p],
                                   config->ZCal[k][p],
@@ -439,14 +441,14 @@ static void *momentCore(void *in) {
         // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
             if (ie != i) {
-                RKLog("%s %s I detected a bug %d vs %d.\n", engine->name, me->name, ie, i);
+                RKLog("%s I detected a bug %d vs %d.\n", me->name, ie, i);
             }
             // Initialize the scratch space
             prepareScratch(space);
             // Call the processor
             k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
-                RKLog("%s %s processed %d samples, which is not expected (%d)\n", engine->name, me->name, k, path.length);
+                RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
             }
             // Fill in the ray with SNR and SQI censoring, 16-bit and 8-bit data
             makeRayFromScratch(space, ray);
@@ -459,7 +461,7 @@ static void *momentCore(void *in) {
             // Zero out the ray
             zeroOutRay(ray);
             if (engine->verbose > 1) {
-                RKLog("%s %s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", engine->name, me->name,
+                RKLog("%s Skipped a ray with %d sample%s   deltaAz = %.2f   deltaEl = %.2f.\n", me->name,
                       path.length, path.length > 1 ? "s": "", deltaAzimuth, deltaElevation);
             }
             ray->header.s |= RKRayStatusSkipped;
@@ -520,7 +522,7 @@ static void *momentCore(void *in) {
     }
 
     if (engine->verbose > 1) {
-        RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
+        RKLog("%s Freeing reources ...\n", me->name);
     }
 
     RKMomentScratchFree(space);
@@ -528,7 +530,7 @@ static void *momentCore(void *in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, me->name);
+    RKLog(">%s Stopped.\n", me->name);
 
     return NULL;
 }

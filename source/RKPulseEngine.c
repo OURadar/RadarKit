@@ -260,21 +260,23 @@ static void *pulseEngineCore(void *_in) {
     };
 
     // Initiate my name
+    RKShortName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(me->name, RKShortNameLength - 1, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(me->name + k, "P%02d", c);
+        k += sprintf(name + k, "P%02d", c);
     } else {
-        k += sprintf(me->name + k, "P%d", c);
+        k += sprintf(name + k, "P%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(me->name + k, RKNoColor);
+        sprintf(name + k, RKNoColor);
     }
+    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
 
     #if defined(_GNU_SOURCE)
 
@@ -294,13 +296,18 @@ static void *pulseEngineCore(void *_in) {
 
     RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
+    // Allocate local resources and keep track of the total allocation
     RKCompressionScratch *scratch;
-    size_t mem = RKCompressionScratchAlloc(&scratch, engine->radarDescription->pulseCapacity, 0);
+    size_t mem = RKCompressionScratchAlloc(&scratch, engine->radarDescription->pulseCapacity, engine->verbose, me->name);
+    if (scratch == NULL || mem == 0) {
+        exit(EXIT_FAILURE);
+    }
 
-    // Pass down some shared constants
-    sprintf(scratch->name, "%s %s", engine->name, me->name);
-    scratch->verbose = engine->verbose;
+    // Pass down other parameters in scratch space
+    scratch->config = &engine->configBuffer[0];
+    scratch->fftModule = engine->fftModule;
 
+    // Business calculation
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -330,8 +337,8 @@ static void *pulseEngineCore(void *_in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   ci = %d\n",
-          engine->name, me->name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), ci);
+    RKLog(">%s Started.   mem = %s B   i0 = %s   ci = %d\n",
+          me->name, RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(i0), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 
@@ -347,7 +354,6 @@ static void *pulseEngineCore(void *_in) {
     //
     uint64_t tic = me->tic;
     uint16_t configIndex = -1;
-    scratch->config = &engine->configBuffer[0];
 
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
@@ -355,7 +361,7 @@ static void *pulseEngineCore(void *_in) {
             RKLog(">%s sem_wait()\n", coreName);
             #endif
             if (sem_wait(sem)) {
-                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, me->name, errno);
+                RKLog("%s Error. Failed in sem_wait(). errno = %d\n", me->name, errno);
             }
         } else {
             while (tic == me->tic && engine->state & RKEngineStateWantActive) {
@@ -407,7 +413,7 @@ static void *pulseEngineCore(void *_in) {
             pulse->parameters.filterCounts[1] = 0;
             pulse->header.s |= RKPulseStatusSkipped;
             if (engine->verbose > 1) {
-                RKLog("%s pulse skipped. header->i = %d   gid = %d\n", engine->name, pulse->header.i, gid);
+                RKLog("%s pulse skipped. header->i = %d   gid = %d\n", me->name, pulse->header.i, gid);
             }
         } else {
             // Do some work with this pulse
@@ -501,23 +507,18 @@ static void *pulseEngineCore(void *_in) {
 
     // Clean up
     if (engine->verbose > 1) {
-        RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
+        RKLog("%s Freeing reources ...\n", me->name);
     }
 
     if (engine->compressorFree) {
         engine->compressorFree(scratch);
     }
-    // free(scratch->zi);
-    // free(scratch->zo);
-    // free(scratch->inBuffer);
-    // free(scratch->outBuffer);
-    // free(scratch);
     free(busyPeriods);
     free(fullPeriods);
     RKCompressionScratchFree(scratch);
     RKPulseBufferFree(localPulseBuffer);
 
-    RKLog(">%s %s Stopped.\n", engine->name, me->name);
+    RKLog(">%s Stopped.\n", me->name);
 
     return NULL;
 }

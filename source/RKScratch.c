@@ -5,6 +5,12 @@
 //  Created by Boonleng Cheong.
 //  Copyright (c) Boonleng Cheong. All rights reserved.
 //
+//  <  PulseScratch >
+//  <CompressScratch>
+//  < MomentScratch >
+//  < FilterScratch >
+//  <FastTimeScratch>
+//  <SlowTimeScratch>
 
 #include <RadarKit/RKScratch.h>
 
@@ -13,7 +19,7 @@
 #pragma mark - Scratch Space
 
 // Allocate a scratch space for pulse compression
-size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose) {
+size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose, const RKName _Nullable name) {
     uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity == 0 || capacity != goodCapacity) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
@@ -32,23 +38,31 @@ size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t c
     RKCompressionScratch *scratch = (RKCompressionScratch *)*buffer;
     scratch->capacity = capacity;
     scratch->verbose = verbose;
+    if (name) {
+        strcpy(scratch->name, name);
+    } else {
+        snprintf(scratch->name, RKNameLength, "%s<  PulseScratch >%s",
+                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMisc) : "",
+                 rkGlobalParameters.showColor ? RKNoColor : "");
+    }
 
     if (scratch->verbose) {
-        RKLog("Info. %s   %s",
-            RKVariableInString("capacity", &capacity, RKValueTypeUInt32),
-            RKVariableInString("fast-nfft", &nfft, RKValueTypeUInt32));
+        RKLog("%s Scratch space allocated.   capacity = %s   fast-nfft = %s",
+            scratch->name,
+            RKIntegerToCommaStyleString(capacity),
+            RKIntegerToCommaStyleString(nfft));
     }
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
-        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        RKLog("%s Error. Unable to allocate resources for FFTW.\n", scratch->name);
         return 0;
     }
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
     if (scratch->zi == NULL || scratch->zo == NULL) {
-        RKLog("Error. Unable to allocate resources for FFTW.\n");
+        RKLog("%s Error. Unable to allocate resources for FFTW.\n", scratch->name);
         return 0;
     }
     size_t mem = 2 * nfft * sizeof(fftwf_complex) + 2 * nfft * sizeof(RKFloat);
@@ -64,7 +78,7 @@ void RKCompressionScratchFree(RKCompressionScratch *scratch) {
 }
 
 // Allocate a scratch space for moment processors
-size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t verbose) {
+size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t verbose, const RKName _Nullable name) {
     uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity == 0 || capacity != goodCapacity) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
@@ -80,14 +94,22 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
 
     const uint32_t nfft = 1 << (int)ceilf(log2f((float)RKMaximumPulsesPerRay));
 
-    RKMomentScratch *space = *buffer;
-    space->capacity = capacity;
-    space->verbose = verbose;
+    RKMomentScratch *scratch = *buffer;
+    scratch->capacity = capacity;
+    scratch->verbose = verbose;
+    if (name) {
+        strcpy(scratch->name, name);
+    } else {
+        snprintf(scratch->name, RKNameLength, "%s< MomentScratch >%s",
+                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMisc) : "",
+                 rkGlobalParameters.showColor ? RKNoColor : "");
+    }
 
-    if (space->verbose) {
-        RKLog("Info. %s   %s",
-            RKVariableInString("capacity", &capacity, RKValueTypeUInt32),
-            RKVariableInString("slow-nfft", &nfft, RKValueTypeUInt32));
+    if (scratch->verbose) {
+        RKLog("%s Scratch space allocated.   capacity = %s   slow-nfft = %s",
+            scratch->name,
+            RKIntegerToCommaStyleString(capacity),
+            RKIntegerToCommaStyleString(nfft));
     }
 
     int j, k;
@@ -95,153 +117,153 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
 
     int s = 0;
     for (k = 0; k < 2; k++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->vX[k].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S[k],    RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Z[k],    RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->V[k],    RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->W[k],    RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->Q[k],    RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->SNR[k],  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S2Z[k],  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        memset(space->S2Z[k], 0, space->capacity * sizeof(RKFloat));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->mX[k].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->mX[k].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->vX[k].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->vX[k].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->S[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->Z[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->V[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->W[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->Q[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->SNR[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->S2Z[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        memset(scratch->S2Z[k], 0, scratch->capacity * sizeof(RKFloat));
         s += 11;
         for (j = 0; j < RKMaximumLagCount; j++) {
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j],  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->R[k][j].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->R[k][j].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->aR[k][j],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
             s += 3;
         }
     }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.i,  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.q,  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.i,  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ts.q,  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->ZDR,   RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->PhiDP, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->RhoHV, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->KDP,   RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->user1, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->user2, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->user3, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->user4, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->dcal,  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->pcal,  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    memset(space->dcal, 0, space->capacity * sizeof(RKFloat));
-    memset(space->pcal, 0, space->capacity * sizeof(RKFloat));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->sC.i,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->sC.q,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->ts.i,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->ts.q,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->ZDR,   RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->PhiDP, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->RhoHV, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->KDP,   RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user1, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user2, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user3, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user4, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->dcal,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->pcal,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+    memset(scratch->dcal, 0, scratch->capacity * sizeof(RKFloat));
+    memset(scratch->pcal, 0, scratch->capacity * sizeof(RKFloat));
     s += 14;
 
     for (j = 0; j < 2 * RKMaximumLagCount - 1; j++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j],  RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->C[j].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->C[j].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->aC[j],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         s += 3;
     }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->gC, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
     s++;
     bytes += s * sizeof(RKFloat);
 
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKMemoryAlignSize, space->capacity * sizeof(uint8_t)));
-    bytes += space->capacity * sizeof(uint8_t);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->mask, RKMemoryAlignSize, scratch->capacity * sizeof(uint8_t)));
+    bytes += scratch->capacity * sizeof(uint8_t);
 
-    space->inBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
-    space->outBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
-    bytes += 2 * space->capacity * sizeof(fftwf_complex *);
-    for (j = 0; j < space->capacity; j++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->inBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->outBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+    scratch->inBuffer = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
+    scratch->outBuffer = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
+    bytes += 2 * scratch->capacity * sizeof(fftwf_complex *);
+    for (j = 0; j < scratch->capacity; j++) {
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
     }
-    bytes += space->capacity * 2 * nfft * sizeof(fftwf_complex);
+    bytes += scratch->capacity * 2 * nfft * sizeof(fftwf_complex);
     return bytes;
 }
 
-void RKMomentScratchFree(RKMomentScratch *space) {
+void RKMomentScratchFree(RKMomentScratch *scratch) {
     int j, k;
     for (k = 0; k < 2; k++) {
-        free(space->mX[k].i);
-        free(space->mX[k].q);
-        free(space->vX[k].i);
-        free(space->vX[k].q);
-        free(space->S[k]);
-        free(space->Z[k]);
-        free(space->V[k]);
-        free(space->W[k]);
-        free(space->Q[k]);
-        free(space->SNR[k]);
-        free(space->S2Z[k]);
+        free(scratch->mX[k].i);
+        free(scratch->mX[k].q);
+        free(scratch->vX[k].i);
+        free(scratch->vX[k].q);
+        free(scratch->S[k]);
+        free(scratch->Z[k]);
+        free(scratch->V[k]);
+        free(scratch->W[k]);
+        free(scratch->Q[k]);
+        free(scratch->SNR[k]);
+        free(scratch->S2Z[k]);
         for (j = 0; j < RKMaximumLagCount; j++) {
-            free(space->R[k][j].i);
-            free(space->R[k][j].q);
-            free(space->aR[k][j]);
+            free(scratch->R[k][j].i);
+            free(scratch->R[k][j].q);
+            free(scratch->aR[k][j]);
         }
     }
-    free(space->sC.i);
-    free(space->sC.q);
-    free(space->ts.i);
-    free(space->ts.q);
-    free(space->ZDR);
-    free(space->PhiDP);
-    free(space->RhoHV);
-    free(space->KDP);
-    free(space->user1);
-    free(space->user2);
-    free(space->user3);
-    free(space->user4);
-    free(space->dcal);
-    free(space->pcal);
+    free(scratch->sC.i);
+    free(scratch->sC.q);
+    free(scratch->ts.i);
+    free(scratch->ts.q);
+    free(scratch->ZDR);
+    free(scratch->PhiDP);
+    free(scratch->RhoHV);
+    free(scratch->KDP);
+    free(scratch->user1);
+    free(scratch->user2);
+    free(scratch->user3);
+    free(scratch->user4);
+    free(scratch->dcal);
+    free(scratch->pcal);
     for (j = 0; j < 2 * RKMaximumLagCount - 1; j++) {
-        free(space->C[j].i);
-        free(space->C[j].q);
-        free(space->aC[j]);
+        free(scratch->C[j].i);
+        free(scratch->C[j].q);
+        free(scratch->aC[j]);
     }
-    free(space->gC);
-    free(space->mask);
-    for (k = 0; k < space->capacity; k++) {
-        free(space->inBuffer[k]);
-        free(space->outBuffer[k]);
+    free(scratch->gC);
+    free(scratch->mask);
+    for (k = 0; k < scratch->capacity; k++) {
+        free(scratch->inBuffer[k]);
+        free(scratch->outBuffer[k]);
     }
-    free(space->inBuffer);
-    free(space->outBuffer);
-    free(space);
+    free(scratch->inBuffer);
+    free(scratch->outBuffer);
+    free(scratch);
 }
 
 #pragma mark -
 
-int prepareScratch(RKMomentScratch *space) {
-    space->fftOrder = -1;
+int prepareScratch(RKMomentScratch *scratch) {
+    scratch->fftOrder = -1;
     return 0;
 }
 
 // This function converts the float data calculated from a chosen processor to uint8_t type, which also represent
 // the display data for the front end
-int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
+int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     int k;
     uint8_t *mask;
     float SNRh, SNRv;
     float SNRThreshold, SQIThreshold;
 
     // Grab the relevant data from scratch space for float to 16-bit quantization
-    RKFloat *iHmi  = space->mX[0].i;      int16_t *oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
-    RKFloat *iHmq  = space->mX[0].q;      int16_t *oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
-    RKFloat *iHR0  = space->aR[0][0];     int16_t *oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
-    RKFloat *iHR1i = space->R[0][1].i;    int16_t *oHR1i = RKGetInt16DataFromRay(ray, RKMomentIndexHR1i);
-    RKFloat *iHR1q = space->R[0][1].q;    int16_t *oHR1q = RKGetInt16DataFromRay(ray, RKMomentIndexHR1q);
-    RKFloat *iHR2  = space->aR[0][2];     int16_t *oHR2  = RKGetInt16DataFromRay(ray, RKMomentIndexHR2);
-    RKFloat *iHR3  = space->aR[0][3];     int16_t *oHR3  = RKGetInt16DataFromRay(ray, RKMomentIndexHR3);
-    RKFloat *iHR4  = space->aR[0][3];     int16_t *oHR4  = RKGetInt16DataFromRay(ray, RKMomentIndexHR4);
-    RKFloat *iVmi  = space->mX[1].i;      int16_t *oVmi  = RKGetInt16DataFromRay(ray, RKMomentIndexVmi);
-    RKFloat *iVmq  = space->mX[1].q;      int16_t *oVmq  = RKGetInt16DataFromRay(ray, RKMomentIndexVmq);
-    RKFloat *iVR0  = space->aR[1][0];     int16_t *oVR0  = RKGetInt16DataFromRay(ray, RKMomentIndexVR0);
-    RKFloat *iVR1i = space->R[1][1].i;    int16_t *oVR1i = RKGetInt16DataFromRay(ray, RKMomentIndexVR1i);
-    RKFloat *iVR1q = space->R[1][1].q;    int16_t *oVR1q = RKGetInt16DataFromRay(ray, RKMomentIndexVR1q);
-    RKFloat *iVR2  = space->aR[1][2];     int16_t *oVR2  = RKGetInt16DataFromRay(ray, RKMomentIndexVR2);
-    RKFloat *iVR3  = space->aR[1][3];     int16_t *oVR3  = RKGetInt16DataFromRay(ray, RKMomentIndexVR3);
-    RKFloat *iVR4  = space->aR[1][3];     int16_t *oVR4  = RKGetInt16DataFromRay(ray, RKMomentIndexVR4);
+    RKFloat *iHmi  = scratch->mX[0].i;      int16_t *oHmi  = RKGetInt16DataFromRay(ray, RKMomentIndexHmi);
+    RKFloat *iHmq  = scratch->mX[0].q;      int16_t *oHmq  = RKGetInt16DataFromRay(ray, RKMomentIndexHmq);
+    RKFloat *iHR0  = scratch->aR[0][0];     int16_t *oHR0  = RKGetInt16DataFromRay(ray, RKMomentIndexHR0);
+    RKFloat *iHR1i = scratch->R[0][1].i;    int16_t *oHR1i = RKGetInt16DataFromRay(ray, RKMomentIndexHR1i);
+    RKFloat *iHR1q = scratch->R[0][1].q;    int16_t *oHR1q = RKGetInt16DataFromRay(ray, RKMomentIndexHR1q);
+    RKFloat *iHR2  = scratch->aR[0][2];     int16_t *oHR2  = RKGetInt16DataFromRay(ray, RKMomentIndexHR2);
+    RKFloat *iHR3  = scratch->aR[0][3];     int16_t *oHR3  = RKGetInt16DataFromRay(ray, RKMomentIndexHR3);
+    RKFloat *iHR4  = scratch->aR[0][3];     int16_t *oHR4  = RKGetInt16DataFromRay(ray, RKMomentIndexHR4);
+    RKFloat *iVmi  = scratch->mX[1].i;      int16_t *oVmi  = RKGetInt16DataFromRay(ray, RKMomentIndexVmi);
+    RKFloat *iVmq  = scratch->mX[1].q;      int16_t *oVmq  = RKGetInt16DataFromRay(ray, RKMomentIndexVmq);
+    RKFloat *iVR0  = scratch->aR[1][0];     int16_t *oVR0  = RKGetInt16DataFromRay(ray, RKMomentIndexVR0);
+    RKFloat *iVR1i = scratch->R[1][1].i;    int16_t *oVR1i = RKGetInt16DataFromRay(ray, RKMomentIndexVR1i);
+    RKFloat *iVR1q = scratch->R[1][1].q;    int16_t *oVR1q = RKGetInt16DataFromRay(ray, RKMomentIndexVR1q);
+    RKFloat *iVR2  = scratch->aR[1][2];     int16_t *oVR2  = RKGetInt16DataFromRay(ray, RKMomentIndexVR2);
+    RKFloat *iVR3  = scratch->aR[1][3];     int16_t *oVR3  = RKGetInt16DataFromRay(ray, RKMomentIndexVR3);
+    RKFloat *iVR4  = scratch->aR[1][3];     int16_t *oVR4  = RKGetInt16DataFromRay(ray, RKMomentIndexVR4);
 
     // Convert float to 16-bit representation (-32768 - 32767) using ...
-    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
+    for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {
         *oHmi++  = (int16_t)(*iHmi++);
         *oHmq++  = (int16_t)(*iHmq++);
         *oHR0++  = (int16_t)(1000.0f * log2f(*iHR0++));
@@ -298,25 +320,25 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
     #endif
 
     // Grab the data from scratch space.
-    RKFloat *Si = space->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
-    RKFloat *Ti = space->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
-    RKFloat *Zi = space->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
-    RKFloat *Vi = space->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
-    RKFloat *Wi = space->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
-    RKFloat *Qi = space->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
-    RKFloat *Oi = space->Q[1];
-    RKFloat *Di = space->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
-    RKFloat *Pi = space->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
-    RKFloat *Ki = space->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
-    RKFloat *Ri = space->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
+    RKFloat *Si = scratch->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
+    RKFloat *Ti = scratch->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
+    RKFloat *Zi = scratch->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+    RKFloat *Vi = scratch->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
+    RKFloat *Wi = scratch->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
+    RKFloat *Qi = scratch->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
+    RKFloat *Oi = scratch->Q[1];
+    RKFloat *Di = scratch->ZDR,   *Do = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
+    RKFloat *Pi = scratch->PhiDP, *Po = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
+    RKFloat *Ki = scratch->KDP,   *Ko = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
+    RKFloat *Ri = scratch->RhoHV, *Ro = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
 
-    SNRThreshold = powf(10.0f, 0.1f * space->config->SNRThreshold);
-    SQIThreshold = space->config->SQIThreshold;
-    mask = space->mask;
+    SNRThreshold = powf(10.0f, 0.1f * scratch->config->SNRThreshold);
+    SQIThreshold = scratch->config->SQIThreshold;
+    mask = scratch->mask;
     // Masking based on SNR and SQI
-    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
-        SNRh = *Si / space->noise[0];
-        SNRv = *Ti / space->noise[1];
+    for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {
+        SNRh = *Si / scratch->noise[0];
+        SNRv = *Ti / scratch->noise[1];
         *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
         *To++ = 10.0f * log10f(*Ti++) - 80.0f;
         *Qo++ = *Qi;
@@ -332,8 +354,8 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
         Oi++;
     }
     // Simple despeckling: censor the current cell if the next cell is censored
-    mask = space->mask;
-    for (k = 0; k < MIN(space->capacity, space->gateCount) - 1; k++) {
+    mask = scratch->mask;
+    for (k = 0; k < MIN(scratch->capacity, scratch->gateCount) - 1; k++) {
         if (!(*(mask + 1) & RKCellMaskKeepH)) {
             *mask &= ~RKCellMaskKeepH;
         }
@@ -343,8 +365,8 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
         mask++;
     }
     // Now we copy out the values based on mask
-    mask = space->mask;
-    for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
+    mask = scratch->mask;
+    for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {
         if (*mask & RKCellMaskKeepH) {
             *Zo++ = *Zi;
             *Vo++ = *Vi;
@@ -389,16 +411,16 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
     RKPLHMAC   RKVec pl = _rk_mm_set1(lhma[0]);  RKVec ph = _rk_mm_set1(lhma[1]);  RKVec pm = _rk_mm_set1(lhma[2]);  RKVec pa = _rk_mm_set1(lhma[3]);
     RKKLHMAC   RKVec kl = _rk_mm_set1(lhma[0]);  RKVec kh = _rk_mm_set1(lhma[1]);  RKVec km = _rk_mm_set1(lhma[2]);  RKVec ka = _rk_mm_set1(lhma[3]);
     RKRLHMAC   RKVec rl = _rk_mm_set1(lhma[0]);  RKVec rh = _rk_mm_set1(lhma[1]);
-    RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSh); RKVec *So_pf = (RKVec *)space->S[0];
-    RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSv); RKVec *To_pf = (RKVec *)space->S[1];
-    RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *Zo_pf = (RKVec *)space->Z[0];
-    RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexV);  RKVec *Vo_pf = (RKVec *)space->V[0];
-    RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexW);  RKVec *Wo_pf = (RKVec *)space->W[0];
-    RKVec *Qi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);  RKVec *Qo_pf = (RKVec *)space->Q[0];
-    RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexD);  RKVec *Do_pf = (RKVec *)space->ZDR;
-    RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexP);  RKVec *Po_pf = (RKVec *)space->PhiDP;
-    RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexK);  RKVec *Ko_pf = (RKVec *)space->KDP;
-    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexR);  RKVec *Ro_pf = (RKVec *)space->RhoHV;
+    RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSh); RKVec *So_pf = (RKVec *)scratch->S[0];
+    RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSv); RKVec *To_pf = (RKVec *)scratch->S[1];
+    RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *Zo_pf = (RKVec *)scratch->Z[0];
+    RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexV);  RKVec *Vo_pf = (RKVec *)scratch->V[0];
+    RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexW);  RKVec *Wo_pf = (RKVec *)scratch->W[0];
+    RKVec *Qi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);  RKVec *Qo_pf = (RKVec *)scratch->Q[0];
+    RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexD);  RKVec *Do_pf = (RKVec *)scratch->ZDR;
+    RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexP);  RKVec *Po_pf = (RKVec *)scratch->PhiDP;
+    RKVec *Ki_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexK);  RKVec *Ko_pf = (RKVec *)scratch->KDP;
+    RKVec *Ri_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexR);  RKVec *Ro_pf = (RKVec *)scratch->RhoHV;
     for (k = 0; k < K; k++) {
         *So_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Si_pf++, sl), sh), sm), sa);
         *To_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Ti_pf++, sl), sh), sm), sa);
@@ -412,16 +434,16 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
         *Ro_pf++ = _rk_mm_min(_rk_mm_max(*Ri_pf++, rl), rh);
     }
     // Convert to uint8 type
-    Si = space->S[0];  uint8_t *su = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
-    Ti = space->S[1];  uint8_t *tu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
-    Zi = space->Z[0];  uint8_t *zu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-    Vi = space->V[0];  uint8_t *vu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
-    Wi = space->W[0];  uint8_t *wu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
-    Qi = space->Q[0];  uint8_t *qu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexQ);
-    Di = space->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
-    Pi = space->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
-    Ki = space->KDP;   uint8_t *ku = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
-    Ri = space->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKBaseProductIndexR);
+    Si = scratch->S[0];  uint8_t *su = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
+    Ti = scratch->S[1];  uint8_t *tu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
+    Zi = scratch->Z[0];  uint8_t *zu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+    Vi = scratch->V[0];  uint8_t *vu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
+    Wi = scratch->W[0];  uint8_t *wu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
+    Qi = scratch->Q[0];  uint8_t *qu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexQ);
+    Di = scratch->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
+    Pi = scratch->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
+    Ki = scratch->KDP;   uint8_t *ku = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
+    Ri = scratch->RhoHV; uint8_t *ru = RKGetUInt8DataFromRay(ray, RKBaseProductIndexR);
     for (k = 0; k < ray->header.gateCount; k++) {
         *su++ = *Si++;
         *tu++ = *Ti++;
@@ -479,12 +501,12 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
         ray->header.marker |= RKMarkerMemoryManagement;
     }
     ray->header.baseProductList = RKBaseProductListFloatZVWDPRKSQ | RKBaseProductListUInt8ZVWDPRKSQ;
-    if (space->fftOrder > 0) {
-        ray->header.fftOrder = (uint8_t)space->fftOrder;
+    if (scratch->fftOrder > 0) {
+        ray->header.fftOrder = (uint8_t)scratch->fftOrder;
     }
     return k;
 }
 
-int RKNullProcessor(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) {
+int RKNullProcessor(RKMomentScratch *scratch, RKPulse **pulses, const uint16_t count) {
     return 0;
 }

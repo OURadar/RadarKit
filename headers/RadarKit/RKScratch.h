@@ -30,7 +30,8 @@ typedef struct rk_compression_scratch {
     uint32_t                         capacity;                                     // Capacity
     RKPulse                          *pulse;                                       //
     RKComplex                        *filter;                                      //
-    RKFilterAnchor                   *filterAnchor;                                // (deprecating)
+    RKFilterAnchor                   *filterAnchor;                                // (deprecating, use waveform->filterAnchor instead)
+    RKFFTModule                      *fftModule;                                   // A reference to the common FFT module
     fftwf_plan                       planForwardInPlace;                           //
     fftwf_plan                       planForwardOutPlace;                          //
     fftwf_plan                       planBackwardInPlace;                          //
@@ -97,10 +98,10 @@ typedef struct rk_moment_scratch {
     RKUserResource                   userResource;                                 //
 } RKMomentScratch;
 
-size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t);
+size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const RKName);
 void RKCompressionScratchFree(RKCompressionScratch *);
 
-size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t, const uint8_t);
+size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t, const uint8_t, const RKName);
 void RKMomentScratchFree(RKMomentScratch *);
 
 int prepareScratch(RKMomentScratch *);
