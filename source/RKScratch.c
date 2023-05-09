@@ -1,8 +1,8 @@
 //
-//  RKMoment.c
+//  RKScratch.c
 //  RadarKit
 //
-//  Created by Boonleng Cheong on 5/7/2021.
+//  Created by Boonleng Cheong.
 //  Copyright (c) Boonleng Cheong. All rights reserved.
 //
 
@@ -14,7 +14,8 @@
 
 // Allocate a scratch space for pulse compression
 size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose) {
-    if (capacity == 0 || capacity != (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat)) {
+    uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
+    if (capacity == 0 || capacity != goodCapacity) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
         return 0;
@@ -31,6 +32,12 @@ size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t c
     RKCompressionScratch *scratch = (RKCompressionScratch *)*buffer;
     scratch->capacity = capacity;
     scratch->verbose = verbose;
+
+    if (scratch->verbose) {
+        RKLog("Info. %s   %s",
+            RKVariableInString("capacity", &capacity, RKValueTypeUInt32),
+            RKVariableInString("fast-nfft", &nfft, RKValueTypeUInt32));
+    }
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
@@ -58,7 +65,8 @@ void RKCompressionScratchFree(RKCompressionScratch *scratch) {
 
 // Allocate a scratch space for moment processors
 size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t verbose) {
-    if (capacity == 0 || capacity != (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat)) {
+    uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
+    if (capacity == 0 || capacity != goodCapacity) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
         return 0;
@@ -77,9 +85,9 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
     space->verbose = verbose;
 
     if (space->verbose) {
-        RKLog("Info. %s <-- %s",
-              RKVariableInString("space->capacity", &space->capacity, RKValueTypeUInt32),
-              RKVariableInString("capacity", &capacity, RKValueTypeUInt32));
+        RKLog("Info. %s   %s",
+            RKVariableInString("capacity", &capacity, RKValueTypeUInt32),
+            RKVariableInString("slow-nfft", &nfft, RKValueTypeUInt32));
     }
 
     int j, k;
@@ -236,20 +244,20 @@ int makeRayFromScratch(RKMomentScratch *space, RKRay *ray) {
     for (k = 0; k < MIN(space->capacity, space->gateCount); k++) {
         *oHmi++  = (int16_t)(*iHmi++);
         *oHmq++  = (int16_t)(*iHmq++);
-        *oHR0++  = (int16_t)1000.0f * log2f(*iHR0++);
-        *oHR1i++ = (int16_t)1000.0f * log2f(*iHR1i++);
-        *oHR1q++ = (int16_t)1000.0f * log2f(*iHR1q++);
-        *oHR2++  = (int16_t)1000.0f * log2f(*iHR2++);
-        *oHR3++  = (int16_t)1000.0f * log2f(*iHR3++);
-        *oHR4++  = (int16_t)1000.0f * log2f(*iHR4++);
+        *oHR0++  = (int16_t)(1000.0f * log2f(*iHR0++));
+        *oHR1i++ = (int16_t)(1000.0f * log2f(*iHR1i++));
+        *oHR1q++ = (int16_t)(1000.0f * log2f(*iHR1q++));
+        *oHR2++  = (int16_t)(1000.0f * log2f(*iHR2++));
+        *oHR3++  = (int16_t)(1000.0f * log2f(*iHR3++));
+        *oHR4++  = (int16_t)(1000.0f * log2f(*iHR4++));
         *oVmi++  = (int16_t)(*iVmi++);
         *oVmq++  = (int16_t)(*iVmq++);
-        *oVR0++  = (int16_t)1000.0f * log2f(*iVR0++);
-        *oVR1i++ = (int16_t)1000.0f * log2f(*iVR1i++);
-        *oVR1q++ = (int16_t)1000.0f * log2f(*iVR1q++);
-        *oVR2++  = (int16_t)1000.0f * log2f(*iVR2++);
-        *oVR3++  = (int16_t)1000.0f * log2f(*iVR3++);
-        *oVR4++  = (int16_t)1000.0f * log2f(*iVR4++);
+        *oVR0++  = (int16_t)(1000.0f * log2f(*iVR0++));
+        *oVR1i++ = (int16_t)(1000.0f * log2f(*iVR1i++));
+        *oVR1q++ = (int16_t)(1000.0f * log2f(*iVR1q++));
+        *oVR2++  = (int16_t)(1000.0f * log2f(*iVR2++));
+        *oVR3++  = (int16_t)(1000.0f * log2f(*iVR3++));
+        *oVR4++  = (int16_t)(1000.0f * log2f(*iVR4++));
     }
     // ? Recover the float from 16-bit so that output is the same as generating products from level 15 data?
     #if defined(EMULATE_15)
