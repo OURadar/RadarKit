@@ -911,7 +911,7 @@ int RKPulseEngineSetGroupFilter(RKPulseEngine *engine, const RKComplex *filter, 
         return RKResultFailedToSetFilter;
     }
     // Check if this filter works with my capacity & nfft
-    const size_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulse->header.capacity)));
+    const size_t nfft = 1 << (int)ceilf(log2f((float)pulse->header.capacity));
     if (anchor.length > nfft) {
         RKLog("%s Error. NFFT %s   Filter X @ (d:%s) invalid.\n", engine->name,
               RKIntegerToCommaStyleString(nfft),

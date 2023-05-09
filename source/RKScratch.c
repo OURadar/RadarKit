@@ -12,7 +12,13 @@
 
 #pragma mark - Scratch Space
 
-size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t nfft) {
+// Allocate a scratch space for pulse compression
+size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity) {
+    if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat) != 0) {
+        RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
+              RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
+        return 0;
+    }
     *buffer = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
     if (*buffer == NULL) {
         RKLog("Error. Unable to allocate a compression scratch space.\n");
@@ -20,7 +26,10 @@ size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t n
     }
     memset(*buffer, 0, sizeof(RKCompressionScratch));
 
+    const unsigned long nfft = 1 << (int)ceilf(log2f((float)capacity));
+
     RKCompressionScratch *scratch = (RKCompressionScratch *)*buffer;
+    scratch->capacity = capacity;
 
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
@@ -47,14 +56,10 @@ void RKCompressionScratchFree(RKCompressionScratch *scratch) {
 }
 
 // Allocate a scratch space for moment processors
-size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers) {
+size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const bool showNumbers) {
     if (capacity == 0 || capacity - (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat) != 0) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
               RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
-        return 0;
-    }
-    if ((1 << fftOrder) > RKMaximumGateCount) {
-        RKLog("Error. FFT order must not exceed the hard-coded limit %.0f\n", log2f((float)RKMaximumGateCount));
         return 0;
     }
     *buffer = malloc(sizeof(RKMomentScratch));
@@ -64,8 +69,14 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
     }
     memset(*buffer, 0, sizeof(RKMomentScratch));
 
+    const unsigned long nfft = 1 << (int)ceilf(log2f((float)RKMaximumPulsesPerRay));
+
     RKMomentScratch *space = *buffer;
-    space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
+    //space->capacity = MAX(1, (capacity * sizeof(RKFloat) / RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
+    if (capacity != (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat)) {
+        RKLog("Error. RKMomentScratchAlloc() %zu\n", capacity);
+    }
+    space->capacity = capacity;
     space->showNumbers = showNumbers;
 
     if (showNumbers) {
@@ -76,6 +87,8 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
 
     int j, k;
     size_t bytes = sizeof(RKMomentScratch);
+
+    int s = 0;
     for (k = 0; k < 2; k++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mX[k].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
@@ -89,12 +102,12 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->SNR[k], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->S2Z[k], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         memset(space->S2Z[k], 0, space->capacity * sizeof(RKFloat));
-        bytes += 11;
+        s += 11;
         for (j = 0; j < RKMaximumLagCount; j++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->R[k][j].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aR[k][j], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-            bytes += 3;
+            s += 3;
         }
     }
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->sC.i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
@@ -113,29 +126,29 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->pcal, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
     memset(space->dcal, 0, space->capacity * sizeof(RKFloat));
     memset(space->pcal, 0, space->capacity * sizeof(RKFloat));
+    s += 14;
 
-    bytes += 10;
     for (j = 0; j < 2 * RKMaximumLagCount - 1; j++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].i, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->C[j].q, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->aC[j], RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-        bytes += 3 ;
+        s += 3;
     }
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->gC, RKMemoryAlignSize, space->capacity * sizeof(RKFloat)));
-    bytes++;
-    bytes *= space->capacity * sizeof(RKFloat);
+    s++;
+    bytes += s * sizeof(RKFloat);
+
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->mask, RKMemoryAlignSize, space->capacity * sizeof(uint8_t)));
     bytes += space->capacity * sizeof(uint8_t);
+
     space->inBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
     space->outBuffer = (fftwf_complex **)malloc(space->capacity * sizeof(fftwf_complex *));
     bytes += 2 * space->capacity * sizeof(fftwf_complex *);
     for (j = 0; j < space->capacity; j++) {
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->inBuffer[j], RKMemoryAlignSize, (1 << fftOrder) * sizeof(fftwf_complex)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->outBuffer[j], RKMemoryAlignSize, (1 << fftOrder) * sizeof(fftwf_complex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->inBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->outBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
     }
-    //POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->inBuffer, RKMemoryAlignSize, space->capacity * sizeof(fftwf_complex)));
-    //POSIX_MEMALIGN_CHECK(posix_memalign((void **)&space->outBuffer, RKMemoryAlignSize, space->capacity * sizeof(fftwf_complex)));
-    bytes += space->capacity * 2 * (1 << fftOrder) * sizeof(fftwf_complex);
+    bytes += space->capacity * 2 * nfft * sizeof(fftwf_complex);
     return bytes;
 }
 

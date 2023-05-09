@@ -2652,7 +2652,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
 
     RKLog("Allocating buffers ...\n");
 
-    RKMomentScratchAlloc(&space, pulseCapacity, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    RKMomentScratchAlloc(&space, pulseCapacity, true);
     fftModule = RKFFTModuleInit(pulseCapacity, 0);
     space->fftModule = fftModule;
     space->gateCount = gateCount;
@@ -2946,7 +2946,7 @@ void RKTestMomentProcessorSpeed(void) {
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
 
-    RKMomentScratchAlloc(&space, pulseCapacity, (uint8_t)ceilf(log2f((float)pulseCount)), true);
+    RKMomentScratchAlloc(&space, pulseCapacity, true);
     fftModule = RKFFTModuleInit(pulseCapacity, 0);
     space->fftModule = fftModule;
     space->gateCount = pulseCapacity;

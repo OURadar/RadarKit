@@ -27,6 +27,7 @@ enum {
 typedef struct rk_compression_scratch {
     RKName                           name;                                         //
     uint8_t                          verbose;                                      //
+    uint32_t                         capacity;                                     // Capacity
     RKPulse                          *pulse;                                       //
     RKComplex                        *filter;                                      //
     RKFilterAnchor                   *filterAnchor;                                // (deprecating)
@@ -100,7 +101,7 @@ typedef struct rk_moment_scratch {
 size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t);
 void RKCompressionScratchFree(RKCompressionScratch *);
 
-size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t capacity, const uint8_t fftOrder, const bool showNumbers);
+size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t capacity, const bool showNumbers);
 void RKMomentScratchFree(RKMomentScratch *);
 
 int prepareScratch(RKMomentScratch *);

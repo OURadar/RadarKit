@@ -247,8 +247,8 @@ void proc(UserParams *arg) {
               RKUIntegerToCommaStyleString(bytes));
     }
     mem += bytes;
-    const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
-    bytes = RKMomentScratchAlloc(&space, rayCapacity, fftOrder, false);
+    // const uint8_t fftOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
+    bytes = RKMomentScratchAlloc(&space, rayCapacity, false);
     if (bytes == 0 || space == NULL) {
         RKLog("Error. Unable to allocate memory for scratch space.\n");
         exit(EXIT_FAILURE);

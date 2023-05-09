@@ -508,6 +508,8 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(unsigned int)
     SHOW_SIZE(unsigned long)
     SHOW_SIZE(unsigned long long)
+    SHOW_SIZE(size_t)
+    SHOW_SIZE(ssize_t)
     SHOW_SIZE(bool)
     SHOW_SIZE(int8_t)
     SHOW_SIZE(uint8_t)
