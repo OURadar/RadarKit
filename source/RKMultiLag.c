@@ -260,7 +260,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
     //RKShowArray(space->S[0], "Sh", space->gateCount, 1);
 
 	// Show and tell
-	if (space->showNumbers && gateCount <= 16 && pulseCount <= 32) {
+	if (space->verbose && gateCount <= 16 && pulseCount <= 32) {
 		char variable[RKNameLength];
 		char *line = (char *)malloc(RKMaximumStringLength);
 		RKIQZ *X = (RKIQZ *)malloc(pulseCount * sizeof(RKIQZ));

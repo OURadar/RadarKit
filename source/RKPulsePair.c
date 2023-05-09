@@ -424,7 +424,7 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
     //
     RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
-    if (space->showNumbers && count < 50 && gateCount < 50) {
+    if (space->verbose && count < 50 && gateCount < 50) {
         char variable[RKNameLength];
         char line[RKMaximumStringLength];
         RKIQZ *X = (RKIQZ *)malloc(RKMaximumPulsesPerRay * sizeof(RKIQZ));
@@ -695,7 +695,7 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
     //
     RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
-    if (space->showNumbers && count < 50 && gateCount < 50) {
+    if (space->verbose && count < 50 && gateCount < 50) {
         char variable[RKNameLength];
         char line[RKMaximumStringLength];
         RKIQZ *X = (RKIQZ *)malloc(RKMaximumPulsesPerRay * sizeof(RKIQZ));

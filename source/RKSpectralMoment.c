@@ -222,7 +222,7 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
     space->fftOrder = offt;
 
     // Show and Tell
-    if (space->showNumbers && pulseCount < 50 && space->gateCount < 50) {
+    if (space->verbose && pulseCount < 50 && space->gateCount < 50) {
         char variable[RKNameLength];
         char line[RKMaximumStringLength];
         RKIQZ *X = (RKIQZ *)malloc(RKMaximumPulsesPerRay * sizeof(RKIQZ));

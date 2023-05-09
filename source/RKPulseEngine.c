@@ -295,7 +295,7 @@ static void *pulseEngineCore(void *_in) {
     RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
     RKCompressionScratch *scratch;
-    size_t mem = RKCompressionScratchAlloc(&scratch, engine->radarDescription->pulseCapacity);
+    size_t mem = RKCompressionScratchAlloc(&scratch, engine->radarDescription->pulseCapacity, 0);
 
     // Pass down some shared constants
     sprintf(scratch->name, "%s %s", engine->name, me->name);
