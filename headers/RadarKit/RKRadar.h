@@ -180,7 +180,7 @@ struct rk_radar {
     //
     RKUserModule                     userModule;
     RKUserModule                     (*userModuleInit)(RKRadar *, void *);
-    int                              (*userModuleFree)(RKUserModule);
+    void                             (*userModuleFree)(RKUserModule);
 };
 
 //
