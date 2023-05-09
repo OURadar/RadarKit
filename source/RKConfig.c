@@ -227,8 +227,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 sprintf(stringBuffer[0], "TransitionGateCount = %s", RKIntegerToCommaStyleString(newConfig->transitionGateCount));
                 break;
             case RKConfigKeyUserResource:
-                newConfig->userResource = (RKUserResource)args;
-                sprintf(stringBuffer[0], "UserResource = %p", (void *)args);
+                newConfig->userResource = (RKUserResource)va_arg(args, void *);
+                sprintf(stringBuffer[0], "UserResource = %p", newConfig->userResource);
                 break;
             default:
                 sprintf(stringBuffer[0], "Key %d not understood.", key);

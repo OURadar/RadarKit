@@ -123,13 +123,13 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
 
 #pragma mark - Delegate Workers
 
-void RKBuiltInConfigChangeCallback(RKCompressionScratch *scratch) {
-    RKWaveform *waveform = scratch->config->waveform;
-    RKLog("%s Config changed. waveform @ %p   %s", scratch->name, waveform,
-        waveform == NULL ? "" : RKVariableInString("waveform->count", &waveform->count, RKValueTypeUInt8));
-}
+// void RKBuiltInConfigChangeCallback(RKCompressionScratch *scratch) {
+//     RKWaveform *waveform = scratch->config->waveform;
+//     RKLog("%s Config changed. waveform @ %p   %s", scratch->name, waveform,
+//         waveform == NULL ? "" : RKVariableInString("waveform->count", &waveform->count, RKValueTypeUInt8));
+// }
 
-void RKBuiltInCompressor(RKCompressionScratch *scratch) {
+void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *scratch) {
 
     int i, p;
     RKPulse *pulse = scratch->pulse;
@@ -387,13 +387,6 @@ static void *pulseEngineCore(void *_in) {
             scratch->config = &engine->configBuffer[configIndex];
             scratch->filter = engine->filters[0][0];
             scratch->filterAnchor = &engine->filterAnchors[0][0];
-            if (engine->compressorInit) {
-                engine->compressorInit(scratch);
-                // Add another configuration
-                RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
-                                        RKConfigKeyUserResource, scratch->userResource,
-                                        RKConfigKeyNull);
-            }
         }
 
         #ifdef DEBUG_IQ
@@ -442,7 +435,7 @@ static void *pulseEngineCore(void *_in) {
                 scratch->waveformFilterId = j;
 
                 // Now we actually compress
-                engine->compressorExec(scratch);
+                engine->compressor(engine->userModule, scratch);
 
                 // Copy over the parameters used
                 for (p = 0; p < 2; p++) {
@@ -510,9 +503,6 @@ static void *pulseEngineCore(void *_in) {
         RKLog("%s Freeing reources ...\n", me->name);
     }
 
-    if (engine->compressorFree) {
-        engine->compressorFree(scratch);
-    }
     free(busyPeriods);
     free(fullPeriods);
     RKCompressionScratchFree(scratch);
@@ -734,8 +724,8 @@ RKPulseEngine *RKPulseEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->configChangeCallback = &RKBuiltInConfigChangeCallback;
-    engine->compressorExec = &RKBuiltInCompressor;
+    // engine->configChangeCallback = &RKBuiltInConfigChangeCallback;
+    engine->compressor = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
     return engine;
@@ -764,9 +754,9 @@ void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
     engine->verbose = verb;
 }
 
-void RKPulseEngineSetFilterChangeCallback(RKPulseEngine *engine, void (*callback)(RKCompressionScratch *)) {
-    engine->configChangeCallback = callback;
-}
+// void RKPulseEngineSetFilterChangeCallback(RKPulseEngine *engine, void (*callback)(RKCompressionScratch *)) {
+//     engine->configChangeCallback = callback;
+// }
 
 //
 // RKPulseEngineSetInputOutputBuffers

@@ -1076,6 +1076,10 @@ int RKFree(RKRadar *radar) {
         RKFFTModuleFree(radar->fftModule);
         radar->fftModule = NULL;
     }
+    if (radar->userModule && radar->userModuleFree) {
+        radar->userModuleFree(radar->userModule);
+        radar->userModule = NULL;
+    }
     if (radar->state & RKRadarStatePulseCompressionEngineInitialized) {
         RKPulseEngineFree(radar->pulseEngine);
         radar->pulseEngine = NULL;
@@ -1454,12 +1458,19 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
             break;
         }
     }
+    // Run user module initiation
+    if (radar->userModuleInit) {
+        radar->userModule = radar->userModuleInit(radar, NULL);
+        radar->pulseEngine->userModule = radar->userModule;
+        radar->momentEngine->userModule = radar->userModule;
+    }
     // Send the waveform pointers to config buffer
     RKAddConfig(radar,
                 RKConfigKeyWaveform, radar->waveform,
                 RKConfigKeyWaveformDecimate, radar->waveformDecimate,
                 RKConfigKeyWaveformCalibration, waveformCalibration,
                 RKConfigKeyPulseWidth, pulseWidth,
+                RKConfigKeyUserResource, radar->userModule,
                 RKConfigKeyNull);
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Waveform '%s' cached.\n", waveform->name);
@@ -1528,19 +1539,31 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
     RKClockSetDxDu(radar->positionClock, 1.0 / delta);
 }
 
-int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKMomentScratch *)) {
-    if (radar->momentEngine == NULL) {
-        return RKResultNoMomentEngine;
-    }
-    radar->momentEngine->calibrator = calibrator;
-    return RKResultSuccess;
-}
+// int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKMomentScratch *)) {
+//     if (radar->momentEngine == NULL) {
+//         return RKResultNoMomentEngine;
+//     }
+//     radar->momentEngine->calibrator = calibrator;
+//     return RKResultSuccess;
+// }
 
-int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *)) {
-    if (radar->pulseEngine == NULL) {
-        return RKResultNoPulseCompressionEngine;
-    }
-    radar->pulseEngine->configChangeCallback = callback;
+// int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *)) {
+//     if (radar->pulseEngine == NULL) {
+//         return RKResultNoPulseCompressionEngine;
+//     }
+//     radar->pulseEngine->configChangeCallback = callback;
+//     return RKResultSuccess;
+// }
+
+int RKSetUserEngine(RKRadar *radar,
+                    RKUserModule (*routineInit)(RKRadar *, void *),
+                    void (*compressor)(RKUserModule, RKCompressionScratch *),
+                    void (*calibrator)(RKUserModule, RKMomentScratch *),
+                    int (*routineFree)(RKUserModule)) {
+    radar->userModuleInit = routineInit;
+    radar->userModuleFree = routineFree;
+    radar->pulseEngine->compressor = compressor;
+    radar->momentEngine->calibrator = calibrator;
     return RKResultSuccess;
 }
 
@@ -1552,15 +1575,15 @@ int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *
 //     return RKResultSuccess;
 // }
 
-int RKSetPulseCompressor(RKRadar *radar,
-                         void (*initRoutine)(RKCompressionScratch *),
-                         void (*execRoutine)(RKCompressionScratch *),
-                         void (*freeRoutine)(RKCompressionScratch *)) {
-    radar->pulseEngine->compressorInit = initRoutine;
-    radar->pulseEngine->compressorExec = execRoutine;
-    radar->pulseEngine->compressorFree = freeRoutine;
-    return RKResultSuccess;
-}
+// int RKSetPulseCompressor(RKRadar *radar,
+//                          void (*initRoutine)(RKCompressionScratch *),
+//                          void (*execRoutine)(RKCompressionScratch *),
+//                          void (*freeRoutine)(RKCompressionScratch *)) {
+//     radar->pulseEngine->compressorInit = initRoutine;
+//     radar->pulseEngine->compressorExec = execRoutine;
+//     radar->pulseEngine->compressorFree = freeRoutine;
+//     return RKResultSuccess;
+// }
 
 int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {

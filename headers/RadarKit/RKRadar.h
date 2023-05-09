@@ -175,6 +175,12 @@ struct rk_radar {
     //
     RKControl                        *controls;
     uint32_t                         controlCount;
+    //
+    // External processing engine
+    //
+    RKUserModule                     userModule;
+    RKUserModule                     (*userModuleInit)(RKRadar *, void *);
+    int                              (*userModuleFree)(RKUserModule);
 };
 
 //
@@ -245,13 +251,20 @@ void RKSetPulseTicsPerSeconds(RKRadar *, const double);
 void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
 // Filter array initializer
-int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *));
+// int RKSetFilterArrayInit(RKRadar *radar, void (*callback)(RKCompressionScratch *));
+
+// External compressor and calibrator
+int RKSetUserModule(RKRadar *,
+                    RKUserModule (*initRoutine)(RKRadar *, void *),
+                    int (*compressor)(RKUserModule, RKCompressionScratch),
+                    int (*calibrator)(RKUserModule, RKMomentScratch),
+                    int (*freeRoutine)(RKUserModule));
 
 // Pulse compressor
-int RKSetPulseCompressor(RKRadar *radar,
-                         void (*initRoutine)(RKCompressionScratch *),
-                         void (*execRoutine)(RKCompressionScratch *),
-                         void (*freeRoutine)(RKCompressionScratch *));
+// int RKSetPulseCompressor(RKRadar *,
+//                          void (*initRoutine)(RKCompressionScratch *),
+//                          void (*execRoutine)(RKCompressionScratch *),
+//                          void (*freeRoutine)(RKCompressionScratch *));
 
 // Moment calibrator
 int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKMomentScratch *));

@@ -424,7 +424,7 @@ static void *momentCore(void *in) {
             }
             memcpy(previousConfig, config, sizeof(RKConfig));
             // Call the calibrator to derive range calibration, ZCal and DCal
-            engine->calibrator(space);
+            engine->calibrator(engine->userModule, space);
         }
 
         // Consolidate the pulse marker into ray marker

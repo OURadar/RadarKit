@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKCalibrator.h>
 
-void RKCalibratorSimple(RKMomentScratch *space) {
+void RKCalibratorSimple(RKUserResource _Nullable ignore, RKMomentScratch *space) {
     int i, k, p;
     RKFloat r = 0.0f;
     RKConfig *config = space->config;

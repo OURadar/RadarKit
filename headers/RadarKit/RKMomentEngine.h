@@ -47,12 +47,13 @@ struct rk_moment_engine {
     RKBuffer                         rayBuffer;
     uint32_t                         *rayIndex;
     RKFFTModule                      *fftModule;
+    RKUserModule                     *userModule;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
     int                              (*processor)(RKMomentScratch *, RKPulse **, const uint16_t);
-    void                             (*calibrator)(RKMomentScratch *);
+    void                             (*calibrator)(RKUserModule, RKMomentScratch *);
 
     // Program set variables
     RKModuloPath                     *momentSource;
