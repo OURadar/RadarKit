@@ -2901,7 +2901,6 @@ void RKTestPulseCompressionSpeed(const int offt) {
                 RKSIMD_Int2Complex(X, (RKComplex *)in, nfft);
                 fftwf_execute_dft(planForwardInPlace, in, in);
                 fftwf_execute_dft(planForwardOutPlace, f, out);
-                //memcpy(out, f, nfft * sizeof(RKComplex));
                 RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, nfft);
                 fftwf_execute_dft(planBackwardInPlace, out, out);
                 RKSIMD_iyscl((RKComplex *)out, 1.0f / nfft, nfft);

@@ -60,7 +60,7 @@ struct rk_moment_engine {
     pthread_t                        tidPulseGatherer;
     pthread_mutex_t                  mutex;
     uint8_t                          processorLagCount;                        // Number of lags to calculate R[n]'s
-    uint8_t                          processorFFTOrder;                        // Maximum number of FFT order (1 << order)
+    uint8_t                          processorFFTOrder;                        // FFT order used in spectral processing
     uint8_t                          userLagChoice;                            // Lag parameter for multilag method
 
     // Status / health

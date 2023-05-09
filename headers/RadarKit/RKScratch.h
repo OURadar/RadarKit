@@ -83,10 +83,10 @@ typedef struct rk_moment_scratch {
     RKFloat                          *PhiDP;                                       // Differential phase PhiDP
     RKFloat                          *RhoHV;                                       // Cross-correlation coefficient RhoHV
     RKFloat                          *KDP;                                         // Specific phase KDP
-    RKFloat                          *userArray1;                                  // User array #1, same storage length as ZDR, PhiDP, etc.
-    RKFloat                          *userArray2;                                  // User array #2, same storage length as ZDR, PhiDP, etc.
-    RKFloat                          *userArray3;                                  // User array #3, same storage length as ZDR, PhiDP, etc.
-    RKFloat                          *userArray4;                                  // User array #4, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *user1;                                       // User array #1, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *user2;                                       // User array #2, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *user3;                                       // User array #3, same storage length as ZDR, PhiDP, etc.
+    RKFloat                          *user4;                                       // User array #4, same storage length as ZDR, PhiDP, etc.
     uint8_t                          *mask;                                        // Mask for censoring
     RKFFTModule                      *fftModule;                                   // A reference to the common FFT module
     fftwf_complex                    **inBuffer;                                   //
