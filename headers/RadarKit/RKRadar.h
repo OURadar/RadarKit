@@ -179,7 +179,7 @@ struct rk_radar {
     // External processing engine
     //
     RKUserModule                     userModule;
-    RKUserModule                     (*userModuleInit)(RKRadar *, void *);
+    RKUserModule                     (*userModuleInit)(RKWaveform *);
     void                             (*userModuleFree)(RKUserModule);
 };
 
@@ -255,10 +255,10 @@ void RKSetPositionTicsPerSeconds(RKRadar *, const double);
 
 // External compressor and calibrator
 int RKSetUserModule(RKRadar *,
-                    RKUserModule (*initRoutine)(RKRadar *, void *),
-                    int (*compressor)(RKUserModule, RKCompressionScratch),
-                    int (*calibrator)(RKUserModule, RKMomentScratch),
-                    int (*freeRoutine)(RKUserModule));
+                    RKUserModule (*initRoutine)(RKWaveform *),
+                    void (*freeRoutine)(RKUserModule),
+                    void (*compressor)(RKUserModule, RKCompressionScratch *),
+                    void (*calibrator)(RKUserModule, RKMomentScratch *));
 
 // Pulse compressor
 // int RKSetPulseCompressor(RKRadar *,

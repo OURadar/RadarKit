@@ -55,8 +55,6 @@ struct rk_pulse_engine {
     RKFilterAnchor                   filterAnchors[RKMaximumWaveformCount][RKMaximumFilterCount];
     RKComplex                        *filters[RKMaximumWaveformCount][RKMaximumFilterCount];
     // void                             (*configChangeCallback)(RKCompressionScratch *);
-    // void                             (*compressorInit)(RKCompressionScratch *);
-    // void                             (*compressorFree)(RKCompressionScratch *);
     void                             (*compressor)(RKUserModule, RKCompressionScratch *);
 
     // Program set variables

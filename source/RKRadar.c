@@ -1460,7 +1460,10 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     }
     // Run user module initiation
     if (radar->userModuleInit) {
-        radar->userModule = radar->userModuleInit(radar, NULL);
+        if (radar->userModule && radar->userModuleFree) {
+            radar->userModuleFree(radar->userModule);
+        }
+        radar->userModule = radar->userModuleInit(waveform);
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
     }
@@ -1547,8 +1550,8 @@ void RKSetPositionTicsPerSeconds(RKRadar *radar, const double delta) {
 //     return RKResultSuccess;
 // }
 
-int RKSetUserEngine(RKRadar *radar,
-                    RKUserModule (*routineInit)(RKRadar *, void *),
+int RKSetUserModule(RKRadar *radar,
+                    RKUserModule (*routineInit)(RKWaveform *),
                     void (*routineFree)(RKUserModule),
                     void (*compressor)(RKUserModule, RKCompressionScratch *),
                     void (*calibrator)(RKUserModule, RKMomentScratch *)) {
