@@ -53,23 +53,35 @@ size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t c
             RKIntegerToCommaStyleString(nfft));
     }
 
+    size_t mem = sizeof(RKCompressionScratch);
+
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
     if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
         RKLog("%s Error. Unable to allocate resources for FFTW.\n", scratch->name);
         return 0;
     }
+    mem += 2 * nfft * sizeof(fftwf_complex);
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
     if (scratch->zi == NULL || scratch->zo == NULL) {
         RKLog("%s Error. Unable to allocate resources for FFTW.\n", scratch->name);
         return 0;
     }
-    size_t mem = 2 * nfft * sizeof(fftwf_complex) + 2 * nfft * sizeof(RKFloat);
+    mem += 2 * nfft * sizeof(RKFloat);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user1, RKMemoryAlignSize, capacity * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user2, RKMemoryAlignSize, capacity * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user3, RKMemoryAlignSize, capacity * sizeof(RKFloat)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user4, RKMemoryAlignSize, capacity * sizeof(RKFloat)))
+    mem += 4 * capacity * sizeof(RKFloat);
     return mem;
 }
 
 void RKCompressionScratchFree(RKCompressionScratch *scratch) {
+    free(scratch->user1);
+    free(scratch->user2);
+    free(scratch->user3);
+    free(scratch->user4);
     free(scratch->inBuffer);
     free(scratch->outBuffer);
     free(scratch->zi);
@@ -112,10 +124,9 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
             RKIntegerToCommaStyleString(nfft));
     }
 
-    int j, k;
+    int j, k, s = 0;
     size_t bytes = sizeof(RKMomentScratch);
 
-    int s = 0;
     for (k = 0; k < 2; k++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->mX[k].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->mX[k].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));

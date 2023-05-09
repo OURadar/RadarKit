@@ -1160,8 +1160,8 @@ typedef struct rk_waveform {
     double               fs;                                                   // Sampling frequency (Hz)
     uint8_t              filterCounts[RKMaximumWaveformCount];                 // Number of filters (see filterAnchors)
     RKFilterAnchorGroup  filterAnchors[RKMaximumWaveformCount];                // Filter anchors of each sub-waveform for de-multiplexing
-    RKComplex            *samples[RKMaximumWaveformCount];                     // Samples up to amplitude of 1.0
-    RKInt16C             *iSamples[RKMaximumWaveformCount];                    // 16-bit full-scale equivalence of the waveforms
+    RKComplex            *samples[RKMaximumWaveformCount];                     // Samples up to amplitude of 1.0 (for compression, non-distorted)
+    RKInt16C             *iSamples[RKMaximumWaveformCount];                    // 16-bit full-scale equivalence of the waveforms (pre-distorted)
 } RKWaveform;
 
 typedef union rk_wave_file_header {

@@ -36,11 +36,15 @@ typedef struct rk_compression_scratch {
     fftwf_plan                       planForwardOutPlace;                          //
     fftwf_plan                       planBackwardInPlace;                          //
     fftwf_plan                       planBackwardOutPlace;                         //
+    unsigned int                     planSize;                                     // DFT plan size
     fftwf_complex                    *inBuffer;                                    //
     fftwf_complex                    *outBuffer;                                   //
     RKIQZ                            *zi;                                          //
     RKIQZ                            *zo;                                          //
-    unsigned int                     planSize;                                     // DFT plan size
+    RKFloat                          *user1;                                       // User array #1, same storage length as pulse
+    RKFloat                          *user2;                                       // User array #2, same storage length as pulse
+    RKFloat                          *user3;                                       // User array #3, same storage length as pulse
+    RKFloat                          *user4;                                       // User array #4, same storage length as pulse
     RKConfig                         *config;                                      //
     uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
     uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use
@@ -95,7 +99,6 @@ typedef struct rk_moment_scratch {
     int8_t                           fftOrder;                                     // FFT order that was used to perform FFT. This will be copied over to rayHeader
     RKConfig                         *config;                                      // A reference to the radar configuration
     RKMomentList                     calculatedMoments;                            // Calculated moments
-    RKUserResource                   userResource;                                 //
 } RKMomentScratch;
 
 size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const RKName);
