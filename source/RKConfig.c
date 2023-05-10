@@ -173,7 +173,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                             newConfig->ZCal[j][1] = 0.0f;
                             newConfig->DCal[j] = 0.0f;
                             newConfig->PCal[j] = 0.0f;
-                            sprintf(stringBuffer[j], "WavCal[0/1] @ All zeroes");
+                            sprintf(stringBuffer[j], "WavCal[0/1] @ all zeroes");
                         }
                     } else {
                         for (j = 0; j < RKMaximumFilterCount; j++) {
@@ -181,7 +181,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                             newConfig->ZCal[j][1] = 0.0f;
                             newConfig->DCal[j] = 0.0f;
                             newConfig->PCal[j] = 0.0f;
-                            sprintf(stringBuffer[j], "WavCal[0/1] @ All zeroes");
+                            sprintf(stringBuffer[j], "WavCal[0/1] @ all zeroes");
                         }
                     }
                     break;

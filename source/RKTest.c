@@ -2580,22 +2580,23 @@ void RKTestPulseCompression(RKTestFlag flag) {
                 waveform = RKWaveformInitAsImpulse();
                 break;
             case 1:
-                waveform = RKWaveformInitFromSamples(filter1, sizeof(filter1) / sizeof(RKComplex));
+                waveform = RKWaveformInitFromSamples(filter1, sizeof(filter1) / sizeof(RKComplex), "11");
                 break;
             case 2:
-                waveform = RKWaveformInitFromSamples(filter2, sizeof(filter2) / sizeof(RKComplex));
+                waveform = RKWaveformInitFromSamples(filter2, sizeof(filter2) / sizeof(RKComplex), "121");
                 break;
             case 3:
-                waveform = RKWaveformInitFromSamples(filter3, sizeof(filter3) / sizeof(RKComplex));
+                waveform = RKWaveformInitFromSamples(filter3, sizeof(filter3) / sizeof(RKComplex), "12321");
                 break;
             case 4:
-                waveform = RKWaveformInitFromSamples(filter4, sizeof(filter4) / sizeof(RKComplex));
+                waveform = RKWaveformInitFromSamples(filter4, sizeof(filter4) / sizeof(RKComplex), "1+j");
                 break;
             case 5:
-                waveform = RKWaveformInitFromSamples(filter5, sizeof(filter5) / sizeof(RKComplex));
+                waveform = RKWaveformInitFromSamples(filter5, sizeof(filter5) / sizeof(RKComplex), NULL);
                 break;
         }
 
+        // RKWaveformNormalizeNoiseGain(waveform);
         RKSetWaveform(radar, waveform);
 
         pulse = RKGetVacantPulse(radar);

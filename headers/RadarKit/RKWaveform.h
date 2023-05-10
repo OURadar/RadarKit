@@ -16,7 +16,7 @@
 #define RKWaveformDigitalAmplitude   32000.0
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth);
-RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth);
+RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const RKName _Nullable name);
 RKWaveform *RKWaveformInitFromFile(const char *);
 RKWaveform *RKWaveformInit(void);
 void RKWaveformFree(RKWaveform *);

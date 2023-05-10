@@ -95,12 +95,16 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     return waveform;
 }
 
-RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth) {
+RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const RKName _Nullable name) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, depth);
     waveform->fc = 0.0f;
     waveform->fs = 1.0f;
     waveform->type = RKWaveformTypeIsComplex;
-    sprintf(waveform->name, "custom");
+    if (name == NULL) {
+        sprintf(waveform->name, "custom");
+    } else {
+        snprintf(waveform->name, RKNameLength, "%s", name);
+    }
 
     // Everything simple
     waveform->filterCounts[0] = 1;
@@ -156,7 +160,7 @@ RKWaveform *RKWaveformCopy(RKWaveform *waveform) {
 
 RKWaveform *RKWaveformInitAsImpulse(void) {
     RKComplex one[] = {{1.0f, 0.0f}};
-    return RKWaveformInitFromSamples(one, 1);
+    return RKWaveformInitFromSamples(one, 1, "Impulse");
 }
 
 RKWaveform *RKWaveformInitAsSingleTone(const double fs, const double fc, const double pulsewidth) {
