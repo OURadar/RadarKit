@@ -36,7 +36,8 @@ struct rk_sweep_engine {
     RKConfig                         *configBuffer;
     uint32_t                         *configIndex;
     RKProduct                        *productBuffer;
-    uint32_t                         *productIndex;
+    uint32_t                         productIndex;
+    uint32_t                         productBufferDepth;
     uint8_t                          verbose;
     bool                             record;
     bool                             convertToDegrees;
@@ -73,8 +74,7 @@ void RKSweepEngineFree(RKSweepEngine *);
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
 void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileManager *,
                                        RKConfig *configBuffer,   uint32_t *configIndex,
-                                       RKBuffer rayBuffer,       uint32_t *rayIndex,
-                                       RKProduct *productBuffer, uint32_t *productIndex);
+                                       RKBuffer rayBuffer,       uint32_t *rayIndex);
 void RKSweepEngineSetRecord(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetFilesHandlingScript(RKSweepEngine *, const char *, const RKScriptProperty);

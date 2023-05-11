@@ -256,8 +256,8 @@ static void *momentCore(void *in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s Started.   mem = %s B   lagCount = %d   fftOrder = %d   i0 = %s   ci = %d\n",
-          me->name, RKUIntegerToCommaStyleString(mem), engine->processorLagCount, engine->processorFFTOrder, RKIntegerToCommaStyleString(io), ci);
+    RKLog(">%s Started.   mem = %s B   fftOrder = %d   i0 = %s   ci = %d\n",
+          me->name, RKUIntegerToCommaStyleString(mem), engine->processorFFTOrder, RKIntegerToCommaStyleString(io), ci);
 
     pthread_mutex_unlock(&engine->mutex);
 

@@ -94,7 +94,7 @@ struct rk_radar {
     RKPosition                       *positions;
     RKBuffer                         pulses;
     RKBuffer                         rays;
-    RKProduct                        *products;
+    // RKProduct                        *products;
     //
     // Anchor indices of the buffers
     //

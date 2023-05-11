@@ -50,7 +50,6 @@ void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
 #pragma mark - Engine Monitor
 
 static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
-    int k;
     size_t size;
     size = sizeof(RKRadar);
     size += radar->desc.statusBufferSize;
@@ -63,11 +62,11 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
     size += radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
     size += radar->desc.controlCapacity * sizeof(RKControl);
     // Product buffer is dynamically allocated and reallocated
-    radar->desc.productBufferSize = 0;
-    for (k = 0; k < radar->desc.productBufferDepth; k++) {
-        radar->desc.productBufferSize += radar->products[k].totalBufferSize;
-    }
-    size += radar->desc.productBufferSize;
+    // radar->desc.productBufferSize = 0;
+    // for (k = 0; k < radar->desc.productBufferDepth; k++) {
+    //     radar->desc.productBufferSize += radar->products[k].totalBufferSize;
+    // }
+    // size += radar->desc.productBufferSize;
     // Memory usage of various internal engines
     size += radar->fileManager->memoryUsage;
     size += radar->hostMonitor->memoryUsage;
@@ -507,12 +506,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     } else if (radar->desc.rayBufferDepth == 0) {
         radar->desc.rayBufferDepth = 720;
     }
-    if (radar->desc.productBufferDepth > RKBuffer3SlotCount) {
-        radar->desc.productBufferDepth = RKBuffer3SlotCount;
-        RKLog("Info. Product buffer clamped to %s\n", radar->desc.productBufferDepth);
-    } else if (radar->desc.productBufferDepth == 0) {
-        radar->desc.productBufferDepth = 20;
-    }
+    // if (radar->desc.productBufferDepth > RKBuffer3SlotCount) {
+    //     radar->desc.productBufferDepth = RKBuffer3SlotCount;
+    //     RKLog("Info. Product buffer clamped to %s\n", radar->desc.productBufferDepth);
+    // } else if (radar->desc.productBufferDepth == 0) {
+    //     radar->desc.productBufferDepth = 20;
+    // }
     if (radar->desc.pulseCapacity > RKMaximumGateCount) {
         radar->desc.pulseCapacity = RKMaximumGateCount;
         RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
@@ -727,18 +726,18 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
               RKIntegerToCommaStyleString(k));
         radar->state |= RKRadarStateRayBufferAllocated;
 
-        bytes = RKProductBufferAlloc(&radar->products, radar->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
-        if (bytes == 0 || radar->products == NULL) {
-            RKLog("Error. Unable to allocate memory for products.\n");
-            exit(EXIT_FAILURE);
-        }
-        radar->memoryUsage += bytes;
-        radar->desc.productBufferSize = bytes;
-        RKLog("Level III buffer occupies %s B  (%s products x %s cells)\n",
-              RKUIntegerToCommaStyleString(radar->desc.productBufferSize),
-              RKIntegerToCommaStyleString(radar->desc.productBufferDepth),
-              RKIntegerToCommaStyleString(radar->products[0].capacity));
-        radar->state |= RKRadarStateProductBufferAllocated;
+        // bytes = RKProductBufferAlloc(&radar->products, radar->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
+        // if (bytes == 0 || radar->products == NULL) {
+        //     RKLog("Error. Unable to allocate memory for products.\n");
+        //     exit(EXIT_FAILURE);
+        // }
+        // radar->memoryUsage += bytes;
+        // radar->desc.productBufferSize = bytes;
+        // RKLog("Level III buffer occupies %s B  (%s products x %s cells)\n",
+        //       RKUIntegerToCommaStyleString(radar->desc.productBufferSize),
+        //       RKIntegerToCommaStyleString(radar->desc.productBufferDepth),
+        //       RKIntegerToCommaStyleString(radar->products[0].capacity));
+        // radar->state |= RKRadarStateProductBufferAllocated;
     }
 
     // Waveform calibrations
@@ -915,8 +914,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
                                       radar->configs, &radar->configIndex,
-                                      radar->rays, &radar->rayIndex,
-                                      radar->products, &radar->productIndex);
+                                      radar->rays, &radar->rayIndex);
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
 
@@ -1056,7 +1054,6 @@ RKRadar *RKInitAsRelay(void) {
 //     RKResultSuccess if no errors
 //
 int RKFree(RKRadar *radar) {
-    int i;
     if (radar->active) {
         RKStop(radar);
     }
@@ -1172,28 +1169,28 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateRayBufferAllocated) {
         free(radar->rays);
     }
-    if (radar->state & RKRadarStateProductBufferAllocated) {
-        for (i = 0; i < radar->desc.productBufferDepth; i++) {
-            if (radar->products[i].startAzimuth) {
-                free(radar->products[i].startAzimuth);
-            }
-            if (radar->products[i].endAzimuth) {
-                free(radar->products[i].endAzimuth);
-            }
-            if (radar->products[i].startElevation) {
-                free(radar->products[i].startElevation);
-            }
-            if (radar->products[i].endElevation) {
-                free(radar->products[i].endElevation);
-            }
-            if (radar->products[i].data) {
-                free(radar->products[i].data);
-            }
-        }
-        if (radar->products) {
-            free(radar->products);
-        }
-    }
+    // if (radar->state & RKRadarStateProductBufferAllocated) {
+    //     for (i = 0; i < radar->desc.productBufferDepth; i++) {
+    //         if (radar->products[i].startAzimuth) {
+    //             free(radar->products[i].startAzimuth);
+    //         }
+    //         if (radar->products[i].endAzimuth) {
+    //             free(radar->products[i].endAzimuth);
+    //         }
+    //         if (radar->products[i].startElevation) {
+    //             free(radar->products[i].startElevation);
+    //         }
+    //         if (radar->products[i].endElevation) {
+    //             free(radar->products[i].endElevation);
+    //         }
+    //         if (radar->products[i].data) {
+    //             free(radar->products[i].data);
+    //         }
+    //     }
+    //     if (radar->products) {
+    //         free(radar->products);
+    //     }
+    // }
     if (radar->state & RKRadarStateControlsAllocated) {
         free(radar->controls);
     }

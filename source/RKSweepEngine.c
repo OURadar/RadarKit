@@ -137,7 +137,7 @@ static void *sweepManager(void *in) {
     // Other clients may report products at the same time here, so we wait
     s = 0;
     bool allReported = true;
-    for (i = 0; i < engine->radarDescription->productBufferDepth; i++) {
+    for (i = 0; i < engine->productBufferDepth; i++) {
         if (engine->productBuffer[i].flag == RKProductStatusVacant) {
             continue;
         }
@@ -169,7 +169,7 @@ static void *sweepManager(void *in) {
 
     j = 0;
     summary[0] = '\0';
-    for (i = 0; i < engine->radarDescription->productBufferDepth; i++) {
+    for (i = 0; i < engine->productBufferDepth; i++) {
         if (engine->productBuffer[i].flag == RKProductStatusVacant) {
             continue;
         }
@@ -193,7 +193,7 @@ static void *sweepManager(void *in) {
     bool filenameTooLong;
 
     // Product recording
-    for (p = 0; p < engine->radarDescription->productBufferDepth; p++) {
+    for (p = 0; p < engine->productBufferDepth; p++) {
         if (engine->productBuffer[p].flag == RKProductStatusVacant) {
             continue;
         }
@@ -516,11 +516,17 @@ RKSweepEngine *RKSweepEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     snprintf(engine->productFileExtension, RKMaximumFileExtensionLength, "nc");
     engine->state = RKEngineStateAllocated;
-    engine->memoryUsage = sizeof(RKSweepEngine);
     engine->productTimeoutSeconds = 5;
     engine->baseProductList = RKBaseProductListFloatZVWDPR;
     engine->productRecorder = &RKProductFileWriterNC;
+    engine->productBufferDepth = 10;
+    size_t bytes = RKProductBufferAlloc(&engine->productBuffer, engine->productBufferDepth, RKMaximumRaysPerSweep, 100);
+    if (engine->productBuffer == NULL) {
+        RKLog("Error. Unable to allocate a product buffer for sweep engine.\n");
+        return NULL;
+    }
     pthread_mutex_init(&engine->productMutex, NULL);
+    engine->memoryUsage = sizeof(RKSweepEngine) + bytes;
     return engine;
 }
 
@@ -529,6 +535,7 @@ void RKSweepEngineFree(RKSweepEngine *engine) {
         RKSweepEngineStop(engine);
     }
     pthread_mutex_destroy(&engine->productMutex);
+    RKProductBufferFree(engine->productBuffer, engine->productBufferDepth);
     free(engine);
 }
 
@@ -540,16 +547,15 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
 
 void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
                                        RKConfig *configBuffer, uint32_t *configIndex,
-                                       RKBuffer rayBuffer, uint32_t *rayIndex,
-                                       RKProduct *productBuffer, uint32_t *productIndex) {
+                                       RKBuffer rayBuffer, uint32_t *rayIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
-    engine->productBuffer     = productBuffer;
-    engine->productIndex      = productIndex;
+    // engine->productBuffer     = productBuffer;
+    // engine->productIndex      = productIndex;
     engine->state |= RKEngineStateProperlyWired;
 }
 
