@@ -296,17 +296,6 @@ static void *pulseEngineCore(void *_in) {
 
     RKPulse *pulseCopy = RKGetPulseFromBuffer(localPulseBuffer, 0);
 
-    // Allocate local resources and keep track of the total allocation
-    RKCompressionScratch *scratch;
-    size_t mem = RKCompressionScratchAlloc(&scratch, engine->radarDescription->pulseCapacity, engine->verbose, me->name);
-    if (scratch == NULL || mem == 0) {
-        exit(EXIT_FAILURE);
-    }
-
-    // Pass down other parameters in scratch space
-    scratch->config = &engine->configBuffer[0];
-    scratch->fftModule = engine->fftModule;
-
     // Business calculation
     double *busyPeriods, *fullPeriods;
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
@@ -315,10 +304,11 @@ static void *pulseEngineCore(void *_in) {
         RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
     }
-    mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
+
+    size_t mem = 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
 
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
@@ -335,6 +325,19 @@ static void *pulseEngineCore(void *_in) {
 
     // Log my initial state
     pthread_mutex_lock(&engine->mutex);
+
+    // Allocate local resources and keep track of the total allocation
+    RKCompressionScratch *scratch;
+    const uint32_t capacity = engine->radarDescription->pulseCapacity;
+    engine->memoryUsage += RKCompressionScratchAlloc(&scratch, capacity, engine->verbose, me->name);
+    if (scratch == NULL || mem == 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    // Pass down other parameters in scratch space
+    scratch->config = &engine->configBuffer[0];
+    scratch->fftModule = engine->fftModule;
+
     engine->memoryUsage += mem;
 
     RKLog(">%s Started.   mem = %s B   i0 = %s   ci = %d\n",

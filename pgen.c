@@ -271,7 +271,6 @@ void proc(UserParams *arg) {
         RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
         RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
         RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
-        // RKLog(">desc.productBufferDepth = %u\n", fileHeader->desc.productBufferDepth);
         RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
         RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
         RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",

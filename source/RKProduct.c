@@ -10,19 +10,19 @@
 
 size_t RKProductBufferAlloc(RKProduct **buffer, const uint32_t depth, const uint32_t rayCount, const uint32_t gateCount) {
     int i;
-    
+
     RKProduct *products = (RKProduct *)malloc(depth * sizeof(RKProduct));
     if (products == NULL) {
         RKLog("Error. Unable to allocate product buffer.\n");
         return 0;
     }
     memset(products, 0, depth * sizeof(RKProduct));
-    
+
     size_t size = 0;
     uint32_t capacity = gateCount * rayCount;
     uint32_t headSize = rayCount * sizeof(RKFloat);
     uint32_t dataSize = capacity * sizeof(RKFloat);
-    
+
     for (i = 0; i < depth; i++) {
         RKProduct *product = &products[i];
         product->header.rayCount = rayCount;
@@ -60,8 +60,8 @@ void RKProductBufferFree(RKProduct *buffer, const int depth) {
 
 int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     int k;
-    
-    // Required capacity
+
+    // Required capacity, round to the next 90 ray count, next 100 gate count
     const uint32_t requiredCapacity = (uint32_t)ceilf(sweep->header.rayCount / 90.0f) * 90 * (uint32_t)ceilf(sweep->header.gateCount / 100.0f) * 100;
 
     // Sweep header
@@ -80,10 +80,9 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.rayCount = sweep->header.rayCount;
     product->header.gateCount = sweep->header.gateCount;
     product->header.gateSizeMeters = sweep->header.gateSizeMeters;
-    
+
     // Sweep header config
     for (k = 0; k < RKMaximumFilterCount; k++) {
-        //memcpy(&product->header.filterAnchors[k], &sweep->header.config.filterAnchors[k], sizeof(RKFilterAnchor));
         product->header.pw[k] = sweep->header.config.pw[k];
         product->header.prt[k] = sweep->header.config.prt[k];
     }
@@ -102,7 +101,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     product->header.SNRThreshold = sweep->header.config.SNRThreshold;
     memcpy(product->header.waveformName, sweep->header.config.waveformName, sizeof(RKName));
     memcpy(product->header.vcpDefinition, sweep->header.config.vcpDefinition, sizeof(RKMaximumCommandLength));
-    
+
     // Expand if the current capacity is not sufficient
     if (product->capacity < requiredCapacity) {
         product->data = (RKFloat *)realloc(product->data, requiredCapacity * sizeof(RKFloat));
@@ -119,7 +118,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
         product->startElevation[k] = sweep->rays[k]->header.startElevation;
         product->endElevation[k]   = sweep->rays[k]->header.endElevation;
     }
-    
+
     // Copy over the data if this is one of the base moments
     RKBaseProductIndex momentIndex = RKBaseProductIndexCount;
     if (!strcmp(product->desc.symbol, "Z")) {

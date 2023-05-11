@@ -35,9 +35,6 @@ struct rk_sweep_engine {
     uint32_t                         *rayIndex;
     RKConfig                         *configBuffer;
     uint32_t                         *configIndex;
-    RKProduct                        *productBuffer;
-    uint32_t                         productIndex;
-    uint32_t                         productBufferDepth;
     uint8_t                          verbose;
     bool                             record;
     bool                             convertToDegrees;
@@ -53,6 +50,9 @@ struct rk_sweep_engine {
     pthread_t                        tidRayGatherer;
     RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
     uint8_t                          scratchSpaceIndex;
+    RKProduct                        *productBuffer;
+    uint32_t                         productBufferDepth;
+    uint32_t                         productIndex;
     pthread_mutex_t                  productMutex;
     RKBaseProductList                baseProductList;
     RKProductId                      baseMomentProductIds[RKBaseProductIndexCount];
