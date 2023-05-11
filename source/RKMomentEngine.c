@@ -201,20 +201,6 @@ static void *momentCore(void *in) {
     RKRay *ray;
     RKPulse *pulse;
     RKConfig *config;
-    RKMomentScratch *space = NULL;
-
-    // Allocate local resources and keep track of the total allocation
-    ray = RKGetRayFromBuffer(engine->rayBuffer, 0);
-    const uint32_t capacity = (uint32_t)ceilf((float)ray->header.capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
-    size_t mem = RKMomentScratchAlloc(&space, capacity, engine->verbose, me->name);
-    if (space == NULL || mem == 0) {
-        exit(EXIT_FAILURE);
-    }
-
-    // Pass down other parameters in scratch space
-    space->config = &engine->configBuffer[0];
-    space->fftModule = engine->fftModule;
-    space->userLagChoice = engine->userLagChoice;
 
     // Business calculation
     double *busyPeriods, *fullPeriods;
@@ -224,13 +210,14 @@ static void *momentCore(void *in) {
         RKLog("%s Error. Unable to allocate resources for duty cycle calculation\n", me->name);
         exit(EXIT_FAILURE);
     }
-    mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     memset(fullPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
     double allBusyPeriods = 0.0, allFullPeriods = 0.0;
+
     RKConfig *previousConfig = (RKConfig *)malloc(sizeof(RKConfig));
     memset(previousConfig, 0, sizeof(RKConfig));
-    mem += sizeof(RKConfig);
+
+    size_t mem = 2 * RKWorkerDutyCycleBufferDepth * sizeof(double) + sizeof(RKConfig);
 
     // Initialize some end-of-loop variables
     gettimeofday(&t0, NULL);
@@ -254,6 +241,20 @@ static void *momentCore(void *in) {
 
     // Log my initial state
     pthread_mutex_lock(&engine->mutex);
+
+    // Allocate local resources and keep track of the total allocation
+    RKMomentScratch *space;
+    const uint32_t capacity = engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio;
+    engine->memoryUsage += RKMomentScratchAlloc(&space, capacity, engine->verbose, me->name);
+    if (space == NULL || mem == 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    // Pass down other parameters in scratch space
+    space->config = &engine->configBuffer[0];
+    space->fftModule = engine->fftModule;
+    space->userLagChoice = engine->userLagChoice;
+
     engine->memoryUsage += mem;
 
     RKLog(">%s Started.   mem = %s B   fftOrder = %d   i0 = %s   ci = %d\n",
@@ -825,17 +826,6 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
     engine->rayIndex          = rayIndex;
 
     size_t bytes;
-
-//    if (engine->planIndices != NULL) {
-//        free(engine->planIndices);
-//    }
-//    bytes = engine->radarDescription->rayBufferDepth * sizeof(int);
-//    engine->planIndices = (int *)malloc(bytes);
-//    if (engine->planIndices == NULL) {
-//        RKLog("%s Error. Unable to allocate RKMomentEngine->planIndices.\n", engine->name);
-//        exit(EXIT_FAILURE);
-//    }
-//    engine->memoryUsage += bytes;
 
     engine->state |= RKEngineStateMemoryChange;
     bytes = engine->radarDescription->rayBufferDepth * sizeof(RKModuloPath);

@@ -117,6 +117,7 @@ static void *sweepManager(void *in) {
     int productCount = __builtin_popcount(sweep->header.baseProductList & engine->baseProductList);
 
     // Base products
+    size_t productMemoryUsage = 0;
     for (p = 0; p < productCount; p++) {
         if (engine->baseMomentProductIds[p]) {
             RKProduct *product = RKSweepEngineGetVacantProduct(engine, sweep, engine->baseMomentProductIds[p]);
@@ -126,8 +127,10 @@ static void *sweepManager(void *in) {
             }
             RKProductInitFromSweep(product, sweep);
             RKSweepEngineSetProductComplete(engine, sweep, product);
+            productMemoryUsage += product->totalBufferSize;
         }
     }
+    engine->memoryUsage = sizeof(RKSweepEngine) + productMemoryUsage;
 
     if (engine->productBuffer == NULL) {
         RKLog("%s Unexpected NULL memory.\n", engine->name);
@@ -554,8 +557,6 @@ void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc,
     engine->configIndex       = configIndex;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
-    // engine->productBuffer     = productBuffer;
-    // engine->productIndex      = productIndex;
     engine->state |= RKEngineStateProperlyWired;
 }
 
