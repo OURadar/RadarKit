@@ -538,7 +538,7 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager *fileManager,
+void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
                                        RKConfig *configBuffer, uint32_t *configIndex,
                                        RKBuffer rayBuffer, uint32_t *rayIndex,
                                        RKProduct *productBuffer, uint32_t *productIndex) {
