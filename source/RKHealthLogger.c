@@ -98,7 +98,9 @@ static void *healthLogger(void *in) {
                           filename);
                 }
                 // Notify file manager of a new addition
-                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
+                if (engine->fileManager) {
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeHealth);
+                }
             } else {
                 if (engine->verbose && strlen(filename)) {
                     RKLog("%s Skipped %s\n", engine->name, filename);
@@ -137,7 +139,7 @@ static void *healthLogger(void *in) {
         fclose(engine->fid);
         engine->fid = NULL;
     }
-    
+
     engine->state ^= RKEngineStateActive;
     return NULL;
 }
@@ -168,7 +170,7 @@ void RKHealthLoggerSetVerbose(RKHealthLogger *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *engine, RKRadarDesc *desc, RKFileManager *fileManager,
+void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
                                          RKHealth *healthBuffer, uint32_t *healthIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;

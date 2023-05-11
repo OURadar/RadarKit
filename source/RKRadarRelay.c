@@ -2,6 +2,8 @@
 //  RKRadarRelay.c
 //  RadarKit
 //
+//  NOTE: Check out RadarHub instead. -Boonleng 5/10/2023
+//
 //  Created by Boonleng Cheong on 4/11/17.
 //  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //

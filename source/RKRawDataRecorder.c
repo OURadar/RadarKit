@@ -18,19 +18,19 @@ static void *pulseRecorder(void *);
 static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     int i;
     char *string;
-    
+
     // Status string
     string = engine->statusBuffer[engine->statusBufferIndex];
-    
+
     // Always terminate the end of string buffer
     string[RKStatusStringLength - 1] = '\0';
     string[RKStatusStringLength - 2] = '#';
-    
+
     // Use RKStatusBarWidth characters to draw a bar
     i = *engine->pulseIndex * RKStatusBarWidth / engine->radarDescription->pulseBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'F';
-    
+
     // Engine lag
     snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s",
              rkGlobalParameters.showColor ? RKColorLag(engine->lag) : "",
@@ -43,9 +43,9 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
 
 static void *pulseRecorder(void *in) {
     RKRawDataRecorder *engine = (RKRawDataRecorder *)in;
-    
+
     int i, j, k, n, s;
-    
+
     struct timeval t0, t1;
 
     bool record = engine->record;
@@ -53,9 +53,9 @@ static void *pulseRecorder(void *in) {
     RKPulse *pulse;
     RKConfig *config;
     RKWaveform *waveform;
-    
+
     char filename[RKMaximumPathLength] = "";
-    
+
     size_t len = 0;
     size_t pulseCount = 0;
     uint64_t cacheFlushCount = 0;
@@ -77,20 +77,21 @@ static void *pulseRecorder(void *in) {
 	engine->state ^= RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
-    
+
 	// Increase the tic once to indicate the engine is ready
 	engine->tic = 1;
 
     engine->state |= RKEngineStateActive;
 
 	gettimeofday(&t1, NULL); t1.tv_sec -= 1;
-    
+
     j = 0;   // config index
     k = 0;   // pulse index
     n = 0;   // pulse sample count
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
+
         // Wait until the buffer is advanced
         engine->state |= RKEngineStateSleep1;
         s = 0;
@@ -117,13 +118,6 @@ static void *pulseRecorder(void *in) {
             break;
         }
 
-//        RKLog("%s pulse->header.i = %d   C%d  %s x %.1fm\n",
-//              engine->name,
-//              pulse->header.i, pulse->header.configIndex,
-//              RKIntegerToCommaStyleString(pulse->header.gateCount),
-//              RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-//              pulse->header.gateSizeMeters * engine->radarDescription->pulseToRayRatio);
-
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         if (!isfinite(engine->lag)) {
@@ -132,7 +126,7 @@ static void *pulseRecorder(void *in) {
                   *engine->pulseIndex, engine->radarDescription->pulseBufferDepth, k,
                   *engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k, engine->lag);
         }
-        
+
         // Consider we are writing to a file at this point
         engine->state |= RKEngineStateWritingFile;
 
@@ -160,7 +154,9 @@ static void *pulseRecorder(void *in) {
                     remove(filename);
                 }
                 // Notify file manager of a new addition
-                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
+                if (engine->fileManager) {
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
+                }
             } else {
                 if (strlen(filename)) {
                     RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
@@ -171,7 +167,7 @@ static void *pulseRecorder(void *in) {
                           len > 1000000000 ? "G" : "M");
                 }
             }
-            
+
             // New file
             time_t startTime = pulse->header.time.tv_sec;
             i = snprintf(filename, RKMaximumPathLength - RKMaximumPrefixLength - 30, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
@@ -227,7 +223,7 @@ static void *pulseRecorder(void *in) {
                 }
             }
         }
-        
+
         // Pulse to write cache
         if (engine->record && engine->fd) {
             if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
@@ -289,7 +285,7 @@ static void *pulseRecorder(void *in) {
 
     free(fileHeader);
     free(waveGlobalHeader);
-    
+
     engine->state ^= RKEngineStateActive;
     return NULL;
 }
@@ -327,9 +323,9 @@ void RKRawDataRecorderSetVerbose(RKRawDataRecorder *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDesc *desc, RKFileManager *fileManager,
-                                       RKConfig *configBuffer, uint32_t *configIndex,
-                                       RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
+                                            RKConfig *configBuffer, uint32_t *configIndex,
+                                            RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
