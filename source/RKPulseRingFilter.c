@@ -181,13 +181,12 @@ static void *ringFilterCore(void *_in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   filter @ (%s, %s, %s)   ci = %d\n",
+    RKLog(">%s %s Started.   mem = %s B   i0 = %s   filter @ (%s, %s)   ci = %d\n",
           engine->name, me->name,
           RKUIntegerToCommaStyleString(mem),
           RKIntegerToCommaStyleString(i0),
           RKIntegerToCommaStyleString(me->processOrigin),
           RKIntegerToCommaStyleString(me->processLength),
-          RKIntegerToCommaStyleString(me->outputLength),
           ci);
 
     pthread_mutex_unlock(&engine->mutex);
@@ -560,9 +559,11 @@ static void *pulseRingWatcher(void *_in) {
         if (gateCount != MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
             gateCount = MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount);
             paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKMemoryAlignSize) * engine->coreCount * RKMemoryAlignSize / sizeof(RKFloat));
-            RKLog("%s %s   %s", engine->name,
-                  RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
-                  RKVariableInString("paddedGateCount", &paddedGateCount, RKValueTypeUInt32));
+            if (engine->verbose) {
+                RKLog("%s gateCount = %s   paddedGateCount = %s", engine->name,
+                    RKIntegerToCommaStyleString(gateCount),
+                    RKIntegerToCommaStyleString(paddedGateCount));
+            }
             length = engine->coreCount < 2 ? paddedGateCount : paddedGateCount / engine->coreCount;
             origin = 0;
             for (c = 0; c < engine->coreCount; c++) {
