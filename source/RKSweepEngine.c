@@ -366,6 +366,15 @@ static void *rayGatherer(void *in) {
         engine->state |= RKEngineStateSleep1;
         s = 0;
         while (j == *engine->rayIndex && engine->state & RKEngineStateWantActive) {
+            if (engine->state & RKEngineStateReserved) {
+                engine->state ^= RKEngineStateReserved;
+                if (engine->verbose > 1) {
+                    RKLog("%s Forced out of sleep 1\n", engine->name);
+                    ray = RKGetRayFromBuffer(engine->rayBuffer, RKPreviousModuloS(j, engine->radarDescription->rayBufferDepth));
+                    ray->header.marker |= RKMarkerSweepEnd;
+                }
+                break;
+            }
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
@@ -576,6 +585,50 @@ void RKSweepEngineSetFilesHandlingScript(RKSweepEngine *engine, const char *scri
 
 void RKSweepEngineSetProductRecorder(RKSweepEngine *engine, int (*routine)(RKProduct *, const char *)) {
     engine->productRecorder = routine;
+}
+
+void RKSweepEngineForceSweepComplete(RKSweepEngine *engine) {
+    int k;
+    // uint32_t waitIndex = RKPreviousModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
+    uint32_t waitIndex = *engine->rayIndex;
+    uint64_t tic = engine->tic + 1;
+
+    // engine->state |= RKEngineStateSleep3;
+    // k = 0;
+    // do {
+    //     usleep(10000);
+    // } while (k++ < 200 && engine->processedRayIndex != waitIndex);
+    // engine->state ^= RKEngineStateSleep3;
+
+    // RKLog("%s Marking ray %u RKMarkerSweepEnd ...\n", engine->name, waitIndex);
+    // RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, waitIndex);
+    // ray->header.marker |= RKMarkerSweepEnd;
+
+    // Move one so that RKSweepEngine get out of sleep 1
+    // *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
+
+    RKLog("%s Wait until sleep 1   index = %u / %u   tic = %zu / %zu", engine->name,
+        *engine->rayIndex, waitIndex,
+        engine->tic, tic);
+    k = 0;
+    do {
+        usleep(10000);
+        if (waitIndex != *engine->rayIndex) {
+            waitIndex = *engine->rayIndex;
+            k = 0;
+        }
+    } while (k++ < 100 && !(engine->state & RKEngineStateSleep1));
+
+    RKLog("%s Engine->state = %x   index = %u / %u   tic = %zu / %zu", engine->name, engine->state,
+        *engine->rayIndex, waitIndex,
+        engine->tic, tic);
+
+    engine->state |= RKEngineStateReserved;
+    k = 0;
+    do {
+        usleep(100000);
+    } while (k++ < 20 && engine->tic == tic);
+    RKLog("%s processedRayIndex = %u / %u", engine->name, engine->processedRayIndex, *engine->rayIndex);
 }
 
 #pragma mark - Interactions
