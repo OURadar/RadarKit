@@ -710,6 +710,9 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
     } else {
         RKLog("%s That is weird, this buffer has not been requested.\n", engine->name);
     }
+    // Store a copy for the record
+    engine->radarDescription->productBufferDepth = engine->productBufferDepth;
+    engine->radarDescription->productBufferSize = engine->productBufferDepth * product->totalBufferSize;
     return RKResultSuccess;
 }
 
