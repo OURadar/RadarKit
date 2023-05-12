@@ -20,7 +20,7 @@ static void disconnectStreams(RKReporter *engine) {
         RKLog("%s Ended streaming RKStreamScopeStuff ...\n", engine->name);
     }
     if (engine->streamsInProgress & RKStreamDisplayAll) {
-        engine->streamsInProgress &= !RKStreamDisplayAll;
+        engine->streamsInProgress &= ~RKStreamDisplayAll;
         RKLog("%s Ended streaming RKStreamDisplayAll ...\n", engine->name);
     }
 }
