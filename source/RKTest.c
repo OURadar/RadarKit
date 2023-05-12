@@ -4618,7 +4618,8 @@ void RKTestMakePositionStatusString(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    printf("0x%04x inverse -> 0x%04x vs 0x%04x\n", RKStreamDisplayAll, !RKStreamDisplayAll, ~RKStreamDisplayAll);
+    printf("%04x & %04x --> %d\n", 0x8ef, RKPulseStatusReadyForMoments, (0x8ef & RKPulseStatusReadyForMoments) == RKPulseStatusReadyForMoments);
+    // printf("0x%04x inverse -> 0x%04x vs 0x%04x\n", RKStreamDisplayAll, !RKStreamDisplayAll, ~RKStreamDisplayAll);
 }
 
 #pragma mark -
