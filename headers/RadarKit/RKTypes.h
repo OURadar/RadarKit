@@ -575,11 +575,12 @@ enum RKPulseStatus {
     RKPulseStatusRingFiltered                    = (1 << 8),
     RKPulseStatusRingSkipped                     = (1 << 9),
     RKPulseStatusRingProcessed                   = (1 << 10),
-    RKPulseStatusProcessMask                     = (RKPulseStatusInspected | RKPulseStatusCompressed | RKPulseStatusSkipped |
-                                                    RKPulseStatusDownSampled | RKPulseStatusProcessed |
-                                                    RKPulseStatusRingInspected | RKPulseStatusRingFiltered | RKPulseStatusRingSkipped | RKPulseStatusRingProcessed),
     RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
     RKPulseStatusUsedForMoments                  = (1 << 11),
+    RKPulseStatusProcessMask                     = (RKPulseStatusInspected | RKPulseStatusCompressed | RKPulseStatusSkipped |
+                                                    RKPulseStatusDownSampled | RKPulseStatusProcessed |
+                                                    RKPulseStatusRingInspected | RKPulseStatusRingFiltered | RKPulseStatusRingSkipped | RKPulseStatusRingProcessed |
+                                                    RKPulseStatusUsedForMoments),
     RKPulseStatusRecorded                        = (1 << 12),
     RKPulseStatusStreamed                        = (1 << 13)
 };

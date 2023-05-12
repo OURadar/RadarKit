@@ -82,7 +82,7 @@ void RKSweepEngineSetProductRecorder(RKSweepEngine *, int (*)(RKProduct *, const
 
 int RKSweepEngineStart(RKSweepEngine *);
 int RKSweepEngineStop(RKSweepEngine *);
-void RKSweepEngineForceSweepComplete(RKSweepEngine *);
+void RKSweepEngineFlush(RKSweepEngine *);
 
 char *RKSweepEngineStatusString(RKSweepEngine *);
 
