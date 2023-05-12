@@ -1126,6 +1126,7 @@ typedef struct rk_radar_desc {
     uint32_t             positionBufferDepth;                                  // Depth of the position readings
     uint32_t             pulseBufferDepth;                                     // Depth of the pulse buffer
     uint32_t             rayBufferDepth;                                       // Depth of the ray buffer
+    uint32_t             productBufferDepth;                                   // Depth of the product buffer
     uint32_t             controlCapacity;                                      // Number of control buttons
     uint32_t             waveformCalibrationCapacity;                          // Number of waveform specific calibrations
     size_t               healthNodeBufferSize;                                 // Buffer size (B)
@@ -1135,6 +1136,7 @@ typedef struct rk_radar_desc {
     size_t               positionBufferSize;                                   // Buffer size (B)
     size_t               pulseBufferSize;                                      // Buffer size (B)
     size_t               rayBufferSize;                                        // Buffer size (B)
+    size_t               productBufferSize;                                    // Buffer size (B)
     uint32_t             pulseSmoothFactor;                                    // Pulse rate (Hz)
     uint32_t             pulseTicsPerSecond;                                   // Pulse tics per second (normally 10e6)
     uint32_t             positionSmoothFactor;                                 // Position rate (Hz)
