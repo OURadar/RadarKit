@@ -930,21 +930,16 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
 }
 
 void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {
-    int j, k, lo, hi;
-    // float minWorkerLag, maxWorkerLag;
+    int k;
     RKRay *ray;
-
-    lo = (int)roundf(engine->minWorkerLag * engine->radarDescription->pulseBufferDepth);
-    hi = (int)roundf(engine->maxWorkerLag * engine->radarDescription->pulseBufferDepth);
-    RKLog("%s minLag = %.4f -> %d   maxLag = %.4f -> %u\n", engine->name,
-        engine->minWorkerLag, lo,
-        engine->maxWorkerLag, hi);
-    RKLog("%s business = %u\n", engine->name, engine->business);
 
     k = 0;
     while (engine->business > 0 && k++ < 2000) {
         if (engine->state & RKEngineStateSleep2) {
             // Check finished rays
+            #if defined(DEBUG_MOMENT_ENGINE_WAIT)
+            RKLog("%s Revising business  k = %d\n", engine->name, k);
+            #endif
             ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
             while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
                 *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
@@ -952,12 +947,8 @@ void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {
                 engine->business--;
             }
         }
-        if (k % 100 == 1) {
-            RKLog("%s business = %u   lag = %u   %s\n", engine->name, engine->business, engine->lag, engine->state & RKEngineStateSleep2 ? "sleep 2" : "-");
-        }
         usleep(1000);
     }
-    RKLog("%s business = %u   lag = %u   %s\n", engine->name, engine->business, engine->lag, engine->state & RKEngineStateSleep2 ? "sleep 2" : "-");
 }
 
 char *RKMomentEngineStatusString(RKMomentEngine *engine) {

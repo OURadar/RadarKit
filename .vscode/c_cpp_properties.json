@@ -4,6 +4,7 @@
       "name": "macos-clang-x86_64",
       "includePath": [
         "${workspaceFolder}/headers",
+        "${workspaceFolder}/headers/RadarKit",
         "/usr/local/include",
         "/usr/local/opt/openssl@1.1/include"
       ],
@@ -20,6 +21,7 @@
       "name": "macos-clang-arm64",
       "includePath": [
         "${workspaceFolder}/headers",
+        "${workspaceFolder}/headers/RadarKit",
         "/opt/homebrew/include",
         "/opt/homebrew/opt/openssl@1.1/include"
       ],
