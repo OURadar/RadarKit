@@ -35,7 +35,7 @@ static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'M';
 
-    // Engine lag
+    // Engine lead-lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.statusColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
@@ -185,7 +185,7 @@ static void *momentCore(void *in) {
     }
     snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
 
-#if defined(_GNU_SOURCE)
+    #if defined(_GNU_SOURCE)
 
     if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
         // Set my CPU core
@@ -196,7 +196,7 @@ static void *momentCore(void *in) {
         pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
     }
 
-#endif
+    #endif
 
     RKRay *ray;
     RKPulse *pulse;
@@ -541,7 +541,7 @@ static void *pulseGatherer(void *_in) {
 
     int c, i, j, k, s;
 	struct timeval t0, t1;
-	float lag;
+    float minWorkerLag, maxWorkerLag;
 
 	sem_t *sem[engine->coreCount];
 
@@ -673,20 +673,25 @@ static void *pulseGatherer(void *_in) {
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
         // Assess the lag of the workers
-        lag = engine->workers[0].lag;
+        minWorkerLag = engine->workers[0].lag;
+        maxWorkerLag = engine->workers[0].lag;
         for (i = 1; i < engine->coreCount; i++) {
-            lag = MAX(lag, engine->workers[i].lag);
+            minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
+            maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
         }
-        if (skipCounter == 0 && lag > 0.9f) {
+        engine->minWorkerLag = minWorkerLag;
+        engine->maxWorkerLag = maxWorkerLag;
+        if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
             engine->almostFull++;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an overflow.  lags = %.2f | %.2f %.2f   j = %d   pulseIndex = %d vs %d\n",
-                  engine->name, engine->lag, engine->workers[0].lag, engine->workers[1].lag, j, *engine->pulseIndex, k);
+            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   j = %d   pulseIndex = %d vs %d\n",
+                  engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, j, *engine->pulseIndex, k);
             // Skip the ray: set source length to 0 for those that are currenly being or have not been processed. Save the j-th source, which is current.
             i = j;
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->rayBufferDepth);
                 engine->momentSource[i].length = 0;
+                engine->business--;
                 ray = RKGetRayFromBuffer(engine->rayBuffer, i);
             } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive);
         } else if (skipCounter > 0) {
@@ -723,6 +728,7 @@ static void *pulseGatherer(void *_in) {
                     } else {
                         engine->workers[c].tic++;
                     }
+                    engine->business++;
                     // Move to the next core, gather pulses for the next ray
                     c = RKNextModuloS(c, engine->coreCount);
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
@@ -744,6 +750,7 @@ static void *pulseGatherer(void *_in) {
         while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
             *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
             ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
+            engine->business--;
         }
 
         // Log a message if it has been a while
@@ -920,6 +927,37 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
+}
+
+void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {
+    int j, k, lo, hi;
+    // float minWorkerLag, maxWorkerLag;
+    RKRay *ray;
+
+    lo = (int)roundf(engine->minWorkerLag * engine->radarDescription->pulseBufferDepth);
+    hi = (int)roundf(engine->maxWorkerLag * engine->radarDescription->pulseBufferDepth);
+    RKLog("%s minLag = %.4f -> %d   maxLag = %.4f -> %u\n", engine->name,
+        engine->minWorkerLag, lo,
+        engine->maxWorkerLag, hi);
+    RKLog("%s business = %u\n", engine->name, engine->business);
+
+    k = 0;
+    while (engine->business > 0 && k++ < 2000) {
+        if (engine->state & RKEngineStateSleep2) {
+            // Check finished rays
+            ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
+            while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
+                *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
+                ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
+                engine->business--;
+            }
+        }
+        if (k % 100 == 1) {
+            RKLog("%s business = %u   lag = %u   %s\n", engine->name, engine->business, engine->lag, engine->state & RKEngineStateSleep2 ? "sleep 2" : "-");
+        }
+        usleep(1000);
+    }
+    RKLog("%s business = %u   lag = %u   %s\n", engine->name, engine->business, engine->lag, engine->state & RKEngineStateSleep2 ? "sleep 2" : "-");
 }
 
 char *RKMomentEngineStatusString(RKMomentEngine *engine) {

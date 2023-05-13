@@ -72,6 +72,8 @@ struct rk_pulse_engine {
     RKEngineState                    state;
     uint64_t                         tic;
     float                            lag;
+    float                            minWorkerLag;
+    float                            maxWorkerLag;
     int                              almostFull;
     size_t                           memoryUsage;
 };
@@ -105,10 +107,11 @@ int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
 int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);
 
+void RKPulseEngineWaitWhileBusy(RKPulseEngine *);
+
 char *RKPulseEngineStatusString(RKPulseEngine *);
 char *RKPulseEnginePulseString(RKPulseEngine *);
 void RKPulseEngineFilterSummary(RKPulseEngine *);
-void RKPulseEngineShowBuffer(fftwf_complex *, const int);
 
 // void RKBuiltInConfigChangeCallback(RKCompressionScratch *);
 void RKBuiltInCompressor(RKUserModule, RKCompressionScratch *);

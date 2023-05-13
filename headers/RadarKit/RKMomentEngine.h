@@ -63,6 +63,7 @@ struct rk_moment_engine {
     uint8_t                          processorLagCount;                        // Number of lags to calculate R[n]'s
     uint8_t                          processorFFTOrder;                        // FFT order used in spectral processing
     uint8_t                          userLagChoice;                            // Lag parameter for multilag method
+    uint32_t                         business;
 
     // Status / health
     uint32_t                         processedPulseIndex;
@@ -73,6 +74,8 @@ struct rk_moment_engine {
     RKEngineState                    state;
     uint64_t                         tic;
     float                            lag;
+    float                            minWorkerLag;
+    float                            maxWorkerLag;
     uint32_t                         almostFull;
     size_t                           memoryUsage;
 };
@@ -83,14 +86,16 @@ void RKMomentEngineFree(RKMomentEngine *);
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int verbose);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          RKConfig *configBuffer, uint32_t *configIndex,
-                                         RKBuffer pulseBuffer, uint32_t *pulseIndex,
-                                         RKBuffer rayBuffer,   uint32_t *rayIndex);
+                                         RKBuffer pulseBuffer,   uint32_t *pulseIndex,
+                                         RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
+
+void RKMomentEngineWaitWhileBusy(RKMomentEngine *);
 
 char *RKMomentEngineStatusString(RKMomentEngine *);
 

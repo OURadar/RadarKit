@@ -33,7 +33,7 @@ static void RKPulseEngineUpdateStatusString(RKPulseEngine *engine) {
     memset(string, '.', RKStatusBarWidth);
     string[i] = 'C';
 
-    // Engine lag
+    // Engine lead-lag
     i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %s%02.0f%s :%s",
                                     rkGlobalParameters.statusColor ? RKColorLag(engine->lag) : "",
                                     99.49f * engine->lag,
@@ -121,6 +121,16 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
     engine->state |= RKEngineStateProperlyWired;
 }
 
+#if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
+
+static void RKEngineShowBuffer(fftwf_complex *in, const int n) {
+    for (int k = 0; k < n; k++) {
+        printf("    %6.2f %s %6.2fi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
+    }
+}
+
+#endif
+
 #pragma mark - Delegate Workers
 
 // void RKBuiltInConfigChangeCallback(RKCompressionScratch *scratch) {
@@ -165,11 +175,11 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
         fftwf_execute_dft(scratch->planForwardInPlace, in, in);
 
-        //printf("dft(in) =\n"); RKPulseEngineShowBuffer(in, 8);
+        //printf("dft(in) =\n"); RKEngineShowBuffer(in, 8);
 
         fftwf_execute_dft(scratch->planForwardOutPlace, (fftwf_complex *)filter, out);
 
-        //printf("dft(filt[%d][%d]) =\n", gid, j); RKPulseEngineShowBuffer(out, 8);
+        //printf("dft(filt[%d][%d]) =\n", gid, j); RKEngineShowBuffer(out, 8);
 
         #if RKPulseEngineMultiplyMethod == 1
 
@@ -198,16 +208,22 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
         #endif
 
-        //printf("in * out =\n"); RKPulseEngineShowBuffer(out, 8);
+        #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
+        printf("in * out =\n"); RKEngineShowBuffer(out, 8);
+        #endif
 
         fftwf_execute_dft(scratch->planBackwardInPlace, out, out);
 
-        //printf("idft(out) =\n"); RKPulseEngineShowBuffer(out, 8);
+        #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
+        printf("idft(out) =\n"); RKEngineShowBuffer(out, 8);
+        #endif
 
         // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
         RKSIMD_iyscl((RKComplex *)out, 1.0f / scratch->planSize, scratch->planSize);
 
-        //printf("idft(out) =\n"); RKPulseEngineShowBuffer(out, 8);
+        #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
+        printf("idft(out) =\n"); RKEngineShowBuffer(out, 8);
+        #endif
 
         RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
         RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
@@ -223,12 +239,12 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
             o++;
         }
 
-        #ifdef DEBUG_PULSE_COMPRESSION
+        #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
 
         pthread_mutex_lock(&engine->mutex);
         Y = RKGetComplexDataFromPulse(pulse, p);
         printf("Y [i0 = %d   p = %d   j = %d] =\n", i0, p, j);
-        RKPulseEngineShowBuffer((fftwf_complex *)Y, 8);
+        RKEngineShowBuffer((fftwf_complex *)Y, 8);
 
         Z = RKGetSplitComplexDataFromPulse(pulse, p);
         RKShowArray(Z.i, "Zi", 8, 1);
@@ -521,7 +537,7 @@ static void *pulseWatcher(void *_in) {
 
     int c, i, j, k, s;
     struct timeval t0, t1;
-    float lag;
+    float minWorkerLag, maxWorkerLag;
 
     sem_t *sem[engine->coreCount];
 
@@ -634,14 +650,19 @@ static void *pulseWatcher(void *_in) {
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
         // Assess the lag of the workers
-        lag = engine->workers[0].lag;
+        minWorkerLag = engine->workers[0].lag;
+        maxWorkerLag = engine->workers[0].lag;
         for (i = 1; i < engine->coreCount; i++) {
-            lag = MAX(lag, engine->workers[i].lag);
+            minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
+            maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
         }
-        if (skipCounter == 0 && lag > 0.9f) {
+        engine->minWorkerLag = minWorkerLag;
+        engine->maxWorkerLag = maxWorkerLag;
+        if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
             engine->almostFull++;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
+            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs %d\n",
+                engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
             i = *engine->pulseIndex;
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
@@ -653,7 +674,7 @@ static void *pulseWatcher(void *_in) {
             engine->filterGid[k] = -1;
             engine->planIndices[k][0] = 0;
             if (--skipCounter == 0) {
-                RKLog(">%s Info. Skipped a chunk.\n", engine->name);
+                RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
             }
         } else {
             // Compute the filter group id to use
@@ -1062,6 +1083,61 @@ int RKPulseEngineStop(RKPulseEngine *engine) {
     return RKResultSuccess;
 }
 
+void RKPulseEngineWaitWhileBusy(RKPulseEngine *engine) {
+    int j, k, lo, hi;
+    float minWorkerLag, maxWorkerLag;
+
+    lo = (int)roundf(engine->minWorkerLag * engine->radarDescription->pulseBufferDepth);
+    hi = (int)roundf(engine->maxWorkerLag * engine->radarDescription->pulseBufferDepth);
+
+    #if defined(DEBUG_PULSE_ENGINE_WAIT)
+
+    RKLog("%s minLag = %.4f -> %d   maxLag = %.4f -> %u   %s\n", engine->name,
+        engine->minWorkerLag, lo,
+        engine->maxWorkerLag, hi,
+        lo == 1 && hi == engine->coreCount ? "skip" : "wait");
+
+    #endif
+
+    k = 0;
+    while (!(lo == 1 && hi == engine->coreCount) && k++ < 2000 && engine->state & RKEngineStateWantActive) {
+        minWorkerLag = engine->workers[0].lag;
+        maxWorkerLag = engine->workers[0].lag;
+        for (j = 1; j < engine->coreCount; j++) {
+            minWorkerLag = MIN(minWorkerLag, engine->workers[j].lag);
+            maxWorkerLag = MAX(maxWorkerLag, engine->workers[j].lag);
+        }
+        lo = (int)roundf(minWorkerLag * engine->radarDescription->pulseBufferDepth);
+        hi = (int)roundf(maxWorkerLag * engine->radarDescription->pulseBufferDepth);
+
+        #if defined(DEBUG_PULSE_ENGINE_WAIT)
+
+        if (k % 100 == 1) {
+            for (j = 0; j < engine->coreCount; j++) {
+                int n = (int)round(engine->workers[j].lag * engine->radarDescription->pulseBufferDepth);
+                RKLog(">%s %.4f -> %d\n", engine->workers[j].name, engine->workers[j].lag, n);
+            }
+            RKLog("%s minLag = %.4f -> %d   maxLag = %.4f -> %u   %s\n", engine->name,
+                minWorkerLag, lo,
+                maxWorkerLag, hi,
+                lo == 1 && hi == engine->coreCount ? "skip" : "wait");
+        }
+
+        #endif
+
+        usleep(1000);
+    }
+
+    #if defined(DEBUG_PULSE_ENGINE_WAIT)
+
+    RKLog("%s minLag = %.4f -> %d   maxLag = %.4f -> %u   %s\n", engine->name,
+        minWorkerLag, lo,
+        maxWorkerLag, hi,
+        lo == 1 && hi == engine->coreCount ? "skip" : "wait");
+
+    #endif
+}
+
 char *RKPulseEngineStatusString(RKPulseEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
@@ -1109,11 +1185,5 @@ void RKPulseEngineFilterSummary(RKPulseEngine *engine) {
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].outputOrigin),
                   RKIntegerToCommaStyleString(engine->filterAnchors[i][j].maxDataLength));
         }
-    }
-}
-
-void RKPulseEngineShowBuffer(fftwf_complex *in, const int n) {
-    for (int k = 0; k < n; k++) {
-        printf("    %6.2f %s %6.2fi\n", in[k][0], in[k][1] < 0 ? "-" : "+", fabsf(in[k][1]));
     }
 }
