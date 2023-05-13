@@ -950,6 +950,21 @@ int RKPulseEngineSetFilter(RKPulseEngine *engine, const RKComplex *filter, const
     return RKPulseEngineSetGroupFilter(engine, filter, anchor, 0, 0);
 }
 
+int RKPulseEngineSetFilterByWaveform(RKPulseEngine *engine, RKWaveform *waveform) {
+    int j, k, r;
+    RKPulseEngineResetFilters(engine);
+    for (k = 0; k < waveform->count; k++) {
+        for (j = 0; j < waveform->filterCounts[k]; j++) {
+            RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
+            r = RKPulseEngineSetGroupFilter(engine, filter, waveform->filterAnchors[k][j], k, j);
+            if (r != RKResultSuccess) {
+                return RKResultFailedToSetWaveform;
+            }
+        }
+    }
+    return RKResultSuccess;
+}
+
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *engine) {
     if (engine->verbose > 1) {
         RKLog("%s Setting impulse filter...", engine->name);

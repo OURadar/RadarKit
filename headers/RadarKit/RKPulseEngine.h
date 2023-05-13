@@ -93,16 +93,13 @@ int RKPulseEngineResetFilters(RKPulseEngine *);
 int RKPulseEngineSetFilterCountOfGroup(RKPulseEngine *, const int group, const int count);
 int RKPulseEngineSetFilterGroupCount(RKPulseEngine *, const int groupCount);
 int RKPulseEngineSetGroupFilter(RKPulseEngine *,
-                           const RKComplex *filter,
-                           const RKFilterAnchor anchor,
-                           const int group,
-                           const int index);
+                                const RKComplex *filter,
+                                const RKFilterAnchor anchor,
+                                const int group,
+                                const int index);
 int RKPulseEngineSetFilter(RKPulseEngine *, const RKComplex *, const RKFilterAnchor anchor);
+int RKPulseEngineSetFilterByWaveform(RKPulseEngine *, RKWaveform *);
 int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
-// int RKPulseEngineSetCompressor(RKPulseEngine *,
-//                                void (*initRoutine)(RKCompressionScratch *),
-//                                void (*execRoutine)(RKCompressionScratch *),
-//                                void (*freeRoutine)(RKCompressionScratch *));
 
 int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);
@@ -113,7 +110,6 @@ char *RKPulseEngineStatusString(RKPulseEngine *);
 char *RKPulseEnginePulseString(RKPulseEngine *);
 void RKPulseEngineFilterSummary(RKPulseEngine *);
 
-// void RKBuiltInConfigChangeCallback(RKCompressionScratch *);
 void RKBuiltInCompressor(RKUserModule, RKCompressionScratch *);
 
 #endif /* defined(__RadarKit_Pulse_Engine__) */
