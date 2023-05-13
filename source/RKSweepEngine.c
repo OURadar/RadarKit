@@ -632,8 +632,9 @@ void RKSweepEngineFlush(RKSweepEngine *engine) {
     do {
         usleep(10000);
     } while (k++ < 200 && (engine->tic != tic || engine->state & RKEngineStateWritingFile));
-    RKLog("%s processedRayIndex = %u / %u   tic = %zu / %zu   k = %d\n", engine->name,
-        engine->processedRayIndex, *engine->rayIndex, engine->tic, tic, k);
+    if (engine->verbose > 1) {
+        RKLog("%s Flushed.   tic = %zu / %zu   k = %d\n", engine->name, engine->tic, tic, k);
+    }
 }
 
 #pragma mark - Interactions

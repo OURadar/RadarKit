@@ -334,6 +334,7 @@ extern "C" {
 #include <RadarKit/RKRadarRelay.h>
 #include <RadarKit/RKHostMonitor.h>
 #include <RadarKit/RKReporter.h>
+#include <RadarKit/RKFileHeader.h>
 
 #ifdef __cplusplus
 }
