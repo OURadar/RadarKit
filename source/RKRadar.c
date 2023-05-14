@@ -1457,12 +1457,18 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     }
     // Run user module initiation
     if (radar->userModuleInit) {
-        RKUserModule current = radar->userModule;
-        radar->userModule = radar->userModuleInit(waveform);
+        RKUserModule old = radar->userModule;
+        RKUserModule new = radar->userModuleInit(waveform);
+        radar->userModule = new;
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
-        if (current && radar->userModuleFree) {
-            radar->userModuleFree(current);
+        uint32_t waitTic = radar->pulseEngine->tic + (uint32_t)round(radar->pulseEngine->lag * radar->desc.pulseBufferDepth) + 10;
+        RKLog("Waiting for pulseEngine->tic = %d -> %d ...", radar->pulseEngine->tic, waitTic);
+        if (old != NULL && radar->userModuleFree) {
+            do {
+                usleep(10000);
+            } while (radar->pulseEngine->tic < waitTic);
+            radar->userModuleFree(old);
         }
     }
     // Send the waveform pointers to config buffer
