@@ -103,21 +103,23 @@ static void *ringFilterCore(void *_in) {
     };
 
     // Initiate my name
+    RKShortName name;
     if (rkGlobalParameters.showColor) {
         pthread_mutex_lock(&engine->mutex);
-        k = snprintf(me->name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
+        k = snprintf(name, RKShortNameLength, "%s", rkGlobalParameters.showColor ? RKGetColor() : "");
         pthread_mutex_unlock(&engine->mutex);
     } else {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(me->name + k, "C%02d", c);
+        k += sprintf(name + k, "C%02d", c);
     } else {
-        k += sprintf(me->name + k, "C%d", c);
+        k += sprintf(name + k, "C%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(me->name + k, RKNoColor);
+        sprintf(name + k, RKNoColor);
     }
+    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
 
 #if defined(_GNU_SOURCE)
 
@@ -136,7 +138,7 @@ static void *ringFilterCore(void *_in) {
     size_t mem = 0;
 
     if ((me->processOrigin * sizeof(RKFloat)) % RKMemoryAlignSize > 0) {
-        RKLog("%s %s Error. Each filter origin must align to the SIMD requirements.\n", engine->name, me->name);
+        RKLog("%s Error. Each filter origin must align to the SIMD requirements.\n", me->name);
         return NULL;
     }
     // Allocate local resources, use k to keep track of the total allocation
@@ -159,7 +161,7 @@ static void *ringFilterCore(void *_in) {
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
-        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        RKLog("%s Error. Unable to allocate resources for duty cycle calculation\n", me->name);
         exit(EXIT_FAILURE);
     }
     mem += 2 * RKWorkerDutyCycleBufferDepth * sizeof(double);
@@ -181,8 +183,8 @@ static void *ringFilterCore(void *_in) {
     pthread_mutex_lock(&engine->mutex);
     engine->memoryUsage += mem;
 
-    RKLog(">%s %s Started.   mem = %s B   i0 = %s   filter @ (%s, %s)   ci = %d\n",
-          engine->name, me->name,
+    RKLog(">%s Started.   mem = %s B   i0 = %s   filter @ (%s, %s)   ci = %d\n",
+          me->name,
           RKUIntegerToCommaStyleString(mem),
           RKIntegerToCommaStyleString(i0),
           RKIntegerToCommaStyleString(me->processOrigin),
@@ -213,7 +215,7 @@ static void *ringFilterCore(void *_in) {
             RKLog(">%s sem_wait()\n", coreName);
             #endif
             if (sem_wait(sem)) {
-                RKLog("%s %s Error. Failed in sem_wait(). errno = %d\n", engine->name, me->name, errno);
+                RKLog("%s Error. Failed in sem_wait(). errno = %d\n", me->name, errno);
             }
         } else {
             while (tic == me->tic && engine->state & RKEngineStateWantActive) {
@@ -262,7 +264,7 @@ static void *ringFilterCore(void *_in) {
 #if defined(DEBUG_IIR)
 
                 pthread_mutex_lock(&engine->mutex);
-                RKLog(">%s %s %s   %s   %s   %s   %s\n", engine->name, name,
+                RKLog(">%s %s   %s   %s   %s   %s\n", name,
                       RKVariableInString("p", &p, RKValueTypeInt),
                       RKVariableInString("k", &k, RKValueTypeInt),
                       RKVariableInString("bLength", &engine->filter.bLength, RKValueTypeUInt32),
@@ -287,7 +289,7 @@ static void *ringFilterCore(void *_in) {
 
 #if defined(DEBUG_IIR)
 
-                    RKLog(">%s %s B portion   %s   %s   %s   %s\n", engine->name, name,
+                    RKLog(">%s B portion   %s   %s   %s   %s\n", name,
                           RKVariableInString("k", &k, RKValueTypeInt),
                           RKVariableInString("j", &j, RKValueTypeInt),
                           RKVariableInString("i", &i, RKValueTypeInt),
@@ -313,7 +315,7 @@ static void *ringFilterCore(void *_in) {
 
 #if defined(DEBUG_IIR)
 
-                    RKLog(">%s %s A portion   %s   %s   %s\n", engine->name, name,
+                    RKLog(">%s A portion   %s   %s   %s\n", me->name,
                           RKVariableInString("j", &j, RKValueTypeInt),
                           RKVariableInString("i", &i, RKValueTypeInt),
                           RKVariableInString("iOffset", &iOffset, RKValueTypeInt));
@@ -334,7 +336,7 @@ static void *ringFilterCore(void *_in) {
 
 #if defined(DEBUG_IIR)
 
-                RKLog("%s %s Output copied with path @ (%s, %s)", engine->name, name,
+                RKLog("%s Output copied with path @ (%s, %s)", me->name,
                       RKIntegerToCommaStyleString(me->processOrigin),
                       RKIntegerToCommaStyleString(me->outputLength));
                 pthread_mutex_unlock(&engine->mutex);
@@ -375,7 +377,7 @@ static void *ringFilterCore(void *_in) {
 
     // Clean up
     if (engine->verbose > 1) {
-        RKLog("%s %s Freeing reources ...\n", engine->name, me->name);
+        RKLog("%s Freeing reources ...\n", me->name);
     }
 
     free(xx.i);
@@ -385,7 +387,7 @@ static void *ringFilterCore(void *_in) {
     free(busyPeriods);
     free(fullPeriods);
 
-    RKLog(">%s %s Stopped.\n", engine->name, me->name);
+    RKLog(">%s Stopped.\n", me->name);
 
     return NULL;
 }
@@ -405,7 +407,7 @@ static void *pulseRingWatcher(void *_in) {
     bool *workerTaskDone;
 
     if (engine->coreCount == 0) {
-        RKLog("Error. No processing core?\n");
+        RKLog("%s Error. No processing core?\n", engine->name);
         return NULL;
     }
 

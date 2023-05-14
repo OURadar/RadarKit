@@ -461,7 +461,7 @@ static void *pulseEngineCore(void *_in) {
                     pulse->parameters.planIndices[p][j] = planIndex;
                     pulse->parameters.planSizes[p][j] = engine->fftModule->plans[planIndex].size;
                 }
-            } // for (j=0; j < engine->filterCount ...
+            } // for (j = 0; j < engine->filterCount ...
             pulse->parameters.filterCounts[0] = j;
             pulse->parameters.filterCounts[1] = j;
             pulse->header.pulseWidthSampleCount = blindGateCount;
@@ -626,7 +626,7 @@ static void *pulseWatcher(void *_in) {
             usleep(50);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
+                      engine->name, (float)s * 0.00005f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         engine->state ^= RKEngineStateSleep1;
@@ -637,7 +637,7 @@ static void *pulseWatcher(void *_in) {
             usleep(50);
             if (++s % 1000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.0002f, k , *engine->pulseIndex, pulse->header.s);
+                      engine->name, (float)s * 0.00005f, k , *engine->pulseIndex, pulse->header.s);
             }
         }
         engine->state ^= RKEngineStateSleep2;
