@@ -1462,9 +1462,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         radar->userModule = new;
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
-        uint32_t waitTic = radar->pulseEngine->tic + (uint32_t)round(radar->pulseEngine->lag * radar->desc.pulseBufferDepth) + 10;
-        RKLog("Waiting for pulseEngine->tic = %d -> %d ...", radar->pulseEngine->tic, waitTic);
+        uint64_t waitTic = radar->pulseEngine->tic + (uint64_t)round(radar->pulseEngine->lag * radar->desc.pulseBufferDepth) + 10;
         if (old != NULL && radar->userModuleFree) {
+            RKLog("Waiting for pulseEngine->tic = %llu -> %llu ...", radar->pulseEngine->tic, waitTic);
             do {
                 usleep(10000);
             } while (radar->pulseEngine->tic < waitTic);
