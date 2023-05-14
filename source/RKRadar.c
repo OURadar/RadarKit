@@ -1457,12 +1457,13 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     }
     // Run user module initiation
     if (radar->userModuleInit) {
-        if (radar->userModule && radar->userModuleFree) {
-            radar->userModuleFree(radar->userModule);
-        }
+        RKUserModule current = radar->userModule;
         radar->userModule = radar->userModuleInit(waveform);
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
+        if (current && radar->userModuleFree) {
+            radar->userModuleFree(current);
+        }
     }
     // Send the waveform pointers to config buffer
     RKAddConfig(radar,

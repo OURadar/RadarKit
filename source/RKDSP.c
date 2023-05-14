@@ -46,7 +46,7 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin) {
     do {
         usleep(1000);
     } while (k++ < 1000 && !(pulse->header.s & RKPulseStatusCompressed));
-    if (k > 0) {
+    if (k >= 1000) {
         RKLog("Noise measurement timed out.  k = %d  pulse.header.s = %04x\n", k, pulse->header.s);
         return RKResultTimeout;
     }
