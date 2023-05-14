@@ -1095,19 +1095,20 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t count) {
 }
 
 // Read pulse from a file reference
-int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid) {
+int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE *fid) {
     int i, j;
     size_t readsize;
     uint32_t gateCount = 0;
     const uint32_t capacity = pulse->header.capacity;
     static RKPulseHeaderV1 *headerV1 = NULL;
-    switch (header->version) {
+    static RKPulseHeader *header = NULL;
+    switch (fileHeader->version) {
         case 0:
         case 1:
         case 2:
         case 3:
         case 4:
-            RKLog("Warning. Version = %d not expected.\n", header->version);
+            RKLog("Warning. Version = %d not expected.\n", fileHeader->version);
             return RKResultNothingToRead;
             break;
         case 5:
@@ -1121,7 +1122,6 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
             pulse->header.i = headerV1->i;
             pulse->header.n = headerV1->n;
             pulse->header.t = headerV1->t;
-            pulse->header.s = headerV1->s;
             pulse->header.gateCount = headerV1->gateCount;
             pulse->header.downSampledGateCount = headerV1->downSampledGateCount;
             pulse->header.pulseWidthSampleCount = headerV1->pulseWidthSampleCount;
@@ -1140,7 +1140,27 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
             pulse->header.azimuthVelocityDegreesPerSecond = headerV1->azimuthVelocityDegreesPerSecond;
             break;
         default:
-            readsize = fread(pulse, sizeof(RKPulseHeader), 1, fid);
+            if (header == NULL) {
+                header = (RKPulseHeader *)malloc(sizeof(RKPulseHeader));
+            }
+            readsize = fread(header, sizeof(RKPulseHeader), 1, fid);
+            pulse->header.i = header->i;
+            pulse->header.n = header->n;
+            pulse->header.t = header->t;
+            pulse->header.gateCount = header->gateCount;
+            pulse->header.downSampledGateCount = header->downSampledGateCount;
+            pulse->header.pulseWidthSampleCount = header->pulseWidthSampleCount;
+            pulse->header.marker = header->marker;
+            pulse->header.time = header->time;
+            pulse->header.timeDouble = header->timeDouble;
+            pulse->header.rawAzimuth = header->rawAzimuth;
+            pulse->header.rawElevation = header->rawElevation;
+            pulse->header.positionIndex = header->positionIndex;
+            pulse->header.gateSizeMeters = header->gateSizeMeters;
+            pulse->header.elevationDegrees = header->elevationDegrees;
+            pulse->header.azimuthDegrees = header->azimuthDegrees;
+            pulse->header.elevationVelocityDegreesPerSecond = header->elevationVelocityDegreesPerSecond;
+            pulse->header.azimuthVelocityDegreesPerSecond = header->azimuthVelocityDegreesPerSecond;
             break;
     }
     if (readsize == 0) {
@@ -1149,16 +1169,23 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
             free(headerV1);
             headerV1 = NULL;
         }
+        if (header != NULL) {
+            free(header);
+            header = NULL;
+        }
         return RKResultNothingToRead;
     }
-    pulse->header.capacity = capacity;
+    if (pulse->header.capacity != capacity) {
+        pulse->header.capacity = capacity;
+        RKLog("Warning. Pulse capacity restored.\n");
+    }
     // Pulse payload: H and V data into channels 0 and 1, respectively. Duplicate to split-complex storage
     for (j = 0; j < 2; j++) {
-        if (header->dataType == RKRawDataTypeFromTransceiver) {
+        if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
             RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
             gateCount = pulse->header.gateCount;
             readsize = fread(x, sizeof(RKInt16C), gateCount, fid);
-        } else if (header->dataType == RKRawDataTypeAfterMatchedFilter) {
+        } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
             gateCount = pulse->header.downSampledGateCount;
             readsize = fread(x, sizeof(RKComplex), gateCount, fid);
@@ -1178,6 +1205,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *header, FILE *fid
             return RKResultTooBig;
         }
     }
+    pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
     return RKResultSuccess;
 }
 

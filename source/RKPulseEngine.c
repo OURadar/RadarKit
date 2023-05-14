@@ -121,6 +121,18 @@ static void RKPulseEngineVerifyWiring(RKPulseEngine *engine) {
     engine->state |= RKEngineStateProperlyWired;
 }
 
+static void RKPulseEngineUpdateMinMaxWorkerLag(RKPulseEngine *engine) {
+    int i;
+    float minWorkerLag = engine->workers[0].lag;
+    float maxWorkerLag = engine->workers[0].lag;
+    for (i = 1; i < engine->coreCount; i++) {
+        minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
+        maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
+    }
+    engine->minWorkerLag = minWorkerLag;
+    engine->maxWorkerLag = maxWorkerLag;
+}
+
 #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
 
 static void RKEngineShowBuffer(fftwf_complex *in, const int n) {
@@ -537,7 +549,6 @@ static void *pulseWatcher(void *_in) {
 
     int c, i, j, k, s;
     struct timeval t0, t1;
-    float minWorkerLag, maxWorkerLag;
 
     sem_t *sem[engine->coreCount];
 
@@ -624,10 +635,11 @@ static void *pulseWatcher(void *_in) {
         s = 0;
         while (k == *engine->pulseIndex && engine->state & RKEngineStateWantActive) {
             usleep(50);
-            if (++s % 1000 == 0 && engine->verbose > 1) {
+            if (++s % 4000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.00005f, k , *engine->pulseIndex, pulse->header.s);
+                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, pulse->header.s);
             }
+            RKPulseEngineUpdateMinMaxWorkerLag(engine);
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
@@ -635,10 +647,11 @@ static void *pulseWatcher(void *_in) {
         s = 0;
         while (!(pulse->header.s & RKPulseStatusHasPosition) && engine->state & RKEngineStateWantActive) {
             usleep(50);
-            if (++s % 1000 == 0 && engine->verbose > 1) {
+            if (++s % 4000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.00005f, k , *engine->pulseIndex, pulse->header.s);
+                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, pulse->header.s);
             }
+            RKPulseEngineUpdateMinMaxWorkerLag(engine);
         }
         engine->state ^= RKEngineStateSleep2;
 
@@ -649,15 +662,6 @@ static void *pulseWatcher(void *_in) {
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
-        // Assess the lag of the workers
-        minWorkerLag = engine->workers[0].lag;
-        maxWorkerLag = engine->workers[0].lag;
-        for (i = 1; i < engine->coreCount; i++) {
-            minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
-            maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
-        }
-        engine->minWorkerLag = minWorkerLag;
-        engine->maxWorkerLag = maxWorkerLag;
         if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
             engine->almostFull++;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
@@ -687,7 +691,6 @@ static void *pulseWatcher(void *_in) {
                                                                  engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
                 engine->planIndices[k][j] = planIndex;
                 engine->fftModule->plans[planIndex].count++;
-
             }
         }
 
@@ -1098,6 +1101,35 @@ int RKPulseEngineStop(RKPulseEngine *engine) {
     return RKResultSuccess;
 }
 
+RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *engine) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired for RKPulseEngineGetVacantPulse()\n");
+        return NULL;
+    }
+    // Set the 1/8-ahead (7/8-depth old) pulse vacant if it has been used
+    uint32_t k = RKNextNModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth / 8, engine->radarDescription->pulseBufferDepth);
+    RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
+    if (pulse->header.s & RKPulseStatusHasIQData) {
+        k = 0;
+        while (!(pulse->header.s & RKPulseStatusUsedForMoments)) {
+            usleep(100);
+            if (k > 10000 && k++ % 10000 == 0) {
+                RKLog("%s Wait 1   %.1fs\n", engine->name, k * 0.0001f);
+            }
+        }
+    }
+    pulse->header.s = RKPulseStatusVacant;
+    // Current pulse
+    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *engine->pulseIndex);
+    pulse->header.timeDouble = 0.0;
+    pulse->header.time.tv_sec = 0;
+    pulse->header.time.tv_usec = 0;
+    pulse->header.i += engine->radarDescription->pulseBufferDepth;
+    pulse->header.s = RKPulseStatusVacant;
+    *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth);
+    return pulse;
+}
+
 void RKPulseEngineWaitWhileBusy(RKPulseEngine *engine) {
     int j, k, lo, hi;
     float minWorkerLag, maxWorkerLag;
@@ -1115,7 +1147,7 @@ void RKPulseEngineWaitWhileBusy(RKPulseEngine *engine) {
     #endif
 
     k = 0;
-    while (!(lo == 1 && hi == engine->coreCount) && k++ < 2000 && engine->state & RKEngineStateWantActive) {
+    while (!(lo <= 2 && hi <= engine->coreCount + 1) && k++ < 2000 && engine->state & RKEngineStateWantActive) {
         minWorkerLag = engine->workers[0].lag;
         maxWorkerLag = engine->workers[0].lag;
         for (j = 1; j < engine->coreCount; j++) {

@@ -103,6 +103,18 @@ static void RKMomentEngineCheckWiring(RKMomentEngine *engine) {
     engine->state |= RKEngineStateProperlyWired;
 }
 
+static void RKMomentEngineUpdateMinMaxWorkerLag(RKMomentEngine *engine) {
+    int i;
+    float minWorkerLag = engine->workers[0].lag;
+    float maxWorkerLag = engine->workers[0].lag;
+    for (i = 1; i < engine->coreCount; i++) {
+        minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
+        maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
+    }
+    engine->minWorkerLag = minWorkerLag;
+    engine->maxWorkerLag = maxWorkerLag;
+}
+
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
     int i, j, k, p;
 
@@ -453,10 +465,6 @@ static void *momentCore(void *in) {
             }
             // Fill in the ray with SNR and SQI censoring, 16-bit and 8-bit data
             makeRayFromScratch(space, ray);
-            for (k = 0; k < path.length; k++) {
-                pulse = pulses[k];
-                pulse->header.s |= RKPulseStatusUsedForMoments;
-            }
             ray->header.s |= RKRayStatusProcessed;
         } else {
             // Zero out the ray
@@ -466,6 +474,10 @@ static void *momentCore(void *in) {
                       path.length, path.length > 1 ? "s": "", deltaAzimuth, deltaElevation);
             }
             ray->header.s |= RKRayStatusSkipped;
+        }
+        for (k = 0; k < path.length; k++) {
+            pulse = pulses[k];
+            pulse->header.s |= RKPulseStatusUsedForMoments;
         }
 
         // Update the rest of the ray header
@@ -541,7 +553,6 @@ static void *pulseGatherer(void *_in) {
 
     int c, i, j, k, s;
 	struct timeval t0, t1;
-    float minWorkerLag, maxWorkerLag;
 
 	sem_t *sem[engine->coreCount];
 
@@ -648,6 +659,7 @@ static void *pulseGatherer(void *_in) {
                 RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
+            RKMomentEngineUpdateMinMaxWorkerLag(engine);
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
@@ -662,6 +674,7 @@ static void *pulseGatherer(void *_in) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
+            RKMomentEngineUpdateMinMaxWorkerLag(engine);
         }
         engine->state ^= RKEngineStateSleep2;
 
@@ -672,15 +685,6 @@ static void *pulseGatherer(void *_in) {
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
 
-        // Assess the lag of the workers
-        minWorkerLag = engine->workers[0].lag;
-        maxWorkerLag = engine->workers[0].lag;
-        for (i = 1; i < engine->coreCount; i++) {
-            minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
-            maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
-        }
-        engine->minWorkerLag = minWorkerLag;
-        engine->maxWorkerLag = maxWorkerLag;
         if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
             engine->almostFull++;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;

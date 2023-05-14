@@ -104,6 +104,7 @@ int RKPulseEngineSetFilterToImpulse(RKPulseEngine *);
 int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);
 
+RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *);
 void RKPulseEngineWaitWhileBusy(RKPulseEngine *);
 
 char *RKPulseEngineStatusString(RKPulseEngine *);

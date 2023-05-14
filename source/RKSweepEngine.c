@@ -369,7 +369,7 @@ static void *rayGatherer(void *in) {
             if (engine->state & RKEngineStateReserved) {
                 engine->state ^= RKEngineStateReserved;
                 if (engine->verbose) {
-                    RKLog("%s Waking up from sleep 1 ...\n", engine->name);
+                    RKLog("%s Flushing ...\n", engine->name);
                     j = RKPreviousModuloS(j, engine->radarDescription->rayBufferDepth);
                     ray = RKGetRayFromBuffer(engine->rayBuffer, j);
                     ray->header.marker |= RKMarkerSweepEnd;
