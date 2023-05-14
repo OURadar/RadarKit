@@ -645,7 +645,7 @@ static void *pulseWatcher(void *_in) {
         engine->state |= RKEngineStateSleep2;
         // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
         s = 0;
-        while (!(pulse->header.s & RKPulseStatusHasPosition) && engine->state & RKEngineStateWantActive) {
+        while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateWantActive) {
             usleep(50);
             if (++s % 4000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
@@ -665,7 +665,7 @@ static void *pulseWatcher(void *_in) {
         if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
             engine->almostFull++;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs %d\n",
+            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
                 engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
             i = *engine->pulseIndex;
             do {
@@ -678,7 +678,7 @@ static void *pulseWatcher(void *_in) {
             engine->filterGid[k] = -1;
             engine->planIndices[k][0] = 0;
             if (--skipCounter == 0) {
-                RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
+                RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs k = %d\n", engine->name, *engine->pulseIndex, k);
             }
         } else {
             // Compute the filter group id to use
