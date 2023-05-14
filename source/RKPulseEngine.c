@@ -659,6 +659,8 @@ static void *pulseWatcher(void *_in) {
             break;
         }
 
+        RKPulseEngineUpdateMinMaxWorkerLag(engine);
+
         // Lag of the engine
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
 

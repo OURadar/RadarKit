@@ -4618,8 +4618,14 @@ void RKTestMakePositionStatusString(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    printf("%04x & %04x --> %d\n", 0x8ef, RKPulseStatusReadyForMoments, (0x8ef & RKPulseStatusReadyForMoments) == RKPulseStatusReadyForMoments);
+    // printf("%04x & %04x --> %d\n", 0x8ef, RKPulseStatusReadyForMoments, (0x8ef & RKPulseStatusReadyForMoments) == RKPulseStatusReadyForMoments);
     // printf("0x%04x inverse -> 0x%04x vs 0x%04x\n", RKStreamDisplayAll, !RKStreamDisplayAll, ~RKStreamDisplayAll);
+    uint32_t depth = 1000;
+    uint32_t k = 500, pulseIndex = 503;
+    // fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);
+    float lag = fmodf((float)(pulseIndex + depth - k) / depth, 1.0f);
+    uint32_t i = (uint32_t)roundf(lag * depth);
+    printf("k = %u   pulseIndex = %u   lag = %.4f (%d)\n", k, pulseIndex, lag, i);
 }
 
 #pragma mark -
