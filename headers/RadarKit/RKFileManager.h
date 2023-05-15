@@ -63,7 +63,7 @@ typedef struct rk_file_remover RKFileRemover;
 typedef struct rk_file_manager RKFileManager;
 
 struct rk_file_remover {
-    RKShortName                      name;
+    RKName                           name;
     int                              id;
     uint64_t                         tic;
     pthread_t                        tid;

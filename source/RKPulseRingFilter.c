@@ -121,7 +121,7 @@ static void *ringFilterCore(void *_in) {
     }
     snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
 
-#if defined(_GNU_SOURCE)
+    #if defined(_GNU_SOURCE)
 
     if (engine->radarDescription->initFlags & RKInitFlagManuallyAssignCPU) {
         // Set my CPU core
@@ -132,7 +132,7 @@ static void *ringFilterCore(void *_in) {
         pthread_setaffinity_np(me->tid, sizeof(cpu_set_t), &cpuset);
     }
 
-#endif
+    #endif
 
     RKPulse *pulse;
     size_t mem = 0;
@@ -261,7 +261,7 @@ static void *ringFilterCore(void *_in) {
                 memcpy(xx.i + kOffset, Z.i + me->processOrigin, me->processLength * sizeof(RKFloat));
                 memcpy(xx.q + kOffset, Z.q + me->processOrigin, me->processLength * sizeof(RKFloat));
 
-#if defined(DEBUG_IIR)
+                #if defined(DEBUG_IIR)
 
                 pthread_mutex_lock(&engine->mutex);
                 RKLog(">%s %s   %s   %s   %s   %s\n", name,
@@ -271,7 +271,7 @@ static void *ringFilterCore(void *_in) {
                       RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32),
                       RKVariableInString("outpuLength", &me->outputLength, RKValueTypeUInt32));
 
-#endif
+                #endif
 
                 // Store y[n] at local buffer y at offset k
                 yk.i = yy.i + kOffset;
@@ -287,7 +287,7 @@ static void *ringFilterCore(void *_in) {
                     xi.q = xx.q + iOffset;
                     RKSIMD_csz(engine->filter.B[j].i, &xi, &yk, me->processLength);
 
-#if defined(DEBUG_IIR)
+                    #if defined(DEBUG_IIR)
 
                     RKLog(">%s B portion   %s   %s   %s   %s\n", name,
                           RKVariableInString("k", &k, RKValueTypeInt),
@@ -300,7 +300,7 @@ static void *ringFilterCore(void *_in) {
                     RKShowArray(yk.i, "yk.i", 8, 1);
                     RKShowArray(yk.q, "yk.q", 8, 1);
 
-#endif
+                    #endif
 
                     i = RKPreviousModuloS(i, depth);
                 }
@@ -313,7 +313,7 @@ static void *ringFilterCore(void *_in) {
                     yi.q = yy.q + iOffset;
                     RKSIMD_csz(-engine->filter.A[j].i, &yi, &yk, me->processLength);
 
-#if defined(DEBUG_IIR)
+                    #if defined(DEBUG_IIR)
 
                     RKLog(">%s A portion   %s   %s   %s\n", me->name,
                           RKVariableInString("j", &j, RKValueTypeInt),
@@ -325,7 +325,7 @@ static void *ringFilterCore(void *_in) {
                     RKShowArray(yk.i, "yk.i", 8, 1);
                     RKShowArray(yk.q, "yk.q", 8, 1);
 
-#endif
+                    #endif
 
                     i = RKPreviousModuloS(i, depth);
                 }
@@ -334,14 +334,14 @@ static void *ringFilterCore(void *_in) {
                 memcpy(Z.i + me->processOrigin, yk.i, me->outputLength * sizeof(RKFloat));
                 memcpy(Z.q + me->processOrigin, yk.q, me->outputLength * sizeof(RKFloat));
 
-#if defined(DEBUG_IIR)
+                #if defined(DEBUG_IIR)
 
                 RKLog("%s Output copied with path @ (%s, %s)", me->name,
                       RKIntegerToCommaStyleString(me->processOrigin),
                       RKIntegerToCommaStyleString(me->outputLength));
                 pthread_mutex_unlock(&engine->mutex);
 
-#endif
+                #endif
 
             } // for (p = 0; ...
             // Move to the next index of local buffer
