@@ -180,9 +180,7 @@ static void *sweepManager(void *in) {
                       rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
                       engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
     }
-    if (engine->verbose) {
-        RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
-    }
+    RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -275,7 +273,7 @@ static void *sweepManager(void *in) {
 
     // Show a summary of all the files created
     if (summarySize) {
-        RKLog("%s %s", engine->name, summary);
+        RKLog("%s %s\n", engine->name, summary);
     }
 
     if (engine->record && engine->hasFileHandlingScript) {
@@ -370,10 +368,10 @@ static void *rayGatherer(void *in) {
                 engine->state ^= RKEngineStateReserved;
                 if (engine->verbose) {
                     RKLog("%s Flushing ...\n", engine->name);
-                    j = RKPreviousModuloS(j, engine->radarDescription->rayBufferDepth);
-                    ray = RKGetRayFromBuffer(engine->rayBuffer, j);
-                    ray->header.marker |= RKMarkerSweepEnd;
                 }
+                j = RKPreviousModuloS(j, engine->radarDescription->rayBufferDepth);
+                ray = RKGetRayFromBuffer(engine->rayBuffer, j);
+                ray->header.marker |= RKMarkerSweepEnd;
                 break;
             }
             usleep(10000);
@@ -631,7 +629,7 @@ void RKSweepEngineFlush(RKSweepEngine *engine) {
     k = 0;
     do {
         usleep(10000);
-    } while (k++ < 200 && (engine->tic != tic || engine->state & RKEngineStateWritingFile));
+    } while (k++ < 200 && (engine->tic < tic || engine->state & RKEngineStateWritingFile));
     if (engine->verbose > 1) {
         RKLog("%s Flushed.   tic = %zu / %zu   k = %d\n", engine->name, engine->tic, tic, k);
     }
