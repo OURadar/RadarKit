@@ -704,15 +704,14 @@ bool RKFilenameExists(const char *filename) {
 }
 
 void RKPreparePath(const char *filename) {
-    DIR *dir;
+    struct stat s;
     char path[strlen(filename) + 1];
     strcpy(path, filename);
     char *c = strrchr(path, '/');
     if (c == NULL) {
         return;
     }
-    dir = opendir(path);
-    if (dir == NULL) {
+    if (lstat(path, &s) && errno == ENOENT) {
         // Recursively create paths that do not exist
         c = path;
         size_t n = strlen(path);
@@ -723,22 +722,15 @@ void RKPreparePath(const char *filename) {
             *c = '\0';
             //printf("path = |%s|  n = %zu\n", path, (size_t)(c - path));
             if (strlen(path)) {
-                dir = opendir(path);
-                if (dir == NULL) {
-                    //printf("mkdir %s\n", path);
+                if (lstat(path, &s) && errno == ENOENT) {
+                    // printf("mkdir %s\n", path);
                     if (mkdir(path, 0755)) {
                         fprintf(stderr, "Error creating directory '%s'\n", path);
                         fprintf(stderr, "Input filename '%s'\n", filename);
                     }
-                } else {
-                    closedir(dir);
                 }
             }
             *c++ = '/';
-        }
-    } else {
-        if (closedir(dir)) {
-            fprintf(stderr, "Error in closing '%s'\n", path);
         }
     }
     return;
