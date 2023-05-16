@@ -687,6 +687,10 @@ char *RKSweepEngineStatusString(RKSweepEngine *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
 
+char *RKSweepEngineLatestSummary(RKSweepEngine *engine) {
+    return engine->scratchSpaces[engine->scratchSpaceIndex].summary;
+}
+
 RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc desc) {
     int i = 0;
     RKProductId productId = 42;
