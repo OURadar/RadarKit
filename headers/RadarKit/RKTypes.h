@@ -618,6 +618,9 @@ enum RKInitFlag {
     RKInitFlagPulsePositionCombiner              = 0x00010000,                 // 1 << 16
     RKInitFlagPositionSteerEngine                = 0x00020000,                 // 1 << 17
     RKInitFlagSignalProcessor                    = 0x00040000,                 // 1 << 18
+    RKInitFlagStartPulseEngine                   = 0x00100000,                 // New in v5 (still experimenting)
+    RKInitFlagStartRingFilterEngine              = 0x00200000,                 // New in v5 (still experimenting)
+    RKInitFlagStartMomentEngine                  = 0x00400000,                 // New in v5 (still experimenting)
     RKInitFlagRelay                              = 0x00007703,                 // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
     RKInitFlagIQPlayback                         = 0x00047701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
     RKInitFlagAllocEverything                    = 0x00077F01,
