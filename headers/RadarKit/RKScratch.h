@@ -45,6 +45,10 @@ typedef struct rk_compression_scratch {
     RKFloat                          *user2;                                       // User array #2, same storage length as pulse
     RKFloat                          *user3;                                       // User array #3, same storage length as pulse
     RKFloat                          *user4;                                       // User array #4, same storage length as pulse
+    RKComplex                        *userComplex1;                                // User complex array #1, same storage length as pulse
+    RKComplex                        *userComplex2;                                // User complex array #2, same storage length as pulse
+    RKComplex                        *userComplex3;                                // User complex array #3, same storage length as pulse
+    RKComplex                        *userComplex4;                                // User complex array #4, same storage length as pulse
     RKConfig                         *config;                                      //
     uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
     uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use

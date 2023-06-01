@@ -14,8 +14,8 @@
 
 #include <RadarKit/RKSIMD.h>
 
-const float _rk_flip_even_sign_mask[] = {1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
-const float _rk_flip_odd_sign_mask[]  = {-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f};
+static const float _rk_flip_odd_sign_mask[]  = {1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
+static const float _rk_flip_even_sign_mask[] = {-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f};
 
 size_t RKSIMD_size(void) {
     return sizeof(RKVec);
@@ -369,7 +369,7 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
 
 void RKSIMD_iyconj(RKComplex *src, const int n) {
     int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    const RKVec m = _rk_mm_load(_rk_flip_even_sign_mask);
+    const RKVec m = _rk_mm_load(_rk_flip_odd_sign_mask);
 	RKVec *s = (RKVec *)src;
     for (k = 0; k < K; k++) {
         *s = _rk_mm_mul(*s, m);
@@ -384,12 +384,12 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
     #if !defined(__FMA__)
-    const RKVec m = _rk_mm_load(_rk_flip_odd_sign_mask);         // [ -1   1  -1   1 ]
+    const RKVec m = _rk_mm_load(_rk_flip_even_sign_mask);        // [ -1   1  -1   1 ]
     #endif
     for (k = 0; k < K; k++) {
 		r = _rk_mm_dup_even(*s);                                 // [  a   a   x   x ]
 		i = _rk_mm_dup_odd(*s);                                  // [  b   b   y   y ]
-        x = _rk_mm_flip_odd_even(*d);                            // [  d   c   w   z ]
+        x = _rk_mm_flip_pair(*d);                                // [  d   c   w   z ]
         i = _rk_mm_mul(i, x);                                    // [ bd  bc  yw  yz ]
         #if defined(__FMA__)
         *d = _rk_mm_muladdsub(r, *d, i);                         // [a a x x] * [c d z w] -/+/-/+ [bd bc yw yz] = [ac-bd ad+bc xz-yw xw+yz]
@@ -409,12 +409,12 @@ void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
 	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
 	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
     #if !defined(__FMA__)
-    const RKVec m = _rk_mm_load(_rk_flip_even_sign_mask);        // [  1  -1   1  -1 ]
+    const RKVec m = _rk_mm_load(_rk_flip_odd_sign_mask);         // [  1  -1   1  -1 ]
     #endif
 	for (k = 0; k < K; k++) {
         r = _rk_mm_dup_even(*s);                                 // [  a   a   x   x ]
         i = _rk_mm_dup_odd(*s);                                  // [  b   b   y   y ]
-        x = _rk_mm_flip_odd_even(*d);                            // [  d   c   w   z ]
+        x = _rk_mm_flip_pair(*d);                                // [  d   c   w   z ]
         r = _rk_mm_mul(r, *d);                                   // [ ac  ad  xz  xw ]
         #if defined(__FMA__)
         *d = _rk_mm_mulsubadd(i, x, r);                          // [b b y y] * [d c w z] +/-/+/- [ac -ad xz -xw] = [bd+ac bc-ad yw+xz yz-xw]

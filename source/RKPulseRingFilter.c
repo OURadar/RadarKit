@@ -269,7 +269,7 @@ static void *ringFilterCore(void *_in) {
                       RKVariableInString("k", &k, RKValueTypeInt),
                       RKVariableInString("bLength", &engine->filter.bLength, RKValueTypeUInt32),
                       RKVariableInString("aLength", &engine->filter.aLength, RKValueTypeUInt32),
-                      RKVariableInString("outpuLength", &me->outputLength, RKValueTypeUInt32));
+                      RKVariableInString("outputLength", &me->outputLength, RKValueTypeUInt32));
 
                 #endif
 
@@ -579,7 +579,7 @@ static void *pulseRingWatcher(void *_in) {
                           RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
                           RKVariableInString("origin", &worker->processOrigin, RKValueTypeUInt32),
                           RKVariableInString("length", &worker->processLength, RKValueTypeUInt32),
-                          RKVariableInString("outpuLength", &worker->processLength, RKValueTypeUInt32));
+                          RKVariableInString("outputLength", &worker->processLength, RKValueTypeUInt32));
                 }
             }
         }

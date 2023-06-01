@@ -74,6 +74,11 @@ size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t c
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user3, RKMemoryAlignSize, capacity * sizeof(RKFloat)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->user4, RKMemoryAlignSize, capacity * sizeof(RKFloat)))
     mem += 4 * capacity * sizeof(RKFloat);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->userComplex1, RKMemoryAlignSize, capacity * sizeof(RKComplex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->userComplex2, RKMemoryAlignSize, capacity * sizeof(RKComplex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->userComplex3, RKMemoryAlignSize, capacity * sizeof(RKComplex)))
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->userComplex4, RKMemoryAlignSize, capacity * sizeof(RKComplex)))
+    mem += 4 * capacity * sizeof(RKComplex);
     return mem;
 }
 
@@ -82,6 +87,10 @@ void RKCompressionScratchFree(RKCompressionScratch *scratch) {
     free(scratch->user2);
     free(scratch->user3);
     free(scratch->user4);
+    free(scratch->userComplex1);
+    free(scratch->userComplex2);
+    free(scratch->userComplex3);
+    free(scratch->userComplex4);
     free(scratch->inBuffer);
     free(scratch->outBuffer);
     free(scratch->zi);

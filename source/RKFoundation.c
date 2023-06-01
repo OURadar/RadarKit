@@ -1099,9 +1099,25 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
     int i, j;
     size_t readsize;
     uint32_t gateCount = 0;
-    const uint32_t capacity = pulse->header.capacity;
-    static RKPulseHeaderV1 *headerV1 = NULL;
     static RKPulseHeader *header = NULL;
+    static RKPulseHeaderV1 *headerV1 = NULL;
+
+    // Deallocate static memories if fid == NULL
+    if (fid == NULL) {
+        if (headerV1) {
+            free(headerV1);
+            headerV1 = NULL;
+        }
+        if (header) {
+            free(header);
+            header = NULL;
+        }
+        return RKResultSuccess;
+    }
+
+    const uint32_t capacity = pulse->header.capacity;
+
+    // Read routine based on file version
     switch (fileHeader->version) {
         case 0:
         case 1:
@@ -1205,7 +1221,15 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             return RKResultTooBig;
         }
     }
-    pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+    if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
+        pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+    } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
+        if (fileHeader->version <= 6) {
+            pulse->header.s = headerV1->s;
+        } else {
+            pulse->header.s = header->s;
+        }
+    }
     return RKResultSuccess;
 }
 
