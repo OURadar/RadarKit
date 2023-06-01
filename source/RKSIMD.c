@@ -55,9 +55,9 @@ void RKSIMD_show_info(void) {
 }
 
 void RKSIMD_show_count(const int n) {
-    int KF = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    int KC = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-    printf("n = %d   K = %d / %d\n", n, KF, KC);
+    int nF = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    int nC = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    printf("n = %d   nF = %d   nC = %d\n", n, nF, nC);
 }
 
 //
