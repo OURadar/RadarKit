@@ -1674,10 +1674,10 @@ void RKTestSIMDBasic(void) {
     RKSIMD_TEST_DESC(str, "_rk_mm_dup_even(a)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
 
-    c = _rk_mm_flip_odd_even(a);
+    c = _rk_mm_flip_pair(a);
     e = _array_delta(&c, r9, n);
     f = (float *)&c;
-    RKSIMD_TEST_DESC(str, "_rk_mm_flip_odd_even(a)", f, e);
+    RKSIMD_TEST_DESC(str, "_rk_mm_flip_pair(a)", f, e);
     RKSIMD_TEST_RESULT(str, e < tiny);
 
     #if defined(_rk_mm_movehdup)
