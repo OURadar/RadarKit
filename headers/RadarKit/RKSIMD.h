@@ -141,6 +141,9 @@ typedef float32x4_t RKVec;
 #define _rk_mm_dup_odd(a)            __builtin_shufflevector(a, a, 1, 1, 3, 3)                     // macOS, M1, clang
 #define _rk_mm_dup_even(a)           __builtin_shufflevector(a, a, 0, 0, 2, 2)                     //
 #define _rk_mm_flip_pair(a)          __builtin_shufflevector(a, a, 1, 0, 3, 2)                     //
+// #define _rk_mm_dup_odd(a)            vcombine_f32(vdup_n_f32(vgetq_lane_f32(a, 1)), vdup_n_f32(vgetq_lane_f32(a, 3)))
+// #define _rk_mm_dup_even(a)           vcombine_f32(vdup_n_f32(vgetq_lane_f32(a, 0)), vdup_n_f32(vgetq_lane_f32(a, 2)))
+// #define _rk_mm_flip_pair(a)          vcombine_f32(vrev64_f32(vget_low_f32(a)), vrev64_f32(vget_high_f32(a)));
 #define _rk_mm_sqrt(a)               vsqrtq_f32(a)
 #define _rk_mm_rcp(a)                vrecpeq_f32(a)
 

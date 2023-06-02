@@ -349,7 +349,7 @@ RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ..
     parameter = va_arg(args, double);
     va_end(args);
 
-    RKWindowMake(window, type, waveform->depth, parameter);
+    RKWindowMake(window, type, waveform->depth, parameter, 0);
 
     g = 0.0;
     w = window;

@@ -2207,9 +2207,16 @@ void RKTestWindow(void) {
     }
     printf("\n");
 
+    printf("Hamming 0.7:\n");
+    RKWindowMake(window, RKWindowTypeHamming, n, 0.7);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+
+    printf("\n");
     param = 0.5;
     printf("Kaiser @ %.4f:\n", param);
-    RKWindowMake(window, RKWindowTypeKaiser, n, param);
+    RKWindowMake(window, RKWindowTypeKaiser, n, param, 0);
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
@@ -2217,7 +2224,7 @@ void RKTestWindow(void) {
 
     param = 0.8;
     printf("Trapezoid @ %.4f:\n", param);
-    RKWindowMake(window, RKWindowTypeTrapezoid, n, param);
+    RKWindowMake(window, RKWindowTypeTrapezoid, n, param, 0);
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
@@ -2225,7 +2232,7 @@ void RKTestWindow(void) {
 
     param = 0.5;
     printf("Tukey @ %.4f:\n", param);
-    RKWindowMake(window, RKWindowTypeTukey, n, param);
+    RKWindowMake(window, RKWindowTypeTukey, n, param, 0);
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }

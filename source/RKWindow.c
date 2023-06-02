@@ -76,20 +76,20 @@ void kaiser(double *w, const int n, const double beta) {
     double bes = BESSI0(beta);
     double x_end = ((double)n - 1); x_end *= x_end;
     double *x, *v;
-    
+
     if (n == 0) {
         return;
     }
-    
+
     x = (double *)malloc((m + 1) * sizeof(double));
     v = (double *)malloc(m * sizeof(double));
     memset(x, 0, (m + 1) * sizeof(double));
     memset(v, 0, m * sizeof(double));
-    
+
     if (bes < 0.0) {
         bes -= bes;
     }
-    
+
     if (odd) {
         for (i = 0; i < m; i++) {
             x[i] = (double)i;
@@ -99,13 +99,13 @@ void kaiser(double *w, const int n, const double beta) {
             x[i] = (double)i + 0.5;
         }
     }
-    
+
     for (i = 0; i < m; i++) {
         x[i] *= x[i] * 4.0;
         v[i] = BESSI0(beta * sqrt(1.0 - (x[i] / x_end))) / bes;
         //printf("x = %10.7f  v = %10.7f\n", x[i], v[i]);
     }
-    
+
     i = m;
     j = 0;
     while (i > 1) {
@@ -175,37 +175,39 @@ void tukey(double *w, const int n, const double r) {
 
 //
 // RKWindowMake(buffer, RKWindowTypeHann, 20) creates a Hann window of length 20
+// RKWindowMake(buffer, RKWindowTypeHann, 20, 0.2) creates a Hann window of length 20, 0.2 blend with rectangular window (0.2 like rectangle)
 // RKWindowMake(buffer, RKWindowTypeKaiser, 20, 0.2) creates a Kaiser window of length 20 with factor 0.2
 //
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
     int k;
-    double param;
+    double param, blend;
     va_list args;
-    
+
     if (length == 0) {
         return;
     }
-    
+
     double *window = (double *)malloc(length * sizeof(double));
     memset(window, 0, length * sizeof(double));
 
+    // The next arg is interpreted as NULL = 0.0 if not supplied
     va_start(args, length);
 
     switch (type) {
-        
+
         case RKWindowTypeHann:
             hann(window, length);
             break;
-        
+
         case RKWindowTypeHamming:
             hamming(window, length);
             break;
-        
+
         case RKWindowTypeKaiser:
             param = va_arg(args, double);
             kaiser(window, length, param);
             break;
-        
+
         case RKWindowTypeTrapezoid:
             param = va_arg(args, double);
             trapezoid(window, length, param);
@@ -223,13 +225,16 @@ void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
             }
             break;
     }
-    
+
+    blend = va_arg(args, double);
     va_end(args);
-    
-    // Copy to RadarKit buffer
+
+    // printf("blend = %.4f\n", blend);
+
+    // Copy and blend to RadarKit buffer
     for (k = 0; k < length; k++) {
-        buffer[k] = (RKFloat)window[k];
+        buffer[k] = (RKFloat)((1.0 - blend) * window[k] + blend);
     }
-    
+
     free(window);
 }
