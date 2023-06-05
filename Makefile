@@ -3,6 +3,7 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
+MODERN_KERNEL := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
 
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -g -DBETA_BRANCH
@@ -92,6 +93,11 @@ else
 	LDFLAGS += -lrt
 endif
 
+# Modern OS needs no -e
+ifeq ($(KERNEL_VER), 0)
+	ECHO_FLAG = -e
+endif
+
 all: showinfo $(RKLIB) $(PROGS)
 
 showinfo:
@@ -101,6 +107,7 @@ showinfo:
 	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
 	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
 	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
+	MODERN_KERNEL = \033[38;5;214m$(MODERN_KERNEL)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
 
 MAKEFLAGS += --jobs=$(CPUS)
@@ -115,11 +122,7 @@ $(RKLIB): $(OBJS_WITH_PATH)
 	ar rvcs $@ $(OBJS_WITH_PATH)
 
 $(PROGS): %: %.c libradarkit.a
-ifeq ($(KERNEL), Darwin)
-	@echo "\033[38;5;45m$@\033[m"
-else
 	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
-endif
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
