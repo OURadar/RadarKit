@@ -33,6 +33,20 @@
       "cStandard": "c11",
       "cppStandard": "${default}",
       "intelliSenseMode": "macos-clang-arm64"
+    },
+    {
+      "name": "linux-gcc-x86_64",
+      "includePath": [
+        "${workspaceFolder}/headers",
+        "${workspaceFolder}/headers/RadarKit",
+        "/usr/include",
+        "/usr/local/include"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "c17",
+      "cppStandard": "c++14",
+      "intelliSenseMode": "linux-clang-x64"
     }
   ],
   "version": 4

@@ -23,6 +23,7 @@ CFLAGS += -Wall
 # CFLAGS += -Wpedantic
 CFLAGS += -Woverlength-strings
 CFLAGS += -Wno-unknown-pragmas
+CFLAGS += -fPIC
 
 ifeq ($(HOMEBREW_PREFIX), )
 	ifeq ($(MACHINE), arm64)
@@ -37,17 +38,13 @@ ifeq ($(MACHINE), x86_64)
 	CFLAGS += -mfpmath=sse
 endif
 
-CFLAGS += -Iheaders -Iheaders/RadarKit -fPIC
+CFLAGS += -Iheaders -Iheaders/RadarKit
+CFLAGS += -I${HOMEBREW_PREFIX}/include
+CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
 
 LDFLAGS = -L./
-
-ifeq ($(KERNEL), Darwin)
-	CFLAGS += -I${HOMEBREW_PREFIX}/include
-	CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
-
-	LDFLAGS += -L${HOMEBREW_PREFIX}/lib
-	LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
-endif
+LDFLAGS += -L${HOMEBREW_PREFIX}/lib
+LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
