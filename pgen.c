@@ -520,9 +520,9 @@ void proc(UserParams *arg) {
                 for (j = 0; j < config->waveform->filterCounts[gid]; j++) {
                     int planIndex = (int)ceilf(log2f((float)MIN(pulse->header.gateCount - config->waveform->filterAnchors[gid][j].inputOrigin,
                                                                 config->waveform->filterAnchors[gid][j].maxDataLength)));
-                    printf("C:%s  gid = %d   j = %d   planIndex = %d   %08x (%s)\n",
-                           RKIntegerToCommaStyleString(pulse->header.gateCount), gid, j, planIndex,
-                           pulse->header.s, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
+                    // printf("C:%s  gid = %d   j = %d   planIndex = %d   %08x (%s)\n",
+                    //        RKIntegerToCommaStyleString(pulse->header.gateCount), gid, j, planIndex,
+                    //        pulse->header.s, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
 
                     // Compression
                     scratch->pulse = pulse;
