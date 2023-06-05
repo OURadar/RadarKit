@@ -27,19 +27,19 @@ x == RKScanModeSector ? "SEC" : ( \
 x == RKScanModePoint ? "SPT" : "UNK")))
 
 typedef bool RKScanRepeat;
-enum RKScanRepeat {
+enum {
     RKScanRepeatNone                             = false,
     RKScanRepeatForever                          = true
 };
 
-typedef int RKPedestalAxis;
-enum RKPedestalAxis {
+typedef uint8_t RKPedestalAxis;
+enum {
     RKPedestalAxisElevation                      = 0,
     RKPedestalAxisAzimuth                        = 1
 };
 
-typedef int RKScanProgress;
-enum RKScanProgress {
+typedef uint8_t RKScanProgress;
+enum {
     RKScanProgressNone                           = 0,                          // Not active, ready for next sweep
     RKScanProgressSetup                          = 1,                          // Getting ready
     RKScanProgressReady                          = 1 << 1,                     // Ready for the next sweep (deprecating)
@@ -48,16 +48,16 @@ enum RKScanProgress {
     RKScanProgressStopPedestal                   = 1 << 4                      // Stop pedestal
 };
 
-typedef int RKScanOption;
-enum RKScanOption {
+typedef uint8_t RKScanOption;
+enum {
     RKScanOptionNone                             = 0,
     RKScanOptionRepeat                           = 1,
     RKScanOptionVerbose                          = 1 << 1,
     RKScanOptionUsePoint                         = 1 << 2
 };
 
-typedef int RKScanMode;
-enum RKScanMode {
+typedef uint8_t RKScanMode;
+enum {
     RKScanModeNone,
     RKScanModeRHI,
     RKScanModePPI,
@@ -66,15 +66,15 @@ enum RKScanMode {
     RKScanModeSpeedDown        // need to learn more
 };
 
-typedef int RKScanHitter;
-enum RKScanHitter {
+typedef uint8_t RKScanHitter;
+enum {
     RKScanAtBat                                  = 0,                          // current vcp
     RKScanPinch                                  = 1,                          // vcp only once
     RKScanLine                                   = 2,                          // next vcp
 };
 
-typedef int RKSteerCommand;
-enum RKSteerCommand {
+typedef uint16_t RKSteerCommand;
+enum {
     RKSteerCommandNone,
     RKSteerCommandHome,
     RKSteerCommandPoint,

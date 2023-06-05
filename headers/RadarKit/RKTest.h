@@ -14,15 +14,15 @@
 
 #define RKTestWaveformCacheCount 2
 
-typedef int RKTestFlag;
-enum RKTestFlag {
+typedef uint8_t RKTestFlag;
+enum {
     RKTestFlagNone         = 0,
     RKTestFlagVerbose      = 1,
     RKTestFlagShowResults  = 1 << 1
 };
 
-typedef int RKTestSIMDFlag;
-enum RKTestSIMDFlag {
+typedef uint8_t RKTestSIMDFlag;
+enum {
     RKTestSIMDFlagNull                       = 0,
     RKTestSIMDFlagShowNumbers                = 1,
     RKTestSIMDFlagPerformanceTestArithmetic  = 1 << 1,
@@ -30,8 +30,8 @@ enum RKTestSIMDFlag {
     RKTestSIMDFlagPerformanceTestAll         = RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestDuplicate
 };
 
-typedef int RKAxisAction;
-enum RKAxisAction {
+typedef uint8_t RKAxisAction;
+enum {
     RKAxisActionStop,
     RKAxisActionSpeed,
     RKAxisActionPosition
