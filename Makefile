@@ -94,14 +94,14 @@ else
 endif
 
 # Modern OS needs no -e
-ifeq ($(KERNEL_VER), 0)
+ifneq ($(MODERN_KERNEL), 1)
 	ECHO_FLAG = -e
 endif
 
 all: showinfo $(RKLIB) $(PROGS)
 
 showinfo:
-	@echo "\
+	@echo $(ECHO_FLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
 	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
