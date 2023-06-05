@@ -119,7 +119,7 @@ static void *ringFilterCore(void *_in) {
     if (rkGlobalParameters.showColor) {
         sprintf(name + k, RKNoColor);
     }
-    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
+    snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
     #if defined(_GNU_SOURCE)
 

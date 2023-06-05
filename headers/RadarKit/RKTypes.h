@@ -147,11 +147,12 @@
 #define RKMaximumPathLength                  1024
 #define RKMaximumFolderPathLength            768
 #define RKMaximumCommandLength               512
-#define RKNameLength                         128
 #define RKStatusStringLength                 256
 #define RKPulseHeaderPaddedSize              384                               // Change this to higher number for post-AVX2 intrinsics
 #define RKRayHeaderPaddedSize                128                               // Change this to higher number for post-AVX2 intrinsics
+#define RKNameLength                         128
 #define RKShortNameLength                    20                                // Short names, e.g., C1, M2, P0, etc. (including color)
+#define RKChildNameLength                    160                               // Child names, e.g., "PulseEngine C0"
 
 #define RKColorDutyCycle(x)  (x > RKDutyCyleRedThreshold ? RKBaseRedColor : (x > RKDutyCyleOrangeThreshold ? RKBaseYellowColor : RKBaseGreenColor))
 #define RKColorLag(x)        (x > RKLagRedThreshold      ? RKBaseRedColor : (x > RKLagOrangeThreshold      ? RKBaseYellowColor : RKBaseGreenColor))
@@ -201,6 +202,7 @@ typedef void *        RKUserResource;                                          /
 typedef void *        RKUserModule;                                            //
 typedef void *        RKCompressor;                                            //
 typedef char          RKName[RKNameLength];                                    // RKName x = char x[RKNameLength]
+typedef char          RKChildName[RKChildNameLength];                          // RKChildName x = char x[RKChildNameLength]
 typedef char          RKShortName[RKShortNameLength];                          // RKShortname x = char x[RKShortNameLength]
 typedef char          RKCommand[RKMaximumCommandLength];                       // RKCommand x = char x[RKCommandLength]
 typedef uint8_t       RKProductId;                                             // Product identifier

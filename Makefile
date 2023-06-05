@@ -2,6 +2,7 @@ KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -g -DBETA_BRANCH
@@ -72,15 +73,6 @@ RKLIB = libradarkit.a
 # PROGS = rkutil simple-emulator rknchead pgen owav2wav
 PROGS = rkutil simple-emulator pgen
 
-# The command echo from macOS and Ubuntu needs no -e
-ECHO_FLAG = -e
-ifneq (, $(findstring Darwin, $(KERNEL_VER)))
-	ECHO_FLAG =
-endif
-ifneq (, $(findstring Linux, $(KERNEL_VER)))
-	ECHO_FLAG =
-endif
-
 ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
@@ -106,11 +98,15 @@ endif
 all: showinfo $(RKLIB) $(PROGS)
 
 showinfo:
-	@echo $(ECHO_FLAG) "KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m"
-	@echo $(ECHO_FLAG) "KERNEL = \033[38;5;15m$(KERNEL)\033[m"
-	@echo $(ECHO_FLAG) "MACHINE = \033[38;5;220m$(MACHINE)\033[m"
-	@echo $(ECHO_FLAG) "GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m"
-	@echo $(ECHO_FLAG) "HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m"
+	@echo "\
+	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
+	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
+	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
+	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
+	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
+	CPUS = \033[38;5;203m$(CPUS)\033[m"
+
+MAKEFLAGS += --jobs=$(CPUS)
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
 	$(CC) $(CFLAGS) -c $< -o $@

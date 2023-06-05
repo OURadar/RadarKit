@@ -19,7 +19,7 @@ typedef struct rk_pulse_ring_filter_worker RKPulseRingFilterWorker;
 typedef struct rk_pulse_ring_filter_engine RKPulseRingFilterEngine;
 
 struct rk_pulse_ring_filter_worker {
-    RKName                           name;
+    RKChildName                      name;
     int                              id;
     pthread_t                        tid;                                      // Thread ID
     RKPulseRingFilterEngine          *parent;                                  // Parent engine reference

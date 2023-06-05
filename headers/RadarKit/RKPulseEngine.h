@@ -20,7 +20,7 @@ typedef struct rk_pulse_engine RKPulseEngine;
 typedef int RKPulseEnginePlanIndex[RKMaximumFilterCount];
 
 struct rk_pulse_worker {
-    RKName                           name;
+    RKChildName                      name;
     int                              id;
     pthread_t                        tid;                                      // Thread ID
     RKPulseEngine                    *parent;                                  // Parent engine reference

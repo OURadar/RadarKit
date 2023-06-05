@@ -292,7 +292,7 @@ static void *fileRemover(void *in) {
     if (rkGlobalParameters.showColor) {
         sprintf(name + k, RKNoColor);
     }
-    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
+    snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
     size_t bytes;
     size_t mem = 0;

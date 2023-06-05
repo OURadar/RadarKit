@@ -304,7 +304,7 @@ static void *pulseEngineCore(void *_in) {
     if (rkGlobalParameters.showColor) {
         sprintf(name + k, RKNoColor);
     }
-    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
+    snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
     #if defined(_GNU_SOURCE)
 
@@ -687,7 +687,7 @@ static void *pulseWatcher(void *_in) {
             engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
             //printf("pulse->header.i = %d   gid = %d\n", (uint32_t)pulse->header.i, gid);
 
-            // Find the right plan; create it if it does not exist
+            // Find the right plan and increase the use count, assuming the compressor will use it
             for (j = 0; j < engine->filterCounts[gid]; j++) {
                 planIndex = (unsigned int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
                                                                  engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));

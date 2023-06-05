@@ -195,7 +195,7 @@ static void *momentCore(void *in) {
     if (rkGlobalParameters.showColor) {
         sprintf(name + k, RKNoColor);
     }
-    snprintf(me->name, RKNameLength, "%s %s", engine->name, name);
+    snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
     #if defined(_GNU_SOURCE)
 
@@ -498,7 +498,7 @@ static void *momentCore(void *in) {
         // Summary of this ray
         snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth,
                  " %05u %s | %05u - %05u (%3d)  [C%02d %s E%.2f A%.2f]   %s%6.2f-%6.2f (%4.2f)  G%s  M%05x  %s  %s%s",
-                 (unsigned int)io, me->name, (unsigned int)is, (unsigned int)ie, path.length,
+                 (unsigned int)io, name, (unsigned int)is, (unsigned int)ie, path.length,
                  ray->header.configIndex,
                  RKMarkerScanTypeShortString(ray->header.marker),
                  engine->configBuffer[ray->header.configIndex].sweepElevation, engine->configBuffer[ray->header.configIndex].sweepAzimuth,

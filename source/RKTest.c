@@ -143,7 +143,7 @@ char *RKTestByNumberDescription(const int indent) {
     "63 - Measure the speed of cached write\n";
     RKIndentCopy(text, helpText, indent);
     if (strlen(text) > 3000) {
-        fprintf(stderr, "Warning. Approaching limit. (%lu)\n", strlen(text));
+        fprintf(stderr, "Warning. Approaching limit. (%zu)\n", strlen(text));
     }
     return text;
 }
@@ -1404,7 +1404,7 @@ void RKTestReadIQ(const char *filename) {
         tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
         tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
         if (tr > 30) {
-            fprintf(stderr, "Warning. Time string is getting long at %lu.\n", tr);
+            fprintf(stderr, "Warning. Time string is getting long at %zu.\n", tr);
         }
         // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
         if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
@@ -1468,7 +1468,7 @@ void RKTestPreparePath(void) {
         strftime(daystr, 31, "%Y%m%d", localtime(&tt));
         strftime(timestr, 31, "%H%M%S", localtime(&tt));
         sprintf(filename, "data/iq/%s/PX-%s-%s-E1.0-Z.nc", daystr, daystr, timestr);
-        printf("tt = %zu  -->  %s %s -->  %s\n", tt, daystr, timestr, filename);
+        printf("tt = %lu  -->  %s %s -->  %s\n", tt, daystr, timestr, filename);
         RKPreparePath(filename);
         tt += 86400;
     }
@@ -4060,6 +4060,10 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             break;
         case 'z':
             transceiver->transmitting = false;
+            RKSteerEngineExecuteString(radar->steerEngine, "stop", response);
+            if (strstr(response, "ACK")) {
+                sprintf(response, "ACK. Everything stopped." RKEOL);
+            }
             break;
         default:
             sprintf(response, "NAK. Command not understood." RKEOL);
