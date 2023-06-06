@@ -87,7 +87,7 @@ else
 	endif
 endif
 
-LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm -lssl -lcrypto
+LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm -lssl -lcrypto
 
 ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
@@ -98,7 +98,7 @@ ifneq ($(MODERN_KERNEL), 1)
 	ECHO_FLAG = -e
 endif
 
-all: showinfo $(RKLIB) $(PROGS)
+all: showinfo $(RKLIB) $(PROGS) libradarkit.so
 
 showinfo:
 	@echo $(ECHO_FLAG) "\
@@ -119,11 +119,16 @@ $(OBJS_PATH):
 	mkdir -p $@
 
 $(RKLIB): $(OBJS_WITH_PATH)
+	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
 	ar rvcs $@ $(OBJS_WITH_PATH)
+
+libradarkit.so: $(OBJS_WITH_PATH)
+	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
+	$(CC) -shared -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
 
 $(PROGS): %: %.c libradarkit.a
 	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $< -lradarkit $(LDFLAGS)
 
 clean:
 	rm -f $(PROGS) $(RKLIB) *.log
