@@ -5,6 +5,7 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 MODERN_KERNEL := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
 
+CFLAGS = -O2
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -g -DBETA_BRANCH
 endif
@@ -18,7 +19,6 @@ endif
 # CFLAGS += -DDEBUG_PULSE_ENGINE_WAIT
 # CFLAGS += -DDEBUG_MUTEX_DESTROY
 
-CFLAGS += -O2
 CFLAGS += -std=c11
 CFLAGS += -Wall
 # CFLAGS += -Wextra
@@ -44,8 +44,7 @@ CFLAGS += -Iheaders -Iheaders/RadarKit
 CFLAGS += -I${HOMEBREW_PREFIX}/include
 CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
 
-LDFLAGS = -L./
-LDFLAGS += -L${HOMEBREW_PREFIX}/lib
+LDFLAGS = -L${HOMEBREW_PREFIX}/lib
 LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
@@ -87,7 +86,7 @@ else
 	endif
 endif
 
-LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm -lssl -lcrypto
+LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm -lssl
 
 ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
@@ -128,7 +127,7 @@ libradarkit.so: $(OBJS_WITH_PATH)
 
 $(PROGS): %: %.c libradarkit.a
 	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -lradarkit
+	$(CC) $(CFLAGS) -o $@ $< $(RKLIB) $(LDFLAGS)
 
 clean:
 	rm -f $(PROGS) $(RKLIB) *.log
