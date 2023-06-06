@@ -89,8 +89,7 @@ endif
 
 LDFLAGS += -lradarkit -lfftw3f -lnetcdf -lpthread -lz -lm -lssl -lcrypto
 
-ifeq ($(KERNEL), Darwin)
-else
+ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
 endif
 
