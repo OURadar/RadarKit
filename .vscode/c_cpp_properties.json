@@ -1,12 +1,9 @@
 {
   "configurations": [
     {
-      "name": "macos-clang-x86_64",
+      "name": "macos-clang-arm64",
       "includePath": [
-        "${workspaceFolder}/headers",
-        "${workspaceFolder}/headers/RadarKit",
-        "/usr/local/include",
-        "/usr/local/opt/openssl@1.1/include"
+        "${workspaceFolder}/**"
       ],
       "macFrameworkPath": [
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
@@ -14,8 +11,11 @@
       "compilerPath": "/usr/bin/clang",
       "cStandard": "${default}",
       "cppStandard": "${default}",
-      "intelliSenseMode": "macos-clang-x86",
-      "compilerArgs": ["-march=native", "-mfpmath=sse"]
+      "intelliSenseMode": "macos-clang-arm64",
+      "compilerArgs": [
+        "-march=native",
+        "-mfpmath=sse"
+      ]
     },
     {
       "name": "macos-clang-arm64",
