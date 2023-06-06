@@ -82,13 +82,41 @@ int RKLog(const char *whatever, ...) {
     struct timeval utc;
     va_list args;
     struct tm tm;
-    char *msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
-    char *filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
+
+    // Local memory
+    static char *msg = NULL;
+    static char *filename = NULL;
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    if (msg == NULL) {
+        msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
+    }
+    if (filename == NULL) {
+        filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
+    }
     if (msg == NULL || filename == NULL) {
         fprintf(stderr, "Error in RKLog().\n");
         free(filename);
         free(msg);
         return -1;
+    }
+
+    if (whatever == NULL) {
+        va_start(args, whatever);
+        if (va_arg(args, void *) == NULL) {
+            #if defined(DEBUG_MUTEX_DESTROY)
+            fprintf(stderr, "Deallocating RKLog's internal stuff ...\n");
+            #endif
+            if (msg) {
+                free(msg);
+            }
+            if (filename) {
+                free(filename);
+            }
+            pthread_mutex_destroy(&lock);
+        }
+        va_end(args);
+        return 0;
     }
 
     // Get the time
@@ -99,8 +127,6 @@ int RKLog(const char *whatever, ...) {
     va_start(args, whatever);
     if (strlen(whatever) > RKMaximumStringLength - 256) {
         fprintf(stderr, "RKLog() could potential crash for string '%s'\n", whatever);
-        free(filename);
-        free(msg);
         return 1;
     }
     if (rkGlobalParameters.logTimeOnly) {
@@ -181,7 +207,6 @@ int RKLog(const char *whatever, ...) {
         fflush(rkGlobalParameters.stream);
     }
     // Write the string to a file if specified
-    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_lock(&lock);
     FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
@@ -215,9 +240,23 @@ int RKLog(const char *whatever, ...) {
         fclose(logFileID);
     }
     pthread_mutex_unlock(&lock);
-    free(filename);
-    free(msg);
     return 0;
+}
+
+void RKExit(int e) {
+    RKVariableInString(NULL, NULL, 0);
+    RKGetValueOfKey(NULL, NULL);
+    RKGetCPUIndex(0xDEADBEEF);
+    RKGetColorOfIndex(0xDEADBEEF);
+    RKGetBackgroundColorOfIndex(0xDEADBEEF);
+    RKGetBackgroundColorOfCubeIndex(0xDEADBEEF);
+    RKUIntegerToCommaStyleString((unsigned long long)0xFEEDFACECAFEBEEF);
+    RKIntegerToCommaStyleString((long long)0xFEEDFACECAFEBEEF);
+    RKIntegerToHexStyleString((long long)0xFEEDFACECAFEBEEF);
+    RKFloatToCommaStyleString((double)0xFEEDFACECAFEBEEF);
+    pthread_mutex_destroy(&rkGlobalParameters.lock);
+    RKLog(NULL, NULL);
+    exit(e);
 }
 
 #pragma mark - Global Preferences
@@ -283,6 +322,8 @@ int RKSetLogfileToDefault(void) {
     }
     return RKResultSuccess;
 }
+
+//
 
 char *RKVersionString(void) {
     static char versionString[16];
@@ -836,6 +877,14 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
     static int ibuf = 0;
     static RKName stringBuffer[16];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    if (name == NULL) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKVariableInString: Destroying static mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
 
     char *string = stringBuffer[ibuf];
     memset(string, 0, RKNameLength);

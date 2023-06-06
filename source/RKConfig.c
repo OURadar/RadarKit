@@ -23,6 +23,13 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
 
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+    if (configs == NULL && configIndex == NULL && configBufferDepth == 0) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKConfigAdvance: Destroying static mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+    }
+
     for (k = 0; k < RKMaximumFilterCount; k++) {
         memset(stringBuffer[k], 0, RKStatusStringLength * sizeof(char));
     }

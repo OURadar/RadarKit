@@ -519,7 +519,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 // A bunch of different tests
                 k = atoi(optarg);
                 RKTestByNumber(k, argc == optind ? NULL : argv[optind]);
-                exit(EXIT_SUCCESS);
+                RKExit(EXIT_SUCCESS);
                 break;
             case 'V':
                 c = optarg;
@@ -531,7 +531,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->verbose = 2;
                 RKSetWantScreenOutput(true);
                 updateSystemPreferencesFromControlFile(user);
-                exit(EXIT_SUCCESS);
+                RKExit(EXIT_SUCCESS);
                 break;
             case 'b':
                 user->fs = roundf(atof(optarg));

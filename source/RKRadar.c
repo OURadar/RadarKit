@@ -1152,6 +1152,7 @@ int RKFree(RKRadar *radar) {
         free(radar->status);
     }
     if (radar->state & RKRadarStateConfigBufferAllocated) {
+        RKConfigAdvance(NULL, NULL, 0, 0);
         free(radar->configs);
     }
     if (radar->state & RKRadarStateHealthBufferAllocated) {

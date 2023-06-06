@@ -267,7 +267,7 @@ bool RKAngularCrossOver(const float a1, const float a2, const float crossover);
 //
 //
 
-long RKGetCPUIndex(void);
+long RKGetCPUIndex(const long);
 long RKGetMemoryUsage(void);
 
 //

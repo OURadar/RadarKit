@@ -108,8 +108,9 @@ void RKComplexArrayInPlaceConjugateMultiply(RKComplex *src, RKComplex *dst, cons
 
 // Log
 int RKLog(const char *, ...);
+void RKExit(int);
 
-// Presentation
+// Variables in rkGlobalVariable / Presentation
 void RKSetStatusColor(const bool);
 void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
@@ -118,6 +119,7 @@ int RKSetProgramName(const char *);
 int RKSetRootFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
+
 char *RKVersionString(void);
 RKValueType RKGuessValueType(const char *);
 

@@ -16,6 +16,14 @@ char *RKGetColorOfIndex(const int i) {
     static char str[4][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+    if (i == 0xDEADBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKGetColorOfIndex: Destroying static mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
     pthread_mutex_lock(&lock);
     k = k == 3 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
@@ -41,6 +49,14 @@ char *RKGetBackgroundColorOfIndex(const int i) {
     static char str[4][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+    if (i == 0xDEADBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKGetBackgroundColorOfIndex: Destroying static mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
     pthread_mutex_lock(&lock);
     k = k == 3 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
@@ -56,12 +72,22 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
     static int s = 3;
     static char str[4][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    if (c == 0xDEADBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKGetBackgroundColorOfCubeIndex: Destroying static mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
     pthread_mutex_lock(&lock);
     s = s == 3 ? 0 : s + 1;
     pthread_mutex_unlock(&lock);
+
     int f = j > 2 ? 0 : 15;
-    snprintf(str[k], sizeof(str[0]), "\033[38;5;%d;48;5;%dm", f, 16 + i * 36 + j * 6 + k);
-    return str[k];
+    snprintf(str[s], sizeof(str[0]), "\033[38;5;%d;48;5;%dm", f, 16 + i * 36 + j * 6 + k);
+    return str[s];
 }
 
 #pragma mark - JSON / Dictionary / Parsing
@@ -163,7 +189,14 @@ char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
 char *RKGetValueOfKey(const char *string, const char *key) {
     static char valueStrings[8][256];
     static int k = 7;
-    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    if (string == NULL && key == NULL) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKGetValueOfKey: Destroying static mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
     pthread_mutex_lock(&lock);
     k = k == 7 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
@@ -525,6 +558,14 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
     static char stringBuffer[16][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+    if (num == (unsigned long long)0xFEEDFACECAFEBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKUIntegerToCommaStyleString: Destroying mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
     char *string = stringBuffer[ibuf];
 
     pthread_mutex_lock(&lock);
@@ -559,6 +600,14 @@ char *RKIntegerToCommaStyleString(const long long num) {
     static char stringBuffer[16][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+    if (num == (long long)0xFEEDFACECAFEBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKIntegerToCommaStyleString: Destroying mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
     char *string = stringBuffer[ibuf];
 
     pthread_mutex_lock(&lock);
@@ -592,6 +641,14 @@ char *RKIntegerToHexStyleString(const long long num) {
     static char stringBuffer[16][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+    if (num == (long long)0xFEEDFACECAFEBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKIntegerToHexStyleString: Destroying mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
     char *string = stringBuffer[ibuf];
 
     pthread_mutex_lock(&lock);
@@ -612,6 +669,14 @@ char *RKFloatToCommaStyleString(const double num) {
     static int ibuf = 0;
     static char stringBuffer[16][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    if (num == (double)0xFEEDFACECAFEBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKFloatToCommaStyleString: Destroying mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
 
     char *string = stringBuffer[ibuf];
 
@@ -1095,19 +1160,23 @@ int pthread_setaffinity_np(pthread_t thread, size_t cpu_size, cpu_set_t *cpu_set
 
 #endif
 
-long RKGetCPUIndex(void) {
+long RKGetCPUIndex(const long v) {
 	static long c = 1;
 	static long count = 0;
-	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-	pthread_mutex_lock(&mutex);
+	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    if (v == 0xDEADBEEF) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKGetCPUIndex: Destroying mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return 0;
+    }
+	pthread_mutex_lock(&lock);
 	if (count == 0) {
 		count = sysconf(_SC_NPROCESSORS_ONLN);
-		if (count == 0) {
-			count = 1;
-		}
 	}
-	pthread_mutex_unlock(&mutex);
-	return c++ % count;
+	pthread_mutex_unlock(&lock);
+	return count ? c++ % count : v;
 }
 
 long RKGetMemoryUsage(void) {
