@@ -1146,13 +1146,13 @@ int RKFree(RKRadar *radar) {
         free(radar->filter);
         radar->filter = NULL;
     }
+    RKConfigAdvance(NULL, NULL, 0, 0);
     // Buffers
     RKLog("Freeing radar '%s' ...\n", radar->desc.name);
     if (radar->state & RKRadarStateStatusBufferAllocated) {
         free(radar->status);
     }
     if (radar->state & RKRadarStateConfigBufferAllocated) {
-        RKConfigAdvance(NULL, NULL, 0, 0);
         free(radar->configs);
     }
     if (radar->state & RKRadarStateHealthBufferAllocated) {

@@ -28,6 +28,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
         fprintf(stderr, "RKConfigAdvance: Destroying static mutex lock ...\n");
         #endif
         pthread_mutex_destroy(&lock);
+        return;
     }
 
     for (k = 0; k < RKMaximumFilterCount; k++) {
