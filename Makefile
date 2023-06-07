@@ -126,9 +126,9 @@ libradarkit.so: $(OBJS_WITH_PATH)
 	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
 	$(CC) -shared -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
 
-$(PROGS): %: %.c libradarkit.a
+$(PROGS): %: %.c $(RKLIB)
 	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -lradarkit
+	$(CC) $(CFLAGS) -o $@ $< $(RKLIB) $(LDFLAGS)
 
 clean:
 	rm -f $(PROGS) $(RKLIB) *.log

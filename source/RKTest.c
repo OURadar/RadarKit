@@ -3903,7 +3903,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                     "Commands:\n"
                     UNDERLINE("help") " - Help list.\n"
                     UNDERLINE("prt") " [value] - PRT set to value\n"
-                    UNDERLINE("z") " [value] - Sleep interval set to value.\n"
+                    UNDERLINE("y") " Starts a built-in mode.\n"
+                    UNDERLINE("z") " Stops everything.\n"
                     );
             break;
         case 'p':
@@ -4057,6 +4058,13 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             // Simulate critical temperature
             transceiver->simFault = !transceiver->simFault;
             sprintf(response, "ACK. simFault -> %d" RKEOL, transceiver->simFault);
+            break;
+        case 'y':
+            // Everything goes
+            RKSteerEngineExecuteString(radar->steerEngine, "ipp 2,4,6,8,10,12 0 18", response);
+            if (strstr(response, "ACK")) {
+                sprintf(response, "ACK. Supposed to be everything goes" RKEOL);
+            }
             break;
         case 'z':
             transceiver->transmitting = false;
