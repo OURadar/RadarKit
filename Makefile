@@ -66,9 +66,9 @@ OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductF
 OBJS_PATH = objects
 OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
-RKLIB = libradarkit.a
+STATIC_LIB = libradarkit.a
+SHARED_LIB = libradarkit.so
 
-# PROGS = rkutil simple-emulator rknchead pgen owav2wav
 PROGS = rkutil simple-emulator pgen
 
 ifeq ($(KERNEL), Darwin)
@@ -97,7 +97,7 @@ ifneq ($(MODERN_KERNEL), 1)
 	ECHO_FLAG = -e
 endif
 
-all: showinfo $(RKLIB) $(PROGS) libradarkit.so
+all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
 
 showinfo:
 	@echo $(ECHO_FLAG) "\
@@ -117,27 +117,27 @@ $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
 $(OBJS_PATH):
 	mkdir -p $@
 
-$(RKLIB): $(OBJS_WITH_PATH)
+$(STATIC_LIB): $(OBJS_WITH_PATH)
 	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
 	ar rvcs $@ $(OBJS_WITH_PATH)
 
-libradarkit.so: $(OBJS_WITH_PATH)
+$(SHARED_LIB): $(OBJS_WITH_PATH)
 	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
 	$(CC) -shared -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
 
-$(PROGS): %: %.c $(RKLIB)
+$(PROGS): %: %.c $(STATIC_LIB)
 	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
-	$(CC) $(CFLAGS) -o $@ $< $(RKLIB) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $< $(STATIC_LIB) $(LDFLAGS)
 
 clean:
-	rm -f $(PROGS) $(RKLIB) *.log
+	rm -f $(PROGS) $(STATIC_LIB) $(SHARED_LIB) *.log
 	rm -f $(OBJS_PATH)/*.o
 	rm -rf *.dSYM
 
 install: showinfo
 	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/
-	cp -p $(RKLIB) ${HOMEBREW_PREFIX}/lib/
+	cp -p $(STATIC_LIB) $(SHARED_LIB) ${HOMEBREW_PREFIX}/lib/
 
 uninstall:
 	rm -rf ${HOMEBREW_PREFIX}/include/RadarKit.h ${HOMEBREW_PREFIX}/include/RadarKit
-	rm -rf ${HOMEBREW_PREFIX}/lib/$(RKLIB)
+	rm -rf ${HOMEBREW_PREFIX}/lib/$(STATIC_LIB) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB)
