@@ -174,7 +174,7 @@ static void showHelp() {
            "    -T60\n"
            "         Runs the program to measure SIMD performance.\n"
            "\n\n"
-           "%s / RadarKit " __RKVersionString__ " / " __VERSION__
+           "%s / RadarKit " __RKVersion__ " / " __VERSION__
            "\n\n",
            name,
            RKTestByNumberDescription(9),

@@ -4,10 +4,13 @@ KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 MODERN_KERNEL := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
+RADARKIT_VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -g -DBETA_BRANCH
+
+	RADARKIT_VERSION := $(RADARKIT_VERSION)b
 endif
 
 # Some other heavy debuggning flags
@@ -103,11 +106,13 @@ showinfo:
 	@echo $(ECHO_FLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
+	MODERN_KERNEL = \033[38;5;214m$(MODERN_KERNEL)\033[m\n\
 	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
 	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
+	RADARKIT_VERSION = \033[38;5;46m$(RADARKIT_VERSION)\033[m\n\
 	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
-	MODERN_KERNEL = \033[38;5;214m$(MODERN_KERNEL)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
+
 
 MAKEFLAGS += --jobs=$(CPUS)
 
@@ -136,8 +141,11 @@ clean:
 
 install: showinfo
 	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/
-	cp -p $(STATIC_LIB) $(SHARED_LIB) ${HOMEBREW_PREFIX}/lib/
+	cp -p $(STATIC_LIB) ${HOMEBREW_PREFIX}/lib/
+	cp -p $(SHARED_LIB) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB).$(RADARKIT_VERSION)
+	[ -f ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB) ] && rm -f ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB) || :
+	ln -s ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB).$(RADARKIT_VERSION) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB)
 
 uninstall:
 	rm -rf ${HOMEBREW_PREFIX}/include/RadarKit.h ${HOMEBREW_PREFIX}/include/RadarKit
-	rm -rf ${HOMEBREW_PREFIX}/lib/$(STATIC_LIB) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB)
+	rm -rf ${HOMEBREW_PREFIX}/lib/$(STATIC_LIB) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB)*

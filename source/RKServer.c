@@ -431,7 +431,7 @@ int RKDefaultWelcomeHandler(RKOperator *O) {
     int nlines = 2;
     char line_array[nlines][RKMaximumStringLength];
     snprintf(line_array[0], ii, "%s", c);
-    sprintf(line_array[1], __RKVersionString__);
+    sprintf(line_array[1], __RKVersion__);
     size_t max_len = 0, len;
     for (ii = 0; ii < nlines; ii++) {
         len = strlen(line_array[ii]);
