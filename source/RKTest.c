@@ -150,6 +150,7 @@ char *RKTestByNumberDescription(const int indent) {
 }
 
 void RKTestByNumber(const int number, const void *arg) {
+    int n;
     RKSetWantScreenOutput(true);
     switch (number) {
         case 0:
@@ -249,10 +250,13 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestRadarHub();
             break;
         case 26:
-            const int n = arg != NULL ? atoi(arg) : 1;
-            const RKPulseStatus status = n == 1 ? RKPulseStatusProcessed : (
-                                         n == 2 ? RKPulseStatusUsedForMoments : RKPulseStatusNull);
-            RKTestSimplePulseEngine(status);
+            if (arg) {
+                n = atoi(arg);
+            } else {
+                n = 1;
+            }
+            RKTestSimplePulseEngine(n == 1 ? RKPulseStatusProcessed : (
+                                    n == 2 ? RKPulseStatusUsedForMoments : RKPulseStatusNull));
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull, 0);
