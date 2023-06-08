@@ -565,6 +565,7 @@ enum {
 //
 typedef uint32_t RKPulseStatus;
 enum {
+    RKPulseStatusNull                            = 0,
     RKPulseStatusVacant                          = 0,
     RKPulseStatusHasIQData                       = 1,                          // 0x01
     RKPulseStatusHasPosition                     = (1 << 1),                   // 0x02

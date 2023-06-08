@@ -25,6 +25,9 @@
 #define RKNextModuloS(i, S)              ((i) == (S) - 1 ? 0 : (i) + 1)
 #define RKPreviousModuloS(i, S)          ((i) == 0 ? (S) - 1 : (i) - 1)
 
+// Compute the modulo lag, assume h is always ahead of t
+#define RKModuloLag(h, t, S)             ((h) < (t) ? (h) + (S) - (t) : (h) - (t))
+
 //
 // Z in [-32.0    ... 95.5]             Zi = (Z) x 2 + 64
 // V in [-16.0    ... 15.875]           Vi = (V) x 8 + 128

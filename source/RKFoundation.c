@@ -1090,6 +1090,7 @@ size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t
     while (i < count) {
         RKPulse *pulse = (RKPulse *)m;
         pulse->header.capacity = capacity;
+        pulse->header.gateCount = 1;
         pulse->header.i = -(uint64_t)count + i;
         m += pulseSize;
         i++;

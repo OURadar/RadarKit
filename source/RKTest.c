@@ -112,6 +112,7 @@ char *RKTestByNumberDescription(const int indent) {
     "23 - RKWebSocket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "25 - Connect to RadarHub - RKReporterInit()\n"
+    "26 - Illustrate a simple RKPulseEngine()\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -246,6 +247,12 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 25:
             RKTestRadarHub();
+            break;
+        case 26:
+            const int n = arg != NULL ? atoi(arg) : 1;
+            const RKPulseStatus status = n == 1 ? RKPulseStatusProcessed : (
+                                         n == 2 ? RKPulseStatusUsedForMoments : RKPulseStatusNull);
+            RKTestSimplePulseEngine(status);
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull, 0);
@@ -1552,6 +1559,57 @@ void RKTestRadarHub(void) {
     sleep(1);
 
     RKReporterFree(reporter);
+}
+
+void RKTestSimplePulseEngine(const RKPulseStatus status) {
+    SHOW_FUNCTION_NAME
+    int k;
+    uint32_t pulseIndex = 0;
+    uint32_t configIndex = 0;
+    uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
+    uint32_t capacity = (uint32_t)ceilf((float)15 / multiple) * multiple;
+
+    RKRadarDesc desc = {
+        .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
+        .configBufferDepth = 3,
+        .pulseToRayRatio = 1,
+        .pulseBufferDepth = 8,
+        .pulseCapacity = capacity,
+        .dataPath = "data"
+    };
+
+    RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
+
+    RKBuffer pulses;
+    RKPulseBufferAlloc(&pulses, capacity, desc.pulseBufferDepth);
+    RKConfig *configs = (RKConfig *)malloc(desc.configBufferDepth);
+
+    RKPulseEngine *engine = RKPulseEngineInit();
+    RKPulseEngineSetInputOutputBuffers(engine, &desc, configs, &configIndex, pulses, &pulseIndex);
+    RKPulseEngineSetFFTModule(engine, fftModule);
+    RKPulseEngineSetCoreCount(engine, 4);
+    RKPulseEngineStart(engine);
+
+    RKWaveform *waveform = RKWaveformInitAsImpulse();
+    RKPulseEngineSetFilterByWaveform(engine, waveform);
+
+    for (k = 0; k < 11; k++) {
+        // status can be RKPulseStatusNull for no wait
+        //               RKPulseStatusProcessed for pulse compression
+        //               RKPulseStatusUsedForMoments for moment calculation
+        RKPulse *pulse = RKPulseEngineGetVacantPulse(engine, status);
+        pulse->header.gateCount = 12;
+        pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+        RKLog("k = %02d   pulse @ %p   i = %02zu   gateCount = %d\n", k, pulse, pulse->header.i, pulse->header.gateCount);
+    }
+
+    RKPulseEngineWaitWhileBusy(engine);
+    RKPulseEngineFree(engine);
+
+    RKFFTModuleFree(fftModule);
+
+    RKPulseBufferFree(pulses);
+    free(configs);
 }
 
 #pragma mark -
@@ -4637,14 +4695,6 @@ void RKTestMakePositionStatusString(void) {
 
 void RKTestExperiment(void) {
     SHOW_FUNCTION_NAME
-    // printf("%04x & %04x --> %d\n", 0x8ef, RKPulseStatusReadyForMoments, (0x8ef & RKPulseStatusReadyForMoments) == RKPulseStatusReadyForMoments);
-    // printf("0x%04x inverse -> 0x%04x vs 0x%04x\n", RKStreamDisplayAll, !RKStreamDisplayAll, ~RKStreamDisplayAll);
-    uint32_t depth = 1000;
-    uint32_t k = 500, pulseIndex = 503;
-    // fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / engine->radarDescription->pulseBufferDepth, 1.0f);
-    float lag = fmodf((float)(pulseIndex + depth - k) / depth, 1.0f);
-    uint32_t i = (uint32_t)roundf(lag * depth);
-    printf("k = %u   pulseIndex = %u   lag = %.4f (%d)\n", k, pulseIndex, lag, i);
 }
 
 #pragma mark -
