@@ -1,8 +1,10 @@
 {
   "configurations": [
     {
-      "name": "macos-clang-x86_64",
-      "includePath": ["${workspaceFolder}/**"],
+      "name": "macos-clang-x64",
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
       "macFrameworkPath": [
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
       ],
@@ -10,7 +12,10 @@
       "cStandard": "${default}",
       "cppStandard": "${default}",
       "intelliSenseMode": "macos-clang-x64",
-      "compilerArgs": ["-march=native", "-mfpmath=sse"]
+      "compilerArgs": [
+        "-march=native",
+        "-mfpmath=sse"
+      ]
     },
     {
       "name": "macos-clang-arm64",
