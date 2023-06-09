@@ -1255,6 +1255,15 @@ int RKSetHealthRelay(RKRadar *radar,
     return RKResultSuccess;
 }
 
+int RKSeUserDevice(RKRadar *radar,
+                   const RKHealthNode i,
+                   void *initInput,
+                   RKHealthRelay initRoutine(RKRadar *, void *),
+                   int execRoutine(RKHealthRelay, const char *, char *),
+                   int freeRoutine(RKHealthRelay)) {
+
+}
+
 #pragma mark - Before-Live Properties
 
 int RKSetProcessingCoreCounts(RKRadar *radar,
