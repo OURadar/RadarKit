@@ -426,6 +426,7 @@ enum RKEngineColor {
     RKEngineColorTransceiver = 17,
     RKEngineColorPedestalRelayPedzy = 15,
     RKEngineColorHealthRelayTweeta = 0,
+    RKEngineColorHealthRelayNaveen = 11,
     RKEngineColorRadarRelay = 17,
     RKEngineColorHostMonitor = 16,
     RKEngineColorClock = 19,
