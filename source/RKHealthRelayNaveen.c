@@ -7,6 +7,7 @@
 //
 
 #include <RadarKit/RKHealthRelayNaveen.h>
+#include "nmea.c"
 
 // Internal Functions
 
@@ -19,6 +20,14 @@ static int healthRelayNaveenRead(RKClient *client) {
     char *stringValue;
 
     printf("%s\n", string);
+    nmea_data_t nmea = {
+        .utc_time = 0,
+        .valid = false
+    };
+    int r = nmea_parse_sentence(&nmea, string);
+    if (r) {
+        return r;
+    }
 
     return RKResultSuccess;
 }
@@ -130,6 +139,7 @@ int RKHealthRelayNaveenFree(RKHealthRelay input) {
         return RKResultNoRadar;
     }
     RKHealthRelayNaveen *me = (RKHealthRelayNaveen *)input;
+    RKLog("%s Freeing ...\n", me->client->name);
     RKClientFree(me->client);
     free(me);
     return RKResultSuccess;

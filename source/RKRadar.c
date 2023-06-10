@@ -2009,9 +2009,11 @@ int RKStop(RKRadar *radar) {
         }
         for (k = 0; k < RKHealthNodeCount; k++) {
             if (radar->userDevices[k].device != NULL) {
-                RKLog("Sending 'disconnect' to user device %d ...\n", k);
+                if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                    RKLog("Sending 'disconnect' to user device %d ...\n", k);
+                }
+                radar->userDevices[k].exec(radar->userDevices[k].device, "disconnect", radar->userDevices[k].response);
             }
-            radar->userDevices[k].exec(radar->userDevices[k].device, "disconnect", radar->userDevices[k].response);
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
     }

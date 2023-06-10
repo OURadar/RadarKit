@@ -984,12 +984,11 @@ int main(int argc, const char **argv) {
 
         for (k = 0; k < RKHealthNodeCount; k++) {
             if (strlen(systemPreferences->userDevices[k])) {
-                RKLog("User device[%d] '%s'\n", k, systemPreferences->userDevices[k]);
                 RKSeUserDevice(myRadar, k,
                                (void *)systemPreferences->userDevices[k],
-                               &RKHealthRelayNaveenInit,
-                               &RKHealthRelayNaveenExec,
-                               &RKHealthRelayNaveenFree);
+                               RKHealthRelayNaveenInit,
+                               RKHealthRelayNaveenExec,
+                               RKHealthRelayNaveenFree);
             }
         }
 
