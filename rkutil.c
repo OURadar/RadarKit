@@ -17,6 +17,7 @@ typedef struct user_params {
     RKName                   pedzyHost;
     RKName                   tweetaHost;
     RKName                   radarhubHost;
+    RKName                   userDevices[RKHealthNodeCount];
     RKName                   relayHost;
     RKName                   ringFilter;
     RKName                   momentMethod;
@@ -351,6 +352,13 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterTypeFloat, 1);
+
+    // User devices
+    k = 0;
+    memset(user->userDevices, 0, RKHealthNodeCount * sizeof(RKNameLength));
+    do {
+        s = RKPreferenceGetValueOfKeyword(userPreferences, verb, "UserDevice", user->userDevices[k++], RKParameterTypeString, RKNameLength);
+    } while (s == RKResultSuccess);
 
     // Revise some parameters
     s = (int)strlen(user->desc.dataPath);
@@ -972,6 +980,17 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayInit,
                              RKTestHealthRelayExec,
                              RKTestHealthRelayFree);
+        }
+
+        for (k = 0; k < RKHealthNodeCount; k++) {
+            if (strlen(systemPreferences->userDevices[k])) {
+                RKLog("User device[%d] '%s'\n", k, systemPreferences->userDevices[k]);
+                RKSeUserDevice(myRadar, k,
+                               (void *)systemPreferences->userDevices[k],
+                               &RKHealthRelayNaveenInit,
+                               &RKHealthRelayNaveenExec,
+                               &RKHealthRelayNaveenFree);
+            }
         }
 
         // Radar going live

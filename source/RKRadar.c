@@ -1054,6 +1054,7 @@ RKRadar *RKInitAsRelay(void) {
 //     RKResultSuccess if no errors
 //
 int RKFree(RKRadar *radar) {
+    int k;
     if (radar->active) {
         RKStop(radar);
     }
@@ -1129,6 +1130,12 @@ int RKFree(RKRadar *radar) {
     if (radar->healthRelay) {
         radar->healthRelayFree(radar->healthRelay);
         radar->healthRelay = NULL;
+        for (k = 0; k < RKHealthNodeCount; k++) {
+            if (radar->userDevices[k].device) {
+                radar->userDevices[k].free(radar->userDevices[k].device);
+                radar->userDevices[k].device = NULL;
+            }
+        }
     }
     // Internal copies of things
     if (radar->waveform) {
@@ -1221,9 +1228,9 @@ int RKFree(RKRadar *radar) {
 //
 int RKSetTransceiver(RKRadar *radar,
                      void *initInput,
-                     RKTransceiver initRoutine(RKRadar *, void *),
-                     int execRoutine(RKTransceiver, const char *, char *),
-                     int freeRoutine(RKTransceiver)) {
+                     RKTransceiver (*initRoutine)(RKRadar *, void *),
+                     int (*execRoutine)(RKTransceiver, const char *, char *),
+                     int (*freeRoutine)(RKTransceiver)) {
     radar->transceiverInitInput = initInput;
     radar->transceiverInit = initRoutine;
     radar->transceiverExec = execRoutine;
@@ -1233,9 +1240,9 @@ int RKSetTransceiver(RKRadar *radar,
 
 int RKSetPedestal(RKRadar *radar,
                   void *initInput,
-                  RKPedestal initRoutine(RKRadar *, void *),
-                  int execRoutine(RKPedestal, const char *, char *),
-                  int freeRoutine(RKPedestal)) {
+                  RKPedestal (*initRoutine)(RKRadar *, void *),
+                  int (*execRoutine)(RKPedestal, const char *, char *),
+                  int (*freeRoutine)(RKPedestal)) {
     radar->pedestalInitInput = initInput;
     radar->pedestalInit = initRoutine;
     radar->pedestalExec = execRoutine;
@@ -1245,9 +1252,9 @@ int RKSetPedestal(RKRadar *radar,
 
 int RKSetHealthRelay(RKRadar *radar,
                      void *initInput,
-                     RKHealthRelay initRoutine(RKRadar *, void *),
-                     int execRoutine(RKHealthRelay, const char *, char *),
-                     int freeRoutine(RKHealthRelay)) {
+                     RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                     int (*execRoutine)(RKHealthRelay, const char *, char *),
+                     int (*freeRoutine)(RKHealthRelay)) {
     radar->healthRelayInitInput = initInput;
     radar->healthRelayInit = initRoutine;
     radar->healthRelayExec = execRoutine;
@@ -1258,10 +1265,14 @@ int RKSetHealthRelay(RKRadar *radar,
 int RKSeUserDevice(RKRadar *radar,
                    const RKHealthNode i,
                    void *initInput,
-                   RKHealthRelay initRoutine(RKRadar *, void *),
-                   int execRoutine(RKHealthRelay, const char *, char *),
-                   int freeRoutine(RKHealthRelay)) {
-
+                   RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                   int (*execRoutine)(RKHealthRelay, const char *, char *),
+                   int (*freeRoutine)(RKHealthRelay)) {
+    radar->userDevices[i].initInput = initInput;
+    radar->userDevices[i].init = initRoutine;
+    radar->userDevices[i].exec = execRoutine;
+    radar->userDevices[i].free = freeRoutine;
+    return RKResultSuccess;
 }
 
 #pragma mark - Before-Live Properties
@@ -1719,6 +1730,7 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
 //     Always RKResultSuccess
 //
 int RKGoLive(RKRadar *radar) {
+    int k;
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("RKGoLive()   %s\n", RKVariableInString("radar->tic", &radar->tic, RKValueTypeUInt64));
     }
@@ -1785,7 +1797,28 @@ int RKGoLive(RKRadar *radar) {
     // Now we declare the radar is live
     radar->state |= RKRadarStateLive;
 
-    // Health Relay
+    // User devices
+    for (k = 0; k < RKHealthNodeCount; k++) {
+        if (radar->userDevices[k].init != NULL) {
+            RKLog("Initializing user device %d ...\n", k);
+            if (radar->userDevices[k].exec == NULL || radar->userDevices[k].free == NULL) {
+                RKLog("Error. User device %d incomplete.\n", k);
+                pthread_mutex_unlock(&radar->mutex);
+                RKStop(radar);
+                return RKResultIncompleteHealthRelay;
+            }
+            radar->userDevices[k].device = radar->userDevices[k].init(radar, radar->userDevices[k].initInput);
+            if (radar->userDevices[k].device == NULL) {
+                RKLog("Error. Unable to start user device %d.\n", k);
+                pthread_mutex_unlock(&radar->mutex);
+                RKStop(radar);
+                return RKResultFailedToStartHealthRelay;
+            }
+            radar->state |= RKRadarStateHealthRelayInitialized;
+        }
+    }
+
+    // Health relay
     if (radar->healthRelayInit != NULL) {
         if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
             RKLog("Initializing health relay ...\n");
@@ -1925,6 +1958,7 @@ int RKStop(RKRadar *radar) {
         RKLog("RKStop()   %s", RKVariableInString("radar->tic", &radar->tic, RKValueTypeUInt64));
     }
     int s = 0;
+    int k;
     float t;
     do {
         if (++s % 40 == 0) {
@@ -1948,17 +1982,8 @@ int RKStop(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Radar state = 0x%08x\n", radar->state);
     }
-    if (radar->state & RKRadarStatePedestalInitialized) {
-        if (radar->pedestalExec != NULL) {
-            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
-                RKLog("Sending 'disconnect' to pedestal ...\n");
-            }
-            radar->pedestalExec(radar->pedestal, "disconnect", radar->pedestalResponse);
-        }
-        radar->state ^= RKRadarStatePedestalInitialized;
-    }
     if (radar->state & RKRadarStateTransceiverInitialized) {
-        if (radar->transceiverExec != NULL) {
+        if (radar->transceiver != NULL) {
             if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                 RKLog("Sending 'disconnect' to transceiver ...\n");
             }
@@ -1966,12 +1991,27 @@ int RKStop(RKRadar *radar) {
         }
         radar->state ^= RKRadarStateTransceiverInitialized;
     }
+    if (radar->state & RKRadarStatePedestalInitialized) {
+        if (radar->pedestal != NULL) {
+            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                RKLog("Sending 'disconnect' to pedestal ...\n");
+            }
+            radar->pedestalExec(radar->pedestal, "disconnect", radar->pedestalResponse);
+        }
+        radar->state ^= RKRadarStatePedestalInitialized;
+    }
     if (radar->state & RKRadarStateHealthRelayInitialized) {
-        if (radar->healthRelayExec != NULL) {
+        if (radar->healthRelay != NULL) {
             if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                 RKLog("Sending 'disconnect' to health relay ...\n");
             }
             radar->healthRelayExec(radar->healthRelay, "disconnect", radar->healthRelayResponse);
+        }
+        for (k = 0; k < RKHealthNodeCount; k++) {
+            if (radar->userDevices[k].device != NULL) {
+                RKLog("Sending 'disconnect' to user device %d ...\n", k);
+            }
+            radar->userDevices[k].exec(radar->userDevices[k].device, "disconnect", radar->userDevices[k].response);
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
     }

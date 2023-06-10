@@ -1493,18 +1493,6 @@ typedef struct rk_status {
 } RKStatus;
 
 //
-// Simple device that reports health only
-//
-typedef struct rk_user_device {
-    RKHealthRelay        healthRelay;
-    RKHealthRelay        (*init)(RKRadar *, void *);
-    int                  (*exec)(RKHealthRelay, const char *, char *);
-    int                  (*free)(RKHealthRelay);
-    void                 *initInput;
-    char                 response[RKMaximumStringLength];
-} RKUserDevice;
-
-//
 // Simple engine
 //
 // - File monitor, etc.

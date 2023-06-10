@@ -73,6 +73,22 @@ enum {
 };
 
 typedef struct rk_radar RKRadar;
+typedef struct rk_user_device RKUserDevice;
+//
+// Simple device that reports health only
+//
+struct rk_user_device {
+    RKHealthRelay        device;
+    RKHealthRelay        (*init)(RKRadar *, void *);
+    int                  (*exec)(RKHealthRelay, const char *, char *);
+    int                  (*free)(RKHealthRelay);
+    void                 *initInput;
+    char                 response[RKMaximumStringLength];
+};
+
+//
+// The Radar
+//
 struct rk_radar {
     //
     // General attributes
@@ -166,7 +182,7 @@ struct rk_radar {
     RKMasterController               masterController;
     int                              (*masterControllerExec)(RKMasterController, const char *, char *);
     //
-    RKUserDevice                     devices[RKHealthNodeCount];
+    RKUserDevice                     userDevices[RKHealthNodeCount];
     //
     // Waveform calibrations
     //
@@ -206,31 +222,31 @@ int RKFree(RKRadar *radar);
 // Set the transceiver. Pass in function pointers: init, exec, and free
 int RKSetTransceiver(RKRadar *,
                      void *,
-                     RKTransceiver initRoutine(RKRadar *, void *),
-                     int execRoutine(RKTransceiver, const char *, char *),
-                     int freeRoutine(RKTransceiver));
+                     RKTransceiver (*initRoutine)(RKRadar *, void *),
+                     int (*execRoutine)(RKTransceiver, const char *, char *),
+                     int (*freeRoutine)(RKTransceiver));
 
 // Set the pedestal. Pass in function pointers: init, exec, and free
 int RKSetPedestal(RKRadar *,
                   void *,
-                  RKPedestal initRoutine(RKRadar *, void *),
-                  int execRoutine(RKPedestal, const char *, char *),
-                  int freeRoutine(RKPedestal));
+                  RKPedestal (*)(RKRadar *, void *),
+                  int (*execRoutine)(RKPedestal, const char *, char *),
+                  int (*freeRoutine)(RKPedestal));
 
 // Set the health relay. Pass in function pointers: init, exec, and free
 int RKSetHealthRelay(RKRadar *,
                      void *,
-                     RKHealthRelay initRoutine(RKRadar *, void *),
-                     int execRoutine(RKHealthRelay, const char *, char *),
-                     int freeRoutine(RKHealthRelay));
+                     RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                     int (*execRoutine)(RKHealthRelay, const char *, char *),
+                     int (*freeRoutine)(RKHealthRelay));
 
 // Set other simple devices that report health. Pass in function pointers init, exec, and free
 int RKSeUserDevice(RKRadar *,
                    const RKHealthNode,
                    void *,
-                   RKHealthRelay initRoutine(RKRadar *, void *),
-                   int execRoutine(RKHealthRelay, const char *, char *),
-                   int freeRoutine(RKHealthRelay));
+                   RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                   int (*execRoutine)(RKHealthRelay, const char *, char *),
+                   int (*freeRoutine)(RKHealthRelay));
 
 //
 // Properties

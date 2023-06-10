@@ -13,7 +13,7 @@
 
 #define RKHealthRelayNaveenFeedbackDepth   8
 
-typedef struct rk_ingest_nmea {
+typedef struct rk_naveen {
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKHealthRelayNaveenFeedbackDepth][RKMaximumStringLength];
@@ -23,8 +23,8 @@ typedef struct rk_ingest_nmea {
     RKByte                 response[RKMaximumStringLength];
 } RKHealthRelayNaveen;
 
-RKHealthRelayNaveen RKHealthRelayNaveenInit(RKRadar *, void *);
-int RKHealthRelayNaveenExec(RKHealthRelayNaveen, const char *, char *);
-int RKHealthRelayNaveenFree(RKHealthRelayNaveen);
+RKHealthRelay RKHealthRelayNaveenInit(RKRadar *, void *);
+int RKHealthRelayNaveenExec(RKHealthRelay, const char *, char *);
+int RKHealthRelayNaveenFree(RKHealthRelay);
 
 #endif /* __RadarKit_HealthRelayNaveen__ */
