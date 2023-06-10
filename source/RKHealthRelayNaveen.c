@@ -17,9 +17,7 @@ static int healthRelayNaveenRead(RKClient *client) {
     RKRadar *radar = me->radar;
 
     char *string = (char *)client->userPayload;
-    char *stringValue;
 
-    printf("%s\n", string);
     nmea_data_t nmea = {
         .utc_time = 0,
         .valid = false
@@ -28,7 +26,27 @@ static int healthRelayNaveenRead(RKClient *client) {
     if (r) {
         return r;
     }
-
+    printf("valid = %d   utc_time = %f   (%.6f, %.6f) @ %.2f\n", nmea.valid, nmea.utc_time, nmea.longitude, nmea.latitude, nmea.heading);
+    // Get a vacant slot for health from Radar, copy over the data, then set it ready
+    RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeUser1);
+    if (health == NULL) {
+        RKLog("%s failed to get a vacant health.\n", client->name);
+        return RKResultFailedToGetVacantHealth;
+    }
+    RKStatusEnum e = nmea.valid ? RKStatusEnumNormal : RKStatusEnumInvalid;
+    snprintf(health->string, RKMaximumStringLength, "{"
+        "\"GPS2 Valid\": {\"Value\":%s,\"Enum\":%d}, "
+        "\"GPS2 Longitude\": {\"Value\":%.7f,\"Enum\":%d}, "
+        "\"GPS2 Latitude\": {\"Value\":%.7f,\"Enum\":%d}, "
+        "\"GPS2 Heading\": {\"Value\":%.1f,\"Enum\":%d}"
+        "}",
+        nmea.valid ? "true" : "false", e,
+        nmea.longitude, e,
+        nmea.latitude, e,
+        nmea.heading, e
+    );
+    printf("%s\n", health->string);
+    RKSetHealthReady(radar, health);
     return RKResultSuccess;
 }
 
