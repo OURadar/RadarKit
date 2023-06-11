@@ -16,17 +16,17 @@ static int healthRelayNaveenRead(RKClient *client) {
     RKHealthRelayNaveen *me = (RKHealthRelayNaveen *)client->userResource;
     RKRadar *radar = me->radar;
 
-    char *string = (char *)client->userPayload;
-
     nmea_data_t nmea = {
         .utc_time = 0,
         .valid = false
     };
-    int r = nmea_parse_sentence(&nmea, string);
+    int r = nmea_parse_sentence(&nmea, (char *)client->userPayload);
     if (r) {
         return r;
     }
-    // printf("valid = %d   utc_time = %f   (%.6f, %.6f) @ %.2f\n", nmea.valid, nmea.utc_time, nmea.longitude, nmea.latitude, nmea.heading);
+    #if defined(DEBUG_NAVEEN)
+    printf("valid = %d   utc_time = %f   (%.6f, %.6f) @ %.2f\n", nmea.valid, nmea.utc_time, nmea.longitude, nmea.latitude, nmea.heading);
+    #endif
     // Get a vacant slot for health from Radar, copy over the data, then set it ready
     RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeUser1);
     if (health == NULL) {
@@ -45,7 +45,9 @@ static int healthRelayNaveenRead(RKClient *client) {
         nmea.latitude, e,
         nmea.heading, e
     );
-    // printf("%s\n", health->string);
+    #if defined(DEBUG_NAVEEN)
+    printf("%s\n", health->string);
+    #endif
     RKSetHealthReady(radar, health);
     return RKResultSuccess;
 }

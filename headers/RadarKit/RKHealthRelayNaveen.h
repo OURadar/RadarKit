@@ -2,6 +2,14 @@
 //  RKHealthRelayNaveen.h
 //  RadarKit
 //
+//  For relaying NMEA messages through a TCP/IP port
+//
+//  Supported NMEA 0183 input:
+//  - GPGGA - 3D position
+//  - GPHDT - heading
+//  - GPVTG - 2D velocity
+//  - GPRMC - 2D position, 2D velocity and coarse time
+//
 //  Created by Boonleng Cheong on 6/9/2023.
 //  Copyright © Boonleng Cheong. All rights reserved.
 //

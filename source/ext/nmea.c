@@ -1,12 +1,15 @@
 #ifndef NMEA_H
 #define NMEA_H
 
+//
 // Repackaged parts of the original source of tweeta
+// https://git.arrc.ou.edu/radar/tweeta
 //
 // Credits all go to the original author(s)
 //
 // Boonleng Cheong
 // 6/10/2023
+//
 
 #pragma pack(push, 1)
 
