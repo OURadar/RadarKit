@@ -7,7 +7,7 @@
 //
 
 #include <RadarKit/RKHealthRelayNaveen.h>
-#include "nmea.c"
+#include "ext/nmea.c"
 
 // Internal Functions
 
