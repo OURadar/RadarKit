@@ -26,7 +26,7 @@ static int healthRelayNaveenRead(RKClient *client) {
     if (r) {
         return r;
     }
-    printf("valid = %d   utc_time = %f   (%.6f, %.6f) @ %.2f\n", nmea.valid, nmea.utc_time, nmea.longitude, nmea.latitude, nmea.heading);
+    // printf("valid = %d   utc_time = %f   (%.6f, %.6f) @ %.2f\n", nmea.valid, nmea.utc_time, nmea.longitude, nmea.latitude, nmea.heading);
     // Get a vacant slot for health from Radar, copy over the data, then set it ready
     RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeUser1);
     if (health == NULL) {
@@ -45,7 +45,7 @@ static int healthRelayNaveenRead(RKClient *client) {
         nmea.latitude, e,
         nmea.heading, e
     );
-    printf("%s\n", health->string);
+    // printf("%s\n", health->string);
     RKSetHealthReady(radar, health);
     return RKResultSuccess;
 }
@@ -87,8 +87,9 @@ RKHealthRelay RKHealthRelayNaveenInit(RKRadar *radar, void *input) {
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatNewLine;
-    desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    desc.reconnect = true;
+    desc.ping = false;
     desc.verbose =
     radar->desc.initFlags & RKInitFlagVeryVeryVerbose ? 3 :
     (radar->desc.initFlags & RKInitFlagVeryVerbose ? 2:

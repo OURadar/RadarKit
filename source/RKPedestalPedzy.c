@@ -211,8 +211,9 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-    desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    desc.reconnect = true;
+    desc.ping = true;
     desc.verbose =
     radar->desc.initFlags & RKInitFlagVeryVeryVerbose ? 3 :
     (radar->desc.initFlags & RKInitFlagVeryVerbose ? 2:
