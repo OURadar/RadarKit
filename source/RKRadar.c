@@ -19,13 +19,19 @@ typedef struct rk_radar_command {
     RKCommand command;
 } RKRadarCommand;
 
-#pragma mark - Static Functions
-
 typedef uint32_t UIDType;
 enum UIDType {
     UIDTypeControl,
     UIDTypeWaveformCalibration
 };
+
+typedef struct rk_old_source {
+    RKRadar       *radar;
+    RKUserModule  *module;
+    uint64_t      targetConfigId;
+} RKOldUserModule;
+
+#pragma mark - Static Functions
 
 static uint32_t getUID(UIDType type) {
     static uint32_t uidControl = 0;
@@ -42,6 +48,25 @@ static uint32_t getUID(UIDType type) {
             break;
     }
     return 0;
+}
+
+void *freeUserModuleDelayed(void *input) {
+    RKOldUserModule *resource = (RKOldUserModule *)input;
+    RKRadar *radar = resource->radar;
+    bool all = true;
+    int k = 0;
+    do {
+        all = true;
+        for (int c = 0; c < radar->pulseEngine->coreCount; c++) {
+            all &= radar->pulseEngine->workers[c].cid >= resource->targetConfigId;
+        }
+        usleep(10000);
+    } while (k++ < 500 && !all);
+    if (k == 500) {
+        RKLog("Forcing removal of user module %p ...\n", resource->module);
+    }
+    radar->userModuleFree(resource->module);
+    return NULL;
 }
 
 void RKUpdateWaveformCalibration(RKRadar *, const uint8_t, const RKWaveformCalibration *);
@@ -61,12 +86,6 @@ static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
     size += radar->desc.rayBufferSize;
     size += radar->desc.waveformCalibrationCapacity * sizeof(RKWaveformCalibration);
     size += radar->desc.controlCapacity * sizeof(RKControl);
-    // Product buffer is dynamically allocated and reallocated
-    // radar->desc.productBufferSize = 0;
-    // for (k = 0; k < radar->desc.productBufferDepth; k++) {
-    //     radar->desc.productBufferSize += radar->products[k].totalBufferSize;
-    // }
-    // size += radar->desc.productBufferSize;
     // Memory usage of various internal engines
     size += radar->fileManager->memoryUsage;
     size += radar->hostMonitor->memoryUsage;
@@ -1425,6 +1444,7 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         RKLog("Error. Multiplexing = %d filters has not been implemented. Reverting to impulse filter.\n", waveform->filterCounts[0]);
         return RKSetWaveformToImpulse(radar);
     }
+    RKConfig *config = RKGetLatestConfig(radar);
     RKWaveform *oldWaveform = radar->waveform;
     RKWaveform *oldWaveformDecimate = radar->waveformDecimate;
     const double pulseWidth = (double)waveform->depth / waveform->fs;
@@ -1462,12 +1482,13 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
         if (old != NULL) {
-            // uint64_t waitTic = radar->pulseEngine->tic + (uint64_t)round(radar->pulseEngine->lag * radar->desc.pulseBufferDepth) + 10;
-            // RKLog("Waiting for pulseEngine->tic = %llu -> %llu ...", radar->pulseEngine->tic, waitTic);
-            // do {
-            //     usleep(10000);
-            // } while (radar->pulseEngine->tic < waitTic);
-            radar->userModuleFree(old);
+            RKOldUserModule resource = {
+                .radar = radar,
+                .module = old,
+                .targetConfigId = config->i
+            };
+            pthread_t tid;
+            pthread_create(&tid, NULL, &freeUserModuleDelayed, &resource);
         }
     }
     // Send the waveform pointers to config buffer

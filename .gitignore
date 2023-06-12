@@ -10,8 +10,10 @@ core.*
 *.dSYM
 *.so
 *.pyc
+*.nc
 .vscode/launch.json
 .vscode/settings.json
+m4
 
 # Folders
 .ipynb_checkpoints

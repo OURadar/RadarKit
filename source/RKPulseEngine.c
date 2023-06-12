@@ -511,7 +511,7 @@ static void *pulseEngineCore(void *_in) {
 
         // Record down the latest processed pulse index
         me->pid = i0;
-        //me->lag = fmodf((float)(*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - me->pid) / (float)engine->radarDescription->pulseBufferDepth, 1.0f);
+        me->cid = scratch->config->i;
         me->lag = RKModuloLag(*engine->pulseIndex, i0, engine->radarDescription->pulseBufferDepth) / (float)engine->radarDescription->pulseBufferDepth;
 
         // Done processing, get the time
