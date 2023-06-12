@@ -3,7 +3,7 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
-ECHO_FLAG := $(shell ([[ $$(echo "\033") == "\\033" ]] && echo "e" || echo ""))
+# EFLAG := $(shell ([[ $$(echo "\033") == '\033' ]] && echo e || echo v))
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
@@ -71,10 +71,6 @@ OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 STATIC_LIB = libradarkit.a
 SHARED_LIB = libradarkit.so
 
-ifeq ($(ECHO_FLAG), e)
-	ECHO_FLAG = -e
-endif
-
 PROGS = rkutil simple-emulator pgen
 
 ifeq ($(KERNEL), Darwin)
@@ -98,17 +94,20 @@ ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
 endif
 
-all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
+all: check showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
+
+check:
+	@if [ -z "$$(echo -e "test")" ]; then EFLAG = -e; fi
 
 showinfo:
-	@echo $(ECHO_FLAG) "\
+	@echo $(EFLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
 	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
 	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
 	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
 	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
-	ECHO_FLAG = \033[38;5;214m$(ECHO_FLAG)\033[m\n\
+	EFLAG = \033[38;5;214m$(EFLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
 
 
@@ -121,15 +120,15 @@ $(OBJS_PATH):
 	mkdir -p $@
 
 $(STATIC_LIB): $(OBJS_WITH_PATH)
-	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
 	ar rvcs $@ $(OBJS_WITH_PATH)
 
 $(SHARED_LIB): $(OBJS_WITH_PATH)
-	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
 	$(CC) -shared -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
 
 $(PROGS): %: %.c $(STATIC_LIB)
-	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
 	$(CC) $(CFLAGS) -o $@ $< $(STATIC_LIB) $(LDFLAGS)
 
 clean:
