@@ -898,8 +898,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         response = engine->response;
     }
 
-    RKLog("%s Interpreted %s\n", engine->name,
-        RKVariableInString("command", &command, RKValueTypeInt32InHex));
+    // RKLog("%s Interpreted %s\n", engine->name, RKVariableInString("command", &command, RKValueTypeInt32InHex));
 
     int s;
     int result;
