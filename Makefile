@@ -3,8 +3,7 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
-# MODERN := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
-# ECHO_FLAG := $(shell ([[ $$(echo "\033") == "\\033" ]] && echo "e" || echo ""))
+ECHO_FLAG := $(shell ([[ $$(echo "\033") == "\\033" ]] && echo "e" || echo ""))
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
@@ -72,7 +71,9 @@ OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 STATIC_LIB = libradarkit.a
 SHARED_LIB = libradarkit.so
 
-ECHO_FLAG = -e
+ifeq ($(ECHO_FLAG), e)
+	ECHO_FLAG = -e
+endif
 
 PROGS = rkutil simple-emulator pgen
 
@@ -80,8 +81,6 @@ ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -fms-extensions -Wno-microsoft
-
-	ECHO_FLAG =
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
