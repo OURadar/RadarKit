@@ -3,7 +3,6 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
-# EFLAG := $(shell ([[ $$(echo "\033") == '\033' ]] && echo e || echo v))
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
@@ -94,10 +93,11 @@ ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
 endif
 
-all: check showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
+ifeq ($(shell echo "\033"), \033)
+	EFLAG := -e
+endif
 
-check:
-	@if [ -z "$$(echo -e "test")" ]; then EFLAG = -e; fi
+all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
 
 showinfo:
 	@echo $(EFLAG) "\
