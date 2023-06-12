@@ -3,8 +3,8 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
-MODERN := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
-ECHO_FLAG := $(shell ([[ $$(echo "\t") == '\t' ]] && echo "-e" || echo ""))
+# MODERN := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
+# ECHO_FLAG := $(shell ([[ $$(echo "\033") == "\\033" ]] && echo "e" || echo ""))
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
@@ -72,12 +72,16 @@ OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 STATIC_LIB = libradarkit.a
 SHARED_LIB = libradarkit.so
 
+ECHO_FLAG = -e
+
 PROGS = rkutil simple-emulator pgen
 
 ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -fms-extensions -Wno-microsoft
+
+	ECHO_FLAG =
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
@@ -95,23 +99,17 @@ ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
 endif
 
-# Modern OS needs no -e
-# ifneq ($(MODERN), 1)
-# 	ECHO_FLAG = -e
-# endif
-
 all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
 
 showinfo:
 	@echo $(ECHO_FLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
-	MODERN = \033[38;5;214m$(MODERN)\033[m\n\
 	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
 	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
 	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
-	ECHO_FLAG = \033[38;5;214m$(ECHO_FLAG)\033[m\n\
 	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
+	ECHO_FLAG = \033[38;5;214m$(ECHO_FLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
 
 
