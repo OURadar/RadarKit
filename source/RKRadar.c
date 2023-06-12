@@ -1177,28 +1177,6 @@ int RKFree(RKRadar *radar) {
     if (radar->state & RKRadarStateRayBufferAllocated) {
         free(radar->rays);
     }
-    // if (radar->state & RKRadarStateProductBufferAllocated) {
-    //     for (i = 0; i < radar->desc.productBufferDepth; i++) {
-    //         if (radar->products[i].startAzimuth) {
-    //             free(radar->products[i].startAzimuth);
-    //         }
-    //         if (radar->products[i].endAzimuth) {
-    //             free(radar->products[i].endAzimuth);
-    //         }
-    //         if (radar->products[i].startElevation) {
-    //             free(radar->products[i].startElevation);
-    //         }
-    //         if (radar->products[i].endElevation) {
-    //             free(radar->products[i].endElevation);
-    //         }
-    //         if (radar->products[i].data) {
-    //             free(radar->products[i].data);
-    //         }
-    //     }
-    //     if (radar->products) {
-    //         free(radar->products);
-    //     }
-    // }
     if (radar->state & RKRadarStateControlsAllocated) {
         free(radar->controls);
     }
