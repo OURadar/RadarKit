@@ -257,7 +257,6 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         if (client->state != RKClientStateConnected) {
             RKLog("%s Pedestal not connected for command '%s'.\n", client->name, command);
             sprintf(response, "NAK. Pedestal not connected." RKEOL);
-            RKClientStop(client);
             return RKResultClientNotConnected;
         }
         int s = 0;

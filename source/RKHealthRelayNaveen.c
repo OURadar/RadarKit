@@ -160,7 +160,6 @@ int RKHealthRelayNaveenFree(RKHealthRelay input) {
         return RKResultNoRadar;
     }
     RKHealthRelayNaveen *me = (RKHealthRelayNaveen *)input;
-    RKLog("%s Freeing ...\n", me->client->name);
     RKClientFree(me->client);
     free(me);
     return RKResultSuccess;
