@@ -26,6 +26,7 @@ void *theClient(void *in) {
     int flags;
     int readCount, timeoutCount;
     struct timeval timeout;
+    struct timeval previousBeaconTime = {0, 0};
     bool readOkay;
 
     C->state = RKClientStateCreating;
@@ -209,44 +210,19 @@ void *theClient(void *in) {
                       C->name, r, FD_ISSET(C->sd, &C->rfd), FD_ISSET(C->sd, &C->efd), errno);
             }
             if (r == 0) {
-                // No errors just yet. The server could be sending out payload slowly
                 if (timeoutCount++ / 10 > C->timeoutSeconds) {
-                    // Send in a beacon signal to see if there's a response
-                    if (C->ping) {
-                        FD_ZERO(&C->wfd);
-                        FD_ZERO(&C->efd);
-                        FD_SET(C->sd, &C->wfd);
-                        FD_SET(C->sd, &C->efd);
-                        timeout.tv_sec = 0;
-                        timeout.tv_usec = 1000;
-                        r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
-                        if (r > 0) {
-                            if (FD_ISSET(C->sd, &C->efd)) {
-                                // Exceptions
-                                RKLog("%s encountered an exception error.\n", C->name);
-                                break;
-                            } else if (FD_ISSET(C->sd, &C->wfd)) {
-                                if (C->verbose > 1) {
-                                    RKLog("%s Sending ping\n", C->name);
-                                }
-                                pthread_mutex_lock(&C->lock);
-                                RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
-                                pthread_mutex_unlock(&C->lock);
-                            }
-                        } else {
-                            RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
-                            break;
-                        }
-                    } else {
-                        // Socket established but nothing from the server.
-                        RKLog("%s Timed out\n", C->name);
-                    } // if (C->ping) ...
+                    // Socket established but nothing from the server.
+                    if (C->verbose > 1) {
+                        RKLog("%s Timeout during select() for read.\n", C->name);
+                    }
                     break;
                 }
             } else if (r > 0 && FD_ISSET(C->sd, &C->rfd)) {
                 //RKLog("%s Warning C->state = %d   format = %d\n", C->name, C->state, C->format);
                 switch (C->format) {
+
                     case RKNetworkMessageFormatConstantSize:
+
                         k = 0;
                         readCount = 0;
                         while (readCount++ < C->timeoutSeconds * 100) {
@@ -284,7 +260,9 @@ void *theClient(void *in) {
                         }
                         readOkay = true;
                         break;
+
                     case RKNetworkMessageFormatHeaderDefinedSize:
+
                         // The delimiter first
                         k = 0;
                         readCount = 0;
@@ -387,8 +365,10 @@ void *theClient(void *in) {
                         }
                         readOkay = true;
                         break;
+
                     case RKNetworkMessageFormatNewLine:
                     default:
+                        
                         if (fid == NULL) {
                             fid = fdopen(C->sd, "r");
                             if (fid < 0) {
@@ -401,6 +381,7 @@ void *theClient(void *in) {
                         }
                         break;
                 } // switch (C->format) ...
+
                 if (readOkay == false) {
                     if (C->verbose > 1) {
                         RKLog("%s Server not connected.\n", C->name);
@@ -426,6 +407,35 @@ void *theClient(void *in) {
                 timeoutCount = 0;
                 C->recv(C);
                 cbuf[0] = '\0';
+
+                // Send in a beacon signal
+                gettimeofday(&timeout, NULL);
+                timeout.tv_sec -= 2;
+                if (timercmp(&timeout, &previousBeaconTime, >=)) {
+                    FD_ZERO(&C->wfd);
+                    FD_ZERO(&C->efd);
+                    FD_SET(C->sd, &C->wfd);
+                    FD_SET(C->sd, &C->efd);
+                    timeout.tv_sec = 0;
+                    timeout.tv_usec = 1000;
+                    r = select(C->sd + 1, NULL, &C->wfd, &C->efd, &timeout);
+                    if (r > 0) {
+                        if (FD_ISSET(C->sd, &C->efd)) {
+                            // Exceptions
+                            RKLog("%s encountered an exception error.\n", C->name);
+                            break;
+                        } else if (FD_ISSET(C->sd, &C->wfd)) {
+                            gettimeofday(&previousBeaconTime, NULL);
+                            //RKLog("%s beacon\n", C->name);
+                            pthread_mutex_lock(&C->lock);
+                            RKNetworkSendPackets(C->sd, ping, strlen(ping), NULL);
+                            pthread_mutex_unlock(&C->lock);
+                        }
+                    } else {
+                        RKLog("%s Error. r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
+                        break;
+                    }
+                } // if (timercmp(&timeout, &previousBeaconTime, >=)) ...
             } else if (r > 0 && FD_ISSET(C->sd, &C->efd)) {
                 RKLog("%s Error occurred.  r=%d  errno=%d (%s)\n", C->name, r, errno, RKErrnoString(errno));
                 break;
