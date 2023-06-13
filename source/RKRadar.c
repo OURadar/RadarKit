@@ -65,7 +65,9 @@ void *freeUserModuleDelayed(void *input) {
     if (k == 500) {
         RKLog("Forcing removal of user module %p ...\n", resource->module);
     }
-    radar->userModuleFree(resource->module);
+    RKLog("Deallocating %p ...\n", resource->module);
+    //radar->userModuleFree(resource->module);
+    free(resource);
     return NULL;
 }
 
@@ -1482,13 +1484,18 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
         if (old != NULL) {
-            RKOldUserModule resource = {
-                .radar = radar,
-                .module = old,
-                .targetConfigId = config->i
-            };
+            // RKOldUserModule resource = {
+            //     .radar = radar,
+            //     .module = old,
+            //     .targetConfigId = config->i
+            // };
+            RKOldUserModule *resource = (RKOldUserModule *)malloc(sizeof(RKOldUserModule));
+            resource->radar = radar;
+            resource->module = old;
+            resource->targetConfigId = config->i;
+            RKLog("Invoking freeUserModuleDelayed() ... module @ %p\n", old);
             pthread_t tid;
-            pthread_create(&tid, NULL, &freeUserModuleDelayed, &resource);
+            pthread_create(&tid, NULL, &freeUserModuleDelayed, resource);
         }
     }
     // Send the waveform pointers to config buffer

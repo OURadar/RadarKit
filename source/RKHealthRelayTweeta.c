@@ -97,7 +97,7 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
     desc.reconnect = true;
-    desc.ping = true;
+    desc.ping = false;
     desc.verbose =
     radar->desc.initFlags & RKInitFlagVeryVeryVerbose ? 3 :
     (radar->desc.initFlags & RKInitFlagVeryVerbose ? 2:
