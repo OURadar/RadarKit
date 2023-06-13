@@ -2,6 +2,9 @@
 //  RKHealthRelayTweeta.h
 //  RadarKit
 //
+//  For relaying health information through a TCP/IP port
+//  Messages must be in a valid JSON key-value dictionary
+//
 //  Created by Boonleng Cheong on 1/28/17.
 //  Copyright © 2017-2023 Boonleng Cheong. All rights reserved.
 //

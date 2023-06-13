@@ -38,6 +38,7 @@ typedef struct rk_client_desc {
     int                      blockLength;                        // Payload length
     bool                     blocking;                           // Blocking read
     bool                     reconnect;                          // Reconnect if connection fails
+    bool                     ping;                               // Send in a ping beacon periodically
     int                      verbose;                            // Verbosity level
     void                     *userResource;                      // A pointer to user resource
 } RKClientDesc;
@@ -45,8 +46,7 @@ typedef struct rk_client_desc {
 typedef struct rk_client RKClient;
 
 struct rk_client {
-    // User set parameters
-    //    struct rk_client_desc;                                 // Need -fms-extension to compile this properly
+    // User set parameters (must match RKClientDesc)
     RKName                   name;                               // A program name
     RKName                   hostname;                           // Hostname
     int                      port;                               // Port number of the server
@@ -56,6 +56,7 @@ struct rk_client {
     int                      blockLength;                        // Payload length
     bool                     blocking;                           // Blocking read
     bool                     reconnect;                          // Reconnect if connection fails
+    bool                     ping;                               // Send in a ping beacon periodically
     int                      verbose;                            // Verbosity level
     void                     *userResource;                      // A pointer to user resource
     void                     *userPayload;                       // A pointer to user payload

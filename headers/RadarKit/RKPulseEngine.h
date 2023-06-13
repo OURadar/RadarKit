@@ -27,6 +27,7 @@ struct rk_pulse_worker {
 
     char                             semaphoreName[32];
     uint64_t                         tic;                                      // Tic count
+    uint64_t                         cid;                                      // Latest processed RKConfig.i
     uint32_t                         pid;                                      // Latest processed index of pulses buffer
     double                           dutyBuff[RKWorkerDutyCycleBufferDepth];   // Duty cycle history
     double                           dutyCycle;                                // Latest duty cycle estimate

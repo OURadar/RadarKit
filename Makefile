@@ -3,7 +3,6 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
-MODERN := $(shell (echo "$$(uname -v | grep -oE '20[123][0-9]') > 2020" | bc -l))
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
@@ -21,6 +20,7 @@ endif
 # CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 # CFLAGS += -DDEBUG_PULSE_ENGINE_WAIT
 # CFLAGS += -DDEBUG_MUTEX_DESTROY
+# CFLAGS += -DDEBUG_NAVEEN
 
 CFLAGS += -std=c11
 CFLAGS += -Wall
@@ -61,7 +61,7 @@ OBJS += RKPulseEngine.o RKPulseRingFilter.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
 OBJS += RKMomentEngine.o RKPulsePair.o RKMultiLag.o RKSpectralMoment.o RKCalibrator.o
-OBJS += RKHealthRelayTweeta.o RKPedestalPedzy.o
+OBJS += RKHealthRelayTweeta.o RKHealthRelayNaveen.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
 
 OBJS_PATH = objects
@@ -93,22 +93,21 @@ ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
 endif
 
-# Modern OS needs no -e
-ifneq ($(MODERN), 1)
-	ECHO_FLAG = -e
+ifeq ($(shell echo "\033"), \033)
+	EFLAG := -e
 endif
 
 all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
 
 showinfo:
-	@echo $(ECHO_FLAG) "\
+	@echo $(EFLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
-	MODERN = \033[38;5;214m$(MODERN)\033[m\n\
 	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
 	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
 	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
 	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
+	EFLAG = \033[38;5;214m$(EFLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
 
 
@@ -121,15 +120,15 @@ $(OBJS_PATH):
 	mkdir -p $@
 
 $(STATIC_LIB): $(OBJS_WITH_PATH)
-	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
 	ar rvcs $@ $(OBJS_WITH_PATH)
 
 $(SHARED_LIB): $(OBJS_WITH_PATH)
-	@echo $(ECHO_FLAG) "\033[38;5;118m$@\033[m"
-	$(CC) -shared -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
+	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
+	$(CC) -shared -fPIC -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
 
 $(PROGS): %: %.c $(STATIC_LIB)
-	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
 	$(CC) $(CFLAGS) -o $@ $< $(STATIC_LIB) $(LDFLAGS)
 
 clean:
