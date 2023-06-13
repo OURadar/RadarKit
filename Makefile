@@ -110,7 +110,6 @@ showinfo:
 	EFLAG = \033[38;5;214m$(EFLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
 
-
 MAKEFLAGS += --jobs=$(CPUS)
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
