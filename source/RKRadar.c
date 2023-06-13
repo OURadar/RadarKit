@@ -1483,16 +1483,10 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
         radar->pulseEngine->userModule = radar->userModule;
         radar->momentEngine->userModule = radar->userModule;
         if (old != NULL) {
-            // RKOldUserModule resource = {
-            //     .radar = radar,
-            //     .module = old,
-            //     .targetConfigId = config->i
-            // };
             RKOldUserModule *resource = (RKOldUserModule *)malloc(sizeof(RKOldUserModule));
             resource->radar = radar;
             resource->module = old;
             resource->targetConfigId = config->i;
-            RKLog("Invoking freeUserModuleDelayed() ... module @ %p\n", old);
             pthread_t tid;
             pthread_create(&tid, NULL, &freeUserModuleDelayed, resource);
         }
