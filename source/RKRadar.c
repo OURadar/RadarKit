@@ -27,7 +27,7 @@ enum UIDType {
 
 typedef struct rk_old_source {
     RKRadar       *radar;
-    RKUserModule  *module;
+    RKUserModule  module;
     uint64_t      targetConfigId;
 } RKOldUserModule;
 
