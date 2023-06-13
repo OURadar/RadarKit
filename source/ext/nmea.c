@@ -51,7 +51,7 @@ static void tokenize_nmea_gpgga_sentence(char *sentence, nmea_data_t *out) {
 
     int     b;
     float   c;
-    float   utc_time, latitude, longitude;
+    double  utc_time, latitude, longitude;
     uint8_t quality;
 
     utc_time = latitude = longitude = 0.0;
@@ -117,9 +117,7 @@ static void tokenize_nmea_gphdt_sentence(char *sentence, nmea_data_t *out) {
     size_t len;
     int i = 0;
 
-    long    heading;
-
-    heading = 0.0;
+    double heading = 0.0;
 
     while (*e != '\0' && i < 16) {
         memset(token, 0, sizeof(token));
