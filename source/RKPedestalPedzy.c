@@ -252,7 +252,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         RKClientStop(client);
     } else {
         if (client->verbose) {
-            RKLog("%s Current client->state = 0x%08x", client->name, client->state);
+            RKLog("%s Current client->state = 0x%08x   command = '%s'", client->name, client->state, command);
         }
         if (client->state != RKClientStateConnected) {
             RKLog("%s Pedestal not connected for command '%s'.\n", client->name, command);
