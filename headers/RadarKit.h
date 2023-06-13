@@ -331,6 +331,7 @@ extern "C" {
 #include <RadarKit/RKCommandCenter.h>
 #include <RadarKit/RKPedestalPedzy.h>
 #include <RadarKit/RKHealthRelayTweeta.h>
+#include <RadarKit/RKHealthRelayNaveen.h>
 #include <RadarKit/RKRadarRelay.h>
 #include <RadarKit/RKHostMonitor.h>
 #include <RadarKit/RKReporter.h>

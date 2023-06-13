@@ -58,8 +58,11 @@ static int healthRelayTweetaRead(RKClient *client) {
 }
 
 static int healthRelayTweetaGreet(RKClient *client) {
+    ssize_t s = RKNetworkSendPackets(client->sd, "\n", 1, NULL);
+    if (s < 0) {
+        return -s;
+    }
     RKLog("%s Tweeta @ %s:%d connected.\n", client->name, client->hostIP, client->port);
-    // RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     return RKResultSuccess;
 }
 
@@ -92,8 +95,9 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     }
     desc.type = RKNetworkSocketTypeTCP;
     desc.format = RKNetworkMessageFormatHeaderDefinedSize;
-    desc.reconnect = true;
     desc.timeoutSeconds = RKNetworkTimeoutSeconds;
+    desc.reconnect = true;
+    desc.ping = false;
     desc.verbose =
     radar->desc.initFlags & RKInitFlagVeryVeryVerbose ? 3 :
     (radar->desc.initFlags & RKInitFlagVeryVerbose ? 2:

@@ -73,6 +73,22 @@ enum {
 };
 
 typedef struct rk_radar RKRadar;
+typedef struct rk_user_device RKUserDevice;
+//
+// Simple device that reports health only
+//
+struct rk_user_device {
+    RKHealthRelay        device;
+    RKHealthRelay        (*init)(RKRadar *, void *);
+    int                  (*exec)(RKHealthRelay, const char *, char *);
+    int                  (*free)(RKHealthRelay);
+    void                 *initInput;
+    char                 response[RKMaximumStringLength];
+};
+
+//
+// The Radar
+//
 struct rk_radar {
     //
     // General attributes
@@ -166,6 +182,8 @@ struct rk_radar {
     RKMasterController               masterController;
     int                              (*masterControllerExec)(RKMasterController, const char *, char *);
     //
+    RKUserDevice                     userDevices[RKHealthNodeCount];
+    //
     // Waveform calibrations
     //
     RKWaveformCalibration            *waveformCalibrations;
@@ -203,24 +221,32 @@ int RKFree(RKRadar *radar);
 
 // Set the transceiver. Pass in function pointers: init, exec, and free
 int RKSetTransceiver(RKRadar *,
-                     void *initInput,
-                     RKTransceiver initRoutine(RKRadar *, void *),
-                     int execRoutine(RKTransceiver, const char *, char *),
-                     int freeRoutine(RKTransceiver));
+                     void *,
+                     RKTransceiver (*initRoutine)(RKRadar *, void *),
+                     int (*execRoutine)(RKTransceiver, const char *, char *),
+                     int (*freeRoutine)(RKTransceiver));
 
 // Set the pedestal. Pass in function pointers: init, exec, and free
 int RKSetPedestal(RKRadar *,
-                  void *initInput,
-                  RKPedestal initRoutine(RKRadar *, void *),
-                  int execRoutine(RKPedestal, const char *, char *),
-                  int freeRoutine(RKPedestal));
+                  void *,
+                  RKPedestal (*)(RKRadar *, void *),
+                  int (*execRoutine)(RKPedestal, const char *, char *),
+                  int (*freeRoutine)(RKPedestal));
 
 // Set the health relay. Pass in function pointers: init, exec, and free
 int RKSetHealthRelay(RKRadar *,
-                     void *initInput,
-                     RKHealthRelay initRoutine(RKRadar *, void *),
-                     int execRoutine(RKHealthRelay, const char *, char *),
-                     int freeRoutine(RKHealthRelay));
+                     void *,
+                     RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                     int (*execRoutine)(RKHealthRelay, const char *, char *),
+                     int (*freeRoutine)(RKHealthRelay));
+
+// Set other simple devices that report health. Pass in function pointers init, exec, and free
+int RKSeUserDevice(RKRadar *,
+                   const RKHealthNode,
+                   void *,
+                   RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                   int (*execRoutine)(RKHealthRelay, const char *, char *),
+                   int (*freeRoutine)(RKHealthRelay));
 
 //
 // Properties
@@ -260,15 +286,6 @@ int RKSetUserModule(RKRadar *,
                     void (*compressor)(RKUserModule, RKCompressionScratch *),
                     void (*calibrator)(RKUserModule, RKMomentScratch *));
 
-// Pulse compressor
-// int RKSetPulseCompressor(RKRadar *,
-//                          void (*initRoutine)(RKCompressionScratch *),
-//                          void (*execRoutine)(RKCompressionScratch *),
-//                          void (*freeRoutine)(RKCompressionScratch *));
-
-// Moment calibrator
-int RKSetMomentCalibrator(RKRadar *radar, void (*calibrator)(RKMomentScratch *));
-
 // Moment processor
 int RKSetMomentProcessorToMultiLag(RKRadar *, const uint8_t);
 int RKSetMomentProcessorToPulsePair(RKRadar *);
@@ -307,8 +324,8 @@ RKStatus *RKGetVacantStatus(RKRadar *);                                         
 void RKSetStatusReady(RKRadar *, RKStatus *);                                                      // Don't worry about this. This is managed by systemInspector
 
 // Configs
-void RKAddConfig(RKRadar *radar, ...);                                                             // Inform RadarKit about certain slow-changing parameters, e.g., PRF, waveform, etc.
-RKConfig *RKGetLatestConfig(RKRadar *radar);                                                       // Get the latest configuration from the radar
+void RKAddConfig(RKRadar *, ...);                                                             // Inform RadarKit about certain slow-changing parameters, e.g., PRF, waveform, etc.
+RKConfig *RKGetLatestConfig(RKRadar *);                                                       // Get the latest configuration from the radar
 
 // Healths
 RKHealthNode RKRequestHealthNode(RKRadar *);

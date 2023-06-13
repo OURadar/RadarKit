@@ -42,7 +42,7 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
                 usleep(10000);
             } else if (sentSize < 0) {
                 RKLog("RKNetworkSendPackets Unable to send()\n");
-                return RKResultIncompleteSend;
+                return -RKResultIncompleteSend;
             }
         }
         grandTotalSentSize += totalSentSize;
@@ -53,7 +53,7 @@ ssize_t RKNetworkSendPackets(int sd, ...) {
     va_end(arg);
 
     if (timeout_count >= RKNetworkTimeoutSeconds / 10) {
-        return RKResultTimeout;
+        return -RKResultTimeout;
     }
     return grandTotalSentSize;
 }

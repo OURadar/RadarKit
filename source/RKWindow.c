@@ -7,7 +7,7 @@
 //
 
 #include <RadarKit/RKWindow.h>
-#include "bessi.c"
+#include "ext/bessi.c"
 
 //
 // Hann window
