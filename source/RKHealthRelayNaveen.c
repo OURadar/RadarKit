@@ -35,10 +35,10 @@ static int healthRelayNaveenRead(RKClient *client) {
     }
     RKStatusEnum e = nmea.valid ? RKStatusEnumNormal : RKStatusEnumInvalid;
     snprintf(health->string, RKMaximumStringLength, "{"
-        "\"GPS2 Valid\": {\"Value\":%s,\"Enum\":%d}, "
-        "\"GPS2 Longitude\": {\"Value\":%.7f,\"Enum\":%d}, "
-        "\"GPS2 Latitude\": {\"Value\":%.7f,\"Enum\":%d}, "
-        "\"GPS2 Heading\": {\"Value\":%.1f,\"Enum\":%d}"
+        "\"GPS Valid\": {\"Value\":%s,\"Enum\":%d}, "
+        "\"GPS Longitude\": {\"Value\":%.7f,\"Enum\":%d}, "
+        "\"GPS Latitude\": {\"Value\":%.7f,\"Enum\":%d}, "
+        "\"GPS Heading\": {\"Value\":%.1f,\"Enum\":%d}"
         "}",
         nmea.valid ? "true" : "false", e,
         nmea.longitude, e,

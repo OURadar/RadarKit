@@ -125,7 +125,7 @@ $(STATIC_LIB): $(OBJS_WITH_PATH)
 
 $(SHARED_LIB): $(OBJS_WITH_PATH)
 	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
-	$(CC) -shared -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
+	$(CC) -shared -fPIC -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
 
 $(PROGS): %: %.c $(STATIC_LIB)
 	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
