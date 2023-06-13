@@ -38,12 +38,14 @@ static int healthRelayNaveenRead(RKClient *client) {
         "\"GPS Valid\": {\"Value\":%s,\"Enum\":%d}, "
         "\"GPS Heading\": {\"Value\":%.1f,\"Enum\":%d}, "
         "\"GPS Latitude\": {\"Value\":%.7f,\"Enum\":%d}, "
-        "\"GPS Longitude\": {\"Value\":%.7f,\"Enum\":%d}"
+        "\"GPS Longitude\": {\"Value\":%.7f,\"Enum\":%d}, "
+        "\"Ground Speed\":{\"Value\":\"%.2f km/h\",\"Enum\":%d}"
         "}",
         nmea.valid ? "true" : "false", e,
         nmea.heading, e,
         nmea.latitude, e,
-        nmea.longitude, e
+        nmea.longitude, e,
+        nmea.speed, e
     );
     #if defined(DEBUG_NAVEEN)
     printf("%s\n", health->string);
