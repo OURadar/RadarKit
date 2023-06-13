@@ -65,8 +65,7 @@ void *freeUserModuleDelayed(void *input) {
     if (k == 500) {
         RKLog("Forcing removal of user module %p ...\n", resource->module);
     }
-    RKLog("Deallocating %p ...\n", resource->module);
-    //radar->userModuleFree(resource->module);
+    radar->userModuleFree(resource->module);
     free(resource);
     return NULL;
 }
