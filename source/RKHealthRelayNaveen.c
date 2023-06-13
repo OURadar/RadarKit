@@ -16,7 +16,7 @@ static int healthRelayNaveenRead(RKClient *client) {
     RKHealthRelayNaveen *me = (RKHealthRelayNaveen *)client->userResource;
     RKRadar *radar = me->radar;
 
-    nmea_data_t nmea = {
+    static nmea_data_t nmea = {
         .utc_time = 0,
         .valid = false
     };

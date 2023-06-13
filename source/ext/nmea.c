@@ -206,7 +206,7 @@ static void tokenize_nmea_gprmc_sentence(char *sentence, nmea_data_t *out) {
 
     int     b;
     float   c;
-    long    utc_time, latitude, longitude, heading;
+    double  utc_time, latitude, longitude, heading;
     bool    valid;
 
     utc_time = latitude = longitude = heading = 0.0;
