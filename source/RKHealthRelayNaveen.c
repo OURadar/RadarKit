@@ -36,14 +36,14 @@ static int healthRelayNaveenRead(RKClient *client) {
     RKStatusEnum e = nmea.valid ? RKStatusEnumNormal : RKStatusEnumInvalid;
     snprintf(health->string, RKMaximumStringLength, "{"
         "\"GPS Valid\": {\"Value\":%s,\"Enum\":%d}, "
-        "\"GPS Longitude\": {\"Value\":%.7f,\"Enum\":%d}, "
+        "\"GPS Heading\": {\"Value\":%.1f,\"Enum\":%d}, "
         "\"GPS Latitude\": {\"Value\":%.7f,\"Enum\":%d}, "
-        "\"GPS Heading\": {\"Value\":%.1f,\"Enum\":%d}"
+        "\"GPS Longitude\": {\"Value\":%.7f,\"Enum\":%d}"
         "}",
         nmea.valid ? "true" : "false", e,
-        nmea.longitude, e,
+        nmea.heading, e,
         nmea.latitude, e,
-        nmea.heading, e
+        nmea.longitude, e
     );
     #if defined(DEBUG_NAVEEN)
     printf("%s\n", health->string);
