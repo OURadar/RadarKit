@@ -1074,6 +1074,13 @@ enum {
     RKRawDataTypeAfterMatchedFilter                                            // The I/Q samples after pulse compression (RKFloat)
 };
 
+typedef uint8_t RKCompressorOption;
+enum {
+    RKCompressorOptionRKInt16C                   = 0,                          // legacy option input with RKInt16C
+    RKCompressorOptionRKComplex                  = 1,                          // place input at RKComplex
+    RKCompressorOptionSingleChannel              = (1 << 5)                    // only process single channel
+};
+
 typedef uint8_t RadarHubType;
 enum {
     RKRadarHubTypeHandshake                      = 1,                          // JSON message {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}
@@ -1328,6 +1335,7 @@ typedef union rk_pulse_header {
         float               azimuthDegrees;                                    // Azimuth in degrees
         float               elevationVelocityDegreesPerSecond;                 // Velocity of elevation in degrees / second
         float               azimuthVelocityDegreesPerSecond;                   // Velocity of azimuth in degrees / second
+        RKCompressorOption  compressorDataType;                                // data type of compressor input
     };
     RKByte               bytes[192];
 } RKPulseHeader;
