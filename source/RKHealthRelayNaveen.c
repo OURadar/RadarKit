@@ -47,9 +47,6 @@ static int healthRelayNaveenRead(RKClient *client) {
         nmea.longitude, e,
         nmea.speed, e
     );
-    #if defined(DEBUG_NAVEEN)
-    printf("%s\n", health->string);
-    #endif
     RKSetHealthReady(radar, health);
     return RKResultSuccess;
 }
