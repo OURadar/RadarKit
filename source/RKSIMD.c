@@ -482,6 +482,19 @@ void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n) {
     return;
 }
 
+void RKSIMD_Complexcpy(RKComplex *src, RKComplex *dst, const int n) {
+    int k;
+    RKComplex *s = src;
+    RKComplex *d = dst;
+    for (k = 0; k < n; k++) {
+        d->i = s->i;
+        d->q = s->q;
+        d++;
+        s++;
+    }
+    return;
+}
+
 // Subtract by a float
 void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n) {
     int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);

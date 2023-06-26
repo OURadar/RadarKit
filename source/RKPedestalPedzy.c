@@ -244,10 +244,6 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         response = (char *)me->response;
     }
 
-    if (client->verbose > 1) {
-        RKLog("%s Received '%s'", client->name, command);
-    }
-
     if (!strcmp(command, "disconnect")) {
         RKClientStop(client);
     } else {

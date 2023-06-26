@@ -176,9 +176,18 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
     for (p = 0; p < 2; p++) {
        // Copy and convert the samples
-        RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-        X += filterAnchor->inputOrigin;
-        RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
+        if ( (pulse->header.compressorDataType & RKCompressorOptionSingleChannel) && (p == 1) ) {
+            continue;
+        }
+        if (pulse->header.compressorDataType & RKCompressorOptionRKComplex) {
+            RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
+            Y += filterAnchor->inputOrigin;
+            RKSIMD_Complexcpy(Y, (RKComplex *)in, inBound);
+        }else{
+            RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+            X += filterAnchor->inputOrigin;
+            RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
+        }
 
         // Zero pad the input; a filter is always zero-padded in the setter function.
         if (scratch->planSize > inBound) {

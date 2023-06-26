@@ -181,6 +181,7 @@ void RKSIMD_iyscl(RKComplex *src, const float s, const int n);
 void RKSIMD_IQZ2Complex(RKIQZ *src, RKComplex *dst, const int n);
 void RKSIMD_Complex2IQZ(RKComplex *src, RKIQZ *dst, const int n);
 void RKSIMD_Int2Complex(RKInt16C *src, RKComplex *dst, const int n);
+void RKSIMD_Complexcpy(RKComplex *src, RKComplex *dst, const int n);
 
 void RKSIMD_subc(RKFloat *src, const RKFloat f, RKFloat *dst, const int n);
 void RKSIMD_clamp(RKFloat *src, const RKFloat min, const RKFloat max, const int n);
