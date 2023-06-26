@@ -11,14 +11,11 @@
 // 6/10/2023
 //
 
-<<<<<<< HEAD
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
 
-=======
->>>>>>> beta
 #pragma pack(push, 1)
 
 typedef struct nmea_data {

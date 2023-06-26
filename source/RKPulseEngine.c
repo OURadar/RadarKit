@@ -176,7 +176,7 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
     bool singleChannelOnly = pulse->header.compressorDataType & RKCompressorOptionSingleChannel;
 
-    for (p = 0; p < singleChannelOnly ? 1 : 2; p++) {
+    for (p = 0; p < (singleChannelOnly ? 1 : 2); p++) {
        // Copy and convert the samples
         if (pulse->header.compressorDataType & RKCompressorOptionRKComplex) {
             RKComplex *X = RKGetComplexDataFromPulse(pulse, p);
