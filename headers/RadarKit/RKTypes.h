@@ -1076,9 +1076,9 @@ enum {
 
 typedef uint8_t RKCompressorOption;
 enum {
-    RKCompressorOptionRKInt16C                   = 0,                          // legacy option input with RKInt16C
-    RKCompressorOptionRKComplex                  = 1,                          // place input at RKComplex
-    RKCompressorOptionSingleChannel              = (1 << 5)                    // only process single channel
+    RKCompressorOptionRKInt16C                   = 0,                          // Process input from RKInt16C buffer
+    RKCompressorOptionRKComplex                  = 1,                          // Process input from RKComplex buffer
+    RKCompressorOptionSingleChannel              = (1 << 5)                    // Process only channel 0
 };
 
 typedef uint8_t RadarHubType;

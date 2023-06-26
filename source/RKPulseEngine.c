@@ -174,15 +174,14 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
     #endif
 
-    for (p = 0; p < 2; p++) {
+    bool singleChannelOnly = pulse->header.compressorDataType & RKCompressorOptionSingleChannel;
+
+    for (p = 0; p < singleChannelOnly ? 1 : 2; p++) {
        // Copy and convert the samples
-        if ( (pulse->header.compressorDataType & RKCompressorOptionSingleChannel) && (p == 1) ) {
-            continue;
-        }
         if (pulse->header.compressorDataType & RKCompressorOptionRKComplex) {
-            RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
-            Y += filterAnchor->inputOrigin;
-            RKSIMD_Complexcpy(Y, (RKComplex *)in, inBound);
+            RKComplex *X = RKGetComplexDataFromPulse(pulse, p);
+            X += filterAnchor->inputOrigin;
+            memcpy(in, X, inBound * sizeof(RKComplex));
         }else{
             RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
             X += filterAnchor->inputOrigin;
