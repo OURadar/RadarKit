@@ -647,7 +647,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->value[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     }
                     if (verbose) {
-                        RKLog("%s Info. Position EL to %.1f  del = %.1f  action->value[%d] = %.1f", engine->name, scan->elevationStart, del, a, action->value[a]);
+                        RKLog("%s Info. pos->elevationDegrees = %.1f  V->i = %d  Position EL to %.1f  del = %.1f  action->value[%d] = %.1f", engine->name,
+                            pos->elevationDegrees, V->i, scan->elevationStart, del, a, action->value[a]);
                     }
                     V->tic = 0;
                     a++;
