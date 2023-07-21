@@ -786,7 +786,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     break;
                 }
                 // Send the stop action again if the elevation continues to move
-                if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                if (!(V->progress & RKScanProgressSetup) && fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
                     RKLog("%s Issuing another EL stop action ...\n", engine->name);
                     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[0] = 0.0f;
