@@ -646,6 +646,9 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisElevation;
                         action->value[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     }
+                    if (verbose) {
+                        RKLog("%s Info. Position EL to %.1f  del = %.1f  action->value[%d] = %.1f", engine->name, scan->elevationStart, del, a, action->value[a]);
+                    }
                     V->tic = 0;
                     a++;
                 } else if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
@@ -703,7 +706,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->value[0] = scan->azimuthSlew;
                     V->tic = 0;
                     if (verbose) {
-                        RKLog("%s Info. Ready for SEC sweep %d - EL %.2f° @ crossover AZ %.2f°\n", engine->name,
+                        RKLog("%s Info. Ready for SEC sweep %d - EL %.1f° @ crossover AZ %.1f°\n", engine->name,
                             V->i, scan->elevationStart, scan->azimuthEnd);
                     }
                     V->progress ^= RKScanProgressSetup;

@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "macos-clang-x64",
+      "name": "macos-clang-arm64",
       "includePath": [
         "${workspaceFolder}/**"
       ],
@@ -11,7 +11,7 @@
       "compilerPath": "/usr/bin/clang",
       "cStandard": "${default}",
       "cppStandard": "${default}",
-      "intelliSenseMode": "macos-clang-x64",
+      "intelliSenseMode": "macos-clang-arm64",
       "compilerArgs": [
         "-march=native",
         "-mfpmath=sse"
