@@ -785,6 +785,13 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (fabsf(pos->azimuthVelocityDegreesPerSecond) <= RKPedestalVelocityTolerance) {
                     break;
                 }
+                // Send the stop action again if the elevation continues to move
+                if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                    RKLog("%s Issuing another EL stop action ...\n", engine->name);
+                    action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action->value[0] = 0.0f;
+                    V->tic = 0;
+                }
                 // Check for a cross-over trigger
                 cross = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, scan->azimuthEnd);
                 if (cross) {
