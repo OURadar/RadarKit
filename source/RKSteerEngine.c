@@ -825,7 +825,9 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     // Sweep ended, go to the next sweep
     if (V->progress & RKScanProgressEnd) {
         V->progress ^= RKScanProgressEnd;
+        RKLog("%s V->i = %d   sweepCount = %d   V->tic = %zu\n", engine->name, V->i, V->sweepCount, V->tic);
         V->i = RKNextModuloS(V->i, V->sweepCount);
+        RKLog("%s V->i = %d", engine->name, V->i);
         if (V->i == 0) {
             if (V->option & RKScanOptionRepeat) {
                 RKSteerEngineNextHitter(engine);
