@@ -56,6 +56,7 @@ static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
+// Should make the piece-wise thresholds [4] in pref.con
 float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
     float rate = 0.0f;
     float gamma = fabsf(delta);
@@ -74,9 +75,9 @@ float RKSteerEngineGetRate(const float delta, RKPedestalAxis axis) {
     } else if (axis == RKPedestalAxisElevation) {
         if (gamma >= 20.0f) {
             rate = 15.0f;
-        } else if (gamma >= 7.0f) {
+        } else if (gamma >= 3.0f) {
             rate = 10.0f;
-        } else if (gamma >= 0.8f) {
+        } else if (gamma >= 0.5f) {
             rate = 3.0f;
         } else {
             rate = 1.0f;
@@ -647,8 +648,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->value[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     }
                     if (verbose) {
-                        RKLog("%s Info. pos->elevationDegrees = %.1f  V->i = %d  Position EL to %.1f  del = %.1f  action->value[%d] = %.1f", engine->name,
-                            pos->elevationDegrees, V->i, scan->elevationStart, del, a, action->value[a]);
+                        RKLog("%s Info. V->i = %d  EL %.1f @ %.1f -> %.1f  del = %.1f  action->value[%d] = %.1f", engine->name,
+                            V->i, pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond, scan->elevationStart, del, a, action->value[a]);
                     }
                     V->tic = 0;
                     a++;
@@ -786,8 +787,9 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     break;
                 }
                 // Send the stop action again if the elevation continues to move
-                if (!(V->progress & RKScanProgressSetup) && fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
-                    RKLog("%s Issuing another EL stop action ...\n", engine->name);
+                if (!(V->progress & RKScanProgressSetup) && V->tic > 25 && fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                    RKLog("%s Issuing another EL standby action for sweep %.1f ... EL %.1f @ %.1f\n", engine->name,
+                        scan->elevationStart, pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond);
                     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[0] = 0.0f;
                     V->tic = 0;
@@ -832,9 +834,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     // Sweep ended, go to the next sweep
     if (V->progress & RKScanProgressEnd) {
         V->progress ^= RKScanProgressEnd;
-        RKLog("%s V->i = %d   sweepCount = %d   V->tic = %zu\n", engine->name, V->i, V->sweepCount, V->tic);
         V->i = RKNextModuloS(V->i, V->sweepCount);
-        RKLog("%s V->i = %d", engine->name, V->i);
         if (V->i == 0) {
             if (V->option & RKScanOptionRepeat) {
                 RKSteerEngineNextHitter(engine);

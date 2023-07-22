@@ -16,7 +16,7 @@
 #include <RadarKit/RKConfig.h>
 #include <RadarKit/RKDSP.h>
 
-#define RKPedestalPositionTolerance    0.3f
+#define RKPedestalPositionTolerance    0.1f
 #define RKPedestalVelocityTolerance    0.5f
 #define RKPedestalPointTimeOut         1500
 #define RKPedestalActionPeriod         0.05
