@@ -648,8 +648,10 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->value[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     }
                     if (verbose) {
-                        RKLog("%s Info. V->i = %d  EL %.1f @ %.1f -> %.1f  del = %.1f  action->value[%d] = %.1f", engine->name,
-                            V->i, pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond, scan->elevationStart, del, a, action->value[a]);
+                        RKLog("%s Info. E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f", engine->name,
+                            pos->elevationDegrees, scan->elevationStart, pos->elevationVelocityDegreesPerSecond,
+                            pos->azimuthDegrees, scan->azimuthStart, pos->azimuthVelocityDegreesPerSecond,
+                            V->i, del, a, action->value[a]);
                     }
                     V->tic = 0;
                     a++;
@@ -796,11 +798,11 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 }
                 // Check for a cross-over trigger
                 cross = RKAngularCrossOver(pos->azimuthDegrees, V->azimuthPrevious, scan->azimuthEnd);
-                if (cross) {
+                if (cross && V->tic > 200) {
                     V->progress |= RKScanProgressEnd;
                     if (verbose) {
-                        RKLog("%s End crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
-                            scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
+                        RKLog("%s End crossover detected @ AZ %.2f° [%.2f° -> %.2f°]   V->tic = %zu\n", engine->name,
+                            scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees, V->tic);
                     }
                 }
                 break;
@@ -948,6 +950,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         case RKSteerCommandScanNext:
             RKSteerEngineNextHitter(engine);
             sprintf(response, "ACK. Volume advanced." RKEOL);
+            return RKResultSuccess;
             break;
         case RKSteerCommandNone:
             sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
