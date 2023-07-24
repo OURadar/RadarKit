@@ -113,6 +113,8 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     RKFloat mS;
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
+    int M =  (pulseCount < 199) ? pulseCount : 199;         // M = np.min([pulseCount, len(fTCN)])
+
     for (p = 0; p < 2; p++) {
 
         // Initializes the storage
@@ -147,12 +149,24 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         for (k = 0; k < gateCount; k++) {
             mS += space->aR[p][0][k]/gateCount;
         }
+
         for (k = 0; k < gateCount; k++) {
-            space->S[p][k] = space->aR[p][0][k]/mS;                            // S[p][k] is iq_power
+            space->S[p][k] = space->aR[p][0][k]/mS;     // S[p][k] == iq_power
         }
-    }
-    for (k = 0; k < gateCount; k++) {
-        space->mask[k] = 1;
+
+        noiseGateCount = 0
+        for (int k = 2; k < gateCount - 2; k++) {
+            if ((space->S[p][k] < fTCN[M] * space->S[p][k-2]) && (space->S[p][k] < fTCN[M] * space->S[p][k+2])){
+                    space->S[p][noiseGateCount++] = space->S[p][k];     // S[p][k] == P_noise
+            }
+        }
+        for (k = 0; k < noiseGateCount; k++) {
+            space->Z[p][k] = log10f(space->S[p][k]);    // space->Z[p][k] is log_P
+        }
+
+        for (k = 0; k < gateCount; k++) {
+            space->mask[k] = 0;
+        }
     }
 }
 
