@@ -1,3 +1,12 @@
+//
+//  RKNoiseEstimator.h
+//  RadarKit
+//
+//  Created by Min-Duan Tzeng on 7/26/2023.
+//  Copyright (c) 2023 Min-Duan Tzeng. All rights reserved.
+//
+
+#include <RadarKit/RKNoiseEstimator.h>
 
 RKFloat fTCN[] = {0, 246.342840, 59.019163, 27.284472, 17.386875, 12.822073,
     10.112010, 8.456563, 7.346106, 6.527433, 5.915182, 5.474314, 5.050479, 4.729339,
@@ -139,7 +148,7 @@ void Array_sort(RKFloat *array , uint16_t n){
 
 // function to calculate the median of the array
 float medianf(RKFloat *array , uint16_t n){
-    Array_sort(&array, n)
+    Array_sort(array, n);
     float median=0;
     // if number of elements are even
     if(n%2 == 0)
@@ -160,7 +169,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     bool flat_switch;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const uint32_t M =  (pulseCount < 199) ? pulseCount : 199;         // M = np.min([pulseCount, len(fTCN)])
-    const uint32_t K = (uint32_t)ceilf(8.e3/space->gateSizeMeters)     // running window of size K in step 2
+    const uint32_t K = (uint32_t)ceilf(8.e3/space->gateSizeMeters);    // running window of size K in step 2
 
     for (p = 0; p < 2; p++) {
 
@@ -192,7 +201,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
 
 
     for (p = 0; p < 2; p++) {
-        mS = 0
+        mS = 0;
         for (k = 0; k < gateCount; k++) {
             mS += space->aR[p][0][k];
         }
@@ -203,7 +212,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             space->S[p][k] = space->aR[p][0][k] / iq_pm;                // iq_power
         }
 
-        noiseGateCount = 0
+        noiseGateCount = 0;
         for (int k = 2; k < gateCount - 2; k++) {
             if ((space->S[p][k] < fTCN[M] * space->S[p][k-2]) && (space->S[p][k] < fTCN[M] * space->S[p][k+2])){
                     space->S[p][noiseGateCount++] = space->S[p][k];     // P_noise
@@ -252,23 +261,23 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             break;
         }
 
-        intermediateGateCount = 0
-        intermediate_power = fSNRThr[M]*intermediate_power
+        intermediateGateCount = 0;
+        intermediate_power = fSNRThr[M]*intermediate_power;
         for (int k = 0; k < noiseGateCount; k++) {
             if (space->S[p][k] < intermediate_power){
                 space->V[p][intermediateGateCount] = space->S[p][k];
                 space->S[p][intermediateGateCount++] = space->S[p][k];     // P_noise = P_noise[ P_noise < fSNRThr[M]*intermediate_power ]
             }
         }
-        noiseGateCount = intermediateGateCount
-        median_P = medianf(&(space->V[p][0]), noiseGateCount)
+        noiseGateCount = intermediateGateCount;
+        median_P = medianf(&(space->V[p][0]), noiseGateCount);
 
         for (k = 0; k < noiseGateCount; k++) {
             space->mask[k] = 1;
         }
 
         for (k = 0; k < noiseGateCount; k++) {
-            for (j = -10; j < 10+1; j++) {
+            for (j = -persist; j < persist+1; j++) {
                 if ( k+j < 0){
                     continue;
                 } else if ( k+j >= noiseGateCount) {
@@ -301,5 +310,6 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         noiseGateCount = intermediateGateCount;
         intermediate_power = mS/noiseGateCount;
     }
+    return pulseCount;
 }
 
