@@ -107,13 +107,27 @@ RKFloat fRunSumPerc[] = {0,0.004693,0.004658,0.004693,0.004693,0.004764,0.004800
     0.003117,0.003048,0.002981,0.002916,0.002852,0.002789,0.002728,0.002668,
     0.002610,0.002552,0.002497,0.002442,0.002389,0.002336,0.002285,0.002235};
 
+RKFloat varf(RKFloat * astart, const uint16_t window){
+    int vk;
+    RKFloat mV, varV;
+    varV = 0; mV = 0;
+    for (vk = 0; vk < window; vk++) {
+        varV += powf(*(astart+vk), 2.0f);
+        mV += *(astart+vk);
+    }
+    mV = mV / window;
+    return varV / window - powf(mV, 2.0f);
+}
+
 int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
     int n, j, k, p;
-    uint32_t noiseGateCount;
-    RKFloat mS;
+    uint32_t noiseGateCount; 
+    RKFloat mS, Var_dB;
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
-    int M =  (pulseCount < 199) ? pulseCount : 199;         // M = np.min([pulseCount, len(fTCN)])
+
+    const uint32_t M =  (pulseCount < 199) ? pulseCount : 199;         // M = np.min([pulseCount, len(fTCN)])
+    const uint32_t K = (uint32_t)ceilf(8.e3/space->gateSizeMeters)     // running window of size K in step 2
 
     for (p = 0; p < 2; p++) {
 
@@ -147,26 +161,32 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     for (p = 0; p < 2; p++) {
         mS = 0
         for (k = 0; k < gateCount; k++) {
-            mS += space->aR[p][0][k]/gateCount;
+            mS += space->aR[p][0][k];
         }
 
+        mS = mS / gateCount;
         for (k = 0; k < gateCount; k++) {
-            space->S[p][k] = space->aR[p][0][k]/mS;     // S[p][k] == iq_power
+            space->S[p][k] = space->aR[p][0][k] / mS;                   // iq_power
         }
 
         noiseGateCount = 0
         for (int k = 2; k < gateCount - 2; k++) {
             if ((space->S[p][k] < fTCN[M] * space->S[p][k-2]) && (space->S[p][k] < fTCN[M] * space->S[p][k+2])){
-                    space->S[p][noiseGateCount++] = space->S[p][k];     // S[p][k] == P_noise
+                    space->S[p][noiseGateCount++] = space->S[p][k];     // P_noise
             }
         }
         for (k = 0; k < noiseGateCount; k++) {
-            space->Z[p][k] = log10f(space->S[p][k]);    // space->Z[p][k] is log_P
-        }
-
-        for (k = 0; k < gateCount; k++) {
+            space->Z[p][k] = log10f(space->S[p][k]);                    // log_P
             space->mask[k] = 0;
         }
+
+        for (k = 0; k < noiseGateCount - K + 1; k++) {
+            space->W[p][k] = varf(&(space->Z[p][k]), K);                // Var_dB
+            if ( space->W[p][k] < fVarThr[M] ){
+                space->mask[k] = 1;                                     // flat_P
+            }
+        }
+
     }
 }
 
