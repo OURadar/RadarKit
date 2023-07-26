@@ -655,9 +655,15 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     }
                     V->tic = 0;
                     a++;
-                } else if (fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                } else if (fabs(pos->elevationVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[a] = 0.0f;
+                    if (verbose) {
+                        RKLog("%s Info. E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f", engine->name,
+                            pos->elevationDegrees, scan->elevationStart, pos->elevationVelocityDegreesPerSecond,
+                            pos->azimuthDegrees, scan->azimuthStart, pos->azimuthVelocityDegreesPerSecond,
+                            V->i, del, a, action->value[a]);
+                    }
                     V->tic = 0;
                     a++;
                 }
@@ -666,7 +672,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->value[a] = scan->azimuthSlew;
                     V->tic = 0;
                 }
-                if (udel < RKPedestalPositionTolerance) {
+                if (udel < RKPedestalPositionTolerance && fabs(pos->elevationVelocityDegreesPerSecond) < 0.5 * RKPedestalVelocityTolerance) {
                     if (verbose) {
                         RKLog("%s Info. Ready for PPI sweep %d - EL %.2f° @ crossover AZ %.2f°\n", engine->name,
                             V->i, scan->elevationStart, scan->azimuthEnd);
