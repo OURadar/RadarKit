@@ -121,11 +121,11 @@ RKFloat varf(RKFloat * astart, const uint16_t window){
 
 int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
     int n, j, k, p;
-    uint32_t noiseGateCount; 
-    RKFloat mS, Var_dB;
+    uint32_t noiseGateCount, intermediateGateCount; 
+    RKFloat mS, intermediate_power, Var_dB;
     RKPulse *pulse = pulses[0];
+    bool flat_switch;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
-
     const uint32_t M =  (pulseCount < 199) ? pulseCount : 199;         // M = np.min([pulseCount, len(fTCN)])
     const uint32_t K = (uint32_t)ceilf(8.e3/space->gateSizeMeters)     // running window of size K in step 2
 
@@ -181,9 +181,35 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
 
         for (k = 0; k < noiseGateCount - K + 1; k++) {
-            space->W[p][k] = varf(&(space->Z[p][k]), K);                // Var_dB
-            if ( space->W[p][k] < fVarThr[M] ){
+            Var_dB = varf(&(space->Z[p][k]), K);                        // Var_dB
+            if ( Var_dB < fVarThr[M] ){
                 space->mask[k] = 1;                                     // flat_P
+            }
+        }
+
+        flat_switch = false;
+        intermediate_power = 99999;
+        for (k = 0; k < noiseGateCount - K + 1; k++) {
+            if ( space->mask[k] && (!flat_switch)){
+                mS = space->S[p][k];
+                flat_switch = true;
+                intermediateGateCount = 1;
+            } else if ( space->mask[k] && flat_switch){
+                mS += space->S[p][k];
+                intermediateGateCount++;
+                if ( k == (noiseGateCount - K ) ){
+                    mS = mS/intermediateGateCount;
+                    flat_switch = false;
+                    if (mS < intermediate_power){
+                        intermediate_power = mS;
+                    }
+                }
+            } else if (!(space->mask[k]) && flat_switch){
+                mS = mS/intermediateGateCount;
+                flat_switch = false;
+                if (mS < intermediate_power){
+                    intermediate_power = mS;
+                }
             }
         }
 
