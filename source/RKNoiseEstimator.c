@@ -119,10 +119,43 @@ RKFloat varf(RKFloat * astart, const uint16_t window){
     return varV / window - powf(mV, 2.0f);
 }
 
+void Array_sort(RKFloat *array , uint16_t n){ 
+    // declare some local variables
+    int i=0 , j=0 , temp=0;
+
+    for(i=0 ; i<n ; i++)
+    {
+        for(j=0 ; j<n-1 ; j++)
+        {
+            if(array[j]>array[j+1])
+            {
+                temp        = array[j];
+                array[j]    = array[j+1];
+                array[j+1]  = temp;
+            }
+        }
+    }
+}
+
+// function to calculate the median of the array
+float medianf(RKFloat *array , uint16_t n){
+    Array_sort(&array, n)
+    float median=0;
+    // if number of elements are even
+    if(n%2 == 0)
+        median = (*(array+(n-1)/2) + *(array+n/2))/2.0;
+    // if number of elements are odd
+    else
+        median = *(array+n/2);
+    
+    return median;
+}
+
 int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
     int n, j, k, p;
-    uint32_t noiseGateCount, intermediateGateCount; 
-    RKFloat mS, intermediate_power, Var_dB;
+    uint16_t noiseGateCount, intermediateGateCount;
+    const uint16_t persist = 10;
+    RKFloat mS, intermediate_power, Var_dB, iq_pm, median_P;
     RKPulse *pulse = pulses[0];
     bool flat_switch;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
@@ -165,8 +198,9 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
 
         mS = mS / gateCount;
+        iq_pm = mS;
         for (k = 0; k < gateCount; k++) {
-            space->S[p][k] = space->aR[p][0][k] / mS;                   // iq_power
+            space->S[p][k] = space->aR[p][0][k] / iq_pm;                // iq_power
         }
 
         noiseGateCount = 0
@@ -213,6 +247,59 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             }
         }
 
+        if (intermediate_power > 99998) {
+            // print noise estimate fail here
+            break;
+        }
+
+        intermediateGateCount = 0
+        intermediate_power = fSNRThr[M]*intermediate_power
+        for (int k = 0; k < noiseGateCount; k++) {
+            if (space->S[p][k] < intermediate_power){
+                space->V[p][intermediateGateCount] = space->S[p][k];
+                space->S[p][intermediateGateCount++] = space->S[p][k];     // P_noise = P_noise[ P_noise < fSNRThr[M]*intermediate_power ]
+            }
+        }
+        noiseGateCount = intermediateGateCount
+        median_P = medianf(&(space->V[p][0]), noiseGateCount)
+
+        for (k = 0; k < noiseGateCount; k++) {
+            space->mask[k] = 1;
+        }
+
+        for (k = 0; k < noiseGateCount; k++) {
+            for (j = -10; j < 10+1; j++) {
+                if ( k+j < 0){
+                    continue;
+                } else if ( k+j >= noiseGateCount) {
+                    break;
+                }else if ( space->S[p][k+j] > median_P) {
+                    space->mask[k] = 0;
+                    break;
+                }
+            }
+        }
+        mS = 0;
+        intermediateGateCount = 0;
+        for (int k = 0; k < noiseGateCount; k++) {
+            if (space->mask[k]){
+                mS += space->S[p][k];
+                space->S[p][intermediateGateCount++] = space->S[p][k];     //  P_noise = P_noise[ P_mask ]
+            }
+        }
+        noiseGateCount = intermediateGateCount;
+        intermediate_power = fSNRThr[M]* mS/ noiseGateCount;
+
+        mS = 0;
+        intermediateGateCount = 0;
+        for (int k = 0; k < noiseGateCount; k++) {
+            if (space->S[p][k] < intermediate_power){
+                mS += space->S[p][k];
+                space->S[p][intermediateGateCount++] = space->S[p][k];     // P_noise = P_noise[ P_noise < fSNRThr[M]*mean_power ]
+            }
+        }
+        noiseGateCount = intermediateGateCount;
+        intermediate_power = mS/noiseGateCount;
     }
 }
 
