@@ -459,6 +459,7 @@ static void *momentCore(void *in) {
             // Initialize the scratch space
             prepareScratch(space);
             // Call the processor
+            RKRayNoiseEstimator(space, pulses, path.length);
             k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
                 RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
