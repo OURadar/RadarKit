@@ -327,13 +327,19 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 space->mask[k] = 0;
             }
             powerThr = intermediate_power * iRunSumThr;
-            for (int k = 0; k < noiseGateCount - iRunSumLength + 1; k++) {
-                mS = 0;
+            mS = 0;
+            for (k = 0; k < iRunSumLength; k++) {
+                mS += space->S[p][k];
+            }
+            if ( mS > powerThr){
                 for (j = 0; j < iRunSumLength; j++) {
-                    mS += space->S[p][k+j];
+                    space->mask[j] = 1;
                 }
+            }
+            for (int k = 0; k < noiseGateCount - iRunSumLength; k++) {
+                mS += (space->S[p][k+iRunSumLength]-space->S[p][k]);
                 if ( mS > powerThr){
-                    for (j = 0; j < iRunSumLength; j++) {
+                    for (j = 1; j < iRunSumLength+1; j++) {
                         space->mask[k+j] = 1;
                     }
                 }
