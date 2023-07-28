@@ -373,8 +373,10 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
     }
     if (fail_flag){
+        RKLog("< NoiseEngine > Info. ray/channel-F.\n");
         return RKResultFailedToEstimateNoise;
     } else {
+        RKLog("< NoiseEngine > Info. ray/channel-S.\n");
         return RKResultSuccess;
     }
 }
