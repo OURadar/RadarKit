@@ -383,6 +383,7 @@ N(RKResultFailedToStartHealthRelay) \
 N(RKResultPreferenceFileNotFound) \
 N(RKResultPreferenceKeywordNotFound) \
 N(RKResultFailedToMeasureNoise) \
+N(RKResultFailedToEstimateNoise) \
 N(RKResultFailedToCreateFileRemover) \
 N(RKResultFileManagerBufferNotResuable) \
 N(RKResultInvalidMomentParameters) \
