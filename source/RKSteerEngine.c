@@ -609,7 +609,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     }
                     V->tic = 0;
                     a++;
-                } else if (fabsf(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                } else if (fabsf(pos->elevationVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[a] = 0.0f;
                     V->tic = 0;
@@ -619,7 +619,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->value[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                     V->tic = 0;
-                } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                     action->value[a] = 0.0f;
                     V->tic = 0;
@@ -696,7 +696,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     }
                     V->tic = 0;
                     a++;
-                } else if (fabsf(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                } else if (fabsf(pos->elevationVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[a] = 0.0f;
                     V->tic = 0;
@@ -706,7 +706,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[a] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->value[a] = RKSteerEngineGetRate(daz, RKPedestalAxisAzimuth);
                     V->tic = 0;
-                } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                } else if (fabsf(pos->azimuthVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisAzimuth;
                     action->value[a] = 0.0f;
                     V->tic = 0;
@@ -795,7 +795,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     break;
                 }
                 // Send the stop action again if the elevation continues to move
-                if (!(V->progress & RKScanProgressSetup) && V->tic > 25 && fabs(pos->elevationVelocityDegreesPerSecond) > RKPedestalVelocityTolerance) {
+                if (!(V->progress & RKScanProgressSetup) && V->tic > 25 && fabs(pos->elevationVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     RKLog("%s Issuing another EL standby action for sweep %.1f ... EL %.1f @ %.1f\n", engine->name,
                         scan->elevationStart, pos->elevationDegrees, pos->elevationVelocityDegreesPerSecond);
                     action->mode[0] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
