@@ -70,6 +70,14 @@ void RKComplexArrayInPlaceConjugateMultiply(RKComplex *src, RKComplex *dst, cons
     }
 }
 
+RKFloat RKFloatArraySum(RKFloat *src, const int count) {
+    RKFloat sum = 0.0f;
+    for (int k = 0; k < count; k++) {
+        sum += *src++;
+    }
+    return sum;
+}
+
 RKComplex RKComplexArraySum(RKComplex *src, const int count) {
     RKComplex sum = {0.0f, 0.0f};
     for (int k = 0; k < count; k++) {

@@ -169,7 +169,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     uint16_t noiseGateCount, intermediateGateCount, runSumThreshold;
     const uint16_t persist = 10;
     // RKFloat iq_pm;
-    RKFloat mS, intermediatePower, varInLog, medianP, powerThreshold;
+    RKFloat meanS, intermediatePower, varInLog, medianP, powerThreshold;
     RKPulse *pulse = pulses[0];
     bool flatSwitch;
     bool failed = false;
@@ -209,18 +209,22 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     }
 
     for (p = 0; p < 2; p++) {
-        mS = 0.0f;
-        for (k = 0; k < gateCount; k++) {
-            mS += space->aR[p][0][k];
-        }
-        // mS = RKSIMD_zsum() ...
+        // mS = 0.0f;
+        // for (k = 0; k < gateCount; k++) {
+        //     mS += space->aR[p][0][k];
+        // }
+        // mS = mS / gateCount;
 
-        mS = mS / gateCount;
+        // This is 2x faster (rkutil -T60)
+        meanS = RKSIMD_sum(space->aR[p][0]) / gateCount;
+
+        // QUESTION: space->aR[p][0][k] for k > pulseDownSampledGateCount is meaningless no?
+        //
         // iq_pm = mS;
         noiseGateCount = 0;
         for (k = pulseDownSampledGateCount + 1; k < gateCount; k++) {
             // space->S[p][noiseGateCount++] = space->aR[p][0][k] / iq_pm;                            // iq_power
-            space->S[p][noiseGateCount++] = space->aR[p][0][k] / mS;                               // iq_power
+            space->S[p][noiseGateCount++] = space->aR[p][0][k] / meanS;                               // iq_power
         }
 
         noiseGateCount = 0;
@@ -247,25 +251,25 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         intermediatePower = 99999;
         for (k = 0; k < noiseGateCount - K + 1; k++) {
             if (space->mask[k] && !flatSwitch) {
-                mS = space->S[p][k];
+                meanS = space->S[p][k];
                 flatSwitch = true;
                 intermediateGateCount = 1;
             } else if (space->mask[k] && flatSwitch) {
-                mS += space->S[p][k];
+                meanS += space->S[p][k];
                 intermediateGateCount++;
                 if (k == (noiseGateCount - K)) {
-                    mS = mS / intermediateGateCount;
+                    meanS = meanS / intermediateGateCount;
                     flatSwitch = false;
-                    if (mS < intermediatePower) {
-                        intermediatePower = mS;
+                    if (meanS < intermediatePower) {
+                        intermediatePower = meanS;
                         // RKLog("End intermediateGateCount %d, mS %f (ADU^2)\n", intermediateGateCount, mS);
                     }
                 }
             } else if (!space->mask[k] && flatSwitch) {
-                mS = mS / intermediateGateCount;
+                meanS = meanS / intermediateGateCount;
                 flatSwitch = false;
-                if (mS < intermediatePower) {
-                    intermediatePower = mS;
+                if (meanS < intermediatePower) {
+                    intermediatePower = meanS;
                     // RKLog("intermediateGateCount %d, mS %f (ADU^2)\n", intermediateGateCount, mS);
                 }
             }
@@ -307,27 +311,27 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 }
             }
         }
-        mS = 0;
+        meanS = 0;
         intermediateGateCount = 0;
         for (k = 0; k < noiseGateCount; k++) {
             if (space->mask[k]) {
-                mS += space->S[p][k];
+                meanS += space->S[p][k];
                 space->S[p][intermediateGateCount++] = space->S[p][k];     //  P_noise = P_noise[ P_mask ]
             }
         }
         noiseGateCount = intermediateGateCount;
-        intermediatePower = SNRThreshold[M]* mS/ noiseGateCount;
+        intermediatePower = SNRThreshold[M] * meanS/ noiseGateCount;
         // RKLog("I am here before n, noiseGateCount %d, intermediate_power %f (ADU^2)\n", noiseGateCount, intermediate_power);
-        mS = 0;
+        meanS = 0;
         intermediateGateCount = 0;
         for (k = 0; k < noiseGateCount; k++) {
             if (space->S[p][k] < intermediatePower) {
-                mS += space->S[p][k];
+                meanS += space->S[p][k];
                 space->S[p][intermediateGateCount++] = space->S[p][k];     // P_noise = P_noise[ P_noise < fSNRThr[M]*mean_power ]
             }
         }
         noiseGateCount = intermediateGateCount;
-        intermediatePower = mS / noiseGateCount;
+        intermediatePower = meanS / noiseGateCount;
         // RKLog("I am here before n, noise %f (ADU^2)\n", intermediate_power * iq_pm);
 
         for (n = 0; n < 10; n++) {
@@ -336,20 +340,20 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 space->mask[k] = 0;
             }
             powerThreshold = intermediatePower * intermediateRunSumThreshold;
-            mS = 0;
+            meanS = 0.0f;
             runSumThreshold = 0;
             for (k = 0; k < runSumLength; k++) {
-                mS += space->S[p][k];
+                meanS += space->S[p][k];
             }
-            if (mS > powerThreshold) {
+            if (meanS > powerThreshold) {
                 runSumThreshold++;
                 for (j = 0; j < runSumLength; j++) {
                     space->mask[j] = 1;
                 }
             }
             for (k = 0; k < noiseGateCount - runSumLength; k++) {
-                mS += (space->S[p][k + runSumLength] - space->S[p][k]);
-                if (mS > powerThreshold) {
+                meanS += (space->S[p][k + runSumLength] - space->S[p][k]);
+                if (meanS > powerThreshold) {
                     runSumThreshold++;
                     for (j = 1; j < runSumLength + 1; j++) {
                         space->mask[k + j] = 1;
@@ -357,10 +361,10 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 }
             }
             intermediateGateCount = 0;
-            mS = 0;
+            meanS = 0.0f;
             for (k = 0; k < noiseGateCount; k++) {
                 if (!space->mask[k]) {
-                    mS += space->S[p][k];
+                    meanS += space->S[p][k];
                     space->S[p][intermediateGateCount++] = space->S[p][k];
                 }
             }
@@ -371,14 +375,14 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 break;
             }
             noiseGateCount = intermediateGateCount;
-            intermediatePower = mS/noiseGateCount;
+            intermediatePower = meanS / noiseGateCount;
         }
         if (noiseGateCount * M < failureSampleCount) {
             failed = true;
             // RKLog("< NoiseEngine > Info. Skipped a ray/channel %d. noiseGateCount*M = %d < %d iEndMinSampleSize\n", p, noiseGateCount*M, iEndMinSampleSize);
         } else {
             // space->noise[p] = intermediatePower * iq_pm;
-            space->noise[p] = intermediatePower * mS;
+            space->noise[p] = intermediatePower * meanS;
             // RKLog("< NoiseEngine > Info. channel %d. noiseGateCount*M = %d, noise %f (ADU^2)\n", p, noiseGateCount*M, space->noise[p]);
         }
     }
