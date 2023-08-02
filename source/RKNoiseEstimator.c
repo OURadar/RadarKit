@@ -216,7 +216,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         // mS = mS / gateCount;
 
         // This is 2x faster (rkutil -T60)
-        meanS = RKSIMD_sum(space->aR[p][0]) / gateCount;
+        meanS = RKSIMD_sum(space->aR[p][0], gateCount) / gateCount;
 
         // QUESTION: space->aR[p][0][k] for k > pulseDownSampledGateCount is meaningless no?
         //
