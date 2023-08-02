@@ -2104,6 +2104,15 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
     }
     RKSIMD_TEST_RESULT("Conversion from i16 to float -    ...", all_good);
 
+    //
+
+    RKComplex fsum = RKComplexArraySum(cs, n);
+    RKComplex ysum = RKSIMD_ysum(cs, n);
+    all_good = fabsf(ysum.i - fsum.i) < tiny && fabsf(ysum.q - fsum.q) < tiny;
+    RKSIMD_TEST_RESULT("RKComplex vector sum -   ysum", all_good);
+
+    //
+
     if (flag & RKTestSIMDFlagPerformanceTestAll) {
         printf("\n==== Performance Test ====\n\n");
         printf("Using %s gates\n", RKIntegerToCommaStyleString(RKMaximumGateCount));
@@ -2195,6 +2204,21 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
             }
             gettimeofday(&t2, NULL);
             printf("           iymulc: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+
+            printf("Vectorized Complex Sum (%dK loops):\n", m / 1000);
+            gettimeofday(&t1, NULL);
+            for (k = 0; k < m; k++) {
+                RKComplexArraySum(cs, RKMaximumGateCount);
+            }
+            gettimeofday(&t2, NULL);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+
+            gettimeofday(&t1, NULL);
+            for (k = 0; k < m; k++) {
+                RKSIMD_ysum(cs, RKMaximumGateCount);
+            }
+            gettimeofday(&t2, NULL);
+            printf("             ysum: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
         }
 
         if (flag & RKTestSIMDFlagPerformanceTestDuplicate) {

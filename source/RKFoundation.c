@@ -70,6 +70,15 @@ void RKComplexArrayInPlaceConjugateMultiply(RKComplex *src, RKComplex *dst, cons
     }
 }
 
+RKComplex RKComplexArraySum(RKComplex *src, const int count) {
+    RKComplex sum = {0.0f, 0.0f};
+    for (int k = 0; k < count; k++) {
+        sum.i += src->i;
+        sum.q += src->q;
+        src++;
+    }
+    return sum;
+}
 
 #pragma mark - Logger
 
