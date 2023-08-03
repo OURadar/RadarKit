@@ -169,7 +169,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     uint16_t noiseGateCount, intermediateGateCount, runSumThreshold;
     const uint16_t persist = 10;
     // RKFloat iq_pm;
-    RKFloat meanS, intermediatePower, varInLog, medianP, powerThreshold;
+    RKFloat scaleS, meanS, intermediatePower, varInLog, medianP, powerThreshold;
     RKPulse *pulse = pulses[0];
     bool flatSwitch;
     bool failed = false;
@@ -217,6 +217,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
 
         // This is 2x faster (rkutil -T60)
         meanS = RKSIMD_sum(space->aR[p][0], gateCount) / gateCount;
+        scaleS = meanS;
 
         // QUESTION: space->aR[p][0][k] for k > pulseDownSampledGateCount is meaningless no?
         //
@@ -224,7 +225,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         noiseGateCount = 0;
         for (k = pulseDownSampledGateCount + 1; k < gateCount; k++) {
             // space->S[p][noiseGateCount++] = space->aR[p][0][k] / iq_pm;                            // iq_power
-            space->S[p][noiseGateCount++] = space->aR[p][0][k] / meanS;                               // iq_power
+            space->S[p][noiseGateCount++] = space->aR[p][0][k] / scaleS;                               // iq_power
         }
 
         noiseGateCount = 0;
@@ -382,7 +383,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             // RKLog("< NoiseEngine > Info. Skipped a ray/channel %d. noiseGateCount*M = %d < %d iEndMinSampleSize\n", p, noiseGateCount*M, iEndMinSampleSize);
         } else {
             // space->noise[p] = intermediatePower * iq_pm;
-            space->noise[p] = intermediatePower * meanS;
+            space->noise[p] = intermediatePower * scaleS;
             // RKLog("< NoiseEngine > Info. channel %d. noiseGateCount*M = %d, noise %f (ADU^2)\n", p, noiseGateCount*M, space->noise[p]);
         }
     }
