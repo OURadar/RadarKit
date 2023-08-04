@@ -171,15 +171,17 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     uint16_t noiseGateCount, runSumThreshold;
     RKFloat scaleS, varInLog, medianP, powerThreshold;
     RKPulse *pulse = pulses[0];
-    bool flatSwitch;
+    bool flat;
     bool failed = false;
     const uint16_t persist = 10;
     const uint32_t gateCount = pulse->header.downSampledGateCount;
-    const uint32_t M = pulseCount < 199 ? pulseCount : 199;                                     // M = np.min([pulseCount, len(fTCN)])
+    const uint32_t M = pulseCount < 199 ? pulseCount : 199;                                        // M = np.min([pulseCount, len(fTCN)])
     const uint32_t K = (uint32_t)ceilf(8.e3f / space->gateSizeMeters);                             // running window of size K in step 2
     const uint32_t runSumLength = (uint32_t)(round(500.f / M));
     const RKFloat runSumThreshold = 1.12f * (RKFloat)runSumLength;
-    const uint32_t pulseDownSampledGateCount = pulse->header.pulseWidthSampleCount * pulse->header.downSampledGateCount / pulse->header.gateCount;
+    const uint32_t downSampledPulseWidthSampleCount = pulse->header.pulseWidthSampleCount
+                                                    * pulse->header.downSampledGateCount
+                                                    / pulse->header.gateCount;
 
     for (p = 0; p < 2; p++) {
 
@@ -213,7 +215,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         scaleS = RKSIMD_sum(space->aR[p][0], gateCount) / gateCount;
 
         noiseGateCount = 0;
-        for (k = pulseDownSampledGateCount + 1; k < gateCount; k++) {
+        for (k = downSampledPulseWidthSampleCount + 1; k < gateCount; k++) {
             space->S[p][noiseGateCount++] = space->aR[p][0][k] / scaleS;                           // iq_power
         }
 
@@ -238,26 +240,26 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             }
         }
         f = 99999.0f;
-        flatSwitch = false;
+        flat = false;
         for (k = 0; k < noiseGateCount - K + 1; k++) {
-            if (space->mask[k] && !flatSwitch) {
+            if (space->mask[k] && !flat) {
                 x = space->S[p][k];
-                flatSwitch = true;
+                flat = true;
                 u = 1;
-            } else if (space->mask[k] && flatSwitch) {
+            } else if (space->mask[k] && flat) {
                 x += space->S[p][k];
                 u++;
                 if (k == (noiseGateCount - K)) {
                     x = x / u;
-                    flatSwitch = false;
+                    flat = false;
                     if (x < f) {
                         f = x;
                         // RKLog("End intermediateGateCount %d, mS %f (ADU^2)\n", intermediateGateCount, mS);
                     }
                 }
-            } else if (!space->mask[k] && flatSwitch) {
+            } else if (!space->mask[k] && flat) {
                 x /= u;
-                flatSwitch = false;
+                flat = false;
                 if (x < f) {
                     f = x;
                     // RKLog("intermediateGateCount %d, mS %f (ADU^2)\n", intermediateGateCount, mS);
@@ -301,23 +303,23 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 }
             }
         }
-        x = 0.0f;
         u = 0;
+        x = 0.0f;
         for (k = 0; k < noiseGateCount; k++) {
             if (space->mask[k]) {
                 x += space->S[p][k];
-                space->S[p][u++] = space->S[p][k];     //  P_noise = P_noise[ P_mask ]
+                space->S[p][u++] = space->S[p][k];                                                 //  P_noise = P_noise[ P_mask ]
             }
         }
         noiseGateCount = u;
         f = SNRThreshold[M] * x / noiseGateCount;
         // RKLog("I am here before n, noiseGateCount %d, intermediate_power %f (ADU^2)\n", noiseGateCount, intermediate_power);
-        x = 0.0f;
         u = 0;
+        x = 0.0f;
         for (k = 0; k < noiseGateCount; k++) {
             if (space->S[p][k] < f) {
                 x += space->S[p][k];
-                space->S[p][u++] = space->S[p][k];     // P_noise = P_noise[ P_noise < fSNRThr[M]*mean_power ]
+                space->S[p][u++] = space->S[p][k];                                                 // P_noise = P_noise[ P_noise < fSNRThr[M]*mean_power ]
             }
         }
         noiseGateCount = u;
@@ -330,8 +332,8 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 space->mask[k] = 0;
             }
             powerThreshold = f * runSumThreshold;
-            x = 0.0f;
             runSumThreshold = 0;
+            x = 0.0f;
             for (k = 0; k < runSumLength; k++) {
                 x += space->S[p][k];
             }
