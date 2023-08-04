@@ -173,11 +173,11 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     const uint32_t gateCount = pulse->header.downSampledGateCount;
     const uint32_t M = pulseCount < 199 ? pulseCount : 199;                                        // M = np.min([pulseCount, len(fTCN)])
     const uint32_t K = (uint32_t)ceilf(8.e3f / space->gateSizeMeters);                             // running window of size K in step 2
-    const uint32_t runSumLength = (uint32_t)(round(500.f / M));
-    const RKFloat runSumThreshold = 1.12f * (RKFloat)runSumLength;
+    const uint32_t runSumLength = (uint32_t)round(500.f / M);
     const uint32_t downSampledPulseWidthSampleCount = pulse->header.pulseWidthSampleCount
                                                     * pulse->header.downSampledGateCount
                                                     / pulse->header.gateCount;
+    const RKFloat adjustedRunSumLength = 1.12f * (RKFloat)runSumLength;
 
     for (p = 0; p < 2; p++) {
 
@@ -269,13 +269,13 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             break;
         }
         // RKLog("< NoiseEngine > Info. before noiseGateCount = %d\n", noiseGateCount);
-        n_time = 0;
+        n = 0;
         f = SNRThreshold[M] * f;
         // RKLog("< NoiseEngine > Info. intermediate_power = %f\n", intermediate_power);
         for (k = 0; k < noiseGateCount; k++) {
             if (space->S[p][k] < f) {
                 space->V[p][n] = space->S[p][k];
-                space->S[p][n++] = space->S[p][k];     // P_noise = P_noise[P_noise < fSNRThr[M] * intermediate_power]
+                space->S[p][n++] = space->S[p][k];                                                 // P_noise = P_noise[P_noise < fSNRThr[M] * intermediate_power]
             }
         }
         noiseGateCount = n;
@@ -327,7 +327,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             for (k = 0; k < noiseGateCount; k++) {
                 space->mask[k] = 0;
             }
-            powerThreshold = f * runSumThreshold;
+            powerThreshold = f * adjustedRunSumLength;
             runSumThreshold = 0;
             x = 0.0f;
             for (k = 0; k < runSumLength; k++) {
