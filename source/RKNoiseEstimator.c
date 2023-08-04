@@ -124,10 +124,6 @@ RKFloat varf(RKFloat *astart, const uint16_t window) {
     RKFloat m = 0.0f, v = 0.0f;
     RKFloat *x = astart;
     for (k = 0; k < window; k++) {
-        // For integer power, I think *(astart + vk) ** 2 is more efficient
-        // https://stackoverflow.com/questions/2940367/what-is-more-efficient-using-pow-to-square-or-just-multiply-it-with-itself
-        // varV += powf(*(astart + vk), 2.0f);
-        // mV += *(astart + vk);
         v += *x * *x;
         m += *x;
         x++;
