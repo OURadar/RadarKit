@@ -109,6 +109,10 @@ void RKComplexArrayInPlaceSubtract(RKComplex *src, RKComplex *dst, const int);  
 void RKComplexArrayInPlaceMultiply(RKComplex *src, RKComplex *dst, const int);                     // dst = src * dst
 void RKComplexArrayInPlaceConjugateMultiply(RKComplex *src, RKComplex *dst, const int);            // dst = src * conj(dst)
 
+// Reduction
+RKFloat RKFloatArraySum(RKFloat *src, const int);
+RKComplex RKComplexArraySum(RKComplex *src, const int);
+
 // Log
 int RKLog(const char *, ...);
 void RKExit(int);

@@ -514,3 +514,38 @@ void RKSIMD_izrmrm(RKIQZ *src, RKFloat *dst, RKFloat *x, RKFloat *y, RKFloat u, 
     }
     return;
 }
+
+static RKVec _RKSIMD_vsum(RKVec *src, const int n) {
+    int k;
+    const float zero = 0.0f;
+    RKVec s = _rk_mm_set1(zero);
+    for (k = 0; k < n; k++) {
+        s = _rk_mm_add(s, *src++);
+    }
+    return s;
+}
+// Sum a RKFloat array
+RKFloat RKSIMD_sum(RKFloat *src, const int n) {
+    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKVec s = _RKSIMD_vsum((RKVec *)src, K);
+    RKFloat *t = (RKFloat *)&s;
+    RKFloat y = 0.0f;
+    for (k = 0; k < sizeof(RKVec) / sizeof(float); k++) {
+        y += *t++;
+    }
+    return y;
+}
+
+// Sum an RKComplex array
+RKComplex RKSIMD_ysum(RKComplex *src, const int n) {
+    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKVec s = _RKSIMD_vsum((RKVec *)src, K);
+    RKComplex *t = (RKComplex *)&s;
+    RKComplex y = {0.0f, 0.0f};
+    for (k = 0; k < sizeof(RKVec) / sizeof(RKComplex); k++) {
+        y.i += t->i;
+        y.q += t->q;
+        t++;
+    }
+    return y;
+}
