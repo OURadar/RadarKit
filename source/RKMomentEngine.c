@@ -467,10 +467,11 @@ static void *momentCore(void *in) {
             prepareScratch(space);
             // Call the noise estimator
             k = engine->noiseEstimator(space, pulses, path.length);
-            RKLog("%s estimate: noise[0] %f noise[1] %f \n", me->name, space->noise[0], space->noise[1]);
-            if (k != RKResultSuccess) {
-                RKNoiseFromConfig(space, pulses, path.length);
-            }
+            RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
+            // if (k != RKResultSuccess) {
+            //     RKNoiseFromConfig(space, pulses, path.length);
+            // }
+            // RKNoiseFromConfig(space, pulses, path.length);
             // Call the moment processor
             k = engine->momentProcessor(space, pulses, path.length);
             if (k != path.length) {
@@ -893,6 +894,14 @@ void RKMomentEngineSetCoreOrigin(RKMomentEngine *engine, const uint8_t origin) {
         return;
     }
     engine->coreOrigin = origin;
+}
+
+void RKMomentEngineSetNoiseEstimator(RKMomentEngine *engine, int (*routine)(RKMomentScratch *, RKPulse **, const uint16_t)) {
+    engine->noiseEstimator = routine;
+}
+
+void RKMomentEngineSetMomentProcessor(RKMomentEngine *engine, int (*routine)(RKMomentScratch *, RKPulse **, const uint16_t)) {
+    engine->momentProcessor = routine;
 }
 
 #pragma mark - Interactions

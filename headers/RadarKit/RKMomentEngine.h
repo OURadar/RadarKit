@@ -93,8 +93,8 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
 void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
-void RKMomentEngineSetNoiseEstimator(RKMomentEngine *, int (*noiseEstimator)(RKMomentScratch *, RKPulse **, const uint16_t));
-void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*momentProcessor)(RKMomentScratch *, RKPulse **, const uint16_t));
+void RKMomentEngineSetNoiseEstimator(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
+void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
