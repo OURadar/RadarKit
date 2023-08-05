@@ -367,6 +367,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
         if (noiseGateCount * M < failureSampleCount) {
             failed = true;
+            space->noise[p] = space->config->noise[p];
             // RKLog("< NoiseEngine > Info. Skipped a ray/channel %d. noiseGateCount*M = %d < %d iEndMinSampleSize\n", p, noiseGateCount*M, iEndMinSampleSize);
         } else {
             // space->noise[p] = intermediatePower * iq_pm;

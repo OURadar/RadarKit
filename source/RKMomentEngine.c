@@ -159,6 +159,12 @@ static void zeroOutRay(RKRay *ray) {
     memset(u, 0, RKBaseProductCount * sizeof(uint8_t));
 }
 
+int RKNoiseFromConfig(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+    space->noise[0] = space->config->noise[0];
+    space->noise[1] = space->config->noise[1];
+    return RKResultSuccess;
+}
+
 #pragma mark - Delegate Workers
 
 static void *momentCore(void *in) {
@@ -453,15 +459,20 @@ static void *momentCore(void *in) {
             // space->noise[0] = ...
             // space->noise[1] = ...
             //
-            space->noise[0] = config->noise[0];
-            space->noise[1] = config->noise[1];
-            RKLog("%s set: noise[0] %f noise[1] %f \n", me->name, space->noise[0], space->noise[1]);
+            // space->noise[0] = config->noise[0];
+            // space->noise[1] = config->noise[1];
+            // RKLog("%s set: noise[0] %f noise[1] %f \n", me->name, space->noise[0], space->noise[1]);
+
             // Initialize the scratch space
             prepareScratch(space);
-            // Call the processor
-            RKRayNoiseEstimator(space, pulses, path.length);
+            // Call the noise estimator
+            k = engine->noiseEstimator(space, pulses, path.length);
             RKLog("%s estimate: noise[0] %f noise[1] %f \n", me->name, space->noise[0], space->noise[1]);
-            k = engine->processor(space, pulses, path.length);
+            if (k != RKResultSuccess) {
+                RKNoiseFromConfig(space, pulses, path.length);
+            }
+            // Call the moment processor
+            k = engine->momentProcessor(space, pulses, path.length);
             if (k != path.length) {
                 RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
             }
@@ -569,20 +580,27 @@ static void *pulseGatherer(void *_in) {
     RKRay *ray;
 	RKMarker marker;
 
-    // Show the selected moment processor
+    // Show the selected noise estimator & moment processor
     if (engine->verbose) {
-        if (engine->processor == &RKMultiLag) {
-            RKLog(">%s Method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
-        } else if (engine->processor == &RKPulsePairHop) {
-            RKLog(">%s Method = RKPulsePairHop\n", engine->name);
-        } else if (engine->processor == &RKPulsePair) {
-            RKLog(">%s Method = RKPulsePair\n", engine->name);
-        } else if (engine->processor == &RKSpectralMoment) {
-            RKLog(">%s Method = RKSpectralMoment\n", engine->name);
-        } else if (engine->processor == &RKNullProcessor) {
+        if (engine->noiseEstimator == &RKNoiseFromConfig) {
+            RKLog(">%s Noise method = RKNoiseEstimator\n", engine->name);
+        } else if (engine->momentProcessor == NULL) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
-            RKLog(">%s Method %p not recognized\n", engine->name, engine->processor);
+            RKLog(">%s Noise method @ %p not recognized\n", engine->name, engine->momentProcessor);
+        }
+        if (engine->momentProcessor == &RKMultiLag) {
+            RKLog(">%s Moment method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
+        } else if (engine->momentProcessor == &RKPulsePairHop) {
+            RKLog(">%s Moment method = RKPulsePairHop\n", engine->name);
+        } else if (engine->momentProcessor == &RKPulsePair) {
+            RKLog(">%s Moment method = RKPulsePair\n", engine->name);
+        } else if (engine->momentProcessor == &RKSpectralMoment) {
+            RKLog(">%s Moment method = RKSpectralMoment\n", engine->name);
+        } else if (engine->momentProcessor == NULL || engine->momentProcessor == &RKNullProcessor) {
+            RKLog(">%s Warning. No moment processor.\n", engine->name);
+        } else {
+            RKLog(">%s Moment method @ %p not recognized\n", engine->name, engine->momentProcessor);
         }
     }
 
@@ -801,7 +819,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->processor = &RKPulsePairHop;
+    engine->noiseEstimator = &RKNoiseFromConfig;
+    engine->momentProcessor = &RKPulsePairHop;
     engine->calibrator = &RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;
     engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));

@@ -1590,10 +1590,10 @@ int RKSetMomentProcessorToMultiLag(RKRadar *radar, const uint8_t lagChoice) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
-    if (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == lagChoice) {
+    if (radar->momentEngine->momentProcessor == &RKMultiLag && radar->momentEngine->userLagChoice == lagChoice) {
         return RKResultSuccess;
     }
-    radar->momentEngine->processor = &RKMultiLag;
+    radar->momentEngine->momentProcessor = &RKMultiLag;
     radar->momentEngine->processorLagCount = RKMaximumLagCount;
     if (lagChoice < 0 || lagChoice > 4) {
         RKLog("Error. Invalid lag choice (%d) for multi-lag method.\n", lagChoice);
@@ -1611,7 +1611,7 @@ int RKSetMomentProcessorToPulsePair(RKRadar *radar) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
-    radar->momentEngine->processor = &RKPulsePair;
+    radar->momentEngine->momentProcessor = &RKPulsePair;
     radar->momentEngine->processorLagCount = 3;
     RKLog("Moment processor set to %sPulse Pair%s",
           rkGlobalParameters.showColor ? "\033[4m" : "",
@@ -1623,7 +1623,7 @@ int RKSetMomentProcessorToPulsePairHop(RKRadar *radar) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
-    radar->momentEngine->processor = &RKPulsePairHop;
+    radar->momentEngine->momentProcessor = &RKPulsePairHop;
     radar->momentEngine->processorLagCount = 2;
     RKLog("Moment processor set to %sPulse Pair for Frequency Hopping%s\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
@@ -1641,7 +1641,7 @@ int RKSetMomentProcessorToPulsePairStaggeredPRT(RKRadar *radar) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
-    radar->momentEngine->processor = &RKPulsePairStaggeredPRT;
+    radar->momentEngine->momentProcessor = &RKPulsePairStaggeredPRT;
     radar->momentEngine->processorLagCount = 2;
     RKLog("Warning. Moment processor set to %sPulse Pair for Staggered PRT%s (Not Implemented)\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
@@ -1653,7 +1653,7 @@ int RKSetMomentProcessorToSpectralMoment(RKRadar *radar) {
     if (radar->momentEngine == NULL) {
         return RKResultNoMomentEngine;
     }
-    radar->momentEngine->processor = &RKSpectralMoment;
+    radar->momentEngine->momentProcessor = &RKSpectralMoment;
     RKLog("Moment processor set to %sSpectral Moment%s\n",
           rkGlobalParameters.showColor ? "\033[4m" : "",
           rkGlobalParameters.showColor ? "\033[24m" : "");
@@ -2281,12 +2281,12 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             }
                         } else if (string) {
                             sprintf(string, "ACK. Current moment processor is %s" RKEOL,
-                                    radar->momentEngine->processor == &RKPulsePair ? "PulsePair" :
-                                    (radar->momentEngine->processor == &RKPulsePairHop ? "PulsePairHop" :
-                                     (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == 2 ? "MultiLag-2" :
-                                      (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == 3 ? "MultiLag-3" :
-                                       (radar->momentEngine->processor == &RKMultiLag && radar->momentEngine->userLagChoice == 4 ? "MultiLag-4" :
-                                        (radar->momentEngine->processor == &RKSpectralMoment ? "SpectralMoment" : "Unknown"))))));
+                                    radar->momentEngine->momentProcessor == &RKPulsePair ? "PulsePair" :
+                                    (radar->momentEngine->momentProcessor == &RKPulsePairHop ? "PulsePairHop" :
+                                     (radar->momentEngine->momentProcessor == &RKMultiLag && radar->momentEngine->userLagChoice == 2 ? "MultiLag-2" :
+                                      (radar->momentEngine->momentProcessor == &RKMultiLag && radar->momentEngine->userLagChoice == 3 ? "MultiLag-3" :
+                                       (radar->momentEngine->momentProcessor == &RKMultiLag && radar->momentEngine->userLagChoice == 4 ? "MultiLag-4" :
+                                        (radar->momentEngine->momentProcessor == &RKSpectralMoment ? "SpectralMoment" : "Unknown"))))));
                         }
                         break;
                     case 'n':
