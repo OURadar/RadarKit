@@ -42,7 +42,7 @@ static int nmea_checksum(const char *sentence) {
         c ^= sentence[i];
     }
     char ic = strtol(sentence + i + 1, NULL, 16);
-    return (int)(ic - c);;
+    return (int)(ic - c);
 }
 
 static void tokenize_nmea_gpgga_sentence(char *sentence, nmea_data_t *out) {
@@ -51,7 +51,7 @@ static void tokenize_nmea_gpgga_sentence(char *sentence, nmea_data_t *out) {
     char *s = (char *)sentence + 6;
     char *e = (char *)sentence + 6;
 
-    char token[80];;
+    char token[80];
     size_t len;
     int i = 0;
 
@@ -119,7 +119,7 @@ static void tokenize_nmea_gphdt_sentence(char *sentence, nmea_data_t *out) {
     char *s = (char *)sentence + 6;
     char *e = (char *)sentence + 6;
 
-    char token[80];;
+    char token[80];
     size_t len;
     int i = 0;
 
@@ -152,7 +152,7 @@ static void tokenize_nmea_gpvtg_sentence(char *sentence, nmea_data_t *out) {
     char *s = (char *)sentence + 6;
     char *e = (char *)sentence + 6;
 
-    char token[80];;
+    char token[80];
     size_t len;
     int i = 0;
 
@@ -206,7 +206,7 @@ static void tokenize_nmea_gprmc_sentence(char *sentence, nmea_data_t *out) {
     char *s = (char *)sentence + 6;
     char *e = (char *)sentence + 6;
 
-    char token[80];;
+    char token[80];
     size_t len;
     int i = 0;
 
