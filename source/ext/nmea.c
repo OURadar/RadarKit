@@ -23,6 +23,7 @@ typedef struct nmea_data {
     double  latitude;               // DDMM.MMM - latitude in degrees, minutes, and decimal minutes
     double  longitude;              // DDMM.MMM - longitude in degrees, minutes, and decimal minutes
     double  heading;                // Y.Y - reference to true north
+    double  course;                 // course over ground
     double  speed;                  // ground speed in kilometers per second
     double  bearing;                // direction of motion relative to true north
     bool    valid;                  // true if GPS reading is valid (pitch and roll are always valid)
@@ -211,10 +212,10 @@ static void tokenize_nmea_gprmc_sentence(char *sentence, nmea_data_t *out) {
 
     int     b;
     float   c;
-    double  utc_time, latitude, longitude, heading;
+    double  utc_time, latitude, longitude, course;
     bool    valid;
 
-    utc_time = latitude = longitude = heading = 0.0;
+    utc_time = latitude = longitude = course = 0.0;
     valid = false;
 
     while (*e != '\0' && i < 16) {
@@ -260,7 +261,7 @@ static void tokenize_nmea_gprmc_sentence(char *sentence, nmea_data_t *out) {
                 longitude *= (-1);
             }
         } else if (i == 7) {
-            heading = atof(token);
+            course = atof(token);
         }
         s = e;
         i++;
@@ -271,7 +272,7 @@ static void tokenize_nmea_gprmc_sentence(char *sentence, nmea_data_t *out) {
     out->utc_time = utc_time;
     out->longitude = longitude;
     out->latitude = latitude;
-    out->heading = heading;
+    out->course = course;
 }
 
 int nmea_parse_sentence(nmea_data_t *out, char *sentence) {
