@@ -80,7 +80,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
         "RhoHV",
         "KDP"
     };
-    uint32_t products[] = {
+    RKBaseProductList products[] = {
         RKBaseProductListFloatZ,
         RKBaseProductListFloatV,
         RKBaseProductListFloatW,
@@ -89,7 +89,7 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
         RKBaseProductListFloatR,
         RKBaseProductListFloatK
     };
-    uint8_t productIndices[] = {
+    RKBaseProductIndex productIndices[] = {
         RKBaseProductIndexZ,
         RKBaseProductIndexV,
         RKBaseProductIndexW,
