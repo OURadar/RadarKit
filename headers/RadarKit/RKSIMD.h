@@ -187,4 +187,7 @@ void RKSIMD_clamp(RKFloat *src, const RKFloat min, const RKFloat max, const int 
 
 void RKSIMD_izrmrm(RKIQZ *src, RKFloat *dst, RKFloat *x, RKFloat *y, RKFloat u, const int n);
 
+RKFloat RKSIMD_sum(RKFloat *src, const int n);
+RKComplex RKSIMD_ysum(RKComplex *src, const int n);
+
 #endif

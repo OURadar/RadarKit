@@ -366,15 +366,6 @@ static void *momentCore(void *in) {
 
         config = &engine->configBuffer[E->header.configIndex];
 
-        //
-        // Could have a ray-by-ray noise estimate here and store them in noise[0] and noise[1] for H & V, respectively
-        //
-        // space->noise[0] = ...
-        // space->noise[1] = ...
-        //
-        space->noise[0] = config->noise[0];
-        space->noise[1] = config->noise[1];
-
         // Compute the range correction factor if needed.
         if (ic != E->header.configIndex || ray->header.gateCount != space->gateCount) {
             ic = E->header.configIndex;
@@ -456,9 +447,20 @@ static void *momentCore(void *in) {
             if (ie != i) {
                 RKLog("%s I detected a bug %d vs %d.\n", me->name, ie, i);
             }
+            // Let's move noise setting here and do ray-by-ray noise estimator (Min-Duan)
+            // Could have a ray-by-ray noise estimate here and store them in noise[0] and noise[1] for H & V, respectively
+            //
+            // space->noise[0] = ...
+            // space->noise[1] = ...
+            //
+            space->noise[0] = config->noise[0];
+            space->noise[1] = config->noise[1];
+            RKLog("%s set: noise[0] %f noise[1] %f \n", me->name, space->noise[0], space->noise[1]);
             // Initialize the scratch space
             prepareScratch(space);
             // Call the processor
+            RKRayNoiseEstimator(space, pulses, path.length);
+            RKLog("%s estimate: noise[0] %f noise[1] %f \n", me->name, space->noise[0], space->noise[1]);
             k = engine->processor(space, pulses, path.length);
             if (k != path.length) {
                 RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
