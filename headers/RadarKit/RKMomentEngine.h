@@ -53,7 +53,8 @@ struct rk_moment_engine {
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
-    int                              (*processor)(RKMomentScratch *, RKPulse **, const uint16_t);
+    int                              (*noiseEstimator)(RKMomentScratch *, RKPulse **, const uint16_t);
+    int                              (*momentProcessor)(RKMomentScratch *, RKPulse **, const uint16_t);
     void                             (*calibrator)(RKUserModule, RKMomentScratch *);
 
     // Program set variables
@@ -92,6 +93,8 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
 void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
+void RKMomentEngineSetNoiseEstimator(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
+void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
@@ -99,5 +102,7 @@ int RKMomentEngineStop(RKMomentEngine *);
 void RKMomentEngineWaitWhileBusy(RKMomentEngine *);
 
 char *RKMomentEngineStatusString(RKMomentEngine *);
+
+int RKNoiseFromConfig(RKMomentScratch *, RKPulse **, const uint16_t);
 
 #endif /* defined(__RadarKit_Moment_Engine__) */
