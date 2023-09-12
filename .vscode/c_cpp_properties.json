@@ -3,23 +3,6 @@
     {
       "name": "macos-clang-arm64",
       "includePath": [
-        "${workspaceFolder}/**"
-      ],
-      "macFrameworkPath": [
-        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
-      ],
-      "compilerPath": "/usr/bin/clang",
-      "cStandard": "${default}",
-      "cppStandard": "${default}",
-      "intelliSenseMode": "macos-clang-arm64",
-      "compilerArgs": [
-        "-march=native",
-        "-mfpmath=sse"
-      ]
-    },
-    {
-      "name": "macos-clang-arm64",
-      "includePath": [
         "${workspaceFolder}/headers",
         "${workspaceFolder}/headers/RadarKit",
         "/opt/homebrew/include",
