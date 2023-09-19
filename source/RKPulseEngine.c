@@ -1141,6 +1141,25 @@ RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *engine, const RKPulseStatus 
     return pulse;
 }
 
+RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocking) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired for RKPulseEngineGetProcessedPulse()\n");
+        return NULL;
+    }
+    RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, engine->doneIndex);
+    if (blocking) {
+        uint32_t s = 0;
+        while (!(pulse->header.s & RKPulseStatusProcessed) && s++ < 10000) {
+            usleep(100);
+        }
+    } else {
+        if (!(pulse->header.s & RKPulseStatusProcessed)) {
+            return NULL;
+        }
+    }
+    return pulse;
+}
+
 void RKPulseEngineWaitWhileBusy(RKPulseEngine *engine) {
     int j, k;
     uint32_t d, lo, hi, offset;

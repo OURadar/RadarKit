@@ -45,6 +45,7 @@ struct rk_pulse_engine {
     uint32_t                         *configIndex;
     RKBuffer                         pulseBuffer;                              // Buffer of raw pulses
     uint32_t                         *pulseIndex;                              // The refence index to watch for
+    uint32_t                         doneIndex;                                // Last retrieved pulse index that's processed
     RKFFTModule                      *fftModule;
     RKUserModule                     userModule;
     uint8_t                          verbose;
@@ -106,6 +107,7 @@ int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);
 
 RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *, const RKPulseStatus);
+RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *);
 void RKPulseEngineWaitWhileBusy(RKPulseEngine *);
 
 char *RKPulseEngineStatusString(RKPulseEngine *);
