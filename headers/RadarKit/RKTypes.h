@@ -736,15 +736,16 @@ enum {
     RKBaseProductListFloatSh                     = (1 << 23),                  // Data of Sh
     RKBaseProductListFloatSv                     = (1 << 24),                  // Data of Sv
     RKBaseProductListFloatQ                      = (1 << 25),                  // Data of Q
-    RKBaseProductListFloatU6                     = (1 << 26),                  //
-    RKBaseProductListFloatU5                     = (1 << 27),                  //
-    RKBaseProductListFloatU4                     = (1 << 28),                  //
-    RKBaseProductListFloatU3                     = (1 << 29),                  //
-    RKBaseProductListFloatU2                     = (1 << 30),                  //
-    RKBaseProductListFloatU1                     = (1 << 31),                  //
+    RKBaseProductListFloatLh                     = (1 << 26),                  // Data of LDRh
+    RKBaseProductListFloatLv                     = (1 << 27),                  // Data of LDRv
+    RKBaseProductListFloatRXh                    = (1 << 28),                  // Data of Rhoxh
+    RKBaseProductListFloatRXv                    = (1 << 29),                  // Data of Rhoxv
+    RKBaseProductListFloatPXh                    = (1 << 30),                  // Data of Phixh
+    RKBaseProductListFloatPXv                    = (1 << 31),                  // Data of Phixv
     RKBaseProductListFloatZVWDPR                 = 0x003F0000,                 // Base moment data without K, Sh, Sv and Q
     RKBaseProductListFloatZVWDPRK                = 0x007F0000,                 // Base moment data without Sh, Sv and Q
     RKBaseProductListFloatZVWDPRKS               = 0x01FF0000,                 // All data without Q
+    RKBaseProductListFloatATSR                   = 0xFDFF0000,                 // ATSR data without Q
     RKBaseProductListFloatZVWDPRKSQ              = 0x03FF0000,                 // All data
     RKBaseProductListFloatAll                    = 0xFFFF0000                  // All data (same as above)
 };
@@ -761,12 +762,12 @@ enum {
     RKBaseProductIndexSh,
     RKBaseProductIndexSv,
     RKBaseProductIndexQ,
-    RKBaseProductIndexLH,
-    RKBaseProductIndexLV,
-    RKBaseProductIndexRhoXH,
-    RKBaseProductIndexRhoXV,
-    RKBaseProductIndexPhiXH,
-    RKBaseProductIndexPhiXV,
+    RKBaseProductIndexLh,
+    RKBaseProductIndexLv,
+    RKBaseProductIndexRXh,
+    RKBaseProductIndexRXv,
+    RKBaseProductIndexPXh,
+    RKBaseProductIndexPXv,
     RKBaseProductIndexZv,                                                      // No longer used
     RKBaseProductIndexVv,                                                      // No longer used
     RKBaseProductIndexWv,                                                      // No longer used

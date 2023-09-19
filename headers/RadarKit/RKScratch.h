@@ -93,7 +93,7 @@ typedef struct rk_moment_scratch {
     RKFloat                          *Q[2];                                        // Signal quality index SQI
     RKFloat                          *L[2];                                        // Linear depolarization ratio LDR
     RKFloat                          *RhoXP[2];                                    // Co-polar-to-cross-polar correlation coefficient RhoXP
-    RKFloat                          *PhiXP[2];                                    // Co-polar-to-cross-polar phase PhiXP
+    RKFloat                          *PhiXP[2];                                    // Co-polar-to-cross-polar differential phase PhiXP
     RKFloat                          *SNR[2];                                      // Signal-to-noise ratio
     RKFloat                          *ZDR;                                         // Differential reflectivity ZDR
     RKFloat                          *PhiDP;                                       // Differential phase PhiDP
