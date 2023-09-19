@@ -7,7 +7,6 @@
 //
 
 #include <RadarKit/RKPulseATSR.h>
-#include <RadarKit/RKPulsePair.h>
 
 void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCount) {
     //  ACF & CCF to L RX PX
