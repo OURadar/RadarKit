@@ -15,12 +15,14 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     const RKFloat wa = space->widthFactor;
     const RKFloat ten = 10.0f;
     const RKFloat one = 1.0f;
+    const RKFloat two = 2.0f;
     const RKFloat zero = 0.0f;
     const RKFloat tiny = 1.0e-6;
     const RKVec va_pf = _rk_mm_set1(va);
     const RKVec wa_pf = _rk_mm_set1(wa);
     const RKVec ten_pf = _rk_mm_set1(ten);
     const RKVec one_pf = _rk_mm_set1(one);
+    const RKVec two_pf = _rk_mm_set1(two);
     const RKVec zero_pf = _rk_mm_set1(zero);
     //const RKVec dcal_pf = _rk_mm_set1(space->dcal);
     RKFloat n;
@@ -167,6 +169,7 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     z_pf = (RKVec *)space->ZDR;
     r_pf = (RKVec *)space->RhoHV;
     s_pf = (RKVec *)space->aC[0];
+    l_pf = (RKVec *)space->aC[1];
     h_pf = (RKVec *)space->aR[0][0];
     v_pf = (RKVec *)space->aR[1][0];
     a_pf = (RKVec *)space->Z[0];
@@ -178,15 +181,16 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
         *z_pf = _rk_mm_add(_rk_mm_sub(*a_pf, *w_pf), *d_pf);
         // R: |C[0]| * sqrt( R[H][0] * R[V][0])
         *r_pf = _rk_mm_rcp(_rk_mm_sqrt(_rk_mm_mul(*h_pf, *v_pf)));
-        *r_pf = _rk_mm_mul(*s_pf, *r_pf);
+        *r_pf = _rk_mm_mul(_rk_mm_div(_rk_mm_add(*s_pf, *l_pf), two_pf), *r_pf);
         //*r_pf = *s_pf;
         z_pf++;
-        a_pf++;
-        w_pf++;
-        h_pf++;
-        v_pf++;
         r_pf++;
         s_pf++;
+        l_pf++;
+        h_pf++;
+        v_pf++;
+        a_pf++;
+        w_pf++;
         d_pf++;
     }
     s = space->PhiDP;

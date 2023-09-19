@@ -146,15 +146,21 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->V[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->W[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->Q[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->L[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->RhoXP[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->PhiXP[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->SNR[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->S2Z[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         memset(scratch->S2Z[k], 0, scratch->capacity * sizeof(RKFloat));
-        s += 11;
+        s += 14;
         for (j = 0; j < RKMaximumLagCount; j++) {
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->R[k][j].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->R[k][j].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
             POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->aR[k][j],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
-            s += 3;
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->RX[k][j].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->RX[k][j].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->aRX[k][j],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            s += 6;
         }
     }
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->sC.i,  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
@@ -180,6 +186,12 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->C[j].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->aC[j],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         s += 3;
+        for (k = 0; k < 2; k++) {
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->CX[k][j].i, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->CX[k][j].q, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->aCX[k][j],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+            s += 3;
+        }
     }
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->gC, RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
     s++;
@@ -212,11 +224,17 @@ void RKMomentScratchFree(RKMomentScratch *scratch) {
         free(scratch->W[k]);
         free(scratch->Q[k]);
         free(scratch->SNR[k]);
+        free(scratch->L[k]);
+        free(scratch->RhoXP[k]);
+        free(scratch->PhiXP[k]);
         free(scratch->S2Z[k]);
         for (j = 0; j < RKMaximumLagCount; j++) {
             free(scratch->R[k][j].i);
             free(scratch->R[k][j].q);
             free(scratch->aR[k][j]);
+            free(scratch->RX[k][j].i);
+            free(scratch->RX[k][j].q);
+            free(scratch->aRX[k][j]);
         }
     }
     free(scratch->sC.i);
@@ -237,6 +255,11 @@ void RKMomentScratchFree(RKMomentScratch *scratch) {
         free(scratch->C[j].i);
         free(scratch->C[j].q);
         free(scratch->aC[j]);
+        for (k = 0; k < 2; k++) {
+            free(scratch->CX[k][j].i);
+            free(scratch->CX[k][j].q);
+            free(scratch->aCX[k][j]);
+        }
     }
     free(scratch->gC);
     free(scratch->mask);
