@@ -761,6 +761,12 @@ enum {
     RKBaseProductIndexSh,
     RKBaseProductIndexSv,
     RKBaseProductIndexQ,
+    RKBaseProductIndexLH,
+    RKBaseProductIndexLV,
+    RKBaseProductIndexRhoXH,
+    RKBaseProductIndexRhoXV,
+    RKBaseProductIndexPhiXH,
+    RKBaseProductIndexPhiXV,
     RKBaseProductIndexZv,                                                      // No longer used
     RKBaseProductIndexVv,                                                      // No longer used
     RKBaseProductIndexWv,                                                      // No longer used

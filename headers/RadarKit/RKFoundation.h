@@ -37,7 +37,7 @@
 // R in [  0.0    ... 1.079]
 // K in [ -0.1*PI ... 0.1*PI*(N-1)/N]   Ki = (K) x 1280 / M_PI + 128
 // Q in [  0.0    ... 1.0]              Ri = (Q) * 250
-//
+// L in [-40.0    ... 2.5]              Li = (L) x 6 + 240
 //
 // Z  in [CLR  -31.50   -31.00  ... 95.5]            Z = (Zi) * 0.5 - 32.0
 // V  in [CLR  -15.875  -15.750 ... 15.875]          V = (Vi) * 0.125 - 16.0
@@ -61,6 +61,7 @@
 #define RKV3LHMAC { lhma[0] = -64.0f;     lhma[1] = 63.5f;       lhma[2] = 2.0f;      lhma[3] = 128.0f; }  //
 #define RKQLHMAC  { lhma[0] = 0.0f;       lhma[1] = 1.0f;        lhma[2] = 250.0f;    lhma[3] =   0.0f; }  //
 #define RKSLHMAC  { lhma[0] = -120.0f;    lhma[1] = 0.0f;        lhma[2] = 250.0f;    lhma[3] = -96.3f; }  // Asuumed 16-bit, 96 dB, peak @ 0 dBm
+#define RKLLHMAC  { lhma[0] = -40.0f;     lhma[1] = 2.5f;        lhma[2] = 6.0f;      lhma[3] = 240.0f; }  //
 
 //#define RKRho2Uint8(r)    (r > 0.93f ? roundf((r - 0.93f) * 1000.0f) + 106.0f : (r > 0.7f ? roundf((r - 0.7f) * 300.0f) + 37.0f : roundf(r * 52.8571f)))
 #define RKRho2Uint8(r)    roundf(r > 0.93f ? r * 1000.0f - 824.0f : (r > 0.7f ? r * 300.0f - 173.0f : r * 52.8571f))
