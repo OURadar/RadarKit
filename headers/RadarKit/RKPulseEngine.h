@@ -107,7 +107,7 @@ int RKPulseEngineStart(RKPulseEngine *);
 int RKPulseEngineStop(RKPulseEngine *);
 
 RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *, const RKPulseStatus);
-RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *);
+RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *, const bool);
 void RKPulseEngineWaitWhileBusy(RKPulseEngine *);
 
 char *RKPulseEngineStatusString(RKPulseEngine *);
