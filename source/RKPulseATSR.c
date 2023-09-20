@@ -151,8 +151,8 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     // PhiXP[H], PhiXP[V]
     for (p = 0; p < 2; p++) {
         s = space->PhiXP[p];
-        ri = space->CX[p].i;
-        rq = space->CX[p].q;
+        ri = (RKFloat *)space->CX[p][0].i;
+        rq = (RKFloat *)space->CX[p][0].q;
         s[0] = atan2f(*rq++, *ri++);
         for (k = 1; k < gateCount; k++) {
             s[k] = atan2f(*rq++, *ri++);
@@ -244,6 +244,10 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     const uint32_t gateCount = space->gateCount;
     const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
+    RKIQZ Xn;
+    RKIQZ Xm;
+    RKIQZ Xk;
+
     //
     //  ACF (R,RX), CCF (hcvx, vchx)
     //
@@ -268,9 +272,9 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
         n = 1;
     }
 
-    RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);            //hc
+    Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);            //hc
     RKSIMD_zcma(&Xn, &Xn, &space->R[0][0], gateCount, 1);
-    RKIQZ Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);            //vx
+    Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);            //vx
     RKSIMD_zcma(&Xm, &Xm, &space->RX[1][0], gateCount, 1);
 
     RKSIMD_zcma(&Xn, &Xm, &space->CX[0][0], gateCount, 1);
@@ -278,12 +282,12 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     n += 2;
     j = 1;
     for (; n < pulseCount; n += 2) {
-        RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
-        RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 0);
+        Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
+        Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 0);
         RKSIMD_zcma(&Xn, &Xn, &space->R[0][0], gateCount, 1);                                                // R[0] += X[n] * X[n]'
         RKSIMD_zcma(&Xn, &Xk, &space->R[0][1], gateCount, 1);                                                // R[k] += X[n] * X[n- k]'
-        RKIQZ Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);
-        RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 1);
+        Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);
+        Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 1);
         RKSIMD_zcma(&Xm, &Xm, &space->RX[1][0], gateCount, 1);
         RKSIMD_zcma(&Xm, &Xk, &space->RX[1][1], gateCount, 1);
 
@@ -311,9 +315,9 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
         n = 0;
     }
 
-    RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);            //hx
+    Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);            //hx
     RKSIMD_zcma(&Xn, &Xn, &space->RX[0][0], gateCount, 1);
-    RKIQZ Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);            //vc
+    Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);            //vc
     RKSIMD_zcma(&Xm, &Xm, &space->R[1][0], gateCount, 1);
 
     RKSIMD_zcma(&Xm, &Xn, &space->CX[1][0], gateCount, 1);
@@ -321,12 +325,12 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     n += 2;
     j = 1;
     for (; n < pulseCount; n += 2) {
-        RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
-        RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 0);
+        Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
+        Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 0);
         RKSIMD_zcma(&Xn, &Xn, &space->RX[0][0], gateCount, 1);                                                // R[0] += X[n] * X[n]'
         RKSIMD_zcma(&Xn, &Xk, &space->RX[0][1], gateCount, 1);                                                // R[k] += X[n] * X[n- k]'
-        RKIQZ Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);
-        RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 1);
+        Xm = RKGetSplitComplexDataFromPulse(pulses[n], 1);
+        Xk = RKGetSplitComplexDataFromPulse(pulses[n - 2], 1);
         RKSIMD_zcma(&Xm, &Xm, &space->R[1][0], gateCount, 1);
         RKSIMD_zcma(&Xm, &Xk, &space->R[1][1], gateCount, 1);
 
@@ -359,8 +363,8 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
 
     j = 0;
     for (; n < pulseCount-1; n += 2) {
-        RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
-        RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n + 1], 1);
+        Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
+        Xk = RKGetSplitComplexDataFromPulse(pulses[n + 1], 1);
         RKSIMD_zcma(&Xn, &Xk, &space->C[0], gateCount, 1);                                                  // Ca = C[0] += H[n] * V[n+1]'
         j++;
     }
@@ -374,8 +378,8 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     }
     j = 0;
     for (; n < pulseCount; n += 2) {
-        RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
-        RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 1], 1);
+        Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
+        Xk = RKGetSplitComplexDataFromPulse(pulses[n - 1], 1);
         RKSIMD_zcma(&Xn, &Xk, &space->C[1], gateCount, 1);                                                  // Cb = C[0] += H[n] * V[n-1]'
         j++;
     }

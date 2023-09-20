@@ -668,6 +668,10 @@ enum {
     RKMomentListCp3                              = (1 << 23),                  // | C(+3) |
     RKMomentListCn4                              = (1 << 24),                  // | C(-4) |
     RKMomentListCp4                              = (1 << 25),                  // | C(+4) |
+    RKMomentListCa0                              = (1 << 26),                  // | C(H[0]V[1]) |   ATSR H lead-1 V
+    RKMomentListCb0                              = (1 << 27),                  // | C(H[2]V[1]) |   ATSR H lag-1 V
+    RKMomentListChcvx0                           = (1 << 28),                  // | C(0) | hcvx     ATSR Ht
+    RKMomentListCvchx0                           = (1 << 29),                  // | C(0) | vchx     ATSR Vt
 };
 
 typedef uint8_t RKMomentIndex;
