@@ -617,7 +617,7 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         memset(PhiXVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         ray->header.marker |= RKMarkerMemoryManagement;
     }
-    ray->header.baseProductList = RKBaseProductListFloatZVWDPRKSQ | RKBaseProductListUInt8ZVWDPRKSQ;
+    ray->header.baseProductList = RKBaseProductListFloatAll | RKBaseProductListUInt8ZVWDPRKSQ;
     if (scratch->fftOrder > 0) {
         ray->header.fftOrder = (uint8_t)scratch->fftOrder;
     }
