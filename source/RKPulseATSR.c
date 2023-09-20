@@ -46,7 +46,7 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     RKFloat *ri;
     RKFloat *rq;
     int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
-
+    RKLog("WARNING. we are here. Ya\n");
     for (p = 0; p < 2; p++) {
         n = MAX(tiny, space->noise[p]);
         n_pf = _rk_mm_set1(n);
@@ -400,6 +400,6 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     //  ACF & CCF to moments
     //
     RKUpdateATSRProductsInScratchSpace(space, gateCount);
-
+    RKLog("WARNING. we are clear. YaHa\n");
     return pulseCount;
 }

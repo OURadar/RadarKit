@@ -528,9 +528,9 @@ RKSweepEngine *RKSweepEngineInit(void) {
     snprintf(engine->productFileExtension, RKMaximumFileExtensionLength, "nc");
     engine->state = RKEngineStateAllocated;
     engine->productTimeoutSeconds = 5;
-    engine->baseProductList = RKBaseProductListFloatZVWDPR;
+    engine->baseProductList = RKBaseProductListFloatATSR;
     engine->productRecorder = &RKProductFileWriterNC;
-    engine->productBufferDepth = 10;
+    engine->productBufferDepth = 20;
     size_t bytes = RKProductBufferAlloc(&engine->productBuffer, engine->productBufferDepth, RKMaximumRaysPerSweep, 2000);
     if (engine->productBuffer == NULL) {
         RKLog("Error. Unable to allocate a product buffer for sweep engine.\n");
