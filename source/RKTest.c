@@ -112,7 +112,7 @@ char *RKTestByNumberDescription(const int indent) {
     "23 - RKWebSocket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "25 - Connect to RadarHub - RKReporterInit()\n"
-    "26 - Illustrate a simple RKPulseEngine()\n"
+    "26 - Illustrate a simple RKPulseEngine() -T26 MODE (0, 1, 2)\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -253,10 +253,13 @@ void RKTestByNumber(const int number, const void *arg) {
             if (arg) {
                 n = atoi(arg);
             } else {
-                n = 1;
+                n = 2;
             }
+            RKLog("RKTestSimplePulseEngine with n = %d  %s\n", n,
+                n == 1 ? "RKPulseStatusProcessed" : (
+                n == 2 ? "RKPulseStatusConsumed" : "No Wait"));
             RKTestSimplePulseEngine(n == 1 ? RKPulseStatusProcessed : (
-                                    n == 2 ? RKPulseStatusUsedForMoments : RKPulseStatusNull));
+                                    n == 2 ? RKPulseStatusConsumed : RKPulseStatusNull));
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull, 0);
@@ -1565,8 +1568,34 @@ void RKTestRadarHub(void) {
     RKReporterFree(reporter);
 }
 
+void *RKTestSimplePulseEngineRetriever(void *in) {
+    RKPulseEngine *engine = (RKPulseEngine *)in;
+    RKPulse *pulse;
+
+    int k = 0;
+    do {
+        pulse = RKPulseEngineGetProcessedPulse(engine, true);
+        if (pulse) {
+            RKLog(":< k = %02d   pulse @ %p   i = %02zu   gateCount = %d   doneIndex -> %u\n",
+                k, pulse, pulse->header.i, pulse->header.gateCount, engine->doneIndex);
+            k++;
+        } else {
+            RKLog("pulse @ NULL\n");
+        }
+        usleep(1000);
+    } while (k < 11);
+    // A dirty way to notify another thread I have reached here
+    engine->doneIndex = 1000;
+    RKLog("Retrieve worker done");
+    return NULL;
+}
+
 void RKTestSimplePulseEngine(const RKPulseStatus status) {
     SHOW_FUNCTION_NAME
+    RKLog("RKPulseEngineGetVacantPulse() will wait for status = %s (%x)\n",
+        status == RKPulseStatusProcessed ? "RKPulseStatusProcessed" : (
+        status == RKPulseStatusUsedForMoments ? "RKPulseStatusUsedForMoments" : "RKPulseStatusNull"),
+        status);
     int k;
     uint32_t pulseIndex = 0;
     uint32_t configIndex = 0;
@@ -1597,17 +1626,32 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKWaveform *waveform = RKWaveformInitAsImpulse();
     RKPulseEngineSetFilterByWaveform(engine, waveform);
 
+    // Launch a separate thread to retrieve processed pulses
+    pthread_t tidPulseRetriever;
+    if (status == RKPulseStatusConsumed) {
+        pthread_create(&tidPulseRetriever, NULL, RKTestSimplePulseEngineRetriever, engine);
+    }
+
     for (k = 0; k < 11; k++) {
         // status can be RKPulseStatusNull for no wait
         //               RKPulseStatusProcessed for pulse compression
-        //               RKPulseStatusUsedForMoments for moment calculation
+        //               RKPulseStatusConsumed for bring consumed by RKPulseEngineGetProcessedPulse
         RKPulse *pulse = RKPulseEngineGetVacantPulse(engine, status);
         pulse->header.gateCount = 12;
         pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
-        RKLog("k = %02d   pulse @ %p   i = %02zu   gateCount = %d\n", k, pulse, pulse->header.i, pulse->header.gateCount);
+        RKLog(":> k = %02d   pulse @ %p   i = %02zu   gateCount = %d   pulseIndex -> %u\n",
+            k, pulse, pulse->header.i, pulse->header.gateCount, *engine->pulseIndex);
     }
 
-    RKPulseEngineWaitWhileBusy(engine);
+    if (status == RKPulseStatusConsumed) {
+        while (engine->doneIndex != 1000) {
+            usleep(10000);
+        }
+        pthread_join(tidPulseRetriever, NULL);
+    } else {
+        RKPulseEngineWaitWhileBusy(engine);
+    }
+
     RKPulseEngineFree(engine);
 
     RKFFTModuleFree(fftModule);

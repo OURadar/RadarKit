@@ -1128,6 +1128,7 @@ RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *engine, const RKPulseStatus 
                 RKLog("%s Wait 1   %.1fs\n", engine->name, k * 0.0001f);
             }
         }
+        // RKLog("%s waited k = %d for %x / %x\n", engine->name, k, waitMask, pulse->header.s);
     }
     pulse->header.s = RKPulseStatusVacant;
     // Current pulse
@@ -1157,6 +1158,8 @@ RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocki
             return NULL;
         }
     }
+    pulse->header.s |= RKPulseStatusConsumed;
+    engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->pulseBufferDepth);
     return pulse;
 }
 
