@@ -16,6 +16,7 @@
 #include <RadarKit/RKNoiseEstimator.h>
 #include <RadarKit/RKSpectralMoment.h>
 #include <RadarKit/RKCalibrator.h>
+#include <RadarKit/RKPulseATSR.h>
 
 #define RKMomentDFTPlanCount    16
 
