@@ -146,7 +146,7 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->V[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->W[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->Q[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
-        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->L[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->L[k],    RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->RhoXP[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->PhiXP[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->SNR[k],  RKMemoryAlignSize, scratch->capacity * sizeof(RKFloat)));
@@ -621,6 +621,7 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     if (scratch->fftOrder > 0) {
         ray->header.fftOrder = (uint8_t)scratch->fftOrder;
     }
+    RKLog("Warning:: RayFromScratch %d \n", k);
     return k;
 }
 

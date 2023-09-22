@@ -463,6 +463,7 @@ static void *momentCore(void *in) {
             // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
             // Call the moment processor
             k = engine->momentProcessor(space, pulses, path.length);
+            RKLog("%s Processed %d samples\n", me->name, k);
             if (k != path.length) {
                 RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
             }
@@ -533,7 +534,7 @@ static void *momentCore(void *in) {
         me->dutyCycle = allBusyPeriods / allFullPeriods;
 
         tag += engine->coreCount;
-
+        RKLog("Warning:: tag %d \n", tag);
         t2 = t0;
     }
 
