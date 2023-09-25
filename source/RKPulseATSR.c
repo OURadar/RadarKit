@@ -240,8 +240,8 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
 
     int n, j, k, p;
 
-    const uint32_t gateCount = space->gateCount;
-    const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    // const uint32_t gateCount = space->gateCount;
+    // const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
     RKIQZ Xn;
     RKIQZ Xm;
@@ -253,6 +253,7 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
 
     // Get the start pulse
     RKPulse *pulse = pulses[0];
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
 
     // Go through each polarization
     for (p = 0; p < 2; p++) {

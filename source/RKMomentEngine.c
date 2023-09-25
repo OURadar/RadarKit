@@ -456,7 +456,9 @@ static void *momentCore(void *in) {
             // Initialize the scratch space
             prepareScratch(space);
             // Call the noise estimator
+            RKLog("%s noiseEstimator on.\n", me->name);
             k = engine->noiseEstimator(space, pulses, path.length);
+            RKLog("%s noiseEstimator off.\n", me->name);
             if (k != RKResultSuccess) {
                 RKNoiseFromConfig(space, pulses, path.length);
             }
@@ -812,6 +814,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->useSemaphore = true;
     engine->noiseEstimator = &RKNoiseFromConfig;
     engine->momentProcessor = &RKPulsePairHop;
+    // engine->momentProcessor = &RKMultiLag;
+    // engine->userLagChoice = 3;
     engine->calibrator = &RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;
     engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
