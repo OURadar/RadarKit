@@ -128,8 +128,8 @@ RKFloat varf(RKFloat *astart, const uint16_t window) {
         m += *x;
         x++;
     }
-    m = m / window;
-    return v / window - m * m;
+    m = m / (float)window;
+    return v / (float)window - m * m;
 }
 
 void arraySort(RKFloat *array , uint16_t n) {
@@ -180,11 +180,12 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
     const RKFloat adjustedRunSumLength = 1.12f * (RKFloat)runSumLength;
 
     for (p = 0; p < 2; p++) {
-
+        RKZeroOutIQZ(&space->R[p][0], space->capacity);
+        // RKZeroOutFloat(space->S[p], space->capacity);
+        // RKZeroOutFloat(space->Z[p], space->capacity);
         RKIQZ *R = &space->R[p][0];
 
         // Initializes the storage
-        RKZeroOutIQZ(R, space->capacity);
 
         // Go through all pulses
         n = 0;
@@ -205,19 +206,20 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         for (k = downSampledPulseWidthSampleCount + 1; k < gateCount; k++) {
             space->S[p][noiseGateCount++] = space->aR[p][0][k] / scaleS;                           // iq_power
         }
-
+        j = noiseGateCount;
         noiseGateCount = 0;
-        for (k = 2; k < gateCount - 2; k++) {
+        for (k = 2; k < j - 2; k++) {
             if ((space->S[p][k] < TCN[M] * space->S[p][k - 2]) &&
                 (space->S[p][k] < TCN[M] * space->S[p][k + 2])) {
                 space->S[p][noiseGateCount++] = space->S[p][k];                                    // P_noise
             }
         }
+
         for (k = 0; k < noiseGateCount; k++) {
             space->Z[p][k] = log10f(space->S[p][k]);                                               // log_P
             space->mask[k] = 0;
         }
-
+        RKLog("< NoiseEngine > I guess crash here.\n");
         for (k = 0; k < noiseGateCount - K + 1; k++) {
             varInLog = varf(&space->Z[p][k], K);                                                   // Var_dB
             if (varInLog < varThreshold[M] ) {
@@ -226,6 +228,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 }
             }
         }
+        RKLog("< NoiseEngine > crash 230.\n");
         f = 99999.0f;
         flat = false;
         for (k = 0; k < noiseGateCount - K + 1; k++) {
