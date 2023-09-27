@@ -216,7 +216,7 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     // alternative transmit and simultaneous receive processing
     //
     //  h  v  h  v  h  v
-    //  1  2  1  2  1  2
+    //  0  1  0  1  0  1
     //
     //  o  o  o  o  o  o
     //  |  |  |  |  |  |
@@ -224,10 +224,10 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     //
     // Properties:
     //   - ACF
-    //   - R[0][lag] hc (h-copolar) from odd pulses H channel receive
-    //   - R[1][lag] vc (v-copolar) from even pulses V channel receive
-    //   - RX[0][lag] hx (h-cross-polar) from even pulses H channel receive
-    //   - RX[1][lag] vx (v-cross-polar) from odd pulses V channel receive
+    //   - R[0][lag] hc (h-copolar) from even pulses H channel receive
+    //   - R[1][lag] vc (v-copolar) from odd pulses V channel receive
+    //   - RX[0][lag] hx (h-cross-polar) from odd pulses H channel receive
+    //   - RX[1][lag] vx (v-cross-polar) from even pulses V channel receive
     //
     //   - CCF
     //   - C[0] Ca               hc[n] * vc[n+1]'
@@ -267,10 +267,10 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
         RKZeroOutIQZ(&space->RX[p][0], gateCount);
         RKZeroOutIQZ(&space->RX[p][1], gateCount);
     }
-    // Go through the odd pulses for hc and vx
+    // Go through the even pulses for hc and vx
     n = 0;
-    if (!(pulse->header.i % 2)) {
-        // Ignore the first pulse if it is an even-pulse
+    if (pulse->header.i % 2) {
+        // Ignore the first pulse if it is an odd-pulse
         n = 1;
     }
 
@@ -310,10 +310,10 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
 
     RKSIMD_zabs(&space->CX[0][0], space->aCX[0][0], gateCount);
 
-    // Go through the even pulses for vc and hx
+    // Go through the odd pulses for vc and hx
     n = 1;
-    if (!(pulse->header.i % 2)) {
-        // Take first pulse if it is an even-pulse
+    if (pulse->header.i % 2) {
+        // Take first pulse if it is an odd-pulse
         n = 0;
     }
 
@@ -358,8 +358,8 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     //
 
     n = 0;
-    if (!(pulse->header.i % 2)) {
-        // Ignore the first pulse if it is an even-pulse
+    if (pulse->header.i % 2) {
+        // Ignore the first pulse if it is an odd-pulse
         n = 1;
     }
 
@@ -374,8 +374,8 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     RKSIMD_zabs(&space->C[0], space->aC[0], gateCount);
 
     n = 2;
-    if (!(pulse->header.i % 2)) {
-        // Ignore the first pulse if it is an even-pulse
+    if (pulse->header.i % 2) {
+        // Ignore the first pulse if it is an odd-pulse
         n = 1;
     }
     j = 0;
