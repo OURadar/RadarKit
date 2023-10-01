@@ -10,8 +10,8 @@
 
 void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCount) {
     //  ACF & CCF to L RX PX
-    const RKFloat va = space->velocityFactor;
-    const RKFloat wa = space->widthFactor;
+    const RKFloat va = space->velocityFactor / 2;
+    const RKFloat wa = space->widthFactor / 2;
     const RKFloat ten = 10.0f;
     const RKFloat one = 1.0f;
     const RKFloat two = 2.0f;
