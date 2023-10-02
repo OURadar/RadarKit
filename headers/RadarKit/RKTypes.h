@@ -749,6 +749,7 @@ enum {
     RKBaseProductListFloatZVWDPR                 = 0x003F0000,                 // Base moment data without K, Sh, Sv and Q
     RKBaseProductListFloatZVWDPRK                = 0x007F0000,                 // Base moment data without Sh, Sv and Q
     RKBaseProductListFloatZVWDPRKS               = 0x01FF0000,                 // All data without Q
+    RKBaseProductListFloatZVWDPRKLRXPX           = 0xFC7F0000,                 // ATSR data without SQ
     RKBaseProductListFloatATSR                   = 0xFDFF0000,                 // ATSR data without Q
     RKBaseProductListFloatZVWDPRKSQ              = 0x03FF0000,                 // All data
     RKBaseProductListFloatAll                    = 0xFFFF0000                  // All data (same as above)
@@ -1559,6 +1560,7 @@ typedef union rk_product_desc {                                                /
         RKFloat              l[16];                                            // The lower bound of each piece
         RKFloat              mininimumValue;                                   // Minimum value
         RKFloat              maximumValue;                                     // Maximum value
+        RKBaseProductList    baseProductList;                                  // baseProductList of product
     };
     RKByte bytes[1024];
 } RKProductDesc;

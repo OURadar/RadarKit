@@ -1896,6 +1896,7 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         desc.b[0] = lhma[3];
         desc.l[0] = 0.0f;
     }
+    desc.baseProductList = baseMoments[k];
     *list ^= baseMoments[k];
     return desc;
 }
