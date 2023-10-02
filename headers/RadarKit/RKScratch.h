@@ -110,6 +110,7 @@ typedef struct rk_moment_scratch {
     int8_t                           fftOrder;                                     // FFT order that was used to perform FFT. This will be copied over to rayHeader
     RKConfig                         *config;                                      // A reference to the radar configuration
     RKMomentList                     calculatedMoments;                            // Calculated moments
+    RKBaseProductList                calculatedProducts;                           // Calculated Products
 } RKMomentScratch;
 
 size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const RKName);

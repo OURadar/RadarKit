@@ -208,6 +208,7 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
     }
     bytes += scratch->capacity * 2 * nfft * sizeof(fftwf_complex);
+    scratch->calculatedProducts = RKBaseProductListFloatZVWDPRKSQ | RKBaseProductListUInt8ZVWDPRKSQ;
     return bytes;
 }
 
@@ -617,11 +618,11 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         memset(PhiXVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         ray->header.marker |= RKMarkerMemoryManagement;
     }
-    ray->header.baseProductList = RKBaseProductListFloatAll | RKBaseProductListUInt8ZVWDPRKSQ;
+    // ray->header.baseProductList = RKBaseProductListFloatAll | RKBaseProductListUInt8ZVWDPRKSQ;
+    ray->header.baseProductList = scratch->calculatedProducts;
     if (scratch->fftOrder > 0) {
         ray->header.fftOrder = (uint8_t)scratch->fftOrder;
     }
-    RKLog("Warning:: RayFromScratch %d \n", k);
     return k;
 }
 

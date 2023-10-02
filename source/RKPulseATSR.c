@@ -402,5 +402,6 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     //  ACF & CCF to moments
     //
     RKUpdateATSRProductsInScratchSpace(space, gateCount);
+    space->calculatedProducts = RKBaseProductListFloatAll | RKBaseProductListUInt8ZVWDPRKSQ;
     return pulseCount;
 }
