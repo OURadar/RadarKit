@@ -47,6 +47,7 @@ struct rk_sweep_engine {
     int                              (*productRecorder)(RKProduct *, const char *);
 
     // Program set variables
+    RKIdentifier                     sweepIndex;
     pthread_t                        tidRayGatherer;
     RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
     uint8_t                          scratchSpaceIndex;

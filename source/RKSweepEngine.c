@@ -104,6 +104,11 @@ static void *sweepManager(void *in) {
               1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
 
+    // Increase the sweep identifier
+    pthread_mutex_lock(&engine->productMutex);
+    sweep->header.i = engine->sweepIndex++;
+    pthread_mutex_unlock(&engine->productMutex);
+
     // Mark the rays being used by user algorithms
     for (j = 0; j < sweep->header.rayCount; j++) {
         sweep->rays[j]->header.s |= RKRayStatusBeingConsumed;

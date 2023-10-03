@@ -1417,6 +1417,7 @@ typedef struct rk_ray {
 // Sweep header
 //
 typedef struct rk_sweep_header {
+    RKIdentifier         i;                                                    // Identity counter = RKSweepEngine->sweepIndex
     uint32_t             rayCount;                                             // Number of rays
     uint32_t             gateCount;                                            // Number of range gates
     time_t               startTime;                                            // Start time of the sweep
