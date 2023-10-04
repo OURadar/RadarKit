@@ -110,6 +110,28 @@ showinfo:
 	EFLAG = \033[38;5;214m$(EFLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m"
 
+# IMPORTANT: KEEP THOSE SPACES BEFORE THE SLASHES
+ctypes:
+	if [ ! -d "radarkit" ]; then mkdir radarkit; fi
+	ctypesgen -lradarkit \
+	headers/RadarKit.h \
+	headers/RadarKit/RKTypes.h \
+	headers/RadarKit/RKMisc.h \
+	headers/RadarKit/RKFoundation.h \
+	headers/RadarKit/RKDSP.h \
+	headers/RadarKit/RKPulseEngine.h \
+	headers/RadarKit/RKFileHeader.h \
+	headers/RadarKit/RKScratch.h \
+	headers/RadarKit/RKRawDataRecorder.h \
+	headers/RadarKit/RKMomentEngine.h \
+	headers/RadarKit/RKNoiseEstimator.h \
+	headers/RadarKit/RKSweepEngine.h \
+	headers/RadarKit/RKPulseRingFilter.h \
+	headers/RadarKit/RKMultiLag.h \
+	headers/RadarKit/RKPulseATSR.h \
+	headers/RadarKit/RKWaveform.h \
+	-o radarkit/radarkittypes.py
+
 MAKEFLAGS += --jobs=$(CPUS)
 
 $(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
@@ -134,6 +156,7 @@ clean:
 	rm -f $(PROGS) $(STATIC_LIB) $(SHARED_LIB) *.log
 	rm -f $(OBJS_PATH)/*.o
 	rm -rf *.dSYM
+	rm -f radarkit/radarkittypes.py
 
 install: showinfo
 	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/

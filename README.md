@@ -49,7 +49,7 @@ Follow these steps to get the project
    I use [Homebrew] as my package manager for macOS. I highly recommend it.
 
    ```shell
-   brew install fftw netcdf openssl
+   brew install fftw netcdf openssl@1.1
    ```
 
    ##### Special Notes About NetCDF shared library

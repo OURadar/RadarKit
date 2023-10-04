@@ -1128,6 +1128,7 @@ RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *engine, const RKPulseStatus 
                 RKLog("%s Wait 1   %.1fs\n", engine->name, k * 0.0001f);
             }
         }
+        // RKLog("%s waited k = %d for %x / %x\n", engine->name, k, waitMask, pulse->header.s);
     }
     pulse->header.s = RKPulseStatusVacant;
     // Current pulse
@@ -1138,6 +1139,27 @@ RKPulse *RKPulseEngineGetVacantPulse(RKPulseEngine *engine, const RKPulseStatus 
     pulse->header.i += engine->radarDescription->pulseBufferDepth;
     pulse->header.s = RKPulseStatusVacant;
     *engine->pulseIndex = RKNextModuloS(*engine->pulseIndex, engine->radarDescription->pulseBufferDepth);
+    return pulse;
+}
+
+RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocking) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired for RKPulseEngineGetProcessedPulse()\n");
+        return NULL;
+    }
+    RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, engine->doneIndex);
+    if (blocking) {
+        uint32_t s = 0;
+        while (!(pulse->header.s & RKPulseStatusProcessed) && s++ < 10000) {
+            usleep(100);
+        }
+    } else {
+        if (!(pulse->header.s & RKPulseStatusProcessed)) {
+            return NULL;
+        }
+    }
+    pulse->header.s |= RKPulseStatusConsumed;
+    engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->pulseBufferDepth);
     return pulse;
 }
 
