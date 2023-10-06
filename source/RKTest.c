@@ -261,6 +261,9 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestSimplePulseEngine(n == 1 ? RKPulseStatusProcessed : (
                                     n == 2 ? RKPulseStatusConsumed : RKPulseStatusNull));
             break;
+        case 27:
+            RKLog("RKTestSimpleMomentEngine\n");
+            break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull, 0);
             break;
@@ -1596,14 +1599,17 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         status == RKPulseStatusProcessed ? "RKPulseStatusProcessed" : (
         status == RKPulseStatusUsedForMoments ? "RKPulseStatusUsedForMoments" : "RKPulseStatusNull"),
         status);
+
+    const uint32_t maxGateCount = 1000;
+
     int k;
     uint32_t pulseIndex = 0;
     uint32_t configIndex = 0;
     uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
-    uint32_t capacity = (uint32_t)ceilf((float)15 / multiple) * multiple;
+    uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
 
     RKRadarDesc desc = {
-        .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
+        .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer,
         .configBufferDepth = 3,
         .pulseToRayRatio = 1,
         .pulseBufferDepth = 8,
@@ -1627,9 +1633,9 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKPulseEngineSetFilterByWaveform(engine, waveform);
 
     // Launch a separate thread to retrieve processed pulses
-    pthread_t tidPulseRetriever;
+    pthread_t tid;
     if (status == RKPulseStatusConsumed) {
-        pthread_create(&tidPulseRetriever, NULL, RKTestSimplePulseEngineRetriever, engine);
+        pthread_create(&tid, NULL, RKTestSimplePulseEngineRetriever, engine);
     }
 
     for (k = 0; k < 11; k++) {
@@ -1658,6 +1664,49 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
 
     RKPulseBufferFree(pulses);
     free(configs);
+}
+
+void *RKTestSimpleMomentEngineRetriever(void *in) {
+    RKMomentEngine *engine = (RKMomentEngine *)in;
+}
+
+void RKTestSimpleMomentEngine(void) {
+    SHOW_FUNCTION_NAME
+
+    const uint32_t maxGateCount = 1000;
+
+    uint32_t pulseIndex = 0;
+    uint32_t configIndex = 0;
+    uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
+    uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
+
+    RKRadarDesc desc = {
+        .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
+        .configBufferDepth = 3,
+        .pulseToRayRatio = 1,          // A down-sampling factor after pulse compression
+        .pulseBufferDepth = 1000,      // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseCapacity = capacity,     // Number of range gates each pulse can hold
+        .dataPath = "data"
+    };
+
+    RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
+
+    RKBuffer pulses;
+    RKBuffer rays;
+
+    RKPulseBufferAlloc(&pulses, capacity, desc.pulseBufferDepth);
+    RKRayBufferAlloc(&rays, capacity, desc.pulseBufferDepth / desc.pulseToRayRatio);
+    RKConfig *configs = (RKConfig *)malloc(desc.configBufferDepth);
+
+    RKMomentEngine *momentEngine = RKMomentEngineInit();
+    RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays);
+    RKMomentEngineSetFFTModule(momentEngine, fftModule);
+
+    // Launch a separate thread to retrieve processed pulses
+    pthread_t tid;
+    if (status == RKPulseStatusConsumed) {
+        pthread_create(&tid, NULL, RKTestSimplePulseEngineRetriever, engine);
+    }
 }
 
 #pragma mark -
