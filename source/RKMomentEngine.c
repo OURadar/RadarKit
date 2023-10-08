@@ -589,6 +589,8 @@ static void *pulseGatherer(void *_in) {
             RKLog(">%s Moment method = RKPulsePair\n", engine->name);
         } else if (engine->momentProcessor == &RKSpectralMoment) {
             RKLog(">%s Moment method = RKSpectralMoment\n", engine->name);
+        } else if (engine->momentProcessor == &RKPulseATSR) {
+            RKLog(">%s Moment method = RKPulseATS\n", engine->name);
         } else if (engine->momentProcessor == NULL || engine->momentProcessor == &RKNullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {

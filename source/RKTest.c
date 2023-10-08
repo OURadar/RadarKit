@@ -33,7 +33,7 @@
     : RKSIMD_TEST_RESULT_SHORT(str, res)
 
 #define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
-#define PEDESTAL_SAMPLING_TIME         0.05
+#define PEDESTAL_SAMPLING_TIME         0.025
 #define HEALTH_RELAY_SAMPLING_TIME     0.2
 
 #define TEST_RESULT(clr, str, res)   clr ? \

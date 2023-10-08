@@ -286,7 +286,7 @@ static void *sweepManager(void *in) {
     }
 
     if (engine->record && engine->hasFileHandlingScript) {
-        //printf("CMD: '%s'\n", filelist);
+        printf("CMD: '%s'\n", filelist);
         j = system(filelist);
         if (j) {
             RKLog("Error. CMD: %s", filelist);
@@ -354,7 +354,8 @@ static void *rayGatherer(void *in) {
                (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTxz ? ".txz" :
                 (engine->fileHandlingScriptProperties & RKScriptPropertyProduceTgz ? ".tgz" : ".zip"))) : "");
     }
-    RKLog("%s Started.   mem = %s B   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->rayIndex);
+    RKLog("%s Started.   mem = %s B   productCount = %d   rayIndex = %d\n",
+        engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), productCount, *engine->rayIndex);
 
     // Increase the tic once to indicate the engine is ready
     engine->tic = 1;
