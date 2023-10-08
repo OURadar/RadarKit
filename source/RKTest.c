@@ -1692,7 +1692,7 @@ void RKTestSimpleMomentEngine(void) {
         .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
         .configBufferDepth = 3,
         .pulseToRayRatio = 1,          // A down-sampling factor after pulse compression
-        .pulseBufferDepth = 1000,      // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseBufferDepth = 8000,      // Number of pulses the buffer can hold (RKBuffer pulses)
         .pulseCapacity = capacity,     // Number of range gates each pulse can hold
         .dataPath = "data"
     };
@@ -1714,6 +1714,11 @@ void RKTestSimpleMomentEngine(void) {
     // Launch a separate thread to retrieve processed pulses
     pthread_t tid;
     pthread_create(&tid, NULL, RKTestSimpleMomentEngineRetriever, momentEngine);
+
+    int k;
+    for (k = 0; k < 1000; k++) {
+
+    }
 
     pthread_join(tid, NULL);
 

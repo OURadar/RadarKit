@@ -1300,6 +1300,16 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
     return RKResultSuccess;
 }
 
+RKPulse *RKGetVacantPulseFromBuffer(RKBuffer pulses, uint32_t *index, const uint32_t depth) {
+    RKPulse *pulse = RKGetPulseFromBuffer(pulses, *index);
+    pulse->header.s = RKPulseStatusVacant;
+    pulse->header.timeDouble = 0.0;
+    pulse->header.time.tv_sec = 0;
+    pulse->header.time.tv_usec = 0;
+    *index = RKNextModuloS(*index, depth);
+    return pulse;
+}
+
 #pragma mark - Ray
 
 //
@@ -1388,6 +1398,18 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t count) {
         memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultSuccess;
+}
+
+RKRay *RKGetVacantRayFromBuffer(RKBuffer rays, uint32_t *index, const uint32_t depth) {
+    RKRay *ray = RKGetRayFromBuffer(rays, *index);
+    ray->header.s = RKRayStatusVacant;
+    ray->header.startTime.tv_sec = 0;
+    ray->header.startTime.tv_usec = 0;
+    ray->header.endTime.tv_sec = 0;
+    ray->header.endTime.tv_usec = 0;
+    ray->header.i = RKNextModuloS(*index, depth);
+    *index = RKNextModuloS(*index, depth);
+    return ray;
 }
 
 #pragma mark - File Monitor

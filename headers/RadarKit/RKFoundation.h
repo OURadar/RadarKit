@@ -164,6 +164,7 @@ RKComplex *RKGetComplexDataFromPulse(RKPulse *, const uint32_t);
 RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
 int RKClearPulseBuffer(RKBuffer, const uint32_t);
 int RKReadPulseFromFileReference(RKPulse *, RKFileHeader *, FILE *);
+RKPulse *RKGetVacantPulseFromBuffer(RKBuffer, uint32_t *, const uint32_t);
 
 // Ray
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);
@@ -173,6 +174,7 @@ int16_t *RKGetInt16DataFromRay(RKRay *, const RKMomentIndex);
 uint8_t *RKGetUInt8DataFromRay(RKRay *, const RKBaseProductIndex);
 float *RKGetFloatDataFromRay(RKRay *, const RKBaseProductIndex);
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t);
+RKRay *RKGetVacantRayFromBuffer(RKBuffer, uint32_t *, const uint32_t);
 
 // Standalone file monitor (one file per thread)
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *), void *);

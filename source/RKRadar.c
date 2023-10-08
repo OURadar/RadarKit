@@ -2920,16 +2920,7 @@ RKPulse *RKGetVacantPulse(RKRadar *radar) {
     RKPulse *pulse = RKGetPulseFromBuffer(radar->pulses, RKNextNModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth >> 3, radar->desc.pulseBufferDepth));
     pulse->header.s = RKPulseStatusVacant;
     // Current pulse
-    pulse = RKGetPulseFromBuffer(radar->pulses, radar->pulseIndex);
-    pulse->header.s = RKPulseStatusVacant;
-    pulse->header.timeDouble = 0.0;
-    pulse->header.time.tv_sec = 0;
-    pulse->header.time.tv_usec = 0;
-    if (radar->state & RKRadarStateLive) {
-        pulse->header.i += radar->desc.pulseBufferDepth;
-        radar->pulseIndex = RKNextModuloS(radar->pulseIndex, radar->desc.pulseBufferDepth);
-    }
-    return pulse;
+    return RKGetVacantPulseFromBuffer(radar->pulses, &radar->pulseIndex, radar->desc.pulseBufferDepth);
 }
 
 void RKSetPulseHasData(RKRadar *radar, RKPulse *pulse) {
@@ -2991,17 +2982,15 @@ RKRay *RKGetVacantRay(RKRadar *radar) {
         RKLog("Error. Buffer for rays has not been allocated.\n");
         exit(EXIT_FAILURE);
     }
-    RKRay *ray = RKGetRayFromBuffer(radar->rays, radar->rayIndex);
-    ray->header.s = RKRayStatusVacant;
-    ray->header.startTime.tv_sec = 0;
-    ray->header.startTime.tv_usec = 0;
-    ray->header.endTime.tv_sec = 0;
-    ray->header.endTime.tv_usec = 0;
-    if (radar->state & RKRadarStateLive) {
-        ray->header.i += radar->desc.rayBufferDepth;
-        radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
-    }
-    return ray;
+    // RKRay *ray = RKGetRayFromBuffer(radar->rays, radar->rayIndex);
+    // ray->header.s = RKRayStatusVacant;
+    // ray->header.startTime.tv_sec = 0;
+    // ray->header.startTime.tv_usec = 0;
+    // ray->header.endTime.tv_sec = 0;
+    // ray->header.endTime.tv_usec = 0;
+    // ray->header.i += radar->desc.rayBufferDepth;
+    // radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
+    return RKGetVacantRayFromBuffer(radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
 }
 
 void RKSetRayReady(RKRadar *radar, RKRay *ray) {
