@@ -1,0 +1,4 @@
+numpy
+wheel
+ctypesgen
+tqdm

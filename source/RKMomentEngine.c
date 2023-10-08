@@ -456,13 +456,16 @@ static void *momentCore(void *in) {
             // Initialize the scratch space
             prepareScratch(space);
             // Call the noise estimator
+            // RKLog("%s noiseEstimator on.\n", me->name);
             k = engine->noiseEstimator(space, pulses, path.length);
+            // RKLog("%s noiseEstimator off.\n", me->name);
             if (k != RKResultSuccess) {
                 RKNoiseFromConfig(space, pulses, path.length);
             }
             // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
             // Call the moment processor
             k = engine->momentProcessor(space, pulses, path.length);
+            // RKLog("%s Processed %d samples\n", me->name, k);
             if (k != path.length) {
                 RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
             }
@@ -533,7 +536,6 @@ static void *momentCore(void *in) {
         me->dutyCycle = allBusyPeriods / allFullPeriods;
 
         tag += engine->coreCount;
-
         t2 = t0;
     }
 
@@ -587,6 +589,8 @@ static void *pulseGatherer(void *_in) {
             RKLog(">%s Moment method = RKPulsePair\n", engine->name);
         } else if (engine->momentProcessor == &RKSpectralMoment) {
             RKLog(">%s Moment method = RKSpectralMoment\n", engine->name);
+        } else if (engine->momentProcessor == &RKPulseATSR) {
+            RKLog(">%s Moment method = RKPulseATS\n", engine->name);
         } else if (engine->momentProcessor == NULL || engine->momentProcessor == &RKNullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
@@ -811,6 +815,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->useSemaphore = true;
     engine->noiseEstimator = &RKNoiseFromConfig;
     engine->momentProcessor = &RKPulsePairHop;
+    // engine->momentProcessor = &RKMultiLag;
+    // engine->userLagChoice = 3;
     engine->calibrator = &RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;
     engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));

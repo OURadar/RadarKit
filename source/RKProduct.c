@@ -137,7 +137,24 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
         momentIndex = RKBaseProductIndexK;
     } else if (!strcmp(product->desc.symbol, "Sh")) {
         momentIndex = RKBaseProductIndexSh;
+    } else if (!strcmp(product->desc.symbol, "Sv")) {
+        momentIndex = RKBaseProductIndexSv;
+    } else if (!strcmp(product->desc.symbol, "Q")) {
+        momentIndex = RKBaseProductIndexQ;
+    } else if (!strcmp(product->desc.symbol, "Lh")) {
+        momentIndex = RKBaseProductIndexLh;
+    } else if (!strcmp(product->desc.symbol, "Lv")) {
+        momentIndex = RKBaseProductIndexLv;
+    } else if (!strcmp(product->desc.symbol, "Rxh")) {
+        momentIndex = RKBaseProductIndexRXh;
+    } else if (!strcmp(product->desc.symbol, "Rxv")) {
+        momentIndex = RKBaseProductIndexRXv;
+    } else if (!strcmp(product->desc.symbol, "Pxh")) {
+        momentIndex = RKBaseProductIndexPXh;
+    } else if (!strcmp(product->desc.symbol, "Pxv")) {
+        momentIndex = RKBaseProductIndexPXv;
     }
+
     if (momentIndex < RKBaseProductIndexCount) {
         RKFloat *x, *y = product->data;
         for (k = 0; k < product->header.rayCount; k++) {

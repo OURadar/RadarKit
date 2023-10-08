@@ -200,7 +200,7 @@ void proc(UserParams *arg) {
     RKProduct *product;
     RKMomentScratch *space;
 
-    const RKBaseProductList momentList = RKBaseProductListFloatZVWDPR;
+    const RKBaseProductList momentList = RKBaseProductListFloatATSR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKMemoryAlignSize)) * RKMemoryAlignSize;
@@ -648,7 +648,8 @@ void proc(UserParams *arg) {
 
                 // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
-                RKPulsePairHop(space, pulses, p);
+                // RKPulsePairHop(space, pulses, p);
+                RKPulseATSR(space, pulses, p);
                 makeRayFromScratch(space, ray);
 
                 // Timestamp

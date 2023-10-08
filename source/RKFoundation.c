@@ -1687,6 +1687,12 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         "Sh",
         "Sv",
         "Q",
+        "Lh",
+        "Lv",
+        "Rxh",
+        "Rxv",
+        "Pxh",
+        "Pxv",
         "-"
     };
     RKName names[] = {
@@ -1700,6 +1706,12 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         "Signal_Power_H",
         "Signal_Power_V",
         "SQI",
+        "Linear_Depolarization_Ratio_H",
+        "Linear_Depolarization_Ratio_V",
+        "Co-polar-to-cross-polar_Correlation_Coefficient_H",
+        "Co-polar-to-cross-polar_Correlation_Coefficient_V",
+        "Co-polar-to-cross-polar_Differential_Phase_H",
+        "Co-polar-to-cross-polar_Differential_Phase_V",
         "-"
     };
     RKName units[] = {
@@ -1713,6 +1725,12 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         "dBm",
         "dBm",
         "Unitless",
+        "dB",
+        "dB",
+        "Unitless",
+        "Unitless",
+        "Radians",
+        "Radians",
         "-"
     };
     RKName colormaps[] = {
@@ -1726,6 +1744,12 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         "Power",
         "Power",
         "SQI",
+        "Differential_Reflectivity",
+        "Differential_Reflectivity",
+        "RhoHV",
+        "RhoHV",
+        "PhiDP",
+        "PhiDP",
         "-"
     };
     RKBaseProductList baseMoments[] = {
@@ -1739,6 +1763,12 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         RKBaseProductListFloatSh,
         RKBaseProductListFloatSv,
         RKBaseProductListFloatQ,
+        RKBaseProductListFloatLh,
+        RKBaseProductListFloatLv,
+        RKBaseProductListFloatRXh,
+        RKBaseProductListFloatRXv,
+        RKBaseProductListFloatPXh,
+        RKBaseProductListFloatPXv,
         0xFFFF
     };
     RKBaseProductIndex baseMomentIndices[] = {
@@ -1752,6 +1782,12 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         RKBaseProductIndexSh,
         RKBaseProductIndexSv,
         RKBaseProductIndexQ,
+        RKBaseProductIndexLh,
+        RKBaseProductIndexLv,
+        RKBaseProductIndexRXh,
+        RKBaseProductIndexRXv,
+        RKBaseProductIndexPXh,
+        RKBaseProductIndexPXv,
         0
     };
     int k = -1;
@@ -1775,6 +1811,18 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         k = 8;
     } else if (*list & RKBaseProductListFloatQ) {
         k = 9;
+    } else if (*list & RKBaseProductListFloatLh) {
+        k = 10;
+    } else if (*list & RKBaseProductListFloatLv) {
+        k = 11;
+    } else if (*list & RKBaseProductListFloatRXh) {
+        k = 12;
+    } else if (*list & RKBaseProductListFloatRXv) {
+        k = 13;
+    } else if (*list & RKBaseProductListFloatPXh) {
+        k = 14;
+    } else if (*list & RKBaseProductListFloatPXv) {
+        k = 15;
     }
     if (k < 0) {
         RKLog("Unable to get description for k = %d\n", k);
@@ -1820,6 +1868,24 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
             case RKBaseProductIndexK:
                 RKKLHMAC
                 break;
+            case RKBaseProductIndexLh:
+                RKLLHMAC
+                break;
+            case RKBaseProductIndexLv:
+                RKLLHMAC
+                break;
+            case RKBaseProductIndexRXh:
+                RKQLHMAC
+                break;
+            case RKBaseProductIndexRXv:
+                RKQLHMAC
+                break;
+            case RKBaseProductIndexPXh:
+                RKPLHMAC
+                break;
+            case RKBaseProductIndexPXv:
+                RKPLHMAC
+                break;
             default:
                 break;
         }
@@ -1830,6 +1896,7 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         desc.b[0] = lhma[3];
         desc.l[0] = 0.0f;
     }
+    desc.baseProductList = baseMoments[k];
     *list ^= baseMoments[k];
     return desc;
 }

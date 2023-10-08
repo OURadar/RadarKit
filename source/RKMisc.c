@@ -25,11 +25,12 @@ char *RKGetColorOfIndex(const int i) {
     }
 
     pthread_mutex_lock(&lock);
+    char *string = str[k];
     k = k == 3 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
 
-    snprintf(str[k], sizeof(str[0]), "\033[38;5;%dm", colors[i % sizeof(colors)]);
-    return str[k];
+    snprintf(string, sizeof(str[0]), "\033[38;5;%dm", colors[i % sizeof(colors)]);
+    return string;
 }
 
 char *RKGetBackgroundColor(void) {
@@ -198,11 +199,11 @@ char *RKGetValueOfKey(const char *string, const char *key) {
         return NULL;
     }
     pthread_mutex_lock(&lock);
+    char *valueString = valueStrings[k];
     k = k == 7 ? 0 : k + 1;
     pthread_mutex_unlock(&lock);
     char *s, *e;
     size_t len;
-    char *valueString = valueStrings[k];
     char quotedKey[256];
     sprintf(quotedKey, "\"%s\"", key);
     char *keyPosition = strcasestr(string, quotedKey);
@@ -566,9 +567,8 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
         return NULL;
     }
 
-    char *string = stringBuffer[ibuf];
-
     pthread_mutex_lock(&lock);
+    char *string = stringBuffer[ibuf];
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
@@ -608,9 +608,8 @@ char *RKIntegerToCommaStyleString(const long long num) {
         return NULL;
     }
 
-    char *string = stringBuffer[ibuf];
-
     pthread_mutex_lock(&lock);
+    char *string = stringBuffer[ibuf];
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
@@ -649,9 +648,8 @@ char *RKIntegerToHexStyleString(const long long num) {
         return NULL;
     }
 
-    char *string = stringBuffer[ibuf];
-
     pthread_mutex_lock(&lock);
+    char *string = stringBuffer[ibuf];
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
@@ -678,9 +676,8 @@ char *RKFloatToCommaStyleString(const double num) {
         return NULL;
     }
 
-    char *string = stringBuffer[ibuf];
-
     pthread_mutex_lock(&lock);
+    char *string = stringBuffer[ibuf];
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
