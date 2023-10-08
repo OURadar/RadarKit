@@ -263,6 +263,7 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 27:
             RKLog("RKTestSimpleMomentEngine\n");
+            RKTestSimpleMomentEngine();
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull, 0);
@@ -1603,8 +1604,8 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     const uint32_t maxGateCount = 1000;
 
     int k;
-    uint32_t pulseIndex = 0;
     uint32_t configIndex = 0;
+    uint32_t pulseIndex = 0;
     uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
     uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
 
@@ -1653,7 +1654,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         while (engine->doneIndex != 1000) {
             usleep(10000);
         }
-        pthread_join(tidPulseRetriever, NULL);
+        pthread_join(tid, NULL);
     } else {
         RKPulseEngineWaitWhileBusy(engine);
     }
@@ -1668,6 +1669,12 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
 
 void *RKTestSimpleMomentEngineRetriever(void *in) {
     RKMomentEngine *engine = (RKMomentEngine *)in;
+    sleep(3);
+
+    RKLog("%s\n", engine->name);
+
+    RKLog("Retrieve worker done");
+    return NULL;
 }
 
 void RKTestSimpleMomentEngine(void) {
@@ -1675,8 +1682,9 @@ void RKTestSimpleMomentEngine(void) {
 
     const uint32_t maxGateCount = 1000;
 
-    uint32_t pulseIndex = 0;
     uint32_t configIndex = 0;
+    uint32_t pulseIndex = 0;
+    uint32_t rayIndex = 0;
     uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
     uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
 
@@ -1699,14 +1707,23 @@ void RKTestSimpleMomentEngine(void) {
     RKConfig *configs = (RKConfig *)malloc(desc.configBufferDepth);
 
     RKMomentEngine *momentEngine = RKMomentEngineInit();
-    RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays);
+    RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
     RKMomentEngineSetFFTModule(momentEngine, fftModule);
+    RKMomentEngineStart(momentEngine);
 
     // Launch a separate thread to retrieve processed pulses
     pthread_t tid;
-    if (status == RKPulseStatusConsumed) {
-        pthread_create(&tid, NULL, RKTestSimplePulseEngineRetriever, engine);
-    }
+    pthread_create(&tid, NULL, RKTestSimpleMomentEngineRetriever, momentEngine);
+
+    pthread_join(tid, NULL);
+
+    RKMomentEngineFree(momentEngine);
+
+    RKFFTModuleFree(fftModule);
+
+    RKPulseBufferFree(pulses);
+    RKRayBufferFree(rays);
+    free(configs);
 }
 
 #pragma mark -
