@@ -130,7 +130,7 @@ ctypes:
 	headers/RadarKit/RKMultiLag.h \
 	headers/RadarKit/RKPulseATSR.h \
 	headers/RadarKit/RKWaveform.h \
-	-o radarkit/radarkittypes.py
+	-o radarkit/_radarkit_ctypes_.py
 
 MAKEFLAGS += --jobs=$(CPUS)
 

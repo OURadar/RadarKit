@@ -13,7 +13,6 @@ core.*
 *.nc
 .vscode/launch.json
 .vscode/settings.json
-m4
 
 # Folders
 .ipynb_checkpoints
@@ -22,6 +21,9 @@ old
 data
 waveforms
 waveforms-old
+m4
+build
+radarkit.egg-info
 
 # Programs, etc.
 radar
