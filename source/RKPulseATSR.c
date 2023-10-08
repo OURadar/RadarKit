@@ -240,7 +240,7 @@ int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCo
     // Calculate R0, R1
     // R0, R1 --> Z, V, W
 
-    int n, j, k, p;
+    int n, j, p;
 
     // const uint32_t gateCount = space->gateCount;
     // const int K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
