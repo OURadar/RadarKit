@@ -70,7 +70,7 @@
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKMemoryAlignSize
 #define RKMemoryAlignSize                    64                                // SSE 16, AVX 32, AVX-512 64
 #define RKMomentCount                        26                                // 32 to be the absolute max since momentList enum is 32-bit
-#define RKBaseProductCount                   10                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
+#define RKBaseProductCount                   16                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaximumWaveformCount               22                                // Maximum waveform group count
@@ -669,6 +669,10 @@ enum {
     RKMomentListCp3                              = (1 << 23),                  // | C(+3) |
     RKMomentListCn4                              = (1 << 24),                  // | C(-4) |
     RKMomentListCp4                              = (1 << 25),                  // | C(+4) |
+    RKMomentListCa0                              = (1 << 26),                  // | C(H[0]V[1]) |   ATSR H lead-1 V
+    RKMomentListCb0                              = (1 << 27),                  // | C(H[2]V[1]) |   ATSR H lag-1 V
+    RKMomentListChcvx0                           = (1 << 28),                  // | C(0) | hcvx     ATSR Ht
+    RKMomentListCvchx0                           = (1 << 29),                  // | C(0) | vchx     ATSR Vt
 };
 
 typedef uint8_t RKMomentIndex;
@@ -737,15 +741,17 @@ enum {
     RKBaseProductListFloatSh                     = (1 << 23),                  // Data of Sh
     RKBaseProductListFloatSv                     = (1 << 24),                  // Data of Sv
     RKBaseProductListFloatQ                      = (1 << 25),                  // Data of Q
-    RKBaseProductListFloatU6                     = (1 << 26),                  //
-    RKBaseProductListFloatU5                     = (1 << 27),                  //
-    RKBaseProductListFloatU4                     = (1 << 28),                  //
-    RKBaseProductListFloatU3                     = (1 << 29),                  //
-    RKBaseProductListFloatU2                     = (1 << 30),                  //
-    RKBaseProductListFloatU1                     = (1 << 31),                  //
+    RKBaseProductListFloatLh                     = (1 << 26),                  // Data of LDRh
+    RKBaseProductListFloatLv                     = (1 << 27),                  // Data of LDRv
+    RKBaseProductListFloatRXh                    = (1 << 28),                  // Data of Rhoxh
+    RKBaseProductListFloatRXv                    = (1 << 29),                  // Data of Rhoxv
+    RKBaseProductListFloatPXh                    = (1 << 30),                  // Data of Phixh
+    RKBaseProductListFloatPXv                    = (1 << 31),                  // Data of Phixv
     RKBaseProductListFloatZVWDPR                 = 0x003F0000,                 // Base moment data without K, Sh, Sv and Q
     RKBaseProductListFloatZVWDPRK                = 0x007F0000,                 // Base moment data without Sh, Sv and Q
     RKBaseProductListFloatZVWDPRKS               = 0x01FF0000,                 // All data without Q
+    RKBaseProductListFloatZVWDPRKLRXPX           = 0xFC7F0000,                 // ATSR data without SQ
+    RKBaseProductListFloatATSR                   = 0xFDFF0000,                 // ATSR data without Q
     RKBaseProductListFloatZVWDPRKSQ              = 0x03FF0000,                 // All data
     RKBaseProductListFloatAll                    = 0xFFFF0000                  // All data (same as above)
 };
@@ -762,6 +768,12 @@ enum {
     RKBaseProductIndexSh,
     RKBaseProductIndexSv,
     RKBaseProductIndexQ,
+    RKBaseProductIndexLh,
+    RKBaseProductIndexLv,
+    RKBaseProductIndexRXh,
+    RKBaseProductIndexRXv,
+    RKBaseProductIndexPXh,
+    RKBaseProductIndexPXv,
     RKBaseProductIndexZv,                                                      // No longer used
     RKBaseProductIndexVv,                                                      // No longer used
     RKBaseProductIndexWv,                                                      // No longer used
@@ -1550,6 +1562,7 @@ typedef union rk_product_desc {                                                /
         RKFloat              l[16];                                            // The lower bound of each piece
         RKFloat              mininimumValue;                                   // Minimum value
         RKFloat              maximumValue;                                     // Maximum value
+        RKBaseProductList    baseProductList;                                  // baseProductList of product
     };
     RKByte bytes[1024];
 } RKProductDesc;

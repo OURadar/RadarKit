@@ -240,7 +240,11 @@ static void *sweepManager(void *in) {
          }
 
         // Call a product writer only if the engine is set to record and the is a valid product recorder
-        if (engine->record && engine->productRecorder) {
+        if (!(engine->productBuffer[p].desc.baseProductList & sweep->header.baseProductList)) {
+            if (engine->verbose > 1){
+                RKLog("%s Skipping %s ...\n", engine->name, filename);
+            }
+        } else if (engine->record && engine->productRecorder) {
             if (engine->verbose > 1) {
                 RKLog("%s Creating %s ...\n", engine->name, filename);
             }
@@ -533,9 +537,9 @@ RKSweepEngine *RKSweepEngineInit(void) {
     snprintf(engine->productFileExtension, RKMaximumFileExtensionLength, "nc");
     engine->state = RKEngineStateAllocated;
     engine->productTimeoutSeconds = 5;
-    engine->baseProductList = RKBaseProductListFloatZVWDPR;
+    engine->baseProductList = RKBaseProductListFloatZVWDPRKLRXPX;
     engine->productRecorder = &RKProductFileWriterNC;
-    engine->productBufferDepth = 10;
+    engine->productBufferDepth = 20;
     size_t bytes = RKProductBufferAlloc(&engine->productBuffer, engine->productBufferDepth, RKMaximumRaysPerSweep, 2000);
     if (engine->productBuffer == NULL) {
         RKLog("Error. Unable to allocate a product buffer for sweep engine.\n");
