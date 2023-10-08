@@ -2982,14 +2982,6 @@ RKRay *RKGetVacantRay(RKRadar *radar) {
         RKLog("Error. Buffer for rays has not been allocated.\n");
         exit(EXIT_FAILURE);
     }
-    // RKRay *ray = RKGetRayFromBuffer(radar->rays, radar->rayIndex);
-    // ray->header.s = RKRayStatusVacant;
-    // ray->header.startTime.tv_sec = 0;
-    // ray->header.startTime.tv_usec = 0;
-    // ray->header.endTime.tv_sec = 0;
-    // ray->header.endTime.tv_usec = 0;
-    // ray->header.i += radar->desc.rayBufferDepth;
-    // radar->rayIndex = RKNextModuloS(radar->rayIndex, radar->desc.rayBufferDepth);
     return RKGetVacantRayFromBuffer(radar->rays, &radar->rayIndex, radar->desc.rayBufferDepth);
 }
 

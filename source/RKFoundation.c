@@ -1306,6 +1306,7 @@ RKPulse *RKGetVacantPulseFromBuffer(RKBuffer pulses, uint32_t *index, const uint
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
+    pulse->header.i += depth;
     *index = RKNextModuloS(*index, depth);
     return pulse;
 }
@@ -1407,7 +1408,7 @@ RKRay *RKGetVacantRayFromBuffer(RKBuffer rays, uint32_t *index, const uint32_t d
     ray->header.startTime.tv_usec = 0;
     ray->header.endTime.tv_sec = 0;
     ray->header.endTime.tv_usec = 0;
-    ray->header.i = RKNextModuloS(*index, depth);
+    ray->header.i += depth;
     *index = RKNextModuloS(*index, depth);
     return ray;
 }

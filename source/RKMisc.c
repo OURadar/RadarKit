@@ -556,7 +556,7 @@ char *RKJSONGetValueOfKey(char *keyValue, char *key, char *value, const char *na
 char *RKUIntegerToCommaStyleString(const unsigned long long num) {
     int i, j, k;
     static int ibuf = 0;
-    static char stringBuffer[16][32];
+    static char stringBuffer[32][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     if (num == (unsigned long long)0xFEEDFACECAFEBEEF) {
@@ -569,7 +569,7 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
 
     pthread_mutex_lock(&lock);
     char *string = stringBuffer[ibuf];
-    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
     i = sprintf(string, "%llu", num);
@@ -597,7 +597,7 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
 char *RKIntegerToCommaStyleString(const long long num) {
     int i, j, k;
     static int ibuf = 0;
-    static char stringBuffer[16][32];
+    static char stringBuffer[32][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     if (num == (long long)0xFEEDFACECAFEBEEF) {
@@ -610,7 +610,7 @@ char *RKIntegerToCommaStyleString(const long long num) {
 
     pthread_mutex_lock(&lock);
     char *string = stringBuffer[ibuf];
-    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
     i = sprintf(string, "%lld", num);
@@ -637,7 +637,7 @@ char *RKIntegerToCommaStyleString(const long long num) {
 
 char *RKIntegerToHexStyleString(const long long num) {
     static int ibuf = 0;
-    static char stringBuffer[16][32];
+    static char stringBuffer[32][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     if (num == (long long)0xFEEDFACECAFEBEEF) {
@@ -650,7 +650,7 @@ char *RKIntegerToHexStyleString(const long long num) {
 
     pthread_mutex_lock(&lock);
     char *string = stringBuffer[ibuf];
-    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
     sprintf(string, "0x%04llx", num);
@@ -665,7 +665,7 @@ char *RKIntegerToHexStyleString(const long long num) {
 char *RKFloatToCommaStyleString(const double num) {
     int i, j, k;
     static int ibuf = 0;
-    static char stringBuffer[16][32];
+    static char stringBuffer[32][32];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     if (num == (double)0xFEEDFACECAFEBEEF) {
@@ -678,7 +678,7 @@ char *RKFloatToCommaStyleString(const double num) {
 
     pthread_mutex_lock(&lock);
     char *string = stringBuffer[ibuf];
-    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
     i = sprintf(string, "%.3f", num);
