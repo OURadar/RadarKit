@@ -1680,14 +1680,20 @@ void *RKTestSimpleMomentEngineRetriever(void *in) {
 void RKTestSimpleMomentEngine(void) {
     SHOW_FUNCTION_NAME
 
-    const uint32_t maxGateCount = 1000;
+    RKSetUseDailyLog(true);
 
+    // Hyper parameters
+    const uint32_t maxGateCount = 2000;
+    const uint32_t pulsePerRay = 20;
+
+    // Internal indices
     uint32_t configIndex = 0;
     uint32_t pulseIndex = 0;
     uint32_t rayIndex = 0;
     uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
     uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
 
+    // Radar description
     RKRadarDesc desc = {
         .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
         .configBufferDepth = 3,
@@ -1709,18 +1715,38 @@ void RKTestSimpleMomentEngine(void) {
     RKMomentEngine *momentEngine = RKMomentEngineInit();
     RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
     RKMomentEngineSetFFTModule(momentEngine, fftModule);
+    RKMomentEngineSetVerbose(momentEngine, 1);
+    RKMomentEngineSetMomentProcessor(momentEngine, &RKPulsePair);
     RKMomentEngineStart(momentEngine);
 
     // Launch a separate thread to retrieve processed pulses
     pthread_t tid;
     pthread_create(&tid, NULL, RKTestSimpleMomentEngineRetriever, momentEngine);
 
+    // The busy loop
     int k;
-    for (k = 0; k < 1000; k++) {
-
+    for (k = 0; k < 3000; k++) {
+        RKPulse *pulse = RKGetVacantPulseFromBuffer(pulses, &pulseIndex, desc.pulseBufferDepth);
+        pulse->header.gateCount = 1600;
+        pulse->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
+        // These are just for emulating when a sweep begins and ends
+        if (k % (30 * pulsePerRay) == 0) {
+            pulse->header.marker |= RKMarkerSweepBegin;
+        }
+        if (k % (30 * pulsePerRay) == 29 && k % pulsePerRay == (pulsePerRay - 1)) {
+            pulse->header.marker |= RKMarkerSweepEnd;
+        }
+        // Emulate a 0-30 degree RHI scan every pulsePerRay pulses
+        pulse->header.elevationDegrees = (float)((k / pulsePerRay) % 30);
+        pulse->header.s |= RKPulseStatusReadyForMoments;
+        RKLog("k = %04d   EL = %.1f   gateCount = %d   pulseIndex -> %u\n",
+            k, pulse->header.elevationDegrees, pulse->header.gateCount, pulseIndex);
+        usleep(1000);
     }
 
     pthread_join(tid, NULL);
+
+    RKMomentEngineStop(momentEngine);
 
     RKMomentEngineFree(momentEngine);
 
