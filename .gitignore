@@ -24,6 +24,7 @@ waveforms-old
 m4
 build
 radarkit.egg-info
+dist
 
 # Programs, etc.
 radar
