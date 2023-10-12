@@ -1685,6 +1685,7 @@ void RKTestSimpleMomentEngine(void) {
     // Hyper parameters
     const uint32_t maxGateCount = 2000;
     const uint32_t pulsePerRay = 20;
+    const uint32_t rayPerSweep = 30;
 
     // Internal indices
     uint32_t configIndex = 0;
@@ -1700,6 +1701,7 @@ void RKTestSimpleMomentEngine(void) {
         .pulseToRayRatio = 1,          // A down-sampling factor after pulse compression
         .pulseBufferDepth = 8000,      // Number of pulses the buffer can hold (RKBuffer pulses)
         .pulseCapacity = capacity,     // Number of range gates each pulse can hold
+        .rayBufferDepth = 8000,        // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
         .dataPath = "data"
     };
 
@@ -1709,13 +1711,13 @@ void RKTestSimpleMomentEngine(void) {
     RKBuffer rays;
 
     RKPulseBufferAlloc(&pulses, capacity, desc.pulseBufferDepth);
-    RKRayBufferAlloc(&rays, capacity, desc.pulseBufferDepth / desc.pulseToRayRatio);
+    RKRayBufferAlloc(&rays, capacity, desc.rayBufferDepth);
     RKConfig *configs = (RKConfig *)malloc(desc.configBufferDepth);
 
     RKMomentEngine *momentEngine = RKMomentEngineInit();
     RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
     RKMomentEngineSetFFTModule(momentEngine, fftModule);
-    RKMomentEngineSetVerbose(momentEngine, 1);
+    RKMomentEngineSetVerbose(momentEngine, 2);
     RKMomentEngineSetMomentProcessor(momentEngine, &RKPulsePair);
     RKMomentEngineStart(momentEngine);
 
@@ -1728,23 +1730,27 @@ void RKTestSimpleMomentEngine(void) {
     for (k = 0; k < 3000; k++) {
         RKPulse *pulse = RKGetVacantPulseFromBuffer(pulses, &pulseIndex, desc.pulseBufferDepth);
         pulse->header.gateCount = 1600;
+        pulse->header.downSampledGateCount = 1600;
         pulse->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
         // These are just for emulating when a sweep begins and ends
-        if (k % (30 * pulsePerRay) == 0) {
+        if (k % (rayPerSweep * pulsePerRay) == 0) {
             pulse->header.marker |= RKMarkerSweepBegin;
         }
-        if (k % (30 * pulsePerRay) == 29 && k % pulsePerRay == (pulsePerRay - 1)) {
+        if (k % (rayPerSweep * pulsePerRay) == (rayPerSweep - 1) && k % pulsePerRay == (pulsePerRay - 1)) {
             pulse->header.marker |= RKMarkerSweepEnd;
         }
         // Emulate a 0-30 degree RHI scan every pulsePerRay pulses
-        pulse->header.elevationDegrees = (float)((k / pulsePerRay) % 30);
+        pulse->header.elevationDegrees = (float)((k / pulsePerRay) % rayPerSweep);
         pulse->header.s |= RKPulseStatusReadyForMoments;
-        RKLog("k = %04d   EL = %.1f   gateCount = %d   pulseIndex -> %u\n",
-            k, pulse->header.elevationDegrees, pulse->header.gateCount, pulseIndex);
-        usleep(1000);
+        RKLog("k = %04d / %04u   EL = %.1f   gateCount = %u / %u\n",
+            k, pulseIndex,
+            pulse->header.elevationDegrees, pulse->header.gateCount, pulse->header.downSampledGateCount);
+        usleep(50000);
     }
 
     pthread_join(tid, NULL);
+
+    RKMomentEngineWaitWhileBusy(momentEngine);
 
     RKMomentEngineStop(momentEngine);
 

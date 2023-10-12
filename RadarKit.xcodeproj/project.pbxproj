@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -34,7 +34,6 @@
 		B565B5351E5A3838000C8503 /* RKPreference.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B5341E5A3838000C8503 /* RKPreference.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B565B53D1E5A3988000C8503 /* RKTemplate.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53C1E5A3988000C8503 /* RKTemplate.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		B565B5401E5A3E23000C8503 /* RKWaveform.h in Headers */ = {isa = PBXBuildFile; fileRef = B565B53F1E5A3E23000C8503 /* RKWaveform.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		B565B5451E5A4623000C8503 /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B565B5441E5A4623000C8503 /* bessi.c */; };
 		B565E05429C9F92B0051FEAB /* RKSteerEngine.c in Sources */ = {isa = PBXBuildFile; fileRef = B565E05329C9F92A0051FEAB /* RKSteerEngine.c */; };
 		B565E05629C9F9400051FEAB /* RKSteerEngine.h in Headers */ = {isa = PBXBuildFile; fileRef = B565E05529C9F9400051FEAB /* RKSteerEngine.h */; };
 		B56A750B20BB01C500E8B6E9 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
@@ -44,12 +43,14 @@
 		B56BD9F52642E09400113329 /* RKCommandCenter.h in Headers */ = {isa = PBXBuildFile; fileRef = B5C1F35E1AB9CC48004F88CD /* RKCommandCenter.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B56C075027B5877B0054A2E9 /* RKWebSocket.c in Sources */ = {isa = PBXBuildFile; fileRef = B56C074F27B5877B0054A2E9 /* RKWebSocket.c */; };
 		B56C075227B587850054A2E9 /* RKReporter.c in Sources */ = {isa = PBXBuildFile; fileRef = B56C075127B587850054A2E9 /* RKReporter.c */; };
-		B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075327B587990054A2E9 /* _rfc_6455.h */; };
+		B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075327B587990054A2E9 /* _rfc_6455.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B56C075627B587A40054A2E9 /* RKWebSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075527B587A40054A2E9 /* RKWebSocket.h */; };
 		B56C075827B587AA0054A2E9 /* RKReporter.h in Headers */ = {isa = PBXBuildFile; fileRef = B56C075727B587AA0054A2E9 /* RKReporter.h */; };
 		B57E2AF329CBE73700D29300 /* libRadarKit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5324D4F1AB8A5A000C00517 /* libRadarKit.a */; };
 		B57E2AF529CBE77E00D29300 /* pref.conf in CopyFiles */ = {isa = PBXBuildFile; fileRef = B56AB0A520A732DC00E73AE9 /* pref.conf */; };
 		B59471911D89B4D400EEE77C /* RadarKit.h in Headers */ = {isa = PBXBuildFile; fileRef = B59471901D89B4D400EEE77C /* RadarKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B597269A2AD85C8B00813E9B /* nmea.c in Sources */ = {isa = PBXBuildFile; fileRef = B59726982AD85C8B00813E9B /* nmea.c */; };
+		B597269B2AD85C8B00813E9B /* bessi.c in Sources */ = {isa = PBXBuildFile; fileRef = B59726992AD85C8B00813E9B /* bessi.c */; };
 		B5B2058920E43118007D48E0 /* RKSweepFile.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B2058820E43117007D48E0 /* RKSweepFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B5B2058B20E43128007D48E0 /* RKSweepFile.c in Sources */ = {isa = PBXBuildFile; fileRef = B5B2058A20E43128007D48E0 /* RKSweepFile.c */; };
 		B5B5196C1DCA87BD00470924 /* RKPulsePair.h in Headers */ = {isa = PBXBuildFile; fileRef = B5B5196B1DCA87BD00470924 /* RKPulsePair.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -215,7 +216,6 @@
 		B565B5391E5A3948000C8503 /* RKTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKTemplate.c; path = source/RKTemplate.c; sourceTree = SOURCE_ROOT; };
 		B565B53C1E5A3988000C8503 /* RKTemplate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKTemplate.h; path = headers/RadarKit/RKTemplate.h; sourceTree = "<group>"; };
 		B565B53F1E5A3E23000C8503 /* RKWaveform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = RKWaveform.h; path = headers/RadarKit/RKWaveform.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		B565B5441E5A4623000C8503 /* bessi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bessi.c; path = source/bessi.c; sourceTree = "<group>"; };
 		B565E05329C9F92A0051FEAB /* RKSteerEngine.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSteerEngine.c; path = source/RKSteerEngine.c; sourceTree = "<group>"; };
 		B565E05529C9F9400051FEAB /* RKSteerEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSteerEngine.h; path = headers/RadarKit/RKSteerEngine.h; sourceTree = "<group>"; };
 		B56AB0A520A732DC00E73AE9 /* pref.conf */ = {isa = PBXFileReference; lastKnownFileType = text; path = pref.conf; sourceTree = "<group>"; };
@@ -228,6 +228,8 @@
 		B56C075527B587A40054A2E9 /* RKWebSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKWebSocket.h; path = headers/RadarKit/RKWebSocket.h; sourceTree = "<group>"; };
 		B56C075727B587AA0054A2E9 /* RKReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKReporter.h; path = headers/RadarKit/RKReporter.h; sourceTree = "<group>"; };
 		B59471901D89B4D400EEE77C /* RadarKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RadarKit.h; path = headers/RadarKit.h; sourceTree = "<group>"; };
+		B59726982AD85C8B00813E9B /* nmea.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = nmea.c; path = source/ext/nmea.c; sourceTree = "<group>"; };
+		B59726992AD85C8B00813E9B /* bessi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bessi.c; path = source/ext/bessi.c; sourceTree = "<group>"; };
 		B5B2058820E43117007D48E0 /* RKSweepFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKSweepFile.h; path = headers/RadarKit/RKSweepFile.h; sourceTree = "<group>"; };
 		B5B2058A20E43128007D48E0 /* RKSweepFile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RKSweepFile.c; path = source/RKSweepFile.c; sourceTree = "<group>"; };
 		B5B5196B1DCA87BD00470924 /* RKPulsePair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RKPulsePair.h; path = headers/RadarKit/RKPulsePair.h; sourceTree = "<group>"; };
@@ -439,7 +441,8 @@
 		B565B5431E5A4605000C8503 /* Imported */ = {
 			isa = PBXGroup;
 			children = (
-				B565B5441E5A4623000C8503 /* bessi.c */,
+				B59726992AD85C8B00813E9B /* bessi.c */,
+				B59726982AD85C8B00813E9B /* nmea.c */,
 			);
 			name = Imported;
 			sourceTree = "<group>";
@@ -510,6 +513,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */,
 				B5FA3920263475D8008C0454 /* RKVersion.h in Headers */,
 				B5324DE61AB8DA0800C00517 /* RKTypes.h in Headers */,
 				B565E05629C9F9400051FEAB /* RKSteerEngine.h in Headers */,
@@ -549,7 +553,6 @@
 				B5324DE41AB8DA0800C00517 /* RKRadar.h in Headers */,
 				B56BD9F52642E09400113329 /* RKCommandCenter.h in Headers */,
 				B528D9621E74EE8100A7328F /* RKFileManager.h in Headers */,
-				B56C075427B587990054A2E9 /* _rfc_6455.h in Headers */,
 				B5EBAA031E9C8D20006AE027 /* RKRadarRelay.h in Headers */,
 				B5377DC62041C18C00972E41 /* RKHostMonitor.h in Headers */,
 				B5F5AE3B1DBF994200CF643F /* RKTest.h in Headers */,
@@ -672,8 +675,9 @@
 		B50A81401AB89B6200E12E1F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				CLASSPREFIX = RK;
-				LastUpgradeCheck = 1420;
+				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = "Boon Leng Cheong";
 				TargetAttributes = {
 					B5324D4E1AB8A5A000C00517 = {
@@ -733,7 +737,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B565B5451E5A4623000C8503 /* bessi.c in Sources */,
+				B597269B2AD85C8B00813E9B /* bessi.c in Sources */,
+				B597269A2AD85C8B00813E9B /* nmea.c in Sources */,
 				B525FEF41FB0B6A400C5195C /* RKMisc.c in Sources */,
 				B56C075227B587850054A2E9 /* RKReporter.c in Sources */,
 				B5FFD48E1FB0B5C600319453 /* RKSIMD.c in Sources */,
@@ -860,6 +865,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				EXCLUDED_ARCHS = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -871,21 +877,18 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"${SRCROOT}/headers",
-					/usr/local/include,
+					/opt/homebrew/include,
+					"/opt/homebrew/opt/openssl@1.1/include",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"/usr/local/opt/openssl@1.1/include",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					/usr/local/lib,
-					"/usr/local/opt/openssl@1.1/lib",
+					/opt/homebrew/local/lib,
+					"/opt/homebrew/opt/openssl@1.1/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-fPIC",
-					"-mfpmath=sse",
-				);
+				OTHER_CFLAGS = "-fPIC";
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
 					"-lm",
@@ -926,6 +929,7 @@
 				CODE_SIGN_ENTITLEMENTS = entitlements/common.entitlements;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				EXCLUDED_ARCHS = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -937,21 +941,18 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"${SRCROOT}/headers",
-					/usr/local/include,
+					/opt/homebrew/include,
+					"/opt/homebrew/opt/openssl@1.1/include",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"/usr/local/opt/openssl@1.1/include",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					/usr/local/lib,
-					"/usr/local/opt/openssl@1.1/lib",
+					/opt/homebrew/local/lib,
+					"/opt/homebrew/opt/openssl@1.1/lib",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-fPIC",
-					"-mfpmath=sse",
-				);
+				OTHER_CFLAGS = "-fPIC";
 				OTHER_LDFLAGS = (
 					"-lfftw3f",
 					"-lm",
@@ -1223,10 +1224,12 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = "$(inherited)";
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 33Q44947M2;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1274,11 +1277,13 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = "$(inherited)";
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 33Q44947M2;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;

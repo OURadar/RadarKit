@@ -312,13 +312,13 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
             r2i = (RKVec *)space->R[p][2].i;
             r2q = (RKVec *)space->R[p][2].q;
             for (k = 0; k < K; k++) {
-                *mi = _rk_mm_add(*mi, *s0i);                                                                  // mX += X
-                *mq = _rk_mm_add(*mq, *s0q);                                                                  // mX += X
-                *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q))); // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
-                *r1i = _rk_mm_add(*r1i, _rk_mm_add(_rk_mm_mul(*s0i, *s1i), _rk_mm_mul(*s0q, *s1q))); // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
-                *r1q = _rk_mm_add(*r1q, _rk_mm_sub(_rk_mm_mul(*s0q, *s1i), _rk_mm_mul(*s0i, *s1q))); // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
-                *r2i = _rk_mm_add(*r2i, _rk_mm_add(_rk_mm_mul(*s0i, *s2i), _rk_mm_mul(*s0q, *s2q))); // R[2].i += X[n] * X[n-2]'  (I += I1 * I2 + Q1 * Q2)
-                *r2q = _rk_mm_add(*r2q, _rk_mm_sub(_rk_mm_mul(*s0q, *s2i), _rk_mm_mul(*s0i, *s2q))); // R[2].q += X[n] * X[n-2]'  (Q += Q1 * I2 - I1 * Q2)
+                *mi = _rk_mm_add(*mi, *s0i);                                                             // mX += X
+                *mq = _rk_mm_add(*mq, *s0q);                                                             // mX += X
+                *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));     // R[0].i += X[n] * X[n]'    (I += I1 * I2 + Q1 * Q2)
+                *r1i = _rk_mm_add(*r1i, _rk_mm_add(_rk_mm_mul(*s0i, *s1i), _rk_mm_mul(*s0q, *s1q)));     // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+                *r1q = _rk_mm_add(*r1q, _rk_mm_sub(_rk_mm_mul(*s0q, *s1i), _rk_mm_mul(*s0i, *s1q)));     // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+                *r2i = _rk_mm_add(*r2i, _rk_mm_add(_rk_mm_mul(*s0i, *s2i), _rk_mm_mul(*s0q, *s2q)));     // R[2].i += X[n] * X[n-2]'  (I += I1 * I2 + Q1 * Q2)
+                *r2q = _rk_mm_add(*r2q, _rk_mm_sub(_rk_mm_mul(*s0q, *s2i), _rk_mm_mul(*s0i, *s2q)));     // R[2].q += X[n] * X[n-2]'  (Q += Q1 * I2 - I1 * Q2)
                 s0i++;
                 s0q++;
                 s1i++;
