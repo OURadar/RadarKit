@@ -2,7 +2,7 @@
 //  RKPulseATSR.h
 //  RadarKit
 //
-//  Created by Boonleng Cheong on 09/20/23.
+//  Created by Min-Duan Tzeng on 09/20/23.
 //  Copyright (c) 2023 Min-Duan Tzeng. All rights reserved.
 //
 

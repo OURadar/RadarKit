@@ -269,7 +269,7 @@ static void *sweepManager(void *in) {
                                   filenameTooLong ? "..." : "",
                                   filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
                                   product->desc.symbol, engine->productFileExtension);
-        } else {
+        } else if (engine->productBuffer[p].desc.baseProductList & sweep->header.baseProductList) {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
     }
