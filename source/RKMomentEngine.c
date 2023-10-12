@@ -537,6 +537,10 @@ static void *momentCore(void *in) {
 
         tag += engine->coreCount;
         t2 = t0;
+
+        RKLog("%s Ray E%.1f-%.1f A%.1f-%.1f done\n", me->name,
+            ray->header.startElevation, ray->header.endElevation,
+            ray->header.startAzimuth, ray->header.endAzimuth);
     }
 
     if (engine->verbose > 1) {

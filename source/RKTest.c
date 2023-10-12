@@ -1707,18 +1707,33 @@ void RKTestSimpleMomentEngine(void) {
 
     RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
 
+    // Need to provide waveform to RKConfig for ZCal, this must be the same waveform provided to the pulse engine
+    RKWaveform *waveform = RKWaveformInitAsImpulse();
+    // RKWaveformCalibration *calibration = RKWaveformCalibrationInit(waveform);
+
+    // Pulses, rays, etc.
     RKBuffer pulses;
     RKBuffer rays;
-
+    RKConfig *configs;
     RKPulseBufferAlloc(&pulses, capacity, desc.pulseBufferDepth);
     RKRayBufferAlloc(&rays, capacity, desc.rayBufferDepth);
-    RKConfig *configs = (RKConfig *)malloc(desc.configBufferDepth);
+    configs = (RKConfig *)malloc(desc.configBufferDepth * sizeof(RKConfig));
+    memset(configs, 0, desc.configBufferDepth * sizeof(RKConfig));
 
+    // Get the very first config. For now, let's assume RKConfig doesn't change
+    RKConfig *config = &configs[0];
+    config->systemZCal[0] = 42.0;
+    config->systemZCal[1] = 42.0;
+    config->waveform = waveform;
+    config->waveformDecimate = waveform;
+
+    // Moment engine
     RKMomentEngine *momentEngine = RKMomentEngineInit();
     RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
     RKMomentEngineSetFFTModule(momentEngine, fftModule);
     RKMomentEngineSetVerbose(momentEngine, 2);
     RKMomentEngineSetMomentProcessor(momentEngine, &RKPulsePair);
+    // RKMomentEngineSetMomentProcessor(momentEngine, &RKMultiLag);
     RKMomentEngineStart(momentEngine);
 
     // Launch a separate thread to retrieve processed pulses
@@ -1731,6 +1746,8 @@ void RKTestSimpleMomentEngine(void) {
         RKPulse *pulse = RKGetVacantPulseFromBuffer(pulses, &pulseIndex, desc.pulseBufferDepth);
         pulse->header.gateCount = 1600;
         pulse->header.downSampledGateCount = 1600;
+        pulse->header.gateSizeMeters = 30.0f;
+        pulse->header.configIndex = 0;
         pulse->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
         // These are just for emulating when a sweep begins and ends
         if (k % (rayPerSweep * pulsePerRay) == 0) {
@@ -1742,10 +1759,10 @@ void RKTestSimpleMomentEngine(void) {
         // Emulate a 0-30 degree RHI scan every pulsePerRay pulses
         pulse->header.elevationDegrees = (float)((k / pulsePerRay) % rayPerSweep);
         pulse->header.s |= RKPulseStatusReadyForMoments;
-        RKLog("k = %04d / %04u   EL = %.1f   gateCount = %u / %u\n",
-            k, pulseIndex,
-            pulse->header.elevationDegrees, pulse->header.gateCount, pulse->header.downSampledGateCount);
-        usleep(50000);
+        // RKLog("k = %04d / %04u   EL = %.1f   gateCount = %u / %u\n",
+        //     k, pulseIndex,
+        //     pulse->header.elevationDegrees, pulse->header.gateCount, pulse->header.downSampledGateCount);
+        usleep(10000);
     }
 
     pthread_join(tid, NULL);
@@ -1757,6 +1774,8 @@ void RKTestSimpleMomentEngine(void) {
     RKMomentEngineFree(momentEngine);
 
     RKFFTModuleFree(fftModule);
+
+    RKWaveformFree(waveform);
 
     RKPulseBufferFree(pulses);
     RKRayBufferFree(rays);
