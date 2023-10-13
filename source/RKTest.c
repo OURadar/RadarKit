@@ -1763,7 +1763,7 @@ void RKTestSimpleMomentEngine(void) {
         // RKLog("k = %04d / %04u   EL = %.1f   gateCount = %u / %u\n",
         //     k, pulseIndex,
         //     pulse->header.elevationDegrees, pulse->header.gateCount, pulse->header.downSampledGateCount);
-        usleep(10000);
+        usleep(5000);
     }
 
     pthread_join(tid, NULL);
