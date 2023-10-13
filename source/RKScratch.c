@@ -276,6 +276,7 @@ void RKMomentScratchFree(RKMomentScratch *scratch) {
 #pragma mark -
 
 int prepareScratch(RKMomentScratch *scratch) {
+    scratch->calculatedProducts = RKBaseProductListFloatZVWDPRKSQ | RKBaseProductListUInt8ZVWDPRKSQ;
     scratch->fftOrder = -1;
     return 0;
 }
