@@ -54,6 +54,7 @@ struct rk_moment_engine {
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
     bool                             useSemaphore;
+    bool                             excludeBoundaryPulses;
     int                              (*noiseEstimator)(RKMomentScratch *, RKPulse **, const uint16_t);
     int                              (*momentProcessor)(RKMomentScratch *, RKPulse **, const uint16_t);
     void                             (*calibrator)(RKUserModule, RKMomentScratch *);
@@ -94,6 +95,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
 void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
+void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *, const bool);
 void RKMomentEngineSetNoiseEstimator(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
 void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
 

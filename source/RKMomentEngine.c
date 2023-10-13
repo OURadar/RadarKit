@@ -738,6 +738,17 @@ static void *pulseGatherer(void *_in) {
                 i1 = i0;
                 if (count > 0) {
                     // Number of samples in this ray and the correct plan index
+                    if (engine->excludeBoundaryPulses && count > 1) {
+                        count--;
+                    }
+                    #if defined(DEBUG_RAY_GATHERER)
+                    int ii = RKNextNModuloS(engine->momentSource[j].origin, count, engine->radarDescription->pulseBufferDepth);
+                    RKPulse *s = RKGetPulseFromBuffer(engine->pulseBuffer, engine->momentSource[j].origin);
+                    RKPulse *e = RKGetPulseFromBuffer(engine->pulseBuffer, ii);
+                    RKLog("%s MM Ray E%.1f-%.1f   %d ... %d (%u)", engine->name,
+                          s->header.elevationDegrees, e->header.elevationDegrees,
+                          engine->momentSource[j].origin, ii, count + 1);
+                    #endif
                     engine->momentSource[j].length = count;
                     engine->momentSource[j].planIndex = (uint32_t)ceilf(log2f((float)count));
 
@@ -893,6 +904,10 @@ void RKMomentEngineSetCoreOrigin(RKMomentEngine *engine, const uint8_t origin) {
         return;
     }
     engine->coreOrigin = origin;
+}
+
+void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *engine, const bool exclude) {
+    engine->excludeBoundaryPulses = exclude;
 }
 
 void RKMomentEngineSetNoiseEstimator(RKMomentEngine *engine, int (*routine)(RKMomentScratch *, RKPulse **, const uint16_t)) {

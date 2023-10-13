@@ -1734,6 +1734,7 @@ void RKTestSimpleMomentEngine(void) {
     RKMomentEngineSetVerbose(momentEngine, 2);
     RKMomentEngineSetMomentProcessor(momentEngine, &RKPulsePair);
     // RKMomentEngineSetMomentProcessor(momentEngine, &RKMultiLag);
+    RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special case for phased array beams
     RKMomentEngineStart(momentEngine);
 
     // Launch a separate thread to retrieve processed pulses
