@@ -1729,8 +1729,8 @@ void RKTestSimpleMomentEngine(void) {
 
     // Get the very first config. For now, let's assume RKConfig doesn't change
     RKConfig *config = &configs[0];
-    config->systemZCal[0] = 42.0;
-    config->systemZCal[1] = 42.0;
+    config->systemZCal[0] = 48.0;
+    config->systemZCal[1] = 48.0;
     config->waveform = waveform;
     config->waveformDecimate = waveform;
     config->sweepAzimuth = 42.0;
@@ -1772,8 +1772,8 @@ void RKTestSimpleMomentEngine(void) {
     int k;
     for (k = 0; k < 4000; k++) {
         RKPulse *pulse = RKGetVacantPulseFromBuffer(pulses, &pulseIndex, desc.pulseBufferDepth);
-        pulse->header.gateCount = 1600;
-        pulse->header.downSampledGateCount = 1600;
+        pulse->header.gateCount = 3800;
+        pulse->header.downSampledGateCount = 3800;
         pulse->header.gateSizeMeters = 30.0f;
         pulse->header.configIndex = 0;
         // Some kind of time stamp from somewhere, or just this
