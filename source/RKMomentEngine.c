@@ -983,8 +983,8 @@ RKRay *RKMomentEngineGetProcessedRay(RKMomentEngine *engine, const bool blocking
     RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, engine->doneIndex);
     if (blocking) {
         uint32_t s = 0;
-        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive && s++ < 100) {
-            usleep(10000);
+        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive && s++ < 1000) {
+            usleep(1000);
         }
     } else {
         if (!(ray->header.s & RKRayStatusReady)) {
