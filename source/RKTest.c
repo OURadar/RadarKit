@@ -1757,6 +1757,8 @@ void RKTestSimpleMomentEngine(void) {
 
     RKSweepEngine *sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(sweepEngine, &desc, NULL, configs, &configIndex, rays, &rayIndex);
+    // RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/show.sh", RKScriptPropertyNull);
+    RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/archive.sh", RKScriptPropertyProduceTxz);
     RKSweepEngineStart(sweepEngine);
     RKSweepEngineSetRecord(sweepEngine, true);
 

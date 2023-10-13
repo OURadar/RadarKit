@@ -181,8 +181,8 @@ static void *sweepManager(void *in) {
     for (i = 0; i < engine->productBufferDepth; i++) {
         if (engine->productBuffer[i].desc.baseProductList & sweep->header.baseProductList) {
             j += snprintf(summary + j, RKMaximumCommandLength - j,
-                        rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
-                        engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
+                          rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
+                          engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
         }
     }
     RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
@@ -200,7 +200,7 @@ static void *sweepManager(void *in) {
 
     // Product recording
     for (p = 0; p < engine->productBufferDepth; p++) {
-        if (engine->productBuffer[p].flag == RKProductStatusVacant) {
+        if (!(engine->productBuffer[p].desc.baseProductList & sweep->header.baseProductList) || engine->productBuffer[p].flag == RKProductStatusVacant) {
             continue;
         }
         RKProduct *product = &engine->productBuffer[p];
@@ -269,7 +269,7 @@ static void *sweepManager(void *in) {
                                   filenameTooLong ? "..." : "",
                                   filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
                                   product->desc.symbol, engine->productFileExtension);
-        } else if (engine->productBuffer[p].desc.baseProductList & sweep->header.baseProductList) {
+        } else {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
     }
@@ -286,7 +286,6 @@ static void *sweepManager(void *in) {
     }
 
     if (engine->record && engine->hasFileHandlingScript) {
-        printf("CMD: '%s'\n", filelist);
         j = system(filelist);
         if (j) {
             RKLog("Error. CMD: %s", filelist);
