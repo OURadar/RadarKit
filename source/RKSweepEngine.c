@@ -177,13 +177,13 @@ static void *sweepManager(void *in) {
 
     j = 0;
     summary[0] = '\0';
+
     for (i = 0; i < engine->productBufferDepth; i++) {
-        if (engine->productBuffer[i].flag == RKProductStatusVacant) {
-            continue;
+        if (engine->productBuffer[i].desc.baseProductList & sweep->header.baseProductList) {
+            j += snprintf(summary + j, RKMaximumCommandLength - j,
+                        rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
+                        engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
         }
-        j += snprintf(summary + j, RKMaximumCommandLength - j,
-                      rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
-                      engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
     }
     RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
 
