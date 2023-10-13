@@ -446,13 +446,11 @@ static void *momentCore(void *in) {
             marker |= pulse->header.marker;
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
-        } while (k < path.length);
+        } while (k <= path.length);
+        // printf("k = %d   is = %u   ie = %u\n", k, is, ie);
 
         // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
-            if (ie != i) {
-                RKLog("%s I detected a bug %d vs %d.\n", me->name, ie, i);
-            }
             // Initialize the scratch space
             prepareScratch(space);
             // Call the noise estimator
@@ -538,9 +536,9 @@ static void *momentCore(void *in) {
         tag += engine->coreCount;
         t2 = t0;
 
-        RKLog("%s Ray E%.1f-%.1f A%.1f-%.1f done\n", me->name,
-            ray->header.startElevation, ray->header.endElevation,
-            ray->header.startAzimuth, ray->header.endAzimuth);
+        #if defined(RAY_GATHERER)
+        RKLog("%s Ray E%.1f-%.1f A%.1f-%.1f done\n", me->name, ray->header.startElevation, ray->header.endElevation, ray->header.startAzimuth, ray->header.endAzimuth);
+        #endif
     }
 
     if (engine->verbose > 1) {
@@ -975,6 +973,30 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }
     return RKResultSuccess;
+}
+
+RKRay *RKMomentEngineGetProcessedRay(RKMomentEngine *engine, const bool blocking) {
+    if (!(engine->state & RKEngineStateProperlyWired)) {
+        RKLog("%s Error. Not properly wired for RKPulseEngineGetProcessedPulse()\n", engine->name);
+        return NULL;
+    }
+    RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, engine->doneIndex);
+    if (blocking) {
+        uint32_t s = 0;
+        while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive && s++ < 100) {
+            usleep(10000);
+        }
+    } else {
+        if (!(ray->header.s & RKRayStatusReady)) {
+            return NULL;
+        }
+    }
+    if (!(engine->state & RKEngineStateWantActive)) {
+        return NULL;
+    }
+    ray->header.s |= RKRayStatusConsumed;
+    engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->rayBufferDepth);
+    return ray;
 }
 
 void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {

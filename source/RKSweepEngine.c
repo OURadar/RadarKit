@@ -111,7 +111,7 @@ static void *sweepManager(void *in) {
 
     // Mark the rays being used by user algorithms
     for (j = 0; j < sweep->header.rayCount; j++) {
-        sweep->rays[j]->header.s |= RKRayStatusBeingConsumed;
+        sweep->rays[j]->header.s |= RKRayStatusOverviewed;
     }
 
     // Localize the scratch space storage

@@ -48,6 +48,7 @@ struct rk_moment_engine {
     uint32_t                         *pulseIndex;
     RKBuffer                         rayBuffer;
     uint32_t                         *rayIndex;
+    uint32_t                         doneIndex;                                // Last retrieved ray index that's processed
     RKFFTModule                      *fftModule;
     RKUserModule                     *userModule;
     uint8_t                          verbose;
@@ -102,6 +103,7 @@ void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*)(RKMomentScratch 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
 
+RKRay *RKMomentEngineGetProcessedRay(RKMomentEngine *, const bool);
 void RKMomentEngineWaitWhileBusy(RKMomentEngine *);
 
 char *RKMomentEngineStatusString(RKMomentEngine *);

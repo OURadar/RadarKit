@@ -3448,7 +3448,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
             ray = RKGetRayFromBuffer(radar->rays, k);
             s0 = ray->header.s;
             if (flag & RKTextPreferencesShowColor) {
-                if (s0 & RKRayStatusBeingConsumed) {
+                if (s0 & RKRayStatusOverviewed) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
                     } else {
@@ -3474,7 +3474,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                     }
                 }
             } else {
-                *(text + m++) = s0 & RKRayStatusBeingConsumed ? m3 : (s0 & RKRayStatusStreamed ? m2 : (s0 & RKRayStatusReady ? m1 : m0));
+                *(text + m++) = s0 & RKRayStatusOverviewed ? m3 : (s0 & RKRayStatusStreamed ? m2 : (s0 & RKRayStatusReady ? m1 : m0));
             }
             s1 = s0;
         }

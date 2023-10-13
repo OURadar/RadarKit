@@ -599,7 +599,8 @@ enum {
     RKRayStatusSkipped                           = (1 << 2),
     RKRayStatusReady                             = (1 << 3),
     RKRayStatusStreamed                          = (1 << 4),
-    RKRayStatusBeingConsumed                     = (1 << 5)
+    RKRayStatusConsumed                          = (1 << 5),
+    RKRayStatusOverviewed                        = (1 << 6)
 };
 
 typedef uint32_t RKInitFlag;
