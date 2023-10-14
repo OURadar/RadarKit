@@ -181,7 +181,6 @@ static void *sweepManager(void *in) {
         pthread_mutex_lock(&engine->productMutex);
         engine->business--;
         pthread_mutex_unlock(&engine->productMutex);
-        return NULL;
     }
 
     j = 0;
