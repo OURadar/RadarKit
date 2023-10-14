@@ -85,6 +85,9 @@ static void *sweepManager(void *in) {
         if (engine->verbose > 1) {
             RKLog("%s Empty sweep   scratchSpaceIndex = %d\n", scratchSpaceIndex);
         }
+        pthread_mutex_lock(&engine->productMutex);
+        engine->business--;
+        pthread_mutex_unlock(&engine->productMutex);
         return NULL;
     }
     if (engine->verbose) {
@@ -139,6 +142,9 @@ static void *sweepManager(void *in) {
 
     if (engine->productBuffer == NULL) {
         RKLog("%s Unexpected NULL memory.\n", engine->name);
+        pthread_mutex_lock(&engine->productMutex);
+        engine->business--;
+        pthread_mutex_unlock(&engine->productMutex);
         return NULL;
     }
 
@@ -172,6 +178,9 @@ static void *sweepManager(void *in) {
         }
     }
     if (!(engine->state & RKEngineStateWantActive)) {
+        pthread_mutex_lock(&engine->productMutex);
+        engine->business--;
+        pthread_mutex_unlock(&engine->productMutex);
         return NULL;
     }
 
@@ -310,6 +319,10 @@ static void *sweepManager(void *in) {
         }
     }
 
+    pthread_mutex_lock(&engine->productMutex);
+    engine->business--;
+    pthread_mutex_unlock(&engine->productMutex);
+
     return NULL;
 }
 
@@ -412,7 +425,6 @@ static void *rayGatherer(void *in) {
 
         // A sweep is complete
         if (ray->header.marker & RKMarkerSweepEnd) {
-            engine->business++;
             // Gather the rays
             n = 0;
             do {
@@ -461,6 +473,9 @@ static void *rayGatherer(void *in) {
             rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
             is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
+            pthread_mutex_lock(&engine->productMutex);
+            engine->business++;
+            pthread_mutex_unlock(&engine->productMutex);
             if (engine->verbose > 1) {
                 RKLog("%s Info. RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
             }
@@ -789,12 +804,11 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
 
 void RKSweepEngineWaitWhileBusy(RKSweepEngine *engine) {
     int s = 0;
-    int8_t k = engine->scratchSpaceIndex;
     do {
-        usleep(10000);
-    } while (k == engine->scratchSpaceIndex && s++ < 100);
-    while (engine->state & RKEngineStateWritingFile) {
-        usleep(10000);
+        usleep(1000);
+    } while (engine->business > 0 && s++ < 2000);
+    if (engine->business) {
+        RKLog("%s Warning. Waited for %.2f s but still busy.\n", engine->name, s * 0.001f);
     }
 }
 

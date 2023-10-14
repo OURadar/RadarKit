@@ -1695,7 +1695,7 @@ void RKTestSimpleMomentEngine(void) {
     // Hyper parameters
     const uint32_t maxGateCount = 4000;   // Number of range gate samples
     const uint32_t pulsesPerRay = 60;     // Number of pulses per ray
-    const uint32_t raysPerSweep = 30;     // Say elevation 1 - 30 degrees at a 1-deg increment
+    const uint32_t raysPerSweep = 50;     // Say elevation 1 - 50 degrees at a 1-deg increment
 
     // Internal indices
     uint32_t configIndex = 0;
@@ -1703,6 +1703,7 @@ void RKTestSimpleMomentEngine(void) {
     uint32_t rayIndex = 0;
     uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
     uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
+    struct timeval t;
 
     // Radar description, should be the same as the pulse engine
     RKRadarDesc desc = {
@@ -1757,6 +1758,7 @@ void RKTestSimpleMomentEngine(void) {
     RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special case for phased array beams
     RKMomentEngineStart(momentEngine);
 
+    // Sweep engine
     RKSweepEngine *sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(sweepEngine, &desc, NULL, configs, &configIndex, rays, &rayIndex);
     // RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/show.sh", RKScriptPropertyNull);
@@ -1769,7 +1771,7 @@ void RKTestSimpleMomentEngine(void) {
     pthread_t tid;
     pthread_create(&tid, NULL, RKTestSimpleMomentEngineRayRetriever, momentEngine);
 
-    struct timeval t;
+    RKComplex *x;
 
     // The busy loop
     int k = 0, s = 0;
@@ -1797,7 +1799,16 @@ void RKTestSimpleMomentEngine(void) {
         // Emulate a 0-30 degree RHI scan every pulsesPerRay pulses
         pulse->header.elevationDegrees = (float)((k / pulsesPerRay) % raysPerSweep);
         pulse->header.azimuthDegrees = config->sweepAzimuth;
-        pulse->header.s |= RKPulseStatusReadyForMoments;
+        for (int c = 0; c < 2; c++) {
+            x = RKGetComplexDataFromPulse(pulse, 0);
+            // Copy over the data
+            // memcpy(x, &source, pulse->header.gateCount * sizeof(RKComplex));
+            for (int i = 0; i < pulse->header.gateCount; i++) {
+                x[i].i = 1.0f;
+                x[i].q = 0.0f;
+            }
+        }
+        pulse->header.s = RKPulseStatusReadyForMoments;
         usleep(500);
         k++;
     } while (s < 2);

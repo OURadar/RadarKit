@@ -733,7 +733,7 @@ static void *pulseGatherer(void *_in) {
                 i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
             }
             // printf("k%4u   i = %d %d %s\n", k, i0, i1, pulse->header.marker & RKMarkerSweepEnd ? "E" : "");
-            if (engine->excludeBoundaryPulses && pulse->header.marker & RKMarkerSweepBegin) {
+            if (pulse->header.marker & RKMarkerSweepBegin) {
                 engine->momentSource[j].origin = k;
                 count = 0;
                 i1 = i0;
