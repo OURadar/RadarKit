@@ -137,7 +137,7 @@ void RKTestWebSocket(void);
 void RKTestReadBareRKComplex(const char *);
 void RKTestRadarHub(void);
 void RKTestSimplePulseEngine(const RKPulseStatus);
-void RKTestSimpleMomentEngine(void);
+void RKTestSimpleMomentEngine(const int);
 
 #pragma mark - DSP Tests
 

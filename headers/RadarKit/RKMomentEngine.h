@@ -104,6 +104,7 @@ int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
 
 RKRay *RKMomentEngineGetProcessedRay(RKMomentEngine *, const bool);
+void RKMomentEngineFlush(RKMomentEngine *);
 void RKMomentEngineWaitWhileBusy(RKMomentEngine *);
 
 char *RKMomentEngineStatusString(RKMomentEngine *);

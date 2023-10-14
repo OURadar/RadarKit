@@ -1010,6 +1010,10 @@ RKRay *RKMomentEngineGetProcessedRay(RKMomentEngine *engine, const bool blocking
     return ray;
 }
 
+void RKMomentEngineFlush(RKMomentEngine *engine) {
+    *engine->rayIndex = RKNextModuloS(*engine->rayIndex,  engine->radarDescription->rayBufferDepth);
+}
+
 void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {
     int k;
     RKRay *ray;

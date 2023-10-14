@@ -262,8 +262,13 @@ void RKTestByNumber(const int number, const void *arg) {
                                     n == 2 ? RKPulseStatusConsumed : RKPulseStatusNull));
             break;
         case 27:
-            RKLog("RKTestSimpleMomentEngine\n");
-            RKTestSimpleMomentEngine();
+            if (arg) {
+                n = atoi(arg);
+            } else {
+                n = 0;
+            }
+            RKLog("RKTestSimpleMomentEngine with n = %d  %s\n", n, n == 1 ? "archive" : "show");
+            RKTestSimpleMomentEngine(n);
             break;
         case 30:
             RKTestSIMD(RKTestSIMDFlagNull, 0);
@@ -1603,26 +1608,40 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
 
     const uint32_t maxGateCount = 1000;
 
-    int k;
+    int c, k, i;
     uint32_t configIndex = 0;
     uint32_t pulseIndex = 0;
     uint32_t multiple = RKMemoryAlignSize / sizeof(RKFloat);
     uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
 
     RKRadarDesc desc = {
-        .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer,
-        .configBufferDepth = 3,
-        .pulseToRayRatio = 1,
-        .pulseBufferDepth = 8,
-        .pulseCapacity = capacity,
-        .dataPath = "data"
+        .name = "Horus",
+        .initFlags = RKInitFlagAllocConfigBuffer           // Only for housekeeping, doesn't really matter here
+                   | RKInitFlagAllocRawIQBuffer
+                   | RKInitFlagAllocMomentBuffer,
+        .configBufferDepth = 2,
+        .pulseToRayRatio = 1,                              // A down-sampling factor after pulse compression
+        .pulseBufferDepth = 8,                             // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseCapacity = capacity,                         // Number of range gates each pulse can hold
+        .rayBufferDepth = 500,                             // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
+        .filePrefix = "HRS",                               // A prefix for the output file name
+        .dataPath = "data",                                // A path to the output directory
+        .latitude = 35.23682,
+        .longitude = -97.46381,
+        .wavelength = 0.10,
     };
 
-    RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
-
+    RKConfig *configs;
     RKBuffer pulses;
+
+    RKLog("Allocating config buffer ...");
+    RKConfigBufferAlloc(&configs, desc.configBufferDepth);
+
+    RKLog("Allocating pulse buffer ...");
     RKPulseBufferAlloc(&pulses, capacity, desc.pulseBufferDepth);
-    RKConfig *configs = (RKConfig *)malloc(desc.configBufferDepth);
+
+    RKLog("Allocating FFT module ...");
+    RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
 
     RKPulseEngine *engine = RKPulseEngineInit();
     RKPulseEngineSetInputOutputBuffers(engine, &desc, configs, &configIndex, pulses, &pulseIndex);
@@ -1646,6 +1665,14 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         RKPulse *pulse = RKPulseEngineGetVacantPulse(engine, status);
         pulse->header.gateCount = 12;
         pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+        // Go through both H & V channels and fill in the 16-bit data
+        for (c = 0; c < 2; c++) {
+            RKInt16C *x = RKGetInt16CDataFromPulse(pulse, c);
+            for (i = 0; i < pulse->header.gateCount; i++) {
+                x[i].i = 2;
+                x[i].q = 1;
+            }
+        }
         RKLog(":> k = %02d   pulse @ %p   i = %02zu   gateCount = %d   pulseIndex -> %u\n",
             k, pulse, pulse->header.i, pulse->header.gateCount, *engine->pulseIndex);
     }
@@ -1660,11 +1687,9 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     }
 
     RKPulseEngineFree(engine);
-
     RKFFTModuleFree(fftModule);
-
+    RKConfigBufferFree(configs);
     RKPulseBufferFree(pulses);
-    free(configs);
 }
 
 void *RKTestSimpleMomentEngineRayRetriever(void *in) {
@@ -1677,9 +1702,11 @@ void *RKTestSimpleMomentEngineRayRetriever(void *in) {
         }
         float *data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
         if (ray->header.pulseCount > 0) {
-            RKLog("%s RR Ray E%4.1f-%4.1f  i%04u  [%u]  %.1f %.1f %.1f ... %.1f   %s%s%s%s\n", engine->name,
-                ray->header.startElevation, ray->header.endElevation,
-                ray->header.i, ray->header.pulseCount,
+            RKLog("%s RR Ray E%4.1f-%4.1f  i%03u  [%u]  %.1f %.1f %.1f ... %.1f   %s%s%s%s\n", engine->name,
+                ray->header.startElevation,
+                ray->header.endElevation,
+                ray->header.i,
+                ray->header.pulseCount,
                 data[0], data[1], data[2], data[ray->header.gateCount - 1],
                 rkGlobalParameters.showColor ? RKOrangeColor : "",
                 ray->header.marker & RKMarkerSweepBegin ? "S" : "",
@@ -1691,7 +1718,7 @@ void *RKTestSimpleMomentEngineRayRetriever(void *in) {
     return NULL;
 }
 
-void RKTestSimpleMomentEngine(void) {
+void RKTestSimpleMomentEngine(const int mode) {
     SHOW_FUNCTION_NAME
 
     RKSetUseDailyLog(true);
@@ -1745,7 +1772,6 @@ void RKTestSimpleMomentEngine(void) {
     RKLog("Allocating ray buffer ...");
     RKRayBufferAlloc(&rays, capacity, desc.rayBufferDepth);
 
-    // A common FFT module for both pulse and moment engines
     RKLog("Allocating FFT module ...");
     RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
 
@@ -1779,8 +1805,11 @@ void RKTestSimpleMomentEngine(void) {
     // Sweep engine
     RKSweepEngine *sweepEngine = RKSweepEngineInit();
     RKSweepEngineSetInputOutputBuffer(sweepEngine, &desc, NULL, configs, &configIndex, rays, &rayIndex);
-    // RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/show.sh", RKScriptPropertyNull);
-    RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/archive.sh", RKScriptPropertyProduceTxz);
+    if (mode == 1) {
+        RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/archive.sh", RKScriptPropertyProduceTxz);
+    } else {
+        RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/show.sh", RKScriptPropertyNull);
+    }
     RKSweepEngineSetVerbose(sweepEngine, 1);
     RKSweepEngineStart(sweepEngine);
     RKSweepEngineSetRecord(sweepEngine, true);
@@ -1832,7 +1861,7 @@ void RKTestSimpleMomentEngine(void) {
     } while (s < 2);
 
     // Kick ray index forward so that sweep engine can start processing
-    rayIndex = RKNextModuloS(rayIndex, desc.rayBufferDepth);
+    RKMomentEngineFlush(momentEngine);
 
     RKMomentEngineWaitWhileBusy(momentEngine);
     RKSweepEngineWaitWhileBusy(sweepEngine);
@@ -1850,6 +1879,8 @@ void RKTestSimpleMomentEngine(void) {
     RKConfigBufferFree(configs);
     RKPulseBufferFree(pulses);
     RKRayBufferFree(rays);
+
+    RKLog("done");
 }
 
 #pragma mark -
