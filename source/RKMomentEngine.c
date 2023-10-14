@@ -1050,7 +1050,7 @@ void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {
                 engine->business--;
             }
         }
-        if (k % 100 == 1) {
+        if (engine->verbose && k % 100 == 1) {
             RKLog("%s Waiting ... business = %d   state = %x\n", engine->name, engine->business, engine->state);
         }
         usleep(1000);

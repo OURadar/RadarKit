@@ -1710,6 +1710,8 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKFFTModuleFree(fftModule);
     RKConfigBufferFree(configs);
     RKPulseBufferFree(pulses);
+
+    RKLog("done\n");
 }
 
 void *RKTestSimpleMomentEngineRayRetriever(void *in) {
@@ -1745,7 +1747,7 @@ void RKTestSimpleMomentEngine(const int mode) {
 
     // Hyper parameters
     const uint32_t maxGateCount = 4000;                    // Number of range gate samples
-    const uint32_t pulsesPerRay = 60;                      // Number of pulses per ray
+    const uint32_t pulsesPerRay = 40;                      // Number of pulses per ray
     const uint32_t raysPerSweep = 50;                      // Say elevation 1 - 50 degrees at a 1-deg increment
 
     // Internal indices
@@ -1816,9 +1818,9 @@ void RKTestSimpleMomentEngine(const int mode) {
     // Moment engine
     RKMomentEngine *momentEngine = RKMomentEngineInit();
     RKMomentEngineSetEssentials(momentEngine, &desc, fftModule, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
-    RKMomentEngineSetCoreCount(momentEngine, 4);
     RKMomentEngineSetMomentProcessor(momentEngine, RKPulsePair);         // RKPulsePair, RKPulsePairHop or RKMultiLag
     RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special mode for electronic beams
+    RKMomentEngineSetCoreCount(momentEngine, 2);
     RKMomentEngineStart(momentEngine);
 
     // Sweep engine
@@ -1829,9 +1831,9 @@ void RKTestSimpleMomentEngine(const int mode) {
     } else {
         RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/show.sh", RKScriptPropertyNull);
     }
+    RKSweepEngineSetRecord(sweepEngine, true);
     RKSweepEngineSetVerbose(sweepEngine, 1);
     RKSweepEngineStart(sweepEngine);
-    RKSweepEngineSetRecord(sweepEngine, true);
 
     // Launch a separate thread to retrieve processed pulses
     pthread_t tid;
@@ -1843,16 +1845,17 @@ void RKTestSimpleMomentEngine(const int mode) {
     int k = 0, s = 0;
     do {
         RKPulse *pulse = RKGetVacantPulseFromBuffer(pulses, &pulseIndex, desc.pulseBufferDepth);
+        // Required parameters:
+        // Some kind of time stamp from somewhere, or the arrival time using gettimeofday()
+        // A marker to indicate this pulse is collected from RHI mode
+        gettimeofday(&t, NULL);
         pulse->header.gateCount = 3800;
         pulse->header.downSampledGateCount = 3800;
         pulse->header.gateSizeMeters = 30.0f;
         pulse->header.configIndex = 0;
-        // Some kind of time stamp from somewhere, or just this
-        gettimeofday(&t, NULL);
         pulse->header.time.tv_sec = t.tv_sec;
         pulse->header.time.tv_usec = t.tv_usec;
         pulse->header.timeDouble = (double)t.tv_sec + 1.0e-6 * (double)t.tv_usec;
-        // A marker to indicate this pulse is collected from RHI mode
         pulse->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
         // These are just for emulating when a sweep begins and ends
         if (k % (raysPerSweep * pulsesPerRay) == 0) {
@@ -1862,7 +1865,7 @@ void RKTestSimpleMomentEngine(const int mode) {
             pulse->header.marker |= RKMarkerSweepEnd;
             s++;
         }
-        // Emulate a 0-30 degree RHI scan every pulsesPerRay pulses
+        // Emulate an RHI scan every pulsesPerRay pulses
         pulse->header.elevationDegrees = (float)((k / pulsesPerRay) % raysPerSweep);
         pulse->header.azimuthDegrees = config->sweepAzimuth;
         // Go through the two channels H & V
