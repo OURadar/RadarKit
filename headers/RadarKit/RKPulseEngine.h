@@ -84,10 +84,14 @@ RKPulseEngine *RKPulseEngineInit(void);
 void RKPulseEngineFree(RKPulseEngine *);
 
 void RKPulseEngineSetVerbose(RKPulseEngine *, const int);
+void RKPulseEngineSetEssentials(RKPulseEngine *, const RKRadarDesc *, RKFFTModule *,
+                                RKConfig *configBuffer, uint32_t *configIndex,
+                                RKBuffer pulseBuffer, uint32_t *pulseIndex);
 void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *, const RKRadarDesc *,
                                         RKConfig *configBuffer, uint32_t *configIndex,
-                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex);
-void RKPulseEngineSetFFTModule(RKPulseEngine *, RKFFTModule *);
+                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex)
+                                        __attribute__ ((deprecated));
+void RKPulseEngineSetFFTModule(RKPulseEngine *, RKFFTModule *) __attribute__ ((deprecated));
 void RKPulseEngineSetCoreCount(RKPulseEngine *, const uint8_t);
 void RKPulseEngineSetCoreOrigin(RKPulseEngine *, const uint8_t);
 

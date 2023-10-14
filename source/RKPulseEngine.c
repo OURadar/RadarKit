@@ -797,24 +797,26 @@ void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
 // }
 
 //
-// RKPulseEngineSetInputOutputBuffers
+// RKPulseEngineSetEssentials
 //
 // Input:
 // engine - the pulse compression engine
 // desc - the description of the radar
+// fftModule - the FFT module
 // configBuffer - config buffer (for status display only)
 // configIndex - index to retrieve the up-to-date config
 // pulseBuffer - the raw data buffer
 // pulseIndex - the reference index watch, *pulseIndex is the latest reading in *pulseBuffer
 //
-void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc *desc,
-                                        RKConfig *configBuffer, uint32_t *configIndex,
-                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+void RKPulseEngineSetEssentials(RKPulseEngine *engine, const RKRadarDesc *desc, RKFFTModule *module,
+                                RKConfig *configBuffer, uint32_t *configIndex,
+                                RKBuffer pulseBuffer, uint32_t *pulseIndex) {
     engine->radarDescription = (RKRadarDesc *)desc;
     engine->configBuffer     = configBuffer;
     engine->configIndex      = configIndex;
     engine->pulseBuffer      = pulseBuffer;
     engine->pulseIndex       = pulseIndex;
+    engine->fftModule        = module;
 
     size_t bytes;
 
@@ -852,8 +854,16 @@ void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc
     RKPulseEngineVerifyWiring(engine);
 }
 
+void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *engine, const RKRadarDesc *desc,
+                                        RKConfig *configBuffer, uint32_t *configIndex,
+                                        RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+    RKLog("%s Warning. RKPulseEngineSetInputOutputBuffers() is deprecated. Use RKPulseEngineSetEssentials() instead.\n", engine->name);
+    RKPulseEngineSetEssentials(engine, desc, NULL, configBuffer, configIndex, pulseBuffer, pulseIndex);
+}
+
 void RKPulseEngineSetFFTModule(RKPulseEngine *engine, RKFFTModule *module) {
     engine->fftModule = module;
+    RKLog("%s Warning. RKPulseEngineSetFFTModule() is deprecated. Use RKPulseEngineSetEssentials() instead.\n", engine->name);
     RKPulseEngineVerifyWiring(engine);
 }
 

@@ -676,6 +676,14 @@ static void *pulseGatherer(void *_in) {
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
             RKMomentEngineUpdateMinMaxWorkerLag(engine);
+
+            // Check finished rays
+            ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
+            while (ray->header.s & RKRayStatusReady && engine->state & RKEngineStateWantActive) {
+                *engine->rayIndex = RKNextModuloS(*engine->rayIndex, engine->radarDescription->rayBufferDepth);
+                ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
+                engine->business--;
+            }
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
@@ -837,10 +845,10 @@ RKMomentEngine *RKMomentEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->noiseEstimator = &RKNoiseFromConfig;
-    engine->momentProcessor = &RKPulsePairHop;
-    // engine->momentProcessor = &RKMultiLag;
-    // engine->userLagChoice = 3;
+    engine->noiseEstimator = RKNoiseFromConfig;
+    engine->momentProcessor = RKPulsePairHop;
+    // engine->momentProcessor = RKMultiLag;
+    engine->userLagChoice = 3;
     engine->calibrator = &RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;
     engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
@@ -865,10 +873,10 @@ void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDesc *desc,
-                                         RKConfig *configBuffer, uint32_t *configIndex,
-                                         RKBuffer pulseBuffer,   uint32_t *pulseIndex,
-                                         RKBuffer rayBuffer,     uint32_t *rayIndex) {
+void RKMomentEngineSetEssentials(RKMomentEngine *engine, const RKRadarDesc *desc, RKFFTModule *module,
+                                 RKConfig *configBuffer, uint32_t *configIndex,
+                                 RKBuffer pulseBuffer, uint32_t *pulseIndex,
+                                 RKBuffer rayBuffer, uint32_t *rayIndex) {
     engine->radarDescription  = (RKRadarDesc *)desc;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;
@@ -876,6 +884,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
     engine->pulseIndex        = pulseIndex;
     engine->rayBuffer         = rayBuffer;
     engine->rayIndex          = rayIndex;
+    engine->fftModule         = module;
 
     size_t bytes;
 
@@ -894,8 +903,17 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDe
     RKMomentEngineCheckWiring(engine);
 }
 
+void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *engine, const RKRadarDesc *desc,
+                                         RKConfig *configBuffer, uint32_t *configIndex,
+                                         RKBuffer pulseBuffer, uint32_t *pulseIndex,
+                                         RKBuffer rayBuffer, uint32_t *rayIndex) {
+    RKLog("Warning. RKMomentEngineSetInputOutputBuffers() is deprecated. Use RKMomentEngineSetEssentials() instead.\n");
+    RKMomentEngineSetEssentials(engine, desc, NULL, configBuffer, configIndex, pulseBuffer, pulseIndex, rayBuffer, rayIndex);
+}
+
 void RKMomentEngineSetFFTModule(RKMomentEngine *engine, RKFFTModule *module) {
     engine->fftModule = module;
+    RKLog("Warning. RKMomentEngineSetFFTModule() is deprecated. Use RKMomentEngineSetEssentials() instead.\n");
     RKMomentEngineCheckWiring(engine);
 }
 
@@ -1031,6 +1049,9 @@ void RKMomentEngineWaitWhileBusy(RKMomentEngine *engine) {
                 ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
                 engine->business--;
             }
+        }
+        if (k % 100 == 1) {
+            RKLog("%s Waiting ... business = %d   state = %x\n", engine->name, engine->business, engine->state);
         }
         usleep(1000);
     }

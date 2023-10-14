@@ -89,11 +89,16 @@ RKMomentEngine *RKMomentEngineInit(void);
 void RKMomentEngineFree(RKMomentEngine *);
 
 void RKMomentEngineSetVerbose(RKMomentEngine *, const int verbose);
+void RKMomentEngineSetEssentials(RKMomentEngine *, const RKRadarDesc *, RKFFTModule *,
+                                 RKConfig *configBuffer, uint32_t *configIndex,
+                                 RKBuffer pulseBuffer,   uint32_t *pulseIndex,
+                                 RKBuffer rayBuffer,     uint32_t *rayIndex);
 void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          RKConfig *configBuffer, uint32_t *configIndex,
                                          RKBuffer pulseBuffer,   uint32_t *pulseIndex,
-                                         RKBuffer rayBuffer,     uint32_t *rayIndex);
-void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *);
+                                         RKBuffer rayBuffer,     uint32_t *rayIndex)
+                                         __attribute__ ((deprecated));
+void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *) __attribute__ ((deprecated));;
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *, const bool);

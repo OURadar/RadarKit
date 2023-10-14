@@ -1631,6 +1631,8 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         .wavelength = 0.10,
     };
 
+    RKWaveform *waveform = RKWaveformInitAsImpulse();
+
     RKConfig *configs;
     RKBuffer pulses;
 
@@ -1643,13 +1645,29 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKLog("Allocating FFT module ...");
     RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
 
+    // Get the very first config. For now, let's assume RKConfig doesn't change
+    RKConfig *config = &configs[0];
+    strcpy(config->vcpDefinition, "vcp1");
+    strcpy(config->waveformName, waveform->name);
+    config->waveform = waveform;
+    config->waveformDecimate = waveform;
+    config->sweepAzimuth = 42.0;
+    config->systemZCal[0] = 48.0;
+    config->systemZCal[1] = 48.0;
+    config->systemDCal = 0.02;
+    config->systemPCal = 0.2;
+    config->prt[0] = 0.5e-3f;
+    config->startMarker = RKMarkerScanTypePPI | RKMarkerSweepBegin;
+    config->noise[0] = 0.00011;
+    config->noise[1] = 0.00012;
+    config->SNRThreshold = -3.0f;
+    config->SQIThreshold = 0.1f;
+
     RKPulseEngine *engine = RKPulseEngineInit();
-    RKPulseEngineSetInputOutputBuffers(engine, &desc, configs, &configIndex, pulses, &pulseIndex);
-    RKPulseEngineSetFFTModule(engine, fftModule);
+    RKPulseEngineSetEssentials(engine, &desc, fftModule, configs, &configIndex, pulses, &pulseIndex);
     RKPulseEngineSetCoreCount(engine, 4);
     RKPulseEngineStart(engine);
 
-    RKWaveform *waveform = RKWaveformInitAsImpulse();
     RKPulseEngineSetFilterByWaveform(engine, waveform);
 
     // Launch a separate thread to retrieve processed pulses
@@ -1664,8 +1682,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         //               RKPulseStatusConsumed for bring consumed by RKPulseEngineGetProcessedPulse
         RKPulse *pulse = RKPulseEngineGetVacantPulse(engine, status);
         pulse->header.gateCount = 12;
-        pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
-        // Go through both H & V channels and fill in the 16-bit data
+        // Go through both H & V channels and fill in the 16-bit data buffers
         for (c = 0; c < 2; c++) {
             RKInt16C *x = RKGetInt16CDataFromPulse(pulse, c);
             for (i = 0; i < pulse->header.gateCount; i++) {
@@ -1673,6 +1690,9 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
                 x[i].q = 1;
             }
         }
+        pulse->header.azimuthDegrees = 12.0f;
+        pulse->header.elevationDegrees = 2.4f;
+        pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
         RKLog(":> k = %02d   pulse @ %p   i = %02zu   gateCount = %d   pulseIndex -> %u\n",
             k, pulse, pulse->header.i, pulse->header.gateCount, *engine->pulseIndex);
     }
@@ -1795,8 +1815,7 @@ void RKTestSimpleMomentEngine(const int mode) {
 
     // Moment engine
     RKMomentEngine *momentEngine = RKMomentEngineInit();
-    RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
-    RKMomentEngineSetFFTModule(momentEngine, fftModule);
+    RKMomentEngineSetEssentials(momentEngine, &desc, fftModule, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
     RKMomentEngineSetCoreCount(momentEngine, 4);
     RKMomentEngineSetMomentProcessor(momentEngine, RKPulsePair);         // RKPulsePair, RKPulsePairHop or RKMultiLag
     RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special mode for electronic beams
@@ -1859,9 +1878,6 @@ void RKTestSimpleMomentEngine(const int mode) {
         usleep(500);
         k++;
     } while (s < 2);
-
-    // Kick ray index forward so that sweep engine can start processing
-    RKMomentEngineFlush(momentEngine);
 
     RKMomentEngineWaitWhileBusy(momentEngine);
     RKSweepEngineWaitWhileBusy(sweepEngine);
