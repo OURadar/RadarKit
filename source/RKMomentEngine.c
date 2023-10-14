@@ -559,20 +559,20 @@ static void *pulseGatherer(void *_in) {
     RKMomentEngine *engine = (RKMomentEngine *)_in;
 
     int c, i, j, k, s;
-	struct timeval t0, t1;
+    struct timeval t0, t1;
 
-	sem_t *sem[engine->coreCount];
+    sem_t *sem[engine->coreCount];
 
-	unsigned int skipCounter = 0;
+    unsigned int skipCounter = 0;
 
-	// Beam index at t = 0 and t = 1 (previous sample)
+    // Beam index at t = 0 and t = 1 (previous sample)
     int i0;
-    int i1 = 0;
+    int i1 = -999999;
     int count = 0;
 
-	RKPulse *pulse;
+    RKPulse *pulse;
     RKRay *ray;
-	RKMarker marker;
+    RKMarker marker;
 
     // Show the selected noise estimator & moment processor
     if (engine->verbose) {
@@ -600,7 +600,7 @@ static void *pulseGatherer(void *_in) {
         }
     }
 
-	// Update the engine state
+    // Update the engine state
     engine->state |= RKEngineStateWantActive;
     engine->state ^= RKEngineStateActivating;
 
@@ -652,8 +652,8 @@ static void *pulseGatherer(void *_in) {
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d   rayIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex, *engine->rayIndex);
 
-	// Increase the tic once to indicate the watcher is ready
-	engine->tic = 1;
+    // Increase the tic once to indicate the watcher is ready
+    engine->tic = 1;
 
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
@@ -732,13 +732,24 @@ static void *pulseGatherer(void *_in) {
             } else {
                 i0 = 360 * (int)floorf(pulse->header.elevationDegrees - 0.25f) + (int)floorf(pulse->header.azimuthDegrees);
             }
-            if (i1 != i0 || count == RKMaximumPulsesPerRay) {
+            // printf("k%4u   i = %d %d %s\n", k, i0, i1, pulse->header.marker & RKMarkerSweepEnd ? "E" : "");
+            if (engine->excludeBoundaryPulses && pulse->header.marker & RKMarkerSweepBegin) {
+                engine->momentSource[j].origin = k;
+                count = 0;
                 i1 = i0;
-                if (count > 0) {
-                    // Number of samples in this ray and the correct plan index
-                    if (engine->excludeBoundaryPulses && count > 1) {
+            }
+            if (i1 != i0 || count == RKMaximumPulsesPerRay || pulse->header.marker & RKMarkerSweepEnd) {
+                i1 = i0;
+                if (engine->excludeBoundaryPulses) {
+                    if (pulse->header.marker & RKMarkerSweepEnd) {
+                        count++;
+                    }
+                    if (count > 1) {
                         count--;
                     }
+                }
+                if (count > 0) {
+                    // Number of samples in this ray and the correct plan index
                     #if defined(DEBUG_RAY_GATHERER)
                     int ii = RKNextNModuloS(engine->momentSource[j].origin, count, engine->radarDescription->pulseBufferDepth);
                     RKPulse *s = RKGetPulseFromBuffer(engine->pulseBuffer, engine->momentSource[j].origin);
@@ -792,7 +803,7 @@ static void *pulseGatherer(void *_in) {
             RKMomentEngineUpdateStatusString(engine);
         }
 
-		engine->tic++;
+        engine->tic++;
 
         // Update k to catch up for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
@@ -952,20 +963,20 @@ int RKMomentEngineStop(RKMomentEngine *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	if (!(engine->state & RKEngineStateWantActive)) {
-		RKLog("%s Not active.\n", engine->name);
-		return RKResultEngineDeactivatedMultipleTimes;
-	}
+    if (!(engine->state & RKEngineStateWantActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
     if (engine->tidPulseGatherer) {
         pthread_join(engine->tidPulseGatherer, NULL);
-		engine->tidPulseGatherer = (pthread_t)0;
+        engine->tidPulseGatherer = (pthread_t)0;
         free(engine->workers);
         engine->workers = NULL;
-	} else {
-		RKLog("%s Invalid thread ID.\n", engine->name);
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
     }
     engine->state ^= RKEngineStateDeactivating;
     RKLog("%s Stopped.\n", engine->name);

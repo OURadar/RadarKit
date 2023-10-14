@@ -412,6 +412,7 @@ static void *rayGatherer(void *in) {
 
         // A sweep is complete
         if (ray->header.marker & RKMarkerSweepEnd) {
+            engine->business++;
             // Gather the rays
             n = 0;
             do {
@@ -784,6 +785,17 @@ int RKSweepEngineSetProductComplete(RKSweepEngine *engine, RKSweep *sweep, RKPro
     engine->radarDescription->productBufferDepth = engine->productBufferDepth;
     engine->radarDescription->productBufferSize = engine->productBufferDepth * product->totalBufferSize;
     return RKResultSuccess;
+}
+
+void RKSweepEngineWaitWhileBusy(RKSweepEngine *engine) {
+    int s = 0;
+    int8_t k = engine->scratchSpaceIndex;
+    do {
+        usleep(10000);
+    } while (k == engine->scratchSpaceIndex && s++ < 100);
+    while (engine->state & RKEngineStateWritingFile) {
+        usleep(10000);
+    }
 }
 
 #pragma mark - RKSweep

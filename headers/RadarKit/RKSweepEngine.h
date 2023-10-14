@@ -57,6 +57,7 @@ struct rk_sweep_engine {
     pthread_mutex_t                  productMutex;
     RKBaseProductList                baseProductList;
     RKProductId                      baseMomentProductIds[RKBaseProductIndexCount];
+    uint32_t                         business;
 
     // Status / health
     uint32_t                         processedRayIndex;
@@ -92,6 +93,7 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKProductDesc);
 int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKProductId);
 RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *, RKSweep *, RKProductId);
 int RKSweepEngineSetProductComplete(RKSweepEngine *, RKSweep *, RKProduct *);
+void RKSweepEngineWaitWhileBusy(RKSweepEngine *);
 
 RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
 int RKSweepFree(RKSweep *);

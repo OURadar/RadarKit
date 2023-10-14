@@ -1675,11 +1675,13 @@ void *RKTestSimpleMomentEngineRayRetriever(void *in) {
         if (ray == NULL) {
             continue;
         }
-        RKLog("%s RR Ray E%4.1f-%4.1f  i%04u  c%u  %s%s\n", engine->name,
-            ray->header.startElevation, ray->header.endElevation,
-            ray->header.i, ray->header.pulseCount,
-            ray->header.marker & RKMarkerSweepBegin ? "S" : "",
-            ray->header.marker & RKMarkerSweepEnd ? "E" : "");
+        if (ray->header.pulseCount > 0) {
+            RKLog("%s RR Ray E%4.1f-%4.1f  i%04u  c%u  %s%s\n", engine->name,
+                ray->header.startElevation, ray->header.endElevation,
+                ray->header.i, ray->header.pulseCount,
+                ray->header.marker & RKMarkerSweepBegin ? "S" : "",
+                ray->header.marker & RKMarkerSweepEnd ? "E" : "");
+        }
     }
 
     return NULL;
@@ -1691,8 +1693,8 @@ void RKTestSimpleMomentEngine(void) {
     RKSetUseDailyLog(true);
 
     // Hyper parameters
-    const uint32_t maxGateCount = 4000;  // Number of range gate samples
-    const uint32_t pulsesPerRay = 50;     // Number of pulses per ray
+    const uint32_t maxGateCount = 4000;   // Number of range gate samples
+    const uint32_t pulsesPerRay = 60;     // Number of pulses per ray
     const uint32_t raysPerSweep = 30;     // Say elevation 1 - 30 degrees at a 1-deg increment
 
     // Internal indices
@@ -1706,11 +1708,11 @@ void RKTestSimpleMomentEngine(void) {
     RKRadarDesc desc = {
         .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
         .configBufferDepth = 3,
-        .pulseToRayRatio = 1,            // A down-sampling factor after pulse compression
-        .pulseBufferDepth = 2000,        // Number of pulses the buffer can hold (RKBuffer pulses)
-        .pulseCapacity = capacity,       // Number of range gates each pulse can hold
-        .rayBufferDepth = 700,           // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
-        .filePrefix = "HRS",             // A prefix for the output file name
+        .pulseToRayRatio = 1,             // A down-sampling factor after pulse compression
+        .pulseBufferDepth = 2000,         // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseCapacity = capacity,        // Number of range gates each pulse can hold
+        .rayBufferDepth = 700,            // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
+        .filePrefix = "HRS",              // A prefix for the output file name
         .dataPath = "data"
     };
 
@@ -1759,6 +1761,7 @@ void RKTestSimpleMomentEngine(void) {
     RKSweepEngineSetInputOutputBuffer(sweepEngine, &desc, NULL, configs, &configIndex, rays, &rayIndex);
     // RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/show.sh", RKScriptPropertyNull);
     RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/archive.sh", RKScriptPropertyProduceTxz);
+    RKSweepEngineSetVerbose(sweepEngine, 1);
     RKSweepEngineStart(sweepEngine);
     RKSweepEngineSetRecord(sweepEngine, true);
 
@@ -1769,8 +1772,8 @@ void RKTestSimpleMomentEngine(void) {
     struct timeval t;
 
     // The busy loop
-    int k;
-    for (k = 0; k < 4000; k++) {
+    int k = 0, s = 0;
+    do {
         RKPulse *pulse = RKGetVacantPulseFromBuffer(pulses, &pulseIndex, desc.pulseBufferDepth);
         pulse->header.gateCount = 3800;
         pulse->header.downSampledGateCount = 3800;
@@ -1789,22 +1792,29 @@ void RKTestSimpleMomentEngine(void) {
         }
         if ((k / pulsesPerRay) % raysPerSweep == (raysPerSweep - 1) && k % pulsesPerRay == (pulsesPerRay - 1)) {
             pulse->header.marker |= RKMarkerSweepEnd;
+            s++;
         }
         // Emulate a 0-30 degree RHI scan every pulsesPerRay pulses
         pulse->header.elevationDegrees = (float)((k / pulsesPerRay) % raysPerSweep);
         pulse->header.azimuthDegrees = config->sweepAzimuth;
         pulse->header.s |= RKPulseStatusReadyForMoments;
         usleep(500);
-    }
+        k++;
+    } while (s < 2);
+
+    // Kick ray index forward so that sweep engine can start processing
+    rayIndex = RKNextModuloS(rayIndex, desc.rayBufferDepth);
 
     RKMomentEngineWaitWhileBusy(momentEngine);
+    RKSweepEngineWaitWhileBusy(sweepEngine);
+
     RKMomentEngineStop(momentEngine);
     RKSweepEngineStop(sweepEngine);
 
     pthread_join(tid, NULL);
 
     RKMomentEngineFree(momentEngine);
-    RKSweepEngineStop(sweepEngine);
+    RKSweepEngineFree(sweepEngine);
 
     RKFFTModuleFree(fftModule);
 
