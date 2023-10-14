@@ -220,33 +220,32 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 		switch (space->mask[k]) {
 			default:
 			case RKMomentMaskNormal:
-				space->ZDR[k] = 10.0f * log10f(space->S[0][k] / space->S[1][k])
-				+ space->dcal[k];
+				space->ZDR[k] = 10.0f * log10f(space->S[0][k] / space->S[1][k]) + space->dcal[k];
 				space->RhoHV[k] = space->gC[k] / sqrtf(space->aR[0][0][k] * space->aR[1][0][k]);
 				break;
 			case RKMomentMaskLag2:
 				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 4.0f / 3.0f) * powf(space->aR[1][2][k], 1.0f / 3.0f) /
 											   (powf(space->aR[1][1][k], 4.0f / 3.0f) * powf(space->aR[0][2][k], 1.0f / 3.0f)))
-				+ space->dcal[k];
+                              + space->dcal[k];
 				space->RhoHV[k] = space->gC[k]
-				* powf(space->aR[0][2][k] * space->aR[1][2][k], 1.0f / 6.0f)
-				/ powf(space->aR[0][1][k] * space->aR[1][1][k], 2.0f / 3.0f);
+				                * powf(space->aR[0][2][k] * space->aR[1][2][k], 1.0f / 6.0f)
+				                / powf(space->aR[0][1][k] * space->aR[1][1][k], 2.0f / 3.0f);
 				break;
 			case RKMomentMaskLag3:
 				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 6.0f / 7.0f) * powf(space->aR[0][2][k], 3.0f / 7.0f) * powf(space->aR[1][3][k], 2.0f / 7.0f) /
 											   (powf(space->aR[1][1][k], 6.0f / 7.0f) * powf(space->aR[1][2][k], 3.0f / 7.0f) * powf(space->aR[0][3][k], 2.0f / 7.0f)))
-				+ space->dcal[k];
+				              + space->dcal[k];
 				space->RhoHV[k] = space->gC[k]
-				* powf(space->aR[0][3][k] * space->aR[1][3][k], 1.0f / 7.0f)
-				/ (powf(space->aR[0][1][k] * space->aR[1][1][k], 3.0 / 7.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 3.0f / 14.0f));
+				                * powf(space->aR[0][3][k] * space->aR[1][3][k], 1.0f / 7.0f)
+				                / (powf(space->aR[0][1][k] * space->aR[1][1][k], 3.0 / 7.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 3.0f / 14.0f));
 				break;
 			case RKMomentMaskLag4:
 				space->ZDR[k] = 10.0f * log10f( powf(space->aR[0][1][k], 54.0f / 86.0f) * powf(space->aR[0][2][k], 39.0f / 86.0f) * powf(space->aR[0][3][k], 14.0f / 86.0f) * powf(space->aR[1][4][k], 21.0f / 86.0f) /
 											   (powf(space->aR[1][1][k], 54.0f / 86.0f) * powf(space->aR[1][2][k], 39.0f / 86.0f) * powf(space->aR[1][3][k], 14.0f / 86.0f) * powf(space->aR[0][4][k], 21.0f / 86.0f)) )
-				+ space->dcal[k];
+				              + space->dcal[k];
 				space->RhoHV[k] = space->gC[k]
-				* powf(space->aR[0][4][k] * space->aR[1][4][k], 21.0f / 172.0f)
-				/ (powf(space->aR[0][1][k] * space->aR[1][1][k], 27.0f / 86.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 39.0 / 172.0f) * powf(space->aR[0][3][k] * space->aR[1][3][k], 7.0f / 86.0f));
+				                * powf(space->aR[0][4][k] * space->aR[1][4][k], 21.0f / 172.0f)
+				                / (powf(space->aR[0][1][k] * space->aR[1][1][k], 27.0f / 86.0f) * powf(space->aR[0][2][k] * space->aR[1][2][k], 39.0 / 172.0f) * powf(space->aR[0][3][k] * space->aR[1][3][k], 7.0f / 86.0f));
 				break;
 		}
         space->PhiDP[k] = atan2(Cq[k], Ci[k]) + space->pcal[k];
@@ -258,6 +257,9 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 		}
     }
     //RKShowArray(space->S[0], "Sh", space->gateCount, 1);
+
+    // Mark the calculated products, exclude K here since it is not ready
+    space->calculatedProducts = RKBaseProductListFloatZVWDPR;
 
 	// Show and tell
 	if (space->verbose && gateCount <= 16 && pulseCount <= 32) {

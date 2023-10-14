@@ -1675,12 +1675,16 @@ void *RKTestSimpleMomentEngineRayRetriever(void *in) {
         if (ray == NULL) {
             continue;
         }
+        float *data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
         if (ray->header.pulseCount > 0) {
-            RKLog("%s RR Ray E%4.1f-%4.1f  i%04u  c%u  %s%s\n", engine->name,
+            RKLog("%s RR Ray E%4.1f-%4.1f  i%04u  [%u]  %.1f %.1f %.1f ... %.1f   %s%s%s%s\n", engine->name,
                 ray->header.startElevation, ray->header.endElevation,
                 ray->header.i, ray->header.pulseCount,
+                data[0], data[1], data[2], data[ray->header.gateCount - 1],
+                rkGlobalParameters.showColor ? RKOrangeColor : "",
                 ray->header.marker & RKMarkerSweepBegin ? "S" : "",
-                ray->header.marker & RKMarkerSweepEnd ? "E" : "");
+                ray->header.marker & RKMarkerSweepEnd ? "E" : "",
+                rkGlobalParameters.showColor ? RKNoColor : "");
         }
     }
 
@@ -1693,9 +1697,9 @@ void RKTestSimpleMomentEngine(void) {
     RKSetUseDailyLog(true);
 
     // Hyper parameters
-    const uint32_t maxGateCount = 4000;   // Number of range gate samples
-    const uint32_t pulsesPerRay = 60;     // Number of pulses per ray
-    const uint32_t raysPerSweep = 50;     // Say elevation 1 - 50 degrees at a 1-deg increment
+    const uint32_t maxGateCount = 4000;                    // Number of range gate samples
+    const uint32_t pulsesPerRay = 60;                      // Number of pulses per ray
+    const uint32_t raysPerSweep = 50;                      // Say elevation 1 - 50 degrees at a 1-deg increment
 
     // Internal indices
     uint32_t configIndex = 0;
@@ -1707,14 +1711,20 @@ void RKTestSimpleMomentEngine(void) {
 
     // Radar description, should be the same as the pulse engine
     RKRadarDesc desc = {
-        .initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer,
-        .configBufferDepth = 3,
-        .pulseToRayRatio = 1,             // A down-sampling factor after pulse compression
-        .pulseBufferDepth = 2000,         // Number of pulses the buffer can hold (RKBuffer pulses)
-        .pulseCapacity = capacity,        // Number of range gates each pulse can hold
-        .rayBufferDepth = 700,            // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
-        .filePrefix = "HRS",              // A prefix for the output file name
-        .dataPath = "data"
+        .name = "Horus",
+        .initFlags = RKInitFlagAllocConfigBuffer           // Only for housekeeping, doesn't really matter here
+                   | RKInitFlagAllocRawIQBuffer
+                   | RKInitFlagAllocMomentBuffer,
+        .configBufferDepth = 2,
+        .pulseToRayRatio = 1,                              // A down-sampling factor after pulse compression
+        .pulseBufferDepth = 2000,                          // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseCapacity = capacity,                         // Number of range gates each pulse can hold
+        .rayBufferDepth = 700,                             // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
+        .filePrefix = "HRS",                               // A prefix for the output file name
+        .dataPath = "data",                                // A path to the output directory
+        .latitude = 35.23682,
+        .longitude = -97.46381,
+        .wavelength = 0.10,
     };
 
     // Need to provide waveform to RKConfig for ZCal, this must be the same waveform provided to the pulse engine
@@ -1737,6 +1747,7 @@ void RKTestSimpleMomentEngine(void) {
     config->waveform = waveform;
     config->waveformDecimate = waveform;
     config->sweepAzimuth = 42.0;
+    config->prt[0] = 0.5e-3f;
     config->startMarker = RKMarkerScanTypeRHI | RKMarkerSweepBegin;
 
     RKLog("Allocating pulse buffer ...");
@@ -1754,8 +1765,8 @@ void RKTestSimpleMomentEngine(void) {
     RKMomentEngineSetInputOutputBuffers(momentEngine, &desc, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
     RKMomentEngineSetFFTModule(momentEngine, fftModule);
     RKMomentEngineSetCoreCount(momentEngine, 4);
-    RKMomentEngineSetMomentProcessor(momentEngine, RKPulsePair);         // Could be &RKPulsePairHop or &RKMultiLag,
-    RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special case for phased array beams
+    RKMomentEngineSetMomentProcessor(momentEngine, RKPulsePair);         // RKPulsePair, RKPulsePairHop or RKMultiLag
+    RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special mode for electronic beams
     RKMomentEngineStart(momentEngine);
 
     // Sweep engine
@@ -1771,7 +1782,7 @@ void RKTestSimpleMomentEngine(void) {
     pthread_t tid;
     pthread_create(&tid, NULL, RKTestSimpleMomentEngineRayRetriever, momentEngine);
 
-    RKComplex *x;
+    RKIQZ x;
 
     // The busy loop
     int k = 0, s = 0;
@@ -1799,13 +1810,13 @@ void RKTestSimpleMomentEngine(void) {
         // Emulate a 0-30 degree RHI scan every pulsesPerRay pulses
         pulse->header.elevationDegrees = (float)((k / pulsesPerRay) % raysPerSweep);
         pulse->header.azimuthDegrees = config->sweepAzimuth;
+        // Go through the two channels H & V
         for (int c = 0; c < 2; c++) {
-            x = RKGetComplexDataFromPulse(pulse, 0);
+            x = RKGetSplitComplexDataFromPulse(pulse, c);
             // Copy over the data
-            // memcpy(x, &source, pulse->header.gateCount * sizeof(RKComplex));
-            for (int i = 0; i < pulse->header.gateCount; i++) {
-                x[i].i = 1.0f;
-                x[i].q = 0.0f;
+            for (int g = 0; g < pulse->header.gateCount; g++) {
+                x.i[g] = 0.09876f;
+                x.q[g] = -0.01234f;
             }
         }
         pulse->header.s = RKPulseStatusReadyForMoments;
@@ -1824,13 +1835,11 @@ void RKTestSimpleMomentEngine(void) {
 
     pthread_join(tid, NULL);
 
+    // Cleanup
     RKMomentEngineFree(momentEngine);
     RKSweepEngineFree(sweepEngine);
-
     RKFFTModuleFree(fftModule);
-
     RKWaveformFree(waveform);
-
     RKPulseBufferFree(pulses);
     RKRayBufferFree(rays);
     free(configs);

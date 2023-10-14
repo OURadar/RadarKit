@@ -487,7 +487,7 @@ static void *momentCore(void *in) {
         // Update the rest of the ray header
         ray->header.sweepElevation = config->sweepElevation;
         ray->header.sweepAzimuth = config->sweepAzimuth;
-        ray->header.pulseCount = path.length;
+        ray->header.pulseCount = path.length + 1;
         ray->header.marker = marker;
         ray->header.s ^= RKRayStatusProcessing;
         ray->header.s |= RKRayStatusReady;
