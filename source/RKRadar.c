@@ -878,10 +878,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
         // Pulse compression engine
         radar->pulseEngine = RKPulseEngineInit();
-        // RKPulseEngineSetInputOutputBuffers(radar->pulseEngine, &radar->desc,
-        //                                    radar->configs, &radar->configIndex,
-        //                                    radar->pulses, &radar->pulseIndex);
-        // RKPulseEngineSetFFTModule(radar->pulseEngine, radar->fftModule);
         RKPulseEngineSetEssentials(radar->pulseEngine, &radar->desc, radar->fftModule,
                                    radar->configs, &radar->configIndex,
                                    radar->pulses, &radar->pulseIndex);
@@ -898,11 +894,6 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
         // Moment engine
         radar->momentEngine = RKMomentEngineInit();
-        // RKMomentEngineSetInputOutputBuffers(radar->momentEngine, &radar->desc,
-        //                                     radar->configs, &radar->configIndex,
-        //                                     radar->pulses, &radar->pulseIndex,
-        //                                     radar->rays, &radar->rayIndex);
-        // RKMomentEngineSetFFTModule(radar->momentEngine, radar->fftModule);
         RKMomentEngineSetEssentials(radar->momentEngine, &radar->desc, radar->fftModule,
                                     radar->configs, &radar->configIndex,
                                     radar->pulses, &radar->pulseIndex,
