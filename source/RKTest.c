@@ -1737,18 +1737,7 @@ void RKTestSimpleMomentEngine(void) {
     RKBuffer rays;
 
     RKLog("Allocating config buffer ...");
-    configs = (RKConfig *)malloc(desc.configBufferDepth * sizeof(RKConfig));
-    memset(configs, 0, desc.configBufferDepth * sizeof(RKConfig));
-
-    // Get the very first config. For now, let's assume RKConfig doesn't change
-    RKConfig *config = &configs[0];
-    config->systemZCal[0] = 48.0;
-    config->systemZCal[1] = 48.0;
-    config->waveform = waveform;
-    config->waveformDecimate = waveform;
-    config->sweepAzimuth = 42.0;
-    config->prt[0] = 0.5e-3f;
-    config->startMarker = RKMarkerScanTypeRHI | RKMarkerSweepBegin;
+    RKConfigBufferAlloc(&configs, desc.configBufferDepth);
 
     RKLog("Allocating pulse buffer ...");
     RKPulseBufferAlloc(&pulses, capacity, desc.pulseBufferDepth);
@@ -1759,6 +1748,24 @@ void RKTestSimpleMomentEngine(void) {
     // A common FFT module for both pulse and moment engines
     RKLog("Allocating FFT module ...");
     RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
+
+    // Get the very first config. For now, let's assume RKConfig doesn't change
+    RKConfig *config = &configs[0];
+    strcpy(config->vcpDefinition, "vcp1");
+    strcpy(config->waveformName, waveform->name);
+    config->waveform = waveform;
+    config->waveformDecimate = waveform;
+    config->sweepAzimuth = 42.0;
+    config->systemZCal[0] = 48.0;
+    config->systemZCal[1] = 48.0;
+    config->systemDCal = 0.02;
+    config->systemPCal = 0.2;
+    config->prt[0] = 0.5e-3f;
+    config->startMarker = RKMarkerScanTypeRHI | RKMarkerSweepBegin;
+    config->noise[0] = 0.00011;
+    config->noise[1] = 0.00012;
+    config->SNRThreshold = -3.0f;
+    config->SQIThreshold = 0.1f;
 
     // Moment engine
     RKMomentEngine *momentEngine = RKMomentEngineInit();
@@ -1840,9 +1847,9 @@ void RKTestSimpleMomentEngine(void) {
     RKSweepEngineFree(sweepEngine);
     RKFFTModuleFree(fftModule);
     RKWaveformFree(waveform);
+    RKConfigBufferFree(configs);
     RKPulseBufferFree(pulses);
     RKRayBufferFree(rays);
-    free(configs);
 }
 
 #pragma mark -

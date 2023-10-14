@@ -8,6 +8,25 @@
 
 #include <RadarKit/RKConfig.h>
 
+size_t RKConfigBufferAlloc(RKConfig **mem, const uint32_t configBufferDepth) {
+    size_t bytes = configBufferDepth * sizeof(RKConfig);
+    RKConfig *configs = (RKConfig *)malloc(bytes);
+    *mem = configs;
+    if (configs == NULL) {
+        RKLog("Error. Unable to allocate memory for RKConfig.\n");
+        return 0;
+    }
+    memset(configs, 0, configBufferDepth * sizeof(RKConfig));
+    return bytes;
+}
+
+void RKConfigBufferFree(RKConfig *configs) {
+    if (configs == NULL) {
+        return;
+    }
+    free(configs);
+}
+
 void RKConfigAdvanceEllipsis(RKConfig *configs, uint32_t *configIndex, uint32_t configBufferDepth, ...) {
     va_list args;
     va_start(args, configBufferDepth);

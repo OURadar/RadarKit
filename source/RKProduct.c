@@ -99,6 +99,7 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
         product->header.PCal[k] = sweep->header.config.PCal[k];
     }
     product->header.SNRThreshold = sweep->header.config.SNRThreshold;
+    product->header.SQIThreshold = sweep->header.config.SQIThreshold;
     memcpy(product->header.waveformName, sweep->header.config.waveformName, sizeof(RKName));
     memcpy(product->header.vcpDefinition, sweep->header.config.vcpDefinition, sizeof(RKMaximumCommandLength));
 
