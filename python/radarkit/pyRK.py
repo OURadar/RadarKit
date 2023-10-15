@@ -126,7 +126,7 @@ def init_workspace(self, verbose=0, cores=4):
         RKPulseEngineSetVerbose(workspace.pulseMachine, verbose)
         RKPulseEngineSetFFTModule(workspace.pulseMachine, workspace.fftModule)
 
-        RKPulseEngineSetInputOutputBuffers(workspace.pulseMachine, ctypes.byref(desc),
+        RKPulseEngineSetEssentials(workspace.pulseMachine, ctypes.byref(desc),
                                            workspace.configs, ctypes.byref(workspace.configIndex),
                                            workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKPulseEngineSetCoreCount(workspace.pulseMachine, cores)
@@ -135,7 +135,7 @@ def init_workspace(self, verbose=0, cores=4):
 
         workspace.ringMachine = RKPulseRingFilterEngineInit()
         RKPulseRingFilterEngineSetVerbose(workspace.ringMachine, verbose)
-        RKPulseRingFilterEngineSetInputOutputBuffers(workspace.ringMachine, ctypes.byref(desc),
+        RKPulseRingFilterEngineSetEssentials(workspace.ringMachine, ctypes.byref(desc),
                                                      workspace.configs, ctypes.byref(workspace.configIndex),
                                                      workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKPulseRingFilterEngineSetCoreCount(workspace.ringMachine, 2)
@@ -149,7 +149,7 @@ def init_workspace(self, verbose=0, cores=4):
         workspace.momentMachine.contents.noiseEstimator = ctypes.cast(RKRayNoiseEstimator, type(workspace.momentMachine.contents.noiseEstimator))
         RKMomentEngineSetVerbose(workspace.momentMachine, verbose)
         RKMomentEngineSetFFTModule(workspace.momentMachine, workspace.fftModule)
-        RKMomentEngineSetInputOutputBuffers(workspace.momentMachine, ctypes.byref(desc),
+        RKMomentEngineSetEssentials(workspace.momentMachine, ctypes.byref(desc),
                                             workspace.configs, ctypes.byref(workspace.configIndex),
                                             workspace.pulses, ctypes.byref(workspace.pulseIndex),
                                             workspace.rays, ctypes.byref(workspace.rayIndex))
@@ -159,14 +159,14 @@ def init_workspace(self, verbose=0, cores=4):
 
         workspace.sweepMachine = RKSweepEngineInit()
         RKSweepEngineSetVerbose(workspace.sweepMachine, verbose)
-        RKSweepEngineSetInputOutputBuffer(workspace.sweepMachine, ctypes.byref(desc), None,
+        RKSweepEngineSetEssentials(workspace.sweepMachine, ctypes.byref(desc), None,
                                           workspace.configs, ctypes.byref(workspace.configIndex),
                                           workspace.rays, ctypes.byref(workspace.rayIndex))
         RKSweepEngineSetRecord(workspace.sweepMachine, True)
         RKSweepEngineStart(workspace.sweepMachine)
 
         workspace.recorder = RKRawDataRecorderInit()
-        RKRawDataRecorderSetInputOutputBuffers(workspace.recorder, ctypes.byref(desc), None,
+        RKRawDataRecorderSetEssentials(workspace.recorder, ctypes.byref(desc), None,
                                                workspace.configs, ctypes.byref(workspace.configIndex),
                                                workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKRawDataRecorderSetRawDataType(workspace.recorder, RKRawDataTypeAfterMatchedFilter)

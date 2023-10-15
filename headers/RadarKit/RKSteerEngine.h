@@ -163,9 +163,9 @@ RKSteerEngine *RKSteerEngineInit(void);
 void RKSteerEngineFree(RKSteerEngine *);
 
 void RKSteerEngineSetVerbose(RKSteerEngine *, const int);
-void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *, const RKRadarDesc *,
-                                                RKPosition *, uint32_t *,
-                                                RKConfig *,   uint32_t *);
+void RKSteerEngineSetEssentials(RKSteerEngine *, const RKRadarDesc *,
+                                RKPosition *, uint32_t *,
+                                RKConfig *,   uint32_t *);
 void RKSteerEngineSetScanRepeat(RKSteerEngine *, const bool);
 
 int RKSteerEngineStart(RKSteerEngine *);

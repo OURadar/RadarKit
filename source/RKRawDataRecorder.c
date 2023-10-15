@@ -72,18 +72,18 @@ static void *pulseRecorder(void *in) {
     RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
     memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
 
-	// Update the engine state
-	engine->state |= RKEngineStateWantActive;
-	engine->state ^= RKEngineStateActivating;
+    // Update the engine state
+    engine->state |= RKEngineStateWantActive;
+    engine->state ^= RKEngineStateActivating;
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
-	// Increase the tic once to indicate the engine is ready
-	engine->tic = 1;
+    // Increase the tic once to indicate the engine is ready
+    engine->tic = 1;
 
     engine->state |= RKEngineStateActive;
 
-	gettimeofday(&t1, NULL); t1.tv_sec -= 1;
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     j = 0;   // config index
     k = 0;   // pulse index
@@ -267,7 +267,7 @@ static void *pulseRecorder(void *in) {
         // Going to wait mode soon
         engine->state ^= RKEngineStateWritingFile;
 
-		engine->tic++;
+        engine->tic++;
 
         // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
@@ -323,9 +323,9 @@ void RKRawDataRecorderSetVerbose(RKRawDataRecorder *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
-                                            RKConfig *configBuffer, uint32_t *configIndex,
-                                            RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+void RKRawDataRecorderSetEssentials(RKRawDataRecorder *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
+                                    RKConfig *configBuffer, uint32_t *configIndex,
+                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;
@@ -390,19 +390,19 @@ int RKRawDataRecorderStop(RKRawDataRecorder *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-	if (!(engine->state & RKEngineStateWantActive)) {
-		RKLog("%s Not active.\n", engine->name);
-		return RKResultEngineDeactivatedMultipleTimes;
-	}
+    if (!(engine->state & RKEngineStateWantActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
-	if (engine->tidPulseRecorder) {
-    	pthread_join(engine->tidPulseRecorder, NULL);
-		engine->tidPulseRecorder = (pthread_t)0;
-	} else {
-		RKLog("%s Invalid thread ID.\n", engine->name);
-	}
+    if (engine->tidPulseRecorder) {
+        pthread_join(engine->tidPulseRecorder, NULL);
+        engine->tidPulseRecorder = (pthread_t)0;
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
+    }
     engine->state ^= RKEngineStateDeactivating;
     RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {

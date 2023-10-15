@@ -90,11 +90,14 @@ RKPositionEngine *RKPositionEngineInit(void);
 void RKPositionEngineFree(RKPositionEngine *);
 
 void RKPositionEngineSetVerbose(RKPositionEngine *, const int);
+void RKPositionEngineSetEssentials(RKPositionEngine *, const RKRadarDesc *,
+                                   RKPosition *, uint32_t *,
+                                   RKConfig *,   uint32_t *,
+                                   RKBuffer,     uint32_t *);
 void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *, const RKRadarDesc *,
                                            RKPosition *, uint32_t *,
                                            RKConfig *,   uint32_t *,
-                                           RKBuffer,     uint32_t *);
-
+                                           RKBuffer,     uint32_t *) __attribute__((deprecated));
 int RKPositionEngineStart(RKPositionEngine *);
 int RKPositionEngineStop(RKPositionEngine *);
 

@@ -409,9 +409,9 @@ void RKSteerEngineSetVerbose(RKSteerEngine *engine, const int verbose) {
     }
 }
 
-void RKSteerEngineSetInputOutputBuffers(RKSteerEngine *engine, const RKRadarDesc *desc,
-                                        RKPosition *positionBuffer, uint32_t *positionIndex,
-                                        RKConfig   *configBuffer,   uint32_t *configIndex) {
+void RKSteerEngineSetEssentials(RKSteerEngine *engine, const RKRadarDesc *desc,
+                                RKPosition *positionBuffer, uint32_t *positionIndex,
+                                RKConfig   *configBuffer,   uint32_t *configIndex) {
     engine->radarDescription    = (RKRadarDesc *)desc;
     engine->positionBuffer      = positionBuffer;
     engine->positionIndex       = positionIndex;

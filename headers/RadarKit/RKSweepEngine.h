@@ -74,9 +74,9 @@ RKSweepEngine *RKSweepEngineInit(void);
 void RKSweepEngineFree(RKSweepEngine *);
 
 void RKSweepEngineSetVerbose(RKSweepEngine *, const int verbose);
-void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *, RKRadarDesc *, RKFileManager *,
-                                       RKConfig *configBuffer,   uint32_t *configIndex,
-                                       RKBuffer rayBuffer,       uint32_t *rayIndex);
+void RKSweepEngineSetEssentials(RKSweepEngine *, RKRadarDesc *, RKFileManager *,
+                                RKConfig *configBuffer,   uint32_t *configIndex,
+                                RKBuffer rayBuffer,       uint32_t *rayIndex);
 void RKSweepEngineSetRecord(RKSweepEngine *, const bool);
 void RKSweepEngineSetProductTimeout(RKSweepEngine *, const uint32_t);
 void RKSweepEngineSetFilesHandlingScript(RKSweepEngine *, const char *, const RKScriptProperty);

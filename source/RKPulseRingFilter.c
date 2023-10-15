@@ -707,9 +707,9 @@ void RKPulseRingFilterEngineSetVerbose(RKPulseRingFilterEngine *engine, const in
     engine->verbose = verb;
 }
 
-void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *engine, const RKRadarDesc *desc,
-                                                  RKConfig *configBuffer, uint32_t *configIndex,
-                                                  RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
+void RKPulseRingFilterEngineSetEssentials(RKPulseRingFilterEngine *engine, const RKRadarDesc *desc,
+                                          RKConfig *configBuffer, uint32_t *configIndex,
+                                          RKBuffer pulseBuffer,   uint32_t *pulseIndex) {
     engine->radarDescription  = (RKRadarDesc *)desc;
     engine->configBuffer      = configBuffer;
     engine->configIndex       = configIndex;

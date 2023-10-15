@@ -42,8 +42,8 @@ RKHealthLogger *RKHealthLoggerInit(void);
 void RKHealthLoggerFree(RKHealthLogger *);
 
 void RKHealthLoggerSetVerbose(RKHealthLogger *, const int);
-void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *, RKRadarDesc *, RKFileManager *,
-                                         RKHealth *healthBuffer, uint32_t *healthIndex);
+void RKHealthLoggerSetEssentials(RKHealthLogger *, RKRadarDesc *, RKFileManager *,
+                                 RKHealth *healthBuffer, uint32_t *healthIndex);
 void RKHealthLoggerSetRecord(RKHealthLogger *, const bool);
 
 int RKHealthLoggerStart(RKHealthLogger *);

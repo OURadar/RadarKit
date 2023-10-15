@@ -271,12 +271,16 @@ static void *sweepManager(void *in) {
 
         // Make a summary for logging
         if (p == 0) {
-            // There are at least two '/'s in the filename: ...rootDataFolder/moment/YYYYMMDD/RK-YYYYMMDD-HHMMSS-Enn.n-Z.nc
-            summarySize = sprintf(summary, rkGlobalParameters.showColor ? RKGreenColor "%s" RKNoColor " %s%s-" RKYellowColor "%s" RKNoColor ".%s" : "%s %s%s-%s.%s",
+            summarySize = sprintf(summary, "%s%s%s %s%s-%s%s%s.%s",
+                                  rkGlobalParameters.showColor ? (engine->record ? RKGreenColor : RKOrangeColor) : "",
                                   engine->record ? "Recorded": "Skipped",
+                                  rkGlobalParameters.showColor ? RKNoColor : "",
                                   filenameTooLong ? "..." : "",
                                   filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
-                                  product->desc.symbol, engine->productFileExtension);
+                                  rkGlobalParameters.showColor ? RKYellowColor : "",
+                                  product->desc.symbol,
+                                  rkGlobalParameters.showColor ? RKNoColor : "",
+                                engine->productFileExtension);
         } else {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
@@ -580,9 +584,9 @@ void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKSweepEngineSetInputOutputBuffer(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
-                                       RKConfig *configBuffer, uint32_t *configIndex,
-                                       RKBuffer rayBuffer, uint32_t *rayIndex) {
+void RKSweepEngineSetEssentials(RKSweepEngine *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
+                                RKConfig *configBuffer, uint32_t *configIndex,
+                                RKBuffer rayBuffer, uint32_t *rayIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;
     engine->configBuffer      = configBuffer;

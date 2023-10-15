@@ -72,9 +72,9 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void);
 void RKPulseRingFilterEngineFree(RKPulseRingFilterEngine *);
 
 void RKPulseRingFilterEngineSetVerbose(RKPulseRingFilterEngine *, const int);
-void RKPulseRingFilterEngineSetInputOutputBuffers(RKPulseRingFilterEngine *, const RKRadarDesc *,
-                                                  RKConfig *configBuffer, uint32_t *configIndex,
-                                                  RKBuffer pulseBuffer,   uint32_t *pulseIndex);
+void RKPulseRingFilterEngineSetEssentials(RKPulseRingFilterEngine *, const RKRadarDesc *,
+                                          RKConfig *configBuffer, uint32_t *configIndex,
+                                          RKBuffer pulseBuffer,   uint32_t *pulseIndex);
 void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *, const uint8_t);
 void RKPulseRingFilterEngineSetCoreOrigin(RKPulseRingFilterEngine *, const uint8_t);
 

@@ -313,9 +313,9 @@ void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *engine, const RKRadarDesc *desc,
-                                         RKNodalHealth *healthNodes,
-                                         RKHealth *healthBuffer, uint32_t *healthIndex) {
+void RKHealthEngineSetEssentials(RKHealthEngine *engine, const RKRadarDesc *desc,
+                                RKNodalHealth *healthNodes,
+                                RKHealth *healthBuffer, uint32_t *healthIndex) {
     engine->radarDescription  = (RKRadarDesc *)desc;
     engine->healthNodes       = healthNodes;
     engine->healthBuffer      = healthBuffer;

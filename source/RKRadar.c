@@ -812,7 +812,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // File manager
     radar->fileManager = RKFileManagerInit();
-    RKFileManagerSetInputOutputBuffer(radar->fileManager, &radar->desc);
+    RKFileManagerSetEssentials(radar->fileManager, &radar->desc);
     RKLog("File manager occupies %s B\n", RKIntegerToCommaStyleString(radar->fileManager->memoryUsage));
     radar->memoryUsage += radar->fileManager->memoryUsage;
     radar->state |= RKRadarStateFileManagerInitialized;
@@ -851,10 +851,10 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
         // Position engine
         radar->positionEngine = RKPositionEngineInit();
-        RKPositionEngineSetInputOutputBuffers(radar->positionEngine, &radar->desc,
-                                              radar->positions, &radar->positionIndex,
-                                              radar->configs, &radar->configIndex,
-                                              radar->pulses, &radar->pulseIndex);
+        RKPositionEngineSetEssentials(radar->positionEngine, &radar->desc,
+                                      radar->positions, &radar->positionIndex,
+                                      radar->configs, &radar->configIndex,
+                                      radar->pulses, &radar->pulseIndex);
         radar->memoryUsage += radar->positionEngine->memoryUsage;
         radar->state |= RKRadarStatePositionEngineInitialized;
     }
@@ -863,9 +863,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.initFlags & RKInitFlagPositionSteerEngine) {
         // Position steer engine
         radar->steerEngine = RKSteerEngineInit();
-        RKSteerEngineSetInputOutputBuffers(radar->steerEngine, &radar->desc,
-                                           radar->positions, &radar->positionIndex,
-                                           radar->configs, &radar->configIndex);
+        RKSteerEngineSetEssentials(radar->steerEngine, &radar->desc,
+                                   radar->positions, &radar->positionIndex,
+                                   radar->configs, &radar->configIndex);
         radar->memoryUsage += radar->steerEngine->memoryUsage;
         radar->state |= RKRadarStatePositionSteerEngineInitialized;
     }
@@ -886,9 +886,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
         // Pulse ring filter engine
         radar->pulseRingFilterEngine = RKPulseRingFilterEngineInit();
-        RKPulseRingFilterEngineSetInputOutputBuffers(radar->pulseRingFilterEngine, &radar->desc,
-                                                     radar->configs, &radar->configIndex,
-                                                     radar->pulses, &radar->pulseIndex);
+        RKPulseRingFilterEngineSetEssentials(radar->pulseRingFilterEngine, &radar->desc,
+                                             radar->configs, &radar->configIndex,
+                                             radar->pulses, &radar->pulseIndex);
         radar->memoryUsage += radar->pulseRingFilterEngine->memoryUsage;
         radar->state |= RKRadarStatePulseRingFilterEngineInitialized;
 
@@ -903,19 +903,19 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
         // Health engine
         radar->healthEngine = RKHealthEngineInit();
-        RKHealthEngineSetInputOutputBuffers(radar->healthEngine, &radar->desc, radar->healthNodes,
-                                            radar->healths, &radar->healthIndex);
+        RKHealthEngineSetEssentials(radar->healthEngine, &radar->desc, radar->healthNodes,
+                                    radar->healths, &radar->healthIndex);
         radar->memoryUsage += radar->healthEngine->memoryUsage;
         radar->state |= RKRadarStateHealthEngineInitialized;
     } else {
         // Radar relay
         radar->radarRelay = RKRadarRelayInit();
-        RKRadarRelaySetInputOutputBuffers(radar->radarRelay, &radar->desc, radar->fileManager,
-                                          radar->status, &radar->statusIndex,
-                                          radar->configs, &radar->configIndex,
-                                          radar->healths, &radar->healthIndex,
-                                          radar->pulses, &radar->pulseIndex,
-                                          radar->rays, &radar->rayIndex);
+        RKRadarRelaySetEssentials(radar->radarRelay, &radar->desc, radar->fileManager,
+                                  radar->status, &radar->statusIndex,
+                                  radar->configs, &radar->configIndex,
+                                  radar->healths, &radar->healthIndex,
+                                  radar->pulses, &radar->pulseIndex,
+                                  radar->rays, &radar->rayIndex);
         RKRadarRelaySetVerbose(radar->radarRelay, 2);
         radar->memoryUsage += radar->radarRelay->memoryUsage;
         radar->state |= RKRadarStateRadarRelayInitialized;
@@ -923,24 +923,24 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Health logger
     radar->healthLogger = RKHealthLoggerInit();
-    RKHealthLoggerSetInputOutputBuffers(radar->healthLogger, &radar->desc, radar->fileManager,
-                                        radar->healths, &radar->healthIndex);
+    RKHealthLoggerSetEssentials(radar->healthLogger, &radar->desc, radar->fileManager,
+                                radar->healths, &radar->healthIndex);
     radar->memoryUsage += radar->healthLogger->memoryUsage;
     radar->state |= RKRadarStateHealthLoggerInitialized;
 
     // Sweep engine
     radar->sweepEngine = RKSweepEngineInit();
-    RKSweepEngineSetInputOutputBuffer(radar->sweepEngine, &radar->desc, radar->fileManager,
-                                      radar->configs, &radar->configIndex,
-                                      radar->rays, &radar->rayIndex);
+    RKSweepEngineSetEssentials(radar->sweepEngine, &radar->desc, radar->fileManager,
+                               radar->configs, &radar->configIndex,
+                               radar->rays, &radar->rayIndex);
     radar->memoryUsage += radar->sweepEngine->memoryUsage;
     radar->state |= RKRadarStateSweepEngineInitialized;
 
     // Raw data recorder
     radar->rawDataRecorder = RKRawDataRecorderInit();
-    RKRawDataRecorderSetInputOutputBuffers(radar->rawDataRecorder, &radar->desc, radar->fileManager,
-                                           radar->configs, &radar->configIndex,
-                                           radar->pulses, &radar->pulseIndex);
+    RKRawDataRecorderSetEssentials(radar->rawDataRecorder, &radar->desc, radar->fileManager,
+                                   radar->configs, &radar->configIndex,
+                                   radar->pulses, &radar->pulseIndex);
     radar->memoryUsage += radar->rawDataRecorder->memoryUsage;
     radar->state |= RKRadarStateFileRecorderInitialized;
 
@@ -952,8 +952,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     // Other resources
     pthread_mutex_init(&radar->mutex, NULL);
 
-    // Recording level 0 - moment and health only
-    RKSetRecordingLevel(radar, 0);
+    // Recording level 1 - moment and health only
+    RKSetRecordingLevel(radar, 1);
 
     // Give the radar an impulse waveform
     RKSetWaveformToImpulse(radar);
@@ -1404,22 +1404,27 @@ int RKSetRecordingLevel(RKRadar *radar, const int level) {
     //RKLog("Raw data recording: %s\n", level == 2 ? "Raw from transceiver" : (level == 1 ? "Compressed I/Q" : "No"));
     //RKLog("Product recording: %s\n", level > -1 ? "True" : "False");
     switch (level) {
-        case 2:
+        case 3:
             RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeFromTransceiver);
             RKRawDataRecorderSetRecord(radar->rawDataRecorder, true);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
             RKHealthLoggerSetRecord(radar->healthLogger, true);
             break;
-        case 1:
+        case 2:
             RKRawDataRecorderSetRawDataType(radar->rawDataRecorder, RKRawDataTypeAfterMatchedFilter);
             RKRawDataRecorderSetRecord(radar->rawDataRecorder, true);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
             RKHealthLoggerSetRecord(radar->healthLogger, true);
             break;
-        default:
+        case 1:
             RKRawDataRecorderSetRecord(radar->rawDataRecorder, false);
             RKSweepEngineSetRecord(radar->sweepEngine, true);
             RKHealthLoggerSetRecord(radar->healthLogger, true);
+            break;
+        default:
+            RKRawDataRecorderSetRecord(radar->rawDataRecorder, false);
+            RKSweepEngineSetRecord(radar->sweepEngine, false);
+            RKHealthLoggerSetRecord(radar->healthLogger, false);
             break;
     }
     return RKResultSuccess;

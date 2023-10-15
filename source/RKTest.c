@@ -1825,7 +1825,7 @@ void RKTestSimpleMomentEngine(const int mode) {
 
     // Sweep engine
     RKSweepEngine *sweepEngine = RKSweepEngineInit();
-    RKSweepEngineSetInputOutputBuffer(sweepEngine, &desc, NULL, configs, &configIndex, rays, &rayIndex);
+    RKSweepEngineSetEssentials(sweepEngine, &desc, NULL, configs, &configIndex, rays, &rayIndex);
     if (mode == 1) {
         RKSweepEngineSetFilesHandlingScript(sweepEngine, "scripts/archive.sh", RKScriptPropertyProduceTxz);
     } else {

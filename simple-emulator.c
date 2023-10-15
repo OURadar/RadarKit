@@ -30,7 +30,7 @@ int main(int argc, const char * argv[]) {
     }
 
     myRadar = RKInit();
-    
+
     if (myRadar == NULL) {
         RKLog("Error. Could not allocate a radar.\n");
         exit(EXIT_FAILURE);
@@ -40,18 +40,18 @@ int main(int argc, const char * argv[]) {
     signal(SIGINT, handleSignals);
     signal(SIGQUIT, handleSignals);
     signal(SIGKILL, handleSignals);
-    
+
     // Make a command center and add the radar to it
     RKCommandCenter *center = RKCommandCenterInit();
     RKCommandCenterSetVerbose(center, 1);
     RKCommandCenterStart(center);
     RKCommandCenterAddRadar(center, myRadar);
-    
+
     // Set some properties of the radar
     RKSetVerbosity(myRadar, 1);
-    RKSetRecordingLevel(myRadar, 2);
+    RKSetRecordingLevel(myRadar, 3);
     RKSetProcessingCoreCounts(myRadar, 2, 2, 2);
-    
+
     // Add some control buttons
     RKAddControlAsLabelAndCommand(myRadar, "10us pulse", "t w s10");
     RKAddControlAsLabelAndCommand(myRadar, "20us pulse", "t w s20");

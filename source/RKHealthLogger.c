@@ -170,7 +170,7 @@ void RKHealthLoggerSetVerbose(RKHealthLogger *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKHealthLoggerSetInputOutputBuffers(RKHealthLogger *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
+void RKHealthLoggerSetEssentials(RKHealthLogger *engine, RKRadarDesc *desc, RKFileManager _Nullable *fileManager,
                                          RKHealth *healthBuffer, uint32_t *healthIndex) {
     engine->radarDescription  = desc;
     engine->fileManager       = fileManager;

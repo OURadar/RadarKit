@@ -372,6 +372,14 @@ void RKPositionEngineSetInputOutputBuffers(RKPositionEngine *engine, const RKRad
                                            RKPosition *positionBuffer, uint32_t *positionIndex,
                                            RKConfig   *configBuffer,   uint32_t *configIndex,
                                            RKBuffer   pulseBuffer,     uint32_t *pulseIndex) {
+    RKLog("Warning. RKPositionEngineSetInputOutputBuffers is deprecated. Use RKPositionEngineSetEssentials() instead.\n");
+    RKPositionEngineSetEssentials(engine, desc, positionBuffer, positionIndex, configBuffer, configIndex, pulseBuffer, pulseIndex);
+}
+
+void RKPositionEngineSetEssentials(RKPositionEngine *engine, const RKRadarDesc *desc,
+                                   RKPosition *positionBuffer, uint32_t *positionIndex,
+                                   RKConfig   *configBuffer,   uint32_t *configIndex,
+                                   RKBuffer   pulseBuffer,     uint32_t *pulseIndex) {
     engine->radarDescription    = (RKRadarDesc *)desc;
     engine->positionBuffer      = positionBuffer;
     engine->positionIndex       = positionIndex;

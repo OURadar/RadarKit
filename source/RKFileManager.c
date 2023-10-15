@@ -655,7 +655,7 @@ void RKFileManagerSetVerbose(RKFileManager *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
-void RKFileManagerSetInputOutputBuffer(RKFileManager *engine, RKRadarDesc *desc) {
+void RKFileManagerSetEssentials(RKFileManager *engine, RKRadarDesc *desc) {
     engine->radarDescription = desc;
 }
 

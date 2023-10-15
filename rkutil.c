@@ -437,6 +437,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"gate"              , required_argument, NULL, 'g'},
         {"help"              , no_argument      , NULL, 'h'},
         {"interpulse-period" , required_argument, NULL, 'i'},
+        {"record"            , no_argument      , NULL, 'n'},
         {"pedzy-host"        , required_argument, NULL, 'p'},
         {"radarhub-host"     , required_argument, NULL, 'r'},
         {"simulate"          , optional_argument, NULL, 's'},
@@ -578,6 +579,9 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 if (k < 2) {
                     user->sprt = 0;
                 }
+                break;
+            case 'n':
+                user->recordLevel = 0;
                 break;
             case 'p':
                 strncpy(user->pedzyHost, optarg, sizeof(user->pedzyHost));

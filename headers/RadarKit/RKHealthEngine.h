@@ -40,9 +40,9 @@ RKHealthEngine *RKHealthEngineInit(void);
 void RKHealthEngineFree(RKHealthEngine *);
 
 void RKHealthEngineSetVerbose(RKHealthEngine *, const int);
-void RKHealthEngineSetInputOutputBuffers(RKHealthEngine *, const RKRadarDesc *,
-                                         RKNodalHealth *healthNodes,
-                                         RKHealth *healthBuffer, uint32_t *healthIndex);
+void RKHealthEngineSetEssentials(RKHealthEngine *, const RKRadarDesc *,
+                                 RKNodalHealth *healthNodes,
+                                 RKHealth *healthBuffer, uint32_t *healthIndex);
 
 int RKHealthEngineStart(RKHealthEngine *);
 int RKHealthEngineStop(RKHealthEngine *);

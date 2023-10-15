@@ -54,9 +54,9 @@ RKRawDataRecorder *RKRawDataRecorderInit(void);
 void RKRawDataRecorderFree(RKRawDataRecorder *engine);
 
 void RKRawDataRecorderSetVerbose(RKRawDataRecorder *, const int);
-void RKRawDataRecorderSetInputOutputBuffers(RKRawDataRecorder *engine, RKRadarDesc *, RKFileManager *,
-                                            RKConfig *configBuffer, uint32_t *configIndex,
-                                            RKBuffer pulseBuffer,   uint32_t *pulseIndex);
+void RKRawDataRecorderSetEssentials(RKRawDataRecorder *engine, RKRadarDesc *, RKFileManager *,
+                                    RKConfig *configBuffer, uint32_t *configIndex,
+                                    RKBuffer pulseBuffer,   uint32_t *pulseIndex);
 void RKRawDataRecorderSetRecord(RKRawDataRecorder *engine, const bool);
 void RKRawDataRecorderSetRawDataType(RKRawDataRecorder *engine, const RKRawDataType);
 void RKRawDataRecorderSetMaximumRecordDepth(RKRawDataRecorder *engine, const uint32_t);

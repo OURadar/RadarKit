@@ -5719,10 +5719,10 @@ if _libs["radarkit"].has("RKPulseEngineSetEssentials", "cdecl"):
     RKPulseEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 90
-if _libs["radarkit"].has("RKPulseEngineSetInputOutputBuffers", "cdecl"):
-    RKPulseEngineSetInputOutputBuffers = _libs["radarkit"].get("RKPulseEngineSetInputOutputBuffers", "cdecl")
-    RKPulseEngineSetInputOutputBuffers.argtypes = [POINTER(RKPulseEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKPulseEngineSetInputOutputBuffers.restype = None
+if _libs["radarkit"].has("RKPulseEngineSetEssentials", "cdecl"):
+    RKPulseEngineSetEssentials = _libs["radarkit"].get("RKPulseEngineSetEssentials", "cdecl")
+    RKPulseEngineSetEssentials.argtypes = [POINTER(RKPulseEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKPulseEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 94
 if _libs["radarkit"].has("RKPulseEngineSetFFTModule", "cdecl"):
@@ -6214,10 +6214,10 @@ if _libs["radarkit"].has("RKRawDataRecorderSetVerbose", "cdecl"):
     RKRawDataRecorderSetVerbose.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKRawDataRecorder.h: 57
-if _libs["radarkit"].has("RKRawDataRecorderSetInputOutputBuffers", "cdecl"):
-    RKRawDataRecorderSetInputOutputBuffers = _libs["radarkit"].get("RKRawDataRecorderSetInputOutputBuffers", "cdecl")
-    RKRawDataRecorderSetInputOutputBuffers.argtypes = [POINTER(RKRawDataRecorder), POINTER(RKRadarDesc), POINTER(RKFileManager), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKRawDataRecorderSetInputOutputBuffers.restype = None
+if _libs["radarkit"].has("RKRawDataRecorderSetEssentials", "cdecl"):
+    RKRawDataRecorderSetEssentials = _libs["radarkit"].get("RKRawDataRecorderSetEssentials", "cdecl")
+    RKRawDataRecorderSetEssentials.argtypes = [POINTER(RKRawDataRecorder), POINTER(RKRadarDesc), POINTER(RKFileManager), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKRawDataRecorderSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKRawDataRecorder.h: 60
 if _libs["radarkit"].has("RKRawDataRecorderSetRecord", "cdecl"):
@@ -6442,10 +6442,10 @@ if _libs["radarkit"].has("RKMomentEngineSetEssentials", "cdecl"):
     RKMomentEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 96
-if _libs["radarkit"].has("RKMomentEngineSetInputOutputBuffers", "cdecl"):
-    RKMomentEngineSetInputOutputBuffers = _libs["radarkit"].get("RKMomentEngineSetInputOutputBuffers", "cdecl")
-    RKMomentEngineSetInputOutputBuffers.argtypes = [POINTER(RKMomentEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKMomentEngineSetInputOutputBuffers.restype = None
+if _libs["radarkit"].has("RKMomentEngineSetEssentials", "cdecl"):
+    RKMomentEngineSetEssentials = _libs["radarkit"].get("RKMomentEngineSetEssentials", "cdecl")
+    RKMomentEngineSetEssentials.argtypes = [POINTER(RKMomentEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKMomentEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 101
 if _libs["radarkit"].has("RKMomentEngineSetFFTModule", "cdecl"):
@@ -6650,10 +6650,10 @@ if _libs["radarkit"].has("RKSweepEngineSetVerbose", "cdecl"):
     RKSweepEngineSetVerbose.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 77
-if _libs["radarkit"].has("RKSweepEngineSetInputOutputBuffer", "cdecl"):
-    RKSweepEngineSetInputOutputBuffer = _libs["radarkit"].get("RKSweepEngineSetInputOutputBuffer", "cdecl")
-    RKSweepEngineSetInputOutputBuffer.argtypes = [POINTER(RKSweepEngine), POINTER(RKRadarDesc), POINTER(RKFileManager), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKSweepEngineSetInputOutputBuffer.restype = None
+if _libs["radarkit"].has("RKSweepEngineSetEssentials", "cdecl"):
+    RKSweepEngineSetEssentials = _libs["radarkit"].get("RKSweepEngineSetEssentials", "cdecl")
+    RKSweepEngineSetEssentials.argtypes = [POINTER(RKSweepEngine), POINTER(RKRadarDesc), POINTER(RKFileManager), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKSweepEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 80
 if _libs["radarkit"].has("RKSweepEngineSetRecord", "cdecl"):
@@ -6879,10 +6879,10 @@ if _libs["radarkit"].has("RKPulseRingFilterEngineSetVerbose", "cdecl"):
     RKPulseRingFilterEngineSetVerbose.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseRingFilter.h: 75
-if _libs["radarkit"].has("RKPulseRingFilterEngineSetInputOutputBuffers", "cdecl"):
-    RKPulseRingFilterEngineSetInputOutputBuffers = _libs["radarkit"].get("RKPulseRingFilterEngineSetInputOutputBuffers", "cdecl")
-    RKPulseRingFilterEngineSetInputOutputBuffers.argtypes = [POINTER(RKPulseRingFilterEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKPulseRingFilterEngineSetInputOutputBuffers.restype = None
+if _libs["radarkit"].has("RKPulseRingFilterEngineSetEssentials", "cdecl"):
+    RKPulseRingFilterEngineSetEssentials = _libs["radarkit"].get("RKPulseRingFilterEngineSetEssentials", "cdecl")
+    RKPulseRingFilterEngineSetEssentials.argtypes = [POINTER(RKPulseRingFilterEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKPulseRingFilterEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseRingFilter.h: 78
 if _libs["radarkit"].has("RKPulseRingFilterEngineSetCoreCount", "cdecl"):
