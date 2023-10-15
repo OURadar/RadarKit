@@ -113,7 +113,7 @@ showinfo:
 # IMPORTANT: KEEP THOSE SPACES BEFORE THE SLASHES
 ctypes:
 	if [ ! -d "radarkit" ]; then mkdir radarkit; fi
-	ctypesgen -I$(HOMEBREW_PREFIX)/include -Iheaders -Iheaders/RadarKit -lradarkit \
+	ctypesgen -I$(HOMEBREW_PREFIX)/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit \
 	headers/RadarKit/RKTypes.h \
 	headers/RadarKit/RKMisc.h \
 	headers/RadarKit/RKFoundation.h \
@@ -130,6 +130,7 @@ ctypes:
 	headers/RadarKit/RKPulseATSR.h \
 	headers/RadarKit/RKWaveform.h \
 	headers/RadarKit.h \
+	headers/RadarKit/RKTest.h \
 	-o python/radarkit/_radarkit_ctypes_.py
 
 MAKEFLAGS += --jobs=$(CPUS)

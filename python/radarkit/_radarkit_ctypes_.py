@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h -o python/radarkit/_radarkit_ctypes_.py
+/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_radarkit_ctypes_.py
 
 Do not modify this file.
 """
@@ -440,7 +440,7 @@ def ord_if_char(value):
 # End preamble
 
 _libs = {}
-_libdirs = []
+_libdirs = ['./']
 
 # Begin loader
 
@@ -857,7 +857,7 @@ del loaderclass
 
 # End loader
 
-add_library_search_dirs([])
+add_library_search_dirs(['./'])
 
 # Begin libraries
 _libs["radarkit"] = load_library("radarkit")
@@ -866,6 +866,12 @@ _libs["radarkit"] = load_library("radarkit")
 # End libraries
 
 # No modules
+
+__uint8_t = c_ubyte# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 19
+
+__uint16_t = c_ushort# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 21
+
+__uint32_t = c_uint# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 23
 
 __darwin_time_t = c_long# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 98
 
@@ -886,6 +892,19 @@ struct___darwin_pthread_handler_rec._fields_ = [
     ('__routine', CFUNCTYPE(UNCHECKED(None), POINTER(None))),
     ('__arg', POINTER(None)),
     ('__next', POINTER(struct___darwin_pthread_handler_rec)),
+]
+
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 63
+class struct__opaque_pthread_attr_t(Structure):
+    pass
+
+struct__opaque_pthread_attr_t.__slots__ = [
+    '__sig',
+    '__opaque',
+]
+struct__opaque_pthread_attr_t._fields_ = [
+    ('__sig', c_long),
+    ('__opaque', c_char * int(56)),
 ]
 
 # /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 78
@@ -915,6 +934,8 @@ struct__opaque_pthread_t._fields_ = [
     ('__cleanup_stack', POINTER(struct___darwin_pthread_handler_rec)),
     ('__opaque', c_char * int(8176)),
 ]
+
+__darwin_pthread_attr_t = struct__opaque_pthread_attr_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 109
 
 __darwin_pthread_mutex_t = struct__opaque_pthread_mutex_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 113
 
@@ -990,6 +1011,8 @@ struct___sFILE._fields_ = [
 
 FILE = struct___sFILE# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
 
+pthread_attr_t = __darwin_pthread_attr_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h: 31
+
 uint8_t = c_ubyte# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h: 31
 
 uint16_t = c_ushort# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h: 31
@@ -1010,6 +1033,19 @@ struct_timeval._fields_ = [
     ('tv_sec', __darwin_time_t),
     ('tv_usec', __darwin_suseconds_t),
 ]
+
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
+class struct_fd_set(Structure):
+    pass
+
+struct_fd_set.__slots__ = [
+    'fds_bits',
+]
+struct_fd_set._fields_ = [
+    ('fds_bits', c_int32 * int(((1024 % (sizeof(c_int32) * 8)) == 0) and (1024 / (sizeof(c_int32) * 8)) or ((1024 / (sizeof(c_int32) * 8)) + 1))),
+]
+
+fd_set = struct_fd_set# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
 
 # /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h: 33
 class struct_timespec(Structure):
@@ -1049,6 +1085,10 @@ if _libs["radarkit"].has("roundf", "cdecl"):
     roundf = _libs["radarkit"].get("roundf", "cdecl")
     roundf.argtypes = [c_float]
     roundf.restype = c_float
+
+in_addr_t = __uint32_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_addr_t.h: 31
+
+in_port_t = __uint16_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h: 31
 
 pthread_mutex_t = __darwin_pthread_mutex_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutex_t.h: 31
 
@@ -4113,6 +4153,38 @@ struct_rk_command_queue._fields_ = [
 
 RKCommandQueue = struct_rk_command_queue# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1651
 
+sa_family_t = __uint8_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_sa_family_t.h: 31
+
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 301
+class struct_in_addr(Structure):
+    pass
+
+struct_in_addr.__slots__ = [
+    's_addr',
+]
+struct_in_addr._fields_ = [
+    ('s_addr', in_addr_t),
+]
+
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 374
+class struct_sockaddr_in(Structure):
+    pass
+
+struct_sockaddr_in.__slots__ = [
+    'sin_len',
+    'sin_family',
+    'sin_port',
+    'sin_addr',
+    'sin_zero',
+]
+struct_sockaddr_in._fields_ = [
+    ('sin_len', __uint8_t),
+    ('sin_family', sa_family_t),
+    ('sin_port', in_port_t),
+    ('sin_addr', struct_in_addr),
+    ('sin_zero', c_char * int(8)),
+]
+
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMisc.h: 92
 class struct_cpu_set(Structure):
     pass
@@ -5719,10 +5791,10 @@ if _libs["radarkit"].has("RKPulseEngineSetEssentials", "cdecl"):
     RKPulseEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 90
-if _libs["radarkit"].has("RKPulseEngineSetEssentials", "cdecl"):
-    RKPulseEngineSetEssentials = _libs["radarkit"].get("RKPulseEngineSetEssentials", "cdecl")
-    RKPulseEngineSetEssentials.argtypes = [POINTER(RKPulseEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKPulseEngineSetEssentials.restype = None
+if _libs["radarkit"].has("RKPulseEngineSetInputOutputBuffers", "cdecl"):
+    RKPulseEngineSetInputOutputBuffers = _libs["radarkit"].get("RKPulseEngineSetInputOutputBuffers", "cdecl")
+    RKPulseEngineSetInputOutputBuffers.argtypes = [POINTER(RKPulseEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKPulseEngineSetInputOutputBuffers.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 94
 if _libs["radarkit"].has("RKPulseEngineSetFFTModule", "cdecl"):
@@ -6442,10 +6514,10 @@ if _libs["radarkit"].has("RKMomentEngineSetEssentials", "cdecl"):
     RKMomentEngineSetEssentials.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 96
-if _libs["radarkit"].has("RKMomentEngineSetEssentials", "cdecl"):
-    RKMomentEngineSetEssentials = _libs["radarkit"].get("RKMomentEngineSetEssentials", "cdecl")
-    RKMomentEngineSetEssentials.argtypes = [POINTER(RKMomentEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
-    RKMomentEngineSetEssentials.restype = None
+if _libs["radarkit"].has("RKMomentEngineSetInputOutputBuffers", "cdecl"):
+    RKMomentEngineSetInputOutputBuffers = _libs["radarkit"].get("RKMomentEngineSetInputOutputBuffers", "cdecl")
+    RKMomentEngineSetInputOutputBuffers.argtypes = [POINTER(RKMomentEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
+    RKMomentEngineSetInputOutputBuffers.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 101
 if _libs["radarkit"].has("RKMomentEngineSetFFTModule", "cdecl"):
@@ -6721,16 +6793,16 @@ if _libs["radarkit"].has("RKSweepEngineLatestSummary", "cdecl"):
         RKSweepEngineLatestSummary.errcheck = ReturnString
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 92
-if _libs["radarkit"].has("RKSweepEngineRegisterProduct", "cdecl"):
-    RKSweepEngineRegisterProduct = _libs["radarkit"].get("RKSweepEngineRegisterProduct", "cdecl")
-    RKSweepEngineRegisterProduct.argtypes = [POINTER(RKSweepEngine), RKProductDesc]
-    RKSweepEngineRegisterProduct.restype = RKProductId
+if _libs["radarkit"].has("RKSweepEngineDescribeProduct", "cdecl"):
+    RKSweepEngineDescribeProduct = _libs["radarkit"].get("RKSweepEngineDescribeProduct", "cdecl")
+    RKSweepEngineDescribeProduct.argtypes = [POINTER(RKSweepEngine), RKProductDesc]
+    RKSweepEngineDescribeProduct.restype = RKProductId
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 93
-if _libs["radarkit"].has("RKSweepEngineUnregisterProduct", "cdecl"):
-    RKSweepEngineUnregisterProduct = _libs["radarkit"].get("RKSweepEngineUnregisterProduct", "cdecl")
-    RKSweepEngineUnregisterProduct.argtypes = [POINTER(RKSweepEngine), RKProductId]
-    RKSweepEngineUnregisterProduct.restype = c_int
+if _libs["radarkit"].has("RKSweepEngineUndescribeProduct", "cdecl"):
+    RKSweepEngineUndescribeProduct = _libs["radarkit"].get("RKSweepEngineUndescribeProduct", "cdecl")
+    RKSweepEngineUndescribeProduct.argtypes = [POINTER(RKSweepEngine), RKProductId]
+    RKSweepEngineUndescribeProduct.restype = c_int
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 94
 if _libs["radarkit"].has("RKSweepEngineGetVacantProduct", "cdecl"):
@@ -6941,6 +7013,1309 @@ if _libs["radarkit"].has("RKPulseRingFilterEngineStatusString", "cdecl"):
     else:
         RKPulseRingFilterEngineStatusString.restype = String
         RKPulseRingFilterEngineStatusString.errcheck = ReturnString
+
+RKNetworkSocketType = c_int# /opt/homebrew/include/RadarKit/RKNetwork.h: 21
+
+RKNetworkMessageFormat = c_int# /opt/homebrew/include/RadarKit/RKNetwork.h: 27
+
+# /opt/homebrew/include/RadarKit/RKNetwork.h: 57
+class struct_anon_602(Structure):
+    pass
+
+struct_anon_602._pack_ = 1
+struct_anon_602.__slots__ = [
+    'type',
+    'subtype',
+    'size',
+    'decodedSize',
+]
+struct_anon_602._fields_ = [
+    ('type', uint16_t),
+    ('subtype', uint16_t),
+    ('size', uint32_t),
+    ('decodedSize', uint32_t),
+]
+
+# /opt/homebrew/include/RadarKit/RKNetwork.h: 64
+class union_rk_net_delimiter(Union):
+    pass
+
+union_rk_net_delimiter._pack_ = 1
+union_rk_net_delimiter.__slots__ = [
+    'unnamed_1',
+    'bytes',
+]
+union_rk_net_delimiter._anonymous_ = [
+    'unnamed_1',
+]
+union_rk_net_delimiter._fields_ = [
+    ('unnamed_1', struct_anon_602),
+    ('bytes', RKByte * int(16)),
+]
+
+RKNetDelimiter = union_rk_net_delimiter# /opt/homebrew/include/RadarKit/RKNetwork.h: 64
+
+RKClientState = uint32_t# /opt/homebrew/include/RadarKit/RKClient.h: 18
+
+# /opt/homebrew/include/RadarKit/RKClient.h: 48
+class struct_rk_client(Structure):
+    pass
+
+RKClient = struct_rk_client# /opt/homebrew/include/RadarKit/RKClient.h: 46
+
+struct_rk_client.__slots__ = [
+    'name',
+    'hostname',
+    'port',
+    'timeoutSeconds',
+    'type',
+    'format',
+    'blockLength',
+    'blocking',
+    'reconnect',
+    'ping',
+    'verbose',
+    'userResource',
+    'userPayload',
+    'init',
+    'recv',
+    'exit',
+    'hostIP',
+    'sa',
+    'sd',
+    'ireq',
+    'state',
+    'safeToClose',
+    'threadId',
+    'threadAttributes',
+    'lock',
+    'rfd',
+    'wfd',
+    'efd',
+    'netDelimiter',
+]
+struct_rk_client._fields_ = [
+    ('name', RKName),
+    ('hostname', RKName),
+    ('port', c_int),
+    ('timeoutSeconds', c_int),
+    ('type', RKNetworkSocketType),
+    ('format', RKNetworkMessageFormat),
+    ('blockLength', c_int),
+    ('blocking', c_bool),
+    ('reconnect', c_bool),
+    ('ping', c_bool),
+    ('verbose', c_int),
+    ('userResource', POINTER(None)),
+    ('userPayload', POINTER(None)),
+    ('init', CFUNCTYPE(UNCHECKED(c_int), POINTER(RKClient))),
+    ('recv', CFUNCTYPE(UNCHECKED(c_int), POINTER(RKClient))),
+    ('exit', CFUNCTYPE(UNCHECKED(c_int), POINTER(RKClient))),
+    ('hostIP', c_char * int(32)),
+    ('sa', struct_sockaddr_in),
+    ('sd', c_int),
+    ('ireq', c_int),
+    ('state', RKClientState),
+    ('safeToClose', c_bool),
+    ('threadId', pthread_t),
+    ('threadAttributes', pthread_attr_t),
+    ('lock', pthread_mutex_t),
+    ('rfd', fd_set),
+    ('wfd', fd_set),
+    ('efd', fd_set),
+    ('netDelimiter', RKNetDelimiter),
+]
+
+# /opt/homebrew/include/RadarKit/RKClock.h: 56
+class struct_rk_clock(Structure):
+    pass
+
+struct_rk_clock.__slots__ = [
+    'name',
+    'verbose',
+    'autoSync',
+    'hasWisdom',
+    'infoShown',
+    'highPrecision',
+    'useInternalReference',
+    'offsetSeconds',
+    'size',
+    'block',
+    'stride',
+    'tic',
+    'tBuffer',
+    'xBuffer',
+    'uBuffer',
+    'yBuffer',
+    'zBuffer',
+    'a',
+    'b',
+    'index',
+    'count',
+    'initDay',
+    'initTime',
+    'latestTime',
+    'typicalPeriod',
+    'x0',
+    'u0',
+    'dx',
+    'sum_x0',
+    'sum_u0',
+]
+struct_rk_clock._fields_ = [
+    ('name', RKName),
+    ('verbose', c_int),
+    ('autoSync', c_bool),
+    ('hasWisdom', c_bool),
+    ('infoShown', c_bool),
+    ('highPrecision', c_bool),
+    ('useInternalReference', c_bool),
+    ('offsetSeconds', c_double),
+    ('size', uint32_t),
+    ('block', uint32_t),
+    ('stride', uint32_t),
+    ('tic', uint64_t),
+    ('tBuffer', POINTER(struct_timeval)),
+    ('xBuffer', POINTER(c_double)),
+    ('uBuffer', POINTER(c_double)),
+    ('yBuffer', POINTER(c_double)),
+    ('zBuffer', POINTER(c_double)),
+    ('a', c_double),
+    ('b', c_double),
+    ('index', uint32_t),
+    ('count', uint64_t),
+    ('initDay', c_double),
+    ('initTime', c_double),
+    ('latestTime', c_double),
+    ('typicalPeriod', c_double),
+    ('x0', c_double),
+    ('u0', c_double),
+    ('dx', c_double),
+    ('sum_x0', c_double),
+    ('sum_u0', c_double),
+]
+
+RKClock = struct_rk_clock# /opt/homebrew/include/RadarKit/RKClock.h: 56
+
+# /opt/homebrew/include/RadarKit/RKHealthEngine.h: 18
+class struct_rk_health_engine(Structure):
+    pass
+
+RKHealthEngine = struct_rk_health_engine# /opt/homebrew/include/RadarKit/RKHealthEngine.h: 16
+
+struct_rk_health_engine.__slots__ = [
+    'name',
+    'radarDescription',
+    'healthNodes',
+    'healthBuffer',
+    'healthIndex',
+    'verbose',
+    'fid',
+    'tidHealthConsolidator',
+    'statusBuffer',
+    'statusBufferIndex',
+    'state',
+    'tic',
+    'memoryUsage',
+]
+struct_rk_health_engine._fields_ = [
+    ('name', RKName),
+    ('radarDescription', POINTER(RKRadarDesc)),
+    ('healthNodes', POINTER(RKNodalHealth)),
+    ('healthBuffer', POINTER(RKHealth)),
+    ('healthIndex', POINTER(uint32_t)),
+    ('verbose', uint8_t),
+    ('fid', POINTER(FILE)),
+    ('tidHealthConsolidator', pthread_t),
+    ('statusBuffer', (c_char * int(4096)) * int(10)),
+    ('statusBufferIndex', uint32_t),
+    ('state', RKEngineState),
+    ('tic', uint64_t),
+    ('memoryUsage', c_size_t),
+]
+
+# /opt/homebrew/include/RadarKit/RKPositionEngine.h: 53
+class struct_rk_position_engine(Structure):
+    pass
+
+RKPositionEngine = struct_rk_position_engine# /opt/homebrew/include/RadarKit/RKPositionEngine.h: 51
+
+struct_rk_position_engine.__slots__ = [
+    'name',
+    'radarDescription',
+    'configBuffer',
+    'configIndex',
+    'positionBuffer',
+    'positionIndex',
+    'pulseBuffer',
+    'pulseIndex',
+    'verbose',
+    'pedestal',
+    'hardwareInit',
+    'hardwareExec',
+    'hardwareRead',
+    'hardwareFree',
+    'hardwareInitInput',
+    'threadId',
+    'startTime',
+    'processedPulseIndex',
+    'statusBuffer',
+    'positionStringBuffer',
+    'statusBufferIndex',
+    'state',
+    'tic',
+    'lag',
+    'memoryUsage',
+    'vcpI',
+    'vcpSweepCount',
+]
+struct_rk_position_engine._fields_ = [
+    ('name', RKName),
+    ('radarDescription', POINTER(RKRadarDesc)),
+    ('configBuffer', POINTER(RKConfig)),
+    ('configIndex', POINTER(uint32_t)),
+    ('positionBuffer', POINTER(RKPosition)),
+    ('positionIndex', POINTER(uint32_t)),
+    ('pulseBuffer', RKBuffer),
+    ('pulseIndex', POINTER(uint32_t)),
+    ('verbose', uint8_t),
+    ('pedestal', RKPedestal),
+    ('hardwareInit', CFUNCTYPE(UNCHECKED(RKPedestal), POINTER(None))),
+    ('hardwareExec', CFUNCTYPE(UNCHECKED(c_int), RKPedestal, String)),
+    ('hardwareRead', CFUNCTYPE(UNCHECKED(c_int), RKPedestal, POINTER(RKPosition))),
+    ('hardwareFree', CFUNCTYPE(UNCHECKED(c_int), RKPedestal)),
+    ('hardwareInitInput', POINTER(None)),
+    ('threadId', pthread_t),
+    ('startTime', c_double),
+    ('processedPulseIndex', uint32_t),
+    ('statusBuffer', (c_char * int(256)) * int(10)),
+    ('positionStringBuffer', (c_char * int(256)) * int(10)),
+    ('statusBufferIndex', uint32_t),
+    ('state', RKEngineState),
+    ('tic', uint64_t),
+    ('lag', c_float),
+    ('memoryUsage', c_size_t),
+    ('vcpI', c_int),
+    ('vcpSweepCount', c_int),
+]
+
+RKScanProgress = uint8_t# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 41
+
+RKScanOption = uint8_t# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 51
+
+RKScanMode = uint8_t# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 59
+
+# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 111
+class struct_rk_scan_path(Structure):
+    pass
+
+struct_rk_scan_path.__slots__ = [
+    'mode',
+    'azimuthStart',
+    'azimuthEnd',
+    'azimuthSlew',
+    'azimuthMark',
+    'elevationStart',
+    'elevationEnd',
+    'elevationSlew',
+]
+struct_rk_scan_path._fields_ = [
+    ('mode', RKScanMode),
+    ('azimuthStart', c_float),
+    ('azimuthEnd', c_float),
+    ('azimuthSlew', c_float),
+    ('azimuthMark', c_float),
+    ('elevationStart', c_float),
+    ('elevationEnd', c_float),
+    ('elevationSlew', c_float),
+]
+
+RKScanPath = struct_rk_scan_path# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 111
+
+# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 130
+class struct_rk_scan_object(Structure):
+    pass
+
+struct_rk_scan_object.__slots__ = [
+    'name',
+    'option',
+    'batterScans',
+    'onDeckScans',
+    'inTheHoleScans',
+    'inTheHoleCount',
+    'onDeckCount',
+    'sweepCount',
+    'active',
+    'i',
+    'tic',
+    'toc',
+    'elevationPrevious',
+    'azimuthPrevious',
+    'progress',
+    'lastAction',
+]
+struct_rk_scan_object._fields_ = [
+    ('name', RKName),
+    ('option', RKScanOption),
+    ('batterScans', RKScanPath * int(256)),
+    ('onDeckScans', RKScanPath * int(256)),
+    ('inTheHoleScans', RKScanPath * int(256)),
+    ('inTheHoleCount', uint16_t),
+    ('onDeckCount', uint16_t),
+    ('sweepCount', uint16_t),
+    ('active', c_bool),
+    ('i', c_int),
+    ('tic', c_int),
+    ('toc', c_int),
+    ('elevationPrevious', c_float),
+    ('azimuthPrevious', c_float),
+    ('progress', RKScanProgress),
+    ('lastAction', RKScanAction),
+]
+
+RKScanObject = struct_rk_scan_object# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 130
+
+# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 134
+class struct_rk_position_steer_engine(Structure):
+    pass
+
+RKSteerEngine = struct_rk_position_steer_engine# /opt/homebrew/include/RadarKit/RKSteerEngine.h: 132
+
+struct_rk_position_steer_engine.__slots__ = [
+    'name',
+    'radarDescription',
+    'positionBuffer',
+    'positionIndex',
+    'configBuffer',
+    'configIndex',
+    'verbose',
+    'vcpHandle',
+    'actions',
+    'actionIndex',
+    'scanString',
+    'response',
+    'dump',
+    'threadId',
+    'memoryUsage',
+    'statusBuffer',
+    'statusBufferIndex',
+    'state',
+    'tic',
+    'lag',
+]
+struct_rk_position_steer_engine._fields_ = [
+    ('name', RKName),
+    ('radarDescription', POINTER(RKRadarDesc)),
+    ('positionBuffer', POINTER(RKPosition)),
+    ('positionIndex', POINTER(uint32_t)),
+    ('configBuffer', POINTER(RKConfig)),
+    ('configIndex', POINTER(uint32_t)),
+    ('verbose', uint8_t),
+    ('vcpHandle', RKScanObject),
+    ('actions', RKScanAction * int(8)),
+    ('actionIndex', c_int),
+    ('scanString', c_char * int(4096)),
+    ('response', c_char * int(4096)),
+    ('dump', c_char * int(4096)),
+    ('threadId', pthread_t),
+    ('memoryUsage', c_size_t),
+    ('statusBuffer', (c_char * int(256)) * int(10)),
+    ('statusBufferIndex', uint32_t),
+    ('state', RKEngineState),
+    ('tic', uint64_t),
+    ('lag', c_float),
+]
+
+# /opt/homebrew/include/RadarKit/RKHealthLogger.h: 17
+class struct_rk_health_logger(Structure):
+    pass
+
+RKHealthLogger = struct_rk_health_logger# /opt/homebrew/include/RadarKit/RKHealthLogger.h: 15
+
+struct_rk_health_logger.__slots__ = [
+    'name',
+    'radarDescription',
+    'healthBuffer',
+    'healthIndex',
+    'healthBufferDepth',
+    'verbose',
+    'record',
+    'healthRelay',
+    'fileManager',
+    'fid',
+    'tidBackground',
+    'statusBuffer',
+    'statusBufferIndex',
+    'state',
+    'tic',
+    'memoryUsage',
+]
+struct_rk_health_logger._fields_ = [
+    ('name', RKName),
+    ('radarDescription', POINTER(RKRadarDesc)),
+    ('healthBuffer', POINTER(RKHealth)),
+    ('healthIndex', POINTER(uint32_t)),
+    ('healthBufferDepth', uint32_t),
+    ('verbose', uint8_t),
+    ('record', c_bool),
+    ('healthRelay', RKHealthRelay),
+    ('fileManager', POINTER(RKFileManager)),
+    ('fid', POINTER(FILE)),
+    ('tidBackground', pthread_t),
+    ('statusBuffer', (c_char * int(4096)) * int(10)),
+    ('statusBufferIndex', uint32_t),
+    ('state', RKEngineState),
+    ('tic', uint64_t),
+    ('memoryUsage', c_size_t),
+]
+
+# /opt/homebrew/include/RadarKit/RKRadarRelay.h: 64
+class struct_rk_radar_relay(Structure):
+    pass
+
+struct_rk_radar_relay.__slots__ = [
+    'name',
+    'host',
+    'radarDescription',
+    'configBuffer',
+    'configIndex',
+    'healthBuffer',
+    'healthIndex',
+    'statusBuffer',
+    'statusIndex',
+    'pulseBuffer',
+    'pulseIndex',
+    'rayBuffer',
+    'rayIndex',
+    'verbose',
+    'fileManager',
+    'client',
+    'responseIndex',
+    'responses',
+    'latestCommand',
+    'tidBackground',
+    'streams',
+    'sweepHeaderCache',
+    'sweepPacketCount',
+    'sweepRayIndex',
+    'sweepTic',
+    'sweepToc',
+    'pulseStatusBuffer',
+    'rayStatusBuffer',
+    'pulseStatusBufferIndex',
+    'rayStatusBufferIndex',
+    'state',
+    'tic',
+    'memoryUsage',
+]
+struct_rk_radar_relay._fields_ = [
+    ('name', RKName),
+    ('host', RKName),
+    ('radarDescription', POINTER(RKRadarDesc)),
+    ('configBuffer', POINTER(RKConfig)),
+    ('configIndex', POINTER(uint32_t)),
+    ('healthBuffer', POINTER(RKHealth)),
+    ('healthIndex', POINTER(uint32_t)),
+    ('statusBuffer', POINTER(RKStatus)),
+    ('statusIndex', POINTER(uint32_t)),
+    ('pulseBuffer', RKBuffer),
+    ('pulseIndex', POINTER(uint32_t)),
+    ('rayBuffer', RKBuffer),
+    ('rayIndex', POINTER(uint32_t)),
+    ('verbose', uint8_t),
+    ('fileManager', POINTER(RKFileManager)),
+    ('client', POINTER(RKClient)),
+    ('responseIndex', uint32_t),
+    ('responses', (c_char * int(8196)) * int(200)),
+    ('latestCommand', c_char * int(512)),
+    ('tidBackground', pthread_t),
+    ('streams', RKStream),
+    ('sweepHeaderCache', RKSweepHeader),
+    ('sweepPacketCount', uint32_t),
+    ('sweepRayIndex', uint32_t),
+    ('sweepTic', struct_timeval),
+    ('sweepToc', struct_timeval),
+    ('pulseStatusBuffer', (c_char * int(4096)) * int(10)),
+    ('rayStatusBuffer', (c_char * int(4096)) * int(10)),
+    ('pulseStatusBufferIndex', uint32_t),
+    ('rayStatusBufferIndex', uint32_t),
+    ('state', RKEngineState),
+    ('tic', uint64_t),
+    ('memoryUsage', c_size_t),
+]
+
+RKRadarRelay = struct_rk_radar_relay# /opt/homebrew/include/RadarKit/RKRadarRelay.h: 64
+
+# /opt/homebrew/include/RadarKit/RKHostMonitor.h: 19
+class struct_rk_unit_monitor(Structure):
+    pass
+
+RKUnitMonitor = struct_rk_unit_monitor# /opt/homebrew/include/RadarKit/RKHostMonitor.h: 14
+
+# /opt/homebrew/include/RadarKit/RKHostMonitor.h: 33
+class struct_rk_host_monitor(Structure):
+    pass
+
+RKHostMonitor = struct_rk_host_monitor# /opt/homebrew/include/RadarKit/RKHostMonitor.h: 15
+
+struct_rk_unit_monitor.__slots__ = [
+    'name',
+    'id',
+    'tid',
+    'parent',
+    'tic',
+    'pingIntervalInSeconds',
+    'sequenceNumber',
+    'identifier',
+    'latestTime',
+    'hostStatus',
+]
+struct_rk_unit_monitor._fields_ = [
+    ('name', RKShortName),
+    ('id', c_int),
+    ('tid', pthread_t),
+    ('parent', POINTER(RKHostMonitor)),
+    ('tic', uint64_t),
+    ('pingIntervalInSeconds', uint16_t),
+    ('sequenceNumber', uint16_t),
+    ('identifier', uint16_t),
+    ('latestTime', struct_timeval),
+    ('hostStatus', RKHostStatus),
+]
+
+struct_rk_host_monitor.__slots__ = [
+    'name',
+    'verbose',
+    'hosts',
+    'tic',
+    'workerCount',
+    'workers',
+    'tidHostWatcher',
+    'mutex',
+    'allKnown',
+    'allReachable',
+    'anyReachable',
+    'state',
+    'memoryUsage',
+]
+struct_rk_host_monitor._fields_ = [
+    ('name', RKName),
+    ('verbose', uint8_t),
+    ('hosts', POINTER(RKName)),
+    ('tic', uint64_t),
+    ('workerCount', c_int),
+    ('workers', POINTER(RKUnitMonitor)),
+    ('tidHostWatcher', pthread_t),
+    ('mutex', pthread_mutex_t),
+    ('allKnown', c_bool),
+    ('allReachable', c_bool),
+    ('anyReachable', c_bool),
+    ('state', RKEngineState),
+    ('memoryUsage', uint32_t),
+]
+
+RKRadarState = uint32_t# /opt/homebrew/include/RadarKit/RKRadar.h: 39
+
+# /opt/homebrew/include/RadarKit/RKRadar.h: 92
+class struct_rk_radar(Structure):
+    pass
+
+RKRadar = struct_rk_radar# /opt/homebrew/include/RadarKit/RKRadar.h: 75
+
+# /opt/homebrew/include/RadarKit/RKRadar.h: 80
+class struct_rk_user_device(Structure):
+    pass
+
+RKUserDevice = struct_rk_user_device# /opt/homebrew/include/RadarKit/RKRadar.h: 76
+
+struct_rk_user_device.__slots__ = [
+    'device',
+    'init',
+    'exec',
+    'free',
+    'initInput',
+    'response',
+]
+struct_rk_user_device._fields_ = [
+    ('device', RKHealthRelay),
+    ('init', CFUNCTYPE(UNCHECKED(RKHealthRelay), POINTER(RKRadar), POINTER(None))),
+    ('exec', CFUNCTYPE(UNCHECKED(c_int), RKHealthRelay, String, String)),
+    ('free', CFUNCTYPE(UNCHECKED(c_int), RKHealthRelay)),
+    ('initInput', POINTER(None)),
+    ('response', c_char * int(4096)),
+]
+
+struct_rk_radar.__slots__ = [
+    'name',
+    'desc',
+    'state',
+    'active',
+    'memoryUsage',
+    'processorCount',
+    'tic',
+    'mutex',
+    'status',
+    'configs',
+    'healths',
+    'positions',
+    'pulses',
+    'rays',
+    'statusIndex',
+    'configIndex',
+    'healthIndex',
+    'positionIndex',
+    'pulseIndex',
+    'rayIndex',
+    'productIndex',
+    'healthNodeCount',
+    'healthNodes',
+    'pulseClock',
+    'positionClock',
+    'fftModule',
+    'healthEngine',
+    'positionEngine',
+    'steerEngine',
+    'pulseEngine',
+    'pulseRingFilterEngine',
+    'momentEngine',
+    'rawDataRecorder',
+    'healthLogger',
+    'sweepEngine',
+    'fileManager',
+    'radarRelay',
+    'hostMonitor',
+    'systemInspector',
+    'waveform',
+    'waveformDecimate',
+    'filter',
+    'transceiver',
+    'transceiverInit',
+    'transceiverExec',
+    'transceiverFree',
+    'transceiverInitInput',
+    'transceiverResponse',
+    'pedestal',
+    'pedestalInit',
+    'pedestalExec',
+    'pedestalFree',
+    'pedestalInitInput',
+    'pedestalResponse',
+    'healthRelay',
+    'healthRelayInit',
+    'healthRelayExec',
+    'healthRelayFree',
+    'healthRelayInitInput',
+    'healthRelayResponse',
+    'masterController',
+    'masterControllerExec',
+    'userDevices',
+    'waveformCalibrations',
+    'waveformCalibrationCount',
+    'controls',
+    'controlCount',
+    'userModule',
+    'userModuleInit',
+    'userModuleFree',
+]
+struct_rk_radar._fields_ = [
+    ('name', RKName),
+    ('desc', RKRadarDesc),
+    ('state', RKRadarState),
+    ('active', c_bool),
+    ('memoryUsage', c_size_t),
+    ('processorCount', uint8_t),
+    ('tic', uint64_t),
+    ('mutex', pthread_mutex_t),
+    ('status', POINTER(RKStatus)),
+    ('configs', POINTER(RKConfig)),
+    ('healths', POINTER(RKHealth)),
+    ('positions', POINTER(RKPosition)),
+    ('pulses', RKBuffer),
+    ('rays', RKBuffer),
+    ('statusIndex', uint32_t),
+    ('configIndex', uint32_t),
+    ('healthIndex', uint32_t),
+    ('positionIndex', uint32_t),
+    ('pulseIndex', uint32_t),
+    ('rayIndex', uint32_t),
+    ('productIndex', uint32_t),
+    ('healthNodeCount', RKHealthNode),
+    ('healthNodes', POINTER(RKNodalHealth)),
+    ('pulseClock', POINTER(RKClock)),
+    ('positionClock', POINTER(RKClock)),
+    ('fftModule', POINTER(RKFFTModule)),
+    ('healthEngine', POINTER(RKHealthEngine)),
+    ('positionEngine', POINTER(RKPositionEngine)),
+    ('steerEngine', POINTER(RKSteerEngine)),
+    ('pulseEngine', POINTER(RKPulseEngine)),
+    ('pulseRingFilterEngine', POINTER(RKPulseRingFilterEngine)),
+    ('momentEngine', POINTER(RKMomentEngine)),
+    ('rawDataRecorder', POINTER(RKRawDataRecorder)),
+    ('healthLogger', POINTER(RKHealthLogger)),
+    ('sweepEngine', POINTER(RKSweepEngine)),
+    ('fileManager', POINTER(RKFileManager)),
+    ('radarRelay', POINTER(RKRadarRelay)),
+    ('hostMonitor', POINTER(RKHostMonitor)),
+    ('systemInspector', POINTER(RKSimpleEngine)),
+    ('waveform', POINTER(RKWaveform)),
+    ('waveformDecimate', POINTER(RKWaveform)),
+    ('filter', POINTER(RKIIRFilter)),
+    ('transceiver', RKTransceiver),
+    ('transceiverInit', CFUNCTYPE(UNCHECKED(RKTransceiver), POINTER(RKRadar), POINTER(None))),
+    ('transceiverExec', CFUNCTYPE(UNCHECKED(c_int), RKTransceiver, String, String)),
+    ('transceiverFree', CFUNCTYPE(UNCHECKED(c_int), RKTransceiver)),
+    ('transceiverInitInput', POINTER(None)),
+    ('transceiverResponse', c_char * int(4096)),
+    ('pedestal', RKPedestal),
+    ('pedestalInit', CFUNCTYPE(UNCHECKED(RKPedestal), POINTER(RKRadar), POINTER(None))),
+    ('pedestalExec', CFUNCTYPE(UNCHECKED(c_int), RKPedestal, String, String)),
+    ('pedestalFree', CFUNCTYPE(UNCHECKED(c_int), RKPedestal)),
+    ('pedestalInitInput', POINTER(None)),
+    ('pedestalResponse', c_char * int(4096)),
+    ('healthRelay', RKHealthRelay),
+    ('healthRelayInit', CFUNCTYPE(UNCHECKED(RKHealthRelay), POINTER(RKRadar), POINTER(None))),
+    ('healthRelayExec', CFUNCTYPE(UNCHECKED(c_int), RKHealthRelay, String, String)),
+    ('healthRelayFree', CFUNCTYPE(UNCHECKED(c_int), RKHealthRelay)),
+    ('healthRelayInitInput', POINTER(None)),
+    ('healthRelayResponse', c_char * int(4096)),
+    ('masterController', RKMasterController),
+    ('masterControllerExec', CFUNCTYPE(UNCHECKED(c_int), RKMasterController, String, String)),
+    ('userDevices', RKUserDevice * int(RKHealthNodeCount)),
+    ('waveformCalibrations', POINTER(RKWaveformCalibration)),
+    ('waveformCalibrationCount', uint32_t),
+    ('controls', POINTER(RKControl)),
+    ('controlCount', uint32_t),
+    ('userModule', RKUserModule),
+    ('userModuleInit', CFUNCTYPE(UNCHECKED(RKUserModule), POINTER(RKWaveform))),
+    ('userModuleFree', CFUNCTYPE(UNCHECKED(None), RKUserModule)),
+]
+
+RKTestFlag = uint8_t# /opt/homebrew/include/RadarKit/RKTest.h: 17
+
+enum_anon_634 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 18
+
+RKTestFlagNone = 0# /opt/homebrew/include/RadarKit/RKTest.h: 18
+
+RKTestFlagVerbose = 1# /opt/homebrew/include/RadarKit/RKTest.h: 18
+
+RKTestFlagShowResults = (1 << 1)# /opt/homebrew/include/RadarKit/RKTest.h: 18
+
+RKTestSIMDFlag = uint8_t# /opt/homebrew/include/RadarKit/RKTest.h: 24
+
+enum_anon_635 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 25
+
+RKTestSIMDFlagNull = 0# /opt/homebrew/include/RadarKit/RKTest.h: 25
+
+RKTestSIMDFlagShowNumbers = 1# /opt/homebrew/include/RadarKit/RKTest.h: 25
+
+RKTestSIMDFlagPerformanceTestArithmetic = (1 << 1)# /opt/homebrew/include/RadarKit/RKTest.h: 25
+
+RKTestSIMDFlagPerformanceTestDuplicate = (1 << 2)# /opt/homebrew/include/RadarKit/RKTest.h: 25
+
+RKTestSIMDFlagPerformanceTestAll = (RKTestSIMDFlagPerformanceTestArithmetic | RKTestSIMDFlagPerformanceTestDuplicate)# /opt/homebrew/include/RadarKit/RKTest.h: 25
+
+RKAxisAction = uint8_t# /opt/homebrew/include/RadarKit/RKTest.h: 33
+
+enum_anon_636 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 34
+
+RKAxisActionStop = 0# /opt/homebrew/include/RadarKit/RKTest.h: 34
+
+RKAxisActionSpeed = (RKAxisActionStop + 1)# /opt/homebrew/include/RadarKit/RKTest.h: 34
+
+RKAxisActionPosition = (RKAxisActionSpeed + 1)# /opt/homebrew/include/RadarKit/RKTest.h: 34
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 70
+class struct_rk_test_transceiver(Structure):
+    pass
+
+struct_rk_test_transceiver.__slots__ = [
+    'name',
+    'verbose',
+    'counter',
+    'sleepInterval',
+    'gateCapacity',
+    'gateCount',
+    'gateSizeMeters',
+    'fs',
+    'prt',
+    'sprt',
+    'waveformCache',
+    'waveformCacheIndex',
+    'customCommand',
+    'simFault',
+    'transmitting',
+    'chunkSize',
+    'periodEven',
+    'periodOdd',
+    'ticEven',
+    'ticOdd',
+    'playbackFolder',
+    'fileHeaderCache',
+    'pulseHeaderCache',
+    'tidRunLoop',
+    'state',
+    'radar',
+    'memoryUsage',
+    'response',
+]
+struct_rk_test_transceiver._fields_ = [
+    ('name', RKName),
+    ('verbose', c_int),
+    ('counter', c_long),
+    ('sleepInterval', c_int),
+    ('gateCapacity', c_int),
+    ('gateCount', c_int),
+    ('gateSizeMeters', c_float),
+    ('fs', c_double),
+    ('prt', c_double),
+    ('sprt', RKByte),
+    ('waveformCache', POINTER(RKWaveform) * int(2)),
+    ('waveformCacheIndex', c_uint),
+    ('customCommand', RKCommand),
+    ('simFault', c_bool),
+    ('transmitting', c_bool),
+    ('chunkSize', c_int),
+    ('periodEven', c_double),
+    ('periodOdd', c_double),
+    ('ticEven', c_long),
+    ('ticOdd', c_long),
+    ('playbackFolder', c_char * int(768)),
+    ('fileHeaderCache', RKFileHeader),
+    ('pulseHeaderCache', RKPulseHeader),
+    ('tidRunLoop', pthread_t),
+    ('state', RKEngineState),
+    ('radar', POINTER(RKRadar)),
+    ('memoryUsage', c_size_t),
+    ('response', c_char * int(4096)),
+]
+
+RKTestTransceiver = struct_rk_test_transceiver# /opt/homebrew/include/RadarKit/RKTest.h: 70
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 94
+class struct_rk_test_pedestal(Structure):
+    pass
+
+struct_rk_test_pedestal.__slots__ = [
+    'name',
+    'verbose',
+    'counter',
+    'azimuth',
+    'speedAzimuth',
+    'targetAzimuth',
+    'targetSpeedAzimuth',
+    'actionAzimuth',
+    'elevation',
+    'speedElevation',
+    'targetElevation',
+    'targetSpeedElevation',
+    'actionElevation',
+    'tidRunLoop',
+    'state',
+    'radar',
+    'memoryUsage',
+    'response',
+]
+struct_rk_test_pedestal._fields_ = [
+    ('name', RKName),
+    ('verbose', c_int),
+    ('counter', c_ulong),
+    ('azimuth', c_float),
+    ('speedAzimuth', c_float),
+    ('targetAzimuth', c_float),
+    ('targetSpeedAzimuth', c_float),
+    ('actionAzimuth', RKAxisAction),
+    ('elevation', c_float),
+    ('speedElevation', c_float),
+    ('targetElevation', c_float),
+    ('targetSpeedElevation', c_float),
+    ('actionElevation', RKAxisAction),
+    ('tidRunLoop', pthread_t),
+    ('state', RKEngineState),
+    ('radar', POINTER(RKRadar)),
+    ('memoryUsage', c_size_t),
+    ('response', c_char * int(4096)),
+]
+
+RKTestPedestal = struct_rk_test_pedestal# /opt/homebrew/include/RadarKit/RKTest.h: 94
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 106
+class struct_rk_test_health_relay(Structure):
+    pass
+
+struct_rk_test_health_relay.__slots__ = [
+    'name',
+    'verbose',
+    'counter',
+    'tidRunLoop',
+    'state',
+    'radar',
+    'memoryUsage',
+    'response',
+]
+struct_rk_test_health_relay._fields_ = [
+    ('name', RKName),
+    ('verbose', c_int),
+    ('counter', c_long),
+    ('tidRunLoop', pthread_t),
+    ('state', RKEngineState),
+    ('radar', POINTER(RKRadar)),
+    ('memoryUsage', c_size_t),
+    ('response', c_char * int(4096)),
+]
+
+RKTestHealthRelay = struct_rk_test_health_relay# /opt/homebrew/include/RadarKit/RKTest.h: 106
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 110
+if _libs["radarkit"].has("RKTestByNumberDescription", "cdecl"):
+    RKTestByNumberDescription = _libs["radarkit"].get("RKTestByNumberDescription", "cdecl")
+    RKTestByNumberDescription.argtypes = [c_int]
+    if sizeof(c_int) == sizeof(c_void_p):
+        RKTestByNumberDescription.restype = ReturnString
+    else:
+        RKTestByNumberDescription.restype = String
+        RKTestByNumberDescription.errcheck = ReturnString
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 111
+if _libs["radarkit"].has("RKTestByNumber", "cdecl"):
+    RKTestByNumber = _libs["radarkit"].get("RKTestByNumber", "cdecl")
+    RKTestByNumber.argtypes = [c_int, POINTER(None)]
+    RKTestByNumber.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 115
+if _libs["radarkit"].has("RKTestTerminalColors", "cdecl"):
+    RKTestTerminalColors = _libs["radarkit"].get("RKTestTerminalColors", "cdecl")
+    RKTestTerminalColors.argtypes = []
+    RKTestTerminalColors.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 116
+if _libs["radarkit"].has("RKTestPrettyStrings", "cdecl"):
+    RKTestPrettyStrings = _libs["radarkit"].get("RKTestPrettyStrings", "cdecl")
+    RKTestPrettyStrings.argtypes = []
+    RKTestPrettyStrings.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 117
+if _libs["radarkit"].has("RKTestBasicMath", "cdecl"):
+    RKTestBasicMath = _libs["radarkit"].get("RKTestBasicMath", "cdecl")
+    RKTestBasicMath.argtypes = []
+    RKTestBasicMath.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 118
+if _libs["radarkit"].has("RKTestParseCommaDelimitedValues", "cdecl"):
+    RKTestParseCommaDelimitedValues = _libs["radarkit"].get("RKTestParseCommaDelimitedValues", "cdecl")
+    RKTestParseCommaDelimitedValues.argtypes = []
+    RKTestParseCommaDelimitedValues.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 119
+if _libs["radarkit"].has("RKTestParseJSONString", "cdecl"):
+    RKTestParseJSONString = _libs["radarkit"].get("RKTestParseJSONString", "cdecl")
+    RKTestParseJSONString.argtypes = []
+    RKTestParseJSONString.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 120
+if _libs["radarkit"].has("RKTestFileManager", "cdecl"):
+    RKTestFileManager = _libs["radarkit"].get("RKTestFileManager", "cdecl")
+    RKTestFileManager.argtypes = []
+    RKTestFileManager.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 121
+if _libs["radarkit"].has("RKTestPreferenceReading", "cdecl"):
+    RKTestPreferenceReading = _libs["radarkit"].get("RKTestPreferenceReading", "cdecl")
+    RKTestPreferenceReading.argtypes = []
+    RKTestPreferenceReading.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 122
+if _libs["radarkit"].has("RKTestCountFiles", "cdecl"):
+    RKTestCountFiles = _libs["radarkit"].get("RKTestCountFiles", "cdecl")
+    RKTestCountFiles.argtypes = []
+    RKTestCountFiles.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 123
+if _libs["radarkit"].has("RKTestFileMonitor", "cdecl"):
+    RKTestFileMonitor = _libs["radarkit"].get("RKTestFileMonitor", "cdecl")
+    RKTestFileMonitor.argtypes = []
+    RKTestFileMonitor.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 124
+if _libs["radarkit"].has("RKTestHostMonitor", "cdecl"):
+    RKTestHostMonitor = _libs["radarkit"].get("RKTestHostMonitor", "cdecl")
+    RKTestHostMonitor.argtypes = []
+    RKTestHostMonitor.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 125
+if _libs["radarkit"].has("RKTestInitializingRadar", "cdecl"):
+    RKTestInitializingRadar = _libs["radarkit"].get("RKTestInitializingRadar", "cdecl")
+    RKTestInitializingRadar.argtypes = []
+    RKTestInitializingRadar.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 126
+if _libs["radarkit"].has("RKTestTemperatureToStatus", "cdecl"):
+    RKTestTemperatureToStatus = _libs["radarkit"].get("RKTestTemperatureToStatus", "cdecl")
+    RKTestTemperatureToStatus.argtypes = []
+    RKTestTemperatureToStatus.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 127
+if _libs["radarkit"].has("RKTestGetCountry", "cdecl"):
+    RKTestGetCountry = _libs["radarkit"].get("RKTestGetCountry", "cdecl")
+    RKTestGetCountry.argtypes = []
+    RKTestGetCountry.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 128
+if _libs["radarkit"].has("RKTestBufferOverviewText", "cdecl"):
+    RKTestBufferOverviewText = _libs["radarkit"].get("RKTestBufferOverviewText", "cdecl")
+    RKTestBufferOverviewText.argtypes = [String]
+    RKTestBufferOverviewText.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 129
+if _libs["radarkit"].has("RKTestHealthOverviewText", "cdecl"):
+    RKTestHealthOverviewText = _libs["radarkit"].get("RKTestHealthOverviewText", "cdecl")
+    RKTestHealthOverviewText.argtypes = [String]
+    RKTestHealthOverviewText.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 130
+if _libs["radarkit"].has("RKTestSweepRead", "cdecl"):
+    RKTestSweepRead = _libs["radarkit"].get("RKTestSweepRead", "cdecl")
+    RKTestSweepRead.argtypes = [String]
+    RKTestSweepRead.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 131
+if _libs["radarkit"].has("RKTestProductRead", "cdecl"):
+    RKTestProductRead = _libs["radarkit"].get("RKTestProductRead", "cdecl")
+    RKTestProductRead.argtypes = [String]
+    RKTestProductRead.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 132
+if _libs["radarkit"].has("RKTestProductWrite", "cdecl"):
+    RKTestProductWrite = _libs["radarkit"].get("RKTestProductWrite", "cdecl")
+    RKTestProductWrite.argtypes = []
+    RKTestProductWrite.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 133
+if _libs["radarkit"].has("RKTestReviseLogicalValues", "cdecl"):
+    RKTestReviseLogicalValues = _libs["radarkit"].get("RKTestReviseLogicalValues", "cdecl")
+    RKTestReviseLogicalValues.argtypes = []
+    RKTestReviseLogicalValues.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 134
+if _libs["radarkit"].has("RKTestReadIQ", "cdecl"):
+    RKTestReadIQ = _libs["radarkit"].get("RKTestReadIQ", "cdecl")
+    RKTestReadIQ.argtypes = [String]
+    RKTestReadIQ.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 135
+if _libs["radarkit"].has("RKTestPreparePath", "cdecl"):
+    RKTestPreparePath = _libs["radarkit"].get("RKTestPreparePath", "cdecl")
+    RKTestPreparePath.argtypes = []
+    RKTestPreparePath.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 136
+if _libs["radarkit"].has("RKTestWebSocket", "cdecl"):
+    RKTestWebSocket = _libs["radarkit"].get("RKTestWebSocket", "cdecl")
+    RKTestWebSocket.argtypes = []
+    RKTestWebSocket.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 137
+if _libs["radarkit"].has("RKTestReadBareRKComplex", "cdecl"):
+    RKTestReadBareRKComplex = _libs["radarkit"].get("RKTestReadBareRKComplex", "cdecl")
+    RKTestReadBareRKComplex.argtypes = [String]
+    RKTestReadBareRKComplex.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 138
+if _libs["radarkit"].has("RKTestRadarHub", "cdecl"):
+    RKTestRadarHub = _libs["radarkit"].get("RKTestRadarHub", "cdecl")
+    RKTestRadarHub.argtypes = []
+    RKTestRadarHub.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 139
+if _libs["radarkit"].has("RKTestSimplePulseEngine", "cdecl"):
+    RKTestSimplePulseEngine = _libs["radarkit"].get("RKTestSimplePulseEngine", "cdecl")
+    RKTestSimplePulseEngine.argtypes = [RKPulseStatus]
+    RKTestSimplePulseEngine.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 140
+if _libs["radarkit"].has("RKTestSimpleMomentEngine", "cdecl"):
+    RKTestSimpleMomentEngine = _libs["radarkit"].get("RKTestSimpleMomentEngine", "cdecl")
+    RKTestSimpleMomentEngine.argtypes = [c_int]
+    RKTestSimpleMomentEngine.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 144
+if _libs["radarkit"].has("RKTestSIMD", "cdecl"):
+    RKTestSIMD = _libs["radarkit"].get("RKTestSIMD", "cdecl")
+    RKTestSIMD.argtypes = [RKTestSIMDFlag, c_int]
+    RKTestSIMD.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 145
+if _libs["radarkit"].has("RKTestWindow", "cdecl"):
+    RKTestWindow = _libs["radarkit"].get("RKTestWindow", "cdecl")
+    RKTestWindow.argtypes = []
+    RKTestWindow.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 146
+if _libs["radarkit"].has("RKTestHilbertTransform", "cdecl"):
+    RKTestHilbertTransform = _libs["radarkit"].get("RKTestHilbertTransform", "cdecl")
+    RKTestHilbertTransform.argtypes = []
+    RKTestHilbertTransform.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 147
+if _libs["radarkit"].has("RKTestWriteFFTWisdom", "cdecl"):
+    RKTestWriteFFTWisdom = _libs["radarkit"].get("RKTestWriteFFTWisdom", "cdecl")
+    RKTestWriteFFTWisdom.argtypes = [c_int]
+    RKTestWriteFFTWisdom.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 148
+if _libs["radarkit"].has("RKTestRingFilterShowCoefficients", "cdecl"):
+    RKTestRingFilterShowCoefficients = _libs["radarkit"].get("RKTestRingFilterShowCoefficients", "cdecl")
+    RKTestRingFilterShowCoefficients.argtypes = []
+    RKTestRingFilterShowCoefficients.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 149
+if _libs["radarkit"].has("RKTestRamp", "cdecl"):
+    RKTestRamp = _libs["radarkit"].get("RKTestRamp", "cdecl")
+    RKTestRamp.argtypes = []
+    RKTestRamp.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 153
+if _libs["radarkit"].has("RKTestMakeHops", "cdecl"):
+    RKTestMakeHops = _libs["radarkit"].get("RKTestMakeHops", "cdecl")
+    RKTestMakeHops.argtypes = []
+    RKTestMakeHops.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 154
+if _libs["radarkit"].has("RKTestWaveformTFM", "cdecl"):
+    RKTestWaveformTFM = _libs["radarkit"].get("RKTestWaveformTFM", "cdecl")
+    RKTestWaveformTFM.argtypes = []
+    RKTestWaveformTFM.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 155
+if _libs["radarkit"].has("RKTestWaveformWrite", "cdecl"):
+    RKTestWaveformWrite = _libs["radarkit"].get("RKTestWaveformWrite", "cdecl")
+    RKTestWaveformWrite.argtypes = []
+    RKTestWaveformWrite.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 156
+if _libs["radarkit"].has("RKTestWaveformDownsampling", "cdecl"):
+    RKTestWaveformDownsampling = _libs["radarkit"].get("RKTestWaveformDownsampling", "cdecl")
+    RKTestWaveformDownsampling.argtypes = []
+    RKTestWaveformDownsampling.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 157
+if _libs["radarkit"].has("RKTestWaveformShowProperties", "cdecl"):
+    RKTestWaveformShowProperties = _libs["radarkit"].get("RKTestWaveformShowProperties", "cdecl")
+    RKTestWaveformShowProperties.argtypes = []
+    RKTestWaveformShowProperties.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 158
+if _libs["radarkit"].has("RKTestWaveformShowUserWaveformProperties", "cdecl"):
+    RKTestWaveformShowUserWaveformProperties = _libs["radarkit"].get("RKTestWaveformShowUserWaveformProperties", "cdecl")
+    RKTestWaveformShowUserWaveformProperties.argtypes = [String]
+    RKTestWaveformShowUserWaveformProperties.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 162
+if _libs["radarkit"].has("RKTestPulseCompression", "cdecl"):
+    RKTestPulseCompression = _libs["radarkit"].get("RKTestPulseCompression", "cdecl")
+    RKTestPulseCompression.argtypes = [RKTestFlag]
+    RKTestPulseCompression.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 163
+if _libs["radarkit"].has("RKTestOneRay", "cdecl"):
+    RKTestOneRay = _libs["radarkit"].get("RKTestOneRay", "cdecl")
+    RKTestOneRay.argtypes = [CFUNCTYPE(UNCHECKED(c_int), POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t), c_int]
+    RKTestOneRay.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 164
+if _libs["radarkit"].has("RKTestOneRaySpectra", "cdecl"):
+    RKTestOneRaySpectra = _libs["radarkit"].get("RKTestOneRaySpectra", "cdecl")
+    RKTestOneRaySpectra.argtypes = [CFUNCTYPE(UNCHECKED(c_int), POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t), c_int]
+    RKTestOneRaySpectra.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 168
+if _libs["radarkit"].has("RKTestPulseCompressionSpeed", "cdecl"):
+    RKTestPulseCompressionSpeed = _libs["radarkit"].get("RKTestPulseCompressionSpeed", "cdecl")
+    RKTestPulseCompressionSpeed.argtypes = [c_int]
+    RKTestPulseCompressionSpeed.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 169
+if _libs["radarkit"].has("RKTestMomentProcessorSpeed", "cdecl"):
+    RKTestMomentProcessorSpeed = _libs["radarkit"].get("RKTestMomentProcessorSpeed", "cdecl")
+    RKTestMomentProcessorSpeed.argtypes = []
+    RKTestMomentProcessorSpeed.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 170
+if _libs["radarkit"].has("RKTestCacheWrite", "cdecl"):
+    RKTestCacheWrite = _libs["radarkit"].get("RKTestCacheWrite", "cdecl")
+    RKTestCacheWrite.argtypes = []
+    RKTestCacheWrite.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 174
+if _libs["radarkit"].has("RKTestTransceiverInit", "cdecl"):
+    RKTestTransceiverInit = _libs["radarkit"].get("RKTestTransceiverInit", "cdecl")
+    RKTestTransceiverInit.argtypes = [POINTER(RKRadar), POINTER(None)]
+    RKTestTransceiverInit.restype = RKTransceiver
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 175
+if _libs["radarkit"].has("RKTestTransceiverExec", "cdecl"):
+    RKTestTransceiverExec = _libs["radarkit"].get("RKTestTransceiverExec", "cdecl")
+    RKTestTransceiverExec.argtypes = [RKTransceiver, String, String]
+    RKTestTransceiverExec.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 176
+if _libs["radarkit"].has("RKTestTransceiverFree", "cdecl"):
+    RKTestTransceiverFree = _libs["radarkit"].get("RKTestTransceiverFree", "cdecl")
+    RKTestTransceiverFree.argtypes = [RKTransceiver]
+    RKTestTransceiverFree.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 180
+if _libs["radarkit"].has("RKTestPedestalInit", "cdecl"):
+    RKTestPedestalInit = _libs["radarkit"].get("RKTestPedestalInit", "cdecl")
+    RKTestPedestalInit.argtypes = [POINTER(RKRadar), POINTER(None)]
+    RKTestPedestalInit.restype = RKPedestal
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 181
+if _libs["radarkit"].has("RKTestPedestalExec", "cdecl"):
+    RKTestPedestalExec = _libs["radarkit"].get("RKTestPedestalExec", "cdecl")
+    RKTestPedestalExec.argtypes = [RKPedestal, String, String]
+    RKTestPedestalExec.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 182
+if _libs["radarkit"].has("RKTestPedestalFree", "cdecl"):
+    RKTestPedestalFree = _libs["radarkit"].get("RKTestPedestalFree", "cdecl")
+    RKTestPedestalFree.argtypes = [RKPedestal]
+    RKTestPedestalFree.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 186
+if _libs["radarkit"].has("RKTestHealthRelayInit", "cdecl"):
+    RKTestHealthRelayInit = _libs["radarkit"].get("RKTestHealthRelayInit", "cdecl")
+    RKTestHealthRelayInit.argtypes = [POINTER(RKRadar), POINTER(None)]
+    RKTestHealthRelayInit.restype = RKHealthRelay
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 187
+if _libs["radarkit"].has("RKTestHealthRelayExec", "cdecl"):
+    RKTestHealthRelayExec = _libs["radarkit"].get("RKTestHealthRelayExec", "cdecl")
+    RKTestHealthRelayExec.argtypes = [RKHealthRelay, String, String]
+    RKTestHealthRelayExec.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 188
+if _libs["radarkit"].has("RKTestHealthRelayFree", "cdecl"):
+    RKTestHealthRelayFree = _libs["radarkit"].get("RKTestHealthRelayFree", "cdecl")
+    RKTestHealthRelayFree.argtypes = [RKHealthRelay]
+    RKTestHealthRelayFree.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 192
+if _libs["radarkit"].has("RKTestCommandQueue", "cdecl"):
+    RKTestCommandQueue = _libs["radarkit"].get("RKTestCommandQueue", "cdecl")
+    RKTestCommandQueue.argtypes = []
+    RKTestCommandQueue.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 193
+if _libs["radarkit"].has("RKTestSingleCommand", "cdecl"):
+    RKTestSingleCommand = _libs["radarkit"].get("RKTestSingleCommand", "cdecl")
+    RKTestSingleCommand.argtypes = []
+    RKTestSingleCommand.restype = None
+
+# /opt/homebrew/include/RadarKit/RKTest.h: 194
+if _libs["radarkit"].has("RKTestExperiment", "cdecl"):
+    RKTestExperiment = _libs["radarkit"].get("RKTestExperiment", "cdecl")
+    RKTestExperiment.argtypes = []
+    RKTestExperiment.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 11
 try:
@@ -7774,6 +9149,12 @@ try:
 except:
     pass
 
+# /opt/homebrew/include/RadarKit/RKTest.h: 15
+try:
+    RKTestWaveformCacheCount = 2
+except:
+    pass
+
 rk_int16c = struct_rk_int16c# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 224
 
 rk_complex = struct_rk_complex# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 232
@@ -7887,6 +9268,12 @@ rk_sweep_engine = struct_rk_sweep_engine# /Users/boonleng/Developer/radarkit/hea
 rk_pulse_ring_filter_worker = struct_rk_pulse_ring_filter_worker# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseRingFilter.h: 21
 
 rk_pulse_ring_filter_engine = struct_rk_pulse_ring_filter_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseRingFilter.h: 39
+
+rk_test_transceiver = struct_rk_test_transceiver# /opt/homebrew/include/RadarKit/RKTest.h: 70
+
+rk_test_pedestal = struct_rk_test_pedestal# /opt/homebrew/include/RadarKit/RKTest.h: 94
+
+rk_test_health_relay = struct_rk_test_health_relay# /opt/homebrew/include/RadarKit/RKTest.h: 106
 
 # No inserted files
 

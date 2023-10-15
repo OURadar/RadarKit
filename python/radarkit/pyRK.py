@@ -127,8 +127,8 @@ def init_workspace(self, verbose=0, cores=4):
         RKPulseEngineSetFFTModule(workspace.pulseMachine, workspace.fftModule)
 
         RKPulseEngineSetEssentials(workspace.pulseMachine, ctypes.byref(desc),
-                                           workspace.configs, ctypes.byref(workspace.configIndex),
-                                           workspace.pulses, ctypes.byref(workspace.pulseIndex))
+                                   workspace.configs, ctypes.byref(workspace.configIndex),
+                                   workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKPulseEngineSetCoreCount(workspace.pulseMachine, cores)
         if (desc.initFlags & RKInitFlagStartPulseEngine):
             RKPulseEngineStart(workspace.pulseMachine)
@@ -136,8 +136,8 @@ def init_workspace(self, verbose=0, cores=4):
         workspace.ringMachine = RKPulseRingFilterEngineInit()
         RKPulseRingFilterEngineSetVerbose(workspace.ringMachine, verbose)
         RKPulseRingFilterEngineSetEssentials(workspace.ringMachine, ctypes.byref(desc),
-                                                     workspace.configs, ctypes.byref(workspace.configIndex),
-                                                     workspace.pulses, ctypes.byref(workspace.pulseIndex))
+                                             workspace.configs, ctypes.byref(workspace.configIndex),
+                                             workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKPulseRingFilterEngineSetCoreCount(workspace.ringMachine, 2)
         if (desc.initFlags & RKInitFlagStartRingFilterEngine):
             RKPulseRingFilterEngineStart(workspace.ringMachine)
@@ -150,9 +150,9 @@ def init_workspace(self, verbose=0, cores=4):
         RKMomentEngineSetVerbose(workspace.momentMachine, verbose)
         RKMomentEngineSetFFTModule(workspace.momentMachine, workspace.fftModule)
         RKMomentEngineSetEssentials(workspace.momentMachine, ctypes.byref(desc),
-                                            workspace.configs, ctypes.byref(workspace.configIndex),
-                                            workspace.pulses, ctypes.byref(workspace.pulseIndex),
-                                            workspace.rays, ctypes.byref(workspace.rayIndex))
+                                    workspace.configs, ctypes.byref(workspace.configIndex),
+                                    workspace.pulses, ctypes.byref(workspace.pulseIndex),
+                                    workspace.rays, ctypes.byref(workspace.rayIndex))
         RKMomentEngineSetCoreCount(workspace.momentMachine, 2)
         RKMomentEngineStart(workspace.momentMachine)
 
@@ -160,15 +160,15 @@ def init_workspace(self, verbose=0, cores=4):
         workspace.sweepMachine = RKSweepEngineInit()
         RKSweepEngineSetVerbose(workspace.sweepMachine, verbose)
         RKSweepEngineSetEssentials(workspace.sweepMachine, ctypes.byref(desc), None,
-                                          workspace.configs, ctypes.byref(workspace.configIndex),
-                                          workspace.rays, ctypes.byref(workspace.rayIndex))
+                                   workspace.configs, ctypes.byref(workspace.configIndex),
+                                   workspace.rays, ctypes.byref(workspace.rayIndex))
         RKSweepEngineSetRecord(workspace.sweepMachine, True)
         RKSweepEngineStart(workspace.sweepMachine)
 
         workspace.recorder = RKRawDataRecorderInit()
         RKRawDataRecorderSetEssentials(workspace.recorder, ctypes.byref(desc), None,
-                                               workspace.configs, ctypes.byref(workspace.configIndex),
-                                               workspace.pulses, ctypes.byref(workspace.pulseIndex))
+                                       workspace.configs, ctypes.byref(workspace.configIndex),
+                                       workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKRawDataRecorderSetRawDataType(workspace.recorder, RKRawDataTypeAfterMatchedFilter)
         RKRawDataRecorderSetVerbose(workspace.recorder, verbose)
 
