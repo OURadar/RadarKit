@@ -189,7 +189,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 					break;
 				case RKMomentMaskLag3:
 					space->S[p][k] = powf(space->aR[p][1][k], 6.0f / 7.0f) * powf(space->aR[p][2][k], 3.0f / 7.0f)
-					/ powf(space->aR[p][3][k], 2.0f / 7.0f);
+					               / powf(space->aR[p][3][k], 2.0f / 7.0f);
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = 11.0f * logf(space->aR[p][1][k]) + 2.0f * logf(space->aR[p][2][k]);
 					den = 13.0f * logf(space->aR[p][3][k]);
@@ -197,7 +197,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 					break;
 				case RKMomentMaskLag4:
 					space->S[p][k] = powf(space->aR[p][1][k], 54.0f / 86.0f) * powf(space->aR[p][2][k], 39.0f / 86.0f) * powf(space->aR[p][3][k], 14.0f / 86.0f)
-					/ powf(space->aR[p][4][k], 21.0f / 86.0f);
+					               / powf(space->aR[p][4][k], 21.0f / 86.0f);
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = 13.0f * logf(space->aR[p][1][k]) + 7.0f * logf(space->aR[p][2][k]);
 					den = 3.0f * logf(space->aR[p][3][k]) + 17.0f * logf(space->aR[p][4][k]);

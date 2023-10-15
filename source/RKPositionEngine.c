@@ -97,29 +97,29 @@ static void *pulseTagger(void *_in) {
     int i, j, k, s;
     // uint16_t c0, c1;
     uint32_t gateCount;
-	struct timeval t0, t1;
+    struct timeval t0, t1;
 
-	RKPulse *pulse;
+    RKPulse *pulse;
     RKPosition *positionBefore;
     RKPosition *positionAfter;
     double timeBefore;
     double timeAfter;
     double timeLatest;
     double alpha;
-	RKMarker marker0;
-	RKMarker marker1 = RKMarkerSweepEnd;
+    RKMarker marker0;
+    RKMarker marker1 = RKMarkerSweepEnd;
     bool hasSweepEnd;
 
-	// Update the engine state
-	engine->state |= RKEngineStateWantActive;
-	engine->state ^= RKEngineStateActivating;
+    // Update the engine state
+    engine->state |= RKEngineStateWantActive;
+    engine->state ^= RKEngineStateActivating;
 
-	// If multiple workers are needed, here will be the time to launch them.
+    // If multiple workers are needed, here will be the time to launch them.
 
     RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
 
-	// Increase the tic once to indicate the engine is ready
-	engine->tic = 1;
+    // Increase the tic once to indicate the engine is ready
+    engine->tic = 1;
 
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
@@ -270,10 +270,10 @@ static void *pulseTagger(void *_in) {
             marker0 |= RKMarkerSweepBegin;
         }
 
-		// Mode change also indicates a start
-		if ((marker1 & RKPositionFlagScanModeMask) != (marker0 & RKPositionFlagScanModeMask)) {
-			marker0 |= RKMarkerSweepBegin;
-		}
+        // Mode change also indicates a start
+        if ((marker1 & RKPositionFlagScanModeMask) != (marker0 & RKPositionFlagScanModeMask)) {
+            marker0 |= RKMarkerSweepBegin;
+        }
 
         if (marker0 & RKMarkerSweepBegin || (marker0 & RKMarkerScanTypeMask) != (marker1 & RKMarkerScanTypeMask)) {
             if (engine->verbose) {
@@ -336,9 +336,9 @@ static void *pulseTagger(void *_in) {
 
         pulse->header.s |= RKPulseStatusHasPosition;
 
-		engine->tic++;
+        engine->tic++;
 
-		// Update pulseIndex for the next watch
+        // Update pulseIndex for the next watch
         k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
     }
     engine->state ^= RKEngineStateActive;
@@ -404,7 +404,7 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
         RKLog("Error. Unable to start position engine.\n");
         return RKResultFailedToStartPedestalWorker;
     }
-	while (engine->tic == 0) {
+    while (engine->tic == 0) {
         usleep(10000);
     }
     struct timeval t;
@@ -414,25 +414,25 @@ int RKPositionEngineStart(RKPositionEngine *engine) {
 }
 
 int RKPositionEngineStop(RKPositionEngine *engine) {
-	if (engine->state & RKEngineStateDeactivating) {
-		if (engine->verbose > 1) {
-			RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
-		}
-		return RKResultEngineDeactivatedMultipleTimes;
-	}
-	if (!(engine->state & RKEngineStateWantActive)) {
-		RKLog("%s Not active.\n", engine->name);
-		return RKResultEngineDeactivatedMultipleTimes;
-	}
+    if (engine->state & RKEngineStateDeactivating) {
+        if (engine->verbose > 1) {
+            RKLog("%s Info. Engine is being or has been deactivated.\n", engine->name);
+        }
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
+    if (!(engine->state & RKEngineStateWantActive)) {
+        RKLog("%s Not active.\n", engine->name);
+        return RKResultEngineDeactivatedMultipleTimes;
+    }
     RKLog("%s Stopping ...\n", engine->name);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
-	if (engine->threadId) {
-		pthread_join(engine->threadId, NULL);
-		engine->threadId = (pthread_t)0;
-	} else {
-		RKLog("%s Invalid thread ID.\n", engine->name);
-	}
+    if (engine->threadId) {
+        pthread_join(engine->threadId, NULL);
+        engine->threadId = (pthread_t)0;
+    } else {
+        RKLog("%s Invalid thread ID.\n", engine->name);
+    }
     engine->state ^= RKEngineStateDeactivating;
     RKLog("%s Stopped.\n", engine->name);
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {

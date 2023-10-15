@@ -214,9 +214,9 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
         mq = (RKVec *)space->mX[p].q;
         r0i = (RKVec *)space->R[p][0].i;
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_add(*mi, *s0i);                                                             // mX += X
-            *mq = _rk_mm_add(*mq, *s0q);                                                             // mX += X
-            *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));     // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *mi = _rk_mm_add(*mi, *s0i);                                                           // mX += X
+            *mq = _rk_mm_add(*mq, *s0q);                                                           // mX += X
+            *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));   // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
             s0i++;
             s0q++;
             mi++;
@@ -237,11 +237,11 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
         r1i = (RKVec *)space->R[p][1].i;
         r1q = (RKVec *)space->R[p][1].q;
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_add(*mi, *s0i);                                                             // mX += X
-            *mq = _rk_mm_add(*mq, *s0q);                                                             // mX += X
-            *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));     // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
-            *r1i = _rk_mm_add(*r1i, _rk_mm_add(_rk_mm_mul(*s0i, *s1i), _rk_mm_mul(*s0q, *s1q)));     // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
-            *r1q = _rk_mm_add(*r1q, _rk_mm_sub(_rk_mm_mul(*s0q, *s1i), _rk_mm_mul(*s0i, *s1q)));     // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+            *mi = _rk_mm_add(*mi, *s0i);                                                           // mX += X
+            *mq = _rk_mm_add(*mq, *s0q);                                                           // mX += X
+            *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));   // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *r1i = _rk_mm_add(*r1i, _rk_mm_add(_rk_mm_mul(*s0i, *s1i), _rk_mm_mul(*s0q, *s1q)));   // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+            *r1q = _rk_mm_add(*r1q, _rk_mm_sub(_rk_mm_mul(*s0q, *s1i), _rk_mm_mul(*s0i, *s1q)));   // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
             s0i++;
             s0q++;
             s1i++;
@@ -271,13 +271,13 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
         r2i = (RKVec *)space->R[p][2].i;
         r2q = (RKVec *)space->R[p][2].q;
         for (k = 0; k < K; k++) {
-            *mi = _rk_mm_add(*mi, *s0i);                                                             // mX += X
-            *mq = _rk_mm_add(*mq, *s0q);                                                             // mX += X
-            *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));     // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
-            *r1i = _rk_mm_add(*r1i, _rk_mm_add(_rk_mm_mul(*s0i, *s1i), _rk_mm_mul(*s0q, *s1q)));     // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
-            *r1q = _rk_mm_add(*r1q, _rk_mm_sub(_rk_mm_mul(*s0q, *s1i), _rk_mm_mul(*s0i, *s1q)));     // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
-            *r2i = _rk_mm_add(*r2i, _rk_mm_add(_rk_mm_mul(*s0i, *s2i), _rk_mm_mul(*s0q, *s2q)));     // R[2].i += X[n] * X[n-2]'  (I += I1 * I2 + Q1 * Q2)
-            *r2q = _rk_mm_add(*r2q, _rk_mm_sub(_rk_mm_mul(*s0q, *s2i), _rk_mm_mul(*s0i, *s2q)));     // R[2].q += X[n] * X[n-2]'  (Q += Q1 * I2 - I1 * Q2)
+            *mi = _rk_mm_add(*mi, *s0i);                                                           // mX += X
+            *mq = _rk_mm_add(*mq, *s0q);                                                           // mX += X
+            *r0i = _rk_mm_add(*r0i, _rk_mm_add(_rk_mm_mul(*s0i, *s0i), _rk_mm_mul(*s0q, *s0q)));   // R[0].i += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+            *r1i = _rk_mm_add(*r1i, _rk_mm_add(_rk_mm_mul(*s0i, *s1i), _rk_mm_mul(*s0q, *s1q)));   // R[1].i += X[n] * X[n-1]'  (I += I1 * I2 + Q1 * Q2)
+            *r1q = _rk_mm_add(*r1q, _rk_mm_sub(_rk_mm_mul(*s0q, *s1i), _rk_mm_mul(*s0i, *s1q)));   // R[1].q += X[n] * X[n-1]'  (Q += Q1 * I2 - I1 * Q2)
+            *r2i = _rk_mm_add(*r2i, _rk_mm_add(_rk_mm_mul(*s0i, *s2i), _rk_mm_mul(*s0q, *s2q)));   // R[2].i += X[n] * X[n-2]'  (I += I1 * I2 + Q1 * Q2)
+            *r2q = _rk_mm_add(*r2q, _rk_mm_sub(_rk_mm_mul(*s0q, *s2i), _rk_mm_mul(*s0i, *s2q)));   // R[2].q += X[n] * X[n-2]'  (Q += Q1 * I2 - I1 * Q2)
             s0i++;
             s0q++;
             s1i++;
@@ -478,8 +478,8 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
                 RKShowVecIQZ(variable, &X[n], gateShown);
             }
             printf(RKEOL);
-            RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                                                 // mean(X) in MATLAB
-            RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                                                 // var(X, 1) in MATLAB
+            RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                                   // mean(X) in MATLAB
+            RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                                   // var(X, 1) in MATLAB
             printf(RKEOL);
             for (k = 0; k < 3; k++) {
                 sprintf(variable, "  R[%d] = ", k);
@@ -499,7 +499,7 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
             printf(RKEOL);
         }
         printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
-        RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                                      // xcorr(Xh, Xv, 'unbiased') in MATLAB
+        RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                        // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
         RKShowVecFloat("   ZDR = ", space->ZDR, gateShown);
         RKShowVecFloat(" PhiDP = ", space->PhiDP, gateShown);
@@ -610,9 +610,9 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
             RKVec *mq = (RKVec *)space->mX[p].q;
             RKVec *r0 = (RKVec *)space->R[p][0].i;
             for (k = 0; k < K; k++) {
-                *mi = _rk_mm_add(*mi, *si);                                                                   // mX += X
-                *mq = _rk_mm_add(*mq, *sq);                                                                   // mX += X
-                *r0 = _rk_mm_add(*r0, _rk_mm_add(_rk_mm_mul(*si, *si), _rk_mm_mul(*sq, *sq)));       // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
+                *mi = _rk_mm_add(*mi, *si);                                                        // mX += X
+                *mq = _rk_mm_add(*mq, *sq);                                                        // mX += X
+                *r0 = _rk_mm_add(*r0, _rk_mm_add(_rk_mm_mul(*si, *si), _rk_mm_mul(*sq, *sq)));     // R[0] += X[n] * X[n]'  (I += I1 * I2 + Q1 * Q2)
                 si++;
                 sq++;
                 mi++;
@@ -647,15 +647,15 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
         for (; n < count; n += 2) {
             RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
             RKIQZ Xk = RKGetSplitComplexDataFromPulse(pulses[n - 1], p);
-            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], gateCount, 1);                                                // R[k] += X[n] * X[n - k]'
+            RKSIMD_zcma(&Xn, &Xk, &space->R[p][1], gateCount, 1);                                  // R[k] += X[n] * X[n - k]'
             j++;
         }
-        RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                                             // R[1] /= j   (unbiased)
-        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                                                // aR[1] = abs(R[1])
+        RKSIMD_izscl(&space->R[p][1], 1.0f / (float)(j), gateCount);                               // R[1] /= j   (unbiased)
+        RKSIMD_zabs(&space->R[p][1], space->aR[p][1], gateCount);                                  // aR[1] = abs(R[1])
 
         // Mean and variance (2nd moment)
-        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                                                // E{Xh} * E{Xh}' --> var  (step 1)
-        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                                                 // Rh[] - var     --> var  (step 2)
+        RKSIMD_zsmul(&space->mX[p], &space->vX[p], gateCount, 1);                                  // E{Xh} * E{Xh}' --> var  (step 1)
+        RKSIMD_izsub(&space->R[p][0], &space->vX[p], gateCount);                                   // Rh[] - var     --> var  (step 2)
     }
 
     // Cross-channel
@@ -675,17 +675,17 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
     }
     Xh = RKGetSplitComplexDataFromPulse(pulses[n], 0);
     Xv = RKGetSplitComplexDataFromPulse(pulses[n], 1);
-    RKSIMD_zmul(&Xh, &Xv, &space->C[0], gateCount, 1);                                                           // C = Xh * Xv', flag 1 = conjugate
+    RKSIMD_zmul(&Xh, &Xv, &space->C[0], gateCount, 1);                                             // C = Xh * Xv', flag 1 = conjugate
     j = 1;
     n += 2;
     for (; n < count; n += 2) {
         Xh = RKGetSplitComplexDataFromPulse(pulses[n], 0);
         Xv = RKGetSplitComplexDataFromPulse(pulses[n], 1);
-        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                                                       // C += Xh[] * Xv[]'
+        RKSIMD_zcma(&Xh, &Xv, &space->C[0], gateCount, 1);                                         // C += Xh[] * Xv[]'
         j++;
     }
     RKSIMD_izrmrm(&space->C[0], space->aC[0], space->aR[0][0],
-                  space->aR[1][0], 1.0f / (float)(j), gateCount);                                                // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
+                  space->aR[1][0], 1.0f / (float)(j), gateCount);                                  // aC = |C| / sqrt(|Rh(0)*Rv(0)|)
 
     // Mark the calculated moments
     space->calculatedMoments = RKMomentListHm
@@ -752,8 +752,8 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
                 RKShowVecIQZ(variable, &X[n], gateShown);
             }
             printf(RKEOL);
-            RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                                                 // mean(X) in MATLAB
-            RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                                                 // var(X, 1) in MATLAB
+            RKShowVecIQZ("    mX = ", &space->mX[p], gateShown);                                   // mean(X) in MATLAB
+            RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                                   // var(X, 1) in MATLAB
             printf(RKEOL);
             for (k = 0; k < 2; k++) {
                 sprintf(variable, "  R[%d] = ", k);
@@ -773,7 +773,7 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
             printf(RKEOL);
         }
         printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
-        RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                                      // xcorr(Xh, Xv, 'unbiased') in MATLAB
+        RKShowVecIQZ("  C[0] = ", &space->C[0], gateShown);                                        // xcorr(Xh, Xv, 'unbiased') in MATLAB
         printf(RKEOL);
         RKShowVecFloat("   ZDR = ", space->ZDR, gateShown);
         RKShowVecFloat(" PhiDP = ", space->PhiDP, gateShown);

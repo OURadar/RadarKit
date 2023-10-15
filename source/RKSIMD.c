@@ -370,25 +370,25 @@ void RKSIMD_iymul_reg(RKComplex *src, RKComplex *dst, const int n) {
 void RKSIMD_iyconj(RKComplex *src, const int n) {
     int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     const RKVec m = _rk_mm_load(_rk_flip_odd_sign_mask);
-	RKVec *s = (RKVec *)src;
+    RKVec *s = (RKVec *)src;
     for (k = 0; k < K; k++) {
         *s = _rk_mm_mul(*s, m);
         s++;
     }
-	return;
+    return;
 }
 
 void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
     int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec r, i, x;
-	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
-	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
+    RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
+    RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
     #if !defined(__FMA__)
     const RKVec m = _rk_mm_load(_rk_flip_even_sign_mask);        // [ -1   1  -1   1 ]
     #endif
     for (k = 0; k < K; k++) {
-		r = _rk_mm_dup_even(*s);                                 // [  a   a   x   x ]
-		i = _rk_mm_dup_odd(*s);                                  // [  b   b   y   y ]
+        r = _rk_mm_dup_even(*s);                                 // [  a   a   x   x ]
+        i = _rk_mm_dup_odd(*s);                                  // [  b   b   y   y ]
         x = _rk_mm_flip_pair(*d);                                // [  d   c   w   z ]
         i = _rk_mm_mul(i, x);                                    // [ bd  bc  yw  yz ]
         #if defined(__FMA__)
@@ -404,14 +404,14 @@ void RKSIMD_iymul(RKComplex *src, RKComplex *dst, const int n) {
 }
 
 void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
-	int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
-	RKVec r, i, x;
-	RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
-	RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
+    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKVec r, i, x;
+    RKVec *s = (RKVec *)src;                                     // [  a   b   x   y ]
+    RKVec *d = (RKVec *)dst;                                     // [  c   d   z   w ]
     #if !defined(__FMA__)
     const RKVec m = _rk_mm_load(_rk_flip_odd_sign_mask);         // [  1  -1   1  -1 ]
     #endif
-	for (k = 0; k < K; k++) {
+    for (k = 0; k < K; k++) {
         r = _rk_mm_dup_even(*s);                                 // [  a   a   x   x ]
         i = _rk_mm_dup_odd(*s);                                  // [  b   b   y   y ]
         x = _rk_mm_flip_pair(*d);                                // [  d   c   w   z ]
@@ -422,19 +422,19 @@ void RKSIMD_iymulc(RKComplex *src, RKComplex *dst, const int n) {
         r = _rk_mm_mul(r, m);                                    // [ ac -ad  xz -xw ]
         *d = _rk_mm_add(_rk_mm_mul(i, x), r);                    // [b b y y] * [d c w z] + [ac -ad xz -xw] = [bd+ac bc-ad yw+xz yz-xw]
         #endif
-		s++;
-		d++;
-	}
-	return;
+        s++;
+        d++;
+    }
+    return;
 }
 
 void RKSIMD_iymul2(RKComplex *src, RKComplex *dst, const int n, const bool c) {
-	if (c) {
+    if (c) {
         return RKSIMD_iymulc(src, dst, n);
-	} else {
-		return RKSIMD_iymul(src, dst, n);
-	}
-	return;
+    } else {
+        return RKSIMD_iymul(src, dst, n);
+    }
+    return;
 }
 
 void RKSIMD_iyscl(RKComplex *src, const RKFloat m, const int n) {

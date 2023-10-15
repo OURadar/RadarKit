@@ -2,6 +2,8 @@
 //  RKSweepFile.c
 //  RadarKit
 //
+//  This is less common. Refer RKProductFile
+//
 //  Created by Boonleng Cheong on 6/27/18.
 //  Copyright (c) 2018-2021 Boonleng Cheong. All rights reserved.
 //
