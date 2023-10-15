@@ -301,6 +301,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.pulseToRayRatio = 1;
     user->desc.positionLatency = 0.00001;
     user->port = 10000;
+    user->recordLevel = 1;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
 
     return user;

@@ -71,7 +71,7 @@ static void *rayReleaser(void *in) {
 static void *sweepManager(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
 
-    int i, j, p, s;
+    int i, j, p;
 
     // Grab the anchor reference as soon as possible
     const uint8_t scratchSpaceIndex = engine->scratchSpaceIndex;
@@ -93,7 +93,7 @@ static void *sweepManager(void *in) {
     if (engine->verbose) {
         RKRay *S = sweep->rays[0];
         RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-        RKLog("%s C%02d E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
+        RKLog("%s C%02d concluded   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
               engine->name,
               S->header.configIndex,
               sweep->header.config.sweepElevation,
@@ -148,52 +148,56 @@ static void *sweepManager(void *in) {
         return NULL;
     }
 
+    // Product registration now takes on different behavior, the following block is no longer relevant
+    // Commented out for now until it is removed
+
     // Other clients may report products at the same time here, so we wait
-    s = 0;
-    bool allReported = true;
-    for (i = 0; i < engine->productBufferDepth; i++) {
-        if (engine->productBuffer[i].flag == RKProductStatusVacant) {
-            continue;
-        }
-        pthread_mutex_lock(&engine->productMutex);
-        engine->productBuffer[i].flag |= RKProductStatusSleep0;
-        pthread_mutex_unlock(&engine->productMutex);
-        while (engine->productBuffer[i].i != sweep->header.config.i &&
-               engine->productTimeoutSeconds * 100 > s &&
-               engine->state & RKEngineStateWantActive) {
-            usleep(10000);
-            if (++s % 100 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
-            };
-        }
-        if (engine->verbose > 2) {
-            RKLog("%s %s @ i = %zu ==? %zu\n", engine->name,
-                  RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId), engine->productBuffer[i].i, sweep->header.config.i);
-        }
-        pthread_mutex_lock(&engine->productMutex);
-        engine->productBuffer[i].flag ^= RKProductStatusSleep0;
-        pthread_mutex_unlock(&engine->productMutex);
-        if (engine->productBuffer[i].i != sweep->header.config.i) {
-            allReported = false;
-        }
-    }
+    // int s = 0;
+    // bool allReported = true;
+    // for (i = 0; i < engine->productBufferDepth; i++) {
+    //     RKLog("%s flag[%d] = %x\n", engine->name, i, engine->productBuffer[i].flag);
+    //     if (engine->productBuffer[i].flag == RKProductStatusVacant) {
+    //         continue;
+    //     }
+    //     pthread_mutex_lock(&engine->productMutex);
+    //     engine->productBuffer[i].flag |= RKProductStatusSleep0;
+    //     pthread_mutex_unlock(&engine->productMutex);
+    //     while (engine->productBuffer[i].i != sweep->header.config.i &&
+    //            engine->productTimeoutSeconds * 100 > s &&
+    //            engine->state & RKEngineStateWantActive) {
+    //         usleep(10000);
+    //         if (++s % 100 == 0 && engine->verbose > 1) {
+    //             RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
+    //         };
+    //     }
+    //     if (engine->verbose > 2) {
+    //         RKLog("%s %s @ i = %zu ==? %zu\n", engine->name,
+    //               RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId), engine->productBuffer[i].i, sweep->header.config.i);
+    //     }
+    //     pthread_mutex_lock(&engine->productMutex);
+    //     engine->productBuffer[i].flag ^= RKProductStatusSleep0;
+    //     pthread_mutex_unlock(&engine->productMutex);
+    //     if (engine->productBuffer[i].i != sweep->header.config.i) {
+    //         allReported = false;
+    //     }
+    // }
     if (!(engine->state & RKEngineStateWantActive)) {
         pthread_mutex_lock(&engine->productMutex);
         engine->business--;
         pthread_mutex_unlock(&engine->productMutex);
     }
 
-    j = 0;
-    summary[0] = '\0';
+    // j = 0;
+    // summary[0] = '\0';
 
-    for (i = 0; i < engine->productBufferDepth; i++) {
-        if (engine->productBuffer[i].desc.baseProductList & sweep->header.baseProductList) {
-            j += snprintf(summary + j, RKMaximumCommandLength - j,
-                          rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
-                          engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
-        }
-    }
-    RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
+    // for (i = 0; i < engine->productBufferDepth; i++) {
+    //     if (engine->productBuffer[i].desc.baseProductList & sweep->header.baseProductList) {
+    //         j += snprintf(summary + j, RKMaximumCommandLength - j,
+    //                       rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
+    //                       engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
+    //     }
+    // }
+    // RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -355,7 +359,7 @@ static void *rayGatherer(void *in) {
     const int productCount = __builtin_popcount(momentList);
     for (p = 0; p < productCount; p++) {
         RKProductDesc productDescription = RKGetNextProductDescription(&momentList);
-        engine->baseMomentProductIds[p] = RKSweepEngineRegisterProduct(engine, productDescription);
+        engine->baseMomentProductIds[p] = RKSweepEngineDescribeProduct(engine, productDescription);
     }
 
     if (engine->hasFileHandlingScript) {
@@ -535,7 +539,7 @@ static void *rayGatherer(void *in) {
         tidSweepManager = (pthread_t)0;
     }
     for (p = 0; p < productCount; p++) {
-        RKSweepEngineUnregisterProduct(engine, engine->baseMomentProductIds[p]);
+        RKSweepEngineUndescribeProduct(engine, engine->baseMomentProductIds[p]);
     }
     engine->state ^= RKEngineStateActive;
     return NULL;
@@ -719,7 +723,7 @@ char *RKSweepEngineLatestSummary(RKSweepEngine *engine) {
     return engine->scratchSpaces[engine->scratchSpaceIndex].summary;
 }
 
-RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc desc) {
+RKProductId RKSweepEngineDescribeProduct(RKSweepEngine *engine, RKProductDesc desc) {
     int i = 0;
     RKProductId productId = 42;
     while (engine->productBuffer[i].flag & RKProductStatusActive && i < RKMaximumProductCount) {
@@ -735,7 +739,7 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
     engine->productBuffer[i].pid = productId;
     engine->productBuffer[i].desc = desc;
     engine->productBuffer[i].flag = RKProductStatusActive;
-    RKLog(">%s Product %s%s%s registered   %s   %s\n", engine->name,
+    RKLog(">%s Product %s%s%s described   %s   %s\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
           rkGlobalParameters.showColor ? RKNoColor : "",
@@ -745,7 +749,7 @@ RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *engine, RKProductDesc de
     return productId;
 }
 
-int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId) {
+int RKSweepEngineUndescribeProduct(RKSweepEngine *engine, RKProductId productId) {
     int i = 0;
     while (i < RKMaximumProductCount) {
         if (engine->productBuffer[i].pid == productId) {
@@ -762,7 +766,7 @@ int RKSweepEngineUnregisterProduct(RKSweepEngine *engine, RKProductId productId)
     }
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].flag = RKProductStatusVacant;
-    RKLog(">%s Product %s%s%s unregistered\n", engine->name,
+    RKLog(">%s Product %s%s%s undescribed\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
           rkGlobalParameters.showColor ? RKNoColor : "");

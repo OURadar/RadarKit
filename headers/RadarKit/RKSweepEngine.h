@@ -89,8 +89,8 @@ void RKSweepEngineFlush(RKSweepEngine *);
 char *RKSweepEngineStatusString(RKSweepEngine *);
 char *RKSweepEngineLatestSummary(RKSweepEngine *);
 
-RKProductId RKSweepEngineRegisterProduct(RKSweepEngine *, RKProductDesc);
-int RKSweepEngineUnregisterProduct(RKSweepEngine *, RKProductId);
+RKProductId RKSweepEngineDescribeProduct(RKSweepEngine *, RKProductDesc);
+int RKSweepEngineUndescribeProduct(RKSweepEngine *, RKProductId);
 RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *, RKSweep *, RKProductId);
 int RKSweepEngineSetProductComplete(RKSweepEngine *, RKSweep *, RKProduct *);
 void RKSweepEngineWaitWhileBusy(RKSweepEngine *);

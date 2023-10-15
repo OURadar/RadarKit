@@ -288,7 +288,7 @@ int socketCommandHandler(RKOperator *O) {
                           user->productDescriptions[user->productCount].key,
                           user->productDescriptions[user->productCount].name,
                           user->productDescriptions[user->productCount].symbol);
-                    user->productIds[user->productCount] = RKSweepEngineRegisterProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
+                    user->productIds[user->productCount] = RKSweepEngineDescribeProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
                     if (user->productIds[user->productCount]) {
                         sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
                                 user->productDescriptions[user->productCount].key,
@@ -1562,7 +1562,7 @@ int socketTerminateHandler(RKOperator *O) {
     RKLog(">%s %s Disconnected.\n", engine->name, O->name);
     for (k = 0; k < user->productCount; k++) {
         if (user->productIds[k]) {
-            RKSweepEngineUnregisterProduct(user->radar->sweepEngine, user->productIds[k]);
+            RKSweepEngineUndescribeProduct(user->radar->sweepEngine, user->productIds[k]);
             user->productIds[k] = 0;
         }
     }
