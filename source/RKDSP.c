@@ -484,10 +484,12 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     module->verbose = verbose;
 
     // DFT Wisdom
+    char *wisdom = (char *)malloc(1024 * 1024);
     sprintf(module->wisdomFile, RKFFTWisdomFile);
     if (RKFilenameExists(module->wisdomFile)) {
         RKLog("%s Loading DFT wisdom ...\n", module->name);
         fftwf_import_wisdom_from_filename(module->wisdomFile);
+        strcpy(wisdom, fftwf_export_wisdom_to_string());
     } else {
         RKLog("%s DFT wisdom file not found.\n", module->name);
         module->exportWisdom = true;
@@ -510,8 +512,6 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     if (module->verbose) {
         RKLog("%s Allocating FFT resources with capacity %s ...\n", module->name, RKIntegerToCommaStyleString(internalCapacity));
     }
-    struct timeval toc, tic;
-    gettimeofday(&tic, NULL);
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
         if (module->verbose) {
@@ -523,13 +523,19 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         module->plans[k].backwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, out, in, FFTW_BACKWARD, FFTW_MEASURE);
         module->count++;
     }
-    gettimeofday(&toc, NULL);
-    if (RKTimevalDiff(toc, tic) > 0.5) {
-        module->exportWisdom = true;
+    if (!module->exportWisdom) {
+        if (strcmp(wisdom, fftwf_export_wisdom_to_string())) {
+            module->exportWisdom = true;
+        }
     }
-
+    if (module->exportWisdom) {
+        RKLog("%s Saving DFT wisdom ...\n", module->name);
+        fftwf_export_wisdom_to_filename(module->wisdomFile);
+        module->exportWisdom = false;
+    }
     free(in);
     free(out);
+    free(wisdom);
     return module;
 }
 

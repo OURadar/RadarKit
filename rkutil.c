@@ -210,7 +210,7 @@ static void setSystemLevel(UserParams *user, const int level) {
         case 2:
             // Low: 10-MHz
             user->fs = 10000000;
-            user->gateCount = 10000;
+            user->gateCount = 10048;
             user->coresForPulseCompression = 2;
             user->coresForPulseRingFilter = 2;
             user->coresForMomentProcessor = 2;

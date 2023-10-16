@@ -2692,9 +2692,12 @@ void RKTestWriteFFTWisdom(const int offt) {
     SHOW_FUNCTION_NAME
     fftwf_plan plan;
     fftwf_complex *in, *out;
+    char *wisdom = (char *)malloc(1024 * 1024);
     int nfft = 1 << offt;
     in = fftwf_malloc(nfft * sizeof(fftwf_complex));
     out = fftwf_malloc(nfft * sizeof(fftwf_complex));
+    fftwf_import_wisdom_from_filename(RKFFTWisdomFile);
+    strcpy(wisdom, fftwf_export_wisdom_to_string());
     RKLog("Generating FFT wisdom ...\n");
     while (nfft > 2) {
         RKLog("NFFT %s\n", RKIntegerToCommaStyleString(nfft));
@@ -2710,9 +2713,14 @@ void RKTestWriteFFTWisdom(const int offt) {
     }
     fftwf_free(in);
     fftwf_free(out);
-    RKLog("Exporting FFT wisdom ...\n");
-    fftwf_export_wisdom_to_filename(RKFFTWisdomFile);
+    if (strcmp(wisdom, fftwf_export_wisdom_to_string()) == 0) {
+        RKLog("No new wisdom generated.\n");
+    } else {
+        RKLog("Exporting FFT wisdom ...\n");
+        fftwf_export_wisdom_to_filename(RKFFTWisdomFile);
+    }
     RKLog("Done.\n");
+    free(wisdom);
 }
 
 void RKTestRingFilterShowCoefficients(void) {

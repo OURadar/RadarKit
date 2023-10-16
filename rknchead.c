@@ -6,12 +6,12 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "Please supply a filename.\n");
         return EXIT_FAILURE;
     }
-    
+
     char filename[1024];
     struct timeval s, e;
 
     strcpy(filename, argv[1]);
-    
+
     RKSetWantScreenOutput(true);
 
     int k = 0;
@@ -25,6 +25,6 @@ int main(int argc, const char **argv) {
     gettimeofday(&e, NULL);
     double dt = RKTimevalDiff(e, s);
     RKLog("Elapsed time = %.3f s   (%s files / sec)\n", dt, RKFloatToCommaStyleString((double)k / dt));
-    
+
     return EXIT_SUCCESS;
 }

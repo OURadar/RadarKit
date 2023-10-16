@@ -3610,7 +3610,7 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
                         break;
                     case RKStatusEnumStandby:
                     case RKStatusEnumLow:
-                        strcpy(prefix, RKOrangeColor);
+                        strcpy(prefix, RKLightOrangeColor);
                         break;
                     case RKStatusEnumFault:
                     case RKStatusEnumTooLow:
