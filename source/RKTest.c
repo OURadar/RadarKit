@@ -1652,17 +1652,19 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     strcpy(config->waveformName, waveform->name);
     config->waveform = waveform;
     config->waveformDecimate = waveform;
-    config->sweepAzimuth = 42.0;
-    config->systemZCal[0] = 48.0;
-    config->systemZCal[1] = 48.0;
+    config->sweepAzimuth = 42.0;                                               // For RHI mode
+    config->sweepElevation = 0.0;                                              // For PPI mode
+    config->systemZCal[0] = 48.0;                                              // H-channel Z calibration
+    config->systemZCal[1] = 48.0;                                              // V-channel Z calibration
     config->systemDCal = 0.02;
     config->systemPCal = 0.2;
     config->prt[0] = 0.5e-3f;
-    config->startMarker = RKMarkerScanTypePPI | RKMarkerSweepBegin;
+    config->startMarker = RKMarkerScanTypeRHI | RKMarkerSweepBegin;
     config->noise[0] = 0.00011;
     config->noise[1] = 0.00012;
     config->SNRThreshold = -3.0f;
     config->SQIThreshold = 0.1f;
+    config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
 
     RKPulseEngine *engine = RKPulseEngineInit();
     RKPulseEngineSetEssentials(engine, &desc, fftModule, configs, &configIndex, pulses, &pulseIndex);
@@ -1749,9 +1751,9 @@ void RKTestSimpleMomentEngine(const int mode) {
     RKSetUseDailyLog(true);
 
     // Hyper parameters
-    const uint32_t maxGateCount = 4000;                    // Number of range gate samples
-    const uint32_t pulsesPerRay = 40;                      // Number of pulses per ray
-    const uint32_t raysPerSweep = 50;                      // Say elevation 1 - 50 degrees at a 1-deg increment
+    const uint32_t maxGateCount = 4000;                                        // Number of range gate samples
+    const uint32_t pulsesPerRay = 40;                                          // Number of pulses per ray
+    const uint32_t raysPerSweep = 50;                                          // Say elevation 1 - 50 degrees at a 1-deg increment
 
     // Internal indices
     uint32_t configIndex = 0;
@@ -1764,16 +1766,16 @@ void RKTestSimpleMomentEngine(const int mode) {
     // Radar description, should be the same as the pulse engine
     RKRadarDesc desc = {
         .name = "Horus",
-        .initFlags = RKInitFlagAllocConfigBuffer           // Only for housekeeping, doesn't really matter here
+        .initFlags = RKInitFlagAllocConfigBuffer                               // Only for housekeeping, doesn't really matter here
                    | RKInitFlagAllocRawIQBuffer
                    | RKInitFlagAllocMomentBuffer,
         .configBufferDepth = 2,
-        .pulseToRayRatio = 1,                              // A down-sampling factor after pulse compression
-        .pulseBufferDepth = 2000,                          // Number of pulses the buffer can hold (RKBuffer pulses)
-        .pulseCapacity = capacity,                         // Number of range gates each pulse can hold
-        .rayBufferDepth = 700,                             // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
-        .filePrefix = "HRS",                               // A prefix for the output file name
-        .dataPath = "data",                                // A path to the output directory
+        .pulseToRayRatio = 1,                                                  // A down-sampling factor after pulse compression
+        .pulseBufferDepth = 2000,                                              // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseCapacity = capacity,                                             // Number of range gates each pulse can hold
+        .rayBufferDepth = 700,                                                 // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
+        .filePrefix = "HRS",                                                   // A prefix for the output file name
+        .dataPath = "data",                                                    // A path to the output directory
         .latitude = 35.23682,
         .longitude = -97.46381,
         .wavelength = 0.10,
@@ -1806,9 +1808,10 @@ void RKTestSimpleMomentEngine(const int mode) {
     strcpy(config->waveformName, waveform->name);
     config->waveform = waveform;
     config->waveformDecimate = waveform;
-    config->sweepAzimuth = 42.0;
-    config->systemZCal[0] = 48.0;
-    config->systemZCal[1] = 48.0;
+    config->sweepAzimuth = 42.0;                                               // For RHI mode
+    config->sweepElevation = 0.0;                                              // For PPI mode
+    config->systemZCal[0] = 48.0;                                              // H-channel Z calibration
+    config->systemZCal[1] = 48.0;                                              // V-channel Z calibration
     config->systemDCal = 0.02;
     config->systemPCal = 0.2;
     config->prt[0] = 0.5e-3f;
@@ -1817,12 +1820,13 @@ void RKTestSimpleMomentEngine(const int mode) {
     config->noise[1] = 0.00012;
     config->SNRThreshold = -3.0f;
     config->SQIThreshold = 0.1f;
+    config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
 
     // Moment engine
     RKMomentEngine *momentEngine = RKMomentEngineInit();
     RKMomentEngineSetEssentials(momentEngine, &desc, fftModule, configs, &configIndex, pulses, &pulseIndex, rays, &rayIndex);
-    RKMomentEngineSetMomentProcessor(momentEngine, RKPulsePair);         // RKPulsePair, RKPulsePairHop or RKMultiLag
-    RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);          // Special mode for electronic beams
+    RKMomentEngineSetMomentProcessor(momentEngine, RKPulsePair);               // RKPulsePair, RKPulsePairHop or RKMultiLag
+    RKMomentEngineSetExcludeBoundaryPulses(momentEngine, true);                // Special mode for electronic beams
     RKMomentEngineSetCoreCount(momentEngine, 2);
     RKMomentEngineStart(momentEngine);
 
