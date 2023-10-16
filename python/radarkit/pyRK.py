@@ -73,7 +73,7 @@ def open(filename, opmode='r'):
     out.desc.pulseBufferDepth = 30000
     out.desc.rayBufferDepth = 400
     out.desc.dataPath = b'data'
-    out.PulseFileManager = ReadPulseFromrkfile
+    out.PulseFileManager = read_pulse_from_file
     return out
 
 def set_waveform(self, wfsig):
@@ -234,7 +234,7 @@ def compress(self):
         RKRawDataRecorderSetRecord(workspace.recorder, False)
         self.PulseFileManager(self)
 
-def ReadPulseFromrkfile(self):
+def read_pulse_from_file(self):
     workspace = self.workspace
     config = workspace.configs
     if hasattr(self, 'fid'):
