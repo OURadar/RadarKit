@@ -917,6 +917,11 @@ void RKMomentEngineSetFFTModule(RKMomentEngine *engine, RKFFTModule *module) {
     RKMomentEngineCheckWiring(engine);
 }
 
+void RKMomentEngineSetCalibrator(RKMomentEngine *engine, void (*calibrator)(RKUserModule, RKMomentScratch *), RKUserModule userModule) {
+    engine->calibrator = calibrator;
+    engine->userModule = userModule;
+}
+
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const uint8_t count) {
     if (engine->state & RKEngineStateWantActive) {
         RKLog("Error. Core count cannot be changed when the engine is active.\n");

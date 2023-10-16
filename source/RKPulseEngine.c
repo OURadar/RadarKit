@@ -867,6 +867,11 @@ void RKPulseEngineSetFFTModule(RKPulseEngine *engine, RKFFTModule *module) {
     RKPulseEngineVerifyWiring(engine);
 }
 
+void RKPulseEngineSetCompressor(RKPulseEngine *engine, void (*compressor)(RKUserModule, RKCompressionScratch *), RKUserModule userModule) {
+    engine->compressor = compressor;
+    engine->userModule = userModule;
+}
+
 void RKPulseEngineSetCoreCount(RKPulseEngine *engine, const uint8_t count) {
     if (engine->state & RKEngineStateWantActive) {
         RKLog("%s Error. Core count cannot change when the engine is active.\n", engine->name);

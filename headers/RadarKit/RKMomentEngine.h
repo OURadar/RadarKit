@@ -98,7 +98,8 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          RKBuffer pulseBuffer,   uint32_t *pulseIndex,
                                          RKBuffer rayBuffer,     uint32_t *rayIndex)
                                          __attribute__ ((deprecated));
-void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *) __attribute__ ((deprecated));;
+void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *) __attribute__ ((deprecated));
+void RKMomentEngineSetCalibrator(RKMomentEngine *, void (*)(RKUserModule, RKMomentScratch *), RKUserModule);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *, const bool);

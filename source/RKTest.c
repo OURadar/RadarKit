@@ -1603,8 +1603,9 @@ void *RKTestSimplePulseEngineRetriever(void *in) {
 void RKTestSimplePulseEngine(const RKPulseStatus status) {
     SHOW_FUNCTION_NAME
     RKLog("RKPulseEngineGetVacantPulse() will wait for status = %s (%x)\n",
+        status == RKPulseStatusConsumed ? "RKPulseStatusConsumed" : (
         status == RKPulseStatusProcessed ? "RKPulseStatusProcessed" : (
-        status == RKPulseStatusUsedForMoments ? "RKPulseStatusUsedForMoments" : "RKPulseStatusNull"),
+        status == RKPulseStatusUsedForMoments ? "RKPulseStatusUsedForMoments" : "RKPulseStatusNull")),
         status);
 
     const uint32_t maxGateCount = 1000;
@@ -1698,6 +1699,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
         RKLog(":> k = %02d   pulse @ %p   i = %02zu   gateCount = %d   pulseIndex -> %u\n",
             k, pulse, pulse->header.i, pulse->header.gateCount, *engine->pulseIndex);
+        usleep(500);
     }
 
     if (status == RKPulseStatusConsumed) {
