@@ -112,7 +112,8 @@ char *RKTestByNumberDescription(const int indent) {
     "23 - RKWebSocket unit test\n"
     "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
     "25 - Connect to RadarHub - RKReporterInit()\n"
-    "26 - Illustrate a simple RKPulseEngine() -T26 MODE (0, 1, 2)\n"
+    "26 - Illustrate a simple RKPulseEngine() -T26 MODE (0 = no wait, 1 = process, 2 = consume)\n"
+    "27 - Illustrate a simple RKMomentEngine() -T27 MODE (0 = show, 1 = archive)\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -1742,6 +1743,8 @@ void *RKTestSimpleMomentEngineRayRetriever(void *in) {
 
 void RKTestSimpleMomentEngine(const int mode) {
     SHOW_FUNCTION_NAME
+    RKLog("RKTestSimpleMomentEngine() using file handling script %s\n",
+        mode == 1 ? "scripts/archive.sh" : "scripts/show.sh");
 
     RKSetUseDailyLog(true);
 
