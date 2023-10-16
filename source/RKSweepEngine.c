@@ -276,7 +276,7 @@ static void *sweepManager(void *in) {
         // Make a summary for logging
         if (p == 0) {
             summarySize = sprintf(summary, "%s%s%s %s%s-%s%s%s.%s",
-                                  rkGlobalParameters.showColor ? (engine->record ? RKGreenColor : RKOrangeColor) : "",
+                                  rkGlobalParameters.showColor ? (engine->record ? RKGreenColor : RKLightOrangeColor) : "",
                                   engine->record ? "Recorded": "Skipped",
                                   rkGlobalParameters.showColor ? RKNoColor : "",
                                   filenameTooLong ? "..." : "",

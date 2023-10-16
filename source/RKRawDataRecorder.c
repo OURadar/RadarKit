@@ -159,8 +159,10 @@ static void *pulseRecorder(void *in) {
                 }
             } else {
                 if (strlen(filename)) {
-                    RKLog("%s Skipped %s (%s pulses, %s %sB)\n",
+                    RKLog("%s %sSkipped%s %s (%s pulses, %s %sB)\n",
                           engine->name,
+                          rkGlobalParameters.showColor ? RKLightOrangeColor : "",
+                          rkGlobalParameters.showColor ? RKNoColor : "",
                           filename,
                           RKIntegerToCommaStyleString(n),
                           RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),

@@ -140,6 +140,7 @@
 #define RKMonokaiGreen                       "\033[38;5;154m"
 #define RKMonokaiBlue                        "\033[38;5;81m"
 #define RKMonokaiPurple                      "\033[38;5;141m"
+#define RKLightOrangeColor                   "\033[38;5;220m"
 #define RKWarningColor                       "\033[38;5;15;48;5;197m"
 #define RKPythonColor                        "\033[38;5;226;48;5;24m"
 #define RKRadarKitColor                      "\033[38;5;15;48;5;124m"

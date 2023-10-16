@@ -103,7 +103,11 @@ static void *healthLogger(void *in) {
                 }
             } else {
                 if (engine->verbose && strlen(filename)) {
-                    RKLog("%s Skipped %s\n", engine->name, filename);
+                    RKLog("%s %sSkipped%s %s\n",
+                        engine->name,
+                        rkGlobalParameters.showColor ? RKLightOrangeColor : "",
+                        rkGlobalParameters.showColor ? RKNoColor : "",
+                        filename);
                 }
             }
             i = sprintf(filename, "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
