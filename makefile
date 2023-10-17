@@ -131,7 +131,7 @@ ctypes:
 	headers/RadarKit/RKWaveform.h \
 	headers/RadarKit.h \
 	headers/RadarKit/RKTest.h \
-	-o python/radarkit/_radarkit_ctypes_.py
+	-o python/radarkit/_ctypes_.py
 
 MAKEFLAGS += --jobs=$(CPUS)
 

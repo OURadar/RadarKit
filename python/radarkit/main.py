@@ -4,7 +4,7 @@ import ctypes
 # import builtins
 import numpy as np
 
-from ._radarkit_ctypes_ import *
+from ._ctypes_ import *
 # from . import radial_noise
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

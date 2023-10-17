@@ -1,6 +1,6 @@
 import logging
 
-from .pyRK import *
+from .main import *
 
 __version__ = str(RKVersionString())
 
