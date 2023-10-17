@@ -589,7 +589,7 @@ enum {
                                                     RKPulseStatusUsedForMoments),
     RKPulseStatusRecorded                        = (1 << 12),
     RKPulseStatusStreamed                        = (1 << 13),
-    RKPulseStatusConsumed                        = (1 << 14)
+    RKPulseStatusConsumed                        = (1 << 14)                   // RKPulseStatusConsumed for bring consumed by RKPulseEngineGetProcessedPulse()
 };
 
 typedef uint32_t RKRayStatus;

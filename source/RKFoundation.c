@@ -284,6 +284,10 @@ int RKFileClose(FILE *fid) {
     return fclose(fid);
 }
 
+long RKFileTell(FILE *fid) {
+    return ftell(fid);
+}
+
 size_t RKFileGetSize(FILE *fid) {
     long origin = ftell(fid);
     fseek(fid, 0, SEEK_END);

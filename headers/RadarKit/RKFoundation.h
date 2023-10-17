@@ -121,6 +121,7 @@ void RKExit(int);
 // File operations
 FILE *RKFileOpen(const char *, const char *);
 int RKFileClose(FILE *);
+long RKFileTell(FILE *);
 size_t RKFileGetSize(FILE *);
 
 // Variables in rkGlobalVariable / Presentation
