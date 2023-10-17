@@ -157,7 +157,9 @@ clean:
 	rm -f $(PROGS) $(STATIC_LIB) $(SHARED_LIB) *.log
 	rm -f $(OBJS_PATH)/*.o
 	rm -rf *.dSYM
-	rm -f radarkit/radarkittypes.py
+
+cleanctypes:
+	rm -f python/radarkit/_ctypes_.py
 
 install: showinfo
 	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/
