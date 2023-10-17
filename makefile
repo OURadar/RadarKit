@@ -117,6 +117,7 @@ ctypes:
 	headers/RadarKit/RKTypes.h \
 	headers/RadarKit/RKMisc.h \
 	headers/RadarKit/RKFoundation.h \
+	headers/RadarKit/RKConfig.h \
 	headers/RadarKit/RKDSP.h \
 	headers/RadarKit/RKPulseEngine.h \
 	headers/RadarKit/RKFileHeader.h \

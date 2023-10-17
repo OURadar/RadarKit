@@ -276,6 +276,22 @@ void RKExit(int e) {
     exit(e);
 }
 
+FILE *RKFileOpen(const char *filename, const char *mode) {
+    return fopen(filename, mode);
+}
+
+int RKFileClose(FILE *fid) {
+    return fclose(fid);
+}
+
+size_t RKFileGetSize(FILE *fid) {
+    long origin = ftell(fid);
+    fseek(fid, 0, SEEK_END);
+    size_t size = ftell(fid);
+    fseek(fid, origin, SEEK_SET);
+    return size;
+}
+
 #pragma mark - Global Preferences
 
 void RKSetStatusColor(const bool color) {

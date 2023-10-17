@@ -59,13 +59,15 @@ class Workspace(ctypes.Structure):
     ]
 
 def open(filename, opmode='r'):
-    fid = fopen(filename, opmode)
+    # fid = fopen(filename, opmode)
+    fid = RKFileOpen(filename, opmode);
     out = RKFileHeaderRead(fid).contents
     out.fid = fid
-    origin = ftell(fid)
-    fseek(fid, 0, SEEK_END)
-    out.filesize = ftell(fid)
-    fseek(fid, origin, SEEK_SET)
+    # origin = ftell(fid)
+    # fseek(fid, 0, SEEK_END)
+    # out.filesize = ftell(fid)
+    # fseek(fid, origin, SEEK_SET)
+    out.filesize = RKFileGetSize(fid);
     out.desc.configBufferDepth = 3
     # if pulseBufferDepth larger than pulses in file the rkid.raw_iq could fully
     # save in python memory ortherwise only last {pulseBufferDepth} pulses IQ is in python space.
@@ -116,11 +118,12 @@ def init_workspace(self, verbose=0, cores=4):
 
         workspace.fftModule = RKFFTModuleInit(desc.pulseCapacity, verbose)
 
+        desc.configBufferSize = RKConfigBufferAlloc(ctypes.byref(workspace.configs), desc.configBufferDepth)
         desc.pulseBufferSize = RKPulseBufferAlloc(ctypes.byref(workspace.pulses), desc.pulseCapacity, desc.pulseBufferDepth)
         desc.rayBufferSize = RKRayBufferAlloc(ctypes.byref(workspace.rays), desc.pulseCapacity // desc.pulseToRayRatio, desc.rayBufferDepth)
-        desc.configBufferSize = desc.configBufferDepth * ctypes.sizeof(RKConfig)
+        # desc.configBufferSize = desc.configBufferDepth * ctypes.sizeof(RKConfig)
 
-        workspace.configs = ctypes.cast(malloc(desc.configBufferSize), ctypes.POINTER(RKConfig))
+        # workspace.configs = ctypes.cast(malloc(desc.configBufferSize), ctypes.POINTER(RKConfig))
 
         workspace.pulseMachine = RKPulseEngineInit()
         RKPulseEngineSetVerbose(workspace.pulseMachine, verbose)
@@ -210,9 +213,9 @@ def free_workspace(self, verbose=1):
         RKRawDataRecorderFree(workspace.recorder)
 
         RKFFTModuleFree(workspace.fftModule)
-        free(workspace.configs)
-        free(workspace.pulses)
-        free(workspace.rays)
+        RKConfigBufferFree(workspace.configs)
+        RKPulseBufferFree(workspace.pulses)
+        RKRayBufferFree(workspace.rays)
         RKFileHeaderFree(ctypes.byref(self))
 
 
@@ -236,7 +239,7 @@ def compress(self):
 
 def read_pulse_from_file(self):
     workspace = self.workspace
-    config = workspace.configs
+    # config = workspace.configs
     if hasattr(self, 'fid'):
         # Probably add a progress bar in the future
         p1 = ftell(self.fid)

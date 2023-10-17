@@ -118,6 +118,11 @@ RKComplex RKComplexArraySum(RKComplex *src, const int);
 int RKLog(const char *, ...);
 void RKExit(int);
 
+// File operations
+FILE *RKFileOpen(const char *, const char *);
+int RKFileClose(FILE *);
+size_t RKFileGetSize(FILE *);
+
 // Variables in rkGlobalVariable / Presentation
 void RKSetStatusColor(const bool);
 void RKSetWantColor(const bool);
