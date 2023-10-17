@@ -68,7 +68,7 @@ def open(filename, opmode='r'):
     # if pulseBufferDepth larger than pulses in file the rkid.raw_iq could fully
     # save in python memory ortherwise only last {pulseBufferDepth} pulses IQ is in python space.
     # larger the buffer more load happen in python (more copy and fetch to numpy array conversion)
-    out.desc.pulseBufferDepth = 80000
+    out.desc.pulseBufferDepth = 30000
     out.desc.rayBufferDepth = 400
     out.desc.dataPath = b'data'
     return out
@@ -78,7 +78,6 @@ def close(self):
 
 class core(union_rk_file_header):
     def __init__(self):
-        print(f'Core.__init()__')
         pass
 
     def preparefromrkfile(self, rkfile):
@@ -91,7 +90,6 @@ class core(union_rk_file_header):
         self.desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer
         self.desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
         self.dataType = RKRawDataTypeFromTransceiver
-        print(f'Data is {self.dataType} / {RKRawDataTypeFromTransceiver} or {RKRawDataTypeAfterMatchedFilter}')
         if (self.dataType == RKRawDataTypeFromTransceiver):
             self.desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
         workspace = Workspace()
