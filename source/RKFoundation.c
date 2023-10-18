@@ -136,6 +136,8 @@ int RKLog(const char *whatever, ...) {
         return 0;
     }
 
+    pthread_mutex_lock(&lock);
+
     // Get the time
     gettimeofday(&utc, NULL);
     memcpy(&tm, gmtime(&utc.tv_sec), sizeof(struct tm));
@@ -224,7 +226,6 @@ int RKLog(const char *whatever, ...) {
         fflush(rkGlobalParameters.stream);
     }
     // Write the string to a file if specified
-    pthread_mutex_lock(&lock);
     FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
         if (strlen(rkGlobalParameters.logFolder)) {

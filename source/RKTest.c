@@ -140,9 +140,10 @@ char *RKTestByNumberDescription(const int indent) {
     "56 - Calculating one ray using the Spectral Moment method (** WIP **)\n"
     "\n"
     "60 - Measure the speed of SIMD calculations\n"
-    "61 - Measure the speed of pulse compression\n"
-    "62 - Measure the speed of various moment methods\n"
-    "63 - Measure the speed of cached write\n";
+    "61 - Measure the speed of pulse compression math\n"
+    "62 - Measure the speed of RKPulseEngine() -T62 CORES (default = 4)\n"
+    "63 - Measure the speed of various moment methods\n"
+    "64 - Measure the speed of cached write\n";
     RKIndentCopy(text, helpText, indent);
     if (strlen(text) > 3000) {
         fprintf(stderr, "Warning. Approaching limit. (%zu)\n", strlen(text));
@@ -352,14 +353,21 @@ void RKTestByNumber(const int number, const void *arg) {
         case 61:
             if (arg == NULL) {
                 RKTestPulseCompressionSpeed(13);
-                exit(EXIT_FAILURE);
+                exit(EXIT_SUCCESS);
             }
             RKTestPulseCompressionSpeed(atoi((char *)arg));
             break;
         case 62:
-            RKTestMomentProcessorSpeed();
+            if (arg == NULL) {
+                RKTestPulseEngineSpeed(4);
+                exit(EXIT_SUCCESS);
+            }
+            RKTestPulseEngineSpeed(atoi((char *)arg));
             break;
         case 63:
+            RKTestMomentProcessorSpeed();
+            break;
+        case 64:
             RKTestCacheWrite();
             break;
         case 99:
@@ -3347,6 +3355,164 @@ void RKTestPulseCompressionSpeed(const int offt) {
     free(f);
     free(in);
     free(out);
+}
+
+void *RKTestPulseEngineSpeedWorker(void *in) {
+    RKPulseEngine *engine = (RKPulseEngine *)in;
+    RKPulse *pulse;
+
+    const int count = engine->radarDescription->controlCapacity;
+    const int length = 64;
+
+    char *bar = (char *)malloc((length + 1) * sizeof(char));
+
+    struct timeval tic, toc;
+    double t;
+    int n, o = 0;
+
+    int k = 0;
+    do {
+        pulse = RKPulseEngineGetProcessedPulse(engine, true);
+        if (pulse->header.configIndex == 0) {
+            RKLog("config.id = %u\n", pulse->header.configIndex);
+        }
+        if (k++ == 1) {
+            gettimeofday(&tic, NULL);
+        } else {
+            n = k * length / count;
+            if (o != n) {
+                o = n;
+                memset(bar, '#', n);
+                memset(bar + n, '.', length - n);
+                printf("\r                    Progress %s %.1f%% ", bar, k * 100.0f / count);
+                fflush(stdout);
+            }
+        }
+    } while (k < count);
+
+    gettimeofday(&toc, NULL);
+
+    printf("\n");
+    fflush(stdout);
+
+    t = RKTimevalDiff(toc, tic);
+
+    // Store the result in engine->lag for main thread to read
+    engine->lag = count / t;
+
+    RKLog(">Test elapsed %.3f s (%.3f ms / pulse)\n", t, 1.0e3 * t / count);
+    RKLog(">Speed: %s pulses / sec\n", RKIntegerToCommaStyleString(count / t));
+
+    free(bar);
+
+    return NULL;
+}
+
+void RKTestPulseEngineSpeed(const int cores) {
+    SHOW_FUNCTION_NAME
+    const int offt = 13;
+    const int nfft = 1 << offt;
+    const int count = 1500 * cores;
+    const int g = 7 * nfft / 8;
+
+    RKRadarDesc desc = {
+        .name = "Hope",
+        .initFlags = RKInitFlagAllocConfigBuffer                               // Only for housekeeping, doesn't really matter here
+                   | RKInitFlagAllocRawIQBuffer
+                   | RKInitFlagAllocMomentBuffer,
+        .configBufferDepth = 2,
+        .pulseToRayRatio = 2,                                                  // A down-sampling factor after pulse compression
+        .pulseBufferDepth = 3 * count / 2,                                     // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseCapacity = nfft,                                                 // Number of range gates each pulse can hold
+        .controlCapacity = count,                                              // Use this to convey the count variable to the worker thread
+    };
+
+    RKLog("Performance tests with %s range gates for %s pulses\n",
+        RKIntegerToCommaStyleString(nfft),
+        RKIntegerToCommaStyleString(count));
+
+    RKWaveform *waveform = RKWaveformInitAsImpulse();
+
+    RKConfig *configs;
+    RKBuffer pulses;
+
+    RKConfigBufferAlloc(&configs, desc.configBufferDepth);
+    RKPulseBufferAlloc(&pulses, nfft, desc.pulseBufferDepth);
+    RKFFTModule *fftModule = RKFFTModuleInit(nfft, 1);
+
+    RKConfig *config = &configs[1];
+    strcpy(config->vcpDefinition, "vcp1");
+    strcpy(config->waveformName, waveform->name);
+    config->waveform = waveform;
+    config->waveformDecimate = waveform;
+    config->sweepAzimuth = 42.0;                                               // For RHI mode
+    config->sweepElevation = 0.0;                                              // For PPI mode
+    config->systemZCal[0] = 48.0;                                              // H-channel Z calibration
+    config->systemZCal[1] = 48.0;                                              // V-channel Z calibration
+    config->systemDCal = 0.02;
+    config->systemPCal = 0.2;
+    config->prt[0] = 0.5e-3f;
+    config->startMarker = RKMarkerScanTypeRHI | RKMarkerSweepBegin;
+    config->noise[0] = 0.00011;
+    config->noise[1] = 0.00012;
+    config->SNRThreshold = -3.0f;
+    config->SQIThreshold = 0.1f;
+    config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
+
+    float p[3] = {0.0f, 0.0f, 0.0f};
+
+    for (int t = 0; t < 3; t++) {
+        RKLog("======\n                    Test %d\n                    ======\n", t);
+
+        uint32_t configIndex = 0;
+        uint32_t pulseIndex = 0;
+
+        RKPulseEngine *engine = RKPulseEngineInit();
+        RKPulseEngineSetEssentials(engine, &desc, fftModule, configs, &configIndex, pulses, &pulseIndex);
+        RKPulseEngineSetCoreCount(engine, cores);
+        RKPulseEngineStart(engine);
+
+        RKPulseEngineSetFilterByWaveform(engine, waveform);
+
+        pthread_t tid;
+        pthread_create(&tid, NULL, RKTestPulseEngineSpeedWorker, engine);
+
+        for (int k = 0; k < count; k++) {
+            RKPulse *pulse = RKPulseEngineGetVacantPulse(engine, RKPulseStatusNull);
+            for (int c = 0; c < 2; c++) {
+                RKInt16C *x = RKGetInt16CDataFromPulse(pulse, c);
+                x[0].i = 1; x[1].i = 2; x[2].i = 3; x[3].i = 4;
+                x[0].q = 4; x[1].q = 3; x[2].q = 2; x[3].q = 1;
+            }
+            pulse->header.gateCount = g;
+            pulse->header.configIndex = 1;
+            pulse->header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition;
+            usleep(1);
+        }
+
+        pthread_join(tid, NULL);
+
+        p[t] = engine->lag;
+
+        RKPulseEngineFree(engine);
+
+        usleep(100000);
+    }
+
+    RKFFTModuleFree(fftModule);
+    RKConfigBufferFree(configs);
+    RKPulseBufferFree(pulses);
+
+    int best = MAX(p[0], MAX(p[1], p[2]));
+
+    RKLog("Speeds: %s, %s, %s pulses / sec\n",
+        RKIntegerToCommaStyleString(p[0]),
+        RKIntegerToCommaStyleString(p[1]),
+        RKIntegerToCommaStyleString(p[2]));
+    RKLog("Best of 3: %s%s pulses / sec%s\n",
+        rkGlobalParameters.showColor ? RKGreenColor : "",
+        RKIntegerToCommaStyleString(best),
+        rkGlobalParameters.showColor ? RKNoColor : "");
 }
 
 void RKTestMomentProcessorSpeed(void) {
