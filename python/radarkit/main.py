@@ -68,7 +68,7 @@ def open(filename, opmode='r'):
     # if pulseBufferDepth larger than pulses in file the rkid.raw_iq could fully
     # save in python memory ortherwise only last {pulseBufferDepth} pulses IQ is in python space.
     # larger the buffer more load happen in python (more copy and fetch to numpy array conversion)
-    out.desc.pulseBufferDepth = RKMaximumPulsesPerRay + 500
+    out.desc.pulseBufferDepth = 30000
     out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
     out.desc.dataPath = b'data'
     return out
@@ -89,7 +89,7 @@ class core(union_rk_file_header):
         desc = self.desc
         self.desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer
         self.desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
-        self.dataType = RKRawDataTypeFromTransceiver
+        # self.dataType = RKRawDataTypeFromTransceiver
         if (self.dataType == RKRawDataTypeFromTransceiver):
             self.desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
         workspace = Workspace()
@@ -240,7 +240,7 @@ class core(union_rk_file_header):
                 return self.iq.cache
             else:
                 # Get the first pulse to retrieve gateCount / downSampledGateCount
-                pulse = RKGetPulseFromBuffer(workspace.pulses, 0)
+                pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
                 gateCount = pulse.contents.header.gateCount if iqtype == 'r' else pulse.contents.header.downSampledGateCount;
                 iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
                 read_fn = read_raw_data if iqtype == 'r' else read_compressed_data
@@ -326,6 +326,9 @@ def ReadPulseFromrkfile(self,rkfile):
                     break
                 # pulse.contents.header.i = ip
                 pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
+                pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
+                if rkfile.dataType == RKRawDataTypeAfterMatchedFilter:
+                    pulse.contents.header.s |= RKPulseStatusReadyForMoments
                 p0 = RKFileTell(rkfile.fid)
                 pbar.update(p0 - p1)
                 p1 = p0
