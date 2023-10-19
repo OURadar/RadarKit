@@ -76,6 +76,9 @@ static void *sweepManager(void *in) {
     // Grab the anchor reference as soon as possible
     const uint8_t scratchSpaceIndex = engine->scratchSpaceIndex;
 
+    // Local copy of the record flag, which may change under certain conditions
+    bool record = engine->record;
+
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
 
@@ -113,8 +116,13 @@ static void *sweepManager(void *in) {
     pthread_mutex_unlock(&engine->productMutex);
 
     // Mark the rays being used by user algorithms
+    int sweepMiddleCount = 0;
     for (j = 0; j < sweep->header.rayCount; j++) {
+        sweepMiddleCount += (sweep->rays[j]->header.marker & RKMarkerSweepMiddle);
         sweep->rays[j]->header.s |= RKRayStatusOverviewed;
+    }
+    if ((float)sweepMiddleCount / sweep->header.rayCount < 0.8f || sweep->header.rayCount < 3) {
+        record = false;
     }
 
     // Localize the scratch space storage
@@ -256,7 +264,7 @@ static void *sweepManager(void *in) {
             if (engine->verbose > 1){
                 RKLog("%s Skipping %s ...\n", engine->name, filename);
             }
-        } else if (engine->record && engine->productRecorder) {
+        } else if (record && engine->productRecorder) {
             if (engine->verbose > 1) {
                 RKLog("%s Creating %s ...\n", engine->name, filename);
             }
@@ -276,15 +284,15 @@ static void *sweepManager(void *in) {
         // Make a summary for logging
         if (p == 0) {
             summarySize = sprintf(summary, "%s%s%s %s%s-%s%s%s.%s",
-                                  rkGlobalParameters.showColor ? (engine->record ? RKGreenColor : RKLightOrangeColor) : "",
-                                  engine->record ? "Recorded": "Skipped",
+                                  rkGlobalParameters.showColor ? (record ? RKGreenColor : RKLightOrangeColor) : "",
+                                  record ? "Recorded": "Skipped",
                                   rkGlobalParameters.showColor ? RKNoColor : "",
                                   filenameTooLong ? "..." : "",
                                   filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
                                   rkGlobalParameters.showColor ? RKYellowColor : "",
                                   product->desc.symbol,
                                   rkGlobalParameters.showColor ? RKNoColor : "",
-                                engine->productFileExtension);
+                                  engine->productFileExtension);
         } else {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
@@ -301,7 +309,7 @@ static void *sweepManager(void *in) {
         RKLog("%s %s\n", engine->name, summary);
     }
 
-    if (engine->record && engine->hasFileHandlingScript) {
+    if (record && engine->hasFileHandlingScript) {
         j = system(filelist);
         if (j) {
             RKLog("Error. CMD: %s", filelist);
@@ -766,7 +774,7 @@ int RKSweepEngineUndescribeProduct(RKSweepEngine *engine, RKProductId productId)
     }
     pthread_mutex_lock(&engine->productMutex);
     engine->productBuffer[i].flag = RKProductStatusVacant;
-    RKLog(">%s Product %s%s%s undescribed\n", engine->name,
+    RKLog(">%s Product %s%s%s released\n", engine->name,
           rkGlobalParameters.showColor ? RKYellowColor : "",
           engine->productBuffer[i].desc.symbol,
           rkGlobalParameters.showColor ? RKNoColor : "");

@@ -68,8 +68,8 @@ def open(filename, opmode='r'):
     # if pulseBufferDepth larger than pulses in file the rkid.raw_iq could fully
     # save in python memory ortherwise only last {pulseBufferDepth} pulses IQ is in python space.
     # larger the buffer more load happen in python (more copy and fetch to numpy array conversion)
-    out.desc.pulseBufferDepth = 30000
-    out.desc.rayBufferDepth = 400
+    out.desc.pulseBufferDepth = RKMaximumPulsesPerRay + 500
+    out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
     out.desc.dataPath = b'data'
     return out
 
