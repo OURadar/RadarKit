@@ -160,6 +160,7 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename);
 #pragma mark - Radar Signal Processing
 
 void RKTestPulseCompression(RKTestFlag);
+void RKTestOnePulse(void);
 void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int);
 void RKTestOneRaySpectra(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int lag);
 

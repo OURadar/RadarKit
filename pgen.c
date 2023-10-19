@@ -376,28 +376,14 @@ void proc(UserParams *arg) {
 
     const uint32_t nfft = 1 << (int)ceilf(log2f((float)MIN(RKMaximumGateCount, pulseCapacity)));
 
-    RKCompressionScratch *scratch = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));
-    if (scratch == NULL) {
-        RKLog("Error. Unable to allocate a scratch space.\n");
-        exit(EXIT_FAILURE);
-    }
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer, RKMemoryAlignSize, nfft * sizeof(fftwf_complex)))
-    if (scratch->inBuffer == NULL || scratch->outBuffer == NULL) {
-        RKLog("Error. Unable to allocate resources for FFTW.\n");
-        exit(EXIT_FAILURE);
-    }
-    mem = 2 * nfft * sizeof(fftwf_complex);
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zi, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
-    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->zo, RKMemoryAlignSize, nfft * sizeof(RKFloat)))
-    if (scratch->zi == NULL || scratch->zo == NULL) {
-        RKLog("Error. Unable to allocate resources for FFTW.\n");
-        exit(EXIT_FAILURE);
-    }
-    mem += 2 * nfft * sizeof(RKFloat);
+    RKFFTModule *fftModule = RKFFTModuleInit(nfft, arg->verbose);
+
+    RKCompressionScratch *scratch;
+    mem = RKCompressionScratchAlloc(&scratch, pulseCapacity, arg->verbose, "PGEN");
+    scratch->fftModule = fftModule;
+
     RKLog("mem = %s   nfft = %s", RKIntegerToCommaStyleString(mem), RKIntegerToCommaStyleString(nfft));
 
-    RKFFTModule *fftModule = RKFFTModuleInit(nfft, arg->verbose);
     RKComplex *filters[RKMaximumWaveformCount][config->waveform->count];
 
     bytes = nfft * sizeof(RKComplex);
@@ -528,11 +514,12 @@ void proc(UserParams *arg) {
                     scratch->pulse = pulse;
                     scratch->filter = filters[gid][j];
                     scratch->filterAnchor = &config->waveform->filterAnchors[gid][j];
-                    scratch->planForwardInPlace = fftModule->plans[planIndex].forwardInPlace;
-                    scratch->planForwardOutPlace = fftModule->plans[planIndex].forwardOutPlace;
-                    scratch->planBackwardInPlace = fftModule->plans[planIndex].backwardInPlace;
-                    scratch->planBackwardOutPlace = fftModule->plans[planIndex].backwardOutPlace;
-                    scratch->planSize = fftModule->plans[planIndex].size;
+                    // scratch->planForwardInPlace = fftModule->plans[planIndex].forwardInPlace;
+                    // scratch->planForwardOutPlace = fftModule->plans[planIndex].forwardOutPlace;
+                    // scratch->planBackwardInPlace = fftModule->plans[planIndex].backwardInPlace;
+                    // scratch->planBackwardOutPlace = fftModule->plans[planIndex].backwardOutPlace;
+                    // scratch->planSize = fftModule->plans[planIndex].size;
+                    scratch->planIndex = planIndex;
 
                     // Call the compressor
                     RKBuiltInCompressor(NULL, scratch);
@@ -882,11 +869,7 @@ void proc(UserParams *arg) {
         }
     }
 
-    free(scratch->zi);
-    free(scratch->zo);
-    free(scratch->inBuffer);
-    free(scratch->outBuffer);
-    free(scratch);
+    RKCompressionScratchFree(scratch);
 
     free(fileHeader);
 

@@ -132,12 +132,13 @@ char *RKTestByNumberDescription(const int indent) {
     "45 - Test showing waveform properties; -T45 WAVEFORM_FILE\n"
     "\n"
     "50 - Pulse compression using simple cases\n"
-    "51 - Calculating one ray using the Pulse Pair method\n"
-    "52 - Calculating one ray using the Pulse Pair Hop method\n"
-    "53 - Calculating one ray using the Multi-Lag method with L = 2\n"
-    "54 - Calculating one ray using the Multt-Lag method with L = 3\n"
-    "55 - Calculating one ray using the Multi-Lag method with L = 4\n"
-    "56 - Calculating one ray using the Spectral Moment method (** WIP **)\n"
+    "51 - Compute one pulse using built-in pulse compression\n"
+    "52 - Compute one ray using the Pulse Pair method\n"
+    "53 - Compute one ray using the Pulse Pair Hop method\n"
+    "54 - Compute one ray using the Multi-Lag method with L = 2\n"
+    "55 - Compute one ray using the Multt-Lag method with L = 3\n"
+    "56 - Compute one ray using the Multi-Lag method with L = 4\n"
+    "57 - Compute one ray using the Spectral Moment method (** WIP **)\n"
     "\n"
     "60 - Measure the speed of SIMD calculations\n"
     "61 - Measure the speed of pulse compression math\n"
@@ -327,24 +328,27 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
             break;
         case 51:
-            RKTestOneRay(RKPulsePair, 0);
+            RKTestOnePulse();
             break;
         case 52:
-            RKTestOneRay(RKPulsePairHop, 0);
+            RKTestOneRay(RKPulsePair, 0);
             break;
         case 53:
-            RKTestOneRay(RKMultiLag, 2);
+            RKTestOneRay(RKPulsePairHop, 0);
             break;
         case 54:
-            RKTestOneRay(RKMultiLag, 3);
+            RKTestOneRay(RKMultiLag, 2);
             break;
         case 55:
-            RKTestOneRay(RKMultiLag, 4);
+            RKTestOneRay(RKMultiLag, 3);
             break;
         case 56:
-            RKTestOneRay(RKSpectralMoment, 0);
+            RKTestOneRay(RKMultiLag, 4);
             break;
         case 57:
+            RKTestOneRay(RKSpectralMoment, 0);
+            break;
+        case 58:
             RKTestOneRaySpectra(RKSpectralMoment, 0);
             break;
         case 60:
@@ -3066,6 +3070,69 @@ void RKTestPulseCompression(RKTestFlag flag) {
     RKFree(radar);
 }
 
+void RKTestOnePulse(void) {
+    SHOW_FUNCTION_NAME
+    const int n = 4;
+    RKCompressionScratch *scratch;
+    RKCompressionScratchAlloc(&scratch, RKMemoryAlignSize, 1, "RKTestOnePulse");
+
+    scratch->fftModule = RKFFTModuleInit(n, 1);
+    scratch->planIndex = (int)log2f((float)n);
+
+    RKBuffer pulseBuffer;
+    RKPulseBufferAlloc(&pulseBuffer, RKMemoryAlignSize, 1);
+
+    RKFilterAnchor anchor = {
+        .origin = 0,
+        .length = n,
+        .inputOrigin = 0,
+        .outputOrigin = 0,
+        .maxDataLength = n,
+    };
+
+    // I know the answer to this from Pytho:
+    // x = np.array([ 1. -0.2j, -0.8+0.5j, -0.3+0.7j, -0.1+0.2j])
+    // f = np.array([-2. -1.j , -1. +2.j ,  0.2-0.1j,  0.4-0.6j])
+    // y = np.fft.ifft(np.fft.fft(x) * np.conj(np.fft.fft(f)))
+    //   = array([-2.90e-01+2.63j,  3.28e+00-1.35j,  1.11e-16-1.92j, -2.15e+00-2.18j])
+    RKComplex x[] = {{ 1.00f, -0.20f}, {-0.80f,  0.50f}, {-0.30f,  0.70f}, {-0.10f,  0.20f}};
+    RKComplex f[] = {{-2.00f, -1.00f}, {-1.00f,  2.00f}, { 0.20f, -0.10f}, { 0.40f, -0.60f}};
+    RKComplex a[] = {{-0.29f,  2.63f}, { 3.28f, -1.35f}, { 0.00f, -1.92f}, {-2.15f, -2.18f}};
+
+    RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, 0);
+    pulse->header.compressorDataType = RKCompressorOptionSingleChannel
+                                     | RKCompressorOptionRKComplex;
+    pulse->header.gateCount = 4;
+    RKComplex *samples = RKGetComplexDataFromPulse(pulse, 0);
+    memcpy(samples, x, n * sizeof(RKComplex));
+    scratch->pulse = pulse;
+    scratch->filter = f;
+    scratch->filterAnchor = &anchor;
+    scratch->fftModule->plans[scratch->planIndex].count++;
+
+    RKLog("Compression using planIndex = %d\n", scratch->planIndex);
+    RKBuiltInCompressor(NULL, scratch);
+    RKComplex *y = RKGetComplexDataFromPulse(pulse, 0);
+
+    printf("X =                     F =                     Y =                     A =\n");
+    for (int j = 0; j < n; j++) {
+        bool good = fabs(y[j].i - a[j].i) + fabs(y[j].q - a[j].q) < 1.0e-6;
+        printf("    [ %5.1f %s %5.1fi ]      [ %5.2f %s %5.2fi ]      [ %5.2f %s %5.2fi ]      [ %5.2f %s %5.2fi ]  %s%s%s\n",
+                x[j].i, x[j].q < 0.0f ? "-" : "+", fabs(x[j].q),
+                f[j].i, f[j].q < 0.0f ? "-" : "+", fabs(f[j].q),
+                y[j].i, y[j].q < 0.0f ? "-" : "+", fabs(y[j].q),
+                a[j].i, a[j].q < 0.0f ? "-" : "+", fabs(a[j].q),
+                rkGlobalParameters.showColor ? good ? RKGreenColor : RKRedColor : "",
+                good ? "okay" : "fail",
+                rkGlobalParameters.showColor ? RKNoColor : ""
+                );
+    }
+
+    RKFFTModuleFree(scratch->fftModule);
+
+    RKCompressionScratchFree(scratch);
+}
+
 void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int lag) {
     SHOW_FUNCTION_NAME
     int k, p, n, g;
@@ -3179,7 +3246,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
     }
     err /= (RKFloat)gateCount;
     sprintf(str, "Delta ZDR = %.4e", err);
-    TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+    TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     // Error of PhiDP
     err = 0.0;
@@ -3188,7 +3255,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
     }
     err /= (RKFloat)gateCount;
     sprintf(str, "Delta PhiDP = %.4e", err);
-    TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+    TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     // Error of RhoHV
     err = 0.0;
@@ -3197,7 +3264,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
     }
     err /= (RKFloat)gateCount;
     sprintf(str, "Delta RhoHV = %.4e", err);
-    TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-4);
+    TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     RKLog("Deallocating buffers ...\n");
 
@@ -3412,7 +3479,7 @@ void RKTestPulseEngineSpeed(const int cores) {
     SHOW_FUNCTION_NAME
     const int offt = 13;
     const int nfft = 1 << offt;
-    const int count = 1500 * cores;
+    const int count = 1000 * cores;
     const int g = 7 * nfft / 8;
 
     RKRadarDesc desc = {

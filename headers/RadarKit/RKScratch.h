@@ -32,11 +32,6 @@ typedef struct rk_compression_scratch {
     RKComplex                        *filter;                                      //
     RKFilterAnchor                   *filterAnchor;                                // (deprecating, use waveform->filterAnchor instead)
     RKFFTModule                      *fftModule;                                   // A reference to the common FFT module
-    fftwf_plan                       planForwardInPlace;                           //
-    fftwf_plan                       planForwardOutPlace;                          //
-    fftwf_plan                       planBackwardInPlace;                          //
-    fftwf_plan                       planBackwardOutPlace;                         //
-    unsigned int                     planSize;                                     // DFT plan size
     fftwf_complex                    *inBuffer;                                    //
     fftwf_complex                    *outBuffer;                                   //
     RKIQZ                            *zi;                                          //
@@ -52,6 +47,7 @@ typedef struct rk_compression_scratch {
     RKConfig                         *config;                                      //
     uint16_t                         waveformGroupdId;                             // Index of RKConfig->waveform to use
     uint16_t                         waveformFilterId;                             // Index of RKConfig->waveform->filterAnchor to use
+    uint16_t                         planIndex;                                    // DFT plan index
     RKUserResource                   userResource;                                 //
 } RKCompressionScratch;
 
@@ -113,7 +109,7 @@ typedef struct rk_moment_scratch {
     RKBaseProductList                calculatedProducts;                           // Calculated Products
 } RKMomentScratch;
 
-size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const RKName);
+size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const RKName _Nullable);
 void RKCompressionScratchFree(RKCompressionScratch *);
 
 size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t, const uint8_t, const RKName);

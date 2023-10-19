@@ -1101,7 +1101,8 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
 size_t RKPulseBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
     size_t alignment = RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity != (capacity / alignment) * alignment) {
-        RKLog("Error. Pulse capacity must be multiple of %d!", alignment);
+        RKLog("Error. Unable to allocate for capacity = %s. Must be multiple of %d!",
+            RKIntegerToCommaStyleString(capacity), alignment);
         return 0;
     }
     RKPulse *pulse;

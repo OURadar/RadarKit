@@ -22,8 +22,9 @@
 size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose, const RKName _Nullable name) {
     uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity == 0 || capacity != goodCapacity) {
-        RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",
-              RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
+        RKLog("Error. Unable to allocate capacity = %d. Must be greater than 0 and an integer multiple of %s!",
+            RKIntegerToCommaStyleString(capacity),
+            RKIntegerToCommaStyleString(RKMemoryAlignSize / sizeof(RKFloat)));
         return 0;
     }
     *buffer = (RKCompressionScratch *)malloc(sizeof(RKCompressionScratch));

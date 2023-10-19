@@ -155,16 +155,19 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
     int i, p;
     RKPulse *pulse = scratch->pulse;
-    RKComplex *filter = scratch->filter;
-    RKFilterAnchor *filterAnchor = scratch->filterAnchor;
-    //RKComplex *filter = scratch->config->waveform->samples[scratch->waveformGroupdId]
-    //RKFilterAnchor *filterAnchor = &scratch->config->waveform->filterAnchors[scratch->waveformGroupdId][scratch->waveformFilterId];
+    const RKComplex *filter = scratch->filter;
+    const RKFilterAnchor *filterAnchor = scratch->filterAnchor;
+    const unsigned int inBound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
+    const unsigned int outBound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
+
+    i = scratch->planIndex;
+    const fftwf_plan planForwardInPlace = scratch->fftModule->plans[i].forwardInPlace;
+    const fftwf_plan planForwardOutPlace = scratch->fftModule->plans[i].forwardOutPlace;
+    const fftwf_plan planBackwardInPlace = scratch->fftModule->plans[i].backwardInPlace;
+    const unsigned int planSize = scratch->fftModule->plans[i].size;
+
     fftwf_complex *in = scratch->inBuffer;
     fftwf_complex *out = scratch->outBuffer;
-    unsigned int inBound, outBound;
-
-    inBound = MIN(pulse->header.gateCount - filterAnchor->inputOrigin, filterAnchor->inputOrigin + filterAnchor->maxDataLength + filterAnchor->length);
-    outBound = MIN(pulse->header.gateCount - filterAnchor->outputOrigin, filterAnchor->maxDataLength);
 
     #if DEBUG_PULSE_COMPRESSION
 
@@ -176,35 +179,41 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
 
     bool singleChannelOnly = pulse->header.compressorDataType & RKCompressorOptionSingleChannel;
 
+    // Pulse compression:
+    // DFT of the raw data is stored in *in
+    // DFT of the filter is stored in *out
+    // Their product is stored in *out using in-place multiplication: out[i] = conj(out[i]) * in[i]
+    // Then, the inverse DFT is performed to get *out back to time domain, which is the compressed pulse
+
     for (p = 0; p < (singleChannelOnly ? 1 : 2); p++) {
        // Copy and convert the samples
         if (pulse->header.compressorDataType & RKCompressorOptionRKComplex) {
             RKComplex *X = RKGetComplexDataFromPulse(pulse, p);
             X += filterAnchor->inputOrigin;
             memcpy(in, X, inBound * sizeof(RKComplex));
-        }else{
+        } else {
             RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
             X += filterAnchor->inputOrigin;
             RKSIMD_Int2Complex(X, (RKComplex *)in, inBound);
         }
 
         // Zero pad the input; a filter is always zero-padded in the setter function.
-        if (scratch->planSize > inBound) {
-            memset(in + inBound, 0, (scratch->planSize - inBound) * sizeof(fftwf_complex));
+        if (planSize > inBound) {
+            memset(in + inBound, 0, (planSize - inBound) * sizeof(fftwf_complex));
         }
 
-        fftwf_execute_dft(scratch->planForwardInPlace, in, in);
+        fftwf_execute_dft(planForwardInPlace, in, in);
 
         //printf("dft(in) =\n"); RKEngineShowBuffer(in, 8);
 
-        fftwf_execute_dft(scratch->planForwardOutPlace, (fftwf_complex *)filter, out);
+        fftwf_execute_dft(planForwardOutPlace, (fftwf_complex *)filter, out);
 
         //printf("dft(filt[%d][%d]) =\n", gid, j); RKEngineShowBuffer(out, 8);
 
         #if RKPulseEngineMultiplyMethod == 1
 
         // In-place SIMD multiplication using the interleaved format (hand tuned, this should be the fastest)
-        RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, scratch->planSize);
+        RKSIMD_iymulc((RKComplex *)in, (RKComplex *)out, planSize);
 
         #elif RKPulseEngineMultiplyMethod == 2
 
@@ -232,14 +241,14 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
         printf("in * out =\n"); RKEngineShowBuffer(out, 8);
         #endif
 
-        fftwf_execute_dft(scratch->planBackwardInPlace, out, out);
+        fftwf_execute_dft(planBackwardInPlace, out, out);
 
         #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
         printf("idft(out) =\n"); RKEngineShowBuffer(out, 8);
         #endif
 
         // Scaling due to a net gain of planSize from forward + backward DFT, plus the waveform gain
-        RKSIMD_iyscl((RKComplex *)out, 1.0f / scratch->planSize, scratch->planSize);
+        RKSIMD_iyscl((RKComplex *)out, 1.0f / planSize, planSize);
 
         #if defined(DEBUG_PULSE_COMPRESSION_ENGINE)
         printf("idft(out) =\n"); RKEngineShowBuffer(out, 8);
@@ -448,12 +457,6 @@ static void *pulseEngineCore(void *_in) {
                 RKLog("%s pulse skipped. header->i = %d   gid = %d\n", me->name, pulse->header.i, gid);
             }
         } else {
-            // Do some work with this pulse
-            // DFT of the raw data is stored in *in
-            // DFT of the filter is stored in *out
-            // Their product is stored in *out using in-place multiplication: out[i] = conj(out[i]) * in[i]
-            // Then, the inverse DFT is performed to get out back to time domain, which is the compressed pulse
-
             // Go through all the filters in this filter group
             blindGateCount = 0;
             for (j = 0; j < engine->filterCounts[gid]; j++) {
@@ -465,11 +468,7 @@ static void *pulseEngineCore(void *_in) {
                 scratch->pulse = pulse;
                 scratch->filter = engine->filters[gid][j];
                 scratch->filterAnchor = &engine->filterAnchors[gid][j];
-                scratch->planForwardInPlace = engine->fftModule->plans[planIndex].forwardInPlace;
-                scratch->planForwardOutPlace = engine->fftModule->plans[planIndex].forwardOutPlace;
-                scratch->planBackwardInPlace = engine->fftModule->plans[planIndex].backwardInPlace;
-                scratch->planBackwardOutPlace = engine->fftModule->plans[planIndex].backwardOutPlace;
-                scratch->planSize = engine->fftModule->plans[planIndex].size;
+                scratch->planIndex = planIndex;
                 scratch->waveformGroupdId = gid;
                 scratch->waveformFilterId = j;
 
@@ -504,7 +503,7 @@ static void *pulseEngineCore(void *_in) {
                 RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
                 RKIQZ Z = RKGetSplitComplexDataFromPulse(pulse, p);
                 memcpy(YCopy, Y, (pulse->header.gateCount - pulse->header.downSampledGateCount) * sizeof(RKComplex));
-                for (i = 0, j = 0; j < pulse->header.gateCount; i++, j+= stride) {
+                for (i = 0, j = 0; j < pulse->header.gateCount; i++, j += stride) {
                     Y[i].i = Y[j].i;
                     Y[i].q = Y[j].q;
                     Z.i[i] = Z.i[j];
