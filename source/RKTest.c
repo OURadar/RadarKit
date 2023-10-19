@@ -1403,18 +1403,18 @@ void RKTestReadIQ(const char *filename) {
         u32 = (uint32_t)ceilf((float)rayCapacity * sizeof(int16_t) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(int16_t);
     } else {
         RKLog("Error. Unable to handle dataType %d", fileHeader->dataType);
-        exit(EXIT_FAILURE);
+        return;
     }
     const uint32_t pulseCapacity = u32;
     bytes = RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, 1);
     if (bytes == 0 || pulseBuffer == NULL) {
         RKLog("Error. Unable to allocate memory for I/Q pulses.\n");
-        exit(EXIT_FAILURE);
+        return;
     }
     RKLog("Pulse buffer occupies %s B  (%s pulses x %s gates)\n",
-          RKUIntegerToCommaStyleString(bytes),
-          RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
-          RKIntegerToCommaStyleString(pulseCapacity));
+        RKUIntegerToCommaStyleString(bytes),
+        RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
+        RKIntegerToCommaStyleString(pulseCapacity));
 
     char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
     if (rkGlobalParameters.showColor) {
@@ -1432,9 +1432,10 @@ void RKTestReadIQ(const char *filename) {
         // Restore pulse capacity variable since we are not using whatever that was recorded in the file (radar)
         pulse->header.capacity = pulseCapacity;
         if (pulse->header.downSampledGateCount > pulseCapacity) {
-            printf("Error. Pulse contains %s gates / %s capacity allocated.\n",
-                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                   RKIntegerToCommaStyleString(pulseCapacity));
+            RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
+                RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                RKIntegerToCommaStyleString(pulseCapacity));
+            return;
         }
         startTime = pulse->header.time.tv_sec;
         tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
@@ -1448,10 +1449,11 @@ void RKTestReadIQ(const char *filename) {
                 RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
                 readsize = fread(x, sizeof(RKInt16C), pulse->header.gateCount, fid);
                 if (readsize != pulse->header.gateCount || readsize > pulseCapacity) {
-                    printf("Error. This should not happen.  readsize = %s != %s || > %s\n",
+                    RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
                         RKIntegerToCommaStyleString(readsize),
                         RKIntegerToCommaStyleString(pulse->header.gateCount),
                         RKIntegerToCommaStyleString(pulseCapacity));
+                    return;
                 }
             }
         } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
@@ -1459,10 +1461,11 @@ void RKTestReadIQ(const char *filename) {
                 RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
                 readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
                 if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
-                    printf("Error. This should not happen.  readsize = %s != %s || > %s\n",
+                    RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
                         RKIntegerToCommaStyleString(readsize),
                         RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                         RKIntegerToCommaStyleString(pulseCapacity));
+                    return;
                 }
                 RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
                 for (i = 0; i < pulse->header.downSampledGateCount; i++) {
@@ -1479,11 +1482,11 @@ void RKTestReadIQ(const char *filename) {
         }
         p++;
     }
-    printf("fpos = %s / %s   k = %s\n",
-          RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
-          RKIntegerToCommaStyleString(k));
+    RKLog("fpos = %s / %s   k = %s\n",
+        RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
+        RKIntegerToCommaStyleString(k));
     if (ftell(fid) != filesize) {
-        printf("Warning. There is leftover in the file.");
+        RKLog("Warning. There is leftover in the file.");
     }
 
     fclose(fid);
