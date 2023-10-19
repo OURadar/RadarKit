@@ -1270,7 +1270,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
     }
     if (readsize == 0) {
         if (headerV1 != NULL) {
-            // RKLog("Freeing headerV1 ...\n");
+            RKLog("Freeing headerV1 ...\n");
             free(headerV1);
             headerV1 = NULL;
         }
