@@ -578,15 +578,24 @@ enum {
     RKPulseStatusDownSampled                     = (1 << 5),                   // 0x20
     RKPulseStatusProcessed                       = (1 << 6),                   // 0x40
     RKPulseStatusRingInspected                   = (1 << 7),                   // 0x80
-    RKPulseStatusRingFiltered                    = (1 << 8),
-    RKPulseStatusRingSkipped                     = (1 << 9),
-    RKPulseStatusRingProcessed                   = (1 << 10),
-    RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed | RKPulseStatusRingProcessed | RKPulseStatusHasPosition),
+    RKPulseStatusRingFiltered                    = (1 << 8),                   // 0x100
+    RKPulseStatusRingSkipped                     = (1 << 9),                   // 0x200
+    RKPulseStatusRingProcessed                   = (1 << 10),                  // 0x400
+    RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed
+                                                 | RKPulseStatusRingProcessed
+                                                 | RKPulseStatusHasPosition
+                                                 | RKPulseStatusHasIQData),
     RKPulseStatusUsedForMoments                  = (1 << 11),
-    RKPulseStatusProcessMask                     = (RKPulseStatusInspected | RKPulseStatusCompressed | RKPulseStatusSkipped |
-                                                    RKPulseStatusDownSampled | RKPulseStatusProcessed |
-                                                    RKPulseStatusRingInspected | RKPulseStatusRingFiltered | RKPulseStatusRingSkipped | RKPulseStatusRingProcessed |
-                                                    RKPulseStatusUsedForMoments),
+    RKPulseStatusProcessMask                     = (RKPulseStatusInspected
+                                                 | RKPulseStatusCompressed
+                                                 | RKPulseStatusSkipped
+                                                 | RKPulseStatusDownSampled
+                                                 | RKPulseStatusProcessed
+                                                 | RKPulseStatusRingInspected
+                                                 | RKPulseStatusRingFiltered
+                                                 | RKPulseStatusRingSkipped
+                                                 | RKPulseStatusRingProcessed
+                                                 | RKPulseStatusUsedForMoments),
     RKPulseStatusRecorded                        = (1 << 12),
     RKPulseStatusStreamed                        = (1 << 13),
     RKPulseStatusConsumed                        = (1 << 14)                   // RKPulseStatusConsumed for bring consumed by RKPulseEngineGetProcessedPulse()

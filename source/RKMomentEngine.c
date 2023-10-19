@@ -479,10 +479,14 @@ static void *momentCore(void *in) {
             }
             ray->header.s |= RKRayStatusSkipped;
         }
-        for (k = 0; k < path.length; k++) {
-            pulse = pulses[k];
+        k = 0;
+        do {
+            pulse = pulses[k++];
             pulse->header.s |= RKPulseStatusUsedForMoments;
-        }
+            if (k == 0) {
+                RKLog("pulseIndex %u   .s = %x\n", pulse->header.i, pulse->header.s);
+            }
+        } while (k <= path.length);
 
         // Update the rest of the ray header
         ray->header.sweepElevation = config->sweepElevation;

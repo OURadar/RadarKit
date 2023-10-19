@@ -1599,9 +1599,9 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
                    | RKInitFlagAllocMomentBuffer,
         .configBufferDepth = 2,
         .pulseToRayRatio = 1,                              // A down-sampling factor after pulse compression
-        .pulseBufferDepth = 8,                             // Number of pulses the buffer can hold (RKBuffer pulses)
+        .pulseBufferDepth = RKMaximumPulsesPerRay + 500,   // Number of pulses the buffer can hold (RKBuffer pulses, be sure this is enough)
         .pulseCapacity = capacity,                         // Number of range gates each pulse can hold
-        .rayBufferDepth = 500,                             // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
+        .rayBufferDepth = RKMaximumRaysPerSweep + 50,      // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
         .filePrefix = "HRS",                               // A prefix for the output file name
         .dataPath = "data",                                // A path to the output directory
         .latitude = 35.23682,

@@ -558,6 +558,8 @@ void proc(UserParams *arg) {
                     fwrite(RKGetComplexDataFromPulse(pulse, 0), sizeof(RKComplex), pulse->header.downSampledGateCount, outfid);
                     fwrite(RKGetComplexDataFromPulse(pulse, 1), sizeof(RKComplex), pulse->header.downSampledGateCount, outfid);
                 }
+            } else {
+                pulse->header.s |= RKPulseStatusReadyForMoments;
             }
 
             // Mark for process later

@@ -100,9 +100,6 @@ class core(union_rk_file_header):
         desc.configBufferSize = RKConfigBufferAlloc(ctypes.byref(workspace.configs), desc.configBufferDepth)
         desc.pulseBufferSize = RKPulseBufferAlloc(ctypes.byref(workspace.pulses), desc.pulseCapacity, desc.pulseBufferDepth)
         desc.rayBufferSize = RKRayBufferAlloc(ctypes.byref(workspace.rays), desc.pulseCapacity // desc.pulseToRayRatio, desc.rayBufferDepth)
-        # desc.configBufferSize = desc.configBufferDepth * ctypes.sizeof(RKConfig)
-
-        # workspace.configs = ctypes.cast(malloc(desc.configBufferSize), ctypes.POINTER(RKConfig))
 
         workspace.pulseMachine = RKPulseEngineInit()
         RKPulseEngineSetVerbose(workspace.pulseMachine, verbose)

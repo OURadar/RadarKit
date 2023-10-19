@@ -1183,7 +1183,10 @@ int RKClearPulseBuffer(RKBuffer buffer, const uint32_t count) {
     return RKResultSuccess;
 }
 
-// Read pulse from a file reference
+// Read pulse from a file reference (pulse->header.s is left RKStatusVacant)
+// NOTE: The header status (pulse->header.s) must be handled outside of this function.
+//       Otherwise, pulse engines and moment engines could prematurely start processing
+//       the data without the proper configIndex, etc.
 int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE *fid) {
     int i, j;
     size_t readsize;
@@ -1308,15 +1311,6 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
                   RKIntegerToCommaStyleString(gateCount),
                   RKIntegerToCommaStyleString(capacity));
             return RKResultTooBig;
-        }
-    }
-    if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
-        pulse->header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition;
-    } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
-        if (fileHeader->version <= 6) {
-            pulse->header.s = headerV1->s;
-        } else {
-            pulse->header.s = header->s;
         }
     }
     return RKResultSuccess;
@@ -1753,10 +1747,10 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         "SQI",
         "Linear_Depolarization_Ratio_H",
         "Linear_Depolarization_Ratio_V",
-        "Co-polar-to-cross-polar_Correlation_Coefficient_H",
-        "Co-polar-to-cross-polar_Correlation_Coefficient_V",
-        "Co-polar-to-cross-polar_Differential_Phase_H",
-        "Co-polar-to-cross-polar_Differential_Phase_V",
+        "Co-cross_Correlation_Coefficient_H",
+        "Co-cross_Correlation_Coefficient_V",
+        "Co-cross_Differential_Phase_H",
+        "Co-cross_Differential_Phase_V",
         "-"
     };
     RKName units[] = {
