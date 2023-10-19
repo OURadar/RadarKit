@@ -1435,10 +1435,11 @@ void RKTestReadIQ(const char *filename) {
             if (tr > 30) {
                 fprintf(stderr, "Warning. Time string is getting long at %zu.\n", tr);
             }
-            printf("p:%06d/%06ju  %s  E%5.2f, A%6.2f  %s x %.1f m\n", k, pulse->header.i, timestr,
-                   pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
-                   RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                   pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio);
+            printf("p:%06d/%06ju  %s  E%5.2f, A%6.2f  %s x %.1f m\n",
+                k, (unsigned long)pulse->header.i, timestr,
+                pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
+                RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
+                pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio);
         }
     }
 

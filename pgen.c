@@ -577,7 +577,7 @@ void proc(UserParams *arg) {
                     du += 1000000;
                 }
                 printf("P:%05d/%06ju/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
-                       k, pulse->header.i, p, timestr, du,
+                       k, (unsigned long)pulse->header.i, p, timestr, du,
                        pulse->header.configIndex,
                        pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                        RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
