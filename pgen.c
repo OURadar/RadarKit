@@ -506,19 +506,17 @@ void proc(UserParams *arg) {
                 for (j = 0; j < config->waveform->filterCounts[gid]; j++) {
                     int planIndex = (int)ceilf(log2f((float)MIN(pulse->header.gateCount - config->waveform->filterAnchors[gid][j].inputOrigin,
                                                                 config->waveform->filterAnchors[gid][j].maxDataLength)));
-                    // printf("C:%s  gid = %d   j = %d   planIndex = %d   %08x (%s)\n",
-                    //        RKIntegerToCommaStyleString(pulse->header.gateCount), gid, j, planIndex,
-                    //        pulse->header.s, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
+
+                    #if defined(_DEBUG_SHOW_PULSE_HEADER)
+                    printf("C:%s  gid = %d   j = %d   planIndex = %d   %08x (%s)\n",
+                        RKIntegerToCommaStyleString(pulse->header.gateCount), gid, j, planIndex,
+                        pulse->header.s, pulse->header.s & RKPulseStatusCompressed ? "C" : "R");
+                    #endif
 
                     // Compression
                     scratch->pulse = pulse;
                     scratch->filter = filters[gid][j];
                     scratch->filterAnchor = &config->waveform->filterAnchors[gid][j];
-                    // scratch->planForwardInPlace = fftModule->plans[planIndex].forwardInPlace;
-                    // scratch->planForwardOutPlace = fftModule->plans[planIndex].forwardOutPlace;
-                    // scratch->planBackwardInPlace = fftModule->plans[planIndex].backwardInPlace;
-                    // scratch->planBackwardOutPlace = fftModule->plans[planIndex].backwardOutPlace;
-                    // scratch->planSize = fftModule->plans[planIndex].size;
                     scratch->planIndex = planIndex;
 
                     // Call the compressor
@@ -578,7 +576,7 @@ void proc(UserParams *arg) {
                 if (du < 0) {
                     du += 1000000;
                 }
-                printf("P:%05d/%06" PRIu64 "/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
+                printf("P:%05d/%06ju/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
                        k, pulse->header.i, p, timestr, du,
                        pulse->header.configIndex,
                        pulse->header.elevationDegrees, pulse->header.azimuthDegrees,

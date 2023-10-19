@@ -1310,6 +1310,8 @@ void RKTestReviseLogicalValues(void) {
 void RKTestReadIQ(const char *filename) {
     SHOW_FUNCTION_NAME
     int k, r;
+    size_t tr;
+    time_t startTime;
     size_t readsize, bytes;
     char timestr[32];
     long filesize = 0;
@@ -1427,7 +1429,13 @@ void RKTestReadIQ(const char *filename) {
             break;
         }
         if (k % 100 == 0) {
-            printf("p:%06d/%06" PRIu64 " %s  E%5.2f, A%6.2f  %s x %.1f m\n", k, pulse->header.i, timestr,
+            startTime = pulse->header.time.tv_sec;
+            tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
+            tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
+            if (tr > 30) {
+                fprintf(stderr, "Warning. Time string is getting long at %zu.\n", tr);
+            }
+            printf("p:%06d/%06ju  %s  E%5.2f, A%6.2f  %s x %.1f m\n", k, pulse->header.i, timestr,
                    pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                    RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                    pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio);
