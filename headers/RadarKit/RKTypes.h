@@ -1351,7 +1351,7 @@ typedef union rk_pulse_header {
         float               azimuthDegrees;                                    // Azimuth in degrees
         float               elevationVelocityDegreesPerSecond;                 // Velocity of elevation in degrees / second
         float               azimuthVelocityDegreesPerSecond;                   // Velocity of azimuth in degrees / second
-        RKCompressorOption  compressorDataType;                                // data type of compressor input
+        RKCompressorOption  compressorDataType;                                // Data type of compressor input
     };
     RKByte               bytes[192];
 } RKPulseHeader;

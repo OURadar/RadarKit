@@ -1309,9 +1309,7 @@ void RKTestReviseLogicalValues(void) {
 
 void RKTestReadIQ(const char *filename) {
     SHOW_FUNCTION_NAME
-    int i, j, k, p = 0;
-    size_t tr;
-    time_t startTime;
+    int k, r;
     size_t readsize, bytes;
     char timestr[32];
     long filesize = 0;
@@ -1424,64 +1422,18 @@ void RKTestReadIQ(const char *filename) {
 
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, 0);
-        // Pulse header
-        readsize = fread(&pulse->header, sizeof(RKPulseHeader), 1, fid);
-        if (readsize != 1) {
+        r = RKReadPulseFromFileReference(pulse, fileHeader, fid);
+        if (r != RKResultSuccess) {
             break;
         }
-        // Restore pulse capacity variable since we are not using whatever that was recorded in the file (radar)
-        pulse->header.capacity = pulseCapacity;
-        if (pulse->header.downSampledGateCount > pulseCapacity) {
-            RKLog("Error. Pulse contains %s gates / %s capacity allocated.\n",
-                RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                RKIntegerToCommaStyleString(pulseCapacity));
-            return;
-        }
-        startTime = pulse->header.time.tv_sec;
-        tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
-        tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
-        if (tr > 30) {
-            fprintf(stderr, "Warning. Time string is getting long at %zu.\n", tr);
-        }
-        // Pulse payload of H and V data into channels 0 and 1, respectively. Also, copy to split-complex storage
-        if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
-            for (j = 0; j < 2; j++) {
-                RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
-                readsize = fread(x, sizeof(RKInt16C), pulse->header.gateCount, fid);
-                if (readsize != pulse->header.gateCount || readsize > pulseCapacity) {
-                    RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
-                        RKIntegerToCommaStyleString(readsize),
-                        RKIntegerToCommaStyleString(pulse->header.gateCount),
-                        RKIntegerToCommaStyleString(pulseCapacity));
-                    return;
-                }
-            }
-        } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
-            for (j = 0; j < 2; j++) {
-                RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
-                readsize = fread(x, sizeof(RKComplex), pulse->header.downSampledGateCount, fid);
-                if (readsize != pulse->header.downSampledGateCount || readsize > pulseCapacity) {
-                    RKLog("Error. This should not happen.  readsize = %s != %s || > %s\n",
-                        RKIntegerToCommaStyleString(readsize),
-                        RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
-                        RKIntegerToCommaStyleString(pulseCapacity));
-                    return;
-                }
-                RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, j);
-                for (i = 0; i < pulse->header.downSampledGateCount; i++) {
-                    z.i[i] = x[i].i;
-                    z.q[i] = x[i].q;
-                }
-            }
-        }
-        if (p % 100 == 0) {
-            printf("p:%06d/%06" PRIu64 " %s  E%5.2f, A%6.2f  %s x %.1f m\n", p, pulse->header.i, timestr,
+        if (k % 100 == 0) {
+            printf("p:%06d/%06" PRIu64 " %s  E%5.2f, A%6.2f  %s x %.1f m\n", k, pulse->header.i, timestr,
                    pulse->header.elevationDegrees, pulse->header.azimuthDegrees,
                    RKIntegerToCommaStyleString(pulse->header.downSampledGateCount),
                    pulse->header.gateSizeMeters * fileHeader->desc.pulseToRayRatio);
         }
-        p++;
     }
+
     RKLog("fpos = %s / %s   k = %s\n",
         RKUIntegerToCommaStyleString(ftell(fid)), RKUIntegerToCommaStyleString(filesize),
         RKIntegerToCommaStyleString(k));
