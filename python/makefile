@@ -20,7 +20,7 @@ install:
 	python -m pip install .
 
 uninstall:
-	python -m pip uninstall radarkit
+	python -m pip uninstall -y radarkit
 
 clean:
 	rm -rf radarkit/__pycache__
