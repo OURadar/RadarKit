@@ -83,6 +83,8 @@ class core(union_rk_file_header):
     def preparefromrkfile(self, rkfile):
         ctypes.memmove(ctypes.byref(self.config), ctypes.byref(rkfile.config), ctypes.sizeof(rkfile.config))
         ctypes.memmove(ctypes.byref(self.desc), ctypes.byref(rkfile.desc), ctypes.sizeof(rkfile.desc))
+        self.dataType = rkfile.dataType
+        self.version = rkfile.version
         self.PulseFileManager = ReadPulseFromrkfile
 
     def init_workspace(self, verbose=0, cores=4):
