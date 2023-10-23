@@ -62,15 +62,13 @@ class Workspace(ctypes.Structure):
 def open(filename, opmode='r'):
     fid = RKFileOpen(filename, opmode)
     out = RKFileHeaderRead(fid).contents
+    # Add and override some attributes
     out.fid = fid
     out.filesize = RKFileGetSize(fid)
-    out.desc.configBufferDepth = 10
-    # if pulseBufferDepth larger than pulses in file the rkid.raw_iq could fully
-    # save in python memory ortherwise only last {pulseBufferDepth} pulses IQ is in python space.
-    # larger the buffer more load happen in python (more copy and fetch to numpy array conversion)
-    out.desc.pulseBufferDepth = 30000
-    out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
     out.desc.dataPath = b'data'
+    out.desc.configBufferDepth = 10
+    out.desc.pulseBufferDepth = RKRawDataRecorderDefaultMaximumRecorderDepth    # Large enough to hang on to all pulses.
+    out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50                        # Large enough to hang on to all rays.
     return out
 
 def close(self):
@@ -85,15 +83,16 @@ class core(union_rk_file_header):
         ctypes.memmove(ctypes.byref(self.desc), ctypes.byref(rkfile.desc), ctypes.sizeof(rkfile.desc))
         self.dataType = rkfile.dataType
         self.version = rkfile.version
-        self.PulseFileManager = ReadPulseFromrkfile
+        self.ingest = ingest_rk_file
 
     def init_workspace(self, verbose=0, cores=4):
         desc = self.desc
         self.desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer
         self.desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
-        # self.dataType = RKRawDataTypeFromTransceiver
         if (self.dataType == RKRawDataTypeFromTransceiver):
             self.desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
+        RKLog(f'Python: dataType = {self.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
+
         workspace = Workspace()
         ctypes.memset(ctypes.byref(workspace), 0, ctypes.sizeof(Workspace))
 
@@ -110,6 +109,7 @@ class core(union_rk_file_header):
                                    workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKPulseEngineSetCoreCount(workspace.pulseMachine, cores)
         if (desc.initFlags & RKInitFlagStartPulseEngine):
+            RKLog('Starting pulse engine ... \n')
             RKPulseEngineStart(workspace.pulseMachine)
 
         workspace.ringMachine = RKPulseRingFilterEngineInit()
@@ -222,9 +222,9 @@ class core(union_rk_file_header):
             config = workspace.configs
             RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.contents.waveform)
             RKRawDataRecorderSetRecord(workspace.recorder, False)
-            self.PulseFileManager(self,rkfile)
+            self.ingest(self, rkfile)
 
-    def get_iq(self, iqtype='c'):
+    def get_iq(self, kind='c'):
         if not (hasattr(self, 'workspace')):
             raise RKEngineError("workspace not set yet.")
         else:
@@ -237,15 +237,15 @@ class core(union_rk_file_header):
                 npulses = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
             pulseCount = np.min([npulses, self.desc.pulseBufferDepth])
 
-            if (sweepI == self.iq.last_request) and (pulseCount == self.iq.cache.shape[0]):
-                print('Sweep : {:d} using cached data.'.format(sweepI))
+            if (sweepI == self.iq.last_request) and (pulseCount == self.iq.cache.shape[0]) and self.iq.last_kind == kind:
+                print(f'Sweep {sweepI} from cached data.')
                 return self.iq.cache
             else:
                 # Get the first pulse to retrieve gateCount / downSampledGateCount
                 pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
-                gateCount = pulse.contents.header.gateCount if iqtype == 'r' else pulse.contents.header.downSampledGateCount;
+                gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount;
                 iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-                read_fn = read_raw_data if iqtype == 'r' else read_compressed_data
+                read_fn = read_raw_data if kind == 'r' else read_compressed_data
                 for ip in tqdm.trange(pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}'):
                     ik = ip + self.iq.S
                     if ik >= self.desc.pulseBufferDepth:
@@ -255,11 +255,12 @@ class core(union_rk_file_header):
                     for ic in range(2):
                         iq[ip, ic, :] = read_fn(pulse, ic, gateCount)
                 self.iq.last_request = sweepI
+                self.iq.last_kind = kind
                 self.iq.cache = iq
-                print('Sweep : {:d} loaded from pulse buffer {:d}~{:d}'.format(sweepI, self.iq.S, self.iq.E))
+                print(f'Sweep {sweepI} from pulse buffer {self.iq.S}~{self.iq.E}')
             return iq
 
-    def set_iq(self, array, iqtype='c'):
+    def set_iq(self, array, kind='c'):
         if not (hasattr(self, 'workspace')):
             raise RKEngineError("workspace not set yet.")
         else:
@@ -301,7 +302,7 @@ class RKEngineError(Exception):
     def __str__(self):
         return f"RKEngineError: {self.message}"
 
-def ReadPulseFromrkfile(self,rkfile):
+def ingest_rk_file(self, rkfile):
     workspace = self.workspace
     config = workspace.configs[workspace.pulseMachine.contents.configIndex.contents.value]
     ctypes.memmove(ctypes.byref(config), ctypes.byref(rkfile.config), ctypes.sizeof(RKConfig))
@@ -324,7 +325,7 @@ def ReadPulseFromrkfile(self,rkfile):
                 r = RKReadPulseFromFileReference(pulse, ctypes.byref(rkfile), rkfile.fid)
                 if (r != RKResultSuccess):
                     self.npulses = ip
-                    workspace.pulseMachine.contents.pulseIndex.contents.value = PreviousModuloS(workspace.pulseMachine.contents.pulseIndex.contents.value, self.desc.pulseBufferDepth)
+                    workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, self.desc.pulseBufferDepth)
                     break
                 # pulse.contents.header.i = ip
                 pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
@@ -337,14 +338,14 @@ def ReadPulseFromrkfile(self,rkfile):
             pbar.close()
             ik = workspace.pulseMachine.contents.pulseIndex.contents.value
             self.iq.E = ik - 1
-            workspace.pulseMachine.contents.configIndex.contents.value = NextModuloS(workspace.pulseMachine.contents.configIndex.contents.value, self.desc.configBufferDepth)
+            workspace.pulseMachine.contents.configIndex.contents.value = next_modulo_s(workspace.pulseMachine.contents.configIndex.contents.value, self.desc.configBufferDepth)
     else:
         raise RKEngineError("Unknown pulses for compression.")
 
-def PreviousModuloS(i,S):
+def previous_modulo_s(i, S):
     return (S - 1) if i == 0 else (i - 1)
 
-def NextModuloS(i,S):
+def next_modulo_s(i, S):
     return 0 if i == S - 1 else i + 1
 
 def read_RKFloat_array(rkpos, count):
@@ -418,7 +419,6 @@ RKMarkerDict = {'RKMarkerNull': RKMarkerNull,
                 'RKMarkerScanTypeRHI': RKMarkerScanTypeRHI,
                 'RKMarkerScanTytpePoint': RKMarkerScanTytpePoint,
                 'RKMarkerMemoryManagement': RKMarkerMemoryManagement}
-
 
 def show_flag(RKstatus, sdict=RKPulseStatusDict):
     s = '-'

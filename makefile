@@ -6,11 +6,11 @@ CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
-ifneq ($(GIT_BRANCH), master)
-	CFLAGS += -g -DBETA_BRANCH
+# ifneq ($(GIT_BRANCH), master)
+# 	CFLAGS += -g -DBETA_BRANCH
 
-	VERSION := $(VERSION)b
-endif
+# 	VERSION := $(VERSION)b
+# endif
 
 # Some other heavy debuggning flags
 # CFLAGS += -DDEBUG_IIR
