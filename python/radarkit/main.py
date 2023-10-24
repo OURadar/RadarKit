@@ -76,7 +76,9 @@ def close(self):
 
 class core(union_rk_file_header):
     def __init__(self):
-        pass
+        super().__init__()
+        RKSetProgramName(b"RadarKit")
+        RKLog("Python Core: Initializing ... \n")
 
     def preparefromrkfile(self, rkfile):
         ctypes.memmove(ctypes.byref(self.config), ctypes.byref(rkfile.config), ctypes.sizeof(rkfile.config))
@@ -109,7 +111,6 @@ class core(union_rk_file_header):
                                    workspace.pulses, ctypes.byref(workspace.pulseIndex))
         RKPulseEngineSetCoreCount(workspace.pulseMachine, cores)
         if (desc.initFlags & RKInitFlagStartPulseEngine):
-            RKLog('Starting pulse engine ... \n')
             RKPulseEngineStart(workspace.pulseMachine)
 
         workspace.ringMachine = RKPulseRingFilterEngineInit()

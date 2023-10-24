@@ -560,6 +560,7 @@ void RKShowBanner(const char *title, const char *color) {
     printf("%s\n", padding);
     printf("%s\n", message);
     printf("%s\n", padding);
+    fflush(stdout);
 }
 
 void RKShowName(void) {
