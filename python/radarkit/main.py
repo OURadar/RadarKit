@@ -77,8 +77,9 @@ def close(self):
 class core(union_rk_file_header):
     def __init__(self):
         super().__init__()
+        self.name = f'\033{RKPythonColor[4:]}Python Core\033[m'
         RKSetProgramName(b"RadarKit")
-        RKLog("Python Core: Initializing ... \n")
+        RKLog(f"{self.name} Initializing ...")
 
     def preparefromrkfile(self, rkfile):
         ctypes.memmove(ctypes.byref(self.config), ctypes.byref(rkfile.config), ctypes.sizeof(rkfile.config))
@@ -93,7 +94,8 @@ class core(union_rk_file_header):
         self.desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
         if (self.dataType == RKRawDataTypeFromTransceiver):
             self.desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
-        RKLog(f'Python: dataType = {self.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
+        if verbose:
+            RKLog(f'{self.name} dataType = {self.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
         workspace = Workspace()
         ctypes.memset(ctypes.byref(workspace), 0, ctypes.sizeof(Workspace))
