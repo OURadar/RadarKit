@@ -1328,6 +1328,28 @@ RKPulse *RKGetVacantPulseFromBuffer(RKBuffer pulses, uint32_t *index, const uint
     return pulse;
 }
 
+RKBuffer RKPulseBufferAllocCopyFromBuffer(RKBuffer pulses, const uint32_t start, const uint32_t count, const uint32_t depth) {
+    RKPulse *pulse = RKGetPulseFromBuffer(pulses, start);
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
+    RKLog("Allocating array of %s x 2 x %d RKComplex ...\n", RKIntegerToCommaStyleString(count), gateCount);
+    RKComplex *array = (RKComplex *)malloc(count * 2 * gateCount * sizeof(RKComplex));
+    RKComplex *d = array;
+    RKLog("Copying data from RKBuffer ...\n");
+    for (int k = 0, pulseIndex = start; k < count; k++, pulseIndex++) {
+        if (pulseIndex >= depth) {
+            pulseIndex -= depth;
+        }
+        pulse = RKGetPulseFromBuffer(pulses, pulseIndex);
+        for (int c = 0; c < 2; c++) {
+            RKComplex *samples = RKGetComplexDataFromPulse(pulse, c);
+            memcpy(d, samples, gateCount * sizeof(RKComplex));
+            d += gateCount;
+        }
+    }
+    RKLog("Done\n");
+    return (RKBuffer)array;
+}
+
 #pragma mark - Ray
 
 //

@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/Users/boonleng/.pyenv/versions/3.8.11/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
+/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
 
 Do not modify this file.
 """
@@ -5067,73 +5067,79 @@ if _libs["radarkit"].has("RKGetVacantPulseFromBuffer", "cdecl"):
     RKGetVacantPulseFromBuffer.argtypes = [RKBuffer, POINTER(uint32_t), uint32_t]
     RKGetVacantPulseFromBuffer.restype = POINTER(RKPulse)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 176
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 174
+if _libs["radarkit"].has("RKPulseBufferAllocCopyFromBuffer", "cdecl"):
+    RKPulseBufferAllocCopyFromBuffer = _libs["radarkit"].get("RKPulseBufferAllocCopyFromBuffer", "cdecl")
+    RKPulseBufferAllocCopyFromBuffer.argtypes = [RKBuffer, uint32_t, uint32_t, uint32_t]
+    RKPulseBufferAllocCopyFromBuffer.restype = RKBuffer
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 177
 if _libs["radarkit"].has("RKRayBufferAlloc", "cdecl"):
     RKRayBufferAlloc = _libs["radarkit"].get("RKRayBufferAlloc", "cdecl")
     RKRayBufferAlloc.argtypes = [POINTER(RKBuffer), uint32_t, uint32_t]
     RKRayBufferAlloc.restype = c_size_t
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 177
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 178
 if _libs["radarkit"].has("RKRayBufferFree", "cdecl"):
     RKRayBufferFree = _libs["radarkit"].get("RKRayBufferFree", "cdecl")
     RKRayBufferFree.argtypes = [RKBuffer]
     RKRayBufferFree.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 178
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 179
 if _libs["radarkit"].has("RKGetRayFromBuffer", "cdecl"):
     RKGetRayFromBuffer = _libs["radarkit"].get("RKGetRayFromBuffer", "cdecl")
     RKGetRayFromBuffer.argtypes = [RKBuffer, uint32_t]
     RKGetRayFromBuffer.restype = POINTER(RKRay)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 179
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 180
 if _libs["radarkit"].has("RKGetInt16DataFromRay", "cdecl"):
     RKGetInt16DataFromRay = _libs["radarkit"].get("RKGetInt16DataFromRay", "cdecl")
     RKGetInt16DataFromRay.argtypes = [POINTER(RKRay), RKMomentIndex]
     RKGetInt16DataFromRay.restype = POINTER(c_int16)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 180
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 181
 if _libs["radarkit"].has("RKGetUInt8DataFromRay", "cdecl"):
     RKGetUInt8DataFromRay = _libs["radarkit"].get("RKGetUInt8DataFromRay", "cdecl")
     RKGetUInt8DataFromRay.argtypes = [POINTER(RKRay), RKBaseProductIndex]
     RKGetUInt8DataFromRay.restype = POINTER(uint8_t)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 181
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 182
 if _libs["radarkit"].has("RKGetFloatDataFromRay", "cdecl"):
     RKGetFloatDataFromRay = _libs["radarkit"].get("RKGetFloatDataFromRay", "cdecl")
     RKGetFloatDataFromRay.argtypes = [POINTER(RKRay), RKBaseProductIndex]
     RKGetFloatDataFromRay.restype = POINTER(c_float)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 182
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 183
 if _libs["radarkit"].has("RKClearRayBuffer", "cdecl"):
     RKClearRayBuffer = _libs["radarkit"].get("RKClearRayBuffer", "cdecl")
     RKClearRayBuffer.argtypes = [RKBuffer, uint32_t]
     RKClearRayBuffer.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 183
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 184
 if _libs["radarkit"].has("RKGetVacantRayFromBuffer", "cdecl"):
     RKGetVacantRayFromBuffer = _libs["radarkit"].get("RKGetVacantRayFromBuffer", "cdecl")
     RKGetVacantRayFromBuffer.argtypes = [RKBuffer, POINTER(uint32_t), uint32_t]
     RKGetVacantRayFromBuffer.restype = POINTER(RKRay)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 186
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 187
 if _libs["radarkit"].has("RKFileMonitorInit", "cdecl"):
     RKFileMonitorInit = _libs["radarkit"].get("RKFileMonitorInit", "cdecl")
     RKFileMonitorInit.argtypes = [String, CFUNCTYPE(UNCHECKED(None), POINTER(None)), POINTER(None)]
     RKFileMonitorInit.restype = POINTER(RKFileMonitor)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 187
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 188
 if _libs["radarkit"].has("RKFileMonitorFree", "cdecl"):
     RKFileMonitorFree = _libs["radarkit"].get("RKFileMonitorFree", "cdecl")
     RKFileMonitorFree.argtypes = [POINTER(RKFileMonitor)]
     RKFileMonitorFree.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 190
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 191
 if _libs["radarkit"].has("RKStreamFromString", "cdecl"):
     RKStreamFromString = _libs["radarkit"].get("RKStreamFromString", "cdecl")
     RKStreamFromString.argtypes = [String]
     RKStreamFromString.restype = RKStream
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 191
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 192
 if _libs["radarkit"].has("RKStringOfStream", "cdecl"):
     RKStringOfStream = _libs["radarkit"].get("RKStringOfStream", "cdecl")
     RKStringOfStream.argtypes = [RKStream]
@@ -5143,31 +5149,31 @@ if _libs["radarkit"].has("RKStringOfStream", "cdecl"):
         RKStringOfStream.restype = String
         RKStringOfStream.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 192
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 193
 if _libs["radarkit"].has("RKStringFromStream", "cdecl"):
     RKStringFromStream = _libs["radarkit"].get("RKStringFromStream", "cdecl")
     RKStringFromStream.argtypes = [String, RKStream]
     RKStringFromStream.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 194
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 195
 if _libs["radarkit"].has("RKGetNextProductDescription", "cdecl"):
     RKGetNextProductDescription = _libs["radarkit"].get("RKGetNextProductDescription", "cdecl")
     RKGetNextProductDescription.argtypes = [POINTER(RKBaseProductList)]
     RKGetNextProductDescription.restype = RKProductDesc
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 197
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 198
 if _libs["radarkit"].has("RKParseCommaDelimitedValues", "cdecl"):
     RKParseCommaDelimitedValues = _libs["radarkit"].get("RKParseCommaDelimitedValues", "cdecl")
     RKParseCommaDelimitedValues.argtypes = [POINTER(None), RKValueType, c_size_t, String]
     RKParseCommaDelimitedValues.restype = c_size_t
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 198
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 199
 if _libs["radarkit"].has("RKParseNumericArray", "cdecl"):
     RKParseNumericArray = _libs["radarkit"].get("RKParseNumericArray", "cdecl")
     RKParseNumericArray.argtypes = [POINTER(None), RKValueType, c_size_t, String]
     RKParseNumericArray.restype = c_size_t
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 199
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 200
 if _libs["radarkit"].has("RKParseQuotedStrings", "cdecl"):
     _func = _libs["radarkit"].get("RKParseQuotedStrings", "cdecl")
     _restype = None
@@ -5175,97 +5181,97 @@ if _libs["radarkit"].has("RKParseQuotedStrings", "cdecl"):
     _argtypes = [String]
     RKParseQuotedStrings = _variadic_function(_func,_restype,_argtypes,_errcheck)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 200
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 201
 if _libs["radarkit"].has("RKMakeJSONStringFromControls", "cdecl"):
     RKMakeJSONStringFromControls = _libs["radarkit"].get("RKMakeJSONStringFromControls", "cdecl")
     RKMakeJSONStringFromControls.argtypes = [String, POINTER(RKControl), uint32_t]
     RKMakeJSONStringFromControls.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 201
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 202
 if _libs["radarkit"].has("RKValueToEnum", "cdecl"):
     RKValueToEnum = _libs["radarkit"].get("RKValueToEnum", "cdecl")
     RKValueToEnum.argtypes = [RKConst, RKConst, RKConst, RKConst, RKConst, RKConst, RKConst]
     RKValueToEnum.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 202
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 203
 if _libs["radarkit"].has("RKStatusFromTemperatureForCE", "cdecl"):
     RKStatusFromTemperatureForCE = _libs["radarkit"].get("RKStatusFromTemperatureForCE", "cdecl")
     RKStatusFromTemperatureForCE.argtypes = [RKConst]
     RKStatusFromTemperatureForCE.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 203
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 204
 if _libs["radarkit"].has("RKStatusFromTemperatureForIE", "cdecl"):
     RKStatusFromTemperatureForIE = _libs["radarkit"].get("RKStatusFromTemperatureForIE", "cdecl")
     RKStatusFromTemperatureForIE.argtypes = [RKConst]
     RKStatusFromTemperatureForIE.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 204
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 205
 if _libs["radarkit"].has("RKStatusFromTemperatureForComputers", "cdecl"):
     RKStatusFromTemperatureForComputers = _libs["radarkit"].get("RKStatusFromTemperatureForComputers", "cdecl")
     RKStatusFromTemperatureForComputers.argtypes = [RKConst]
     RKStatusFromTemperatureForComputers.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 205
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 206
 if _libs["radarkit"].has("RKFindCondition", "cdecl"):
     RKFindCondition = _libs["radarkit"].get("RKFindCondition", "cdecl")
     RKFindCondition.argtypes = [String, RKStatusEnum, c_bool, String, String]
     RKFindCondition.restype = c_bool
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 206
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 207
 if _libs["radarkit"].has("RKAnyCritical", "cdecl"):
     RKAnyCritical = _libs["radarkit"].get("RKAnyCritical", "cdecl")
     RKAnyCritical.argtypes = [String, c_bool, String, String]
     RKAnyCritical.restype = c_bool
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 207
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 208
 if _libs["radarkit"].has("RKParseProductDescription", "cdecl"):
     RKParseProductDescription = _libs["radarkit"].get("RKParseProductDescription", "cdecl")
     RKParseProductDescription.argtypes = [POINTER(RKProductDesc), String]
     RKParseProductDescription.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 208
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 209
 if _libs["radarkit"].has("RKProductIdFromString", "cdecl"):
     RKProductIdFromString = _libs["radarkit"].get("RKProductIdFromString", "cdecl")
     RKProductIdFromString.argtypes = [String]
     RKProductIdFromString.restype = RKProductId
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 209
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 210
 if _libs["radarkit"].has("RKIdentifierFromString", "cdecl"):
     RKIdentifierFromString = _libs["radarkit"].get("RKIdentifierFromString", "cdecl")
     RKIdentifierFromString.argtypes = [String]
     RKIdentifierFromString.restype = RKIdentifier
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 212
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 213
 if _libs["radarkit"].has("RKSimpleEngineFree", "cdecl"):
     RKSimpleEngineFree = _libs["radarkit"].get("RKSimpleEngineFree", "cdecl")
     RKSimpleEngineFree.argtypes = [POINTER(RKSimpleEngine)]
     RKSimpleEngineFree.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 215
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 216
 if _libs["radarkit"].has("RKCommandQueueInit", "cdecl"):
     RKCommandQueueInit = _libs["radarkit"].get("RKCommandQueueInit", "cdecl")
     RKCommandQueueInit.argtypes = [uint16_t, c_bool]
     RKCommandQueueInit.restype = POINTER(RKCommandQueue)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 216
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 217
 if _libs["radarkit"].has("RKCommandQueuePop", "cdecl"):
     RKCommandQueuePop = _libs["radarkit"].get("RKCommandQueuePop", "cdecl")
     RKCommandQueuePop.argtypes = [POINTER(RKCommandQueue)]
     RKCommandQueuePop.restype = POINTER(RKCommand)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 217
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 218
 if _libs["radarkit"].has("RKCommandQueuePush", "cdecl"):
     RKCommandQueuePush = _libs["radarkit"].get("RKCommandQueuePush", "cdecl")
     RKCommandQueuePush.argtypes = [POINTER(RKCommandQueue), POINTER(RKCommand)]
     RKCommandQueuePush.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 218
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 219
 if _libs["radarkit"].has("RKCommandQueueFree", "cdecl"):
     RKCommandQueueFree = _libs["radarkit"].get("RKCommandQueueFree", "cdecl")
     RKCommandQueueFree.argtypes = [POINTER(RKCommandQueue)]
     RKCommandQueueFree.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 221
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 222
 if _libs["radarkit"].has("RKPedestalActionString", "cdecl"):
     RKPedestalActionString = _libs["radarkit"].get("RKPedestalActionString", "cdecl")
     RKPedestalActionString.argtypes = [POINTER(RKScanAction)]

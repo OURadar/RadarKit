@@ -76,7 +76,7 @@ def open(filename, opmode='r'):
     out.desc.dataPath = b'data'
     out.desc.configBufferDepth = 10
     # out.desc.pulseBufferDepth = RKRawDataRecorderDefaultMaximumRecorderDepth    # Large enough to hang on to all pulses.
-    out.desc.pulseBufferDepth = 30000    # Large enough to hang on to all pulses.
+    out.desc.pulseBufferDepth = 30000                                           # Large enough to hang on to all pulses.
     out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50                        # Large enough to hang on to all rays.
     return out
 
@@ -298,7 +298,7 @@ class core(union_rk_file_header):
             return self.variables
 
     @background
-    def read_pulse(self, k, gateCount, out):
+    def pulse_from_buffer(self, k, gateCount, out):
         pulseIndex = k + self.iq.S
         if pulseIndex >= self.desc.pulseBufferDepth:
             pulseIndex -= self.desc.pulseBufferDepth
@@ -312,16 +312,29 @@ class core(union_rk_file_header):
             pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
         pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
         firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
-        gateCount = firstPulse.contents.header.gateCount
+        gateCount = firstPulse.contents.header.downSampledGateCount
         iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
         loop = asyncio.get_event_loop()
-        group1 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(0, pulseCount, 4)])
-        group2 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(1, pulseCount, 4)])
-        group3 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(2, pulseCount, 4)])
-        group4 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(3, pulseCount, 4)])
+        group1 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(0, pulseCount, 4)])
+        group2 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(1, pulseCount, 4)])
+        group3 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(2, pulseCount, 4)])
+        group4 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(3, pulseCount, 4)])
         all_groups = asyncio.gather(group1, group2, group3, group4)
         loop.run_until_complete(all_groups)
         return iq
+
+    def get_iq_array(self):
+        if self.iq.S < self.iq.E:
+            pulseCount = self.iq.E - self.iq.S + 1
+        elif self.iq.S > self.iq.E:
+            pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
+        pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
+        firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
+        gateCount = firstPulse.contents.header.downSampledGateCount
+        array = RKPulseBufferAllocCopyFromBuffer(self.workspace.pulses, self.iq.S, pulseCount, self.desc.pulseBufferDepth)
+        ciq = np.ctypeslib.as_array(ctypes.cast(array, ctypes.POINTER(ctypes.c_float)), (pulseCount, 2, gateCount * 2)).view(np.complex64)
+        RKPulseBufferFree(array)
+        return ciq
 
 class iqcache:
     def __init__(self):
