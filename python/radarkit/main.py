@@ -6,6 +6,10 @@ import numpy as np
 
 from ._ctypes_ import *
 
+import asyncio
+import nest_asyncio
+nest_asyncio.apply()
+
 # from . import radial_noise
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -22,6 +26,10 @@ Productdict = {'Z': RKBaseProductIndexZ,
                'R': RKBaseProductIndexR,
                'P': RKBaseProductIndexP}
 
+def background(f):
+    def wrapped(*args, **kwargs):
+        return asyncio.get_event_loop().run_in_executor(None, f, *args, **kwargs)
+    return wrapped
 
 class pyRKuint32(ctypes.c_uint32):
     pass
@@ -67,7 +75,8 @@ def open(filename, opmode='r'):
     out.filesize = RKFileGetSize(fid)
     out.desc.dataPath = b'data'
     out.desc.configBufferDepth = 10
-    out.desc.pulseBufferDepth = RKRawDataRecorderDefaultMaximumRecorderDepth    # Large enough to hang on to all pulses.
+    # out.desc.pulseBufferDepth = RKRawDataRecorderDefaultMaximumRecorderDepth    # Large enough to hang on to all pulses.
+    out.desc.pulseBufferDepth = 30000    # Large enough to hang on to all pulses.
     out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50                        # Large enough to hang on to all rays.
     return out
 
@@ -77,7 +86,7 @@ def close(self):
 class core(union_rk_file_header):
     def __init__(self):
         super().__init__()
-        self.name = f'\033{RKPythonColor[4:]}Python Core\033[m'
+        self.name = f'\033{RKPythonColor[4:]}<  Python Core  >\033[m'
         RKSetProgramName(b"RadarKit")
         RKLog(f"{self.name} Initializing ...")
 
@@ -246,7 +255,7 @@ class core(union_rk_file_header):
             else:
                 # Get the first pulse to retrieve gateCount / downSampledGateCount
                 pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
-                gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount;
+                gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount
                 iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
                 read_fn = read_raw_data if kind == 'r' else read_compressed_data
                 for ip in tqdm.trange(pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}'):
@@ -255,8 +264,7 @@ class core(union_rk_file_header):
                         ik -= self.desc.pulseBufferDepth
                     pulse = RKGetPulseFromBuffer(workspace.pulses, ik)
         #            show_Flag(pulse.contents.header.s, RKPulseStatusDict)
-                    for ic in range(2):
-                        iq[ip, ic, :] = read_fn(pulse, ic, gateCount)
+                    iq[ip, :, :] = read_fn(pulse, gateCount)
                 self.iq.last_request = sweepI
                 self.iq.last_kind = kind
                 self.iq.cache = iq
@@ -288,6 +296,32 @@ class core(union_rk_file_header):
                         buf.append(data)
                 self.variables.update({varname: np.asarray(buf)})
             return self.variables
+
+    @background
+    def read_pulse(self, k, gateCount, out):
+        pulseIndex = k + self.iq.S
+        if pulseIndex >= self.desc.pulseBufferDepth:
+            pulseIndex -= self.desc.pulseBufferDepth
+        pulse = RKGetPulseFromBuffer(self.workspace.pulses, pulseIndex)
+        out[k, :, :] = read_compressed_data(pulse, gateCount)
+
+    def get_iq_fast(self):
+        if self.iq.S < self.iq.E:
+            pulseCount = self.iq.E - self.iq.S + 1
+        elif self.iq.S > self.iq.E:
+            pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
+        pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
+        firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
+        gateCount = firstPulse.contents.header.gateCount
+        iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+        loop = asyncio.get_event_loop()
+        group1 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(0, pulseCount, 4)])
+        group2 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(1, pulseCount, 4)])
+        group3 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(2, pulseCount, 4)])
+        group4 = asyncio.gather(*[self.read_pulse(k, gateCount, iq) for k in range(3, pulseCount, 4)])
+        all_groups = asyncio.gather(group1, group2, group3, group4)
+        loop.run_until_complete(all_groups)
+        return iq
 
 class iqcache:
     def __init__(self):
@@ -362,11 +396,17 @@ def read_RKComplex_array(rkpos, count):
     bufiq = np.ctypeslib.as_array(ctypes.cast(rkpos, ctypes.POINTER(ctypes.c_float)), (count, 2))
     return bufiq[:, 0] + 1j * bufiq[:, 1]
 
-def read_raw_data(pulse, c, count):
-    return read_RKInt16C_array(RKGetInt16CDataFromPulse(pulse, c), count)
+def read_raw_data(pulse, count):
+    # return read_RKInt16C_array(RKGetInt16CDataFromPulse(pulse, c), count)
+    h = np.ctypeslib.as_array(ctypes.cast(RKGetInt16CDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_int16)), (count * 2,)).astype(np.float32).view(np.complex64)
+    v = np.ctypeslib.as_array(ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16)), (count * 2,)).astype(np.float32).view(np.complex64)
+    return np.vstack((h, v))
 
-def read_compressed_data(pulse, c, count):
-    return read_RKComplex_array(RKGetComplexDataFromPulse(pulse, c), count)
+def read_compressed_data(pulse, count):
+    # return read_RKComplex_array(RKGetComplexDataFromPulse(pulse, c), count)
+    h = np.ctypeslib.as_array(ctypes.cast(RKGetComplexDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_float)), (count * 2,)).view(np.complex64)
+    v = np.ctypeslib.as_array(ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float)), (count * 2,)).view(np.complex64)
+    return np.vstack((h, v))
 
 def place_RKComplex_array(dest, source):
     bufiq = np.zeros((source.size * 2), dtype=np.float32)
