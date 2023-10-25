@@ -6,9 +6,9 @@ import numpy as np
 
 from ._ctypes_ import *
 
-import asyncio
-import nest_asyncio
-nest_asyncio.apply()
+# import asyncio
+# import nest_asyncio
+# nest_asyncio.apply()
 
 # from . import radial_noise
 
@@ -26,10 +26,10 @@ Productdict = {'Z': RKBaseProductIndexZ,
                'R': RKBaseProductIndexR,
                'P': RKBaseProductIndexP}
 
-def background(f):
-    def wrapped(*args, **kwargs):
-        return asyncio.get_event_loop().run_in_executor(None, f, *args, **kwargs)
-    return wrapped
+# def background(f):
+#     def wrapped(*args, **kwargs):
+#         return asyncio.get_event_loop().run_in_executor(None, f, *args, **kwargs)
+#     return wrapped
 
 class pyRKuint32(ctypes.c_uint32):
     pass
@@ -297,31 +297,31 @@ class core(union_rk_file_header):
                 self.variables.update({varname: np.asarray(buf)})
             return self.variables
 
-    @background
-    def pulse_from_buffer(self, k, gateCount, out):
-        pulseIndex = k + self.iq.S
-        if pulseIndex >= self.desc.pulseBufferDepth:
-            pulseIndex -= self.desc.pulseBufferDepth
-        pulse = RKGetPulseFromBuffer(self.workspace.pulses, pulseIndex)
-        out[k, :, :] = read_compressed_data(pulse, gateCount)
+    # @background
+    # def pulse_from_buffer(self, k, gateCount, out):
+    #     pulseIndex = k + self.iq.S
+    #     if pulseIndex >= self.desc.pulseBufferDepth:
+    #         pulseIndex -= self.desc.pulseBufferDepth
+    #     pulse = RKGetPulseFromBuffer(self.workspace.pulses, pulseIndex)
+    #     out[k, :, :] = read_compressed_data(pulse, gateCount)
 
-    def get_iq_fast(self):
-        if self.iq.S < self.iq.E:
-            pulseCount = self.iq.E - self.iq.S + 1
-        elif self.iq.S > self.iq.E:
-            pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
-        pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
-        firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
-        gateCount = firstPulse.contents.header.downSampledGateCount
-        iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-        loop = asyncio.get_event_loop()
-        group1 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(0, pulseCount, 4)])
-        group2 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(1, pulseCount, 4)])
-        group3 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(2, pulseCount, 4)])
-        group4 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(3, pulseCount, 4)])
-        all_groups = asyncio.gather(group1, group2, group3, group4)
-        loop.run_until_complete(all_groups)
-        return iq
+    # def get_iq_fast(self):
+    #     if self.iq.S < self.iq.E:
+    #         pulseCount = self.iq.E - self.iq.S + 1
+    #     elif self.iq.S > self.iq.E:
+    #         pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
+    #     pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
+    #     firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
+    #     gateCount = firstPulse.contents.header.downSampledGateCount
+    #     iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+    #     loop = asyncio.get_event_loop()
+    #     group1 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(0, pulseCount, 4)])
+    #     group2 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(1, pulseCount, 4)])
+    #     group3 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(2, pulseCount, 4)])
+    #     group4 = asyncio.gather(*[self.pulse_from_buffer(k, gateCount, iq) for k in range(3, pulseCount, 4)])
+    #     all_groups = asyncio.gather(group1, group2, group3, group4)
+    #     loop.run_until_complete(all_groups)
+    #     return iq
 
     def get_iq_array(self):
         if self.iq.S < self.iq.E:
