@@ -248,6 +248,8 @@ class core(union_rk_file_header):
                 pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
                 gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount;
                 iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+                el = np.zeros(pulseCount, dtype=np.float32)
+                az = np.zeros(pulseCount, dtype=np.float32)
                 read_fn = read_raw_data if kind == 'r' else read_compressed_data
                 for ip in tqdm.trange(pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}'):
                     ik = ip + self.iq.S
@@ -257,9 +259,13 @@ class core(union_rk_file_header):
         #            show_Flag(pulse.contents.header.s, RKPulseStatusDict)
                     for ic in range(2):
                         iq[ip, ic, :] = read_fn(pulse, ic, gateCount)
+                    el[ip] = pulse.contents.header.elevationDegrees
+                    az[ip] = pulse.contents.header.azimuthDegrees
                 self.iq.last_request = sweepI
                 self.iq.last_kind = kind
                 self.iq.cache = iq
+                self.iq.el = el
+                self.iq.az = az
                 print(f'Sweep {sweepI} from pulse buffer {self.iq.S}~{self.iq.E}')
             return iq
 
