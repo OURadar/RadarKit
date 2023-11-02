@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/home/tmin/.local/bin/ctypesgen -I/usr/local/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
+/home/tmin/.local/bin/ctypesgen -I/usr/local/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
 
 Do not modify this file.
 """
@@ -5571,7 +5571,7 @@ struct_rk_compression_scratch._fields_ = [
 
 RKCompressionScratch = struct_rk_compression_scratch# headers/RadarKit/RKScratch.h: 52
 
-# headers/RadarKit/RKScratch.h: 110
+# headers/RadarKit/RKScratch.h: 112
 class struct_rk_moment_scratch(Structure):
     pass
 
@@ -5624,6 +5624,8 @@ struct_rk_moment_scratch.__slots__ = [
     'fftModule',
     'inBuffer',
     'outBuffer',
+    'fS',
+    'fC',
     'fftOrder',
     'config',
     'calculatedMoments',
@@ -5678,51 +5680,53 @@ struct_rk_moment_scratch._fields_ = [
     ('fftModule', POINTER(RKFFTModule)),
     ('inBuffer', POINTER(POINTER(fftwf_complex))),
     ('outBuffer', POINTER(POINTER(fftwf_complex))),
+    ('fS', POINTER(POINTER(fftwf_complex)) * int(2)),
+    ('fC', POINTER(POINTER(fftwf_complex))),
     ('fftOrder', c_int8),
     ('config', POINTER(RKConfig)),
     ('calculatedMoments', RKMomentList),
     ('calculatedProducts', RKBaseProductList),
 ]
 
-RKMomentScratch = struct_rk_moment_scratch# headers/RadarKit/RKScratch.h: 110
+RKMomentScratch = struct_rk_moment_scratch# headers/RadarKit/RKScratch.h: 112
 
-# headers/RadarKit/RKScratch.h: 112
+# headers/RadarKit/RKScratch.h: 114
 if _libs["radarkit"].has("RKCompressionScratchAlloc", "cdecl"):
     RKCompressionScratchAlloc = _libs["radarkit"].get("RKCompressionScratchAlloc", "cdecl")
     RKCompressionScratchAlloc.argtypes = [POINTER(POINTER(RKCompressionScratch)), uint32_t, uint8_t, RKName]
     RKCompressionScratchAlloc.restype = c_size_t
 
-# headers/RadarKit/RKScratch.h: 113
+# headers/RadarKit/RKScratch.h: 115
 if _libs["radarkit"].has("RKCompressionScratchFree", "cdecl"):
     RKCompressionScratchFree = _libs["radarkit"].get("RKCompressionScratchFree", "cdecl")
     RKCompressionScratchFree.argtypes = [POINTER(RKCompressionScratch)]
     RKCompressionScratchFree.restype = None
 
-# headers/RadarKit/RKScratch.h: 115
+# headers/RadarKit/RKScratch.h: 117
 if _libs["radarkit"].has("RKMomentScratchAlloc", "cdecl"):
     RKMomentScratchAlloc = _libs["radarkit"].get("RKMomentScratchAlloc", "cdecl")
     RKMomentScratchAlloc.argtypes = [POINTER(POINTER(RKMomentScratch)), uint32_t, uint8_t, RKName]
     RKMomentScratchAlloc.restype = c_size_t
 
-# headers/RadarKit/RKScratch.h: 116
+# headers/RadarKit/RKScratch.h: 118
 if _libs["radarkit"].has("RKMomentScratchFree", "cdecl"):
     RKMomentScratchFree = _libs["radarkit"].get("RKMomentScratchFree", "cdecl")
     RKMomentScratchFree.argtypes = [POINTER(RKMomentScratch)]
     RKMomentScratchFree.restype = None
 
-# headers/RadarKit/RKScratch.h: 118
+# headers/RadarKit/RKScratch.h: 120
 if _libs["radarkit"].has("prepareScratch", "cdecl"):
     prepareScratch = _libs["radarkit"].get("prepareScratch", "cdecl")
     prepareScratch.argtypes = [POINTER(RKMomentScratch)]
     prepareScratch.restype = c_int
 
-# headers/RadarKit/RKScratch.h: 119
+# headers/RadarKit/RKScratch.h: 121
 if _libs["radarkit"].has("makeRayFromScratch", "cdecl"):
     makeRayFromScratch = _libs["radarkit"].get("makeRayFromScratch", "cdecl")
     makeRayFromScratch.argtypes = [POINTER(RKMomentScratch), POINTER(RKRay)]
     makeRayFromScratch.restype = c_int
 
-# headers/RadarKit/RKScratch.h: 121
+# headers/RadarKit/RKScratch.h: 123
 if _libs["radarkit"].has("RKNullProcessor", "cdecl"):
     RKNullProcessor = _libs["radarkit"].get("RKNullProcessor", "cdecl")
     RKNullProcessor.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
@@ -6435,6 +6439,24 @@ if _libs["radarkit"].has("RKRawDataRecorderCacheFlush", "cdecl"):
     RKRawDataRecorderCacheFlush.argtypes = [POINTER(RKRawDataRecorder)]
     RKRawDataRecorderCacheFlush.restype = c_size_t
 
+# headers/RadarKit/RKPulsePair.h: 15
+if _libs["radarkit"].has("RKPulsePair", "cdecl"):
+    RKPulsePair = _libs["radarkit"].get("RKPulsePair", "cdecl")
+    RKPulsePair.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePair.restype = c_int
+
+# headers/RadarKit/RKPulsePair.h: 16
+if _libs["radarkit"].has("RKPulsePairHop", "cdecl"):
+    RKPulsePairHop = _libs["radarkit"].get("RKPulsePairHop", "cdecl")
+    RKPulsePairHop.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePairHop.restype = c_int
+
+# headers/RadarKit/RKPulsePair.h: 17
+if _libs["radarkit"].has("RKPulsePairStaggeredPRT", "cdecl"):
+    RKPulsePairStaggeredPRT = _libs["radarkit"].get("RKPulsePairStaggeredPRT", "cdecl")
+    RKPulsePairStaggeredPRT.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePairStaggeredPRT.restype = c_int
+
 # headers/RadarKit/RKMultiLag.h: 15
 if _libs["radarkit"].has("RKMultiLag", "cdecl"):
     RKMultiLag = _libs["radarkit"].get("RKMultiLag", "cdecl")
@@ -6446,6 +6468,18 @@ if _libs["radarkit"].has("RKRayNoiseEstimator", "cdecl"):
     RKRayNoiseEstimator = _libs["radarkit"].get("RKRayNoiseEstimator", "cdecl")
     RKRayNoiseEstimator.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKRayNoiseEstimator.restype = c_int
+
+# headers/RadarKit/RKSpectralMoment.h: 15
+if _libs["radarkit"].has("RKSpectralMoment", "cdecl"):
+    RKSpectralMoment = _libs["radarkit"].get("RKSpectralMoment", "cdecl")
+    RKSpectralMoment.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKSpectralMoment.restype = c_int
+
+# headers/RadarKit/RKSpectralMoment.h: 16
+if _libs["radarkit"].has("RKSpectralMoment2", "cdecl"):
+    RKSpectralMoment2 = _libs["radarkit"].get("RKSpectralMoment2", "cdecl")
+    RKSpectralMoment2.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKSpectralMoment2.restype = c_int
 
 # headers/RadarKit/RKPulseATSR.h: 15
 if _libs["radarkit"].has("RKPulseATSR", "cdecl"):
@@ -9351,7 +9385,7 @@ rk_gaussian = struct_rk_gaussian# /mnt/k/OU/RadarKit/headers/RadarKit/RKDSP.h: 4
 
 rk_compression_scratch = struct_rk_compression_scratch# headers/RadarKit/RKScratch.h: 52
 
-rk_moment_scratch = struct_rk_moment_scratch# headers/RadarKit/RKScratch.h: 110
+rk_moment_scratch = struct_rk_moment_scratch# headers/RadarKit/RKScratch.h: 112
 
 rk_pulse_worker = struct_rk_pulse_worker# /mnt/k/OU/RadarKit/headers/RadarKit/RKPulseEngine.h: 22
 
