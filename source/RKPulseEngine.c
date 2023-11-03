@@ -707,6 +707,8 @@ static void *pulseWatcher(void *_in) {
         // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
         pulse->header.s |= RKPulseStatusInspected;
 
+        RKLog("%s k = \n", engine->name, k);
+
         // Now we post
         #ifdef DEBUG_IQ
         RKLog("%s posting core-%d for pulse %d w/ %d gates\n", engine->name, c, k, pulse->header.gateCount);
@@ -1169,11 +1171,13 @@ RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocki
         }
     } else {
         if (!(pulse->header.s & RKPulseStatusProcessed)) {
+            RKLog("%s returning NULL\n", engine->name);
             return NULL;
         }
     }
     pulse->header.s |= RKPulseStatusConsumed;
     engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->pulseBufferDepth);
+    RKLog("%s engine->doneIndex = %d\n", engine->name, engine->doneIndex);
     return pulse;
 }
 

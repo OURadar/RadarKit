@@ -21,6 +21,7 @@ Productdict = {'Z': RKBaseProductIndexZ,
                'D': RKBaseProductIndexD,
                'R': RKBaseProductIndexR,
                'P': RKBaseProductIndexP}
+null = POINTER(c_int)()
 
 class pyRKuint32(ctypes.c_uint32):
     pass
@@ -306,6 +307,79 @@ class core(union_rk_file_header):
         RKPulseBufferFree(array)
         return ciq
 
+def get_done_pulse(workspace):
+    pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, None)
+    try:
+        i = pulse.contents.header.i
+        return pulse
+    except ValueError:
+        return None
+
+def ingest_iq(core, file):
+    workspace = core.workspace
+    config = workspace.configs[workspace.pulseMachine.contents.configIndex.contents.value]
+    ctypes.memmove(ctypes.byref(config), ctypes.byref(file.config), ctypes.sizeof(RKConfig))
+    RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.waveform)
+    if hasattr(file, 'fid'):
+        p1 = RKFileTell(file.fid)
+
+        # Estimate the number of pulses
+        print(f'Origin = {p1}')
+        pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
+        r = RKReadPulseFromFileReference(pulse, ctypes.byref(file), file.fid)
+        if (r != RKResultSuccess):
+            workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, self.desc.pulseBufferDepth)
+            raise RKEngineError("Failed to read the first pulse.")
+        gateCount = pulse.contents.header.downSampledGateCount
+        pulseCount = (file.filesize - p1) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
+        print(f'Estimated number of pulses = {pulseCount:,d}\n')
+        ciq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+        # iq[0, :, :] = read_compressed_data(pulse, gateCount)
+        ic = 0
+        with tqdm.tqdm(total=file.filesize, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
+            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
+            core.iq.S = ik
+            for ip in range(100):
+                pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
+                print(f'ip = {ip}   pulse = {pulse} {pulse.contents.header.i}')
+                # pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusNull)
+                # z = 1
+                # while (workspace.pulseMachine.contents.maxWorkerLag > 0.8):
+                #     time.sleep(1e-4)
+                #     if (z % 1000 == 0):
+                #         s = z * 0.001;
+                #         RKLog(f'Waiting for workers ...  z = {z:d} / {s:.1f}s   {workspace.pulseMachine.contents.maxWorkerLag:.1f} \n')
+                #     z = z + 1
+                r = RKReadPulseFromFileReference(pulse, ctypes.byref(file), file.fid)
+                if (r != RKResultSuccess):
+                    core.npulses = ip + 1
+                    workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, core.desc.pulseBufferDepth)
+                    break
+                # pulse.contents.header.i = ip
+                pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
+                pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
+                if file.dataType == RKRawDataTypeAfterMatchedFilter:
+                    pulse.contents.header.s |= RKPulseStatusReadyForMoments
+                # pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, False)
+                # pulse = get_done_pulse(core.workspace)
+                doneIndex = workspace.pulseMachine.contents.doneIndex
+                print(f'id = {doneIndex}   pulse = {pulse} / {pulse is None}')
+                # while (pulse != None and ic < ip):
+                #     ciq[ic, :, :] = read_compressed_data(pulse, gateCount)
+                #     ic += 1
+                #     pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, False)
+                time.sleep(0.01)
+                p0 = RKFileTell(file.fid)
+                pbar.update(p0 - p1)
+                p1 = p0
+            pbar.close()
+            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
+            core.iq.E = ik - 1
+            workspace.pulseMachine.contents.configIndex.contents.value = next_modulo_s(workspace.pulseMachine.contents.configIndex.contents.value, core.desc.configBufferDepth)
+        return ciq
+    else:
+        raise RKEngineError("Unknown pulses for compression.")
+
 class iqcache:
     def __init__(self):
         self.S = np.nan
@@ -321,60 +395,6 @@ class RKEngineError(Exception):
 
     def __str__(self):
         return f"RKEngineError: {self.message}"
-
-def ingest_iq(self, file):
-    workspace = self.workspace
-    config = workspace.configs[workspace.pulseMachine.contents.configIndex.contents.value]
-    ctypes.memmove(ctypes.byref(config), ctypes.byref(file.config), ctypes.sizeof(RKConfig))
-    RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.waveform)
-    if hasattr(file, 'fid'):
-        p1 = RKFileTell(file.fid)
-
-        # Estimate the number of pulses
-        print(f'Origin = {p1}')
-        pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
-        r = RKReadPulseFromFileReference(pulse, ctypes.byref(file), file.fid)
-        if (r != RKResultSuccess):
-            workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, self.desc.pulseBufferDepth)
-            raise RKEngineError("Failed to read the first pulse.")
-        gateCount = pulse.contents.header.gateCount
-        pulseCount = (file.filesize - p1) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-        print(f'Estimated number of pulses = {pulseCount}\n')
-        ciq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-        # iq[0, :, :] = read_compressed_data(pulse, gateCount)
-        with tqdm.tqdm(total=file.filesize, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
-            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
-            self.iq.S = ik
-            for ip in range(1, RKRawDataRecorderDefaultMaximumRecorderDepth):
-                pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
-                # pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusNull)
-                # z = 1
-                # while (workspace.pulseMachine.contents.maxWorkerLag > 0.8):
-                #     time.sleep(1e-4)
-                #     if (z % 1000 == 0):
-                #         s = z * 0.001;
-                #         RKLog(f'Waiting for workers ...  z = {z:d} / {s:.1f}s   {workspace.pulseMachine.contents.maxWorkerLag:.1f} \n')
-                #     z = z + 1
-                r = RKReadPulseFromFileReference(pulse, ctypes.byref(file), file.fid)
-                if (r != RKResultSuccess):
-                    self.npulses = ip
-                    workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, self.desc.pulseBufferDepth)
-                    break
-                # pulse.contents.header.i = ip
-                pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
-                pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
-                if file.dataType == RKRawDataTypeAfterMatchedFilter:
-                    pulse.contents.header.s |= RKPulseStatusReadyForMoments
-                p0 = RKFileTell(file.fid)
-                pbar.update(p0 - p1)
-                p1 = p0
-            pbar.close()
-            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
-            self.iq.E = ik - 1
-            workspace.pulseMachine.contents.configIndex.contents.value = next_modulo_s(workspace.pulseMachine.contents.configIndex.contents.value, self.desc.configBufferDepth)
-        return ciq
-    else:
-        raise RKEngineError("Unknown pulses for compression.")
 
 def previous_modulo_s(i, S):
     return (S - 1) if i == 0 else (i - 1)
