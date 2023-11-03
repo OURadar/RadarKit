@@ -31,7 +31,7 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
     //      RKVariableInString("planSize", &planSize, RKValueTypeInt));
 
     fftwf_complex *in, *Xh, *Xv;
-    RKFloat A, phi, q, omegaI, omegaQ;
+    RKFloat A, phi, q, omegaI, omegaQ, omegasqI, omegasqQ, gA;
     RKFloat s;
     // RKFloat sumW2, sumW4, sumY2;
     // RKFloat sumW2Y2, sumW4Y2;
@@ -237,6 +237,9 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
             s = 0.0f;
             omegaI = 0.0f;
             omegaQ = 0.0f;
+            omegasqI = 0.0f;
+            omegasqQ = 0.0f;
+            gA = 0.0f;
             in = space->fS[p][g];
             // Go through the spectrum
             for (k = 0; k < planSize; k++) {
@@ -246,6 +249,9 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
                 A = sqrtf(q);
                 omegaI += A * cosf(phi);
                 omegaQ += A * sinf(phi);
+                gA += A;
+                omegasqI += A * cosf(phi) * cosf(phi);
+                omegasqQ += A * sinf(phi) * sinf(phi);
             }
             omega = atan2(omegaQ, omegaI);
             // Forward fft has a gain of sqrtf(planSize) ==> S has a gain of (planSize)
@@ -253,13 +259,16 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
             space->S[p][g] = space->aR[p][0][g] - space->noise[p];
             space->SNR[p][g] = space->S[p][g] / space->noise[p];
             space->Q[p][g] = MIN(1.0f, space->SNR[p][g]);
+            q = ( omegasqI + omegasqQ ) / gA - ( omegaI * omegaI + omegaQ * omegaQ ) / gA / gA;
             // if (space->SNR[p][g] < space->config->SNRThreshold) {
             if (0) {
                 space->Z[p][g] = NAN;
                 space->V[p][g] = NAN;
+                space->W[p][g] = NAN;
             } else{
                 space->Z[p][g] = 10.0f * log10f(space->S[p][g]) + space->S2Z[p][g];
                 space->V[p][g] = space->velocityFactor * omega;
+                space->W[p][g] = space->velocityFactor * q;
             }
         }
         in = space->fC[g];
