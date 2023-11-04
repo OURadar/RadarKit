@@ -1,0 +1,22 @@
+feature_scale = 1.0
+context_properties = {
+    'font.family': 'sans-serif',
+    'font.serif': ['Helvetica', 'Arial', 'DejaVu Serif'],
+    'figure.facecolor': (0, 0, 0, 0),
+    'axes.edgecolor': 'white',
+    'axes.facecolor': 'black',
+    'axes.labelcolor': 'white',
+    'axes.linewidth': 1.0 * feature_scale,
+    'axes.titlepad': 8.0 * feature_scale,
+    'grid.color': 'white',
+    'hatch.color': 'white',
+    'text.color': 'white',
+    'xtick.color': 'white',
+    'xtick.direction': 'in',
+    'xtick.major.pad': 9.0 * feature_scale,
+    'xtick.major.size': 4.0 * feature_scale,
+    'xtick.major.width': 1.0 * feature_scale,
+    'ytick.color': 'white',
+    'ytick.direction': 'in',
+    'ytick.major.pad': 7.5 * feature_scale,
+}
