@@ -59,10 +59,10 @@ class Workspace(ctypes.Structure):
     def __init__(self):
         super().__init__()
         self.name = f'\033{RKPythonColor[4:]}<  Python Core  >\033[m'
+        self.verbose = 0
         self.fid = None
         self.filesize = 0
-        self.ingest = None
-        self.verbose = 0
+        self.allocated = False
         RKSetProgramName(b"RadarKit")
         RKLog(f"{self.name} Initializing ...")
         # print(f'configIndex = {self.configIndex.value}')
@@ -74,7 +74,7 @@ class Workspace(ctypes.Structure):
 
         RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
-        if self.ingest is None:
+        if self.allocated is False:
             # Get original description from header and override some attributes
             desc = header.desc
             desc.dataPath = b'data'
@@ -87,7 +87,6 @@ class Workspace(ctypes.Structure):
                 desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
             self.desc = desc
             self.alloc()
-            self.ingest = self.ingest_iq
 
         if self.desc.pulseCapacity != desc.pulseCapacity:
             raise RKEngineError("pulseCapacity mismatch. Please restart.")
@@ -150,6 +149,8 @@ class Workspace(ctypes.Structure):
         RKRawDataRecorderSetRawDataType(self.recorder, RKRawDataTypeAfterMatchedFilter)
         RKRawDataRecorderSetVerbose(self.recorder, verbose)
 
+        self.allocated = True
+
     def free(self):
         RKPulseEngineWaitWhileBusy(self.pulseMachine)
         RKMomentEngineWaitWhileBusy(self.momentMachine)
@@ -177,6 +178,8 @@ class Workspace(ctypes.Structure):
         RKPulseBufferFree(self.pulses)
         RKRayBufferFree(self.rays)
 
+        self.allocated = False
+
     def set_waveform(self, samples):
         waveform = RKWaveformInitWithCountAndDepth(1, samples.size)
         waveform.contents.filterAnchors[0][0].origin = 0
@@ -194,20 +197,17 @@ class Workspace(ctypes.Structure):
         place_RKComplex_array(waveform.contents.samples[0], samples)
         RKWaveformNormalizeNoiseGain(waveform)
 
-        config = self.configs
+        config = self.configs[self.configIndex.value]
         config.waveform = waveform
         config.waveformDecimate = RKWaveformCopy(waveform)
         RKWaveformDecimate(config.waveformDecimate, self.desc.pulseToRayRatio)
+        RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
 
     def read(self):
         if self.fid is None:
             raise RKEngineError("No file is open.")
-        config = workspace.configs[self.configIndex.value]
-        RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.waveform)
-        RKRawDataRecorderSetRecord(workspace.recorder, False)
-        return self.ingest()
+        RKRawDataRecorderSetRecord(self.recorder, False)
 
-    def ingest_iq(self):
         config = self.configs[self.configIndex.value]
         RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
 
@@ -228,13 +228,12 @@ class Workspace(ctypes.Structure):
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
             riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
         pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
-        # downSampledGateCount = pulse.contents.header.downSampledGateCount
         downSampledGateCount = (gateCount - config.waveform.contents.depth) // self.desc.pulseToRayRatio
         print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
         ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
-        ic = 0
         pulseCount -= 1
         with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
+            ic = 0
             for ip in range(pulseCount):
                 pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
 
@@ -259,33 +258,41 @@ class Workspace(ctypes.Structure):
                 if self.header.dataType == RKRawDataTypeFromTransceiver:
                     riq[ip, :, :] = read_raw_data(pulse, gateCount)
 
-                pulse = get_done_pulse()
+                pulse = self.get_done_pulse()
                 while (pulse != None):
                     ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
                     ic += 1
-                    pulse = get_done_pulse()
+                    pulse = self.get_done_pulse()
 
                 pbar.update(1.0)
             pbar.close()
 
-            if self.verbose > 1:
+            if self.verbose:
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
             s = 0
             while ic < ip and s < 50:
-                pulse = get_done_pulse()
+                pulse = self.get_done_pulse()
                 if pulse is None:
                     time.sleep(0.1)
                     s += 1
                     continue
                 ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
                 ic += 1
-            if self.verbose > 1 or s >= 50 or ic < ip:
+            if self.verbose or s >= 50 or ic < ip:
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
 
         close()
         print('Done')
 
         return riq, ciq
+
+    def get_done_pulse(self):
+        pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
+        try:
+            _ = pulse.contents.header.i
+            return pulse
+        except ValueError:
+            return None
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
         RKMomentEngineWaitWhileBusy(self.momentMachine)
@@ -323,15 +330,6 @@ def free():
         return
     workspace.free()
     workspace = None
-
-def get_done_pulse():
-    global workspace
-    pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, None)
-    try:
-        _ = pulse.contents.header.i
-        return pulse
-    except ValueError:
-        return None
 
 
 class RKEngineError(Exception):
