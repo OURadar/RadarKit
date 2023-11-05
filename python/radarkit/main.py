@@ -1,7 +1,7 @@
 import time
 import tqdm
 import ctypes
-# import builtins
+
 import numpy as np
 
 from ._ctypes_ import *
@@ -13,7 +13,6 @@ from ._ctypes_ import *
 # __builtins__.open and __builtins__.close to do necessary development.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-c_mps = 299792458
 alignment = int(RKMemoryAlignSize / 4)
 Productdict = {'Z': RKBaseProductIndexZ,
                'V': RKBaseProductIndexV,
@@ -21,11 +20,10 @@ Productdict = {'Z': RKBaseProductIndexZ,
                'D': RKBaseProductIndexD,
                'R': RKBaseProductIndexR,
                'P': RKBaseProductIndexP}
-
+workspace = None
 
 class pyRKuint32(ctypes.c_uint32):
     pass
-
 
 class UserParams(ctypes.Structure):
     _pack_ = 1
@@ -38,7 +36,6 @@ class UserParams(ctypes.Structure):
         ('SNRThreshold', ctypes.c_float),
         ('SQIThreshold', ctypes.c_float)
     ]
-
 
 class Workspace(ctypes.Structure):
     _pack_ = 1
@@ -59,249 +56,281 @@ class Workspace(ctypes.Structure):
         ('rayIndex', pyRKuint32)
     ]
 
-def open(filename, opmode='r'):
-    fid = RKFileOpen(filename, opmode)
-    out = RKFileHeaderRead(fid).contents
-    # Add and override some attributes
-    out.fid = fid
-    out.filesize = RKFileGetSize(fid)
-    out.desc.dataPath = b'data'
-    out.desc.configBufferDepth = 10
-    out.desc.pulseBufferDepth = RKRawDataRecorderDefaultMaximumRecorderDepth    # Large enough to hang on to all pulses.
-    out.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50                        # Large enough to hang on to all rays.
-    return out
-
-def close(self):
-    RKFileClose(self.fid)
-
-class core(union_rk_file_header):
     def __init__(self):
         super().__init__()
-        self.name = f'\033{RKPythonColor[4:]}Python Core\033[m'
+        self.name = f'\033{RKPythonColor[4:]}<  Python Core  >\033[m'
+        self.verbose = 0
+        self.fid = None
+        self.filesize = 0
+        self.allocated = False
         RKSetProgramName(b"RadarKit")
         RKLog(f"{self.name} Initializing ...")
+        # print(f'configIndex = {self.configIndex.value}')
 
-    def preparefromrkfile(self, rkfile):
-        ctypes.memmove(ctypes.byref(self.config), ctypes.byref(rkfile.config), ctypes.sizeof(rkfile.config))
-        ctypes.memmove(ctypes.byref(self.desc), ctypes.byref(rkfile.desc), ctypes.sizeof(rkfile.desc))
-        self.dataType = rkfile.dataType
-        self.version = rkfile.version
-        self.ingest = ingest_rk_file
+    def populate(self, fid, header):
+        self.fid = fid
+        self.header = header
+        self.filesize = RKFileGetSize(fid)
 
-    def init_workspace(self, verbose=0, cores=4):
+        RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
+
+        if self.allocated is False:
+            # Get original description from header and override some attributes
+            desc = header.desc
+            desc.dataPath = b'data'
+            desc.configBufferDepth = 3
+            desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
+            desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
+            desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer
+            desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
+            if self.header.dataType == RKRawDataTypeFromTransceiver:
+                desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
+            self.desc = desc
+            self.alloc()
+
+        if self.desc.pulseCapacity != desc.pulseCapacity:
+            raise RKEngineError("pulseCapacity mismatch. Please restart.")
+
+        config = self.configs[self.configIndex.value]
+        ctypes.memmove(ctypes.byref(config), ctypes.byref(self.header.config), ctypes.sizeof(RKConfig))
+        config.waveform = self.header.config.waveform
+        config.waveformDecimate = self.header.config.waveformDecimate
+
+    def alloc(self, verbose=0, cores=4):
         desc = self.desc
-        self.desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer
-        self.desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
-        if (self.dataType == RKRawDataTypeFromTransceiver):
-            self.desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
-        if verbose:
-            RKLog(f'{self.name} dataType = {self.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
-        workspace = Workspace()
-        ctypes.memset(ctypes.byref(workspace), 0, ctypes.sizeof(Workspace))
+        self.fftModule = RKFFTModuleInit(desc.pulseCapacity, verbose)
 
-        workspace.fftModule = RKFFTModuleInit(desc.pulseCapacity, verbose)
+        desc.configBufferSize = RKConfigBufferAlloc(ctypes.byref(self.configs), desc.configBufferDepth)
+        desc.pulseBufferSize = RKPulseBufferAlloc(ctypes.byref(self.pulses), desc.pulseCapacity, desc.pulseBufferDepth)
+        desc.rayBufferSize = RKRayBufferAlloc(ctypes.byref(self.rays), desc.pulseCapacity // desc.pulseToRayRatio, desc.rayBufferDepth)
 
-        desc.configBufferSize = RKConfigBufferAlloc(ctypes.byref(workspace.configs), desc.configBufferDepth)
-        desc.pulseBufferSize = RKPulseBufferAlloc(ctypes.byref(workspace.pulses), desc.pulseCapacity, desc.pulseBufferDepth)
-        desc.rayBufferSize = RKRayBufferAlloc(ctypes.byref(workspace.rays), desc.pulseCapacity // desc.pulseToRayRatio, desc.rayBufferDepth)
-
-        workspace.pulseMachine = RKPulseEngineInit()
-        RKPulseEngineSetVerbose(workspace.pulseMachine, verbose)
-        RKPulseEngineSetEssentials(workspace.pulseMachine, ctypes.byref(desc), workspace.fftModule,
-                                   workspace.configs, ctypes.byref(workspace.configIndex),
-                                   workspace.pulses, ctypes.byref(workspace.pulseIndex))
-        RKPulseEngineSetCoreCount(workspace.pulseMachine, cores)
+        self.pulseMachine = RKPulseEngineInit()
+        RKPulseEngineSetVerbose(self.pulseMachine, verbose)
+        RKPulseEngineSetEssentials(self.pulseMachine, ctypes.byref(desc), self.fftModule,
+                                   self.configs, ctypes.byref(self.configIndex),
+                                   self.pulses, ctypes.byref(self.pulseIndex))
+        RKPulseEngineSetCoreCount(self.pulseMachine, cores)
         if (desc.initFlags & RKInitFlagStartPulseEngine):
-            RKPulseEngineStart(workspace.pulseMachine)
+            RKPulseEngineStart(self.pulseMachine)
 
-        workspace.ringMachine = RKPulseRingFilterEngineInit()
-        RKPulseRingFilterEngineSetVerbose(workspace.ringMachine, verbose)
-        RKPulseRingFilterEngineSetEssentials(workspace.ringMachine, ctypes.byref(desc),
-                                             workspace.configs, ctypes.byref(workspace.configIndex),
-                                             workspace.pulses, ctypes.byref(workspace.pulseIndex))
-        RKPulseRingFilterEngineSetCoreCount(workspace.ringMachine, 2)
+        self.ringMachine = RKPulseRingFilterEngineInit()
+        RKPulseRingFilterEngineSetVerbose(self.ringMachine, verbose)
+        RKPulseRingFilterEngineSetEssentials(self.ringMachine, ctypes.byref(desc),
+                                             self.configs, ctypes.byref(self.configIndex),
+                                             self.pulses, ctypes.byref(self.pulseIndex))
+        RKPulseRingFilterEngineSetCoreCount(self.ringMachine, 2)
         if (desc.initFlags & RKInitFlagStartRingFilterEngine):
-            RKPulseRingFilterEngineStart(workspace.ringMachine)
+            RKPulseRingFilterEngineStart(self.ringMachine)
 
-        workspace.momentMachine = RKMomentEngineInit()
-        workspace.momentMachine.contents.momentProcessor = ctypes.cast(RKMultiLag, type(workspace.momentMachine.contents.momentProcessor))
-        workspace.momentMachine.contents.userLagChoice = 3
-        # RKMomentEngineSetNoiseEstimator(workspace.momentMachine, ctypes.POINTER(RKRayNoiseEstimator))
-        # workspace.momentMachine.contents.noiseEstimator = ctypes.cast(RKRayNoiseEstimator, type(workspace.momentMachine.contents.noiseEstimator))
-        RKMomentEngineSetVerbose(workspace.momentMachine, verbose)
-        RKMomentEngineSetEssentials(workspace.momentMachine, ctypes.byref(desc), workspace.fftModule,
-                                    workspace.configs, ctypes.byref(workspace.configIndex),
-                                    workspace.pulses, ctypes.byref(workspace.pulseIndex),
-                                    workspace.rays, ctypes.byref(workspace.rayIndex))
-        RKMomentEngineSetCoreCount(workspace.momentMachine, 2)
-        RKMomentEngineStart(workspace.momentMachine)
+        self.momentMachine = RKMomentEngineInit()
+        self.momentMachine.contents.momentProcessor = ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor))
+        self.momentMachine.contents.userLagChoice = 3
+        RKMomentEngineSetVerbose(self.momentMachine, verbose)
+        RKMomentEngineSetEssentials(self.momentMachine, ctypes.byref(desc), self.fftModule,
+                                    self.configs, ctypes.byref(self.configIndex),
+                                    self.pulses, ctypes.byref(self.pulseIndex),
+                                    self.rays, ctypes.byref(self.rayIndex))
+        RKMomentEngineSetCoreCount(self.momentMachine, 2)
+        RKMomentEngineStart(self.momentMachine)
 
-        workspace.sweepMachine = RKSweepEngineInit()
-        RKSweepEngineSetVerbose(workspace.sweepMachine, verbose)
-        RKSweepEngineSetEssentials(workspace.sweepMachine, ctypes.byref(desc), None,
-                                   workspace.configs, ctypes.byref(workspace.configIndex),
-                                   workspace.rays, ctypes.byref(workspace.rayIndex))
-        RKSweepEngineSetRecord(workspace.sweepMachine, True)
-        RKSweepEngineStart(workspace.sweepMachine)
+        self.sweepMachine = RKSweepEngineInit()
+        RKSweepEngineSetVerbose(self.sweepMachine, verbose)
+        RKSweepEngineSetEssentials(self.sweepMachine, ctypes.byref(desc), None,
+                                   self.configs, ctypes.byref(self.configIndex),
+                                   self.rays, ctypes.byref(self.rayIndex))
+        RKSweepEngineSetRecord(self.sweepMachine, True)
+        RKSweepEngineStart(self.sweepMachine)
 
-        workspace.recorder = RKRawDataRecorderInit()
-        RKRawDataRecorderSetEssentials(workspace.recorder, ctypes.byref(desc), None,
-                                       workspace.configs, ctypes.byref(workspace.configIndex),
-                                       workspace.pulses, ctypes.byref(workspace.pulseIndex))
-        RKRawDataRecorderSetRawDataType(workspace.recorder, RKRawDataTypeAfterMatchedFilter)
-        RKRawDataRecorderSetVerbose(workspace.recorder, verbose)
+        self.recorder = RKRawDataRecorderInit()
+        RKRawDataRecorderSetEssentials(self.recorder, ctypes.byref(desc), None,
+                                       self.configs, ctypes.byref(self.configIndex),
+                                       self.pulses, ctypes.byref(self.pulseIndex))
+        RKRawDataRecorderSetRawDataType(self.recorder, RKRawDataTypeAfterMatchedFilter)
+        RKRawDataRecorderSetVerbose(self.recorder, verbose)
 
-        config = workspace.configs
-        ctypes.memmove(config, ctypes.byref(self.config), ctypes.sizeof(RKConfig))
-        config.contents.waveform = self.config.waveform
-        config.contents.waveformDecimate = self.config.waveformDecimate
-        self.workspace = workspace
-        self.iq = iqcache()
+        self.allocated = True
 
-    def set_waveform(self, wfsig):
-        wf = RKWaveformInitWithCountAndDepth(1, wfsig.size)
-        wf.contents.filterAnchors[0][0].origin = 0
-        wf.contents.filterAnchors[0][0].length = wfsig.size
-        wf.contents.fc = 0
-        # wf.contents.fs = 3e8*dic['trig_subpulse_length_dec']/dic['trig_subpulse_length']
-        wf.contents.fs = self.fs
-        wf.contents.type = RKWaveformTypeIsComplex
-        # radarkit.show_Flag(rkid.config.waveform.contents.type, radarkit.RKWaveformTypeDict)
-        wf.contents.name = b'Horus'
-        wf.contents.filterCounts[0] = 1
-        wf.contents.filterAnchors[0][0].name = 0
-        wf.contents.filterAnchors[0][0].origin = 0
-        wf.contents.filterAnchors[0][0].length = wf.contents.depth
-        wf.contents.filterAnchors[0][0].maxDataLength = RKMaximumGateCount
-        wf.contents.filterAnchors[0][0].subCarrierFrequency = 0
-        place_RKComplex_array(wf.contents.samples[0], wfsig)
-        RKWaveformNormalizeNoiseGain(wf)
-        self.config.waveform = wf
-        self.config.waveformDecimate = RKWaveformCopy(wf)
-        RKWaveformDecimate(self.config.waveformDecimate, self.desc.pulseToRayRatio)
+    def free(self):
+        RKPulseEngineWaitWhileBusy(self.pulseMachine)
+        RKMomentEngineWaitWhileBusy(self.momentMachine)
+        RKSweepEngineFlush(self.sweepMachine)
+        RKRawDataRecorderSetRecord(self.recorder, False)
+        RKReadPulseFromFileReference(None, None, None)
 
-    def free_workspace(self, verbose=1):
-        if not (hasattr(self, 'workspace')):
-            print("Warning RKEngingError(workspace not set yet.)")
-            return
+        if (self.userModule is not None) and (self.userModuleFree is not None):
+            self.userModuleFree(self.userModule)
+
+        RKPulseEngineStop(self.pulseMachine)
+        RKPulseRingFilterEngineStop(self.ringMachine)
+        RKMomentEngineStop(self.momentMachine)
+        RKSweepEngineStop(self.sweepMachine)
+        RKRawDataRecorderStop(self.recorder)
+
+        RKPulseEngineFree(self.pulseMachine)
+        RKPulseRingFilterEngineFree(self.ringMachine)
+        RKMomentEngineFree(self.momentMachine)
+        RKSweepEngineFree(self.sweepMachine)
+        RKRawDataRecorderFree(self.recorder)
+
+        RKFFTModuleFree(self.fftModule)
+        RKConfigBufferFree(self.configs)
+        RKPulseBufferFree(self.pulses)
+        RKRayBufferFree(self.rays)
+
+        self.allocated = False
+
+    def set_waveform(self, samples):
+        waveform = RKWaveformInitWithCountAndDepth(1, samples.size)
+        waveform.contents.filterAnchors[0][0].origin = 0
+        waveform.contents.filterAnchors[0][0].length = samples.size
+        waveform.contents.fc = 0
+        waveform.contents.fs = self.fs
+        waveform.contents.type = RKWaveformTypeIsComplex
+        waveform.contents.name = b'Custom'
+        waveform.contents.filterCounts[0] = 1
+        waveform.contents.filterAnchors[0][0].name = 0
+        waveform.contents.filterAnchors[0][0].origin = 0
+        waveform.contents.filterAnchors[0][0].length = waveform.contents.depth
+        waveform.contents.filterAnchors[0][0].maxDataLength = RKMaximumGateCount
+        waveform.contents.filterAnchors[0][0].subCarrierFrequency = 0
+        place_RKComplex_array(waveform.contents.samples[0], samples)
+        RKWaveformNormalizeNoiseGain(waveform)
+
+        config = self.configs[self.configIndex.value]
+        config.waveform = waveform
+        config.waveformDecimate = RKWaveformCopy(waveform)
+        RKWaveformDecimate(config.waveformDecimate, self.desc.pulseToRayRatio)
+        RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
+
+    def read(self):
+        if self.fid is None:
+            raise RKEngineError("No file is open.")
+        RKRawDataRecorderSetRecord(self.recorder, False)
+
+        config = self.configs[self.configIndex.value]
+        RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
+
+        pos = RKFileTell(self.fid)
+        pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
+        r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
+        if (r != RKResultSuccess):
+            self.pulseIndex.value = previous_modulo_s(self.pulseIndex.value, self.desc.pulseBufferDepth)
+            raise RKEngineError("Failed to read the first pulse.")
+        pulse.contents.header.configIndex = self.configIndex.value
+        # Estimate the number of pulses
+        if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
+            pulse.contents.header.s |= RKPulseStatusReadyForMoments
+            gateCount = pulse.contents.header.downSampledGateCount
+            pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex))
         else:
-            workspace = self.workspace
-            # if hasattr(self, 'fid'):
-            #     close(self)
-            RKPulseEngineWaitWhileBusy(workspace.pulseMachine)
-            RKMomentEngineWaitWhileBusy(workspace.momentMachine)
-            RKSweepEngineFlush(workspace.sweepMachine)
-            RKRawDataRecorderSetRecord(workspace.recorder, False)
-            RKReadPulseFromFileReference(None, None, None)
+            gateCount = pulse.contents.header.gateCount
+            pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
+            riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+        pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
+        downSampledGateCount = (gateCount - config.waveform.contents.depth) // self.desc.pulseToRayRatio
+        print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
+        ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
+        pulseCount -= 1
+        with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
+            ic = 0
+            for ip in range(pulseCount):
+                pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
 
-            if (workspace.userModule is not None) and (workspace.userModuleFree is not None):
-                workspace.userModuleFree(workspace.userModule)
-                if verbose:
-                    print('free userModule')
+                z = 1
+                while (self.pulseMachine.contents.maxWorkerLag > 0.7):
+                    time.sleep(0.01)
+                    if (z % 100 == 0):
+                        s = z * 0.01;
+                        RKLog(f'Waiting for workers ...  z = {z:d} / {s:.1f}s   {self.pulseMachine.contents.maxWorkerLag:.1f} \n')
+                    z = z + 1
 
-            RKPulseEngineStop(workspace.pulseMachine)
-            RKPulseRingFilterEngineStop(workspace.ringMachine)
-            RKMomentEngineStop(workspace.momentMachine)
-            RKSweepEngineStop(workspace.sweepMachine)
-            RKRawDataRecorderStop(workspace.recorder)
+                r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
+                if (r != RKResultSuccess):
+                    self.configIndex.value = next_modulo_s(self.configIndex.valuee, self.desc.configBufferDepth)
+                    self.pulseIndex.value = previous_modulo_s(self.pulseIndex.value, self.desc.pulseBufferDepth)
+                    print(f'no more data to read.')
+                    break
+                pulse.contents.header.configIndex = self.configIndex.value
+                if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
+                    pulse.contents.header.s |= RKPulseStatusReadyForMoments
+                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
+                if self.header.dataType == RKRawDataTypeFromTransceiver:
+                    riq[ip, :, :] = read_raw_data(pulse, gateCount)
 
-            RKPulseEngineFree(workspace.pulseMachine)
-            RKPulseRingFilterEngineFree(workspace.ringMachine)
-            RKMomentEngineFree(workspace.momentMachine)
-            RKSweepEngineFree(workspace.sweepMachine)
-            RKRawDataRecorderFree(workspace.recorder)
+                pulse = self.get_done_pulse()
+                while (pulse != None):
+                    ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
+                    ic += 1
+                    pulse = self.get_done_pulse()
 
-            RKFFTModuleFree(workspace.fftModule)
-            RKConfigBufferFree(workspace.configs)
-            RKPulseBufferFree(workspace.pulses)
-            RKRayBufferFree(workspace.rays)
+                pbar.update(1.0)
+            pbar.close()
 
-    def compress(self, rkfile):
-        if not (hasattr(self, 'workspace')):
-            raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
-            config = workspace.configs
-            RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.contents.waveform)
-            RKRawDataRecorderSetRecord(workspace.recorder, False)
-            self.ingest(self, rkfile)
+            if self.verbose:
+                print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
+            s = 0
+            while ic < ip and s < 50:
+                pulse = self.get_done_pulse()
+                if pulse is None:
+                    time.sleep(0.1)
+                    s += 1
+                    continue
+                ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
+                ic += 1
+            if self.verbose or s >= 50 or ic < ip:
+                print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
 
-    def get_iq(self, kind='c'):
-        if not (hasattr(self, 'workspace')):
-            raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
-            RKPulseEngineWaitWhileBusy(workspace.pulseMachine)
-            sweepI = workspace.sweepMachine.contents.sweepIndex
-            if self.iq.S < self.iq.E:
-                npulses = self.iq.E - self.iq.S + 1
-            elif self.iq.S > self.iq.E:
-                npulses = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
-            pulseCount = np.min([npulses, self.desc.pulseBufferDepth])
+        close()
+        print('Done')
 
-            if (sweepI == self.iq.last_request) and (pulseCount == self.iq.cache.shape[0]) and self.iq.last_kind == kind:
-                print(f'Sweep {sweepI} from cached data.')
-                return self.iq.cache
-            else:
-                # Get the first pulse to retrieve gateCount / downSampledGateCount
-                pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
-                gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount;
-                iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-                el = np.zeros(pulseCount, dtype=np.float32)
-                az = np.zeros(pulseCount, dtype=np.float32)
-                read_fn = read_raw_data if kind == 'r' else read_compressed_data
-                for ip in tqdm.trange(pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}'):
-                    ik = ip + self.iq.S
-                    if ik >= self.desc.pulseBufferDepth:
-                        ik -= self.desc.pulseBufferDepth
-                    pulse = RKGetPulseFromBuffer(workspace.pulses, ik)
-        #            show_Flag(pulse.contents.header.s, RKPulseStatusDict)
-                    for ic in range(2):
-                        iq[ip, ic, :] = read_fn(pulse, ic, gateCount)
-                    el[ip] = pulse.contents.header.elevationDegrees
-                    az[ip] = pulse.contents.header.azimuthDegrees
-                self.iq.last_request = sweepI
-                self.iq.last_kind = kind
-                self.iq.cache = iq
-                self.iq.el = el
-                self.iq.az = az
-                print(f'Sweep {sweepI} from pulse buffer {self.iq.S}~{self.iq.E}')
-            return iq
+        return riq, ciq
 
-    def set_iq(self, array, kind='c'):
-        if not (hasattr(self, 'workspace')):
-            raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
-
+    def get_done_pulse(self):
+        pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
+        try:
+            _ = pulse.contents.header.i
+            return pulse
+        except ValueError:
+            return None
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
-        if not (hasattr(self, 'workspace')):
-            raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
-            RKMomentEngineWaitWhileBusy(workspace.momentMachine)
-            self.variables = {}
-            for varname in variable_list:
-                buf = []
-                for ip in range(360):
-                    ray = RKGetRayFromBuffer(workspace.sweepMachine.contents.rayBuffer, ip)
-                    data = read_RKFloat_array(RKGetFloatDataFromRay(ray, Productdict[varname]), ray.contents.header.gateCount)
-                    if data is None or data.size == 0:
-                        break
-                    else:
-                        buf.append(data)
-                self.variables.update({varname: np.asarray(buf)})
-            return self.variables
+        RKMomentEngineWaitWhileBusy(self.momentMachine)
+        self.variables = {}
+        for varname in variable_list:
+            buf = []
+            for ip in range(360):
+                ray = RKGetRayFromBuffer(self.sweepMachine.contents.rayBuffer, ip)
+                data = read_RKFloat_array(RKGetFloatDataFromRay(ray, Productdict[varname]), ray.contents.header.gateCount)
+                if data is None or data.size == 0:
+                    break
+                else:
+                    buf.append(data)
+            self.variables.update({varname: np.asarray(buf)})
+        return self.variables
 
-class iqcache:
-    def __init__(self):
-        self.S = np.nan
-        self.E = np.nan
-        self.St = np.nan
-        self.last_request = np.nan
-        self.cache = None
+
+def open(filename, opmode='r'):
+    fid = RKFileOpen(filename, opmode)
+    header = RKFileHeaderRead(fid).contents
+    global workspace
+    if workspace is None:
+        workspace = Workspace()
+    workspace.populate(fid, header)
+    return workspace
+
+def close():
+    global workspace
+    RKFileClose(workspace.fid)
+    workspace.fid = None
+
+def free():
+    global workspace
+    if workspace is None:
+        return
+    workspace.free()
+    workspace = None
+
 
 class RKEngineError(Exception):
     def __init__(self, message):
@@ -310,46 +339,6 @@ class RKEngineError(Exception):
 
     def __str__(self):
         return f"RKEngineError: {self.message}"
-
-def ingest_rk_file(self, rkfile):
-    workspace = self.workspace
-    config = workspace.configs[workspace.pulseMachine.contents.configIndex.contents.value]
-    ctypes.memmove(ctypes.byref(config), ctypes.byref(rkfile.config), ctypes.sizeof(RKConfig))
-    RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.waveform)
-    if hasattr(rkfile, 'fid'):
-        p1 = RKFileTell(rkfile.fid)
-        with tqdm.tqdm(total=rkfile.filesize, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
-            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
-            self.iq.S = ik
-            for ip in range(RKRawDataRecorderDefaultMaximumRecorderDepth):
-                pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
-                # pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusNull)
-                # z = 1
-                # while (workspace.pulseMachine.contents.maxWorkerLag > 0.8):
-                #     time.sleep(1e-4)
-                #     if (z % 1000 == 0):
-                #         s = z * 0.001;
-                #         RKLog(f'Waiting for workers ...  z = {z:d} / {s:.1f}s   {workspace.pulseMachine.contents.maxWorkerLag:.1f} \n')
-                #     z = z + 1
-                r = RKReadPulseFromFileReference(pulse, ctypes.byref(rkfile), rkfile.fid)
-                if (r != RKResultSuccess):
-                    self.npulses = ip
-                    workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, self.desc.pulseBufferDepth)
-                    break
-                # pulse.contents.header.i = ip
-                pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
-                pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
-                if rkfile.dataType == RKRawDataTypeAfterMatchedFilter:
-                    pulse.contents.header.s |= RKPulseStatusReadyForMoments
-                p0 = RKFileTell(rkfile.fid)
-                pbar.update(p0 - p1)
-                p1 = p0
-            pbar.close()
-            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
-            self.iq.E = ik - 1
-            workspace.pulseMachine.contents.configIndex.contents.value = next_modulo_s(workspace.pulseMachine.contents.configIndex.contents.value, self.desc.configBufferDepth)
-    else:
-        raise RKEngineError("Unknown pulses for compression.")
 
 def previous_modulo_s(i, S):
     return (S - 1) if i == 0 else (i - 1)
@@ -368,11 +357,17 @@ def read_RKComplex_array(rkpos, count):
     bufiq = np.ctypeslib.as_array(ctypes.cast(rkpos, ctypes.POINTER(ctypes.c_float)), (count, 2))
     return bufiq[:, 0] + 1j * bufiq[:, 1]
 
-def read_raw_data(pulse, c, count):
-    return read_RKInt16C_array(RKGetInt16CDataFromPulse(pulse, c), count)
+def read_raw_data(pulse, count):
+    # return read_RKInt16C_array(RKGetInt16CDataFromPulse(pulse, c), count)
+    h = np.ctypeslib.as_array(ctypes.cast(RKGetInt16CDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_int16)), (count * 2,)).astype(np.float32).view(np.complex64)
+    v = np.ctypeslib.as_array(ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16)), (count * 2,)).astype(np.float32).view(np.complex64)
+    return np.vstack((h, v))
 
-def read_compressed_data(pulse, c, count):
-    return read_RKComplex_array(RKGetComplexDataFromPulse(pulse, c), count)
+def read_compressed_data(pulse, count):
+    # return read_RKComplex_array(RKGetComplexDataFromPulse(pulse, c), count)
+    h = np.ctypeslib.as_array(ctypes.cast(RKGetComplexDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_float)), (count * 2,)).view(np.complex64)
+    v = np.ctypeslib.as_array(ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float)), (count * 2,)).view(np.complex64)
+    return np.vstack((h, v))
 
 def place_RKComplex_array(dest, source):
     bufiq = np.zeros((source.size * 2), dtype=np.float32)
@@ -385,7 +380,6 @@ def place_RKInt16C_array(dest, source):
     bufiq[::2] = source.real.astype(np.int16)
     bufiq[1::2] = source.imag.astype(np.int16)
     ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
-
 
 RKPulseStatusDict = {'RKPulseStatusNull': RKPulseStatusNull,
                      'RKPulseStatusVacant': RKPulseStatusVacant,
@@ -435,5 +429,3 @@ def show_flag(RKstatus, sdict=RKPulseStatusDict):
         if RKstatus & sdict[iks]:
             s = s + ' | ' + iks
     print(s)
-
-union_rk_file_header.close = close
