@@ -68,7 +68,7 @@ def open(filename, opmode='r'):
     header.filesize = RKFileGetSize(fid)
     header.desc.dataPath = b'data'
     header.desc.configBufferDepth = 3
-    header.desc.pulseBufferDepth = 2000
+    header.desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
     header.desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
 
     global core
@@ -81,8 +81,10 @@ def open(filename, opmode='r'):
 
     return core
 
-def close(self):
-    RKFileClose(self.fid)
+def close():
+    global core
+    RKFileClose(core.fid)
+    core.fid = None
 
 def init():
     global core
@@ -217,8 +219,6 @@ class RadarKitCore(union_rk_file_header):
             return
         else:
             workspace = self.workspace
-            # if hasattr(self, 'fid'):
-            #     close(self)
             RKPulseEngineWaitWhileBusy(workspace.pulseMachine)
             RKMomentEngineWaitWhileBusy(workspace.momentMachine)
             RKSweepEngineFlush(workspace.sweepMachine)
@@ -250,61 +250,63 @@ class RadarKitCore(union_rk_file_header):
     def read(self):
         if not (hasattr(self, 'workspace')):
             raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
-            config = workspace.configs
-            RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.contents.waveform)
-            RKRawDataRecorderSetRecord(workspace.recorder, False)
-            return self.ingest(self)
+        if core is None or core.fid is None:
+            raise RKEngineError("No file is open.")
+
+        workspace = self.workspace
+        config = workspace.configs
+        RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.contents.waveform)
+        RKRawDataRecorderSetRecord(workspace.recorder, False)
+        return self.ingest(self)
 
     def compress(self, _):
         return self.read()
 
-    def get_iq(self, kind='c'):
-        if not (hasattr(self, 'workspace')):
-            raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
-            RKPulseEngineWaitWhileBusy(workspace.pulseMachine)
-            sweepI = workspace.sweepMachine.contents.sweepIndex
-            if self.iq.S < self.iq.E:
-                npulses = self.iq.E - self.iq.S + 1
-            elif self.iq.S > self.iq.E:
-                npulses = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
-            pulseCount = np.min([npulses, self.desc.pulseBufferDepth])
+    # def get_iq(self, kind='c'):
+    #     if not (hasattr(self, 'workspace')):
+    #         raise RKEngineError("workspace not set yet.")
+    #     else:
+    #         workspace = self.workspace
+    #         RKPulseEngineWaitWhileBusy(workspace.pulseMachine)
+    #         sweepI = workspace.sweepMachine.contents.sweepIndex
+    #         if self.iq.S < self.iq.E:
+    #             npulses = self.iq.E - self.iq.S + 1
+    #         elif self.iq.S > self.iq.E:
+    #             npulses = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
+    #         pulseCount = np.min([npulses, self.desc.pulseBufferDepth])
 
-            if (sweepI == self.iq.last_request) and (pulseCount == self.iq.cache.shape[0]) and self.iq.last_kind == kind:
-                print(f'Sweep {sweepI} from cached data.')
-                return self.iq.cache
-            else:
-                # Get the first pulse to retrieve gateCount / downSampledGateCount
-                pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
-                gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount
-                iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-                read_fn = read_raw_data if kind == 'r' else read_compressed_data
-                ic = 0
-                for ip in tqdm.trange(pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}'):
-                    ik = ip + self.iq.S
-                    if ik >= self.desc.pulseBufferDepth:
-                        ik -= self.desc.pulseBufferDepth
-                    pulse = RKGetPulseFromBuffer(workspace.pulses, ik)
-        #            show_Flag(pulse.contents.header.s, RKPulseStatusDict)
-                    pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, False)
-                    while (pulse != None and ic < ip):
-                        iq[ic, :, :] = read_fn(pulse, gateCount)
-                        ic += 1
-                        pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, False)
-                self.iq.last_request = sweepI
-                self.iq.last_kind = kind
-                self.iq.cache = iq
-                print(f'Sweep {sweepI} from pulse buffer {self.iq.S}~{self.iq.E}')
-            return iq
+    #         if (sweepI == self.iq.last_request) and (pulseCount == self.iq.cache.shape[0]) and self.iq.last_kind == kind:
+    #             print(f'Sweep {sweepI} from cached data.')
+    #             return self.iq.cache
+    #         else:
+    #             # Get the first pulse to retrieve gateCount / downSampledGateCount
+    #             pulse = RKGetPulseFromBuffer(workspace.pulses, self.iq.S)
+    #             gateCount = pulse.contents.header.gateCount if kind == 'r' else pulse.contents.header.downSampledGateCount
+    #             iq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+    #             read_fn = read_raw_data if kind == 'r' else read_compressed_data
+    #             ic = 0
+    #             for ip in tqdm.trange(pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}'):
+    #                 ik = ip + self.iq.S
+    #                 if ik >= self.desc.pulseBufferDepth:
+    #                     ik -= self.desc.pulseBufferDepth
+    #                 pulse = RKGetPulseFromBuffer(workspace.pulses, ik)
+    #     #            show_Flag(pulse.contents.header.s, RKPulseStatusDict)
+    #                 pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, False)
+    #                 while (pulse != None and ic < ip):
+    #                     iq[ic, :, :] = read_fn(pulse, gateCount)
+    #                     ic += 1
+    #                     pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, False)
+    #             self.iq.last_request = sweepI
+    #             self.iq.last_kind = kind
+    #             self.iq.cache = iq
+    #             print(f'Sweep {sweepI} from pulse buffer {self.iq.S}~{self.iq.E}')
+    #         return iq
 
-    def set_iq(self, array, kind='c'):
-        if not (hasattr(self, 'workspace')):
-            raise RKEngineError("workspace not set yet.")
-        else:
-            workspace = self.workspace
+    # def set_iq(self, array, kind='c'):
+    #     if not (hasattr(self, 'workspace')):
+    #         raise RKEngineError("workspace not set yet.")
+    #     else:
+    #         workspace = self.workspace
 
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
@@ -326,23 +328,23 @@ class RadarKitCore(union_rk_file_header):
                 self.variables.update({varname: np.asarray(buf)})
             return self.variables
 
-    def get_iq_array(self):
-        if self.iq.S < self.iq.E:
-            pulseCount = self.iq.E - self.iq.S + 1
-        elif self.iq.S > self.iq.E:
-            pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
-        pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
-        firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
-        gateCount = firstPulse.contents.header.downSampledGateCount
-        array = RKPulseBufferAllocCopyFromBuffer(self.workspace.pulses, self.iq.S, pulseCount, self.desc.pulseBufferDepth)
-        ciq = np.ctypeslib.as_array(ctypes.cast(array, ctypes.POINTER(ctypes.c_float)), (pulseCount, 2, gateCount * 2)).view(np.complex64)
-        RKPulseBufferFree(array)
-        return ciq
+    # def get_iq_array(self):
+    #     if self.iq.S < self.iq.E:
+    #         pulseCount = self.iq.E - self.iq.S + 1
+    #     elif self.iq.S > self.iq.E:
+    #         pulseCount = self.desc.pulseBufferDepth - self.iq.S + self.iq.E + 1
+    #     pulseCount = np.min([pulseCount, self.desc.pulseBufferDepth])
+    #     firstPulse = RKGetPulseFromBuffer(self.workspace.pulses, self.iq.S)
+    #     gateCount = firstPulse.contents.header.downSampledGateCount
+    #     array = RKPulseBufferAllocCopyFromBuffer(self.workspace.pulses, self.iq.S, pulseCount, self.desc.pulseBufferDepth)
+    #     ciq = np.ctypeslib.as_array(ctypes.cast(array, ctypes.POINTER(ctypes.c_float)), (pulseCount, 2, gateCount * 2)).view(np.complex64)
+    #     RKPulseBufferFree(array)
+    #     return ciq
 
 def get_done_pulse(workspace):
     pulse = RKPulseEngineGetProcessedPulse(workspace.pulseMachine, None)
     try:
-        i = pulse.contents.header.i
+        _ = pulse.contents.header.i
         return pulse
     except ValueError:
         return None
@@ -352,86 +354,85 @@ def ingest_iq(core):
     config = workspace.configs[workspace.pulseMachine.contents.configIndex.contents.value]
     ctypes.memmove(ctypes.byref(config), ctypes.byref(core.config), ctypes.sizeof(RKConfig))
     RKPulseEngineSetFilterByWaveform(workspace.pulseMachine, config.waveform)
-    if hasattr(core, 'fid'):
-        pos = RKFileTell(core.fid)
-        pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
-        # r = RKReadPulseFromFileReference(pulse, ctypes.byref(file), file.fid)
-        r = RKReadPulseFromFileReference(pulse, ctypes.byref(core), core.fid)
-        if (r != RKResultSuccess):
-            workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, core.desc.pulseBufferDepth)
-            raise RKEngineError("Failed to read the first pulse.")
-        pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
-        # Estimate the number of pulses
-        if core.dataType == RKRawDataTypeAfterMatchedFilter:
-            pulse.contents.header.s |= RKPulseStatusReadyForMoments
-            gateCount = pulse.contents.header.downSampledGateCount
-            pulseCount = (core.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex))
-        else:
-            gateCount = pulse.contents.header.gateCount
-            pulseCount = (core.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-            riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-        pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
-        # downSampledGateCount = pulse.contents.header.downSampledGateCount
-        downSampledGateCount = (gateCount - config.waveform.contents.depth) // core.desc.pulseToRayRatio
-        print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
-        ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
-        ic = 0
-        pulseCount -= 1
-        with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
-            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
-            # core.iq.S = ik
-            for ip in range(pulseCount):
-                pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
 
-                z = 1
-                while (workspace.pulseMachine.contents.maxWorkerLag > 0.8):
-                    time.sleep(1e-4)
-                    if (z % 1000 == 0):
-                        s = z * 0.001;
-                        RKLog(f'Waiting for workers ...  z = {z:d} / {s:.1f}s   {workspace.pulseMachine.contents.maxWorkerLag:.1f} \n')
-                    z = z + 1
+    pos = RKFileTell(core.fid)
+    pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
+    r = RKReadPulseFromFileReference(pulse, ctypes.byref(core), core.fid)
+    if (r != RKResultSuccess):
+        workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, core.desc.pulseBufferDepth)
+        raise RKEngineError("Failed to read the first pulse.")
+    pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
+    # Estimate the number of pulses
+    if core.dataType == RKRawDataTypeAfterMatchedFilter:
+        pulse.contents.header.s |= RKPulseStatusReadyForMoments
+        gateCount = pulse.contents.header.downSampledGateCount
+        pulseCount = (core.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex))
+    else:
+        gateCount = pulse.contents.header.gateCount
+        pulseCount = (core.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
+        riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+    pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
+    # downSampledGateCount = pulse.contents.header.downSampledGateCount
+    downSampledGateCount = (gateCount - config.waveform.contents.depth) // core.desc.pulseToRayRatio
+    print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
+    ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
+    ic = 0
+    pulseCount -= 1
+    with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
+        # ik = workspace.pulseMachine.contents.pulseIndex.contents.value
+        # core.iq.S = ik
+        for ip in range(pulseCount):
+            pulse = RKPulseEngineGetVacantPulse(workspace.pulseMachine, RKPulseStatusCompressed)
 
-                r = RKReadPulseFromFileReference(pulse, ctypes.byref(core), core.fid)
-                if (r != RKResultSuccess):
-                    print(f'no more data to read.')
-                    break
+            z = 1
+            while (workspace.pulseMachine.contents.maxWorkerLag > 0.8):
+                time.sleep(1e-4)
+                if (z % 1000 == 0):
+                    s = z * 0.001;
+                    RKLog(f'Waiting for workers ...  z = {z:d} / {s:.1f}s   {workspace.pulseMachine.contents.maxWorkerLag:.1f} \n')
+                z = z + 1
 
-                # pulse.contents.header.i = ip
-                pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
-                if core.dataType == RKRawDataTypeAfterMatchedFilter:
-                    pulse.contents.header.s |= RKPulseStatusReadyForMoments
-                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
-                pulse = get_done_pulse(core.workspace)
-                while (pulse != None):
-                    if core.dataType == RKRawDataTypeFromTransceiver:
-                        riq[ic, :, :] = read_raw_data(pulse, gateCount)
-                    ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
-                    ic += 1
-                    pulse = get_done_pulse(core.workspace)
-                pbar.update(1.0)
-            pbar.close()
+            r = RKReadPulseFromFileReference(pulse, ctypes.byref(core), core.fid)
+            if (r != RKResultSuccess):
+                workspace.pulseMachine.contents.configIndex.contents.value = next_modulo_s(workspace.pulseMachine.contents.configIndex.contents.value, core.desc.configBufferDepth)
+                workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, core.desc.pulseBufferDepth)
+                print(f'no more data to read.')
+                break
 
-            ik = workspace.pulseMachine.contents.pulseIndex.contents.value
-            # core.npulses = ip + 1
-            # core.iq.E = ik - 1
-            workspace.pulseMachine.contents.configIndex.contents.value = next_modulo_s(workspace.pulseMachine.contents.configIndex.contents.value, core.desc.configBufferDepth)
-            workspace.pulseMachine.contents.pulseIndex.contents.value = previous_modulo_s(workspace.pulseMachine.contents.pulseIndex.contents.value, core.desc.pulseBufferDepth)
-
-            # print(f'ic = {ic:,d}   ip = {ip:,d}   pulseCount = {pulseCount:,d}')
-            while (ic < ip):
-                pulse = get_done_pulse(core.workspace)
-                if pulse is None:
-                    time.sleep(0.01)
-                    continue
+            pulse.contents.header.configIndex = workspace.pulseMachine.contents.configIndex.contents.value
+            if core.dataType == RKRawDataTypeAfterMatchedFilter:
+                pulse.contents.header.s |= RKPulseStatusReadyForMoments
+            pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
+            pulse = get_done_pulse(core.workspace)
+            while (pulse != None):
                 if core.dataType == RKRawDataTypeFromTransceiver:
                     riq[ic, :, :] = read_raw_data(pulse, gateCount)
                 ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
                 ic += 1
-            # print(f'ic = {ic:,d}   ip = {ip:,d}   pulseCount = {pulseCount:,d}')
+                pulse = get_done_pulse(core.workspace)
+            pbar.update(1.0)
+        pbar.close()
 
-        return riq, ciq
-    else:
-        raise RKEngineError("Unknown pulses for compression.")
+        # ik = workspace.pulseMachine.contents.pulseIndex.contents.value
+        # core.npulses = ip + 1
+        # core.iq.E = ik - 1
+
+        # print(f'ic = {ic:,d}   ip = {ip:,d}   pulseCount = {pulseCount:,d}')
+        while (ic < ip):
+            pulse = get_done_pulse(core.workspace)
+            if pulse is None:
+                time.sleep(0.05)
+                continue
+            if core.dataType == RKRawDataTypeFromTransceiver:
+                riq[ic, :, :] = read_raw_data(pulse, gateCount)
+            ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
+            ic += 1
+        # print(f'ic = {ic:,d}   ip = {ip:,d}   pulseCount = {pulseCount:,d}')
+
+    close()
+    print('Done')
+
+    return riq, ciq
 
 class iqcache:
     def __init__(self):
@@ -489,7 +490,6 @@ def place_RKInt16C_array(dest, source):
     bufiq[::2] = source.real.astype(np.int16)
     bufiq[1::2] = source.imag.astype(np.int16)
     ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
-
 
 RKPulseStatusDict = {'RKPulseStatusNull': RKPulseStatusNull,
                      'RKPulseStatusVacant': RKPulseStatusVacant,

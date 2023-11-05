@@ -1166,11 +1166,11 @@ RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocki
     RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, engine->doneIndex);
     if (blocking) {
         uint32_t s = 0;
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateWantActive && s++ < 10000) {
+        while (!(pulse->header.s & RKPulseStatusRingProcessed) && engine->state & RKEngineStateWantActive && s++ < 10000) {
             usleep(100);
         }
     } else {
-        if (!(pulse->header.s & RKPulseStatusProcessed)) {
+        if (!(pulse->header.s & RKPulseStatusRingProcessed)) {
             return NULL;
         }
     }
