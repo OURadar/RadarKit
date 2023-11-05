@@ -24,6 +24,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
     RKPulse *pulse = pulses[0];
     const uint32_t gateCount = pulse->header.downSampledGateCount;
 	const int lagCount = space->userLagChoice == 0 ? MIN(pulseCount, RKMaximumLagCount) : MIN(space->userLagChoice + 1, RKMaximumLagCount);
+	const RKFloat tiny = 1.0e-6;
 
 	if (lagCount > pulseCount) {
 		RKLog("WARNING. Memory leak in RKMultiLag.\n");
@@ -167,7 +168,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
         for (k = 0; k < gateCount; k++) {
             // Derive some criteria for censoring and lag selection
             space->SNR[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f) / powf(space->aR[p][2][k], 1.0f / 3.0f) / space->noise[p];
-            space->Q[p][k] = space->aR[p][1][k] / space->aR[p][0][k];
+            space->Q[p][k] = space->aR[p][1][k] / MAX(tiny, space->aR[p][0][k]);
         }
 		for (k = 0; k < gateCount; k++) {
 			switch (space->mask[k]) {
