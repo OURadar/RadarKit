@@ -206,7 +206,7 @@ class Workspace(ctypes.Structure):
         RKWaveformDecimate(config.waveformDecimate, self.desc.pulseToRayRatio)
         RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
 
-    def read(self):
+    def read(self, count=None):
         if self.fid is None:
             raise RKEngineError("No file is open.")
         RKRawDataRecorderSetRecord(self.recorder, False)
@@ -226,19 +226,20 @@ class Workspace(ctypes.Structure):
             pulse.contents.header.s |= RKPulseStatusReadyForMoments
             gateCount = pulse.contents.header.downSampledGateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex))
-            riq = None
         else:
             gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-            riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+        if count is not None:
+            pulseCount = min(count, pulseCount)
         pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
         while pulse.contents.header.s & RKPulseStatusProcessed == 0:
             time.sleep(0.01)
         downSampledGateCount = pulse.contents.header.downSampledGateCount
-        print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
+        riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64) if self.header.dataType == RKRawDataTypeFromTransceiver else None
         ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
         az = np.zeros((pulseCount,), dtype=np.float32)
         el = np.zeros((pulseCount,), dtype=np.float32)
+        print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
         pulseCount -= 1
         with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
             ic = 0
@@ -292,6 +293,7 @@ class Workspace(ctypes.Structure):
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
 
         RKFileSeek(self.fid, pos)
+        RKMomentEngineWaitWhileBusy(self.momentMachine)
 
         return {'riq': riq, 'ciq': ciq, 'el': el, 'az': az}
 
@@ -310,7 +312,6 @@ class Workspace(ctypes.Structure):
         k = self.sweepMachine.contents.scratchSpaceIndex
         scratch = self.sweepMachine.contents.scratchSpaces[k]
 
-        RKMomentEngineWaitWhileBusy(self.momentMachine)
         RKSweepEngineFlush(self.sweepMachine)
 
         if self.verbose:
@@ -333,8 +334,7 @@ def open(filename, opmode='r'):
     fid = RKFileOpen(filename, opmode)
     header = RKFileHeaderRead(fid).contents
     global workspace
-    if workspace is None:
-        workspace = Workspace()
+    workspace = Workspace()
     workspace.populate(fid, header)
     return workspace
 
@@ -359,7 +359,7 @@ def unset_user_module():
 def free():
     global workspace
     if workspace is None:
-        raise RKEngineError("Workspace hasn't been initialized.")
+        return
     workspace.free()
     workspace = None
 
