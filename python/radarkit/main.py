@@ -74,7 +74,8 @@ class Workspace(ctypes.Structure):
         self.header = header
         self.filesize = RKFileGetSize(fid)
 
-        RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
+        if self.verbose:
+            RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
         if self.desc is None or self.allocated is False:
             # Get original description from header and override some attributes
@@ -290,10 +291,12 @@ class Workspace(ctypes.Structure):
             if self.verbose or s >= 50 or ic < ip:
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
 
-        print('Done')
         RKFileSeek(self.fid, pos)
 
         return {'riq': riq, 'ciq': ciq, 'el': el, 'az': az}
+
+    def get_current_config(self):
+        return self.configs[self.configIndex.value]
 
     def get_done_pulse(self):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
@@ -344,6 +347,7 @@ def unset_user_module():
     workspace.userModule = None
     workspace.userModuleFree = ctypes.cast(None, type(workspace.userModuleFree))
     RKPulseEngineUnsetCompressor(workspace.pulseMachine)
+    RKMomentEngineUnsetCalibrator(workspace.momentMachine)
 
 def free():
     global workspace

@@ -100,6 +100,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          __attribute__ ((deprecated));
 void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *) __attribute__ ((deprecated));
 void RKMomentEngineSetCalibrator(RKMomentEngine *, void (*)(RKUserModule, RKMomentScratch *), RKUserModule);
+void RKMomentEngineUnsetCalibrator(RKMomentEngine *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *, const bool);

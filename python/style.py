@@ -1,5 +1,8 @@
 from cycler import cycler
 
+import matplotlib
+import colormap
+
 feature_scale = 1.0
 context_properties = {
     'font.family': 'sans-serif',
@@ -23,3 +26,9 @@ context_properties = {
     'ytick.direction': 'in',
     'ytick.major.pad': 7.5 * feature_scale,
 }
+
+def makecolormap(colors):
+    return matplotlib.colors.LinearSegmentedColormap.from_list('colors', colors[:, :3], N=len(colors))
+
+zmap = makecolormap(colormap.zmap())
+vmap = makecolormap(colormap.vmap())

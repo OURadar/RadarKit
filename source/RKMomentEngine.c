@@ -853,7 +853,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->momentProcessor = RKPulsePairHop;
     // engine->momentProcessor = RKMultiLag;
     engine->userLagChoice = 3;
-    engine->calibrator = &RKCalibratorSimple;
+    engine->calibrator = RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;
     engine->processorFFTOrder = (uint8_t)ceilf(log2f((float)RKMaximumPulsesPerRay));
     engine->memoryUsage = sizeof(RKMomentEngine);
@@ -924,6 +924,11 @@ void RKMomentEngineSetFFTModule(RKMomentEngine *engine, RKFFTModule *module) {
 void RKMomentEngineSetCalibrator(RKMomentEngine *engine, void (*calibrator)(RKUserModule, RKMomentScratch *), RKUserModule userModule) {
     engine->calibrator = calibrator;
     engine->userModule = userModule;
+}
+
+void RKMomentEngineUnsetCalibrator(RKMomentEngine *engine) {
+    engine->calibrator = RKCalibratorSimple;
+    engine->userModule = NULL;
 }
 
 void RKMomentEngineSetCoreCount(RKMomentEngine *engine, const uint8_t count) {
