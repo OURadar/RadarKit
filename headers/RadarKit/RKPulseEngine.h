@@ -93,6 +93,7 @@ void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *, const RKRadarDesc *,
                                         __attribute__ ((deprecated));
 void RKPulseEngineSetFFTModule(RKPulseEngine *, RKFFTModule *) __attribute__ ((deprecated));
 void RKPulseEngineSetCompressor(RKPulseEngine *, void (*)(RKUserModule, RKCompressionScratch *), RKUserModule);
+void RKPulseEngineUnsetCompressor(RKPulseEngine *);
 void RKPulseEngineSetCoreCount(RKPulseEngine *, const uint8_t);
 void RKPulseEngineSetCoreOrigin(RKPulseEngine *, const uint8_t);
 

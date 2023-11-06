@@ -61,6 +61,8 @@ class Workspace(ctypes.Structure):
         self.name = f'\033{RKPythonColor[4:]}<  Python Core  >\033[m'
         self.verbose = 0
         self.fid = None
+        self.desc = None
+        self.header = None
         self.filesize = 0
         self.allocated = False
         RKSetProgramName(b"RadarKit")
@@ -74,7 +76,7 @@ class Workspace(ctypes.Structure):
 
         RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
-        if self.allocated is False:
+        if self.desc is None or self.allocated is False:
             # Get original description from header and override some attributes
             desc = header.desc
             desc.dataPath = b'data'
@@ -223,14 +225,19 @@ class Workspace(ctypes.Structure):
             pulse.contents.header.s |= RKPulseStatusReadyForMoments
             gateCount = pulse.contents.header.downSampledGateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex))
+            riq = None
         else:
             gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
             riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
         pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
-        downSampledGateCount = (gateCount - config.waveform.contents.depth) // self.desc.pulseToRayRatio
+        while pulse.contents.header.s & RKPulseStatusProcessed == 0:
+            time.sleep(0.01)
+        downSampledGateCount = pulse.contents.header.downSampledGateCount
         print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
         ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
+        az = np.zeros((pulseCount,), dtype=np.float32)
+        el = np.zeros((pulseCount,), dtype=np.float32)
         pulseCount -= 1
         with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
             ic = 0
@@ -257,6 +264,8 @@ class Workspace(ctypes.Structure):
                 pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
                 if self.header.dataType == RKRawDataTypeFromTransceiver:
                     riq[ip, :, :] = read_raw_data(pulse, gateCount)
+                el[ip] = pulse.contents.header.elevationDegrees
+                az[ip] = pulse.contents.header.azimuthDegrees
 
                 pulse = self.get_done_pulse()
                 while (pulse != None):
@@ -281,10 +290,10 @@ class Workspace(ctypes.Structure):
             if self.verbose or s >= 50 or ic < ip:
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
 
-        close()
         print('Done')
+        RKFileSeek(self.fid, pos)
 
-        return riq, ciq
+        return {'riq': riq, 'ciq': ciq, 'el': el, 'az': az}
 
     def get_done_pulse(self):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
@@ -321,16 +330,27 @@ def open(filename, opmode='r'):
 
 def close():
     global workspace
+    if workspace is None:
+        raise RKEngineError("Workspace hasn't been initialized.")
     RKFileClose(workspace.fid)
     workspace.fid = None
+
+def unset_user_module():
+    global workspace
+    if workspace is None:
+        raise RKEngineError("Workspace hasn't been initialized.")
+    if workspace.userModule is not None:
+        workspace.userModuleFree(workspace.userModule)
+    workspace.userModule = None
+    workspace.userModuleFree = ctypes.cast(None, type(workspace.userModuleFree))
+    RKPulseEngineUnsetCompressor(workspace.pulseMachine)
 
 def free():
     global workspace
     if workspace is None:
-        return
+        raise RKEngineError("Workspace hasn't been initialized.")
     workspace.free()
     workspace = None
-
 
 class RKEngineError(Exception):
     def __init__(self, message):

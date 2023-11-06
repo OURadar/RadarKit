@@ -289,6 +289,10 @@ long RKFileTell(FILE *fid) {
     return ftell(fid);
 }
 
+int RKFileSeek(FILE *fid, long offset) {
+    return fseek(fid, offset, SEEK_SET);
+}
+
 size_t RKFileGetSize(FILE *fid) {
     long origin = ftell(fid);
     fseek(fid, 0, SEEK_END);
@@ -1232,7 +1236,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.n = headerV1->n;
             pulse->header.t = headerV1->t;
             pulse->header.gateCount = headerV1->gateCount;
-            pulse->header.downSampledGateCount = headerV1->downSampledGateCount;
+            pulse->header.downSampledGateCount = 0;
             pulse->header.pulseWidthSampleCount = headerV1->pulseWidthSampleCount;
             pulse->header.marker = headerV1->marker;
             pulse->header.time = headerV1->time;
@@ -1257,7 +1261,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.n = header->n;
             pulse->header.t = header->t;
             pulse->header.gateCount = header->gateCount;
-            pulse->header.downSampledGateCount = header->downSampledGateCount;
+            pulse->header.downSampledGateCount = 0;
             pulse->header.pulseWidthSampleCount = header->pulseWidthSampleCount;
             pulse->header.marker = header->marker;
             pulse->header.time = header->time;

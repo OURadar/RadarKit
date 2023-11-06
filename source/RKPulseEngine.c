@@ -873,6 +873,11 @@ void RKPulseEngineSetCompressor(RKPulseEngine *engine, void (*compressor)(RKUser
     engine->userModule = userModule;
 }
 
+void RKPulseEngineUnsetCompressor(RKPulseEngine *engine) {
+    engine->compressor = RKBuiltInCompressor;
+    engine->userModule = NULL;
+}
+
 void RKPulseEngineSetCoreCount(RKPulseEngine *engine, const uint8_t count) {
     if (engine->state & RKEngineStateWantActive) {
         RKLog("%s Error. Core count cannot change when the engine is active.\n", engine->name);

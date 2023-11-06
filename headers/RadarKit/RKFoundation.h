@@ -123,6 +123,7 @@ FILE *RKFileOpen(const char *, const char *);
 int RKFileClose(FILE *);
 long RKFileTell(FILE *);
 size_t RKFileGetSize(FILE *);
+int RKFileSeek(FILE *, long);
 
 // Variables in rkGlobalVariable / Presentation
 void RKSetStatusColor(const bool);
