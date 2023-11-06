@@ -307,12 +307,19 @@ class Workspace(ctypes.Structure):
             return None
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
+        k = self.sweepMachine.contents.scratchSpaceIndex
+        scratch = self.sweepMachine.contents.scratchSpaces[k]
+
         RKMomentEngineWaitWhileBusy(self.momentMachine)
+        RKSweepEngineFlush(self.sweepMachine)
+
+        if self.verbose:
+            print(f'Gathering {scratch.rayCount} rays from scratch space #{k} ...')
         self.variables = {}
         for varname in variable_list:
             buf = []
-            for ip in range(360):
-                ray = RKGetRayFromBuffer(self.sweepMachine.contents.rayBuffer, ip)
+            for k in range(scratch.rayCount):
+                ray = scratch.rays[k]
                 data = read_RKFloat_array(RKGetFloatDataFromRay(ray, Productdict[varname]), ray.contents.header.gateCount)
                 if data is None or data.size == 0:
                     break

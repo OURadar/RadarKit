@@ -6530,7 +6530,7 @@ struct_rk_moment_engine._fields_ = [
     ('rayIndex', POINTER(uint32_t)),
     ('doneIndex', uint32_t),
     ('fftModule', POINTER(RKFFTModule)),
-    ('userModule', POINTER(RKUserModule)),
+    ('userModule', RKUserModule),
     ('verbose', uint8_t),
     ('coreCount', uint8_t),
     ('coreOrigin', uint8_t),
