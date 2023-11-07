@@ -20,7 +20,6 @@ Productdict = {'Z': RKBaseProductIndexZ,
                'D': RKBaseProductIndexD,
                'R': RKBaseProductIndexR,
                'P': RKBaseProductIndexP}
-workspace = None
 
 class pyRKuint32(ctypes.c_uint32):
     pass
@@ -69,7 +68,7 @@ class Workspace(ctypes.Structure):
         RKLog(f"{self.name} Initializing ...")
         # print(f'configIndex = {self.configIndex.value}')
 
-    def populate(self, fid, header):
+    def setup(self, fid, header):
         self.fid = fid
         self.header = header
         self.filesize = RKFileGetSize(fid)
@@ -98,6 +97,12 @@ class Workspace(ctypes.Structure):
         ctypes.memmove(ctypes.byref(config), ctypes.byref(self.header.config), ctypes.sizeof(RKConfig))
         config.waveform = self.header.config.waveform
         config.waveformDecimate = self.header.config.waveformDecimate
+
+    def close(self):
+        if self.fid is None:
+            return
+        RKFileClose(self.fid)
+        self.fid = None
 
     def alloc(self, verbose=0, cores=4):
         desc = self.desc
@@ -155,6 +160,8 @@ class Workspace(ctypes.Structure):
         self.allocated = True
 
     def free(self):
+        if self.fid:
+            self.close()
         RKPulseEngineWaitWhileBusy(self.pulseMachine)
         RKMomentEngineWaitWhileBusy(self.momentMachine)
         RKSweepEngineFlush(self.sweepMachine)
@@ -217,6 +224,9 @@ class Workspace(ctypes.Structure):
     def read(self, count=None):
         if self.fid is None:
             raise RKEngineError("No file is open.")
+        if not self.allocated:
+            raise RKEngineError("This workspace has been released.")
+
         RKRawDataRecorderSetRecord(self.recorder, False)
 
         config = self.configs[self.configIndex.value]
@@ -237,17 +247,17 @@ class Workspace(ctypes.Structure):
         else:
             gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-        if count is not None:
-            pulseCount = min(count, pulseCount)
         pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
         while pulse.contents.header.s & RKPulseStatusProcessed == 0:
             time.sleep(0.01)
         downSampledGateCount = pulse.contents.header.downSampledGateCount
+        print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
+        if count is not None:
+            pulseCount = min(count, pulseCount)
         riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64) if self.header.dataType == RKRawDataTypeFromTransceiver else None
         ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
         az = np.zeros((pulseCount,), dtype=np.float32)
         el = np.zeros((pulseCount,), dtype=np.float32)
-        print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
         pulseCount -= 1
         with tqdm.tqdm(total=pulseCount, ncols=100, bar_format='{l_bar}{bar}|{elapsed}<{remaining}') as pbar:
             ic = 0
@@ -341,30 +351,9 @@ class Workspace(ctypes.Structure):
 def open(filename, opmode='r'):
     fid = RKFileOpen(filename, opmode)
     header = RKFileHeaderRead(fid).contents
-    global workspace
     workspace = Workspace()
-    workspace.populate(fid, header)
+    workspace.setup(fid, header)
     return workspace
-
-def close():
-    global workspace
-    if workspace is None:
-        return
-    RKFileClose(workspace.fid)
-    workspace.fid = None
-
-def unset_user_module():
-    global workspace
-    if workspace is None:
-        return
-    workspace.unset_user_module()
-
-def free():
-    global workspace
-    if workspace is None:
-        return
-    workspace.free()
-    workspace = None
 
 class RKEngineError(Exception):
     def __init__(self, message):
