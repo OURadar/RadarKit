@@ -68,17 +68,17 @@ class Workspace(ctypes.Structure):
         RKLog(f"{self.name} Initializing ...")
         # print(f'configIndex = {self.configIndex.value}')
 
-    def setup(self, fid, header):
-        self.fid = fid
-        self.header = header
-        self.filesize = RKFileGetSize(fid)
+    def open(self, filename):
+        self.fid = RKFileOpen(filename, 'r')
+        self.header = RKFileHeaderRead(self.fid).contents
+        self.filesize = RKFileGetSize(self.fid)
 
         if self.verbose:
             RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
         if self.desc is None or self.allocated is False:
-            # Get original description from header and override some attributes
-            desc = header.desc
+            # Get original description from header and override some attributes. Only the first encounter matters.
+            desc = self.header.desc
             desc.dataPath = b'data'
             desc.configBufferDepth = 3
             desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
@@ -91,12 +91,14 @@ class Workspace(ctypes.Structure):
             self.alloc()
 
         if self.desc.pulseCapacity != desc.pulseCapacity:
-            raise RKEngineError("pulseCapacity mismatch. Please restart.")
+            raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
 
-        config = self.configs[self.configIndex.value]
+        k = next_modulo_s(self.configIndex.valuee, self.desc.configBufferDepth)
+        config = self.configs[k]
         ctypes.memmove(ctypes.byref(config), ctypes.byref(self.header.config), ctypes.sizeof(RKConfig))
         config.waveform = self.header.config.waveform
         config.waveformDecimate = self.header.config.waveformDecimate
+        self.configIndex.value = k
 
     def close(self):
         if self.fid is None:
@@ -274,9 +276,8 @@ class Workspace(ctypes.Structure):
 
                 r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
                 if (r != RKResultSuccess):
-                    self.configIndex.value = next_modulo_s(self.configIndex.valuee, self.desc.configBufferDepth)
                     self.pulseIndex.value = previous_modulo_s(self.pulseIndex.value, self.desc.pulseBufferDepth)
-                    print(f'no more data to read.')
+                    print(f'No more data to read.')
                     break
                 pulse.contents.header.configIndex = self.configIndex.value
                 if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
@@ -348,11 +349,9 @@ class Workspace(ctypes.Structure):
         return self.variables
 
 
-def open(filename, opmode='r'):
-    fid = RKFileOpen(filename, opmode)
-    header = RKFileHeaderRead(fid).contents
+def open(filename):
     workspace = Workspace()
-    workspace.setup(fid, header)
+    workspace.open(filename)
     return workspace
 
 class RKEngineError(Exception):
