@@ -93,7 +93,7 @@ class Workspace(ctypes.Structure):
         if self.desc.pulseCapacity != desc.pulseCapacity:
             raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
 
-        k = next_modulo_s(self.configIndex.valuee, self.desc.configBufferDepth)
+        k = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
         config = self.configs[k]
         ctypes.memmove(ctypes.byref(config), ctypes.byref(self.header.config), ctypes.sizeof(RKConfig))
         config.waveform = self.header.config.waveform
