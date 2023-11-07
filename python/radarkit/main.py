@@ -206,6 +206,14 @@ class Workspace(ctypes.Structure):
         RKWaveformDecimate(config.waveformDecimate, self.desc.pulseToRayRatio)
         RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
 
+    def unset_user_module(self):
+        if self.userModule is not None:
+            self.userModuleFree(workspace.userModule)
+        self.userModule = None
+        self.userModuleFree = ctypes.cast(None, type(self.userModuleFree))
+        RKPulseEngineUnsetCompressor(self.pulseMachine)
+        RKMomentEngineUnsetCalibrator(self.momentMachine)
+
     def read(self, count=None):
         if self.fid is None:
             raise RKEngineError("No file is open.")
@@ -341,20 +349,15 @@ def open(filename, opmode='r'):
 def close():
     global workspace
     if workspace is None:
-        raise RKEngineError("Workspace hasn't been initialized.")
+        return
     RKFileClose(workspace.fid)
     workspace.fid = None
 
 def unset_user_module():
     global workspace
     if workspace is None:
-        raise RKEngineError("Workspace hasn't been initialized.")
-    if workspace.userModule is not None:
-        workspace.userModuleFree(workspace.userModule)
-    workspace.userModule = None
-    workspace.userModuleFree = ctypes.cast(None, type(workspace.userModuleFree))
-    RKPulseEngineUnsetCompressor(workspace.pulseMachine)
-    RKMomentEngineUnsetCalibrator(workspace.momentMachine)
+        return
+    workspace.unset_user_module()
 
 def free():
     global workspace
