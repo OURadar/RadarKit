@@ -164,9 +164,14 @@ class Workspace(ctypes.Structure):
     def free(self):
         if self.fid:
             self.close()
-        RKPulseEngineWaitWhileBusy(self.pulseMachine)
-        RKMomentEngineWaitWhileBusy(self.momentMachine)
-        RKSweepEngineFlush(self.sweepMachine)
+        scratch = self.sweepMachine.contents.scratchSpaces[self.sweepMachine.contents.scratchSpaceIndex]
+        count = scratch.rayCount + self.sweepMachine.contents.business
+        if self.verbose:
+            print(f'count = {count}')
+        if count > 2:
+            RKPulseEngineWaitWhileBusy(self.pulseMachine)
+            RKMomentEngineWaitWhileBusy(self.momentMachine)
+            RKSweepEngineFlush(self.sweepMachine)
         RKRawDataRecorderSetRecord(self.recorder, False)
         RKReadPulseFromFileReference(None, None, None)
 
@@ -217,7 +222,7 @@ class Workspace(ctypes.Structure):
 
     def unset_user_module(self):
         if self.userModule is not None:
-            self.userModuleFree(workspace.userModule)
+            self.userModuleFree(self.userModule)
         self.userModule = None
         self.userModuleFree = ctypes.cast(None, type(self.userModuleFree))
         RKPulseEngineUnsetCompressor(self.pulseMachine)
@@ -300,7 +305,7 @@ class Workspace(ctypes.Structure):
             if self.verbose:
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
             s = 0
-            while ic < ip and s < 50:
+            while ic < ip and s < 30:
                 pulse = self.get_done_pulse()
                 if pulse is None:
                     time.sleep(0.1)
@@ -308,11 +313,18 @@ class Workspace(ctypes.Structure):
                     continue
                 ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
                 ic += 1
-            if self.verbose or s >= 50 or ic < ip:
+            if self.verbose or s >= 30 or ic < ip:
                 print(f'ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}')
 
         RKFileSeek(self.fid, pos)
         RKMomentEngineWaitWhileBusy(self.momentMachine)
+        # self.configIndex.value = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
+        # config = self.get_current_config()
+        # ic = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
+        # newConfig = self.configs[ic]
+        # newConfig.waveform = config.waveform
+        # newConfig.waveformDecimate = config.waveformDecimate
+        # self.configIndex.value = ic
 
         return {'riq': riq, 'ciq': ciq, 'el': el, 'az': az}
 
