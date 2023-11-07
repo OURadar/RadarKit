@@ -13,6 +13,7 @@ from ._ctypes_ import *
 # __builtins__.open and __builtins__.close to do necessary development.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+workspace_opend = False
 alignment = int(RKMemoryAlignSize / 4)
 Productdict = {'Z': RKBaseProductIndexZ,
                'V': RKBaseProductIndexV,
@@ -90,8 +91,11 @@ class Workspace(ctypes.Structure):
             self.desc = desc
             self.alloc()
 
-        if self.desc.pulseCapacity != desc.pulseCapacity:
+        if self.desc.pulseCapacity != self.header.desc.pulseCapacity:
             raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
+        if (((self.desc.initFlags & RKInitFlagStartPulseEngine) and (self.header.dataType == RKRawDataTypeAfterMatchedFilter)) or 
+        (not(self.desc.initFlags & RKInitFlagStartPulseEngine) and (self.header.dataType == RKRawDataTypeFromTransceiver))):
+            raise RKEngineError("dataType mismatch. Please use a new workspace.")
 
         k = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
         config = self.configs[k]
@@ -249,8 +253,8 @@ class Workspace(ctypes.Structure):
         else:
             gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-        pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
-        while pulse.contents.header.s & RKPulseStatusProcessed == 0:
+        pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
+        while (pulse.contents.header.s & RKPulseStatusProcessed) == 0:
             time.sleep(0.01)
         downSampledGateCount = pulse.contents.header.downSampledGateCount
         print(f'Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}')
@@ -321,11 +325,16 @@ class Workspace(ctypes.Structure):
 
     def get_done_pulse(self):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
-        try:
+        if pulse:
             _ = pulse.contents.header.i
             return pulse
-        except ValueError:
+        else:
             return None
+        # try:
+        #     _ = pulse.contents.header.i
+        #     return pulse
+        # except ValueError:
+        #     return None
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
         k = self.sweepMachine.contents.scratchSpaceIndex
@@ -348,9 +357,13 @@ class Workspace(ctypes.Structure):
             self.variables.update({varname: np.asarray(buf)})
         return self.variables
 
-
-def open(filename):
-    workspace = Workspace()
+def open(filename, force = False):
+    global workspace_opend
+    if force or (not workspace_opend):
+        workspace = Workspace()
+        workspace_opend = True
+    else:
+        raise RKEngineError("Multiple workspace opend. Use exist workspace or force open new workspace.")
     workspace.open(filename)
     return workspace
 
