@@ -333,11 +333,9 @@ class Workspace(ctypes.Structure):
 
     def get_done_pulse(self):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
-        try:
-            _ = pulse.contents.header.i
-            return pulse
-        except ValueError:
+        if ctypes.cast(pulse, ctypes.c_void_p).value is None:
             return None
+        return pulse
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
         k = self.sweepMachine.contents.scratchSpaceIndex
