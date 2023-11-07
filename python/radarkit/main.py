@@ -13,6 +13,7 @@ from ._ctypes_ import *
 # __builtins__.open and __builtins__.close to do necessary development.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+workspace_opened = False
 alignment = int(RKMemoryAlignSize / 4)
 Productdict = {'Z': RKBaseProductIndexZ,
                'V': RKBaseProductIndexV,
@@ -90,8 +91,11 @@ class Workspace(ctypes.Structure):
             self.desc = desc
             self.alloc()
 
-        if self.desc.pulseCapacity != desc.pulseCapacity:
+        if self.desc.pulseCapacity != self.header.desc.pulseCapacity:
             raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
+        if (((self.desc.initFlags & RKInitFlagStartPulseEngine) and (self.header.dataType == RKRawDataTypeAfterMatchedFilter)) or
+        (not(self.desc.initFlags & RKInitFlagStartPulseEngine) and (self.header.dataType == RKRawDataTypeFromTransceiver))):
+            raise RKEngineError("dataType mismatch. Please use a new workspace.")
 
         k = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
         config = self.configs[k]
@@ -254,7 +258,7 @@ class Workspace(ctypes.Structure):
         else:
             gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-        pulse.contents.header.s = RKPulseStatusHasIQData | RKPulseStatusHasPosition
+        pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
         while pulse.contents.header.s & RKPulseStatusProcessed == 0:
             time.sleep(0.01)
         downSampledGateCount = pulse.contents.header.downSampledGateCount
@@ -272,7 +276,7 @@ class Workspace(ctypes.Structure):
                 pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
 
                 z = 1
-                while (self.pulseMachine.contents.maxWorkerLag > 0.7):
+                while self.pulseMachine.contents.maxWorkerLag > 0.7:
                     time.sleep(0.01)
                     if (z % 100 == 0):
                         s = z * 0.01;
@@ -333,9 +337,7 @@ class Workspace(ctypes.Structure):
 
     def get_done_pulse(self):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
-        if ctypes.cast(pulse, ctypes.c_void_p).value is None:
-            return None
-        return pulse
+        return pulse if pulse else None
 
     def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
         k = self.sweepMachine.contents.scratchSpaceIndex
@@ -358,9 +360,13 @@ class Workspace(ctypes.Structure):
             self.variables.update({varname: np.asarray(buf)})
         return self.variables
 
-
-def open(filename):
-    workspace = Workspace()
+def open(filename, force=False):
+    global workspace_opened
+    if force or not workspace_opened:
+        workspace = Workspace()
+        workspace_opened = True
+    else:
+        raise RKEngineError("Multiple workspaces detected. Reuse existing workspace or specify force to open a new workspace.")
     workspace.open(filename)
     return workspace
 

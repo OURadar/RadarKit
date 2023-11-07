@@ -1236,7 +1236,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.n = headerV1->n;
             pulse->header.t = headerV1->t;
             pulse->header.gateCount = headerV1->gateCount;
-            pulse->header.downSampledGateCount = 0;
+            pulse->header.downSampledGateCount = header->downSampledGateCount;
             pulse->header.pulseWidthSampleCount = headerV1->pulseWidthSampleCount;
             pulse->header.marker = headerV1->marker;
             pulse->header.time = headerV1->time;
@@ -1261,7 +1261,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.n = header->n;
             pulse->header.t = header->t;
             pulse->header.gateCount = header->gateCount;
-            pulse->header.downSampledGateCount = 0;
+            pulse->header.downSampledGateCount = header->downSampledGateCount;
             pulse->header.pulseWidthSampleCount = header->pulseWidthSampleCount;
             pulse->header.marker = header->marker;
             pulse->header.time = header->time;
@@ -1297,6 +1297,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
         if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
             RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
             gateCount = pulse->header.gateCount;
+            pulse->header.downSampledGateCount = 0;
             readsize = fread(x, sizeof(RKInt16C), gateCount, fid);
         } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
