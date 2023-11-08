@@ -13,7 +13,7 @@ from ._ctypes_ import *
 # __builtins__.open and __builtins__.close to do necessary development.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-workspace_opened = False
+workspaces = []
 alignment = int(RKMemoryAlignSize / 4)
 Productdict = {'Z': RKBaseProductIndexZ,
                'V': RKBaseProductIndexV,
@@ -67,7 +67,6 @@ class Workspace(ctypes.Structure):
         self.allocated = False
         RKSetProgramName(b"RadarKit")
         RKLog(f"{self.name} Initializing ...")
-        # print(f'configIndex = {self.configIndex.value}')
 
     def open(self, filename):
         self.fid = RKFileOpen(filename, 'r')
@@ -77,17 +76,17 @@ class Workspace(ctypes.Structure):
         if self.verbose:
             RKLog(f'{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]')
 
+        # Store as self.desc using the first header.desc and override some attributes. Only the first encounter matters.
         if self.desc is None or self.allocated is False:
-            # Get original description from header and override some attributes. Only the first encounter matters.
             desc = self.header.desc
             desc.dataPath = b'data'
             desc.configBufferDepth = 3
             desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
             desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
-            desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer
-            desc.initFlags |= RKInitFlagVerbose | RKInitFlagVeryVerbose
+            desc.initFlags = RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer | RKInitFlagVerbose
             if self.header.dataType == RKRawDataTypeFromTransceiver:
                 desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
+            self.configIndex = pyRKuint32(desc.configBufferDepth - 1)
             self.desc = desc
             self.alloc()
 
@@ -165,6 +164,9 @@ class Workspace(ctypes.Structure):
 
         self.allocated = True
 
+        global workspaces
+        workspaces.append(self)
+
     def free(self):
         if self.fid:
             self.close()
@@ -200,6 +202,9 @@ class Workspace(ctypes.Structure):
         RKRayBufferFree(self.rays)
 
         self.allocated = False
+
+        global workspaces
+        workspaces.remove(self)
 
     def set_waveform(self, samples):
         waveform = RKWaveformInitWithCountAndDepth(1, samples.size)
@@ -322,13 +327,6 @@ class Workspace(ctypes.Structure):
 
         RKFileSeek(self.fid, pos)
         RKMomentEngineWaitWhileBusy(self.momentMachine)
-        # self.configIndex.value = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
-        # config = self.get_current_config()
-        # ic = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
-        # newConfig = self.configs[ic]
-        # newConfig.waveform = config.waveform
-        # newConfig.waveformDecimate = config.waveformDecimate
-        # self.configIndex.value = ic
 
         return {'riq': riq, 'ciq': ciq, 'el': el, 'az': az}
 
@@ -361,14 +359,27 @@ class Workspace(ctypes.Structure):
         return self.variables
 
 def open(filename, force=False):
-    global workspace_opened
-    if force or not workspace_opened:
+    global workspaces
+    if force or len(workspaces) == 0:
         workspace = Workspace()
-        workspace_opened = True
     else:
-        raise RKEngineError("Multiple workspaces detected. Reuse existing workspace or specify force to open a new workspace.")
+        workspace = workspaces[-1]
     workspace.open(filename)
+    if len(workspaces) > 3:
+        print(f"Warning. Multiple workspaces ({len(workspaces)}) detected.")
     return workspace
+
+def close():
+    global workspaces
+    for workspace in workspaces:
+        workspace.free()
+    workspaces = []
+
+def last():
+    global workspaces
+    if len(workspaces) == 0:
+        raise RKEngineError("No workspace is open.")
+    return workspaces[-1]
 
 class RKEngineError(Exception):
     def __init__(self, message):
