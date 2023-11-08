@@ -135,6 +135,7 @@ class Workspace(ctypes.Structure):
         RKPulseRingFilterEngineSetCoreCount(self.ringMachine, 2)
         if (desc.initFlags & RKInitFlagStartRingFilterEngine):
             RKPulseRingFilterEngineStart(self.ringMachine)
+            RKPulseEngineSetWaitForRingFilter(self.pulseMachine, True)
 
         self.momentMachine = RKMomentEngineInit()
         self.momentMachine.contents.momentProcessor = ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor))

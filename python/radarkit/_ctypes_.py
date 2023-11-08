@@ -5777,6 +5777,7 @@ struct_rk_pulse_engine.__slots__ = [
     'workers',
     'tidPulseWatcher',
     'mutex',
+    'doneStatus',
     'statusBuffer',
     'pulseStatusBuffer',
     'statusBufferIndex',
@@ -5813,6 +5814,7 @@ struct_rk_pulse_engine._fields_ = [
     ('workers', POINTER(RKPulseWorker)),
     ('tidPulseWatcher', pthread_t),
     ('mutex', pthread_mutex_t),
+    ('doneStatus', RKPulseStatus),
     ('statusBuffer', (c_char * int(256)) * int(10)),
     ('pulseStatusBuffer', (c_char * int(256)) * int(10)),
     ('statusBufferIndex', uint32_t),
@@ -5826,139 +5828,151 @@ struct_rk_pulse_engine._fields_ = [
     ('memoryUsage', c_size_t),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 83
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 84
 if _libs["radarkit"].has("RKPulseEngineInit", "cdecl"):
     RKPulseEngineInit = _libs["radarkit"].get("RKPulseEngineInit", "cdecl")
     RKPulseEngineInit.argtypes = []
     RKPulseEngineInit.restype = POINTER(RKPulseEngine)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 84
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 85
 if _libs["radarkit"].has("RKPulseEngineFree", "cdecl"):
     RKPulseEngineFree = _libs["radarkit"].get("RKPulseEngineFree", "cdecl")
     RKPulseEngineFree.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineFree.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 86
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 87
 if _libs["radarkit"].has("RKPulseEngineSetVerbose", "cdecl"):
     RKPulseEngineSetVerbose = _libs["radarkit"].get("RKPulseEngineSetVerbose", "cdecl")
     RKPulseEngineSetVerbose.argtypes = [POINTER(RKPulseEngine), c_int]
     RKPulseEngineSetVerbose.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 87
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 88
 if _libs["radarkit"].has("RKPulseEngineSetEssentials", "cdecl"):
     RKPulseEngineSetEssentials = _libs["radarkit"].get("RKPulseEngineSetEssentials", "cdecl")
     RKPulseEngineSetEssentials.argtypes = [POINTER(RKPulseEngine), POINTER(RKRadarDesc), POINTER(RKFFTModule), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
     RKPulseEngineSetEssentials.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 90
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 91
 if _libs["radarkit"].has("RKPulseEngineSetInputOutputBuffers", "cdecl"):
     RKPulseEngineSetInputOutputBuffers = _libs["radarkit"].get("RKPulseEngineSetInputOutputBuffers", "cdecl")
     RKPulseEngineSetInputOutputBuffers.argtypes = [POINTER(RKPulseEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
     RKPulseEngineSetInputOutputBuffers.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 94
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 95
 if _libs["radarkit"].has("RKPulseEngineSetFFTModule", "cdecl"):
     RKPulseEngineSetFFTModule = _libs["radarkit"].get("RKPulseEngineSetFFTModule", "cdecl")
     RKPulseEngineSetFFTModule.argtypes = [POINTER(RKPulseEngine), POINTER(RKFFTModule)]
     RKPulseEngineSetFFTModule.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 95
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 96
 if _libs["radarkit"].has("RKPulseEngineSetCompressor", "cdecl"):
     RKPulseEngineSetCompressor = _libs["radarkit"].get("RKPulseEngineSetCompressor", "cdecl")
     RKPulseEngineSetCompressor.argtypes = [POINTER(RKPulseEngine), CFUNCTYPE(UNCHECKED(None), RKUserModule, POINTER(RKCompressionScratch)), RKUserModule]
     RKPulseEngineSetCompressor.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 96
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 97
 if _libs["radarkit"].has("RKPulseEngineUnsetCompressor", "cdecl"):
     RKPulseEngineUnsetCompressor = _libs["radarkit"].get("RKPulseEngineUnsetCompressor", "cdecl")
     RKPulseEngineUnsetCompressor.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineUnsetCompressor.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 97
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 98
 if _libs["radarkit"].has("RKPulseEngineSetCoreCount", "cdecl"):
     RKPulseEngineSetCoreCount = _libs["radarkit"].get("RKPulseEngineSetCoreCount", "cdecl")
     RKPulseEngineSetCoreCount.argtypes = [POINTER(RKPulseEngine), uint8_t]
     RKPulseEngineSetCoreCount.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 98
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 99
 if _libs["radarkit"].has("RKPulseEngineSetCoreOrigin", "cdecl"):
     RKPulseEngineSetCoreOrigin = _libs["radarkit"].get("RKPulseEngineSetCoreOrigin", "cdecl")
     RKPulseEngineSetCoreOrigin.argtypes = [POINTER(RKPulseEngine), uint8_t]
     RKPulseEngineSetCoreOrigin.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 100
+if _libs["radarkit"].has("RKPulseEngineSetDoneStatus", "cdecl"):
+    RKPulseEngineSetDoneStatus = _libs["radarkit"].get("RKPulseEngineSetDoneStatus", "cdecl")
+    RKPulseEngineSetDoneStatus.argtypes = [POINTER(RKPulseEngine), RKPulseStatus]
+    RKPulseEngineSetDoneStatus.restype = None
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 101
+if _libs["radarkit"].has("RKPulseEngineSetWaitForRingFilter", "cdecl"):
+    RKPulseEngineSetWaitForRingFilter = _libs["radarkit"].get("RKPulseEngineSetWaitForRingFilter", "cdecl")
+    RKPulseEngineSetWaitForRingFilter.argtypes = [POINTER(RKPulseEngine), c_bool]
+    RKPulseEngineSetWaitForRingFilter.restype = None
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 103
 if _libs["radarkit"].has("RKPulseEngineResetFilters", "cdecl"):
     RKPulseEngineResetFilters = _libs["radarkit"].get("RKPulseEngineResetFilters", "cdecl")
     RKPulseEngineResetFilters.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineResetFilters.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 101
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 104
 if _libs["radarkit"].has("RKPulseEngineSetFilterCountOfGroup", "cdecl"):
     RKPulseEngineSetFilterCountOfGroup = _libs["radarkit"].get("RKPulseEngineSetFilterCountOfGroup", "cdecl")
     RKPulseEngineSetFilterCountOfGroup.argtypes = [POINTER(RKPulseEngine), c_int, c_int]
     RKPulseEngineSetFilterCountOfGroup.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 102
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 105
 if _libs["radarkit"].has("RKPulseEngineSetFilterGroupCount", "cdecl"):
     RKPulseEngineSetFilterGroupCount = _libs["radarkit"].get("RKPulseEngineSetFilterGroupCount", "cdecl")
     RKPulseEngineSetFilterGroupCount.argtypes = [POINTER(RKPulseEngine), c_int]
     RKPulseEngineSetFilterGroupCount.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 103
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 106
 if _libs["radarkit"].has("RKPulseEngineSetGroupFilter", "cdecl"):
     RKPulseEngineSetGroupFilter = _libs["radarkit"].get("RKPulseEngineSetGroupFilter", "cdecl")
     RKPulseEngineSetGroupFilter.argtypes = [POINTER(RKPulseEngine), POINTER(RKComplex), RKFilterAnchor, c_int, c_int]
     RKPulseEngineSetGroupFilter.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 108
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 111
 if _libs["radarkit"].has("RKPulseEngineSetFilter", "cdecl"):
     RKPulseEngineSetFilter = _libs["radarkit"].get("RKPulseEngineSetFilter", "cdecl")
     RKPulseEngineSetFilter.argtypes = [POINTER(RKPulseEngine), POINTER(RKComplex), RKFilterAnchor]
     RKPulseEngineSetFilter.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 109
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 112
 if _libs["radarkit"].has("RKPulseEngineSetFilterByWaveform", "cdecl"):
     RKPulseEngineSetFilterByWaveform = _libs["radarkit"].get("RKPulseEngineSetFilterByWaveform", "cdecl")
     RKPulseEngineSetFilterByWaveform.argtypes = [POINTER(RKPulseEngine), POINTER(RKWaveform)]
     RKPulseEngineSetFilterByWaveform.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 110
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 113
 if _libs["radarkit"].has("RKPulseEngineSetFilterToImpulse", "cdecl"):
     RKPulseEngineSetFilterToImpulse = _libs["radarkit"].get("RKPulseEngineSetFilterToImpulse", "cdecl")
     RKPulseEngineSetFilterToImpulse.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineSetFilterToImpulse.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 112
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 115
 if _libs["radarkit"].has("RKPulseEngineStart", "cdecl"):
     RKPulseEngineStart = _libs["radarkit"].get("RKPulseEngineStart", "cdecl")
     RKPulseEngineStart.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineStart.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 113
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 116
 if _libs["radarkit"].has("RKPulseEngineStop", "cdecl"):
     RKPulseEngineStop = _libs["radarkit"].get("RKPulseEngineStop", "cdecl")
     RKPulseEngineStop.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineStop.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 115
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 118
 if _libs["radarkit"].has("RKPulseEngineGetVacantPulse", "cdecl"):
     RKPulseEngineGetVacantPulse = _libs["radarkit"].get("RKPulseEngineGetVacantPulse", "cdecl")
     RKPulseEngineGetVacantPulse.argtypes = [POINTER(RKPulseEngine), RKPulseStatus]
     RKPulseEngineGetVacantPulse.restype = POINTER(RKPulse)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 116
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 119
 if _libs["radarkit"].has("RKPulseEngineGetProcessedPulse", "cdecl"):
     RKPulseEngineGetProcessedPulse = _libs["radarkit"].get("RKPulseEngineGetProcessedPulse", "cdecl")
     RKPulseEngineGetProcessedPulse.argtypes = [POINTER(RKPulseEngine), c_bool]
     RKPulseEngineGetProcessedPulse.restype = POINTER(RKPulse)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 117
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 120
 if _libs["radarkit"].has("RKPulseEngineWaitWhileBusy", "cdecl"):
     RKPulseEngineWaitWhileBusy = _libs["radarkit"].get("RKPulseEngineWaitWhileBusy", "cdecl")
     RKPulseEngineWaitWhileBusy.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineWaitWhileBusy.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 119
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 122
 if _libs["radarkit"].has("RKPulseEngineStatusString", "cdecl"):
     RKPulseEngineStatusString = _libs["radarkit"].get("RKPulseEngineStatusString", "cdecl")
     RKPulseEngineStatusString.argtypes = [POINTER(RKPulseEngine)]
@@ -5968,7 +5982,7 @@ if _libs["radarkit"].has("RKPulseEngineStatusString", "cdecl"):
         RKPulseEngineStatusString.restype = String
         RKPulseEngineStatusString.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 120
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 123
 if _libs["radarkit"].has("RKPulseEnginePulseString", "cdecl"):
     RKPulseEnginePulseString = _libs["radarkit"].get("RKPulseEnginePulseString", "cdecl")
     RKPulseEnginePulseString.argtypes = [POINTER(RKPulseEngine)]
@@ -5978,13 +5992,13 @@ if _libs["radarkit"].has("RKPulseEnginePulseString", "cdecl"):
         RKPulseEnginePulseString.restype = String
         RKPulseEnginePulseString.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 121
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 124
 if _libs["radarkit"].has("RKPulseEngineFilterSummary", "cdecl"):
     RKPulseEngineFilterSummary = _libs["radarkit"].get("RKPulseEngineFilterSummary", "cdecl")
     RKPulseEngineFilterSummary.argtypes = [POINTER(RKPulseEngine)]
     RKPulseEngineFilterSummary.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 123
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 126
 if _libs["radarkit"].has("RKBuiltInCompressor", "cdecl"):
     RKBuiltInCompressor = _libs["radarkit"].get("RKBuiltInCompressor", "cdecl")
     RKBuiltInCompressor.argtypes = [RKUserModule, POINTER(RKCompressionScratch)]

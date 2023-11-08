@@ -764,6 +764,7 @@ RKPulseEngine *RKPulseEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     // engine->configChangeCallback = &RKBuiltInConfigChangeCallback;
+    engine->doneStatus = RKPulseStatusProcessed;
     engine->compressor = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
@@ -892,6 +893,18 @@ void RKPulseEngineSetCoreOrigin(RKPulseEngine *engine, const uint8_t origin) {
         return;
     }
     engine->coreOrigin = origin;
+}
+
+void RKPulseEngineSetDoneStatus(RKPulseEngine *engine, const RKPulseStatus status) {
+    engine->doneStatus = status;
+}
+
+void RKPulseEngineSetWaitForRingFilter(RKPulseEngine *engine, const bool answer) {
+    if (answer == true) {
+        engine->doneStatus = RKPulseStatusRingProcessed;
+    } else {
+        engine->doneStatus = RKPulseStatusProcessed;
+    }
 }
 
 int RKPulseEngineResetFilters(RKPulseEngine *engine) {
@@ -1171,11 +1184,11 @@ RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocki
     RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, engine->doneIndex);
     if (blocking) {
         uint32_t s = 0;
-        while (!(pulse->header.s & RKPulseStatusRingProcessed) && engine->state & RKEngineStateWantActive && s++ < 10000) {
+        while (!(pulse->header.s & engine->doneStatus) && engine->state & RKEngineStateWantActive && s++ < 10000) {
             usleep(100);
         }
     } else {
-        if (!(pulse->header.s & RKPulseStatusRingProcessed)) {
+        if (!(pulse->header.s & engine->doneStatus)) {
             return NULL;
         }
     }
