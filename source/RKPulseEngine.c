@@ -644,8 +644,8 @@ static void *pulseWatcher(void *_in) {
         while (k == *engine->pulseIndex && engine->state & RKEngineStateWantActive) {
             usleep(50);
             if (++s % 4000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
             }
             RKPulseEngineUpdateMinMaxWorkerLag(engine);
         }
@@ -656,8 +656,8 @@ static void *pulseWatcher(void *_in) {
         while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateWantActive) {
             usleep(50);
             if (++s % 4000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
             }
             RKPulseEngineUpdateMinMaxWorkerLag(engine);
         }
@@ -706,6 +706,8 @@ static void *pulseWatcher(void *_in) {
 
         // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
         pulse->header.s |= RKPulseStatusInspected;
+
+        // RKLog("%s k = %d   pulseIndex = %d   doneIndex = %d\n", engine->name, k, *engine->pulseIndex, engine->doneIndex);
 
         // Now we post
         #ifdef DEBUG_IQ
@@ -762,6 +764,7 @@ RKPulseEngine *RKPulseEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     // engine->configChangeCallback = &RKBuiltInConfigChangeCallback;
+    engine->doneStatus = RKPulseStatusProcessed;
     engine->compressor = &RKBuiltInCompressor;
     engine->memoryUsage = sizeof(RKPulseEngine);
     pthread_mutex_init(&engine->mutex, NULL);
@@ -871,6 +874,11 @@ void RKPulseEngineSetCompressor(RKPulseEngine *engine, void (*compressor)(RKUser
     engine->userModule = userModule;
 }
 
+void RKPulseEngineUnsetCompressor(RKPulseEngine *engine) {
+    engine->compressor = RKBuiltInCompressor;
+    engine->userModule = NULL;
+}
+
 void RKPulseEngineSetCoreCount(RKPulseEngine *engine, const uint8_t count) {
     if (engine->state & RKEngineStateWantActive) {
         RKLog("%s Error. Core count cannot change when the engine is active.\n", engine->name);
@@ -885,6 +893,18 @@ void RKPulseEngineSetCoreOrigin(RKPulseEngine *engine, const uint8_t origin) {
         return;
     }
     engine->coreOrigin = origin;
+}
+
+void RKPulseEngineSetDoneStatus(RKPulseEngine *engine, const RKPulseStatus status) {
+    engine->doneStatus = status;
+}
+
+void RKPulseEngineSetWaitForRingFilter(RKPulseEngine *engine, const bool answer) {
+    if (answer == true) {
+        engine->doneStatus = RKPulseStatusRingProcessed;
+    } else {
+        engine->doneStatus = RKPulseStatusProcessed;
+    }
 }
 
 int RKPulseEngineResetFilters(RKPulseEngine *engine) {
@@ -1164,16 +1184,17 @@ RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocki
     RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, engine->doneIndex);
     if (blocking) {
         uint32_t s = 0;
-        while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateWantActive && s++ < 10000) {
+        while (!(pulse->header.s & engine->doneStatus) && engine->state & RKEngineStateWantActive && s++ < 10000) {
             usleep(100);
         }
     } else {
-        if (!(pulse->header.s & RKPulseStatusProcessed)) {
+        if (!(pulse->header.s & engine->doneStatus)) {
             return NULL;
         }
     }
     pulse->header.s |= RKPulseStatusConsumed;
     engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->pulseBufferDepth);
+    // RKLog("%s engine->doneIndex = %d\n", engine->name, engine->doneIndex);
     return pulse;
 }
 

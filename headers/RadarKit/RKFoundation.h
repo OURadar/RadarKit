@@ -123,6 +123,7 @@ FILE *RKFileOpen(const char *, const char *);
 int RKFileClose(FILE *);
 long RKFileTell(FILE *);
 size_t RKFileGetSize(FILE *);
+int RKFileSeek(FILE *, long);
 
 // Variables in rkGlobalVariable / Presentation
 void RKSetStatusColor(const bool);
@@ -171,6 +172,7 @@ RKIQZ RKGetSplitComplexDataFromPulse(RKPulse *, const uint32_t);
 int RKClearPulseBuffer(RKBuffer, const uint32_t);
 int RKReadPulseFromFileReference(RKPulse *, RKFileHeader *, FILE *);
 RKPulse *RKGetVacantPulseFromBuffer(RKBuffer, uint32_t *, const uint32_t);
+RKBuffer RKPulseBufferAllocCopyFromBuffer(RKBuffer pulses, const uint32_t start, const uint32_t count, const uint32_t depth);
 
 // Ray
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);

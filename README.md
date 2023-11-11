@@ -520,6 +520,8 @@ void RKConcludeControls(RKRadar *);                                             
 |                                                          | `RKMomentEngine` waits for this                        |
 | `RKPulseStatusUsedForMoments`                            | `RKMomentEngine` sets this                             |
 | `RKPulseStatusRecorded`                                  | `RKSweepEngine` sets this                              |
+| `RKPulseStatusConsumed`                                  | `RKPulseEngine` sets this                              |
+|                                                          | `RKPulseEngine` may wait for this                      |
 
 ### Accessing Data of Pulses / Rays (RKFoundation.h)
 

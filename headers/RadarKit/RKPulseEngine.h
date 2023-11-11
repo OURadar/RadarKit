@@ -65,6 +65,7 @@ struct rk_pulse_engine {
     RKPulseWorker                    *workers;
     pthread_t                        tidPulseWatcher;
     pthread_mutex_t                  mutex;
+    RKPulseStatus                    doneStatus;
 
     // Status / health
     char                             statusBuffer[RKBufferSSlotCount][RKStatusStringLength];
@@ -93,8 +94,11 @@ void RKPulseEngineSetInputOutputBuffers(RKPulseEngine *, const RKRadarDesc *,
                                         __attribute__ ((deprecated));
 void RKPulseEngineSetFFTModule(RKPulseEngine *, RKFFTModule *) __attribute__ ((deprecated));
 void RKPulseEngineSetCompressor(RKPulseEngine *, void (*)(RKUserModule, RKCompressionScratch *), RKUserModule);
+void RKPulseEngineUnsetCompressor(RKPulseEngine *);
 void RKPulseEngineSetCoreCount(RKPulseEngine *, const uint8_t);
 void RKPulseEngineSetCoreOrigin(RKPulseEngine *, const uint8_t);
+void RKPulseEngineSetDoneStatus(RKPulseEngine *, const RKPulseStatus);
+void RKPulseEngineSetWaitForRingFilter(RKPulseEngine *, const bool);
 
 int RKPulseEngineResetFilters(RKPulseEngine *);
 int RKPulseEngineSetFilterCountOfGroup(RKPulseEngine *, const int group, const int count);

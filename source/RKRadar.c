@@ -1790,7 +1790,7 @@ int RKGoLive(RKRadar *radar) {
                     RKConfigKeySystemDCal, -0.01,
                     RKConfigKeySystemPCal, 0.01,
                     RKConfigKeySNRThreshold, 0.1,
-                    RKConfigKeySQIThreshold, 0.2,
+                    RKConfigKeySQIThreshold, 0.01,
                     RKConfigKeyTransitionGateCount, 5,
                     RKConfigKeyRingFilterGateCount, 1000,
                     RKConfigKeyNull);

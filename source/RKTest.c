@@ -1640,7 +1640,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     config->noise[0] = 0.00011;
     config->noise[1] = 0.00012;
     config->SNRThreshold = -3.0f;
-    config->SQIThreshold = 0.1f;
+    config->SQIThreshold = 0.01f;
     config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
 
     RKPulseEngine *engine = RKPulseEngineInit();
@@ -1797,7 +1797,7 @@ void RKTestSimpleMomentEngine(const int mode) {
     config->noise[0] = 0.00011;
     config->noise[1] = 0.00012;
     config->SNRThreshold = -3.0f;
-    config->SQIThreshold = 0.1f;
+    config->SQIThreshold = 0.01f;
     config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
 
     // Moment engine
@@ -3487,7 +3487,7 @@ void RKTestPulseEngineSpeed(const int cores) {
     config->noise[0] = 0.00011;
     config->noise[1] = 0.00012;
     config->SNRThreshold = -3.0f;
-    config->SQIThreshold = 0.1f;
+    config->SQIThreshold = 0.01f;
     config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
 
     float p[3] = {0.0f, 0.0f, 0.0f};

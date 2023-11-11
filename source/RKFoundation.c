@@ -289,6 +289,10 @@ long RKFileTell(FILE *fid) {
     return ftell(fid);
 }
 
+int RKFileSeek(FILE *fid, long offset) {
+    return fseek(fid, offset, SEEK_SET);
+}
+
 size_t RKFileGetSize(FILE *fid) {
     long origin = ftell(fid);
     fseek(fid, 0, SEEK_END);
@@ -1232,7 +1236,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.n = headerV1->n;
             pulse->header.t = headerV1->t;
             pulse->header.gateCount = headerV1->gateCount;
-            pulse->header.downSampledGateCount = headerV1->downSampledGateCount;
+            pulse->header.downSampledGateCount = header->downSampledGateCount;
             pulse->header.pulseWidthSampleCount = headerV1->pulseWidthSampleCount;
             pulse->header.marker = headerV1->marker;
             pulse->header.time = headerV1->time;
@@ -1293,6 +1297,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
         if (fileHeader->dataType == RKRawDataTypeFromTransceiver) {
             RKInt16C *x = RKGetInt16CDataFromPulse(pulse, j);
             gateCount = pulse->header.gateCount;
+            pulse->header.downSampledGateCount = 0;
             readsize = fread(x, sizeof(RKInt16C), gateCount, fid);
         } else if (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter) {
             RKComplex *x = RKGetComplexDataFromPulse(pulse, j);
@@ -1326,6 +1331,28 @@ RKPulse *RKGetVacantPulseFromBuffer(RKBuffer pulses, uint32_t *index, const uint
     pulse->header.i += depth;
     *index = RKNextModuloS(*index, depth);
     return pulse;
+}
+
+RKBuffer RKPulseBufferAllocCopyFromBuffer(RKBuffer pulses, const uint32_t start, const uint32_t count, const uint32_t depth) {
+    RKPulse *pulse = RKGetPulseFromBuffer(pulses, start);
+    const uint32_t gateCount = pulse->header.downSampledGateCount;
+    RKLog("Allocating array of %s x 2 x %d RKComplex ...\n", RKIntegerToCommaStyleString(count), gateCount);
+    RKComplex *array = (RKComplex *)malloc(count * 2 * gateCount * sizeof(RKComplex));
+    RKComplex *d = array;
+    RKLog("Copying data from RKBuffer ...\n");
+    for (int k = 0, pulseIndex = start; k < count; k++, pulseIndex++) {
+        if (pulseIndex >= depth) {
+            pulseIndex -= depth;
+        }
+        pulse = RKGetPulseFromBuffer(pulses, pulseIndex);
+        for (int c = 0; c < 2; c++) {
+            RKComplex *samples = RKGetComplexDataFromPulse(pulse, c);
+            memcpy(d, samples, gateCount * sizeof(RKComplex));
+            d += gateCount;
+        }
+    }
+    RKLog("Done\n");
+    return (RKBuffer)array;
 }
 
 #pragma mark - Ray

@@ -50,7 +50,7 @@ struct rk_moment_engine {
     uint32_t                         *rayIndex;
     uint32_t                         doneIndex;                                // Last retrieved ray index that's processed
     RKFFTModule                      *fftModule;
-    RKUserModule                     *userModule;
+    RKUserModule                     userModule;
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
@@ -100,6 +100,7 @@ void RKMomentEngineSetInputOutputBuffers(RKMomentEngine *, const RKRadarDesc *,
                                          __attribute__ ((deprecated));
 void RKMomentEngineSetFFTModule(RKMomentEngine *, RKFFTModule *) __attribute__ ((deprecated));
 void RKMomentEngineSetCalibrator(RKMomentEngine *, void (*)(RKUserModule, RKMomentScratch *), RKUserModule);
+void RKMomentEngineUnsetCalibrator(RKMomentEngine *);
 void RKMomentEngineSetCoreCount(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *, const bool);
