@@ -2,11 +2,6 @@
 //  RKSpectralMoment.c
 //  RadarKit
 //
-//  ** Incomplete **
-//
-//  Created by Boonleng Cheong on 10/8/18.
-//  Copyright (c) 2018-2021 Boonleng Cheong. All rights reserved.
-// 
 //  Created by Min-Duan Tzneg on 11/2/23.
 //  Copyright (c) 2023- Min-Duan Tzneg. All rights reserved.
 //
@@ -37,7 +32,7 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
     // RKFloat sumW2Y2, sumW4Y2;
     RKFloat omega;
     // RKFloat a, b, c, d;
- 
+
     const RKFloat sGain = ((RKFloat)pulseCount * (RKFloat)planSize);
     // const RKFloat sNoise[2] = {(RKFloat)space->noise[0] / (RKFloat)planSize, (RKFloat)space->noise[1] / (RKFloat)planSize};
     const RKFloat unitOmega = 2.0f * M_PI / (RKFloat)planSize;
@@ -225,11 +220,11 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
             in[k][1] = Xh[k][1] * Xv[k][0] - Xh[k][0] * Xv[k][1];       // C.q = Xh.q * Xv.i - Xh.i * Xv.q
         }
     }
-///////// We have fS and fC calculated here let's do some spectral based filtering process
-///////// notice that fS and fC never been scaled and assumed to be scaled while summarizing moment
-///////// remeber to edit moment estimation if move the scaling here in future
+    // We have fS and fC calculated here let's do some spectral based filtering process
+    // notice that fS and fC never been scaled and assumed to be scaled while summarizing moment
+    // remeber to edit moment estimation if move the scaling here in future
 
-///////// Summarize spectral to moment
+    // Summarize spectral to moment
     RKFloat *Ci = space->C[0].i;
     RKFloat *Cq = space->C[0].q;
     for (g = 0; g < space->gateCount; g++) {
