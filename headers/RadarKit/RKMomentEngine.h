@@ -106,6 +106,12 @@ void RKMomentEngineSetCoreOrigin(RKMomentEngine *, const uint8_t);
 void RKMomentEngineSetExcludeBoundaryPulses(RKMomentEngine *, const bool);
 void RKMomentEngineSetNoiseEstimator(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
 void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
+void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToMultiLag2(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToMultiLag3(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToMultiLag4(RKMomentEngine *);
+void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

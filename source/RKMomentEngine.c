@@ -959,6 +959,33 @@ void RKMomentEngineSetMomentProcessor(RKMomentEngine *engine, int (*routine)(RKM
     engine->momentProcessor = routine;
 }
 
+void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *engine) {
+    engine->momentProcessor = RKPulsePair;
+}
+
+void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
+    engine->momentProcessor = RKPulsePairHop;
+}
+
+void RKMomentEngineSetMomentProcessorToMultiLag2(RKMomentEngine *engine) {
+    engine->momentProcessor = RKMultiLag;
+    engine->userLagChoice = 2;
+}
+
+void RKMomentEngineSetMomentProcessorToMultiLag3(RKMomentEngine *engine) {
+    engine->momentProcessor = RKMultiLag;
+    engine->userLagChoice = 3;
+}
+
+void RKMomentEngineSetMomentProcessorToMultiLag4(RKMomentEngine *engine) {
+    engine->momentProcessor = RKMultiLag;
+    engine->userLagChoice = 4;
+}
+
+void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *engine) {
+    engine->momentProcessor = RKSpectralMoment;
+}
+
 #pragma mark - Interactions
 
 int RKMomentEngineStart(RKMomentEngine *engine) {

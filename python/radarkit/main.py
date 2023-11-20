@@ -68,7 +68,7 @@ class Workspace(ctypes.Structure):
         RKSetProgramName(b"RadarKit")
         RKLog(f"{self.name} Initializing ...")
 
-    def open(self, filename):
+    def open(self, filename, cores=4):
         self.fid = RKFileOpen(filename, 'r')
         self.header = RKFileHeaderRead(self.fid).contents
         self.filesize = RKFileGetSize(self.fid)
@@ -88,7 +88,7 @@ class Workspace(ctypes.Structure):
                 desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
             self.configIndex = pyRKuint32(desc.configBufferDepth - 1)
             self.desc = desc
-            self.alloc()
+            self.alloc(cores=cores)
 
         if self.desc.pulseCapacity != self.header.desc.pulseCapacity:
             raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
