@@ -338,11 +338,14 @@ class Workspace(ctypes.Structure):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
         return pulse if pulse else None
 
-    def get_moment(self, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
-        k = self.sweepMachine.contents.scratchSpaceIndex
-        scratch = self.sweepMachine.contents.scratchSpaces[k]
-
-        RKSweepEngineFlush(self.sweepMachine)
+    def get_moment(self, offset=0, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
+        if offset == 0:
+            k = self.sweepMachine.contents.scratchSpaceIndex
+            scratch = self.sweepMachine.contents.scratchSpaces[k]
+            RKSweepEngineFlush(self.sweepMachine)
+        else:
+            print(f'Retrieving from scratch space {offset} ...')
+            scratch = self.sweepMachine.contents.scratchSpaces[offset]
 
         if self.verbose:
             print(f'Gathering {scratch.rayCount} rays from scratch space #{k} ...')
