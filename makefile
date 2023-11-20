@@ -129,6 +129,8 @@ ctypes:
 	headers/RadarKit/RKPulseRingFilter.h \
 	headers/RadarKit/RKMultiLag.h \
 	headers/RadarKit/RKPulseATSR.h \
+	headers/RadarKit/RKSpectralMoment.h \
+	headers/RadarKit/RKPulsePair.h \
 	headers/RadarKit/RKWaveform.h \
 	headers/RadarKit.h \
 	headers/RadarKit/RKTest.h \

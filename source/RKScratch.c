@@ -203,12 +203,19 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
 
     scratch->inBuffer = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
     scratch->outBuffer = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
-    bytes += 2 * scratch->capacity * sizeof(fftwf_complex *);
+    scratch->fS[0] = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
+    scratch->fS[1] = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
+    scratch->fC = (fftwf_complex **)malloc(scratch->capacity * sizeof(fftwf_complex *));
+    bytes += 5 * scratch->capacity * sizeof(fftwf_complex *);
     for (j = 0; j < scratch->capacity; j++) {
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->fC[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+        for (k = 0; k < 2; k++) {
+            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->fS[k][j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+        }
     }
-    bytes += scratch->capacity * 2 * nfft * sizeof(fftwf_complex);
+    bytes += scratch->capacity * 5 * nfft * sizeof(fftwf_complex);
     scratch->calculatedProducts = RKBaseProductListFloatZVWDPRKSQ | RKBaseProductListUInt8ZVWDPRKSQ;
     return bytes;
 }

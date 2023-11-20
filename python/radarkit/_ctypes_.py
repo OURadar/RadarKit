@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
+/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
 
 Do not modify this file.
 """
@@ -6435,6 +6435,24 @@ if _libs["radarkit"].has("RKRawDataRecorderCacheFlush", "cdecl"):
     RKRawDataRecorderCacheFlush.argtypes = [POINTER(RKRawDataRecorder)]
     RKRawDataRecorderCacheFlush.restype = c_size_t
 
+# /opt/homebrew/include/RadarKit/RKPulsePair.h: 15
+if _libs["radarkit"].has("RKPulsePair", "cdecl"):
+    RKPulsePair = _libs["radarkit"].get("RKPulsePair", "cdecl")
+    RKPulsePair.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePair.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKPulsePair.h: 16
+if _libs["radarkit"].has("RKPulsePairHop", "cdecl"):
+    RKPulsePairHop = _libs["radarkit"].get("RKPulsePairHop", "cdecl")
+    RKPulsePairHop.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePairHop.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKPulsePair.h: 17
+if _libs["radarkit"].has("RKPulsePairStaggeredPRT", "cdecl"):
+    RKPulsePairStaggeredPRT = _libs["radarkit"].get("RKPulsePairStaggeredPRT", "cdecl")
+    RKPulsePairStaggeredPRT.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePairStaggeredPRT.restype = c_int
+
 # /opt/homebrew/include/RadarKit/RKMultiLag.h: 15
 if _libs["radarkit"].has("RKMultiLag", "cdecl"):
     RKMultiLag = _libs["radarkit"].get("RKMultiLag", "cdecl")
@@ -6446,6 +6464,18 @@ if _libs["radarkit"].has("RKRayNoiseEstimator", "cdecl"):
     RKRayNoiseEstimator = _libs["radarkit"].get("RKRayNoiseEstimator", "cdecl")
     RKRayNoiseEstimator.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKRayNoiseEstimator.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKSpectralMoment.h: 15
+if _libs["radarkit"].has("RKSpectralMoment", "cdecl"):
+    RKSpectralMoment = _libs["radarkit"].get("RKSpectralMoment", "cdecl")
+    RKSpectralMoment.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKSpectralMoment.restype = c_int
+
+# /opt/homebrew/include/RadarKit/RKSpectralMoment.h: 16
+if _libs["radarkit"].has("RKSpectralMoment2", "cdecl"):
+    RKSpectralMoment2 = _libs["radarkit"].get("RKSpectralMoment2", "cdecl")
+    RKSpectralMoment2.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKSpectralMoment2.restype = c_int
 
 # /opt/homebrew/include/RadarKit/RKPulseATSR.h: 15
 if _libs["radarkit"].has("RKPulseATSR", "cdecl"):
