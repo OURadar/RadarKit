@@ -5551,7 +5551,7 @@ struct_rk_compression_scratch._fields_ = [
 
 RKCompressionScratch = struct_rk_compression_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 52
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 110
+# /opt/homebrew/include/RadarKit/RKScratch.h: 112
 class struct_rk_moment_scratch(Structure):
     pass
 
@@ -5604,6 +5604,8 @@ struct_rk_moment_scratch.__slots__ = [
     'fftModule',
     'inBuffer',
     'outBuffer',
+    'fS',
+    'fC',
     'fftOrder',
     'config',
     'calculatedMoments',
@@ -5658,51 +5660,53 @@ struct_rk_moment_scratch._fields_ = [
     ('fftModule', POINTER(RKFFTModule)),
     ('inBuffer', POINTER(POINTER(fftwf_complex))),
     ('outBuffer', POINTER(POINTER(fftwf_complex))),
+    ('fS', POINTER(POINTER(fftwf_complex)) * int(2)),
+    ('fC', POINTER(POINTER(fftwf_complex))),
     ('fftOrder', c_int8),
     ('config', POINTER(RKConfig)),
     ('calculatedMoments', RKMomentList),
     ('calculatedProducts', RKBaseProductList),
 ]
 
-RKMomentScratch = struct_rk_moment_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 110
+RKMomentScratch = struct_rk_moment_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 112
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 112
+# /opt/homebrew/include/RadarKit/RKScratch.h: 114
 if _libs["radarkit"].has("RKCompressionScratchAlloc", "cdecl"):
     RKCompressionScratchAlloc = _libs["radarkit"].get("RKCompressionScratchAlloc", "cdecl")
     RKCompressionScratchAlloc.argtypes = [POINTER(POINTER(RKCompressionScratch)), uint32_t, uint8_t, RKName]
     RKCompressionScratchAlloc.restype = c_size_t
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 113
+# /opt/homebrew/include/RadarKit/RKScratch.h: 115
 if _libs["radarkit"].has("RKCompressionScratchFree", "cdecl"):
     RKCompressionScratchFree = _libs["radarkit"].get("RKCompressionScratchFree", "cdecl")
     RKCompressionScratchFree.argtypes = [POINTER(RKCompressionScratch)]
     RKCompressionScratchFree.restype = None
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 115
+# /opt/homebrew/include/RadarKit/RKScratch.h: 117
 if _libs["radarkit"].has("RKMomentScratchAlloc", "cdecl"):
     RKMomentScratchAlloc = _libs["radarkit"].get("RKMomentScratchAlloc", "cdecl")
     RKMomentScratchAlloc.argtypes = [POINTER(POINTER(RKMomentScratch)), uint32_t, uint8_t, RKName]
     RKMomentScratchAlloc.restype = c_size_t
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 116
+# /opt/homebrew/include/RadarKit/RKScratch.h: 118
 if _libs["radarkit"].has("RKMomentScratchFree", "cdecl"):
     RKMomentScratchFree = _libs["radarkit"].get("RKMomentScratchFree", "cdecl")
     RKMomentScratchFree.argtypes = [POINTER(RKMomentScratch)]
     RKMomentScratchFree.restype = None
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 118
+# /opt/homebrew/include/RadarKit/RKScratch.h: 120
 if _libs["radarkit"].has("prepareScratch", "cdecl"):
     prepareScratch = _libs["radarkit"].get("prepareScratch", "cdecl")
     prepareScratch.argtypes = [POINTER(RKMomentScratch)]
     prepareScratch.restype = c_int
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 119
+# /opt/homebrew/include/RadarKit/RKScratch.h: 121
 if _libs["radarkit"].has("makeRayFromScratch", "cdecl"):
     makeRayFromScratch = _libs["radarkit"].get("makeRayFromScratch", "cdecl")
     makeRayFromScratch.argtypes = [POINTER(RKMomentScratch), POINTER(RKRay)]
     makeRayFromScratch.restype = c_int
 
-# /opt/homebrew/include/RadarKit/RKScratch.h: 121
+# /opt/homebrew/include/RadarKit/RKScratch.h: 123
 if _libs["radarkit"].has("RKNullProcessor", "cdecl"):
     RKNullProcessor = _libs["radarkit"].get("RKNullProcessor", "cdecl")
     RKNullProcessor.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
@@ -6470,12 +6474,6 @@ if _libs["radarkit"].has("RKSpectralMoment", "cdecl"):
     RKSpectralMoment = _libs["radarkit"].get("RKSpectralMoment", "cdecl")
     RKSpectralMoment.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKSpectralMoment.restype = c_int
-
-# /opt/homebrew/include/RadarKit/RKSpectralMoment.h: 16
-if _libs["radarkit"].has("RKSpectralMoment2", "cdecl"):
-    RKSpectralMoment2 = _libs["radarkit"].get("RKSpectralMoment2", "cdecl")
-    RKSpectralMoment2.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
-    RKSpectralMoment2.restype = c_int
 
 # /opt/homebrew/include/RadarKit/RKPulseATSR.h: 15
 if _libs["radarkit"].has("RKPulseATSR", "cdecl"):
@@ -9431,7 +9429,7 @@ rk_gaussian = struct_rk_gaussian# /Users/boonleng/Developer/radarkit/headers/Rad
 
 rk_compression_scratch = struct_rk_compression_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 52
 
-rk_moment_scratch = struct_rk_moment_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 110
+rk_moment_scratch = struct_rk_moment_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 112
 
 rk_pulse_worker = struct_rk_pulse_worker# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseEngine.h: 22
 
