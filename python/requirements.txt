@@ -2,3 +2,4 @@ numpy
 wheel
 ctypesgen
 tqdm
+blib-py

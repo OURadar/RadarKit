@@ -145,10 +145,7 @@ class Workspace(ctypes.Structure):
                                     self.pulses, ctypes.byref(self.pulseIndex),
                                     self.rays, ctypes.byref(self.rayIndex))
         RKMomentEngineSetCoreCount(self.momentMachine, 2)
-        # self.momentMachine.contents.momentProcessor = ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor))
-        # self.momentMachine.contents.userLagChoice = 3
-        # RKMomentEngineSetMomentProcessorToMultiLag3(self.momentMachine)
-        RKMomentEngineSetMomentProcessorToPulsePair(self.momentMachine)
+        RKMomentEngineSetMomentProcessorToMultiLag3(self.momentMachine)
         RKMomentEngineStart(self.momentMachine)
 
         self.sweepMachine = RKSweepEngineInit()
@@ -233,6 +230,19 @@ class Workspace(ctypes.Structure):
         RKWaveformDecimate(config.waveformDecimate, self.desc.pulseToRayRatio)
         RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
         self.blindGateCount = samples.size
+
+    def set_moment_method(self, method):
+        if method not in ['ppp', 'ppph', 'multi2', 'multi3', 'multi4', 'spec']:
+            raise RKEngineError(f"Invalid moment method: {method}")
+        if method.startswith('multi'):
+            self.momentMachine.contents.userLagChoice = int(method[-1])
+            method = 'multi'
+        self.momentMachine.contents.momentProcessor = {
+            'ppp': ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
+            'ppph': ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
+            'multi': ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
+            'spec': ctypes.cast(RKSpectralMoment, type(self.momentMachine.contents.momentProcessor))
+        }[method]
 
     def unset_user_module(self):
         if self.userModule is not None:
