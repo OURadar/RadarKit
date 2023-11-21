@@ -486,7 +486,7 @@ static void *rayGatherer(void *in) {
                 RKLog("%s Info. RKMarkerSweepEnd   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
             }
             rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
-            is = j;
+            // is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
             pthread_mutex_lock(&engine->productMutex);
             engine->business++;
@@ -518,11 +518,12 @@ static void *rayGatherer(void *in) {
                 } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
 
                 // Ready for next collection while the sweepManager is busy
-                engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
+                // engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
                 if (engine->verbose > 1) {
-                    RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
+                    // RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
+                    RKLog("%s RKMarkerSweepBegin\n", engine->name);
                 }
-                rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
+                // rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
             }
             is = j;
         }

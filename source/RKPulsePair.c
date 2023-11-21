@@ -14,7 +14,7 @@ void RKUpdateRadarProductsInScratchSpace(RKMomentScratch *space, const int gateC
     const RKFloat ten = 10.0f;
     const RKFloat one = 1.0f;
     const RKFloat zero = 0.0f;
-    const RKFloat tiny = 1.0e-6;
+    const RKFloat tiny = 1.0e-7f;
     const RKVec va_pf = _rk_mm_set1(va);
     const RKVec wa_pf = _rk_mm_set1(wa);
     const RKVec ten_pf = _rk_mm_set1(ten);

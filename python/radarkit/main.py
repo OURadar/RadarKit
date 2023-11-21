@@ -15,12 +15,13 @@ from ._ctypes_ import *
 
 workspaces = []
 alignment = int(RKMemoryAlignSize / 4)
-Productdict = {'Z': RKBaseProductIndexZ,
+Productdict = {'S': RKBaseProductIndexSh,
+               'Z': RKBaseProductIndexZ,
                'V': RKBaseProductIndexV,
                'W': RKBaseProductIndexW,
                'D': RKBaseProductIndexD,
-               'R': RKBaseProductIndexR,
-               'P': RKBaseProductIndexP}
+               'P': RKBaseProductIndexP,
+               'R': RKBaseProductIndexR}
 
 class pyRKuint32(ctypes.c_uint32):
     pass
@@ -138,14 +139,16 @@ class Workspace(ctypes.Structure):
             RKPulseEngineSetWaitForRingFilter(self.pulseMachine, True)
 
         self.momentMachine = RKMomentEngineInit()
-        self.momentMachine.contents.momentProcessor = ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor))
-        self.momentMachine.contents.userLagChoice = 3
         RKMomentEngineSetVerbose(self.momentMachine, verbose)
         RKMomentEngineSetEssentials(self.momentMachine, ctypes.byref(desc), self.fftModule,
                                     self.configs, ctypes.byref(self.configIndex),
                                     self.pulses, ctypes.byref(self.pulseIndex),
                                     self.rays, ctypes.byref(self.rayIndex))
         RKMomentEngineSetCoreCount(self.momentMachine, 2)
+        # self.momentMachine.contents.momentProcessor = ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor))
+        # self.momentMachine.contents.userLagChoice = 3
+        # RKMomentEngineSetMomentProcessorToMultiLag3(self.momentMachine)
+        RKMomentEngineSetMomentProcessorToPulsePair(self.momentMachine)
         RKMomentEngineStart(self.momentMachine)
 
         self.sweepMachine = RKSweepEngineInit()
@@ -229,6 +232,7 @@ class Workspace(ctypes.Structure):
         config.waveformDecimate = RKWaveformCopy(waveform)
         RKWaveformDecimate(config.waveformDecimate, self.desc.pulseToRayRatio)
         RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
+        self.blindGateCount = samples.size
 
     def unset_user_module(self):
         if self.userModule is not None:
@@ -338,15 +342,14 @@ class Workspace(ctypes.Structure):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
         return pulse if pulse else None
 
-    def get_moment(self, offset=0, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
-        if offset == 0:
+    def get_moment(self, offset=None, variable_list=['Z', 'V', 'W', 'D', 'R', 'P']):
+        if offset is None:
             k = self.sweepMachine.contents.scratchSpaceIndex
-            scratch = self.sweepMachine.contents.scratchSpaces[k]
             RKSweepEngineFlush(self.sweepMachine)
         else:
+            k = offset
             print(f'Retrieving from scratch space {offset} ...')
-            scratch = self.sweepMachine.contents.scratchSpaces[offset]
-
+        scratch = self.sweepMachine.contents.scratchSpaces[k]
         if self.verbose:
             print(f'Gathering {scratch.rayCount} rays from scratch space #{k} ...')
         self.variables = {}
