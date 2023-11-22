@@ -45,7 +45,8 @@ static void *rayReleaser(void *in) {
     RKRay *ray;
 
     // Grab the anchor reference as soon as possible. Modulo add 1 to get to the oldest scratch space
-    const uint8_t scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
+    const uint8_t index = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
+    RKSweepScratchSpace *space = &engine->scratchSpaces[index];
 
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
@@ -57,12 +58,23 @@ static void *rayReleaser(void *in) {
     } while (++s < 42 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
-        RKLog("%s rayReleaser()  scratchSpaceIndex = %d\n", engine->name, scratchSpaceIndex);
+        RKLog("%s rayReleaser()  index = %d\n", engine->name, index);
     }
     // Set them free
-    for (i = 0; i < engine->scratchSpaces[scratchSpaceIndex].rayCount; i++) {
-        ray = engine->scratchSpaces[scratchSpaceIndex].rays[i];
+    for (i = 0; i < space->rayCount; i++) {
+        ray = space->rays[i];
         ray->header.s = RKRayStatusVacant;
+    }
+    space->rayCount = 0;
+
+    if (engine->verbose > 1) {
+        RKLog("%s rayCount = %u %u %u %u %u %u\n", engine->name,
+            engine->scratchSpaces[0].rayCount,
+            engine->scratchSpaces[1].rayCount,
+            engine->scratchSpaces[2].rayCount,
+            engine->scratchSpaces[3].rayCount,
+            engine->scratchSpaces[4].rayCount,
+            engine->scratchSpaces[5].rayCount);
     }
 
     return NULL;
@@ -74,7 +86,7 @@ static void *sweepManager(void *in) {
     int i, j, p;
 
     // Grab the anchor reference as soon as possible
-    const uint8_t scratchSpaceIndex = engine->scratchSpaceIndex;
+    const uint8_t index = engine->scratchSpaceIndex;
 
     // Local copy of the record flag, which may change under certain conditions
     bool record = engine->record;
@@ -83,10 +95,10 @@ static void *sweepManager(void *in) {
     engine->tic++;
 
     // Collect rays that belong to a sweep to a scratch space
-    RKSweep *sweep = RKSweepCollect(engine, scratchSpaceIndex);
+    RKSweep *sweep = RKSweepCollect(engine, index);
     if (sweep == NULL) {
         if (engine->verbose > 1) {
-            RKLog("%s Empty sweep   scratchSpaceIndex = %d\n", scratchSpaceIndex);
+            RKLog("%s Empty sweep   scratchSpaceIndex = %d\n", index);
         }
         pthread_mutex_lock(&engine->productMutex);
         engine->business--;
@@ -98,7 +110,7 @@ static void *sweepManager(void *in) {
     RKLog("%s C%02d concluded   S%d   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
             engine->name,
             S->header.configIndex,
-            scratchSpaceIndex,
+            index,
             sweep->header.config.sweepElevation,
             S->header.startElevation , E->header.endElevation,
             S->header.startAzimuth   , E->header.endAzimuth,
@@ -108,14 +120,6 @@ static void *sweepManager(void *in) {
             sweep->header.rayCount,
             rkGlobalParameters.showColor ? RKNoColor : "",
             1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
-
-    RKLog("%s rayCount = %u %u %u %u %u %u\n", engine->name,
-        engine->scratchSpaces[0].rayCount,
-        engine->scratchSpaces[1].rayCount,
-        engine->scratchSpaces[2].rayCount,
-        engine->scratchSpaces[3].rayCount,
-        engine->scratchSpaces[4].rayCount,
-        engine->scratchSpaces[5].rayCount);
 
     // Increase the sweep identifier
     pthread_mutex_lock(&engine->productMutex);
@@ -133,9 +137,9 @@ static void *sweepManager(void *in) {
     }
 
     // Localize the scratch space storage
-    char *filename = engine->scratchSpaces[scratchSpaceIndex].filename;
-    char *filelist = engine->scratchSpaces[scratchSpaceIndex].filelist;
-    char *summary = engine->scratchSpaces[scratchSpaceIndex].summary;
+    char *filename = engine->scratchSpaces[index].filename;
+    char *filelist = engine->scratchSpaces[index].filelist;
+    char *summary = engine->scratchSpaces[index].summary;
 
     int productCount = __builtin_popcount(sweep->header.baseProductList & engine->baseProductList);
 
@@ -463,7 +467,7 @@ static void *rayGatherer(void *in) {
                 RKLog("%s Info. RKMarkerSweepEnd   is = %d   j = %d   n = %d\n", engine->name, is, j, n);
             }
 
-            // If the sweepManager is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
+            // If the sweepManager is still going, wait for it to finish, launch a new one, wait for engine->scratchSpaceIndex is grabbed through engine->tic
             if (tidSweepManager) {
                 pthread_join(tidSweepManager, NULL);
             }
@@ -475,7 +479,7 @@ static void *rayGatherer(void *in) {
                 usleep(50000);
             } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
 
-            // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
+            // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->scratchSpaceIndex is grabbed through engine->tic
             if (tidRayReleaser) {
                 pthread_join(tidRayReleaser, NULL);
             }

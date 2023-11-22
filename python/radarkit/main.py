@@ -399,7 +399,6 @@ class Workspace(ctypes.Structure):
                 else:
                     buf.append(data)
             self.variables.update({varname: np.asarray(buf)})
-        scratch.rayCount = 1
         self.variables.update({"time": scanTime})
         return self.variables
 
