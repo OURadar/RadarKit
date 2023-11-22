@@ -6846,7 +6846,7 @@ struct_rk_sweep_engine._fields_ = [
     ('productRecorder', CFUNCTYPE(UNCHECKED(c_int), POINTER(RKProduct), String)),
     ('sweepIndex', RKIdentifier),
     ('tidRayGatherer', pthread_t),
-    ('scratchSpaces', RKSweepScratchSpace * int(4)),
+    ('scratchSpaces', RKSweepScratchSpace * int(6)),
     ('scratchSpaceIndex', uint8_t),
     ('productBuffer', POINTER(RKProduct)),
     ('productBufferDepth', uint32_t),
@@ -9325,7 +9325,7 @@ except:
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 12
 try:
-    RKSweepScratchSpaceDepth = 4
+    RKSweepScratchSpaceDepth = 6
 except:
     pass
 

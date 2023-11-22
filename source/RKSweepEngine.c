@@ -109,11 +109,13 @@ static void *sweepManager(void *in) {
             rkGlobalParameters.showColor ? RKNoColor : "",
             1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
 
-    RKLog("%s  rayCount = %u %u %u %u\n", engine->name,
+    RKLog("%s rayCount = %u %u %u %u %u %u\n", engine->name,
         engine->scratchSpaces[0].rayCount,
         engine->scratchSpaces[1].rayCount,
         engine->scratchSpaces[2].rayCount,
-        engine->scratchSpaces[3].rayCount);
+        engine->scratchSpaces[3].rayCount,
+        engine->scratchSpaces[4].rayCount,
+        engine->scratchSpaces[5].rayCount);
 
     // Increase the sweep identifier
     pthread_mutex_lock(&engine->productMutex);

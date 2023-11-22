@@ -9,7 +9,7 @@
 #ifndef __RadarKit_Sweep__
 #define __RadarKit_Sweep__
 
-#define RKSweepScratchSpaceDepth 4
+#define RKSweepScratchSpaceDepth 6
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
