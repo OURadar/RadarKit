@@ -358,21 +358,25 @@ class Workspace(ctypes.Structure):
             RKSweepEngineFlush(self.sweepMachine)
         else:
             k = offset
-            print(f'Retrieving from scratch space {offset} ...')
         scratch = self.sweepMachine.contents.scratchSpaces[k]
         if self.verbose:
             print(f'Gathering {scratch.rayCount} rays from scratch space #{k} ...')
         self.variables = {}
+        gateCount = scratch.rays[0].contents.header.gateCount
+        scanTime = scratch.rays[0].contents.header.startTime.tv_sec
         for varname in variable_list:
             buf = []
             for k in range(scratch.rayCount):
                 ray = scratch.rays[k]
-                data = read_RKFloat_array(RKGetFloatDataFromRay(ray, Productdict[varname]), ray.contents.header.gateCount)
+                data = read_RKFloat_array(RKGetFloatDataFromRay(ray, Productdict[varname]), gateCount)
                 if data is None or data.size == 0:
+                    print(f'Breaking away at k = {k} ...')
                     break
                 else:
                     buf.append(data)
             self.variables.update({varname: np.asarray(buf)})
+        scratch.rayCount = 0
+        self.variables.update({'time': scanTime})
         return self.variables
 
 def open(filename, force=False):

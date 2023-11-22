@@ -44,8 +44,8 @@ static void *rayReleaser(void *in) {
     int i, s;
     RKRay *ray;
 
-    // Grab the anchor reference as soon as possible
-    const uint8_t scratchSpaceIndex = engine->scratchSpaceIndex;
+    // Grab the anchor reference as soon as possible. Modulo add 1 to get to the oldest scratch space
+    const uint8_t scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
 
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
@@ -53,8 +53,8 @@ static void *rayReleaser(void *in) {
     // Wait for a moment
     s = 0;
     do {
-        usleep(10000);
-    } while (++s < 10 && engine->state & RKEngineStateWantActive);
+        usleep(1000);
+    } while (++s < 42 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
         RKLog("%s rayReleaser()  scratchSpaceIndex = %d\n", engine->name, scratchSpaceIndex);
@@ -93,22 +93,27 @@ static void *sweepManager(void *in) {
         pthread_mutex_unlock(&engine->productMutex);
         return NULL;
     }
-    if (engine->verbose) {
-        RKRay *S = sweep->rays[0];
-        RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-        RKLog("%s C%02d concluded   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
-              engine->name,
-              S->header.configIndex,
-              sweep->header.config.sweepElevation,
-              S->header.startElevation , E->header.endElevation,
-              S->header.startAzimuth   , E->header.endAzimuth,
-              S->header.marker & 0xFF  , E->header.marker & 0xFF,
-              RKIntegerToCommaStyleString(sweep->header.gateCount),
-              rkGlobalParameters.showColor && sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
-              sweep->header.rayCount,
-              rkGlobalParameters.showColor ? RKNoColor : "",
-              1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
-    }
+    RKRay *S = sweep->rays[0];
+    RKRay *E = sweep->rays[sweep->header.rayCount - 1];
+    RKLog("%s C%02d concluded   S%d   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
+            engine->name,
+            S->header.configIndex,
+            scratchSpaceIndex,
+            sweep->header.config.sweepElevation,
+            S->header.startElevation , E->header.endElevation,
+            S->header.startAzimuth   , E->header.endAzimuth,
+            S->header.marker & 0xFF  , E->header.marker & 0xFF,
+            RKIntegerToCommaStyleString(sweep->header.gateCount),
+            rkGlobalParameters.showColor && sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
+            sweep->header.rayCount,
+            rkGlobalParameters.showColor ? RKNoColor : "",
+            1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+
+    RKLog("%s  rayCount = %u %u %u %u\n", engine->name,
+        engine->scratchSpaces[0].rayCount,
+        engine->scratchSpaces[1].rayCount,
+        engine->scratchSpaces[2].rayCount,
+        engine->scratchSpaces[3].rayCount);
 
     // Increase the sweep identifier
     pthread_mutex_lock(&engine->productMutex);
@@ -486,7 +491,6 @@ static void *rayGatherer(void *in) {
                 RKLog("%s Info. RKMarkerSweepEnd   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
             }
             rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
-            // is = j;
         } else if (ray->header.marker & RKMarkerSweepBegin) {
             pthread_mutex_lock(&engine->productMutex);
             engine->business++;
@@ -494,36 +498,42 @@ static void *rayGatherer(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s Info. RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
             }
+            // if (is != j) {
+            //     // Gather the rays to release
+            //     n = 0;
+            //     do {
+            //         ray = RKGetRayFromBuffer(engine->rayBuffer, is);
+            //         ray->header.n = is;
+            //         rays[n++] = ray;
+            //         is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
+            //     } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
+            //     engine->scratchSpaces[engine->scratchSpaceIndex].rayCount = n;
+
+            //     // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
+            //     if (tidRayReleaser) {
+            //         pthread_join(tidRayReleaser, NULL);
+            //     }
+            //     tic = engine->tic;
+            //     if (pthread_create(&tidRayReleaser, NULL, rayReleaser, engine)) {
+            //         RKLog("%s Error. Unable to launch a ray releaser.\n", engine->name);
+            //     }
+            //     do {
+            //         usleep(50000);
+            //     } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
+
+            //     // Ready for next collection while the sweepManager is busy
+            //     engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
+            //     if (engine->verbose > 1) {
+            //         RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
+            //     }
+            //     rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
+            // }
             if (is != j) {
-                // Gather the rays to release
-                n = 0;
                 do {
-                    ray = RKGetRayFromBuffer(engine->rayBuffer, is);
-                    ray->header.n = is;
-                    rays[n++] = ray;
+                    RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, is);
+                    ray->header.s = RKRayStatusVacant;
                     is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-                } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
-                engine->scratchSpaces[engine->scratchSpaceIndex].rayCount = n;
-
-                // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
-                if (tidRayReleaser) {
-                    pthread_join(tidRayReleaser, NULL);
-                }
-                tic = engine->tic;
-                if (pthread_create(&tidRayReleaser, NULL, rayReleaser, engine)) {
-                    RKLog("%s Error. Unable to launch a ray releaser.\n", engine->name);
-                }
-                do {
-                    usleep(50000);
-                } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
-
-                // Ready for next collection while the sweepManager is busy
-                // engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
-                if (engine->verbose > 1) {
-                    // RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
-                    RKLog("%s RKMarkerSweepBegin\n", engine->name);
-                }
-                // rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
+                } while (is != j);
             }
             is = j;
         }
