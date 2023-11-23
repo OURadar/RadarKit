@@ -337,13 +337,13 @@ class Workspace(ctypes.Structure):
                     pulse.contents.header.s |= RKPulseStatusReadyForMoments
                 pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
                 if self.header.dataType == RKRawDataTypeFromTransceiver:
-                    riq[ip, :, :] = read_raw_data(pulse, gateCount)
+                    riq[ip, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
                 el[ip] = pulse.contents.header.elevationDegrees
                 az[ip] = pulse.contents.header.azimuthDegrees
 
                 pulse = self.get_done_pulse()
                 while pulse != None:
-                    ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
+                    ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                     ic += 1
                     pulse = self.get_done_pulse()
 
@@ -359,7 +359,7 @@ class Workspace(ctypes.Structure):
                     time.sleep(0.1)
                     s += 1
                     continue
-                ciq[ic, :, :] = read_compressed_data(pulse, downSampledGateCount)
+                ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                 ic += 1
             if self.verbose or s >= 30 or ic < ip:
                 print(f"ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
@@ -460,29 +460,21 @@ def read_RKComplex_array(rkpos, count):
     return bufiq[:, 0] + 1j * bufiq[:, 1]
 
 
-def read_raw_data(pulse, count):
+def read_RKInt16C_from_pulse(pulse, count):
     # return read_RKInt16C_array(RKGetInt16CDataFromPulse(pulse, c), count)
-    h = (
-        np.ctypeslib.as_array(ctypes.cast(RKGetInt16CDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_int16)), (count * 2,))
-        .astype(np.float32)
-        .view(np.complex64)
-    )
-    v = (
-        np.ctypeslib.as_array(ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16)), (count * 2,))
-        .astype(np.float32)
-        .view(np.complex64)
-    )
+    h = ctypes.cast(RKGetInt16CDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_int16))
+    h = np.ctypeslib.as_array(h, (count * 2,)).astype(np.float32).view(np.complex64)
+    v = ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16))
+    v = np.ctypeslib.as_array(v, (count * 2,)).astype(np.float32).view(np.complex64)
     return np.vstack((h, v))
 
 
-def read_compressed_data(pulse, count):
+def read_RKComplex_from_pulse(pulse, count):
     # return read_RKComplex_array(RKGetComplexDataFromPulse(pulse, c), count)
-    h = np.ctypeslib.as_array(ctypes.cast(RKGetComplexDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_float)), (count * 2,)).view(
-        np.complex64
-    )
-    v = np.ctypeslib.as_array(ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float)), (count * 2,)).view(
-        np.complex64
-    )
+    h = ctypes.cast(RKGetComplexDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_float))
+    h = np.ctypeslib.as_array(h, (count * 2,)).view(np.complex64)
+    v = ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float))
+    v = np.ctypeslib.as_array(v, (count * 2,)).view(np.complex64)
     return np.vstack((h, v))
 
 
