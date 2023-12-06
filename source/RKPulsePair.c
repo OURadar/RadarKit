@@ -116,9 +116,9 @@ void RKUpdateRadarProductsInScratchSpace(RKMomentScratch *space, const int gateC
         //*z_pf = _rk_mm_add(_rk_mm_sub(*a_pf, *w_pf), dcal_pf);
         *z_pf = _rk_mm_add(_rk_mm_sub(*a_pf, *w_pf), *d_pf);
         // R: |C[0]| * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
-        *r_pf = _rk_mm_mul(_rk_mm_add(one_pf, _rk_mm_rcp(*h_pf)), _rk_mm_add(one_pf, _rk_mm_rcp(*v_pf)));
-        *r_pf = _rk_mm_mul(*s_pf, _rk_mm_sqrt(*r_pf));
-        //*r_pf = *s_pf;
+        // *r_pf = _rk_mm_mul(_rk_mm_add(one_pf, _rk_mm_rcp(*h_pf)), _rk_mm_add(one_pf, _rk_mm_rcp(*v_pf)));
+        // *r_pf = _rk_mm_mul(*s_pf, _rk_mm_sqrt(*r_pf));
+        *r_pf = *s_pf;
 
         z_pf++;
         a_pf++;
