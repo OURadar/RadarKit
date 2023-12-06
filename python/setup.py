@@ -1,16 +1,15 @@
 from setuptools import setup, find_packages
 
-from radarkit import __version__
+from src.radarkit import __version__
 
 setup(
     name='radarkit',
     version=__version__,
     install_requires=[
         'wheel',
-        'tqdm',
         'numpy',
+        'tqdm',
     ],
-    packages=find_packages(),
-    include_package_data=True,
-    platforms=['darwin', 'linux'],
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
 )

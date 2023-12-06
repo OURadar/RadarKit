@@ -44,8 +44,8 @@ static void *rayReleaser(void *in) {
     int i, s;
     RKRay *ray;
 
-    // Grab the anchor reference as soon as possible. Modulo add 1 to get to the oldest scratch space
-    const uint8_t index = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
+    // Grab the anchor reference as soon as possible. Modulo add 2 to get to the second oldest scratch space
+    const uint8_t index = RKNextNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth);
     RKSweepScratchSpace *space = &engine->scratchSpaces[index];
 
     // Notify the thread creator that I have grabbed the parameter
@@ -245,7 +245,7 @@ static void *sweepManager(void *in) {
                   engine->name,
                   RKVariableInString("rayCount", &product->header.rayCount, RKValueTypeUInt32),
                   RKVariableInString("gateCount", &product->header.gateCount, RKValueTypeUInt32));
-            RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
+            // RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
         }
         // Full filename with symbol and extension
         sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
@@ -424,7 +424,7 @@ static void *rayGatherer(void *in) {
             }
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
+                RKLog("%s sleep 1/%.1f s   j = %d   rayIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.01f, j, *engine->rayIndex, ray->header.s);
             }
         }
@@ -436,7 +436,7 @@ static void *rayGatherer(void *in) {
             //RKLog("%s I can happen.   j = %d   is = %d\n", engine->name, j, is);
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%.1f s   k = %d   rayIndex = %d   header.s = 0x%02x\n",
+                RKLog("%s sleep 2/%.1f s   j = %d   rayIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.01f, j, *engine->rayIndex, ray->header.s);
             }
         }
@@ -534,12 +534,13 @@ static void *rayGatherer(void *in) {
             //     }
             //     rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
             // }
-            if (is != j) {
-                do {
-                    RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, is);
+
+            while (is != j) {
+                RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, is);
+                if (!(ray->header.marker & RKMarkerSweepEnd)) {
                     ray->header.s = RKRayStatusVacant;
-                    is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-                } while (is != j);
+                }
+                is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
             }
             is = j;
         }
