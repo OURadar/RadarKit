@@ -481,8 +481,12 @@ def read_RKComplex_from_pulse(pulse, count):
 
 
 def place_RKComplex_array(dest, source):
-    np.conj(source, out=source)
-    ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), source.ctypes.data, source.nbytes)
+    # np.conj(source, out=source)
+    # ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), source.ctypes.data, source.nbytes)
+    bufiq = np.zeros((source.size * 2), dtype=np.float32)
+    bufiq[::2] = source.real
+    bufiq[1::2] = -source.imag
+    ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), bufiq.ctypes.data, bufiq.nbytes)
 
 
 def place_RKInt16C_array(dest, source):
