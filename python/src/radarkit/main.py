@@ -465,7 +465,9 @@ def read_RKInt16C_from_pulse(pulse, count):
     h = np.ctypeslib.as_array(h, (count * 2,)).astype(np.float32).view(np.complex64)
     v = ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16))
     v = np.ctypeslib.as_array(v, (count * 2,)).astype(np.float32).view(np.complex64)
-    return np.conj(np.vstack((h, v)))
+    x = np.vstack((h, v))
+    x.imag = -x.imag
+    return x
 
 
 def read_RKComplex_from_pulse(pulse, count):
@@ -473,14 +475,14 @@ def read_RKComplex_from_pulse(pulse, count):
     h = np.ctypeslib.as_array(h, (count * 2,)).view(np.complex64)
     v = ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float))
     v = np.ctypeslib.as_array(v, (count * 2,)).view(np.complex64)
-    return np.conj(np.vstack((h, v)))
+    x = np.vstack((h, v))
+    x.imag = -x.imag
+    return x
 
 
 def place_RKComplex_array(dest, source):
-    bufiq = np.zeros((source.size * 2), dtype=np.float32)
-    bufiq[::2] = source.real
-    bufiq[1::2] = -source.imag
-    ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), bufiq.ctypes.data, bufiq.nbytes)
+    np.conj(source, out=source)
+    ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), source.ctypes.data, source.nbytes)
 
 
 def place_RKInt16C_array(dest, source):
