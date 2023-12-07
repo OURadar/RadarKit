@@ -480,20 +480,20 @@ def read_RKComplex_from_pulse(pulse, count):
     return x
 
 
-def place_RKComplex_array(dest, source):
-    # np.conj(source, out=source)
-    # ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), source.ctypes.data, source.nbytes)
-    bufiq = np.zeros((source.size * 2), dtype=np.float32)
-    bufiq[::2] = source.real
-    bufiq[1::2] = -source.imag
-    ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_float)), bufiq.ctypes.data, bufiq.nbytes)
+def place_RKComplex_array(dst, src):
+    src.imag = -src.imag
+    ctypes.memmove(
+        ctypes.cast(dst, ctypes.POINTER(ctypes.c_float)),
+        src.flatten().ctypes.data,
+        src.nbytes,
+    )
 
 
-def place_RKInt16C_array(dest, source):
-    bufiq = np.zeros((source.size * 2), dtype=np.int16)
-    bufiq[::2] = source.real.astype(np.int16)
-    bufiq[1::2] = -source.imag.astype(np.int16)
-    ctypes.memmove(ctypes.cast(dest, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
+def place_RKInt16C_array(dst, src):
+    bufiq = np.zeros((src.size * 2), dtype=np.int16)
+    bufiq[::2] = src.real.astype(np.int16)
+    bufiq[1::2] = -src.imag.astype(np.int16)
+    ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
 
 
 RKPulseStatusDict = {
