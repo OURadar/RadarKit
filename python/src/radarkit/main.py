@@ -466,22 +466,32 @@ def read_RKInt16C_from_pulse(pulse, count):
     v = ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16))
     v = np.ctypeslib.as_array(v, (count * 2,)).astype(np.float32).view(np.complex64)
     x = np.vstack((h, v))
-    x.imag = -x.imag
+    np.conj(x, out=x)
     return x
 
 
-def read_RKComplex_from_pulse(pulse, count):
+def read_RKComplex_from_pulse_v1(pulse, count):
     h = ctypes.cast(RKGetComplexDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_float))
     h = np.ctypeslib.as_array(h, (count * 2,)).view(np.complex64)
     v = ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float))
     v = np.ctypeslib.as_array(v, (count * 2,)).view(np.complex64)
     x = np.vstack((h, v))
-    x.imag = -x.imag
+    np.conj(x, out=x)
+    return x
+
+
+def read_RKComplex_from_pulse(pulse, count):
+    _from_mem = ctypes.pythonapi.PyMemoryView_FromMemory
+    _from_mem.restype = ctypes.py_object
+    h = np.frombuffer(_from_mem(RKGetComplexDataFromPulse(pulse, 0), 8 * count), dtype=np.complex64)
+    v = np.frombuffer(_from_mem(RKGetComplexDataFromPulse(pulse, 1), 8 * count), dtype=np.complex64)
+    x = np.vstack((h, v))
+    np.conj(x, out=x)
     return x
 
 
 def place_RKComplex_array(dst, src):
-    src.imag = -src.imag
+    np.conj(src, out=src)
     ctypes.memmove(
         ctypes.cast(dst, ctypes.POINTER(ctypes.c_float)),
         src.flatten().ctypes.data,

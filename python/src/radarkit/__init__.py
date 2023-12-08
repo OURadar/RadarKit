@@ -4,4 +4,4 @@ from .main import *
 
 __version__ = str(RKVersionString())
 
-logger = logging.getLogger('RadarKit')
+logger = logging.getLogger("RadarKit")
