@@ -1972,6 +1972,7 @@ int RKStop(RKRadar *radar) {
         usleep(25000);
     } while (radar->tic < 2);
     pthread_mutex_lock(&radar->mutex);
+    radar->active = false;
     if (!(radar->state & RKRadarStateLive)) {
         RKLog("Radar is not live.\n");
         pthread_mutex_unlock(&radar->mutex);
@@ -2070,7 +2071,6 @@ int RKStop(RKRadar *radar) {
     if (radar->desc.initFlags & RKInitFlagVeryVeryVerbose) {
         RKLog("Radar state = 0x%x\n", radar->state);
     }
-    radar->active = false;
     pthread_mutex_unlock(&radar->mutex);
     return RKResultSuccess;
 }

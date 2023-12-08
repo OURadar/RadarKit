@@ -105,7 +105,7 @@
 #define RKDataFolderMoment                   "moment"
 #define RKDataFolderHealth                   "health"
 #define RKLogFolder                          "log"
-#define RKWaveformFolder                     "waveforms"
+#define RKWaveformFolder                     "waveform"
 #define RKFFTWisdomFile                      "radarkit-fft-wisdom"
 
 #define RKNoColor                            "\033[m"

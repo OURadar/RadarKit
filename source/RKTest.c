@@ -4467,6 +4467,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
 
     RKWaveform *waveform = NULL;
     char string[RKMaximumPathLength];
+    bool waveformFromFile = false;
 
     if (!(radar->state & RKRadarStatePulseCompressionEngineInitialized)) {
         if (transceiver->verbose) {
@@ -4571,50 +4572,65 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             } else {
                 c++;
             }
-            if (*c == 's' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
-                // Something like s01, s02, etc.
-                pulsewidth = 1.0e-6 * atof(c + 1);
-                RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
-                waveform = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, pulsewidth);
-            } else if ((*c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
-                // Something like t0101, t0102, q0201, q0205, etc.
-                string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
-                bandwidth = 1.0e6 * atof(string);
-                pulsewidth = 1.0e-6 * atof(c + 3);
-                RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
-                if (*c == 't') {
-                    // Rectangular single tone at (bandwidth) MHz
-                    waveform = RKWaveformInitAsSingleTone(transceiver->fs, bandwidth, pulsewidth);
-                } else if (*c == 'q') {
-                    // LFM at half of the bandwidth capacity
-                    waveform = RKWaveformInitAsLinearFrequencyModulation(transceiver->fs, -0.5 * bandwidth, pulsewidth, bandwidth);
+            if (*c == 'f') {
+                // Something 'wf WAVEFORM' or 'w f WAVEFORM'
+                c++;
+                if (*c == ' ') {
+                    c++;
+                }
+                waveformFromFile = true;
+            }
+            if (waveformFromFile == false && (c - command) <= 2) {
+                // Something like 'w WAVEFORM' or 'wWAVEFORM'
+                if (*c == 's' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9') {
+                    // WAVEFORM = s01, s02, etc.
+                    pulsewidth = 1.0e-6 * atof(c + 1);
+                    RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
+                    waveform = RKWaveformInitAsSingleTone(transceiver->fs, 0.0, pulsewidth);
+                } else if ((*c == 't' || *c == 'q') && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
+                    // WAVEFORM = t0101, t0102, q0201, q0205, etc.
+                    string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
+                    bandwidth = 1.0e6 * atof(string);
+                    pulsewidth = 1.0e-6 * atof(c + 3);
+                    RKLog("%s Waveform '%s'   pw = %.2f us\n", transceiver->name, c, 1.0e6 * pulsewidth);
+                    if (*c == 't') {
+                        // Rectangular single tone at (bandwidth) MHz
+                        waveform = RKWaveformInitAsSingleTone(transceiver->fs, bandwidth, pulsewidth);
+                    } else if (*c == 'q') {
+                        // LFM at half of the bandwidth capacity
+                        waveform = RKWaveformInitAsLinearFrequencyModulation(transceiver->fs, -0.5 * bandwidth, pulsewidth, bandwidth);
+                        if (bandwidth > transceiver->fs) {
+                            RKLog("%s Warning. Aliasing.   bandwidth = %.2f MHz > fs = %.2f MHz\n", transceiver->name, 1.0e-6 * bandwidth, 1.0e-6 * transceiver->fs);
+                        }
+                    }
+                } else if (*c == 'h' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
+                    // WAVEFORM = h1005, h2007, etc.
+                    string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
+                    bandwidth = 1.0e6 * atof(string);
+                    string[0] = c[3]; string[1] = c[4];
+                    k = atoi(string);
+                    if (strlen(c) > 5) {
+                        pulsewidth = 1.0e-6 * atof(c + 5);
+                    } else {
+                        pulsewidth = 1.0e-6;
+                    }
+                    RKLog("%s Waveform '%s'   hops over bw = %.2f MHz @ %d pairs   pw = %.2f us\n", transceiver->name, c, 1.0e-6 * bandwidth, k, 1.0e6 * pulsewidth);
                     if (bandwidth > transceiver->fs) {
                         RKLog("%s Warning. Aliasing.   bandwidth = %.2f MHz > fs = %.2f MHz\n", transceiver->name, 1.0e-6 * bandwidth, 1.0e-6 * transceiver->fs);
                     }
-                }
-            } else if (*c == 'h' && c[1] >= '0' && c[1] <= '9' && c[2] >= '0' && c[2] <= '9' && c[3] >= '0' && c[3] <= '9' && c[4] >= '0' && c[4] <= '9') {
-                // Something like h1005, h2007, etc.
-                string[0] = c[1]; string[1] = c[2]; string[2] = '\0';
-                bandwidth = 1.0e6 * atof(string);
-                string[0] = c[3]; string[1] = c[4];
-                k = atoi(string);
-                if (strlen(c) > 5) {
-                    pulsewidth = 1.0e-6 * atof(c + 5);
+                    // Frequency hop at the specified pulsewidth, bandwith and hop count
+                    waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
+                } else if (*c == 'x') {
+                    // Experimental waveform
+                    waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6, 50.0e-6);
                 } else {
-                    pulsewidth = 1.0e-6;
+                    waveformFromFile = true;
                 }
-                RKLog("%s Waveform '%s'   hops over bw = %.2f MHz @ %d pairs   pw = %.2f us\n", transceiver->name, c, 1.0e-6 * bandwidth, k, 1.0e6 * pulsewidth);
-                if (bandwidth > transceiver->fs) {
-                    RKLog("%s Warning. Aliasing.   bandwidth = %.2f MHz > fs = %.2f MHz\n", transceiver->name, 1.0e-6 * bandwidth, 1.0e-6 * transceiver->fs);
-                }
-                // Frequency hop at the specified pulsewidth, bandwith and hop count
-                waveform = RKWaveformInitAsFrequencyHops(transceiver->fs, 0.0, pulsewidth, bandwidth, k);
-            } else if (*c == 'x') {
-                // Experimental waveform
-                waveform = RKWaveformInitAsTimeFrequencyMultiplexing(transceiver->fs, 0.0, 4.0e6, 50.0e-6);
-            } else {
+            }
+            if (waveformFromFile) {
                 // Load from a file
-                sprintf(string, "%s/%s.rkwav", RKWaveformFolder, c);
+                sprintf(string, "%s%s%s/%s.rkwav", radar->desc.dataPath, radar->desc.dataPath[0] == '\0' ? "" : "/", RKWaveformFolder, c);
+                RKLog("%s Waveform path '%s'...\n", transceiver->name, string);
                 if (RKFilenameExists(string)) {
                     RKLog("Loading waveform from file '%s'...\n", string);
                     waveform = RKWaveformInitFromFile(string);
