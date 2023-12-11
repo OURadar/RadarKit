@@ -66,7 +66,6 @@ void *freeUserModuleDelayed(void *input) {
         RKLog("Forcing removal of user module %p ...\n", resource->module);
     }
     radar->userModuleFree(resource->module);
-    free(resource);
     return NULL;
 }
 
