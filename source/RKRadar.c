@@ -61,9 +61,12 @@ void *freeUserModuleDelayed(void *input) {
             all &= radar->pulseEngine->workers[c].cid >= resource->targetConfigId;
         }
         usleep(10000);
-    } while (k++ < 500 && !all);
+    } while (radar->active && k++ < 500 && !all);
     if (k == 500) {
         RKLog("Forcing removal of user module %p ...\n", resource->module);
+    }
+    if (radar->desc.initFlags & RKInitFlagVerbose) {
+        RKLog("Freeing user module %p ...\n", resource->module);
     }
     radar->userModuleFree(resource->module);
     return NULL;

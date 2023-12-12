@@ -508,7 +508,7 @@ def place_RKInt16C_array(dst, src):
     ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
 
 
-def read_RKComplex_from_waveform(waveform):
+def read_RKComplex_from_waveform(waveform, index=0):
     _from_mem = ctypes.pythonapi.PyMemoryView_FromMemory
     _from_mem.restype = ctypes.py_object
-    return np.frombuffer(_from_mem(waveform.contents.samples[0], 8 * waveform.contents.depth), dtype=np.complex64)
+    return np.frombuffer(_from_mem(waveform.contents.samples[index], 8 * waveform.contents.depth), dtype=np.complex64)
