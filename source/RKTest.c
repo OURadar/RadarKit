@@ -280,7 +280,12 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestSIMD(RKTestSIMDFlagShowNumbers, 0);
             break;
         case 32:
-            RKTestWindow();
+            if (arg) {
+                n = atoi(arg);
+            } else {
+                n = 6;
+            }
+            RKTestWindow(n);
             break;
         case 33:
             RKTestHilbertTransform();
@@ -2571,9 +2576,8 @@ void RKTestSIMD(const RKTestSIMDFlag flag, const int count) {
 
 #pragma mark -
 
-void RKTestWindow(void) {
+void RKTestWindow(const int n) {
     int k;
-    int n = 6;
     double param;
     RKFloat *window = (RKFloat *)malloc(n * sizeof(RKFloat));
 
@@ -2591,6 +2595,14 @@ void RKTestWindow(void) {
     for (k = 0; k < n; k++) {
         printf("w[%d] = %.4f\n", k, window[k]);
     }
+    printf("\n");
+
+    printf("Hann:\n");
+    RKWindowMake(window, RKWindowTypeHann, n);
+    for (k = 0; k < n; k++) {
+        printf("w[%d] = %.4f\n", k, window[k]);
+    }
+    printf("\n");
 
     printf("\n");
     param = 0.5;

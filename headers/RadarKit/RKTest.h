@@ -142,7 +142,7 @@ void RKTestSimpleMomentEngine(const int);
 #pragma mark - DSP Tests
 
 void RKTestSIMD(const RKTestSIMDFlag, const int);
-void RKTestWindow(void);
+void RKTestWindow(const int);
 void RKTestHilbertTransform(void);
 void RKTestWriteFFTWisdom(const int);
 void RKTestRingFilterShowCoefficients(void);
