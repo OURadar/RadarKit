@@ -50,8 +50,10 @@ static void *healthConsolidator(void *_in) {
     s = 0;
     do {
         usleep(100000);
-    } while (engine->healthNodes[RKHealthNodeRadarKit].index == 0 && s++ < 5);
-    RKLog("%s healthNodes[%d].index = %d   s = %d\n", engine->name, RKHealthNodeRadarKit, engine->healthNodes[RKHealthNodeRadarKit].index, s);
+    } while (engine->healthNodes[RKHealthNodeRadarKit].index == 0 && s++ < 5 && engine->state & RKEngineStateWantActive);
+    if (engine->state & RKEngineStateWantActive) {
+        RKLog("%s healthNodes[%d].index = %d   s = %d\n", engine->name, RKHealthNodeRadarKit, engine->healthNodes[RKHealthNodeRadarKit].index, s);
+    }
 
     k = 0;   // health index
     while (engine->state & RKEngineStateWantActive) {

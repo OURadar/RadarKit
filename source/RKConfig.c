@@ -255,7 +255,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyUserResource:
                 newConfig->userResource = (RKUserResource)va_arg(args, void *);
-                sprintf(stringBuffer[0], "UserResource = %p", newConfig->userResource);
+                sprintf(stringBuffer[0], "UserResource @ %p", newConfig->userResource);
                 break;
             default:
                 sprintf(stringBuffer[0], "Key %d not understood.", key);
@@ -267,8 +267,8 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                       rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorConfig) : "",
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       *configIndex,
-                      stringBuffer[k],
-                      RKVariableInString("configId", &configId, RKValueTypeIdentifier));
+                      RKVariableInString("configId", &configId, RKValueTypeIdentifier),
+                      stringBuffer[k]);
                 stringBuffer[k][0] = '\0';
                 n++;
             }
