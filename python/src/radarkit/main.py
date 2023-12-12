@@ -6,6 +6,8 @@ import numpy as np
 
 from ._ctypes_ import *
 
+# from .defs import *
+
 # from . import radial_noise
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -24,6 +26,15 @@ Productdict = {
     "P": RKBaseProductIndexP,
     "R": RKBaseProductIndexR,
 }
+
+
+class RKEngineError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"RKEngineError: {self.message}"
 
 
 class pyRKuint32(ctypes.c_uint32):
@@ -429,15 +440,6 @@ def last():
     return workspaces[-1]
 
 
-class RKEngineError(Exception):
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
-
-    def __str__(self):
-        return f"RKEngineError: {self.message}"
-
-
 def previous_modulo_s(i, S):
     return (S - 1) if i == 0 else (i - 1)
 
@@ -506,58 +508,7 @@ def place_RKInt16C_array(dst, src):
     ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
 
 
-RKPulseStatusDict = {
-    "RKPulseStatusNull": RKPulseStatusNull,
-    "RKPulseStatusVacant": RKPulseStatusVacant,
-    "RKPulseStatusHasIQData": RKPulseStatusHasIQData,
-    "RKPulseStatusHasPosition": RKPulseStatusHasPosition,
-    "RKPulseStatusInspected": RKPulseStatusInspected,
-    "RKPulseStatusCompressed": RKPulseStatusCompressed,
-    "RKPulseStatusSkipped": RKPulseStatusSkipped,
-    "RKPulseStatusDownSampled": RKPulseStatusDownSampled,
-    "RKPulseStatusProcessed": RKPulseStatusProcessed,
-    "RKPulseStatusRingInspected": RKPulseStatusRingInspected,
-    "RKPulseStatusRingFiltered": RKPulseStatusRingFiltered,
-    "RKPulseStatusRingSkipped": RKPulseStatusRingSkipped,
-    "RKPulseStatusRingProcessed": RKPulseStatusRingProcessed,
-    "RKPulseStatusReadyForMoments": RKPulseStatusReadyForMoments,
-    "RKPulseStatusUsedForMoments": RKPulseStatusUsedForMoments,
-    "RKPulseStatusProcessMask": RKPulseStatusProcessMask,
-    "RKPulseStatusRecorded": RKPulseStatusRecorded,
-    "RKPulseStatusStreamed": RKPulseStatusStreamed,
-}
-
-RKWaveformTypeDict = {
-    "RKWaveformTypeNone": RKWaveformTypeNone,
-    "RKWaveformTypeIsComplex": RKWaveformTypeIsComplex,
-    "RKWaveformTypeSingleTone": RKWaveformTypeSingleTone,
-    "RKWaveformTypeFrequencyHopping": RKWaveformTypeFrequencyHopping,
-    "RKWaveformTypeLinearFrequencyModulation": RKWaveformTypeLinearFrequencyModulation,
-    "RKWaveformTypeTimeFrequencyMultiplexing": RKWaveformTypeTimeFrequencyMultiplexing,
-    "RKWaveformTypeFromFile": RKWaveformTypeFromFile,
-    "RKWaveformTypeFlatAnchors": RKWaveformTypeFlatAnchors,
-    "RKWaveformTypeFrequencyHoppingChirp": RKWaveformTypeFrequencyHoppingChirp,
-}
-
-RKMarkerDict = {
-    "RKMarkerNull": RKMarkerNull,
-    "RKMarkerSweepMiddle": RKMarkerSweepMiddle,
-    "RKMarkerSweepBegin": RKMarkerSweepBegin,
-    "RKMarkerSweepEnd": RKMarkerSweepEnd,
-    "RKMarkerVolumeBegin": RKMarkerVolumeBegin,
-    "RKMarkerVolumeEnd": RKMarkerVolumeEnd,
-    "RKMarkerScanTypeMask": RKMarkerScanTypeMask,
-    "RKMarkerScanTypeUnknown": RKMarkerScanTypeUnknown,
-    "RKMarkerScanTypePPI": RKMarkerScanTypePPI,
-    "RKMarkerScanTypeRHI": RKMarkerScanTypeRHI,
-    "RKMarkerScanTytpePoint": RKMarkerScanTytpePoint,
-    "RKMarkerMemoryManagement": RKMarkerMemoryManagement,
-}
-
-
-def show_flag(RKstatus, sdict=RKPulseStatusDict):
-    s = "-"
-    for iks in sdict.keys():
-        if RKstatus & sdict[iks]:
-            s = s + " | " + iks
-    print(s)
+def read_RKComplex_from_waveform(waveform, index=0):
+    _from_mem = ctypes.pythonapi.PyMemoryView_FromMemory
+    _from_mem.restype = ctypes.py_object
+    return np.frombuffer(_from_mem(waveform.contents.samples[index], 8 * waveform.contents.depth), dtype=np.complex64)

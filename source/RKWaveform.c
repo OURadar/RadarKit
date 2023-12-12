@@ -96,7 +96,11 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
 }
 
 RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const RKName _Nullable name) {
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, depth);
+    return RKWaveformInitFromSampleArrays(&samples, 1, depth, name);
+}
+
+RKWaveform *RKWaveformInitFromSampleArrays(RKComplex **samples, const int count, const int depth, const RKName _Nullable name) {
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count, depth);
     waveform->fc = 0.0f;
     waveform->fs = 1.0f;
     waveform->type = RKWaveformTypeIsComplex;
@@ -106,21 +110,23 @@ RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const
         snprintf(waveform->name, RKNameLength, "%s", name);
     }
 
-    // Everything simple
-    waveform->filterCounts[0] = 1;
-    waveform->filterAnchors[0][0].name = 0;
-    waveform->filterAnchors[0][0].origin = 0;
-    waveform->filterAnchors[0][0].length = depth;
-    waveform->filterAnchors[0][0].inputOrigin = 0;
-    waveform->filterAnchors[0][0].outputOrigin = 0;
-    waveform->filterAnchors[0][0].maxDataLength = RKMaximumGateCount;
-    waveform->filterAnchors[0][0].subCarrierFrequency = 0.0f;
+    // Everything simple, no TFM business
+    for (int j = 0; j < count; j++) {
+        waveform->filterCounts[j] = 1;
+        waveform->filterAnchors[j][0].name = 0;
+        waveform->filterAnchors[j][0].origin = 0;
+        waveform->filterAnchors[j][0].length = depth;
+        waveform->filterAnchors[j][0].inputOrigin = 0;
+        waveform->filterAnchors[j][0].outputOrigin = 0;
+        waveform->filterAnchors[j][0].maxDataLength = RKMaximumGateCount;
+        waveform->filterAnchors[j][0].subCarrierFrequency = 0.0f;
 
-    // Copy the samples
-    memcpy(waveform->samples[0], samples, depth * sizeof(RKComplex));
-    for (int k = 0; k < depth; k++) {
-        waveform->iSamples[0][k].i = (int16_t)waveform->samples[0][k].i;
-        waveform->iSamples[0][k].q = (int16_t)waveform->samples[0][k].q;
+        // Copy the samples
+        memcpy(waveform->samples[j], samples[j], depth * sizeof(RKComplex));
+        for (int k = 0; k < depth; k++) {
+            waveform->iSamples[j][k].i = (int16_t)waveform->samples[j][k].i;
+            waveform->iSamples[j][k].q = (int16_t)waveform->samples[j][k].q;
+        }
     }
 
     RKWaveformCalculateGain(waveform, RKWaveformGainAll);
