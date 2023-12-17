@@ -2,7 +2,7 @@ import logging
 
 from .main import *
 
-from . import prod
+from . import sweep
 
 __version__ = str(RKVersionString())
 
