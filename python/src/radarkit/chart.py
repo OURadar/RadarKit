@@ -1,4 +1,5 @@
-import datetime
+from . import sweep
+
 import numpy as np
 import matplotlib.font_manager
 import matplotlib.patheffects
@@ -24,6 +25,7 @@ def rho2ind(values):
 
 
 class Chart:
+    fig = None
     ax = [None] * 6
     cb = [None] * 6
     st = [None] * 6
@@ -119,7 +121,7 @@ class Chart:
         p = self.p
         q = self._get_pos(num)
         ax = self.fig.add_axes(q, frameon=True, snap=True)
-        h = 10 * s
+        h = 10 * self.s
         q[0] += 2 * p / width
         q[1] += q[3] - (2 * p + self.captionsize + h) / height
         q[2] = round(0.4 * q[2] * width) / width
@@ -142,7 +144,7 @@ class ChartRHI(Chart):
                 self.ax[i], self.cb[i], self.st[i] = self._add_axes(231 + i)
 
             # Do a test run to get the proper position of the title, then use left alignment to avoid jitters in animations
-            y = self.size[1] - self.titlesize - self.m / self.size[1]
+            y = (self.size[1] - self.titlesize - self.m) / self.size[1]
             title_props = {
                 "fontproperties": self.titlefont,
                 "fontsize": self.titlesize,
@@ -157,115 +159,120 @@ class ChartRHI(Chart):
             x = extent.x0 / self.size[0] * self.dpi / self.fig.dpi
             self.title = self.fig.text(x, y, "", **title_props)
 
-    def set_data(self, r, e, prods, ymax=None):
-        if self.r is r and self.e is e:
-            self.mz.set_array(prods["Z"].ravel())
-            self.mv.set_array(prods["V"].ravel())
-            self.mw.set_array(prods["W"].ravel())
-            self.md.set_array(prods["D"].ravel())
-            self.mp.set_array(prods["P"].ravel())
-            self.mr.set_array(rho2ind(prods["R"]).ravel())
-            if ymax is not None:
-                self.set_ylim(0, ymax)
-        else:
-            e_rad = np.radians(e)
-            xx = np.outer(np.cos(e_rad), r)
-            yy = np.outer(np.sin(e_rad), r)
+    def _update_data_only(self, sweep: sweep.Sweep, ymax=None):
+        self.mz.set_array(sweep.products["Z"].ravel())
+        self.mv.set_array(sweep.products["V"].ravel())
+        self.mw.set_array(sweep.products["W"].ravel())
+        self.md.set_array(sweep.products["D"].ravel())
+        self.mp.set_array(sweep.products["P"].ravel())
+        self.mr.set_array(rho2ind(sweep.products["R"]).ravel())
+        if ymax is not None:
+            self.set_ylim(0, ymax)
 
-            for ax in self.ax:
-                ax.clear()
+    def set_data(self, sweep: sweep.Sweep, ymax=None):
+        if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e:
+            return self._update_data_only(sweep, ymax)
 
-            self.mz = self.ax[0].pcolormesh(xx, yy, prods["Z"], shading="flat", cmap=zmap, vmin=-32, vmax=96)
-            self.mv = self.ax[1].pcolormesh(xx, yy, prods["V"], shading="flat", cmap=vmap, vmin=-64, vmax=64)
-            self.mw = self.ax[2].pcolormesh(xx, yy, prods["W"], shading="flat", cmap=wmap, vmin=0, vmax=12.8)
-            self.md = self.ax[3].pcolormesh(xx, yy, prods["D"], shading="flat", cmap=dmap, vmin=-10, vmax=15.5)
-            self.mp = self.ax[4].pcolormesh(xx, yy, prods["P"], shading="flat", cmap=pmap, vmin=-np.pi, vmax=np.pi)
-            self.mr = self.ax[5].pcolormesh(xx, yy, rho2ind(prods["R"]), shading="flat", cmap=rmap, vmin=0, vmax=256)
-            self.r = r
-            self.e = e
+        e_rad = np.radians(sweep.meshCoordinate.e)
+        xx = np.outer(np.cos(e_rad), sweep.meshCoordinate.r)
+        yy = np.outer(np.sin(e_rad), sweep.meshCoordinate.r)
 
-            # Find out the meaningful range of the plot
-            mask = np.logical_and(prods["Z"] > -20, prods["Z"] < 80)
+        for ax in self.ax:
+            ax.clear()
 
-            # Grid lines
-            max_range = np.ceil(xx[0, -1])
-            max_height = np.ceil(np.max(yy[1:, 1:][mask]) + 3) if ymax is None else ymax
-            aa = np.radians(np.arange(0, 91, 2))
-            cc = np.cos(np.radians(e[-1] + 5))
-            ss = np.sin(np.radians(e[-1] + 5))
-            ll = round(r[-1] * 0.1) * 10
-            label_props = {
-                "fontproperties": self.labelfont,
-                "fontsize": self.labelsize,
-                "color": self.gridcolor,
-                "path_effects": self.path_effects,
-                "horizontalalignment": "center",
-                "verticalalignment": "center",
-            }
-            for ax in self.ax:
-                # Range rings
-                for r in [1, *range(10, 41, 10)]:
-                    x = r * np.cos(aa)
-                    y = r * np.sin(aa)
-                    ax.plot(x, y, color=self.gridcolor, linewidth=0.5 * self.s)
-                    x = r * cc
-                    y = r * ss
-                    if r < 2 or y > 0.9 * max_height:
-                        continue
-                    t = matplotlib.text.Text(x, y, f"{r} km", **label_props)
-                    ax.add_artist(t)
-                # Angular grid
-                for r in np.radians(range(0, 86, 10)):
-                    x = np.array([1, ll]) * np.cos(r)
-                    y = np.array([1, ll]) * np.sin(r)
-                    ax.plot(x, y, color=self.gridcolor, linewidth=0.5 * self.s)
-                # Clear the axis splines
-                ax.set_xlim(0, max_range)
-                ax.set_ylim(0, max_height)
-                ax.set_xticks([])
-                ax.set_yticks([])
+        self.mz = self.ax[0].pcolormesh(xx, yy, sweep.products["Z"], shading="flat", cmap=zmap, vmin=-32, vmax=96)
+        self.mv = self.ax[1].pcolormesh(xx, yy, sweep.products["V"], shading="flat", cmap=vmap, vmin=-64, vmax=64)
+        self.mw = self.ax[2].pcolormesh(xx, yy, sweep.products["W"], shading="flat", cmap=wmap, vmin=0, vmax=12.8)
+        self.md = self.ax[3].pcolormesh(xx, yy, sweep.products["D"], shading="flat", cmap=dmap, vmin=-10, vmax=15.5)
+        self.mp = self.ax[4].pcolormesh(xx, yy, sweep.products["P"], shading="flat", cmap=pmap, vmin=-np.pi, vmax=np.pi)
+        self.mr = self.ax[5].pcolormesh(xx, yy, rho2ind(sweep.products["R"]), shading="flat", cmap=rmap, vmin=0, vmax=256)
+        self.r = sweep.meshCoordinate.r
+        self.e = sweep.meshCoordinate.e
 
-            # Colorbars
-            plt.colorbar(self.mz, ax=self.ax[0], cax=self.cb[0], orientation="horizontal")
-            plt.colorbar(self.mv, ax=self.ax[1], cax=self.cb[1], orientation="horizontal")
-            plt.colorbar(self.mw, ax=self.ax[2], cax=self.cb[2], orientation="horizontal")
-            plt.colorbar(self.md, ax=self.ax[3], cax=self.cb[3], orientation="horizontal")
-            plt.colorbar(self.mp, ax=self.ax[4], cax=self.cb[4], orientation="horizontal")
-            plt.colorbar(self.mr, ax=self.ax[5], cax=self.cb[5], orientation="horizontal")
-            # Colorbar labels
-            self.st[0].set_text("Z - Reflectivity (dBZ)")
-            self.st[1].set_text("V - Velocity (m/s)")
-            self.st[2].set_text("W - Spectrum Width (m/s)")
-            self.st[3].set_text("D - Differential Reflectivity (dB)")
-            self.st[4].set_text("P - Differential Phase (°)")
-            self.st[5].set_text("R - Correlation Coefficient")
+        # Find out the meaningful range of the plot
+        mask = np.logical_and(sweep.products["Z"] > -20, sweep.products["Z"] < 80)
 
-            # Colorbar ticks
-            tick_props = {
-                "fontproperties": self.labelfont,
-                "fontsize": self.labelsize,
-                "path_effects": self.path_effects,
-            }
-            ticks = np.arange(-20, 61, 20)
-            self.cb[0].set_xticks(ticks, labels=ticks, **tick_props)
-            self.cb[0].set_xlim(-10, 75)
-            ticks = np.arange(-20, 21, 10)
-            self.cb[1].set_xticks(ticks, labels=ticks, **tick_props)
-            self.cb[1].set_xlim(-30, 30)
-            ticks = np.arange(2, 9, 2)
-            self.cb[2].set_xticks(ticks, labels=ticks, **tick_props)
-            self.cb[2].set_xlim(0, 10)
-            ticks = np.arange(-4, 5, 2)
-            self.cb[3].set_xticks(ticks, labels=ticks, **tick_props)
-            self.cb[3].set_xlim(-6, 6)
-            ticks = np.arange(-120, 121, 60)
-            self.cb[4].set_xticks(np.radians(ticks), labels=ticks, **tick_props)
-            self.cb[4].set_xlim(-np.pi, np.pi)
-            ticks = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02])
-            self.cb[5].set_xticks(rho2ind(ticks), labels=ticks, **tick_props)
-            self.cb[5].set_xlim(0, 180)
+        # Grid lines
+        max_range = np.ceil(xx[0, -1])
+        max_height = np.ceil(np.max(yy[1:, 1:][mask]) + 3) if ymax is None else ymax
+        aa = np.radians(np.arange(0, 91, 2))
+        # cc = np.cos(e_rad[-1] + 0.1)
+        # ss = np.sin(e_rad[-1] + 0.1)
+        cc = np.cos(30 / 180 * np.pi)
+        ss = np.sin(30 / 180 * np.pi)
+        ll = round(self.r[-1] * 0.1) * 10
+        label_props = {
+            "fontproperties": self.labelfont,
+            "fontsize": self.labelsize,
+            "color": self.gridcolor,
+            "path_effects": self.path_effects,
+            "horizontalalignment": "center",
+            "verticalalignment": "center",
+        }
+        for ax in self.ax:
+            # Range rings
+            for r in [1, *range(10, 41, 10)]:
+                x = r * np.cos(aa)
+                y = r * np.sin(aa)
+                ax.plot(x, y, color=self.gridcolor, linewidth=0.5 * self.s)
+                x = r * cc
+                y = r * ss
+                if r < 2 or y > 0.9 * max_height:
+                    continue
+                t = matplotlib.text.Text(x, y, f"{r} km", **label_props)
+                ax.add_artist(t)
+            # Angular grid
+            for r in np.radians(range(0, 81, 10)):
+                x = np.array([1, ll]) * np.cos(r)
+                y = np.array([1, ll]) * np.sin(r)
+                ax.plot(x, y, color=self.gridcolor, linewidth=0.5 * self.s)
+            # Clear the axis splines
+            ax.set_xlim(0, max_range)
+            ax.set_ylim(0, max_height)
+            ax.set_xticks([])
+            ax.set_yticks([])
 
-        title = datetime.datetime.utcfromtimestamp(prods["time"]).strftime(r"%Y/%m/%d %H:%M:%S UTC")
+        # Colorbars
+        plt.colorbar(self.mz, ax=self.ax[0], cax=self.cb[0], orientation="horizontal")
+        plt.colorbar(self.mv, ax=self.ax[1], cax=self.cb[1], orientation="horizontal")
+        plt.colorbar(self.mw, ax=self.ax[2], cax=self.cb[2], orientation="horizontal")
+        plt.colorbar(self.md, ax=self.ax[3], cax=self.cb[3], orientation="horizontal")
+        plt.colorbar(self.mp, ax=self.ax[4], cax=self.cb[4], orientation="horizontal")
+        plt.colorbar(self.mr, ax=self.ax[5], cax=self.cb[5], orientation="horizontal")
+        # Colorbar labels
+        self.st[0].set_text("Z - Reflectivity (dBZ)")
+        self.st[1].set_text("V - Velocity (m/s)")
+        self.st[2].set_text("W - Spectrum Width (m/s)")
+        self.st[3].set_text("D - Differential Reflectivity (dB)")
+        self.st[4].set_text("P - Differential Phase (°)")
+        self.st[5].set_text("R - Correlation Coefficient")
+
+        # Colorbar ticks
+        tick_props = {
+            "fontproperties": self.labelfont,
+            "fontsize": self.labelsize,
+            "path_effects": self.path_effects,
+        }
+        ticks = np.arange(-20, 61, 20)
+        self.cb[0].set_xticks(ticks, labels=ticks, **tick_props)
+        self.cb[0].set_xlim(-10, 75)
+        ticks = np.arange(-20, 21, 10)
+        self.cb[1].set_xticks(ticks, labels=ticks, **tick_props)
+        self.cb[1].set_xlim(-30, 30)
+        ticks = np.arange(2, 9, 2)
+        self.cb[2].set_xticks(ticks, labels=ticks, **tick_props)
+        self.cb[2].set_xlim(0, 10)
+        ticks = np.arange(-4, 5, 2)
+        self.cb[3].set_xticks(ticks, labels=ticks, **tick_props)
+        self.cb[3].set_xlim(-6, 6)
+        ticks = np.arange(-120, 121, 60)
+        self.cb[4].set_xticks(np.radians(ticks), labels=ticks, **tick_props)
+        self.cb[4].set_xlim(-np.pi, np.pi)
+        ticks = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02])
+        self.cb[5].set_xticks(rho2ind(ticks), labels=ticks, **tick_props)
+        self.cb[5].set_xlim(0, 180)
+
+        title = sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC")
         self.title.set_text(title)
 
     def set_title(self, title):

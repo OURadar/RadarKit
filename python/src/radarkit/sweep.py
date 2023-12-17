@@ -1,7 +1,15 @@
 import os
 import tarfile
 import netCDF4
+import datetime
 import numpy as np
+
+
+class MeshCoordinate:
+    def __call__(self):
+        self.e = [0]
+        self.a = [0]
+        self.r = [0]
 
 
 class Sweep:
@@ -19,6 +27,7 @@ class Sweep:
         self.azimuths = 0.0
         self.products = {}
         self.archive = None
+        self.meshCoordinate = MeshCoordinate()
         if input:
             self.read(input)
 
@@ -38,7 +47,7 @@ class Sweep:
                 with netCDF4.Dataset("memory", mode="r", memory=fid.read()) as nc:
                     atts = nc.ncattrs()
                     name = nc.getncattr("TypeName")
-                    self.time = nc.getncattr("Time")
+                    self.time = datetime.datetime.utcfromtimestamp(nc.getncattr("Time"))
                     self.longitude = nc.getncattr("Longitude")
                     self.latitude = nc.getncattr("Latitude")
                     self.scanElevation = nc.getncattr("Elevation")
@@ -90,8 +99,8 @@ class Sweep:
 
         # Generate coordinate arrays that are 1 element extra than each dimension
         de = self.elevations[-1] - self.elevations[-2]
-        self._e = [*self.elevations, self.elevations[-1] + de]
-        self._r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
+        self.meshCoordinate.e = [*self.elevations, self.elevations[-1] + de]
+        self.meshCoordinate.r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
         symbols = ["Z", "V", "W", "D", "P", "R"]
         mask = self.products["Z"] < -999.0
         for key in symbols:
