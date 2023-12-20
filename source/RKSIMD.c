@@ -526,11 +526,11 @@ static RKVec _RKSIMD_vsum(RKVec *src, const int n) {
 }
 // Sum a RKFloat array
 RKFloat RKSIMD_sum(RKFloat *src, const int n) {
-    int k, K = (n * sizeof(RKComplex) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec s = _RKSIMD_vsum((RKVec *)src, K);
     RKFloat *t = (RKFloat *)&s;
     RKFloat y = 0.0f;
-    for (k = 0; k < sizeof(RKVec) / sizeof(float); k++) {
+    for (k = 0; k < sizeof(RKVec) / sizeof(RKFloat); k++) {
         y += *t++;
     }
     return y;
