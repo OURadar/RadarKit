@@ -10,27 +10,37 @@
 #include <getopt.h>
 
 #define RKFMT                               "%5d"
-#define RKSIMD_TEST_DESC_FORMAT_LONG        "%90s"
-#define RKSIMD_TEST_DESC_FORMAT_SHORT       "%64s"
+#define RKSIMD_TEST_DESC_FORMAT_16          "%140s"
+#define RKSIMD_TEST_DESC_FORMAT_8           "%90s"
+#define RKSIMD_TEST_DESC_FORMAT_4           "%64s"
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
 
-#define RKSIMD_TEST_DESC_SHORT(str, desc, f, e) \
+#define RKSIMD_TEST_DESC_4(str, desc, f, e) \
     sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], e)
-#define RKSIMD_TEST_DESC_LONG(str, desc, f, e) \
+#define RKSIMD_TEST_DESC_8(str, desc, f, e) \
     sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
-#define RKSIMD_TEST_DESC(str, desc, f, e) sizeof(RKVec) / sizeof(float) == 8 \
-    ? RKSIMD_TEST_DESC_LONG(str, desc, f, e) \
-    : RKSIMD_TEST_DESC_SHORT(str, desc, f, e)
+#define RKSIMD_TEST_DESC_16(str, desc, f, e) \
+    sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f ] (%.4f)", \
+            f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15], e)
+#define RKSIMD_TEST_DESC(str, desc, f, e) sizeof(RKVec) / sizeof(float) == 16 \
+    ? RKSIMD_TEST_DESC_16(str, desc, f, e) : (sizeof(RKVec) / sizeof(float) == 8 \
+    ? RKSIMD_TEST_DESC_8(str, desc, f, e) \
+    : RKSIMD_TEST_DESC_4(str, desc, f, e))
 
-#define RKSIMD_TEST_RESULT_LONG(str, res) rkGlobalParameters.showColor \
-    ? printf(RKSIMD_TEST_DESC_FORMAT_LONG " : %s" RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") \
-    : printf(RKSIMD_TEST_DESC_FORMAT_LONG " : %s\n", str, res ? "successful" : "failed")
-#define RKSIMD_TEST_RESULT_SHORT(str, res) rkGlobalParameters.showColor \
-    ? printf(RKSIMD_TEST_DESC_FORMAT_SHORT " : %s" RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") \
-    : printf(RKSIMD_TEST_DESC_FORMAT_SHORT " : %s\n", str, res ? "successful" : "failed")
-#define RKSIMD_TEST_RESULT(str, res) sizeof(RKVec) / sizeof(float) == 8 \
-    ? RKSIMD_TEST_RESULT_LONG(str, res) \
-    : RKSIMD_TEST_RESULT_SHORT(str, res)
+#define RKSIMD_TEST_RESULT_16(str, res) rkGlobalParameters.showColor \
+    ? printf(RKSIMD_TEST_DESC_FORMAT_16 " : %s" RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") \
+    : printf(RKSIMD_TEST_DESC_FORMAT_16 " : %s\n", str, res ? "successful" : "failed")
+#define RKSIMD_TEST_RESULT_8(str, res) rkGlobalParameters.showColor \
+    ? printf(RKSIMD_TEST_DESC_FORMAT_8 " : %s" RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") \
+    : printf(RKSIMD_TEST_DESC_FORMAT_8 " : %s\n", str, res ? "successful" : "failed")
+#define RKSIMD_TEST_RESULT_4(str, res) rkGlobalParameters.showColor \
+    ? printf(RKSIMD_TEST_DESC_FORMAT_4 " : %s" RKNoColor "\n", str, res ? RKGreenColor "successful" : RKRedColor "failed") \
+    : printf(RKSIMD_TEST_DESC_FORMAT_4 " : %s\n", str, res ? "successful" : "failed")
+
+#define RKSIMD_TEST_RESULT(str, res) sizeof(RKVec) / sizeof(float) == 16 \
+    ? RKSIMD_TEST_RESULT_16(str, res) : (sizeof(RKVec) / sizeof(float) == 8 \
+    ? RKSIMD_TEST_RESULT_8(str, res) \
+    : RKSIMD_TEST_RESULT_4(str, res))
 
 #define OXSTR(x)                       x ? RKGreenColor "o" RKNoColor : RKRedColor "x" RKNoColor
 #define PEDESTAL_SAMPLING_TIME         0.025
@@ -1910,15 +1920,15 @@ static float _array_delta(const RKVec *x, const float *y, const int count) {
 void RKTestSIMDBasic(void) {
     const float one = 1.0f;
     const float tiny = 1.0e-3f;
-    const float vz[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    const float vo[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-    const float va[] = {1.0f, 2.0f, -1.0f, -2.0f, 1.1f, 2.1f, -1.1f, -2.1f};
-    const float vb[] = {2.0f, 1.0f, -2.0f, +1.0f, 2.1f, 1.1f, -2.1f, +1.1f};
+    const float vz[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    const float vo[] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+    const float va[] = {1.0f, 2.0f, -1.0f, -2.0f, 1.1f, 2.1f, -1.1f, -2.1f, 1.0f, 2.0f, -1.0f, -2.0f, 1.1f, 2.1f, -1.1f, -2.1f};
+    const float vb[] = {2.0f, 1.0f, -2.0f, +1.0f, 2.1f, 1.1f, -2.1f, +1.1f, 2.0f, 1.0f, -2.0f, +1.0f, 2.1f, 1.1f, -2.1f, +1.1f};
     const int n = sizeof(RKVec) / sizeof(float);
 
     RKVec a, b, c;
 
-    char str[120];
+    char str[8192];
 
     float e;
     float *f;
@@ -1951,12 +1961,12 @@ void RKTestSIMDBasic(void) {
 
     // Basic arithmetic
 
-    float r1[] = {3.0f, 3.0f, -3.0f, -1.0f, 3.2f, 3.2f, -3.2f, -1.0f};
-    float r2[] = {-1.0f, 1.0f, 1.0f, -3.0f, -1.0f, 1.0f, 1.0f, -3.2f};
-    float r3[] = {2.0f, 2.0f, 2.0f, -2.0f, 2.31f, 2.31f, 2.31f, -2.31f};
-    float r4[] = {0.5f, 2.0f, 0.5f, -2.0f, 0.5238f, 1.9091f, 0.5238f, -1.9091f};
-    float r5[] = {1.0f, 1.0f, -2.0f, -2.0f, 1.1f, 1.1f, -2.1f,-2.1f};
-    float r6[] = {2.0f, 2.0f, -1.0f, 1.0f, 2.1f, 2.1f, -1.1f, 1.1f};
+    float r1[] = {3.0f, 3.0f, -3.0f, -1.0f, 3.2f, 3.2f, -3.2f, -1.0f, 3.0f, 3.0f, -3.0f, -1.0f, 3.2f, 3.2f, -3.2f, -1.0f};
+    float r2[] = {-1.0f, 1.0f, 1.0f, -3.0f, -1.0f, 1.0f, 1.0f, -3.2f, -1.0f, 1.0f, 1.0f, -3.0f, -1.0f, 1.0f, 1.0f, -3.2f};
+    float r3[] = {2.0f, 2.0f, 2.0f, -2.0f, 2.31f, 2.31f, 2.31f, -2.31f, 2.0f, 2.0f, 2.0f, -2.0f, 2.31f, 2.31f, 2.31f, -2.31f};
+    float r4[] = {0.5f, 2.0f, 0.5f, -2.0f, 0.5238f, 1.9091f, 0.5238f, -1.9091f, 0.5f, 2.0f, 0.5f, -2.0f, 0.5238f, 1.9091f, 0.5238f, -1.9091f};
+    float r5[] = {1.0f, 1.0f, -2.0f, -2.0f, 1.1f, 1.1f, -2.1f,-2.1f, 1.0f, 1.0f, -2.0f, -2.0f, 1.1f, 1.1f, -2.1f,-2.1f};
+    float r6[] = {2.0f, 2.0f, -1.0f, 1.0f, 2.1f, 2.1f, -1.1f, 1.1f, 2.0f, 2.0f, -1.0f, 1.0f, 2.1f, 2.1f, -1.1f, 1.1f};
 
     c = _rk_mm_add(a, b);
     e = _array_delta(&c, r1, n);
@@ -1996,9 +2006,9 @@ void RKTestSIMDBasic(void) {
 
     // Element suffling
 
-    float r7[] = {2.0f, 2.0f, -2.0f, -2.0f, 2.1f, 2.1f, -2.1f, -2.1f};
-    float r8[] = {1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f};
-    float r9[] = {2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f};
+    float r7[] = {2.0f, 2.0f, -2.0f, -2.0f, 2.1f, 2.1f, -2.1f, -2.1f, 2.0f, 2.0f, -2.0f, -2.0f, 2.1f, 2.1f, -2.1f, -2.1f};
+    float r8[] = {1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f, 1.0f, 1.0f, -1.0f, -1.0f, 1.1f, 1.1f, -1.1f, -1.1f};
+    float r9[] = {2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f, 2.0f, 1.0f, -2.0f, -1.0f, 2.1f, 1.1f, -2.1f, -1.1f};
 
     c = _rk_mm_dup_odd(a);
     e = _array_delta(&c, r7, n);
@@ -2045,7 +2055,7 @@ void RKTestSIMDBasic(void) {
     RKSIMD_TEST_RESULT(str, e < tiny);
 
     // _rk_mm_rcp finds an approximate reciprocal
-    float r11[] = {1.0f, 0.5f, -1.0f, -0.5f, 0.9091f, 0.4762f, -0.9091f, -0.4762f};
+    float r11[] = {1.0f, 0.5f, -1.0f, -0.5f, 0.9091f, 0.4762f, -0.9091f, -0.4762f, 1.0f, 0.5f, -1.0f, -0.5f, 0.9091f, 0.4762f, -0.9091f, -0.4762f};
     c = _rk_mm_rcp(a);
     e = _array_delta(&c, r11, n);
     f = (float *)&c;
@@ -2078,46 +2088,46 @@ void RKTestSIMDComplex(void) {
     RKSIMD_iyconj(dst, 4);
     e = _array_delta((RKVec *)dst, r20, 8);
     f = (float *)dst;
-    RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iyconj", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, " RKSIMD_iyconj", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymul(src, dst, 4);
     e = _array_delta((RKVec *)dst, r21, 8);
     f = (float *)dst;
-    RKSIMD_TEST_DESC_LONG(str, " RKSIMD_iymul", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, " RKSIMD_iymul", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymul_reg(src, dst, 4);
     e = _array_delta((RKVec *)dst, r21, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymul_reg", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, "RKSIMD_iymul_reg", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKComplexArrayInPlaceMultiply(src, dst, 4);
     e = _array_delta((RKVec *)dst, r21, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKComplexArrayMultiply", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, "RKComplexArrayMultiply", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iyconj(dst, 4);
     RKSIMD_iymul(src, dst, 4);
     e = _array_delta((RKVec *)dst, r22, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iyconj-iymul", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, "RKSIMD_iyconj-iymul", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKSIMD_iymulc(src, dst, 4);
     e = _array_delta((RKVec *)dst, r22, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKSIMD_iymulc", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, "RKSIMD_iymulc", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     memcpy(dst, vb, 4 * sizeof(RKComplex));
     RKComplexArrayInPlaceConjugateMultiply(src, dst, 4);
     e = _array_delta((RKVec *)dst, r22, 8);
-    RKSIMD_TEST_DESC_LONG(str, "RKComplexArrayConjMultiply", f, e);
-    RKSIMD_TEST_RESULT_LONG(str, e < tiny);
+    RKSIMD_TEST_DESC_8(str, "RKComplexArrayConjMultiply", f, e);
+    RKSIMD_TEST_RESULT_8(str, e < tiny);
 
     free(src);
     free(dst);
@@ -2173,7 +2183,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Copy -   zcpy", all_good);
+    RKSIMD_TEST_RESULT_4("Complex Vector Copy -   zcpy", all_good);
 
     //
 
@@ -2194,7 +2204,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Scaling by a Float -   zscl", all_good);
+    RKSIMD_TEST_RESULT_4("Complex Vector Scaling by a Float -   zscl", all_good);
 
     //
 
@@ -2212,7 +2222,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Addition -   zadd", all_good);
+    RKSIMD_TEST_RESULT_4("Complex Vector Addition -   zadd", all_good);
 
     //
 
@@ -2231,7 +2241,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Addition -  izadd", all_good);
+    RKSIMD_TEST_RESULT_4("In-place Complex Vector Addition -  izadd", all_good);
 
     //
 
@@ -2249,7 +2259,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Complex Vector Multiplication -   zmul", all_good);
+    RKSIMD_TEST_RESULT_4("Complex Vector Multiplication -   zmul", all_good);
 
     //
 
@@ -2268,7 +2278,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Complex Vector Multiplication -  izmul", all_good);
+    RKSIMD_TEST_RESULT_4("In-place Complex Vector Multiplication -  izmul", all_good);
 
     //
 
@@ -2295,7 +2305,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication -  iymul", all_good);
+    RKSIMD_TEST_RESULT_4("In-place Deinterleaved Complex Vector Multiplication -  iymul", all_good);
 
     //
 
@@ -2322,7 +2332,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
+    RKSIMD_TEST_RESULT_4("In-place Deinterleaved Complex Vector Multiplication - iymul2", all_good);
 
     //
 
@@ -2352,7 +2362,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Deinterleave, Multiply Using iymul, and Interleave -    ...", all_good);
+    RKSIMD_TEST_RESULT_4("Deinterleave, Multiply Using iymul, and Interleave -    ...", all_good);
 
     //
 
@@ -2378,21 +2388,21 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         }
         all_good &= good;
     }
-    RKSIMD_TEST_RESULT("Conversion from i16 to float -    ...", all_good);
+    RKSIMD_TEST_RESULT_4("Conversion from i16 to float -    ...", all_good);
 
     //
 
     RKFloat fs = RKFloatArraySum(dst->i, n);
     RKFloat ss = RKSIMD_sum(dst->i, n);
     all_good = fabsf(ss - fs) < tiny;
-    RKSIMD_TEST_RESULT("RKFloat vector sum -    sum", all_good);
+    RKSIMD_TEST_RESULT_4("RKFloat vector sum -    sum", all_good);
 
     //
 
     RKComplex fsum = RKComplexArraySum(cs, n);
     RKComplex ysum = RKSIMD_ysum(cs, n);
     all_good = fabsf(ysum.i - fsum.i) < tiny && fabsf(ysum.q - fsum.q) < tiny;
-    RKSIMD_TEST_RESULT("RKComplex vector sum -   ysum", all_good);
+    RKSIMD_TEST_RESULT_4("RKComplex vector sum -   ysum", all_good);
 
     //
 
@@ -2557,7 +2567,7 @@ void RKTestSIMD(const RKTestSIMDFlag flag, const int count) {
 
     printf("\n==== Counting ====\n\n");
 
-    for (int i = 1; i <= 8; i++) {
+    for (int i = 1; i <= sizeof(RKVec) / sizeof(float); i++) {
         RKSIMD_show_count(i);
     }
 

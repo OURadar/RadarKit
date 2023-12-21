@@ -30,6 +30,22 @@
       "cStandard": "c17",
       "cppStandard": "c++14",
       "intelliSenseMode": "linux-clang-x64"
+    },
+    {
+      "name": "linux-gcc-x86_64-avx512",
+      "includePath": [
+        "${workspaceFolder}/headers",
+        "${workspaceFolder}/headers/RadarKit",
+        "/usr/include",
+        "/usr/local/include"
+      ],
+      "defines": [
+        "__AVX512F__", "__FMA__"
+      ],
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "c17",
+      "cppStandard": "c++14",
+      "intelliSenseMode": "linux-clang-x64"
     }
   ],
   "version": 4

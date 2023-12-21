@@ -39,6 +39,7 @@
 #endif
 
 #if defined(__AVX512F__)
+#include <immintrin.h>
 
 // NOTE: Still need to define a lot of _mmXXX_XXX_pd equivalence for double precision calculations
 
@@ -65,7 +66,7 @@ typedef __m512 RKVec;
 #define _rk_mm_mulsubadd(a, b, c)    _mm512_fmsubadd_ps(a, b, c)
 #endif
 #define _rk_mm_sqrt(a)               _mm512_sqrt_ps(a)
-#define _rk_mm_rcp(a)                _mm512_rcp_ps(a)
+#define _rk_mm_rcp(a)                _mm512_rcp14_ps(a)
 
 #elif defined(__AVX__)
 
