@@ -10,7 +10,7 @@
 #include <getopt.h>
 
 #define RKFMT                               "%5d"
-#define RKSIMD_TEST_DESC_FORMAT_16          "%110s"
+#define RKSIMD_TEST_DESC_FORMAT_16          "%115s"
 #define RKSIMD_TEST_DESC_FORMAT_8           "%90s"
 #define RKSIMD_TEST_DESC_FORMAT_4           "%64s"
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
