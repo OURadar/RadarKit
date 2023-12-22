@@ -188,9 +188,11 @@ int RKLog(const char *whatever, ...) {
             len = 0;
         }
 
-        strncpy(colored_whatever, anchor, len);
-        colored_whatever[len] = '\0';
-        anchor += len;
+        if (len > 0) {
+            strncpy(colored_whatever, anchor, len);
+            colored_whatever[len] = '\0';
+            anchor += len;
+        }
 
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
@@ -1536,31 +1538,31 @@ RKStream RKStreamFromString(const char * string) {
     while (j++ < strlen(string)) {
         switch (*c) {
             case '0':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusPositions;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamStatusPositions;
                 break;
             case '1':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusPulses;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamStatusPulses;
                 break;
             case '2':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusRays;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamStatusRays;
                 break;
             case '3':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusIngest;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamStatusIngest;
                 break;
             case '4':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusEngines;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamStatusEngines;
                 break;
             case '5':
-                flag = (flag & !RKStreamStatusMask) | RKStreamStatusBuffers;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamStatusBuffers;
                 break;
             case '6':
-                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtZ;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamASCIIArtZ;
                 break;
             case '7':
-                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtHealth;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamASCIIArtHealth;
                 break;
             case '8':
-                flag = (flag & !RKStreamStatusMask) | RKStreamASCIIArtVCP;
+                flag = (flag & !(RKStream)RKStreamStatusMask) | RKStreamASCIIArtVCP;
                 break;
             case 'x':
                 flag |= RKStreamStatusTerminalChange;

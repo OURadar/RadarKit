@@ -229,6 +229,9 @@ static void *sweepManager(void *in) {
     int summarySize = 0;
     bool filenameTooLong;
 
+    // g++-13 prefers a local copy of the filename
+    char outputFilename[RKMaximumPathLength - 80];
+
     // Product recording
     for (p = 0; p < engine->productBufferDepth; p++) {
         if (!(engine->productBuffer[p].desc.baseProductList & sweep->header.baseProductList) || engine->productBuffer[p].flag == RKProductStatusVacant) {
@@ -249,13 +252,12 @@ static void *sweepManager(void *in) {
         }
         // Full filename with symbol and extension
         sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
-        //strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength - 80);
-        snprintf(filename, RKMaximumPathLength - 80, "%s", product->header.suggestedFilename) < 0 ? abort() : (void)0;
+        snprintf(outputFilename, RKMaximumPathLength - 80, "%s", product->header.suggestedFilename) < 0 ? abort() : (void)0;
         filenameTooLong = strlen(sweep->header.filename) > 48;
 
         // Keep concatenating the filename into filelist
         if (engine->hasFileHandlingScript) {
-            sprintf(filelist + strlen(filelist), " %s", filename);
+            sprintf(filelist + strlen(filelist), " %s", outputFilename);
         }
 
         // Convert data in radians to degrees if necessary

@@ -77,8 +77,12 @@ int socketCommandHandler(RKOperator *O) {
 
     int j, k;
 
-    j = snprintf(user->commandResponse, RKMaximumPacketSize, "%s %d radar:", engine->name, engine->radarCount);
-    for (k = 0; k < engine->radarCount; k++) {
+    char symbol[8];
+    char name[RKNameLength];
+    memcpy(name, engine->name, RKNameLength);
+
+    j = snprintf(user->commandResponse, RKMaximumPacketSize - 256, "%s %d radar:", name, engine->radarCount);
+    for (k = 0; k < MIN(4, engine->radarCount); k++) {
         RKRadar *radar = engine->radars[k];
         j += snprintf(user->commandResponse + j, RKMaximumPacketSize - j, " %s", radar->desc.name);
     }
@@ -290,9 +294,14 @@ int socketCommandHandler(RKOperator *O) {
                           user->productDescriptions[user->productCount].symbol);
                     user->productIds[user->productCount] = RKSweepEngineDescribeProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
                     if (user->productIds[user->productCount]) {
-                        sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
+                        // sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
+                        //         user->productDescriptions[user->productCount].key,
+                        //         user->productDescriptions[user->productCount].symbol,
+                        //         user->productIds[user->productCount]);
+                        strncpy(symbol, user->productDescriptions[user->productCount].symbol, 7);
+                        snprintf(user->commandResponse, RKMaximumCommandLength, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
                                 user->productDescriptions[user->productCount].key,
-                                user->productDescriptions[user->productCount].symbol,
+                                symbol,
                                 user->productIds[user->productCount]);
                         user->productCount++;
                     } else {
@@ -703,19 +712,26 @@ int socketStreamHandler(RKOperator *O) {
         if (user->controlFirstUID != user->radar->controls[0].uid && user->access & RKStreamControl) {
             user->controlFirstUID = user->radar->controls[0].uid;
             RKLog("%s %s Sending new controls.\n", engine->name, O->name);
-            j = sprintf(user->string, "{\"Radars\": [");
-            for (k = 0; k < engine->radarCount; k++) {
+            //j = sprintf(user->string, "{\"Radars\": [");
+            j = snprintf(user->string, RKMaximumPacketSize, "{\"Radars\": [");
+            for (k = 0; k < MIN(4, engine->radarCount); k++) {
                 RKRadar *radar = engine->radars[k];
-                j += sprintf(user->string + j, "\"%s\", ", radar->desc.name);
+                //j += sprintf(user->string + j, "\"%s\", ", radar->desc.name);
+                j += snprintf(user->string + j, RKMaximumPacketSize - j, "\"%s\", ", radar->desc.name);
             }
             if (k > 0) {
-                j += sprintf(user->string + j - 2, "], ") - 2;
+                //j += sprintf(user->string + j - 2, "], ") - 2;
+                j += snprintf(user->string + j - 2, RKMaximumPacketSize - j, "], ") - 2;
             } else {
-                j += sprintf(user->string + j, "], ");
+                // j += sprintf(user->string + j, "], ");
+                j += snprintf(user->string + j, RKMaximumPacketSize - j, "], ");
             }
             // Should only send the controls if the user has been authenticated
             RKMakeJSONStringFromControls(user->scratch, user->radar->controls, user->radar->controlCount);
-            j += sprintf(user->string + j, "\"Controls\": [%s]}" RKEOL, user->scratch);
+            //j += sprintf(user->string + j, "\"Controls\": [%s]}" RKEOL, user->scratch);
+            j += snprintf(user->string + j, RKMaximumPacketSize - j, "\"Controls\": [");
+            strncpy(user->string + j, user->scratch, RKMaximumPacketSize - 16 - j);
+            j += snprintf(user->string + j, RKMaximumPacketSize - j, "]}" RKEOL);
             O->delimTx.type = RKNetworkPacketTypeControls;
             O->delimTx.size = j;
             RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
