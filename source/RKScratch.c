@@ -19,7 +19,7 @@
 #pragma mark - Scratch Space
 
 // Allocate a scratch space for pulse compression
-size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose, const RKName _Nullable name) {
+size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose, const char * _Nullable name) {
     uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity == 0 || capacity != goodCapacity) {
         RKLog("Error. Unable to allocate capacity = %d. Must be greater than 0 and an integer multiple of %s!",
@@ -100,7 +100,7 @@ void RKCompressionScratchFree(RKCompressionScratch *scratch) {
 }
 
 // Allocate a scratch space for moment processors
-size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t verbose, const RKName _Nullable name) {
+size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, const uint8_t verbose, const char * _Nullable name) {
     uint32_t goodCapacity = (capacity * sizeof(RKFloat) / RKMemoryAlignSize) * RKMemoryAlignSize / sizeof(RKFloat);
     if (capacity == 0 || capacity != goodCapacity) {
         RKLog("Error. Scratch space capacity must be greater than 0 and an integer multiple of %s!",

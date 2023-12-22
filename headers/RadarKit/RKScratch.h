@@ -111,10 +111,10 @@ typedef struct rk_moment_scratch {
     RKBaseProductList                calculatedProducts;                           // Calculated Products
 } RKMomentScratch;
 
-size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const RKName _Nullable);
+size_t RKCompressionScratchAlloc(RKCompressionScratch **, const uint32_t, const uint8_t, const char * _Nullable);
 void RKCompressionScratchFree(RKCompressionScratch *);
 
-size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t, const uint8_t, const RKName);
+size_t RKMomentScratchAlloc(RKMomentScratch **, const uint32_t, const uint8_t, const char *);
 void RKMomentScratchFree(RKMomentScratch *);
 
 int prepareScratch(RKMomentScratch *);

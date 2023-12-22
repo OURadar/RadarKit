@@ -957,7 +957,7 @@ void RKTestFileManager(void) {
     time_t startTime = tm.tv_sec;
     float es[] = {2.0f, 4.0f, 6.0f, 8.0f};
     const int ne = sizeof(es) / sizeof(float);
-    RKName ss[] = {"Z", "V", "D", "R"};
+    char ss[][2] = {"Z", "V", "D", "R"};
     const int ns = sizeof(ss) / sizeof(RKName);
     FILE *fid;
     size_t filesize = 1024 * 1024;

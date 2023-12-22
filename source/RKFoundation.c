@@ -325,9 +325,6 @@ void RKSetUseDailyLog(const bool dailyLog) {
 }
 
 int RKSetProgramName(const char *name) {
-    if (strlen(name) >= RKNameLength) {
-        return 1;
-    }
     snprintf(rkGlobalParameters.program, sizeof(rkGlobalParameters.program), "%s", name);
     return RKResultSuccess;
 }
@@ -1977,7 +1974,7 @@ size_t RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const s
     uint32_t *u32v = (uint32_t *)valueStorage;
     int64_t *i64v = (int64_t *)valueStorage;
     uint64_t *u64v = (uint64_t *)valueStorage;
-    char *copy = (char *)malloc(strlen(valueString));
+    char *copy = (char *)malloc(strlen(valueString) + 1);
     strcpy(copy, valueString);
     char *c = copy;
     char *e;

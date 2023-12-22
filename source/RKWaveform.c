@@ -95,11 +95,11 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     return waveform;
 }
 
-RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const RKName _Nullable name) {
+RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const char * _Nullable name) {
     return RKWaveformInitFromSampleArrays(&samples, 1, depth, name);
 }
 
-RKWaveform *RKWaveformInitFromSampleArrays(RKComplex **samples, const int count, const int depth, const RKName _Nullable name) {
+RKWaveform *RKWaveformInitFromSampleArrays(RKComplex **samples, const int count, const int depth, const char * _Nullable name) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count, depth);
     waveform->fc = 0.0f;
     waveform->fs = 1.0f;

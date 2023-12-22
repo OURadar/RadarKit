@@ -256,10 +256,8 @@ static void *radarRelay(void *in) {
 
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    strncpy(desc.name, engine->name, RKNameLength - 1);
-    desc.name[RKNameLength - 1] = '\0';
-    strncpy(desc.hostname, engine->host, RKNameLength - 1);
-    desc.hostname[RKNameLength - 1] = '\0';
+    memcpy(desc.name, engine->name, RKNameLength);
+    memcpy(desc.hostname, engine->host, RKNameLength);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
         *colon = '\0';

@@ -511,7 +511,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 }
                 user->simulate = false;
                 user->desc.initFlags = RKInitFlagIQPlayback;
-                strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder));
+                strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder) - 1);
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'H':
