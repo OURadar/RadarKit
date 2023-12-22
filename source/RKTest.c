@@ -2413,6 +2413,7 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
         int k;
         const int m = count == 0 ? 1000 : count;
         struct timeval t1, t2;
+        float dt_naive, dt_simd;
 
         if (flag & RKTestSIMDFlagPerformanceTestArithmetic) {
             gettimeofday(&t1, NULL);
@@ -2435,7 +2436,8 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 RKComplexArrayInPlaceMultiply(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_naive = RKTimevalDiff(t2, t1);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q)\n", 1.0e3 / m * dt_naive);
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2449,14 +2451,22 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 RKSIMD_iymul(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, _rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("            iymul: " RKSIMD_TEST_TIME_FORMAT " ms (Normal interleaved I/Q, _rk_mm_)   %sx %.1f%s\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_izmul((RKIQZ *)src, (RKIQZ *)dst, RKMaximumGateCount, false);
             }
             gettimeofday(&t2, NULL);
-            printf("            izmul: " RKSIMD_TEST_TIME_FORMAT " ms (Deinterleaved I/Q)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("            izmul: " RKSIMD_TEST_TIME_FORMAT " ms (Hand deinterleaved I/Q, _rk_mm_)   %sx %.1f%s\n\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2474,7 +2484,8 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 RKComplexArrayInPlaceMultiply(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_naive = RKTimevalDiff(t2, t1);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * dt_naive);
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
@@ -2489,14 +2500,22 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 RKSIMD_iymul(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("     conj + iymul: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("     conj + iymul: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)   %sx %.1f%s\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_iymulc(cs, cd, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("           iymulc: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("           iymulc: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)   %sx %.1f%s\n\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
 
             printf("Vectorized Float Sum (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -2504,14 +2523,19 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 RKFloatArraySum(src->i, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_naive = RKTimevalDiff(t2, t1);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * dt_naive);
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_sum(src->i, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("              sum: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("              sum: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)   %sx %.1f%s\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
 
             printf("Vectorized Complex Sum (%dK loops):\n", m / 1000);
             gettimeofday(&t1, NULL);
@@ -2519,14 +2543,19 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 RKComplexArraySum(cs, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_naive = RKTimevalDiff(t2, t1);
+            printf("            naive: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * dt_naive);
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_ysum(cs, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("             ysum: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("             ysum: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)   %sx %.1f%s\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
         }
 
         if (flag & RKTestSIMDFlagPerformanceTestDuplicate) {
@@ -2537,14 +2566,19 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
                 memcpy(src->q, dst->q, RKMaximumGateCount * sizeof(RKFloat));
             }
             gettimeofday(&t2, NULL);
-            printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_naive = RKTimevalDiff(t2, t1);
+            printf("       memcpy x 2: " RKSIMD_TEST_TIME_FORMAT " ms\n", 1.0e3 / m * dt_naive);
 
             gettimeofday(&t1, NULL);
             for (k = 0; k < m; k++) {
                 RKSIMD_zcpy(src, dst, RKMaximumGateCount);
             }
             gettimeofday(&t2, NULL);
-            printf("             zcpy: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)\n", 1.0e3 / m * RKTimevalDiff(t2, t1));
+            dt_simd = RKTimevalDiff(t2, t1);
+            printf("             zcpy: " RKSIMD_TEST_TIME_FORMAT " ms (_rk_mm_)   %sx %.1f%s\n", 1.0e3 / m * dt_simd,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                dt_naive / dt_simd,
+                rkGlobalParameters.showColor ? RKNoColor : "");
         }
 
         printf("\n==========================\n");

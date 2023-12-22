@@ -28,11 +28,11 @@ CFLAGS += -Woverlength-strings
 CFLAGS += -Wno-unknown-pragmas
 CFLAGS += -fPIC
 
-ifeq ($(HOMEBREW_PREFIX), )
+ifeq ($(PREFIX), )
 	ifeq ($(MACHINE), arm64)
-		HOMEBREW_PREFIX = /opt/homebrew
+		PREFIX = /opt/homebrew
 	else
-		HOMEBREW_PREFIX = /usr/local
+		PREFIX = /usr/local
 	endif
 endif
 
@@ -42,11 +42,11 @@ ifeq ($(MACHINE), x86_64)
 endif
 
 CFLAGS += -Iheaders -Iheaders/RadarKit
-CFLAGS += -I${HOMEBREW_PREFIX}/include
-CFLAGS += -I${HOMEBREW_PREFIX}/opt/openssl@1.1/include
+CFLAGS += -I${PREFIX}/include
+CFLAGS += -I${PREFIX}/opt/openssl@1.1/include
 
-LDFLAGS = -L${HOMEBREW_PREFIX}/lib
-LDFLAGS += -L${HOMEBREW_PREFIX}/opt/openssl@1.1/lib
+LDFLAGS = -L${PREFIX}/lib
+LDFLAGS += -L${PREFIX}/opt/openssl@1.1/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
@@ -64,13 +64,22 @@ OBJS += RKMomentEngine.o RKPulsePair.o RKMultiLag.o RKPulseATSR.o RKSpectralMome
 OBJS += RKHealthRelayTweeta.o RKHealthRelayNaveen.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
 
-OBJS_PATH = objects
-OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
+OBJS_OUT_PATH := objects
+OBJS_SRC_PATH := source
+OBJS_SRC := $(wildcard $(OBJS_SRC_PATH)/*.c)
+OBJS := $(patsubst $(OBJS_SRC_PATH)/%.c,$(OBJS_OUT_PATH)/%.o,$(OBJS_SRC))
+
+EXAMPLE_OUT_PATH := build
+EXAMPLE_SRC_PATH := examples
+EXAMPLE_SRC := $(wildcard $(EXAMPLE_SRC_PATH)/*.c)
+EXAMPLES := $(patsubst $(EXAMPLE_SRC_PATH)/%.c,$(EXAMPLE_OUT_PATH)/%,$(EXAMPLE_SRC))
+
+CTYPES_OUT_PATH := python/src/radarkit
 
 STATIC_LIB = libradarkit.a
 SHARED_LIB = libradarkit.so
 
-PROGS = rkutil simple-emulator pgen
+PROGS = rkutil
 
 ifeq ($(KERNEL), Darwin)
 	# macOS
@@ -97,23 +106,25 @@ ifeq ($(shell echo "\033"), \033)
 	EFLAG := -e
 endif
 
-all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS)
+all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS) $(EXAMPLES)
 
 showinfo:
 	@echo $(EFLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
-	MACHINE = \033[38;5;220m$(MACHINE)\033[m\n\
+	MACHINE = \033[38;5;87m$(MACHINE)\033[m\n\
 	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
-	GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[m\n\
-	HOMEBREW_PREFIX = \033[38;5;214m$(HOMEBREW_PREFIX)\033[m\n\
-	EFLAG = \033[38;5;214m$(EFLAG)\033[m\n\
-	CPUS = \033[38;5;203m$(CPUS)\033[m"
+	GIT_BRANCH = \033[38;5;220m$(GIT_BRANCH)\033[m\n\
+	PREFIX = \033[38;5;214m$(PREFIX)\033[m\n\
+	EFLAG = \033[38;5;208m$(EFLAG)\033[m\n\
+	CPUS = \033[38;5;203m$(CPUS)\033[m\n\
+	OBJS = \033[38;5;213m$(OBJS)\033[m\n\
+	EXAMPLES = \033[38;5;45m$(EXAMPLES)\033[m\n\
+	"
 
 # IMPORTANT: KEEP THOSE SPACES BEFORE THE SLASHES
-ctypes:
-	if [ ! -d "radarkit" ]; then mkdir radarkit; fi
-	ctypesgen -I$(HOMEBREW_PREFIX)/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit \
+ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
+	ctypesgen -I$(PREFIX)/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit \
 	headers/RadarKit/RKTypes.h \
 	headers/RadarKit/RKMisc.h \
 	headers/RadarKit/RKFoundation.h \
@@ -134,23 +145,28 @@ ctypes:
 	headers/RadarKit/RKWaveform.h \
 	headers/RadarKit.h \
 	headers/RadarKit/RKTest.h \
-	-o python/radarkit/_ctypes_.py
+	-o $(CTYPES_OUT_PATH)/_ctypes_.py
 
 MAKEFLAGS += --jobs=$(CPUS)
 
-$(OBJS_PATH)/%.o: source/%.c | $(OBJS_PATH)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJS_PATH):
+$(EXAMPLE_OUT_PATH) $(OBJS_OUT_PATH) $(CTYPES_OUT_PATH):
 	mkdir -p $@
 
-$(STATIC_LIB): $(OBJS_WITH_PATH)
-	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
-	ar rvcs $@ $(OBJS_WITH_PATH)
+$(OBJS_OUT_PATH)/%.o: $(OBJS_SRC_PATH)/%.c | $(OBJS_OUT_PATH)
+	@echo $(EFLAG) "\033[38;5;206m$@\033[m $^"
+	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
-$(SHARED_LIB): $(OBJS_WITH_PATH)
+$(STATIC_LIB): $(OBJS)
 	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
-	$(CC) -shared -fPIC -o $@ $(OBJS_WITH_PATH) $(LDFLAGS)
+	ar rvcs $@ $(OBJS)
+
+$(SHARED_LIB): $(OBJS)
+	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
+	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS)
+
+$(EXAMPLE_OUT_PATH)/%: $(EXAMPLE_SRC_PATH)/%.c $(STATIC_LIB) | $(EXAMPLE_OUT_PATH)
+	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
+	$(CC) $(CFLAGS) -o $@ $< $(STATIC_LIB) $(LDFLAGS)
 
 $(PROGS): %: %.c $(STATIC_LIB)
 	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
@@ -158,19 +174,19 @@ $(PROGS): %: %.c $(STATIC_LIB)
 
 clean:
 	rm -f $(PROGS) $(STATIC_LIB) $(SHARED_LIB) *.log
-	rm -f $(OBJS_PATH)/*.o
+	rm -rf $(EXAMPLE_OUT_PATH) $(OBJS_OUT_PATH)
 	rm -rf *.dSYM
 
 cleanctypes:
-	rm -f python/radarkit/_ctypes_.py
+	rm -f $(CTYPES_OUT_PATH/_ctypes_.py
 
 install: showinfo
-	cp -rp headers/RadarKit headers/RadarKit.h ${HOMEBREW_PREFIX}/include/
-	cp -p $(STATIC_LIB) ${HOMEBREW_PREFIX}/lib/
-	cp -p $(SHARED_LIB) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB).$(VERSION)
-	[ -f ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB) ] && rm -f ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB) || :
-	ln -s ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB).$(VERSION) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB)
+	cp -rp headers/RadarKit headers/RadarKit.h ${PREFIX}/include/
+	cp -p $(STATIC_LIB) ${PREFIX}/lib/
+	cp -p $(SHARED_LIB) ${PREFIX}/lib/$(SHARED_LIB).$(VERSION)
+	[ -f ${PREFIX}/lib/$(SHARED_LIB) ] && rm -f ${PREFIX}/lib/$(SHARED_LIB) || :
+	ln -s ${PREFIX}/lib/$(SHARED_LIB).$(VERSION) ${PREFIX}/lib/$(SHARED_LIB)
 
 uninstall:
-	rm -rf ${HOMEBREW_PREFIX}/include/RadarKit.h ${HOMEBREW_PREFIX}/include/RadarKit
-	rm -rf ${HOMEBREW_PREFIX}/lib/$(STATIC_LIB) ${HOMEBREW_PREFIX}/lib/$(SHARED_LIB)*
+	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit
+	rm -rf ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
