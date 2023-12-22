@@ -10,18 +10,18 @@
 #include <getopt.h>
 
 #define RKFMT                               "%5d"
-#define RKSIMD_TEST_DESC_FORMAT_16          "%140s"
+#define RKSIMD_TEST_DESC_FORMAT_16          "%110s"
 #define RKSIMD_TEST_DESC_FORMAT_8           "%90s"
 #define RKSIMD_TEST_DESC_FORMAT_4           "%64s"
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
 
 #define RKSIMD_TEST_DESC_4(str, desc, f, e) \
-    sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], e)
+    sprintf(str, desc " [ %5.2f %5.2f %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], e)
 #define RKSIMD_TEST_DESC_8(str, desc, f, e) \
-    sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
+    sprintf(str, desc " [ %5.2f %5.2f %5.2f %5.2f  %5.2f %5.2f %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
 #define RKSIMD_TEST_DESC_16(str, desc, f, e) \
-    sprintf(str, desc " [ %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f  %5.2f %5.2f ] (%.4f)", \
-            f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15], e)
+    sprintf(str, desc " [ %5.2f %5.2f %5.2f %5.2f  %5.2f %5.2f %5.2f %5.2f  ...  %5.2f %5.2f %5.2f %5.2f ] (%.4f)", \
+            f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[12], f[13], f[14], f[15], e)
 #define RKSIMD_TEST_DESC(str, desc, f, e) sizeof(RKVec) / sizeof(float) == 16 \
     ? RKSIMD_TEST_DESC_16(str, desc, f, e) : (sizeof(RKVec) / sizeof(float) == 8 \
     ? RKSIMD_TEST_DESC_8(str, desc, f, e) \
