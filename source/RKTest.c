@@ -2394,14 +2394,14 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
 
     RKFloat fs = RKFloatArraySum(dst->i, n);
     RKFloat ss = RKSIMD_sum(dst->i, n);
-    all_good = fabsf(ss - fs) < tiny;
+    all_good = fabsf((ss - fs) / fs) < tiny;
     RKSIMD_TEST_RESULT_4("RKFloat vector sum -    sum", all_good);
 
     //
 
     RKComplex fsum = RKComplexArraySum(cs, n);
     RKComplex ysum = RKSIMD_ysum(cs, n);
-    all_good = fabsf(ysum.i - fsum.i) < tiny && fabsf(ysum.q - fsum.q) < tiny;
+    all_good = fabsf((ysum.i - fsum.i) / fsum.i) < tiny && fabsf((ysum.q - fsum.q) / fsum.q) < tiny;
     RKSIMD_TEST_RESULT_4("RKComplex vector sum -   ysum", all_good);
 
     //
