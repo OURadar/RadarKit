@@ -137,7 +137,6 @@ static void *sweepManager(void *in) {
     }
 
     // Localize the scratch space storage
-    char *filename = engine->scratchSpaces[index].filename;
     char *filelist = engine->scratchSpaces[index].filelist;
     char *summary = engine->scratchSpaces[index].summary;
 
@@ -160,63 +159,18 @@ static void *sweepManager(void *in) {
     engine->memoryUsage = sizeof(RKSweepEngine) + productMemoryUsage;
 
     if (engine->productBuffer == NULL) {
-        RKLog("%s Unexpected NULL memory.\n", engine->name);
+        RKLog("%s Unexpected NULL productBuffer.\n", engine->name);
         pthread_mutex_lock(&engine->productMutex);
         engine->business--;
         pthread_mutex_unlock(&engine->productMutex);
         return NULL;
     }
 
-    // Product registration now takes on different behavior, the following block is no longer relevant
-    // Commented out for now until it is removed
-
-    // Other clients may report products at the same time here, so we wait
-    // int s = 0;
-    // bool allReported = true;
-    // for (i = 0; i < engine->productBufferDepth; i++) {
-    //     RKLog("%s flag[%d] = %x\n", engine->name, i, engine->productBuffer[i].flag);
-    //     if (engine->productBuffer[i].flag == RKProductStatusVacant) {
-    //         continue;
-    //     }
-    //     pthread_mutex_lock(&engine->productMutex);
-    //     engine->productBuffer[i].flag |= RKProductStatusSleep0;
-    //     pthread_mutex_unlock(&engine->productMutex);
-    //     while (engine->productBuffer[i].i != sweep->header.config.i &&
-    //            engine->productTimeoutSeconds * 100 > s &&
-    //            engine->state & RKEngineStateWantActive) {
-    //         usleep(10000);
-    //         if (++s % 100 == 0 && engine->verbose > 1) {
-    //             RKLog("%s sleep 0/%.1f s\n", engine->name, (float)s * 0.01f);
-    //         };
-    //     }
-    //     if (engine->verbose > 2) {
-    //         RKLog("%s %s @ i = %zu ==? %zu\n", engine->name,
-    //               RKVariableInString("productId", &engine->productBuffer[i].pid, RKValueTypeProductId), engine->productBuffer[i].i, sweep->header.config.i);
-    //     }
-    //     pthread_mutex_lock(&engine->productMutex);
-    //     engine->productBuffer[i].flag ^= RKProductStatusSleep0;
-    //     pthread_mutex_unlock(&engine->productMutex);
-    //     if (engine->productBuffer[i].i != sweep->header.config.i) {
-    //         allReported = false;
-    //     }
-    // }
     if (!(engine->state & RKEngineStateWantActive)) {
         pthread_mutex_lock(&engine->productMutex);
         engine->business--;
         pthread_mutex_unlock(&engine->productMutex);
     }
-
-    // j = 0;
-    // summary[0] = '\0';
-
-    // for (i = 0; i < engine->productBufferDepth; i++) {
-    //     if (engine->productBuffer[i].desc.baseProductList & sweep->header.baseProductList) {
-    //         j += snprintf(summary + j, RKMaximumCommandLength - j,
-    //                       rkGlobalParameters.showColor ? " " RKLimeColor "%d" RKNoColor "/%1x" : " %d/%1x",
-    //                       engine->productBuffer[i].pid, engine->productBuffer[i].flag & 0x07);
-    //     }
-    // }
-    // RKLog("%s Concluding sweep.   %s   %s\n", engine->name, RKVariableInString("allReported", &allReported, RKValueTypeBool), summary);
 
     // Mark the state
     engine->state |= RKEngineStateWritingFile;
@@ -227,10 +181,8 @@ static void *sweepManager(void *in) {
     }
 
     int summarySize = 0;
-    bool filenameTooLong;
-
-    // g++-13 prefers a local copy of the filename
-    char outputFilename[RKMaximumPathLength - 80];
+    char filename[RKMaximumPathLength];
+    size_t filelistLength = strlen(filelist);
 
     // Product recording
     for (p = 0; p < engine->productBufferDepth; p++) {
@@ -252,12 +204,11 @@ static void *sweepManager(void *in) {
         }
         // Full filename with symbol and extension
         sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
-        snprintf(outputFilename, RKMaximumPathLength - 80, "%s", product->header.suggestedFilename) < 0 ? abort() : (void)0;
-        filenameTooLong = strlen(sweep->header.filename) > 48;
+        strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength);
 
         // Keep concatenating the filename into filelist
         if (engine->hasFileHandlingScript) {
-            sprintf(filelist + strlen(filelist), " %s", outputFilename);
+            filelistLength += snprintf(filelist + filelistLength, RKMaximumListLength - filelistLength, " %s", filename);
         }
 
         // Convert data in radians to degrees if necessary
@@ -296,6 +247,7 @@ static void *sweepManager(void *in) {
 
         // Make a summary for logging
         if (p == 0) {
+            bool filenameTooLong = strlen(sweep->header.filename) > 48;
             summarySize = sprintf(summary, "%s%s%s %s%s-%s%s%s.%s",
                                   rkGlobalParameters.showColor ? (record ? RKGreenColor : RKLightOrangeColor) : "",
                                   record ? "Recorded": "Skipped",
@@ -323,10 +275,13 @@ static void *sweepManager(void *in) {
     }
 
     if (record && engine->hasFileHandlingScript) {
+        if (engine->verbose > 1) {
+            RKLog("%s CMD: %s\n", engine->name, filelist);
+        }
         j = system(filelist);
         if (j) {
-            RKLog("Error. CMD: %s", filelist);
-            RKLog("Error. Failed using system() -> %d   errno = %d\n", j, errno);
+            RKLog("%s Error. CMD: %s", engine->name, filelist);
+            RKLog("%s Error. Failed using system() -> %d   errno = %d\n", engine->name, j, errno);
         }
         // Potential filenames that may be generated by the custom command. Need to notify file manager about them.
         RKReplaceFileExtension(filename, strrchr(filename, '-'), ".__");
@@ -590,7 +545,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->productTimeoutSeconds = 5;
     engine->baseProductList = RKBaseProductListFloatZVWDPRKLRXPX;
     engine->productRecorder = &RKProductFileWriterNC;
-    engine->productBufferDepth = 20;
+    engine->productBufferDepth = RKMaximumProductBufferDepth;
     size_t bytes = RKProductBufferAlloc(&engine->productBuffer, engine->productBufferDepth, RKMaximumRaysPerSweep, 2000);
     if (engine->productBuffer == NULL) {
         RKLog("Error. Unable to allocate a product buffer for sweep engine.\n");

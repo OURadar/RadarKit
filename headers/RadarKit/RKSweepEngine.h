@@ -9,7 +9,9 @@
 #ifndef __RadarKit_Sweep__
 #define __RadarKit_Sweep__
 
-#define RKSweepScratchSpaceDepth 6
+#define RKSweepScratchSpaceDepth             6
+#define RKMaximumProductBufferDepth          20
+#define RKMaximumListLength                  RKMaximumPathLength + RKMaximumProductBufferDepth * RKMaximumPathLength
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKFileManager.h>
@@ -18,8 +20,7 @@
 #include <RadarKit/RKProductFile.h>
 
 typedef struct rk_sweep_scratch {
-    char                             filename[RKMaximumPathLength - 32];
-    char                             filelist[RKMaximumStringLength];              // It's really handleFilesScript + file list
+    char                             filelist[RKMaximumListLength];              // It's really handleFilesScript + file list
     char                             summary[RKMaximumStringLength];
     RKRay                            *rays[RKMaximumRaysPerSweep];
     uint32_t                         rayCount;

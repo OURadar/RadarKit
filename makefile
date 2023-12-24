@@ -114,7 +114,7 @@ showinfo:
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
 	MACHINE = \033[38;5;87m$(MACHINE)\033[m\n\
 	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
-	GIT_BRANCH = \033[38;5;220m$(GIT_BRANCH)\033[m\n\
+	GIT_BRANCH = \033[38;5;226m$(GIT_BRANCH)\033[m\n\
 	PREFIX = \033[38;5;214m$(PREFIX)\033[m\n\
 	EFLAG = \033[38;5;208m$(EFLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m\n\
@@ -153,7 +153,7 @@ $(EXAMPLE_OUT_PATH) $(OBJS_OUT_PATH) $(CTYPES_OUT_PATH):
 	mkdir -p $@
 
 $(OBJS_OUT_PATH)/%.o: $(OBJS_SRC_PATH)/%.c | $(OBJS_OUT_PATH)
-	@echo $(EFLAG) "\033[38;5;206m$@\033[m $^"
+	@echo $(EFLAG) "\033[38;5;213m$@\033[m $^"
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
 $(STATIC_LIB): $(OBJS)
