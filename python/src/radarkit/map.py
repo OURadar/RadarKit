@@ -3,21 +3,51 @@ import json
 import importlib
 import numpy as np
 
-prefix = os.path.join(os.path.dirname(importlib.util.find_spec("radarkit").origin), "maps")
+# prefix = os.path.join(os.path.dirname(importlib.util.find_spec("radarkit").origin), "maps")
+prefix = os.path.join(os.path.split(__file__)[0], "maps")
+
 r_earth = 6378.0
 deg2rad = np.pi / 180.0
 rad2deg = 1.0 / deg2rad
-ring_color = "#78dcff"
 weight_big = 50000
 weight_med = 95000  # Norman is 95694
 
 
-def get(name="county"):
-    if name == "county":
-        path = os.path.join(prefix, "counties-10m.stq.json")
+class MapColor:
+    def __init__(self, theme="light"):
+        if theme == "light":
+            self.ring = "#00bbff"
+            self.state = "#40bf91"
+            self.county = "#40bf91"
+            self.highway = "#e6b955"
+        else:
+            self.ring = "#78dcff"
+            self.state = "#96e6c8"
+            self.county = "#83e2bf"
+            self.highway = "#e6b955"
+
+
+colors = MapColor("dark")
+
+if not os.path.exists(prefix):
+    prefix, _ = os.path.split(__file__)
+    prefix = os.path.join(prefix, "maps")
+    if not os.path.exists(prefix):
+        raise FileNotFoundError(f"Could not find maps directory: {prefix}")
+
+
+def _read(name="county"):
+    if name == "state":
+        path = os.path.join(prefix, "states-10m.stq.json")
+    elif name == "county":
+        path = os.path.join(prefix, "gz_2010_us_050_00_500k.stq.json")
+    elif name == "interstate" or name == "highway":
+        path = os.path.join(prefix, "intrstat.stq.json")
     else:
-        path = os.path.join(prefix, "counties-10m.stq.json")
-    print(path)
+        path = os.path.join(prefix, name)
+    if not os.path.exists(path):
+        print(f"Could not find map: {path}")
+        return None
     with open(path, "r") as fid:
         data = json.load(fid)
     return data
@@ -72,12 +102,19 @@ def coordsFromPoly(poly):
 def subsetPaths(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90)):
     x_min, x_max, y_min, y_max = extent
     rotation = makeRotationForCoord(*origin)
-    coords = coordsFromPoly(poly)
+    if isinstance(poly, dict):
+        coords = coordsFromPoly(poly)
+    else:
+        poly = _read(name=poly)
+        coords = coordsFromPoly(poly)
     subset = []
     for c in coords:
         p = project(np.radians(c), rotation)
-        outside = np.logical_or(np.logical_or(p[:, 0] < x_min, p[:, 0] > x_max), np.logical_or(p[:, 1] < y_min, p[:, 1] > y_max))
-        if np.all(outside):
-            continue
-        subset.append(p)
+        # outside = np.logical_or(np.logical_or(p[:, 0] < x_min, p[:, 0] > x_max), np.logical_or(p[:, 1] < y_min, p[:, 1] > y_max))
+        # if np.all(outside):
+        #     continue
+        # subset.append(p)
+        inside = np.logical_and(np.logical_and(p[:, 0] > x_min, p[:, 0] < x_max), np.logical_and(p[:, 1] > y_min, p[:, 1] < y_max))
+        if np.any(inside):
+            subset.append(p)
     return subset
