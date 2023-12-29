@@ -79,7 +79,7 @@ def project(coords, rotation=makeRotationForCoord()):
     return np.matmul(p, rotation)
 
 
-def coordsFromPoly(poly):
+def coordsFromPolyNaive(poly):
     coords = []
     w = poly["transform"]["scale"]
     b = poly["transform"]["translate"]
@@ -99,7 +99,20 @@ def coordsFromPoly(poly):
     return coords
 
 
-def subsetPaths(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90)):
+def coordsFromPoly(poly):
+    coords = []
+    w = poly["transform"]["scale"]
+    b = poly["transform"]["translate"]
+    for arc in poly["arcs"]:
+        lat = w[1] * arc[0][1] + b[1]
+        if lat < -89:
+            continue
+        line = np.cumsum(np.array(arc), axis=0)
+        coords.append(line * w + b)
+    return coords
+
+
+def get(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90)):
     x_min, x_max, y_min, y_max = extent
     rotation = makeRotationForCoord(*origin)
     if isinstance(poly, dict):
@@ -116,5 +129,5 @@ def subsetPaths(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90))
         # subset.append(p)
         inside = np.logical_and(np.logical_and(p[:, 0] > x_min, p[:, 0] < x_max), np.logical_and(p[:, 1] > y_min, p[:, 1] < y_max))
         if np.any(inside):
-            subset.append(p)
+            subset.append(p[:, :2])
     return subset
