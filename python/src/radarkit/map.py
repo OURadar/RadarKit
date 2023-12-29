@@ -38,13 +38,16 @@ if not os.path.exists(prefix):
 
 def _read(name="county"):
     if name == "state":
-        path = os.path.join(prefix, "states-10m.stq.json")
+        filename = "states-10m.stq.json"
     elif name == "county":
-        path = os.path.join(prefix, "gz_2010_us_050_00_500k.stq.json")
+        filename = "gz_2010_us_050_00_500k.stq.json"
     elif name == "interstate" or name == "highway":
-        path = os.path.join(prefix, "intrstat.stq.json")
+        filename = "intrstat.stq.json"
+    elif name == "city":
+        filename = "citiesx020.shp.json"
     else:
-        path = os.path.join(prefix, name)
+        filename = name
+    path = os.path.join(prefix, filename)
     if not os.path.exists(path):
         print(f"Could not find map: {path}")
         return None
