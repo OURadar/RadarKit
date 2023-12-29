@@ -144,9 +144,8 @@ def get(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90)):
         rotation = makeRotationForCoord(*origin)
         p = project(np.radians(coords), rotation)
         inside = np.logical_and(np.logical_and(p[:, 0] > x_min, p[:, 0] < x_max), np.logical_and(p[:, 1] > y_min, p[:, 1] < y_max))
-        loc = np.where(inside)[0]
-        subset_labels = [labels[i] for i in loc]
-        subset_weights = [weights[i] for i in loc]
-        return p[inside, :2], subset_labels, subset_weights
+        text = [(*pos[:2], label, weight) for pos, label, weight, s in zip(p, labels, weights, inside) if s]
+        text.sort(key=lambda x: x[3], reverse=True)
+        return text
     else:
         raise ValueError(f"Unknown polygon format: {type(poly)}")
