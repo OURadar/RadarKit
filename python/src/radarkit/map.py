@@ -115,7 +115,7 @@ def coordsFromPoly(poly):
     return coords
 
 
-def get(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90)):
+def get(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90), points_per_km=8):
     if isinstance(poly, str):
         poly = _read(name=poly)
         return get(poly, origin=origin, extent=extent)
@@ -125,26 +125,29 @@ def get(poly, origin=(-97.46381, 35.23682), extent=(-160, 160, -90, 90)):
         rotation = makeRotationForCoord(*origin)
         subset = []
         for c in coords:
-            p = project(np.radians(c), rotation)
+            pos = project(np.radians(c), rotation)
             # outside = np.logical_or(np.logical_or(p[:, 0] < x_min, p[:, 0] > x_max), np.logical_or(p[:, 1] < y_min, p[:, 1] > y_max))
             # if np.all(outside):
             #     continue
             # subset.append(p)
             inside = np.logical_and(
-                np.logical_and(p[:, 0] > x_min, p[:, 0] < x_max), np.logical_and(p[:, 1] > y_min, p[:, 1] < y_max)
+                np.logical_and(pos[:, 0] > x_min, pos[:, 0] < x_max), np.logical_and(pos[:, 1] > y_min, pos[:, 1] < y_max)
             )
             if np.any(inside):
-                subset.append(p[:, :2])
+                subset.append(pos[:, :2])
         return subset
     elif isinstance(poly, list) and isinstance(poly[0], dict) and "G" in poly[0]:
         coords = np.array([t["G"]["C"] for t in poly])
         labels = [t["P"]["N"] for t in poly]
-        weights = [t["P"]["P"] for t in poly]
+        pops = [t["P"]["P"] for t in poly]
         x_min, x_max, y_min, y_max = extent
         rotation = makeRotationForCoord(*origin)
-        p = project(np.radians(coords), rotation)
-        inside = np.logical_and(np.logical_and(p[:, 0] > x_min, p[:, 0] < x_max), np.logical_and(p[:, 1] > y_min, p[:, 1] < y_max))
-        text = [(*pos[:2], label, weight) for pos, label, weight, s in zip(p, labels, weights, inside) if s]
+        pos = project(np.radians(coords), rotation)
+        rr = np.hypot(pos[:, 0], pos[:, 1])
+        inside = np.logical_and(np.logical_and(pos[:, 0] > x_min, pos[:, 0] < x_max), np.logical_and(pos[:, 1] > y_min, pos[:, 1] < y_max))
+        popped = [2500 * np.log(x) / x < points_per_km if x > 0 else True if points_per_km > 999 else r < 100 for x, r in zip(pops, rr)]
+        show = np.logical_and(inside, popped)
+        text = [(*pos[:2], label, weight) for pos, label, weight, s in zip(pos, labels, pops, show) if s]
         text.sort(key=lambda x: x[3], reverse=True)
         return text
     else:

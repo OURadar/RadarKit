@@ -13,7 +13,7 @@ class MeshCoordinate:
 
 
 class Sweep:
-    def __init__(self, input=None):
+    def __init__(self, input=None, verbose=0):
         self.time = None
         self.longitude = -97.0
         self.latitude = 32.0
@@ -29,7 +29,7 @@ class Sweep:
         self.archive = None
         self.meshCoordinate = MeshCoordinate()
         if input:
-            self.read(input)
+            self.read(input, verbose=verbose)
 
     def __repr__(self):
         scanAngle = self.scanElevation if self.scanType.lower() == "ppi" else self.scanAzimuth if self.scanType.lower() == "rhi" else -999.0
@@ -38,7 +38,7 @@ class Sweep:
     def __str__(self):
         return f"Sweep: {self.sweep} of {self.archive}"
 
-    def read(self, input):
+    def read(self, input, verbose=0):
         path, basename = os.path.split(input)
         _, ext = os.path.splitext(basename)
 
@@ -90,7 +90,8 @@ class Sweep:
                 parts[-1] = f"{symbol}.nc"
                 basename = "-".join(parts)
                 filename = os.path.join(path, basename)
-                print(f"filename: {filename}")
+                if verbose:
+                    print(f"filename: {filename}")
                 with open(filename, mode="rb") as fid:
                     _handle_fid(fid, symbol)
         else:
@@ -98,8 +99,12 @@ class Sweep:
             return None
 
         # Generate coordinate arrays that are 1 element extra than each dimension
-        de = self.elevations[-1] - self.elevations[-2]
-        self.meshCoordinate.e = [*self.elevations, self.elevations[-1] + de]
+        if self.scanType.lower() == "rhi":
+            de = self.elevations[-1] - self.elevations[-2]
+            self.meshCoordinate.e = [*self.elevations, self.elevations[-1] + de]
+        elif self.scanType.lower() == "ppi":
+            da = self.azimuths[-1] - self.azimuths[-2]
+            self.meshCoordinate.a = [*self.azimuths, self.azimuths[-1] + da]
         self.meshCoordinate.r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
         symbols = ["Z", "V", "W", "D", "P", "R"]
         mask = self.products["Z"] < -999.0
