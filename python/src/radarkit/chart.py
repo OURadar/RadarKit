@@ -1,7 +1,7 @@
 from . import sweep
+from . import overlay
 
 import numpy as np
-import matplotlib.font_manager
 import matplotlib.patheffects
 import matplotlib.pyplot as plt
 
@@ -35,7 +35,7 @@ class Chart:
     labelfont = blib.getFontOfWeight(weight=500)
     titlefont = blib.getFontOfWeight(weight=700)
 
-    def __init__(self, size=(1280, 720), dpi=72, s=1, titlecolor=None):
+    def __init__(self, size=(1280, 720), dpi=72, s=1, titlecolor=None, orientation="horizontal"):
         self.size = size
         self.dpi = dpi
         self.s = s
@@ -44,6 +44,7 @@ class Chart:
         self.labelsize = 12 * s
         self.titlesize = 28 * s
         self.captionsize = 14 * s
+        self.orientation = orientation
 
         width, height = size
         self.figsize = (width / dpi, height / dpi)
@@ -125,19 +126,35 @@ class Chart:
         p = self.p
         q = self._get_pos(num)
         ax = self.fig.add_axes(q, frameon=True, snap=True)
+        ax.set(xticks=[], yticks=[])
         h = 10 * self.s
-        if num // 100 < num % 100 // 10:
-            c = 0.4
+        if self.orientation[:4] == "vert":
+            c = 512 / height
+            q[0] += q[2] - (4 * p + self.captionsize + h) / width
+            q[1] += 2 * p / height
+            q[2] = h / width
+            q[3] = c * q[3]
         else:
-            c = 0.6
-        q[0] += 2 * p / width
-        q[1] += q[3] - (2 * p + self.captionsize + h) / height
-        q[2] = round(c * q[2] * width) / width
-        q[3] = h / height
+            c = 512 / width
+            q[0] += 2 * p / width
+            q[1] += q[3] - (2 * p + self.captionsize + h) / height
+            q[2] = c * q[2]
+            q[3] = h / height
         cb = self.fig.add_axes(q, frameon=False, snap=True)
+        cb.set(xticks=[], yticks=[])
         self._draw_box(q)
-        st = cb.set_title(f"{num}", fontproperties=self.labelfont)
-        st.set(size=self.captionsize, path_effects=self.path_effects)
+        if self.orientation[:4] == "vert":
+            st = matplotlib.text.Text(q[0] - (self.captionsize + p) / width, q[1] + 0.5 * q[3], f"{num}")
+            st.set(fontproperties=self.labelfont,
+                   horizontalalignment="center",
+                   path_effects=self.path_effects,
+                   rotation=self.orientation,
+                   size=self.captionsize,
+                   verticalalignment="center")
+            self.fig.add_artist(st)
+        else:
+            st = cb.set_title(f"{num}", fontproperties=self.labelfont)
+            st.set(size=self.captionsize, path_effects=self.path_effects)
         return ax, cb, st
 
     def _update_data_only(self, sweep: sweep.Sweep):
@@ -150,12 +167,12 @@ class Chart:
 
     def _setup_colorbars(self):
         # Colorbars
-        plt.colorbar(self.mz, ax=self.ax[0], cax=self.cb[0], orientation="horizontal")
-        plt.colorbar(self.mv, ax=self.ax[1], cax=self.cb[1], orientation="horizontal")
-        plt.colorbar(self.mw, ax=self.ax[2], cax=self.cb[2], orientation="horizontal")
-        plt.colorbar(self.md, ax=self.ax[3], cax=self.cb[3], orientation="horizontal")
-        plt.colorbar(self.mp, ax=self.ax[4], cax=self.cb[4], orientation="horizontal")
-        plt.colorbar(self.mr, ax=self.ax[5], cax=self.cb[5], orientation="horizontal")
+        plt.colorbar(self.mz, ax=self.ax[0], cax=self.cb[0], orientation=self.orientation)
+        plt.colorbar(self.mv, ax=self.ax[1], cax=self.cb[1], orientation=self.orientation)
+        plt.colorbar(self.mw, ax=self.ax[2], cax=self.cb[2], orientation=self.orientation)
+        plt.colorbar(self.md, ax=self.ax[3], cax=self.cb[3], orientation=self.orientation)
+        plt.colorbar(self.mp, ax=self.ax[4], cax=self.cb[4], orientation=self.orientation)
+        plt.colorbar(self.mr, ax=self.ax[5], cax=self.cb[5], orientation=self.orientation)
         # Colorbar labels
         self.st[0].set_text("Z - Reflectivity (dBZ)")
         self.st[1].set_text("V - Velocity (m/s)")
@@ -170,24 +187,26 @@ class Chart:
             "fontsize": self.labelsize,
             "path_effects": self.path_effects,
         }
+
+        def setup_ticks(k, ticks, ticklabels, lo, hi):
+            if self.orientation == "vertical":
+                self.cb[k].set_yticks(ticks, labels=ticklabels, **tick_props)
+                self.cb[k].set_ylim(lo, hi)
+            else:
+                self.cb[k].set_xticks(ticks, labels=ticklabels, **tick_props)
+                self.cb[k].set_xlim(lo, hi)
         ticks = np.arange(-20, 61, 20)
-        self.cb[0].set_xticks(ticks, labels=ticks, **tick_props)
-        self.cb[0].set_xlim(-10, 75)
+        setup_ticks(0, ticks, ticks, -10, 75)
         ticks = np.arange(-20, 21, 10)
-        self.cb[1].set_xticks(ticks, labels=ticks, **tick_props)
-        self.cb[1].set_xlim(-30, 30)
+        setup_ticks(1, ticks, ticks, -30, 30)
         ticks = np.arange(2, 9, 2)
-        self.cb[2].set_xticks(ticks, labels=ticks, **tick_props)
-        self.cb[2].set_xlim(0, 10)
+        setup_ticks(2, ticks, ticks, 0, 10)
         ticks = np.arange(-4, 5, 2)
-        self.cb[3].set_xticks(ticks, labels=ticks, **tick_props)
-        self.cb[3].set_xlim(-6, 6)
+        setup_ticks(3, ticks, ticks, -6, 6)
         ticks = np.arange(-120, 121, 60)
-        self.cb[4].set_xticks(np.radians(ticks), labels=ticks, **tick_props)
-        self.cb[4].set_xlim(-np.pi, np.pi)
+        setup_ticks(4, np.radians(ticks), ticks, -np.pi, np.pi)
         ticks = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02])
-        self.cb[5].set_xticks(rho2ind(ticks), labels=ticks, **tick_props)
-        self.cb[5].set_xlim(0, 180)
+        setup_ticks(5, rho2ind(ticks), ticks, 0, 180)
 
     def set_title(self, title):
         self.title.set_text(title)
@@ -205,8 +224,8 @@ class Chart:
 
 
 class ChartRHI(Chart):
-    def __init__(self, size=(1280, 720), dpi=72, s=1, titlecolor=None):
-        super().__init__(size, dpi, s, titlecolor)
+    def __init__(self, size=(1280, 720), dpi=72, s=1, titlecolor=None, orientation="horizontal"):
+        super().__init__(size, dpi, s, titlecolor, orientation)
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
@@ -302,8 +321,8 @@ class ChartRHI(Chart):
 
 
 class ChartPPI(Chart):
-    def __init__(self, size=(1280, 720), dpi=72, s=1, titlecolor=None):
-        super().__init__(size, dpi, s, titlecolor)
+    def __init__(self, size=(1280, 720), dpi=72, s=1, titlecolor=None, orientation="vertical"):
+        super().__init__(size, dpi, s, titlecolor, orientation)
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
@@ -350,16 +369,18 @@ class ChartPPI(Chart):
 
         super()._setup_colorbars()
 
+        origin = (sweep.longitude, sweep.latitude)
         aspect = self.ax[0].bbox.height / self.ax[0].bbox.width
-
         max_range = sweep.meshCoordinate.r[-1] if rmax is None else rmax
+        extent = (-max_range, -max_range * aspect, max_range, max_range * aspect)
+        exclude = (0.5 * max_range, -max_range * aspect, 1.1 * max_range, 0)
 
         # Get the map overlay
-        # Get the county, road, etc.
-
-        # Clear the axis splines
+        self.overlay = overlay.Overlay(origin, extent)
+        self.overlay.load()
+        self.overlay.exclude(exclude)
         for ax in self.ax:
-            ax.set(xlim=(-max_range, max_range), ylim=(-max_range * aspect, max_range * aspect), xticks=[], yticks=[])
+            self.overlay.draw(ax)
 
         title = sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC")
         self.title.set_text(title)
