@@ -182,7 +182,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 					break;
 				case RKMomentMaskLag2:
 					space->S[p][k] = powf(space->aR[p][1][k], 4.0f / 3.0f)
-					/ powf(space->aR[p][2][k], 1.0f / 3.0f);
+					               / powf(space->aR[p][2][k], 1.0f / 3.0f);
 					space->SNR[p][k] = space->S[p][k] / space->noise[p];
 					num = logf(space->aR[p][1][k]);
 					den = logf(space->aR[p][2][k]);

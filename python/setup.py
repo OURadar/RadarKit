@@ -10,6 +10,7 @@ setup(
         'numpy',
         'tqdm',
     ],
+    include_package_data=True,
     packages=find_packages(where="src"),
     package_dir={"": "src"},
 )
