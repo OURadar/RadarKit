@@ -5,8 +5,8 @@
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/headers/RadarKit",
-        "${HOMEBREW_PREFIX}/include",
-        "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
+        "/usr/local/include",
+        "/usr/local/opt/openssl@1.1/include"
       ],
       "defines": [],
       "macFrameworkPath": [
@@ -40,7 +40,8 @@
         "/usr/local/include"
       ],
       "defines": [
-        "__AVX512F__", "__FMA__"
+        "__AVX512F__",
+        "__FMA__"
       ],
       "compilerPath": "/usr/bin/gcc",
       "cStandard": "c17",
