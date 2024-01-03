@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/radarkit/_ctypes_.py
+/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/src/radarkit/_ctypes_.py
 
 Do not modify this file.
 """
@@ -5673,7 +5673,7 @@ RKMomentScratch = struct_rk_moment_scratch# /opt/homebrew/include/RadarKit/RKScr
 # /opt/homebrew/include/RadarKit/RKScratch.h: 114
 if _libs["radarkit"].has("RKCompressionScratchAlloc", "cdecl"):
     RKCompressionScratchAlloc = _libs["radarkit"].get("RKCompressionScratchAlloc", "cdecl")
-    RKCompressionScratchAlloc.argtypes = [POINTER(POINTER(RKCompressionScratch)), uint32_t, uint8_t, RKName]
+    RKCompressionScratchAlloc.argtypes = [POINTER(POINTER(RKCompressionScratch)), uint32_t, uint8_t, String]
     RKCompressionScratchAlloc.restype = c_size_t
 
 # /opt/homebrew/include/RadarKit/RKScratch.h: 115
@@ -5685,7 +5685,7 @@ if _libs["radarkit"].has("RKCompressionScratchFree", "cdecl"):
 # /opt/homebrew/include/RadarKit/RKScratch.h: 117
 if _libs["radarkit"].has("RKMomentScratchAlloc", "cdecl"):
     RKMomentScratchAlloc = _libs["radarkit"].get("RKMomentScratchAlloc", "cdecl")
-    RKMomentScratchAlloc.argtypes = [POINTER(POINTER(RKMomentScratch)), uint32_t, uint8_t, RKName]
+    RKMomentScratchAlloc.argtypes = [POINTER(POINTER(RKMomentScratch)), uint32_t, uint8_t, String]
     RKMomentScratchAlloc.restype = c_size_t
 
 # /opt/homebrew/include/RadarKit/RKScratch.h: 118
@@ -6017,88 +6017,94 @@ if _libs["radarkit"].has("RKWaveformInitWithCountAndDepth", "cdecl"):
 # /opt/homebrew/include/RadarKit/RKWaveform.h: 19
 if _libs["radarkit"].has("RKWaveformInitFromSamples", "cdecl"):
     RKWaveformInitFromSamples = _libs["radarkit"].get("RKWaveformInitFromSamples", "cdecl")
-    RKWaveformInitFromSamples.argtypes = [POINTER(RKComplex), c_int, RKName]
+    RKWaveformInitFromSamples.argtypes = [POINTER(RKComplex), c_int, String]
     RKWaveformInitFromSamples.restype = POINTER(RKWaveform)
 
 # /opt/homebrew/include/RadarKit/RKWaveform.h: 20
+if _libs["radarkit"].has("RKWaveformInitFromSampleArrays", "cdecl"):
+    RKWaveformInitFromSampleArrays = _libs["radarkit"].get("RKWaveformInitFromSampleArrays", "cdecl")
+    RKWaveformInitFromSampleArrays.argtypes = [POINTER(POINTER(RKComplex)), c_int, c_int, String]
+    RKWaveformInitFromSampleArrays.restype = POINTER(RKWaveform)
+
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 21
 if _libs["radarkit"].has("RKWaveformInitFromFile", "cdecl"):
     RKWaveformInitFromFile = _libs["radarkit"].get("RKWaveformInitFromFile", "cdecl")
     RKWaveformInitFromFile.argtypes = [String]
     RKWaveformInitFromFile.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 21
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 22
 if _libs["radarkit"].has("RKWaveformInit", "cdecl"):
     RKWaveformInit = _libs["radarkit"].get("RKWaveformInit", "cdecl")
     RKWaveformInit.argtypes = []
     RKWaveformInit.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 22
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 23
 if _libs["radarkit"].has("RKWaveformFree", "cdecl"):
     RKWaveformFree = _libs["radarkit"].get("RKWaveformFree", "cdecl")
     RKWaveformFree.argtypes = [POINTER(RKWaveform)]
     RKWaveformFree.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 24
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 25
 if _libs["radarkit"].has("RKWaveformCopy", "cdecl"):
     RKWaveformCopy = _libs["radarkit"].get("RKWaveformCopy", "cdecl")
     RKWaveformCopy.argtypes = [POINTER(RKWaveform)]
     RKWaveformCopy.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 26
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 27
 if _libs["radarkit"].has("RKWaveformInitAsImpulse", "cdecl"):
     RKWaveformInitAsImpulse = _libs["radarkit"].get("RKWaveformInitAsImpulse", "cdecl")
     RKWaveformInitAsImpulse.argtypes = []
     RKWaveformInitAsImpulse.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 27
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 28
 if _libs["radarkit"].has("RKWaveformInitAsSingleTone", "cdecl"):
     RKWaveformInitAsSingleTone = _libs["radarkit"].get("RKWaveformInitAsSingleTone", "cdecl")
     RKWaveformInitAsSingleTone.argtypes = [c_double, c_double, c_double]
     RKWaveformInitAsSingleTone.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 28
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 29
 if _libs["radarkit"].has("RKWaveformInitAsLinearFrequencyModulation", "cdecl"):
     RKWaveformInitAsLinearFrequencyModulation = _libs["radarkit"].get("RKWaveformInitAsLinearFrequencyModulation", "cdecl")
     RKWaveformInitAsLinearFrequencyModulation.argtypes = [c_double, c_double, c_double, c_double]
     RKWaveformInitAsLinearFrequencyModulation.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 29
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 30
 if _libs["radarkit"].has("RKWaveformInitAsFrequencyHops", "cdecl"):
     RKWaveformInitAsFrequencyHops = _libs["radarkit"].get("RKWaveformInitAsFrequencyHops", "cdecl")
     RKWaveformInitAsFrequencyHops.argtypes = [c_double, c_double, c_double, c_double, c_int]
     RKWaveformInitAsFrequencyHops.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 30
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 31
 if _libs["radarkit"].has("RKWaveformInitAsFakeTimeFrequencyMultiplexing", "cdecl"):
     RKWaveformInitAsFakeTimeFrequencyMultiplexing = _libs["radarkit"].get("RKWaveformInitAsFakeTimeFrequencyMultiplexing", "cdecl")
     RKWaveformInitAsFakeTimeFrequencyMultiplexing.argtypes = []
     RKWaveformInitAsFakeTimeFrequencyMultiplexing.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 31
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 32
 if _libs["radarkit"].has("RKWaveformInitAsTimeFrequencyMultiplexing", "cdecl"):
     RKWaveformInitAsTimeFrequencyMultiplexing = _libs["radarkit"].get("RKWaveformInitAsTimeFrequencyMultiplexing", "cdecl")
     RKWaveformInitAsTimeFrequencyMultiplexing.argtypes = [c_double, c_double, c_double, c_double]
     RKWaveformInitAsTimeFrequencyMultiplexing.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 32
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 33
 if _libs["radarkit"].has("RKWaveformInitAsFrequencyHoppingChirp", "cdecl"):
     RKWaveformInitAsFrequencyHoppingChirp = _libs["radarkit"].get("RKWaveformInitAsFrequencyHoppingChirp", "cdecl")
     RKWaveformInitAsFrequencyHoppingChirp.argtypes = [c_double, c_double, c_double, c_double, c_int]
     RKWaveformInitAsFrequencyHoppingChirp.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 33
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 34
 if _libs["radarkit"].has("RKWaveformInitFromString", "cdecl"):
     RKWaveformInitFromString = _libs["radarkit"].get("RKWaveformInitFromString", "cdecl")
     RKWaveformInitFromString.argtypes = [String]
     RKWaveformInitFromString.restype = POINTER(RKWaveform)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 35
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 36
 if _libs["radarkit"].has("RKWaveformAppendWaveform", "cdecl"):
     RKWaveformAppendWaveform = _libs["radarkit"].get("RKWaveformAppendWaveform", "cdecl")
     RKWaveformAppendWaveform.argtypes = [POINTER(RKWaveform), POINTER(RKWaveform), uint32_t]
     RKWaveformAppendWaveform.restype = RKResult
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 36
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 37
 if _libs["radarkit"].has("RKWaveformApplyWindow", "cdecl"):
     _func = _libs["radarkit"].get("RKWaveformApplyWindow", "cdecl")
     _restype = RKResult
@@ -6106,79 +6112,79 @@ if _libs["radarkit"].has("RKWaveformApplyWindow", "cdecl"):
     _argtypes = [POINTER(RKWaveform), RKWindowType]
     RKWaveformApplyWindow = _variadic_function(_func,_restype,_argtypes,_errcheck)
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 38
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 39
 if _libs["radarkit"].has("RKWaveformOnes", "cdecl"):
     RKWaveformOnes = _libs["radarkit"].get("RKWaveformOnes", "cdecl")
     RKWaveformOnes.argtypes = [POINTER(RKWaveform)]
     RKWaveformOnes.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 39
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 40
 if _libs["radarkit"].has("RKWaveformSingleTone", "cdecl"):
     RKWaveformSingleTone = _libs["radarkit"].get("RKWaveformSingleTone", "cdecl")
     RKWaveformSingleTone.argtypes = [POINTER(RKWaveform), c_double, c_double]
     RKWaveformSingleTone.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 40
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 41
 if _libs["radarkit"].has("RKWaveformLinearFrequencyModulation", "cdecl"):
     RKWaveformLinearFrequencyModulation = _libs["radarkit"].get("RKWaveformLinearFrequencyModulation", "cdecl")
     RKWaveformLinearFrequencyModulation.argtypes = [POINTER(RKWaveform), c_double, c_double, c_double]
     RKWaveformLinearFrequencyModulation.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 41
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 42
 if _libs["radarkit"].has("RKWaveformFrequencyHops", "cdecl"):
     RKWaveformFrequencyHops = _libs["radarkit"].get("RKWaveformFrequencyHops", "cdecl")
     RKWaveformFrequencyHops.argtypes = [POINTER(RKWaveform), c_double, c_double, c_double]
     RKWaveformFrequencyHops.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 42
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 43
 if _libs["radarkit"].has("RKWaveformFrequencyHoppingChirp", "cdecl"):
     RKWaveformFrequencyHoppingChirp = _libs["radarkit"].get("RKWaveformFrequencyHoppingChirp", "cdecl")
     RKWaveformFrequencyHoppingChirp.argtypes = [POINTER(RKWaveform), c_double, c_double, c_double]
     RKWaveformFrequencyHoppingChirp.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 44
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 45
 if _libs["radarkit"].has("RKWaveformDecimate", "cdecl"):
     RKWaveformDecimate = _libs["radarkit"].get("RKWaveformDecimate", "cdecl")
     RKWaveformDecimate.argtypes = [POINTER(RKWaveform), c_int]
     RKWaveformDecimate.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 45
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 46
 if _libs["radarkit"].has("RKWaveformConjuate", "cdecl"):
     RKWaveformConjuate = _libs["radarkit"].get("RKWaveformConjuate", "cdecl")
     RKWaveformConjuate.argtypes = [POINTER(RKWaveform)]
     RKWaveformConjuate.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 46
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 47
 if _libs["radarkit"].has("RKWaveformDownConvert", "cdecl"):
     RKWaveformDownConvert = _libs["radarkit"].get("RKWaveformDownConvert", "cdecl")
     RKWaveformDownConvert.argtypes = [POINTER(RKWaveform)]
     RKWaveformDownConvert.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 48
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 49
 if _libs["radarkit"].has("RKWaveformNormalizeNoiseGain", "cdecl"):
     RKWaveformNormalizeNoiseGain = _libs["radarkit"].get("RKWaveformNormalizeNoiseGain", "cdecl")
     RKWaveformNormalizeNoiseGain.argtypes = [POINTER(RKWaveform)]
     RKWaveformNormalizeNoiseGain.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 49
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 50
 if _libs["radarkit"].has("RKWaveformSummary", "cdecl"):
     RKWaveformSummary = _libs["radarkit"].get("RKWaveformSummary", "cdecl")
     RKWaveformSummary.argtypes = [POINTER(RKWaveform)]
     RKWaveformSummary.restype = None
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 51
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 52
 if _libs["radarkit"].has("RKWaveformWriteToReference", "cdecl"):
     RKWaveformWriteToReference = _libs["radarkit"].get("RKWaveformWriteToReference", "cdecl")
     RKWaveformWriteToReference.argtypes = [POINTER(RKWaveform), POINTER(FILE)]
     RKWaveformWriteToReference.restype = c_size_t
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 52
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 53
 if _libs["radarkit"].has("RKWaveformWriteFile", "cdecl"):
     RKWaveformWriteFile = _libs["radarkit"].get("RKWaveformWriteFile", "cdecl")
     RKWaveformWriteFile.argtypes = [POINTER(RKWaveform), String]
     RKWaveformWriteFile.restype = RKResult
 
-# /opt/homebrew/include/RadarKit/RKWaveform.h: 53
+# /opt/homebrew/include/RadarKit/RKWaveform.h: 54
 if _libs["radarkit"].has("RKWaveformReadFromReference", "cdecl"):
     RKWaveformReadFromReference = _libs["radarkit"].get("RKWaveformReadFromReference", "cdecl")
     RKWaveformReadFromReference.argtypes = [POINTER(FILE)]
@@ -6763,32 +6769,30 @@ if _libs["radarkit"].has("RKNoiseFromConfig", "cdecl"):
     RKNoiseFromConfig.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKNoiseFromConfig.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 26
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 27
 class struct_rk_sweep_scratch(Structure):
     pass
 
 struct_rk_sweep_scratch.__slots__ = [
-    'filename',
     'filelist',
     'summary',
     'rays',
     'rayCount',
 ]
 struct_rk_sweep_scratch._fields_ = [
-    ('filename', c_char * int((1024 - 32))),
-    ('filelist', c_char * int(4096)),
+    ('filelist', c_char * int((1024 + (20 * 1024)))),
     ('summary', c_char * int(4096)),
     ('rays', POINTER(RKRay) * int(1500)),
     ('rayCount', uint32_t),
 ]
 
-RKSweepScratchSpace = struct_rk_sweep_scratch# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 26
+RKSweepScratchSpace = struct_rk_sweep_scratch# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 27
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 30
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 31
 class struct_rk_sweep_engine(Structure):
     pass
 
-RKSweepEngine = struct_rk_sweep_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 28
+RKSweepEngine = struct_rk_sweep_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 29
 
 struct_rk_sweep_engine.__slots__ = [
     'name',
@@ -6865,37 +6869,37 @@ struct_rk_sweep_engine._fields_ = [
     ('memoryUsage', c_size_t),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 73
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 74
 if _libs["radarkit"].has("RKSweepEngineInit", "cdecl"):
     RKSweepEngineInit = _libs["radarkit"].get("RKSweepEngineInit", "cdecl")
     RKSweepEngineInit.argtypes = []
     RKSweepEngineInit.restype = POINTER(RKSweepEngine)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 74
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 75
 if _libs["radarkit"].has("RKSweepEngineFree", "cdecl"):
     RKSweepEngineFree = _libs["radarkit"].get("RKSweepEngineFree", "cdecl")
     RKSweepEngineFree.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineFree.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 76
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 77
 if _libs["radarkit"].has("RKSweepEngineSetVerbose", "cdecl"):
     RKSweepEngineSetVerbose = _libs["radarkit"].get("RKSweepEngineSetVerbose", "cdecl")
     RKSweepEngineSetVerbose.argtypes = [POINTER(RKSweepEngine), c_int]
     RKSweepEngineSetVerbose.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 77
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 78
 if _libs["radarkit"].has("RKSweepEngineSetEssentials", "cdecl"):
     RKSweepEngineSetEssentials = _libs["radarkit"].get("RKSweepEngineSetEssentials", "cdecl")
     RKSweepEngineSetEssentials.argtypes = [POINTER(RKSweepEngine), POINTER(RKRadarDesc), POINTER(RKFileManager), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
     RKSweepEngineSetEssentials.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 80
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 81
 if _libs["radarkit"].has("RKSweepEngineSetRecord", "cdecl"):
     RKSweepEngineSetRecord = _libs["radarkit"].get("RKSweepEngineSetRecord", "cdecl")
     RKSweepEngineSetRecord.argtypes = [POINTER(RKSweepEngine), c_bool]
     RKSweepEngineSetRecord.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 81
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 82
 for _lib in _libs.values():
     if not _lib.has("RKSweepEngineSetProductTimeout", "cdecl"):
         continue
@@ -6904,37 +6908,37 @@ for _lib in _libs.values():
     RKSweepEngineSetProductTimeout.restype = None
     break
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 82
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 83
 if _libs["radarkit"].has("RKSweepEngineSetFilesHandlingScript", "cdecl"):
     RKSweepEngineSetFilesHandlingScript = _libs["radarkit"].get("RKSweepEngineSetFilesHandlingScript", "cdecl")
     RKSweepEngineSetFilesHandlingScript.argtypes = [POINTER(RKSweepEngine), String, RKScriptProperty]
     RKSweepEngineSetFilesHandlingScript.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 83
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 84
 if _libs["radarkit"].has("RKSweepEngineSetProductRecorder", "cdecl"):
     RKSweepEngineSetProductRecorder = _libs["radarkit"].get("RKSweepEngineSetProductRecorder", "cdecl")
     RKSweepEngineSetProductRecorder.argtypes = [POINTER(RKSweepEngine), CFUNCTYPE(UNCHECKED(c_int), POINTER(RKProduct), String)]
     RKSweepEngineSetProductRecorder.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 85
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 86
 if _libs["radarkit"].has("RKSweepEngineStart", "cdecl"):
     RKSweepEngineStart = _libs["radarkit"].get("RKSweepEngineStart", "cdecl")
     RKSweepEngineStart.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineStart.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 86
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 87
 if _libs["radarkit"].has("RKSweepEngineStop", "cdecl"):
     RKSweepEngineStop = _libs["radarkit"].get("RKSweepEngineStop", "cdecl")
     RKSweepEngineStop.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineStop.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 87
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 88
 if _libs["radarkit"].has("RKSweepEngineFlush", "cdecl"):
     RKSweepEngineFlush = _libs["radarkit"].get("RKSweepEngineFlush", "cdecl")
     RKSweepEngineFlush.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineFlush.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 89
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 90
 if _libs["radarkit"].has("RKSweepEngineStatusString", "cdecl"):
     RKSweepEngineStatusString = _libs["radarkit"].get("RKSweepEngineStatusString", "cdecl")
     RKSweepEngineStatusString.argtypes = [POINTER(RKSweepEngine)]
@@ -6944,7 +6948,7 @@ if _libs["radarkit"].has("RKSweepEngineStatusString", "cdecl"):
         RKSweepEngineStatusString.restype = String
         RKSweepEngineStatusString.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 90
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 91
 if _libs["radarkit"].has("RKSweepEngineLatestSummary", "cdecl"):
     RKSweepEngineLatestSummary = _libs["radarkit"].get("RKSweepEngineLatestSummary", "cdecl")
     RKSweepEngineLatestSummary.argtypes = [POINTER(RKSweepEngine)]
@@ -6954,43 +6958,43 @@ if _libs["radarkit"].has("RKSweepEngineLatestSummary", "cdecl"):
         RKSweepEngineLatestSummary.restype = String
         RKSweepEngineLatestSummary.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 92
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 93
 if _libs["radarkit"].has("RKSweepEngineDescribeProduct", "cdecl"):
     RKSweepEngineDescribeProduct = _libs["radarkit"].get("RKSweepEngineDescribeProduct", "cdecl")
     RKSweepEngineDescribeProduct.argtypes = [POINTER(RKSweepEngine), RKProductDesc]
     RKSweepEngineDescribeProduct.restype = RKProductId
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 93
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 94
 if _libs["radarkit"].has("RKSweepEngineUndescribeProduct", "cdecl"):
     RKSweepEngineUndescribeProduct = _libs["radarkit"].get("RKSweepEngineUndescribeProduct", "cdecl")
     RKSweepEngineUndescribeProduct.argtypes = [POINTER(RKSweepEngine), RKProductId]
     RKSweepEngineUndescribeProduct.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 94
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 95
 if _libs["radarkit"].has("RKSweepEngineGetVacantProduct", "cdecl"):
     RKSweepEngineGetVacantProduct = _libs["radarkit"].get("RKSweepEngineGetVacantProduct", "cdecl")
     RKSweepEngineGetVacantProduct.argtypes = [POINTER(RKSweepEngine), POINTER(RKSweep), RKProductId]
     RKSweepEngineGetVacantProduct.restype = POINTER(RKProduct)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 95
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 96
 if _libs["radarkit"].has("RKSweepEngineSetProductComplete", "cdecl"):
     RKSweepEngineSetProductComplete = _libs["radarkit"].get("RKSweepEngineSetProductComplete", "cdecl")
     RKSweepEngineSetProductComplete.argtypes = [POINTER(RKSweepEngine), POINTER(RKSweep), POINTER(RKProduct)]
     RKSweepEngineSetProductComplete.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 96
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 97
 if _libs["radarkit"].has("RKSweepEngineWaitWhileBusy", "cdecl"):
     RKSweepEngineWaitWhileBusy = _libs["radarkit"].get("RKSweepEngineWaitWhileBusy", "cdecl")
     RKSweepEngineWaitWhileBusy.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineWaitWhileBusy.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 98
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 99
 if _libs["radarkit"].has("RKSweepCollect", "cdecl"):
     RKSweepCollect = _libs["radarkit"].get("RKSweepCollect", "cdecl")
     RKSweepCollect.argtypes = [POINTER(RKSweepEngine), uint8_t]
     RKSweepCollect.restype = POINTER(RKSweep)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 99
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 100
 if _libs["radarkit"].has("RKSweepFree", "cdecl"):
     RKSweepFree = _libs["radarkit"].get("RKSweepFree", "cdecl")
     RKSweepFree.argtypes = [POINTER(RKSweep)]
@@ -7954,7 +7958,7 @@ struct_rk_radar._fields_ = [
 
 RKTestFlag = uint8_t# /opt/homebrew/include/RadarKit/RKTest.h: 17
 
-enum_anon_634 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 18
+enum_anon_635 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 18
 
 RKTestFlagNone = 0# /opt/homebrew/include/RadarKit/RKTest.h: 18
 
@@ -7964,7 +7968,7 @@ RKTestFlagShowResults = (1 << 1)# /opt/homebrew/include/RadarKit/RKTest.h: 18
 
 RKTestSIMDFlag = uint8_t# /opt/homebrew/include/RadarKit/RKTest.h: 24
 
-enum_anon_635 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 25
+enum_anon_636 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 25
 
 RKTestSIMDFlagNull = 0# /opt/homebrew/include/RadarKit/RKTest.h: 25
 
@@ -7978,7 +7982,7 @@ RKTestSIMDFlagPerformanceTestAll = (RKTestSIMDFlagPerformanceTestArithmetic | RK
 
 RKAxisAction = uint8_t# /opt/homebrew/include/RadarKit/RKTest.h: 33
 
-enum_anon_636 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 34
+enum_anon_637 = c_int# /opt/homebrew/include/RadarKit/RKTest.h: 34
 
 RKAxisActionStop = 0# /opt/homebrew/include/RadarKit/RKTest.h: 34
 
@@ -8308,7 +8312,7 @@ if _libs["radarkit"].has("RKTestSIMD", "cdecl"):
 # /opt/homebrew/include/RadarKit/RKTest.h: 145
 if _libs["radarkit"].has("RKTestWindow", "cdecl"):
     RKTestWindow = _libs["radarkit"].get("RKTestWindow", "cdecl")
-    RKTestWindow.argtypes = []
+    RKTestWindow.argtypes = [c_int]
     RKTestWindow.restype = None
 
 # /opt/homebrew/include/RadarKit/RKTest.h: 146
@@ -8861,7 +8865,7 @@ except:
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 108
 try:
-    RKWaveformFolder = 'waveforms'
+    RKWaveformFolder = 'waveform'
 except:
     pass
 
@@ -9329,6 +9333,18 @@ try:
 except:
     pass
 
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 13
+try:
+    RKMaximumProductBufferDepth = 20
+except:
+    pass
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 14
+try:
+    RKMaximumListLength = (RKMaximumPathLength + (RKMaximumProductBufferDepth * RKMaximumPathLength))
+except:
+    pass
+
 # /opt/homebrew/include/RadarKit/RKTest.h: 15
 try:
     RKTestWaveformCacheCount = 2
@@ -9441,9 +9457,9 @@ rk_moment_worker = struct_rk_moment_worker# /Users/boonleng/Developer/radarkit/h
 
 rk_moment_engine = struct_rk_moment_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 41
 
-rk_sweep_scratch = struct_rk_sweep_scratch# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 26
+rk_sweep_scratch = struct_rk_sweep_scratch# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 27
 
-rk_sweep_engine = struct_rk_sweep_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 30
+rk_sweep_engine = struct_rk_sweep_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 31
 
 rk_pulse_ring_filter_worker = struct_rk_pulse_ring_filter_worker# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulseRingFilter.h: 21
 
