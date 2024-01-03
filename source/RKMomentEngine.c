@@ -986,6 +986,10 @@ void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *engine) {
     engine->momentProcessor = RKSpectralMoment;
 }
 
+void RKMomentEngineSetMomentPRocessorToATSR(RKMomentEngine * engine) {
+    engine->momentProcessor = RKPulseATSR;
+}
+
 #pragma mark - Interactions
 
 int RKMomentEngineStart(RKMomentEngine *engine) {

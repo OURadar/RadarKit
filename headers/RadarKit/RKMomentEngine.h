@@ -112,6 +112,7 @@ void RKMomentEngineSetMomentProcessorToMultiLag2(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToMultiLag3(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToMultiLag4(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *);
+void RKMomentEngineSetMomentPRocessorToATSR(RKMomentEngine *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);
