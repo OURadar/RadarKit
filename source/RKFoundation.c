@@ -331,7 +331,7 @@ int RKSetProgramName(const char *name) {
     return RKResultSuccess;
 }
 
-int RKSetRootFolder(const char *folder) {
+int RKSetRootDataFolder(const char *folder) {
     if (strlen(folder) > RKMaximumPathLength - 64) {
         fprintf(stderr, "WARNING. Very long root folder.\n");
     }

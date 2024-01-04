@@ -131,7 +131,7 @@ void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
 void RKSetUseDailyLog(const bool);
 int RKSetProgramName(const char *);
-int RKSetRootFolder(const char *);
+int RKSetRootDataFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
 
