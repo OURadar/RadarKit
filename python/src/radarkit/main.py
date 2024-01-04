@@ -269,7 +269,7 @@ class Workspace(ctypes.Structure):
         self.momentMachine.contents.momentProcessor = {
             "pp": ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
             "pph": ctypes.cast(RKPulsePairHop, type(self.momentMachine.contents.momentProcessor)),
-            "ppa": ctypes.cast(RKPulsePairStaggeredPRT, type(self.momentMachine.contents.momentProcessor)),
+            "ppa": ctypes.cast(RKPulsePairATSR, type(self.momentMachine.contents.momentProcessor)),
             "mx": ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
             "spec": ctypes.cast(RKSpectralMoment, type(self.momentMachine.contents.momentProcessor)),
         }[method]
@@ -377,6 +377,7 @@ class Workspace(ctypes.Structure):
                 print(f"ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
 
         RKFileSeek(self.fid, pos)
+        RKPulseEngineWaitWhileBusy(self.pulseMachine)
         RKMomentEngineWaitWhileBusy(self.momentMachine)
 
         return {"riq": riq, "ciq": ciq, "el": el, "az": az}
@@ -390,8 +391,10 @@ class Workspace(ctypes.Structure):
 
     def get_moment(self, offset=None, variable_list=["Z", "V", "W", "D", "R", "P"]):
         if offset is None:
-            k = self.sweepMachine.contents.scratchSpaceIndex
+            print(f"business = {self.sweepMachine.contents.business} {self.momentMachine.contents.business}")
+            print(f"rayIndex = {self.rayIndex.value}")
             RKSweepEngineFlush(self.sweepMachine)
+            k = self.sweepMachine.contents.lastRecordedScratchSpaceIndex
         else:
             k = offset
         scratch = self.sweepMachine.contents.scratchSpaces[k]

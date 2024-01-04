@@ -234,12 +234,14 @@ static void *sweepManager(void *in) {
             }
             RKPreparePath(filename);
             i = engine->productRecorder(product, filename);
-            if (i != RKResultSuccess) {
+            if (i == RKResultSuccess) {
+                // Notify file manager of a new addition if the file handling script does not remove them
+                if (engine->fileManager && !(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
+                }
+                engine->lastRecordedScratchSpaceIndex = index;
+            } else {
                 RKLog("%s Error creating %s\n", engine->name, filename);
-            }
-            // Notify file manager of a new addition if the file handling script does not remove them
-            if (engine->fileManager && !(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
-                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
             }
         } else if (engine->verbose > 1) {
             RKLog("%s Skipping %s ...\n", engine->name, filename);
@@ -610,6 +612,11 @@ void RKSweepEngineFlush(RKSweepEngine *engine) {
     do {
         usleep(1000);
     } while (k++ < 50 && *engine->rayIndex == waitIndex);
+    // Nothing to flush if the engine is not busy
+    if (engine->business == 0) {
+        RKLog("%s Nothing to flush.\n", engine->name);
+        return;
+    }
     if (engine->verbose > 1) {
         RKLog("%s Engine->state = %s   tic = %zu\n", engine->name,
             engine->state & RKEngineStateSleep1 ? "sleep 1" : (
@@ -867,6 +874,13 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
               overallMomentList, overallBaseProductList,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
+
+    // if (S->header.configIndex == T->header.configIndex && S->header.configIndex == E->header.configIndex &&
+    //     n > 1 && T->header.gateCount == 0) {
+    //     if (engine->verbose) {
+    //         RKLog("%s Transition sweep", engine->name);
+    //     }
+    // }
 
     k = 0;
     if (n > 360 && n < 380) {

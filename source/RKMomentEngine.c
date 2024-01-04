@@ -465,7 +465,13 @@ static void *momentCore(void *in) {
             k = engine->momentProcessor(space, pulses, path.length);
             // RKLog("%s Processed %d samples\n", me->name, k);
             if (k != path.length) {
-                RKLog("%s Processed %d samples, which is not expected (%d)\n", me->name, k, path.length);
+                RKLog("%s %s processed %d samples, which is unexpected (%d)\n", me->name,
+                    engine->momentProcessor == &RKPulsePair ? "RKPulsePair" : (
+                    engine->momentProcessor == &RKPulsePairHop ? "RKPulsePairHop" : (
+                    engine->momentProcessor == &RKPulsePairATSR ? "RKPulsePairATSR" : (
+                    engine->momentProcessor == &RKMultiLag ? "RKMultiLag" : (
+                    engine->momentProcessor == &RKSpectralMoment ? "RKSpectralMoment" : "UnknownMomentMethod")))),
+                    k, path.length);
             }
             // Fill in the ray with SNR and SQI censoring, 16-bit and 8-bit data
             makeRayFromScratch(space, ray);

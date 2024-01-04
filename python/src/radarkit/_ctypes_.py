@@ -4870,10 +4870,10 @@ if _libs["radarkit"].has("RKSetProgramName", "cdecl"):
     RKSetProgramName.restype = c_int
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 134
-if _libs["radarkit"].has("RKSetRootFolder", "cdecl"):
-    RKSetRootFolder = _libs["radarkit"].get("RKSetRootFolder", "cdecl")
-    RKSetRootFolder.argtypes = [String]
-    RKSetRootFolder.restype = c_int
+if _libs["radarkit"].has("RKSetRootDataFolder", "cdecl"):
+    RKSetRootDataFolder = _libs["radarkit"].get("RKSetRootDataFolder", "cdecl")
+    RKSetRootDataFolder.argtypes = [String]
+    RKSetRootDataFolder.restype = c_int
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 135
 if _libs["radarkit"].has("RKSetLogfile", "cdecl"):
@@ -6481,7 +6481,7 @@ if _libs["radarkit"].has("RKSpectralMoment", "cdecl"):
     RKSpectralMoment.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKSpectralMoment.restype = c_int
 
-# headers/RadarKit/RKPulsePairATSR.h: 15
+# /opt/homebrew/include/RadarKit/RKPulsePairATSR.h: 15
 if _libs["radarkit"].has("RKPulsePairATSR", "cdecl"):
     RKPulsePairATSR = _libs["radarkit"].get("RKPulsePairATSR", "cdecl")
     RKPulsePairATSR.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
@@ -6821,6 +6821,7 @@ struct_rk_sweep_engine.__slots__ = [
     'tidRayGatherer',
     'scratchSpaces',
     'scratchSpaceIndex',
+    'lastRecordedScratchSpaceIndex',
     'productBuffer',
     'productBufferDepth',
     'productIndex',
@@ -6858,6 +6859,7 @@ struct_rk_sweep_engine._fields_ = [
     ('tidRayGatherer', pthread_t),
     ('scratchSpaces', RKSweepScratchSpace * int(6)),
     ('scratchSpaceIndex', uint8_t),
+    ('lastRecordedScratchSpaceIndex', uint8_t),
     ('productBuffer', POINTER(RKProduct)),
     ('productBufferDepth', uint32_t),
     ('productIndex', uint32_t),
@@ -6875,37 +6877,37 @@ struct_rk_sweep_engine._fields_ = [
     ('memoryUsage', c_size_t),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 74
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 75
 if _libs["radarkit"].has("RKSweepEngineInit", "cdecl"):
     RKSweepEngineInit = _libs["radarkit"].get("RKSweepEngineInit", "cdecl")
     RKSweepEngineInit.argtypes = []
     RKSweepEngineInit.restype = POINTER(RKSweepEngine)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 75
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 76
 if _libs["radarkit"].has("RKSweepEngineFree", "cdecl"):
     RKSweepEngineFree = _libs["radarkit"].get("RKSweepEngineFree", "cdecl")
     RKSweepEngineFree.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineFree.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 77
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 78
 if _libs["radarkit"].has("RKSweepEngineSetVerbose", "cdecl"):
     RKSweepEngineSetVerbose = _libs["radarkit"].get("RKSweepEngineSetVerbose", "cdecl")
     RKSweepEngineSetVerbose.argtypes = [POINTER(RKSweepEngine), c_int]
     RKSweepEngineSetVerbose.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 78
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 79
 if _libs["radarkit"].has("RKSweepEngineSetEssentials", "cdecl"):
     RKSweepEngineSetEssentials = _libs["radarkit"].get("RKSweepEngineSetEssentials", "cdecl")
     RKSweepEngineSetEssentials.argtypes = [POINTER(RKSweepEngine), POINTER(RKRadarDesc), POINTER(RKFileManager), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
     RKSweepEngineSetEssentials.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 81
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 82
 if _libs["radarkit"].has("RKSweepEngineSetRecord", "cdecl"):
     RKSweepEngineSetRecord = _libs["radarkit"].get("RKSweepEngineSetRecord", "cdecl")
     RKSweepEngineSetRecord.argtypes = [POINTER(RKSweepEngine), c_bool]
     RKSweepEngineSetRecord.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 82
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 83
 for _lib in _libs.values():
     if not _lib.has("RKSweepEngineSetProductTimeout", "cdecl"):
         continue
@@ -6914,37 +6916,37 @@ for _lib in _libs.values():
     RKSweepEngineSetProductTimeout.restype = None
     break
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 83
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 84
 if _libs["radarkit"].has("RKSweepEngineSetFilesHandlingScript", "cdecl"):
     RKSweepEngineSetFilesHandlingScript = _libs["radarkit"].get("RKSweepEngineSetFilesHandlingScript", "cdecl")
     RKSweepEngineSetFilesHandlingScript.argtypes = [POINTER(RKSweepEngine), String, RKScriptProperty]
     RKSweepEngineSetFilesHandlingScript.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 84
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 85
 if _libs["radarkit"].has("RKSweepEngineSetProductRecorder", "cdecl"):
     RKSweepEngineSetProductRecorder = _libs["radarkit"].get("RKSweepEngineSetProductRecorder", "cdecl")
     RKSweepEngineSetProductRecorder.argtypes = [POINTER(RKSweepEngine), CFUNCTYPE(UNCHECKED(c_int), POINTER(RKProduct), String)]
     RKSweepEngineSetProductRecorder.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 86
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 87
 if _libs["radarkit"].has("RKSweepEngineStart", "cdecl"):
     RKSweepEngineStart = _libs["radarkit"].get("RKSweepEngineStart", "cdecl")
     RKSweepEngineStart.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineStart.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 87
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 88
 if _libs["radarkit"].has("RKSweepEngineStop", "cdecl"):
     RKSweepEngineStop = _libs["radarkit"].get("RKSweepEngineStop", "cdecl")
     RKSweepEngineStop.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineStop.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 88
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 89
 if _libs["radarkit"].has("RKSweepEngineFlush", "cdecl"):
     RKSweepEngineFlush = _libs["radarkit"].get("RKSweepEngineFlush", "cdecl")
     RKSweepEngineFlush.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineFlush.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 90
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 91
 if _libs["radarkit"].has("RKSweepEngineStatusString", "cdecl"):
     RKSweepEngineStatusString = _libs["radarkit"].get("RKSweepEngineStatusString", "cdecl")
     RKSweepEngineStatusString.argtypes = [POINTER(RKSweepEngine)]
@@ -6954,7 +6956,7 @@ if _libs["radarkit"].has("RKSweepEngineStatusString", "cdecl"):
         RKSweepEngineStatusString.restype = String
         RKSweepEngineStatusString.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 91
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 92
 if _libs["radarkit"].has("RKSweepEngineLatestSummary", "cdecl"):
     RKSweepEngineLatestSummary = _libs["radarkit"].get("RKSweepEngineLatestSummary", "cdecl")
     RKSweepEngineLatestSummary.argtypes = [POINTER(RKSweepEngine)]
@@ -6964,43 +6966,43 @@ if _libs["radarkit"].has("RKSweepEngineLatestSummary", "cdecl"):
         RKSweepEngineLatestSummary.restype = String
         RKSweepEngineLatestSummary.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 93
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 94
 if _libs["radarkit"].has("RKSweepEngineDescribeProduct", "cdecl"):
     RKSweepEngineDescribeProduct = _libs["radarkit"].get("RKSweepEngineDescribeProduct", "cdecl")
     RKSweepEngineDescribeProduct.argtypes = [POINTER(RKSweepEngine), RKProductDesc]
     RKSweepEngineDescribeProduct.restype = RKProductId
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 94
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 95
 if _libs["radarkit"].has("RKSweepEngineUndescribeProduct", "cdecl"):
     RKSweepEngineUndescribeProduct = _libs["radarkit"].get("RKSweepEngineUndescribeProduct", "cdecl")
     RKSweepEngineUndescribeProduct.argtypes = [POINTER(RKSweepEngine), RKProductId]
     RKSweepEngineUndescribeProduct.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 95
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 96
 if _libs["radarkit"].has("RKSweepEngineGetVacantProduct", "cdecl"):
     RKSweepEngineGetVacantProduct = _libs["radarkit"].get("RKSweepEngineGetVacantProduct", "cdecl")
     RKSweepEngineGetVacantProduct.argtypes = [POINTER(RKSweepEngine), POINTER(RKSweep), RKProductId]
     RKSweepEngineGetVacantProduct.restype = POINTER(RKProduct)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 96
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 97
 if _libs["radarkit"].has("RKSweepEngineSetProductComplete", "cdecl"):
     RKSweepEngineSetProductComplete = _libs["radarkit"].get("RKSweepEngineSetProductComplete", "cdecl")
     RKSweepEngineSetProductComplete.argtypes = [POINTER(RKSweepEngine), POINTER(RKSweep), POINTER(RKProduct)]
     RKSweepEngineSetProductComplete.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 97
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 98
 if _libs["radarkit"].has("RKSweepEngineWaitWhileBusy", "cdecl"):
     RKSweepEngineWaitWhileBusy = _libs["radarkit"].get("RKSweepEngineWaitWhileBusy", "cdecl")
     RKSweepEngineWaitWhileBusy.argtypes = [POINTER(RKSweepEngine)]
     RKSweepEngineWaitWhileBusy.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 99
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 100
 if _libs["radarkit"].has("RKSweepCollect", "cdecl"):
     RKSweepCollect = _libs["radarkit"].get("RKSweepCollect", "cdecl")
     RKSweepCollect.argtypes = [POINTER(RKSweepEngine), uint8_t]
     RKSweepCollect.restype = POINTER(RKSweep)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 100
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKSweepEngine.h: 101
 if _libs["radarkit"].has("RKSweepFree", "cdecl"):
     RKSweepFree = _libs["radarkit"].get("RKSweepFree", "cdecl")
     RKSweepFree.argtypes = [POINTER(RKSweep)]
