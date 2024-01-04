@@ -636,7 +636,7 @@ void proc(UserParams *arg) {
                 // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
                 // RKPulsePairHop(space, pulses, p);
-                RKPulseATSR(space, pulses, p);
+                RKPulsePairATSR(space, pulses, p);
                 makeRayFromScratch(space, ray);
 
                 // Timestamp

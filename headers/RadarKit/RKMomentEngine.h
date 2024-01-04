@@ -16,7 +16,7 @@
 #include <RadarKit/RKNoiseEstimator.h>
 #include <RadarKit/RKSpectralMoment.h>
 #include <RadarKit/RKCalibrator.h>
-#include <RadarKit/RKPulseATSR.h>
+#include <RadarKit/RKPulsePairATSR.h>
 
 #define RKMomentDFTPlanCount    16
 
@@ -108,11 +108,11 @@ void RKMomentEngineSetNoiseEstimator(RKMomentEngine *, int (*)(RKMomentScratch *
 void RKMomentEngineSetMomentProcessor(RKMomentEngine *, int (*)(RKMomentScratch *, RKPulse **, const uint16_t));
 void RKMomentEngineSetMomentProcessorToPulsePair(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *);
+void RKMomentEngineSetMomentPRocessorToPulsePairATSR(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToMultiLag2(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToMultiLag3(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToMultiLag4(RKMomentEngine *);
 void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *);
-void RKMomentEngineSetMomentPRocessorToPulseATSR(RKMomentEngine *);
 
 int RKMomentEngineStart(RKMomentEngine *);
 int RKMomentEngineStop(RKMomentEngine *);

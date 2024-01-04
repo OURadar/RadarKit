@@ -589,14 +589,14 @@ static void *pulseGatherer(void *_in) {
         }
         if (engine->momentProcessor == &RKMultiLag) {
             RKLog(">%s Moment method = RKMultiLag @ %d\n", engine->name, engine->userLagChoice);
-        } else if (engine->momentProcessor == &RKPulsePairHop) {
-            RKLog(">%s Moment method = RKPulsePairHop\n", engine->name);
         } else if (engine->momentProcessor == &RKPulsePair) {
             RKLog(">%s Moment method = RKPulsePair\n", engine->name);
+        } else if (engine->momentProcessor == &RKPulsePairHop) {
+            RKLog(">%s Moment method = RKPulsePairHop\n", engine->name);
+        } else if (engine->momentProcessor == &RKPulsePairATSR) {
+            RKLog(">%s Moment method = RKPulsePairATS\n", engine->name);
         } else if (engine->momentProcessor == &RKSpectralMoment) {
             RKLog(">%s Moment method = RKSpectralMoment\n", engine->name);
-        } else if (engine->momentProcessor == &RKPulseATSR) {
-            RKLog(">%s Moment method = RKPulseATS\n", engine->name);
         } else if (engine->momentProcessor == NULL || engine->momentProcessor == &RKNullProcessor) {
             RKLog(">%s Warning. No moment processor.\n", engine->name);
         } else {
@@ -967,6 +967,10 @@ void RKMomentEngineSetMomentProcessorToPulsePairHop(RKMomentEngine *engine) {
     engine->momentProcessor = RKPulsePairHop;
 }
 
+void RKMomentEngineSetMomentPRocessorToPulsePairATSR(RKMomentEngine * engine) {
+    engine->momentProcessor = RKPulsePairATSR;
+}
+
 void RKMomentEngineSetMomentProcessorToMultiLag2(RKMomentEngine *engine) {
     engine->momentProcessor = RKMultiLag;
     engine->userLagChoice = 2;
@@ -984,10 +988,6 @@ void RKMomentEngineSetMomentProcessorToMultiLag4(RKMomentEngine *engine) {
 
 void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *engine) {
     engine->momentProcessor = RKSpectralMoment;
-}
-
-void RKMomentEngineSetMomentPRocessorToPulseATSR(RKMomentEngine * engine) {
-    engine->momentProcessor = RKPulseATSR;
 }
 
 #pragma mark - Interactions

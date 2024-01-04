@@ -60,7 +60,8 @@ OBJS += RKPositionEngine.o RKSteerEngine.o
 OBJS += RKPulseEngine.o RKPulseRingFilter.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
-OBJS += RKMomentEngine.o RKPulsePair.o RKMultiLag.o RKPulseATSR.o RKSpectralMoment.o RKCalibrator.o RKNoiseEstimator.o
+OBJS += RKMomentEngine.o RKPulsePair.o RKPulsePairHop.o RKPulsePairATSR.o RKMultiLag.o RKSpectralMoment.o
+OBJS += RKCalibrator.o RKNoiseEstimator.o
 OBJS += RKHealthRelayTweeta.o RKHealthRelayNaveen.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
 
@@ -139,9 +140,10 @@ ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
 	headers/RadarKit/RKSweepEngine.h \
 	headers/RadarKit/RKPulseRingFilter.h \
 	headers/RadarKit/RKMultiLag.h \
-	headers/RadarKit/RKPulseATSR.h \
 	headers/RadarKit/RKSpectralMoment.h \
 	headers/RadarKit/RKPulsePair.h \
+	headers/RadarKit/RKPulsePairHop.h \
+	headers/RadarKit/RKPulsePairATSR.h \
 	headers/RadarKit/RKWaveform.h \
 	headers/RadarKit.h \
 	headers/RadarKit/RKTest.h \

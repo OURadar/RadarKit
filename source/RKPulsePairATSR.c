@@ -1,12 +1,12 @@
 //
-//  RKPulseATSR.c
+//  RKPulsePairATSR.c
 //  RadarKit
 //
 //  Created by Min-Duan Tzeng on 9/14/23.
 //  Copyright (c) 2023 Min-Duan Tzeng. All rights reserved.
 //
 
-#include <RadarKit/RKPulseATSR.h>
+#include <RadarKit/RKPulsePairATSR.h>
 
 void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCount) {
     //  ACF & CCF to L RX PX
@@ -210,7 +210,7 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     }
 }
 
-int RKPulseATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+int RKPulsePairATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 
     //
     // alternative transmit and simultaneous receive processing

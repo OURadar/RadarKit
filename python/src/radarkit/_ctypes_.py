@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKPulseATSR.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/src/radarkit/_ctypes_.py
+/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKPulsePairHop.h headers/RadarKit/RKPulsePairATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/src/radarkit/_ctypes_.py
 
 Do not modify this file.
 """
@@ -6481,11 +6481,11 @@ if _libs["radarkit"].has("RKSpectralMoment", "cdecl"):
     RKSpectralMoment.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKSpectralMoment.restype = c_int
 
-# /opt/homebrew/include/RadarKit/RKPulseATSR.h: 15
-if _libs["radarkit"].has("RKPulseATSR", "cdecl"):
-    RKPulseATSR = _libs["radarkit"].get("RKPulseATSR", "cdecl")
-    RKPulseATSR.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
-    RKPulseATSR.restype = c_int
+# headers/RadarKit/RKPulsePairATSR.h: 15
+if _libs["radarkit"].has("RKPulsePairATSR", "cdecl"):
+    RKPulsePairATSR = _libs["radarkit"].get("RKPulsePairATSR", "cdecl")
+    RKPulsePairATSR.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePairATSR.restype = c_int
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 26
 class struct_rk_moment_worker(Structure):
@@ -6700,34 +6700,34 @@ if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToPulsePairHop", "cdec
     RKMomentEngineSetMomentProcessorToPulsePairHop.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 111
+if _libs["radarkit"].has("RKMomentEngineSetMomentPRocessorToPulsePairATSR", "cdecl"):
+    RKMomentEngineSetMomentPRocessorToPulsePairATSR = _libs["radarkit"].get("RKMomentEngineSetMomentPRocessorToPulsePairATSR", "cdecl")
+    RKMomentEngineSetMomentPRocessorToPulsePairATSR.argtypes = [POINTER(RKMomentEngine)]
+    RKMomentEngineSetMomentPRocessorToPulsePairATSR.restype = None
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 112
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToMultiLag2", "cdecl"):
     RKMomentEngineSetMomentProcessorToMultiLag2 = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToMultiLag2", "cdecl")
     RKMomentEngineSetMomentProcessorToMultiLag2.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToMultiLag2.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 112
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 113
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToMultiLag3", "cdecl"):
     RKMomentEngineSetMomentProcessorToMultiLag3 = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToMultiLag3", "cdecl")
     RKMomentEngineSetMomentProcessorToMultiLag3.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToMultiLag3.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 113
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 114
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToMultiLag4", "cdecl"):
     RKMomentEngineSetMomentProcessorToMultiLag4 = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToMultiLag4", "cdecl")
     RKMomentEngineSetMomentProcessorToMultiLag4.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToMultiLag4.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 114
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 115
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToSpectral", "cdecl"):
     RKMomentEngineSetMomentProcessorToSpectral = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToSpectral", "cdecl")
     RKMomentEngineSetMomentProcessorToSpectral.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToSpectral.restype = None
-
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 115
-if _libs["radarkit"].has("RKMomentEngineSetMomentPRocessorToPulseATSR", "cdecl"):
-    RKMomentEngineSetMomentPRocessorToPulseATSR = _libs["radarkit"].get("RKMomentEngineSetMomentPRocessorToPulseATSR", "cdecl")
-    RKMomentEngineSetMomentPRocessorToPulseATSR.argtypes = [POINTER(RKMomentEngine)]
-    RKMomentEngineSetMomentPRocessorToPulseATSR.restype = None
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMomentEngine.h: 117
 if _libs["radarkit"].has("RKMomentEngineStart", "cdecl"):
@@ -7185,6 +7185,12 @@ if _libs["radarkit"].has("RKPulseRingFilterEngineStatusString", "cdecl"):
     else:
         RKPulseRingFilterEngineStatusString.restype = String
         RKPulseRingFilterEngineStatusString.errcheck = ReturnString
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKPulsePairHop.h: 15
+if _libs["radarkit"].has("RKPulsePairHop", "cdecl"):
+    RKPulsePairHop = _libs["radarkit"].get("RKPulsePairHop", "cdecl")
+    RKPulsePairHop.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
+    RKPulsePairHop.restype = c_int
 
 RKNetworkSocketType = c_int# /opt/homebrew/include/RadarKit/RKNetwork.h: 21
 
