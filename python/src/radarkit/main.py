@@ -261,15 +261,16 @@ class Workspace(ctypes.Structure):
         self.blindGateCount = samples.size
 
     def set_moment_method(self, method):
-        if method not in ["ppp", "ppph", "multi2", "multi3", "multi4", "spec"]:
+        if method not in ["pp", "pph", "ppa", "m2", "m3", "m4", "spec"]:
             raise RKEngineError(f"Invalid moment method: {method}")
-        if method.startswith("multi"):
+        if method.startswith("m"):
             self.momentMachine.contents.userLagChoice = int(method[-1])
-            method = "multi"
+            method = "mx"
         self.momentMachine.contents.momentProcessor = {
-            "ppp": ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
-            "ppph": ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
-            "multi": ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
+            "pp": ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
+            "pph": ctypes.cast(RKPulsePairHop, type(self.momentMachine.contents.momentProcessor)),
+            "ppa": ctypes.cast(RKPulsePairStaggeredPRT, type(self.momentMachine.contents.momentProcessor)),
+            "mx": ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
             "spec": ctypes.cast(RKSpectralMoment, type(self.momentMachine.contents.momentProcessor)),
         }[method]
 
