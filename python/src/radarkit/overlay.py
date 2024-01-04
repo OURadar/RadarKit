@@ -330,7 +330,7 @@ class PolarGrid(Grid):
     def draw(self, ax):
         ax.set(xlim=[0, self.extent[2]], ylim=[0, self.ymax], xticks=[], yticks=[])
         for x, y in self.grids:
-            line = matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=0.5 * self.s)
+            line = matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=self.s)
             ax.add_artist(line)
         for x, y, label in self.labels:
             text = matplotlib.text.Text(x, y, label, color=colors.ring, fontsize=self.size1, **self.label_props)
