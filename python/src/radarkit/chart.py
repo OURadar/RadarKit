@@ -62,8 +62,8 @@ def shade(shape, xy=(0.5, 0.5), rgba=[0, 0, 0, 0.5], direction="southeast"):
         y = blib.colormap.fleximap(shape[0], [0, xy[1], 1], [[0], [1], [0]])
         a = np.outer(y, x)
     m = np.empty((*shape, 4))
-    m[:, :, :3] = rgba[:3]
-    m[:, :, 3] = a * rgba[3]
+    m[:, :, :] = rgba
+    m[:, :, 3] *= a
     return m
 
 
