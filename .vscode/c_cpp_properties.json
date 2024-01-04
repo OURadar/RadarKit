@@ -5,8 +5,8 @@
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/headers/RadarKit",
-        "/usr/local/include",
-        "/usr/local/opt/openssl@1.1/include"
+        "${HOMEBREW_PREFIX}/include",
+        "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
       ],
       "defines": [],
       "macFrameworkPath": [
