@@ -390,7 +390,6 @@ class ChartRHI(Chart):
             mask = np.logical_and(sweep.products["Z"] > -20, sweep.products["Z"] < 80)
             h_max = np.ceil(np.max(yy[1:, 1:][mask]) + 3) if ymax is None else ymax
             extent = (0, 0, sweep.meshCoordinate.r[-1], max(sweep.meshCoordinate.e))
-            print(f"h_max = {h_max}  extent = {extent}")
 
             self.overlay = overlay.PolarGrid(extent=extent, ymax=h_max, s=self.s)
             self.overlay.load()
