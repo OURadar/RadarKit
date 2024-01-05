@@ -54,6 +54,7 @@ struct rk_moment_engine {
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
+    bool                             useOldCodes;
     bool                             useSemaphore;
     bool                             excludeBoundaryPulses;
     int                              (*noiseEstimator)(RKMomentScratch *, RKPulse **, const uint16_t);
