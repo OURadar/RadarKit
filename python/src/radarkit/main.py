@@ -313,7 +313,9 @@ class Workspace(ctypes.Structure):
             time.sleep(0.01)
         downSampledGateCount = pulse.contents.header.downSampledGateCount
         print(
-            f"Estimated number of pulses = {pulseCount:,d}    gateCount = {gateCount:,d}   downSampledGateCount = {downSampledGateCount:,d}"
+            f"Estimated pulseCount = {pulseCount:,d}"
+            + f"   gateCount = {gateCount:,d}"
+            + f"   downSampledGateCount = {downSampledGateCount:,d}"
         )
         if count is not None:
             pulseCount = min(count, pulseCount)
@@ -345,14 +347,14 @@ class Workspace(ctypes.Structure):
                     print(f"No more data to read.")
                     break
                 pulse.contents.header.configIndex = self.configIndex.value
+                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
                 if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
                     pulse.contents.header.s |= RKPulseStatusReadyForMoments
-                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
-                if self.header.dataType == RKRawDataTypeFromTransceiver:
-                    riq[ip, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
+
                 el[ip] = pulse.contents.header.elevationDegrees
                 az[ip] = pulse.contents.header.azimuthDegrees
-
+                if self.header.dataType == RKRawDataTypeFromTransceiver:
+                    riq[ip, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
                 pulse = self.get_done_pulse()
                 while pulse != None:
                     ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
@@ -363,7 +365,7 @@ class Workspace(ctypes.Structure):
             pbar.close()
 
             if self.verbose:
-                print(f"ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
+                print(f"E1: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
             s = 0
             while ic < ip and s < 30:
                 pulse = self.get_done_pulse()
@@ -374,7 +376,7 @@ class Workspace(ctypes.Structure):
                 ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                 ic += 1
             if self.verbose or s >= 30 or ic < ip:
-                print(f"ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
+                print(f"E0: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
 
         RKFileSeek(self.fid, pos)
         RKPulseEngineWaitWhileBusy(self.pulseMachine)
@@ -391,8 +393,12 @@ class Workspace(ctypes.Structure):
 
     def get_moment(self, offset=None, variable_list=["Z", "V", "W", "D", "R", "P"]):
         if offset is None:
-            print(f"business = {self.sweepMachine.contents.business} {self.momentMachine.contents.business}")
-            print(f"rayIndex = {self.rayIndex.value}")
+            if self.verbose:
+                print(
+                    f"rayIndex = {self.rayIndex.value}"
+                    + f"   sweepMachine.business = {self.sweepMachine.contents.business}"
+                    + f"   momentMachine.business = {self.momentMachine.contents.business}"
+                )
             RKSweepEngineFlush(self.sweepMachine)
             k = self.sweepMachine.contents.lastRecordedScratchSpaceIndex
         else:
@@ -418,12 +424,18 @@ class Workspace(ctypes.Structure):
         return self.variables
 
 
-def open(filename, force=False):
+def open(filename, **kwargs):
     global workspaces
+    if "force" in kwargs:
+        force = kwargs["force"]
+    else:
+        force = False
     if force or len(workspaces) == 0:
         workspace = Workspace()
     else:
         workspace = workspaces[-1]
+    if "verbose" in kwargs:
+        workspace.verbose = kwargs["verbose"]
     workspace.open(filename)
     if len(workspaces) > 3:
         print(f"Warning. Multiple workspaces ({len(workspaces)}) detected.")
