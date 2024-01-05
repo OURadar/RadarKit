@@ -409,7 +409,10 @@ static void *rayGatherer(void *in) {
         engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - j) / engine->radarDescription->rayBufferDepth, 1.0f);
 
         // A sweep is complete
-        if (ray->header.marker & RKMarkerSweepEnd) {
+        if (ray->header.marker & RKMarkerSweepEnd && is == j) {
+            RKLog("%s Warning. A sweep is complete is == j.\n", engine->name);
+            ray->header.s = RKRayStatusVacant;
+        } else if (ray->header.marker & RKMarkerSweepEnd) {
             // Gather the rays
             n = 0;
             do {
