@@ -600,7 +600,7 @@ static void *pulseGatherer(void *_in) {
         } else if (engine->momentProcessor == &RKPulsePairHop) {
             RKLog(">%s Moment method = RKPulsePairHop\n", engine->name);
         } else if (engine->momentProcessor == &RKPulsePairATSR) {
-            RKLog(">%s Moment method = RKPulsePairATS\n", engine->name);
+            RKLog(">%s Moment method = RKPulsePairATSR\n", engine->name);
         } else if (engine->momentProcessor == &RKSpectralMoment) {
             RKLog(">%s Moment method = RKSpectralMoment\n", engine->name);
         } else if (engine->momentProcessor == NULL || engine->momentProcessor == &RKNullProcessor) {

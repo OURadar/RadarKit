@@ -1,6 +1,7 @@
 import time
 import tqdm
 import ctypes
+import contextlib
 
 import numpy as np
 
@@ -52,6 +53,35 @@ class UserParams(ctypes.Structure):
         ("SNRThreshold", ctypes.c_float),
         ("SQIThreshold", ctypes.c_float),
     ]
+
+
+#
+# https://stackoverflow.com/questions/36986929/redirect-print-command-in-python-script-through-tqdm-write
+#
+
+
+class DummyFile(object):
+    file = None
+
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, x):
+        # Avoid print() second call (useless \n)
+        if len(x.rstrip()) > 0:
+            tqdm.tqdm.write(x, file=self.file)
+
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = DummyFile(sys.stdout)
+    yield
+    sys.stdout = save_stdout
+
+
+def passthrough(x):
+    return x
 
 
 class Workspace(ctypes.Structure):
@@ -236,6 +266,10 @@ class Workspace(ctypes.Structure):
         global workspaces
         workspaces.remove(self)
 
+    def print(self, stuff):
+        with nostdout():
+            print(stuff)
+
     def set_waveform(self, samples):
         waveform = RKWaveformInitWithCountAndDepth(1, samples.size)
         waveform.contents.filterAnchors[0][0].origin = 0
@@ -294,6 +328,8 @@ class Workspace(ctypes.Structure):
         RKPulseEngineSetFilterByWaveform(self.pulseMachine, config.waveform)
 
         pos = RKFileTell(self.fid)
+
+        # Read the first pulse to gather some intels
         pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
         r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
         if r != RKResultSuccess:
@@ -301,6 +337,7 @@ class Workspace(ctypes.Structure):
             raise RKEngineError("Failed to read the first pulse.")
         pulse.contents.header.configIndex = self.configIndex.value
         # Estimate the number of pulses
+        pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
         if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
             pulse.contents.header.s |= RKPulseStatusReadyForMoments
             gateCount = pulse.contents.header.downSampledGateCount
@@ -308,9 +345,11 @@ class Workspace(ctypes.Structure):
         else:
             gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
-        pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
-        while pulse.contents.header.s & RKPulseStatusProcessed == 0:
-            time.sleep(0.01)
+        # Read the first pulse, which should be the same as the one above but use get_done_pulse() for pulseEngine->doneIndex
+        pulse = None
+        while pulse is None:
+            time.sleep(0.05)
+            pulse = self.get_done_pulse()
         downSampledGateCount = pulse.contents.header.downSampledGateCount
         print(
             f"Estimated pulseCount = {pulseCount:,d}"
@@ -319,18 +358,22 @@ class Workspace(ctypes.Structure):
         )
         if count is not None:
             pulseCount = min(count, pulseCount)
-        riq = (
-            np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
-            if self.header.dataType == RKRawDataTypeFromTransceiver
-            else None
-        )
-        ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
-        az = np.zeros((pulseCount,), dtype=np.float32)
+        # Initialize the arrays and populate with the first pulse
         el = np.zeros((pulseCount,), dtype=np.float32)
-        pulseCount -= 1
-        with tqdm.tqdm(total=pulseCount, ncols=100, bar_format="{l_bar}{bar}|{elapsed}<{remaining}") as pbar:
+        az = np.zeros((pulseCount,), dtype=np.float32)
+        if self.header.dataType == RKRawDataTypeFromTransceiver:
+            riq = np.zeros((pulseCount, 2, gateCount), dtype=np.complex64)
+            riq[0, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
+        else:
+            riq = None
+        ciq = np.zeros((pulseCount, 2, downSampledGateCount), dtype=np.complex64)
+        el[0] = pulse.contents.header.elevationDegrees
+        az[0] = pulse.contents.header.azimuthDegrees
+        ciq[0, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
+
+        with tqdm.tqdm(total=pulseCount, ncols=90, bar_format="{l_bar}{bar}|{elapsed}<{remaining}") as pbar:
             ic = 0
-            for ip in range(pulseCount):
+            for ip in range(1, pulseCount):
                 pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
 
                 z = 1
@@ -338,13 +381,15 @@ class Workspace(ctypes.Structure):
                     time.sleep(0.01)
                     if z % 100 == 0:
                         s = z * 0.01
-                        RKLog(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {self.pulseMachine.contents.maxWorkerLag:.1f} \n")
+                        m = self.pulseMachine.contents.maxWorkerLag
+                        self.print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f} \n")
                     z = z + 1
 
                 r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
                 if r != RKResultSuccess:
                     self.pulseIndex.value = previous_modulo_s(self.pulseIndex.value, self.desc.pulseBufferDepth)
-                    print(f"No more data to read.")
+                    self.print("No more data to read.")
+                    ip -= 1
                     break
                 pulse.contents.header.configIndex = self.configIndex.value
                 pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
@@ -356,27 +401,27 @@ class Workspace(ctypes.Structure):
                 if self.header.dataType == RKRawDataTypeFromTransceiver:
                     riq[ip, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
                 pulse = self.get_done_pulse()
-                while pulse != None:
-                    ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
+                while pulse is not None:
                     ic += 1
+                    ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                     pulse = self.get_done_pulse()
 
                 pbar.update(1.0)
             pbar.close()
 
-            if self.verbose:
-                print(f"E1: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
-            s = 0
-            while ic < ip and s < 30:
-                pulse = self.get_done_pulse()
-                if pulse is None:
-                    time.sleep(0.1)
-                    s += 1
-                    continue
-                ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
-                ic += 1
-            if self.verbose or s >= 30 or ic < ip:
-                print(f"E0: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
+        if self.verbose:
+            print(f"E1: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
+        s = 0
+        while ic < ip and s < 30:
+            pulse = self.get_done_pulse()
+            if pulse is None:
+                time.sleep(0.1)
+                s += 1
+                continue
+            ic += 1
+            ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
+        if self.verbose or s >= 30 or ic < ip:
+            print(f"E0: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
 
         RKFileSeek(self.fid, pos)
         RKPulseEngineWaitWhileBusy(self.pulseMachine)
@@ -388,7 +433,7 @@ class Workspace(ctypes.Structure):
         return self.configs[self.configIndex.value]
 
     def get_done_pulse(self):
-        pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, None)
+        pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, False)
         return pulse if pulse else None
 
     def get_moment(self, offset=None, variable_list=["Z", "V", "W", "D", "R", "P"]):

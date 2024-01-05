@@ -392,6 +392,27 @@ static void *ringFilterCore(void *_in) {
     return NULL;
 }
 
+static void updateDonePulses(RKPulseRingFilterEngine *engine, int *j, const int i, const int k) {
+    bool *workerTaskDone;
+    // Now we check on and catch up with the pulses that are done
+    bool allDone = true;
+    while (*j != k && allDone) {
+        // Decide whether the pulse has been processed by FIR/IIR filter
+        workerTaskDone = engine->workerTaskDone + *j * engine->coreCount;
+        for (int c = 0; i < engine->coreCount; c++) {
+            allDone &= *workerTaskDone++;
+        }
+        if (allDone) {
+            RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *j);
+            if (engine->useFilter) {
+                pulse->header.s |= RKPulseStatusRingFiltered;
+            }
+            pulse->header.s |= RKPulseStatusRingProcessed;
+            *j = RKNextModuloS(*j, engine->radarDescription->pulseBufferDepth);
+        }
+    }
+}
+
 static void *pulseRingWatcher(void *_in) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
 
@@ -507,6 +528,9 @@ static void *pulseRingWatcher(void *_in) {
                 RKLog("%s sleep 1/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
             }
+
+            // Check finished pulses
+            updateDonePulses(engine, &j, i, k);
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
@@ -616,22 +640,23 @@ static void *pulseRingWatcher(void *_in) {
 		}
 
 		// Now we check on and catch up with the pulses that are done
-        allDone = true;
-        while (j != k && allDone) {
-            // Decide whether the pulse has been processed by FIR/IIR filter
-            workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
-            for (c = 0; i < engine->coreCount; c++) {
-                allDone &= *workerTaskDone++;
-            }
-            if (allDone) {
-                pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
-                if (engine->useFilter) {
-                    pulse->header.s |= RKPulseStatusRingFiltered;
-                }
-                pulse->header.s |= RKPulseStatusRingProcessed;
-                j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-            }
-        }
+        updateDonePulses(engine, &j, i, k);
+        // allDone = true;
+        // while (j != k && allDone) {
+        //     // Decide whether the pulse has been processed by FIR/IIR filter
+        //     workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
+        //     for (c = 0; i < engine->coreCount; c++) {
+        //         allDone &= *workerTaskDone++;
+        //     }
+        //     if (allDone) {
+        //         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
+        //         if (engine->useFilter) {
+        //             pulse->header.s |= RKPulseStatusRingFiltered;
+        //         }
+        //         pulse->header.s |= RKPulseStatusRingProcessed;
+        //         j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+        //     }
+        // }
 
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
