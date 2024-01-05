@@ -399,7 +399,7 @@ static void updateDonePulses(RKPulseRingFilterEngine *engine, int *j, const int 
     while (*j != k && allDone) {
         // Decide whether the pulse has been processed by FIR/IIR filter
         workerTaskDone = engine->workerTaskDone + *j * engine->coreCount;
-        for (int c = 0; i < engine->coreCount; c++) {
+        for (int c = 0; c < engine->coreCount; c++) {
             allDone &= *workerTaskDone++;
         }
         if (allDone) {
@@ -516,9 +516,6 @@ static void *pulseRingWatcher(void *_in) {
     j = 0;   // filtered pulse index
     k = 0;   // pulse index
     while (engine->state & RKEngineStateWantActive) {
-        // The pulse
-        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
-
         // Wait until the engine index move to the next one for storage, which is also the time pulse has data.
         engine->state |= RKEngineStateSleep1;
         s = 0;
@@ -530,9 +527,29 @@ static void *pulseRingWatcher(void *_in) {
             }
 
             // Check finished pulses
-            updateDonePulses(engine, &j, i, k);
+            // updateDonePulses(engine, &j, i, k);
+            allDone = true;
+            while (j != k && allDone) {
+                // Decide whether the pulse has been processed by FIR/IIR filter
+                workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
+                for (c = 0; c < engine->coreCount; c++) {
+                    allDone &= *workerTaskDone++;
+                }
+                if (allDone) {
+                    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
+                    if (engine->useFilter) {
+                        pulse->header.s |= RKPulseStatusRingFiltered;
+                    }
+                    pulse->header.s |= RKPulseStatusRingProcessed;
+                    j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+                }
+            }
         }
         engine->state ^= RKEngineStateSleep1;
+
+        // The pulse
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
+
         engine->state |= RKEngineStateSleep2;
         // Wait until the pulse has has been processed (compressed or skipped) so that this engine won't compete with the pulse compression engine to set the status.
         s = 0;
@@ -640,23 +657,23 @@ static void *pulseRingWatcher(void *_in) {
 		}
 
 		// Now we check on and catch up with the pulses that are done
-        updateDonePulses(engine, &j, i, k);
-        // allDone = true;
-        // while (j != k && allDone) {
-        //     // Decide whether the pulse has been processed by FIR/IIR filter
-        //     workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
-        //     for (c = 0; i < engine->coreCount; c++) {
-        //         allDone &= *workerTaskDone++;
-        //     }
-        //     if (allDone) {
-        //         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
-        //         if (engine->useFilter) {
-        //             pulse->header.s |= RKPulseStatusRingFiltered;
-        //         }
-        //         pulse->header.s |= RKPulseStatusRingProcessed;
-        //         j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
-        //     }
-        // }
+        // updateDonePulses(engine, &j, i, k);
+        allDone = true;
+        while (j != k && allDone) {
+            // Decide whether the pulse has been processed by FIR/IIR filter
+            workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
+            for (c = 0; c < engine->coreCount; c++) {
+                allDone &= *workerTaskDone++;
+            }
+            if (allDone) {
+                pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
+                if (engine->useFilter) {
+                    pulse->header.s |= RKPulseStatusRingFiltered;
+                }
+                pulse->header.s |= RKPulseStatusRingProcessed;
+                j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+            }
+        }
 
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
