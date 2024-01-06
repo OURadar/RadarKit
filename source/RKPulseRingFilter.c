@@ -392,27 +392,6 @@ static void *ringFilterCore(void *_in) {
     return NULL;
 }
 
-// static void updateDonePulses(RKPulseRingFilterEngine *engine, int *j, const int i, const int k) {
-//     bool *workerTaskDone;
-//     // Now we check on and catch up with the pulses that are done
-//     bool allDone = true;
-//     while (*j != k && allDone) {
-//         // Decide whether the pulse has been processed by FIR/IIR filter
-//         workerTaskDone = engine->workerTaskDone + *j * engine->coreCount;
-//         for (int c = 0; c < engine->coreCount; c++) {
-//             allDone &= *workerTaskDone++;
-//         }
-//         if (allDone) {
-//             RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *j);
-//             if (engine->useFilter) {
-//                 pulse->header.s |= RKPulseStatusRingFiltered;
-//             }
-//             pulse->header.s |= RKPulseStatusRingProcessed;
-//             *j = RKNextModuloS(*j, engine->radarDescription->pulseBufferDepth);
-//         }
-//     }
-// }
-
 static void *pulseRingWatcher(void *_in) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
 
@@ -421,8 +400,6 @@ static void *pulseRingWatcher(void *_in) {
 	float lag;
 
 	sem_t *sem[engine->coreCount];
-
-    unsigned int skipCounter = 0;
 
     bool allDone;
     bool *workerTaskDone;
@@ -436,7 +413,6 @@ static void *pulseRingWatcher(void *_in) {
     uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->ringFilterGateCount);
 
     RKPulse *pulse;
-    RKPulse *pulseToSkip;
 
 	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
     engine->workerTaskDone = (bool *)malloc(engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
@@ -574,26 +550,6 @@ static void *pulseRingWatcher(void *_in) {
         for (i = 1; i < engine->coreCount; i++) {
             lag = MAX(lag, engine->workers[i].lag);
         }
-        // if (skipCounter == 0 && lag > 0.9f) {
-        //     engine->almostFull++;
-        //     skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-        //     RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
-        //     i = *engine->pulseIndex;
-        //     do {
-        //         i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
-        //         // Have some way to skip processing
-        //         pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
-        //     } while (pulseToSkip->header.s & RKPulseStatusHasIQData && !(pulseToSkip->header.s & RKPulseStatusRingFiltered));
-        // } else if (skipCounter > 0) {
-        //     // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
-        //     // Have some way to record skipping
-        //     if (--skipCounter == 0) {
-        //         RKLog(">%s Info. Skipped a chunk.\n", engine->name);
-        //         for (i = 0; i < engine->coreCount; i++) {
-        //             engine->workers[i].lag = 0.0f;
-        //         }
-        //     }
-        // }
 
         // The config to get PulseRingFilterGateCount
         config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];

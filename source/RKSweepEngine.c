@@ -44,9 +44,14 @@ static void *rayReleaser(void *in) {
     int i, s;
     RKRay *ray;
 
-    // Grab the anchor reference as soon as possible. Modulo add 2 to get to the second oldest scratch space
-    const uint8_t index = RKNextNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth);
-    RKSweepScratchSpace *space = &engine->scratchSpaces[index];
+    // Grab the anchor reference as soon as possible. Modulo add 2 to get to
+    // the (RKSweepScratchSpaceDepth - 2)-th oldest scratch space
+    RKSweepScratchSpace *space = &engine->scratchSpaces[engine->scratchSpaceIndex];
+    const uint8_t count = engine->radarDescription->rayBufferDepth / space->rayCount;
+    const uint8_t index = count >= RKSweepScratchSpaceDepth
+                        ? RKNextNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth)
+                        : RKPreviousNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth);
+    space = &engine->scratchSpaces[index];
 
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
@@ -58,7 +63,7 @@ static void *rayReleaser(void *in) {
     } while (++s < 42 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
-        RKLog("%s rayReleaser()  index = %d\n", engine->name, index);
+        RKLog("%s rayReleaser()  index = %d   count = %d\n", engine->name, index, space->rayCount);
     }
     // Set them free
     for (i = 0; i < space->rayCount; i++) {
