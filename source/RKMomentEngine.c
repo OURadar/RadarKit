@@ -787,6 +787,7 @@ static void *pulseGatherer(void *_in) {
             engine->processedPulseIndex = k;
             RKMomentEngineUpdateStatusString(engine);
         }
+
         // Sleep if engine->state contains sleep flags
         if (engine->state & RKEngineStateSleep1) {
             engine->state ^= RKEngineStateSleep1;
