@@ -3420,7 +3420,8 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                     } else {
                         m += sprintf(text + m, "%s%c", c2, m2);
                     }
-                } else if (s0 & RKPulseStatusHasIQData) {
+                } else if (s0 & RKPulseStatusHasIQData && !(s0 & RKPulseStatusSkipped)) {
+                // } else if (s0 & RKPulseStatusRingProcessed) {
                     if (pulse->header.s == s1) {
                         *(text + m++) = m1;
                     } else {

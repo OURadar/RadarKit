@@ -250,7 +250,7 @@ static void *ringFilterCore(void *_in) {
             j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
             fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
         }
-        if (engine->useFilter) {
+        if (engine->useFilter && !(pulse->header.s & RKPulseStatusSkipped)) {
             // Now we perform the difference equation on each polarization
             // y[n] = B[0] * x[n] + B[1] * x[n - 1] + ...
             //
@@ -574,26 +574,26 @@ static void *pulseRingWatcher(void *_in) {
         for (i = 1; i < engine->coreCount; i++) {
             lag = MAX(lag, engine->workers[i].lag);
         }
-        if (skipCounter == 0 && lag > 0.9f) {
-            engine->almostFull++;
-            skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
-            i = *engine->pulseIndex;
-            do {
-                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
-                // Have some way to skip processing
-                pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
-            } while (!(pulseToSkip->header.s & RKPulseStatusRingFiltered));
-        } else if (skipCounter > 0) {
-            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
-            // Have some way to record skipping
-            if (--skipCounter == 0) {
-                RKLog(">%s Info. Skipped a chunk.\n", engine->name);
-                for (i = 0; i < engine->coreCount; i++) {
-                    engine->workers[i].lag = 0.0f;
-                }
-            }
-        }
+        // if (skipCounter == 0 && lag > 0.9f) {
+        //     engine->almostFull++;
+        //     skipCounter = engine->radarDescription->pulseBufferDepth / 10;
+        //     RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
+        //     i = *engine->pulseIndex;
+        //     do {
+        //         i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
+        //         // Have some way to skip processing
+        //         pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
+        //     } while (pulseToSkip->header.s & RKPulseStatusHasIQData && !(pulseToSkip->header.s & RKPulseStatusRingFiltered));
+        // } else if (skipCounter > 0) {
+        //     // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
+        //     // Have some way to record skipping
+        //     if (--skipCounter == 0) {
+        //         RKLog(">%s Info. Skipped a chunk.\n", engine->name);
+        //         for (i = 0; i < engine->coreCount; i++) {
+        //             engine->workers[i].lag = 0.0f;
+        //         }
+        //     }
+        // }
 
         // The config to get PulseRingFilterGateCount
         config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
@@ -668,7 +668,11 @@ static void *pulseRingWatcher(void *_in) {
             if (allDone) {
                 pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
                 if (engine->useFilter) {
-                    pulse->header.s |= RKPulseStatusRingFiltered;
+                    if (!(pulse->header.s & RKPulseStatusSkipped)) {
+                        pulse->header.s |= RKPulseStatusRingFiltered;
+                    } else {
+                        pulse->header.s |= RKPulseStatusRingSkipped;
+                    }
                 }
                 pulse->header.s |= RKPulseStatusRingProcessed;
                 j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);

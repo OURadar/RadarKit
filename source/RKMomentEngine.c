@@ -10,10 +10,10 @@
 
 // Internal Functions
 
-static void RKMomentEngineUpdateStatusString(RKMomentEngine *);
-static void zeroOutRay(RKRay *);
-static void *momentEngineCore(void *);
-static void *pulseGatherer(void *);
+// static void RKMomentEngineUpdateStatusString(RKMomentEngine *);
+// static void zeroOutRay(RKRay *);
+// static void *momentEngineCore(void *);
+// static void *pulseGatherer(void *);
 
 // Private Functions (accessible for tests)
 
@@ -766,9 +766,6 @@ static void *pulseGatherer(void *_in) {
             }
             // Keep counting up
             count++;
-
-            // Update k to catch up for the next watch
-            k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
         }
 
         // Check finished rays
@@ -805,6 +802,10 @@ static void *pulseGatherer(void *_in) {
                       engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
             usleep(1000);
+        } else {
+            // Update k to catch up for the next watch
+            k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+            s = 0;
         }
         engine->tic++;
     }

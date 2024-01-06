@@ -13,9 +13,9 @@
 
 // Internal Functions
 
-static void RKPulseEngineUpdateStatusString(RKPulseEngine *);
-static void *pulseEngineCore(void *);
-static void *pulseWatcher(void *);
+// static void RKPulseEngineUpdateStatusString(RKPulseEngine *);
+// static void *pulseEngineCore(void *);
+// static void *pulseWatcher(void *);
 
 #pragma mark - Helper Functions
 
@@ -283,6 +283,7 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
         #endif
 
     } // for (p = 0; ...
+    usleep(60000);
 }
 
 static void *pulseEngineCore(void *_in) {
@@ -644,17 +645,21 @@ static void *pulseWatcher(void *_in) {
             engine->state |= RKEngineStateSleep1;
         } else if (!(pulse->header.s & RKPulseStatusHasIQData)) {
             engine->state |= RKEngineStateSleep2;
-        } else if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
+        } else if (skipCounter == 0 && engine->maxWorkerLag > 0.85f) {
             engine->almostFull++;
+            engine->filterGid[k] = -1;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
             RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
                 engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
             i = *engine->pulseIndex;
+            RKLog("%s Info. Skipping from %d ...", engine->name, RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth));
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 engine->filterGid[i] = -1;
                 pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
-            } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
+                //RKLog("%s i = %d pulseToSkip.header.s = 0x%02x\n", engine->name, i, pulseToSkip->header.s);
+            } while (pulseToSkip->header.s & RKPulseStatusHasIQData && !(pulseToSkip->header.s & RKPulseStatusProcessed));
+            RKLog("%s Info. ... to %d ...", engine->name, i);
         } else if (skipCounter > 0) {
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             engine->filterGid[k] = -1;
@@ -674,23 +679,6 @@ static void *pulseWatcher(void *_in) {
                 engine->planIndices[k][j] = planIndex;
                 engine->fftModule->plans[planIndex].count++;
             }
-            // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
-            pulse->header.s |= RKPulseStatusInspected;
-            // Now we post
-            #ifdef DEBUG_IQ
-            RKLog("%s posting core-%d for pulse %d w/ %d gates\n", engine->name, c, k, pulse->header.gateCount);
-            #endif
-            if (engine->useSemaphore) {
-                if (sem_post(sem[c])) {
-                    RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
-                }
-            } else {
-                engine->workers[c].tic++;
-            }
-            c = RKNextModuloS(c, engine->coreCount);
-
-            // Update k to catch up for the next watch
-            k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
         }
 
         // Lag of the engine
@@ -718,6 +706,24 @@ static void *pulseWatcher(void *_in) {
                       engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
             }
             usleep(50);
+        } else {
+            // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
+            pulse->header.s |= RKPulseStatusInspected;
+            // Now we post
+            #ifdef DEBUG_IQ
+            RKLog("%s posting core-%d for pulse %d w/ %d gates\n", engine->name, c, k, pulse->header.gateCount);
+            #endif
+            if (engine->useSemaphore) {
+                if (sem_post(sem[c])) {
+                    RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+                }
+            } else {
+                engine->workers[c].tic++;
+            }
+            c = RKNextModuloS(c, engine->coreCount);
+            // Update k to catch up for the next watch
+            k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+            s = 0;
         }
         engine->tic++;
     }
