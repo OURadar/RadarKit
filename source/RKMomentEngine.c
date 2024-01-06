@@ -451,7 +451,7 @@ static void *momentEngineCore(void *in) {
         // printf("k = %d   is = %u   ie = %u\n", k, is, ie);
 
         // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
-        if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f) {
+        if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f && pulse->header.s & RKPulseStatusCompressed) {
             // Initialize the scratch space
             prepareScratch(space);
             // Call the noise estimator

@@ -283,7 +283,6 @@ void RKBuiltInCompressor(RKUserModule _Nullable ignore, RKCompressionScratch *sc
         #endif
 
     } // for (p = 0; ...
-    usleep(60000);
 }
 
 static void *pulseEngineCore(void *_in) {
@@ -450,10 +449,18 @@ static void *pulseEngineCore(void *_in) {
 
         // Now we process / skip
         if (gid < 0 || gid >= engine->filterGroupCount || engine->state & RKEngineStateMemoryChange) {
-            pulse->parameters.planSizes[0][0] = 0;
-            pulse->parameters.planSizes[1][0] = 0;
+            blindGateCount = 0;
+            for (j = 0; j < engine->filterCounts[0]; j++) {
+                blindGateCount += engine->filterAnchors[0][j].length;
+                for (p = 0; p < 2; p++) {
+                    pulse->parameters.planIndices[p][j] = 0;
+                    pulse->parameters.planSizes[p][j] = 0;
+                }
+            }
             pulse->parameters.filterCounts[0] = 0;
             pulse->parameters.filterCounts[1] = 0;
+            pulse->header.pulseWidthSampleCount = blindGateCount;
+            pulse->header.gateCount -= blindGateCount;
             pulse->header.s |= RKPulseStatusSkipped;
             if (engine->verbose > 1) {
                 RKLog("%s pulse skipped. header->i = %d   gid = %d\n", me->name, pulse->header.i, gid);
@@ -652,14 +659,18 @@ static void *pulseWatcher(void *_in) {
             RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
                 engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
             i = *engine->pulseIndex;
-            RKLog("%s Info. Skipping from %d ...", engine->name, RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth));
+            if (engine->verbose) {
+                RKLog("%s Info. Skipping from %d ...", engine->name, RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth));
+            }
             do {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 engine->filterGid[i] = -1;
                 pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
                 //RKLog("%s i = %d pulseToSkip.header.s = 0x%02x\n", engine->name, i, pulseToSkip->header.s);
             } while (pulseToSkip->header.s & RKPulseStatusHasIQData && !(pulseToSkip->header.s & RKPulseStatusProcessed));
-            RKLog("%s Info. ... to %d ...", engine->name, i);
+            if (engine->verbose) {
+                RKLog("%s Info. Skpped to %d ...", engine->name, i);
+            }
         } else if (skipCounter > 0) {
             // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
             engine->filterGid[k] = -1;

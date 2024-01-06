@@ -206,7 +206,6 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->coresForPulseRingFilter = 2;
             user->coresForMomentProcessor = 2;
             user->desc.pulseToRayRatio = 2;
-            user->desc.pulseBufferDepth = 1000;
             break;
         case 2:
             // Low: 10-MHz
