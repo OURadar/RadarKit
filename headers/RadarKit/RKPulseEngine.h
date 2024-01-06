@@ -51,6 +51,7 @@ struct rk_pulse_engine {
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
+    bool                             useOldCodes;
     bool                             useSemaphore;
     uint32_t                         filterGroupCount;
     uint32_t                         filterCounts[RKMaximumWaveformCount];

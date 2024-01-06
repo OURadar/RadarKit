@@ -392,26 +392,26 @@ static void *ringFilterCore(void *_in) {
     return NULL;
 }
 
-static void updateDonePulses(RKPulseRingFilterEngine *engine, int *j, const int i, const int k) {
-    bool *workerTaskDone;
-    // Now we check on and catch up with the pulses that are done
-    bool allDone = true;
-    while (*j != k && allDone) {
-        // Decide whether the pulse has been processed by FIR/IIR filter
-        workerTaskDone = engine->workerTaskDone + *j * engine->coreCount;
-        for (int c = 0; c < engine->coreCount; c++) {
-            allDone &= *workerTaskDone++;
-        }
-        if (allDone) {
-            RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *j);
-            if (engine->useFilter) {
-                pulse->header.s |= RKPulseStatusRingFiltered;
-            }
-            pulse->header.s |= RKPulseStatusRingProcessed;
-            *j = RKNextModuloS(*j, engine->radarDescription->pulseBufferDepth);
-        }
-    }
-}
+// static void updateDonePulses(RKPulseRingFilterEngine *engine, int *j, const int i, const int k) {
+//     bool *workerTaskDone;
+//     // Now we check on and catch up with the pulses that are done
+//     bool allDone = true;
+//     while (*j != k && allDone) {
+//         // Decide whether the pulse has been processed by FIR/IIR filter
+//         workerTaskDone = engine->workerTaskDone + *j * engine->coreCount;
+//         for (int c = 0; c < engine->coreCount; c++) {
+//             allDone &= *workerTaskDone++;
+//         }
+//         if (allDone) {
+//             RKPulse *pulse = RKGetPulseFromBuffer(engine->pulseBuffer, *j);
+//             if (engine->useFilter) {
+//                 pulse->header.s |= RKPulseStatusRingFiltered;
+//             }
+//             pulse->header.s |= RKPulseStatusRingProcessed;
+//             *j = RKNextModuloS(*j, engine->radarDescription->pulseBufferDepth);
+//         }
+//     }
+// }
 
 static void *pulseRingWatcher(void *_in) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;

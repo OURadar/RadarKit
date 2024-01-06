@@ -12,7 +12,7 @@
 
 static void RKMomentEngineUpdateStatusString(RKMomentEngine *);
 static void zeroOutRay(RKRay *);
-static void *momentCore(void *);
+static void *momentEngineCore(void *);
 static void *pulseGatherer(void *);
 
 // Private Functions (accessible for tests)
@@ -167,7 +167,7 @@ int RKNoiseFromConfig(RKMomentScratch *space, RKPulse **pulses, const uint16_t p
 
 #pragma mark - Delegate Workers
 
-static void *momentCore(void *in) {
+static void *momentEngineCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
     RKMomentEngine *engine = me->parent;
 
@@ -265,6 +265,7 @@ static void *momentCore(void *in) {
     const uint32_t capacity = engine->radarDescription->pulseCapacity / engine->radarDescription->pulseToRayRatio;
     engine->memoryUsage += RKMomentScratchAlloc(&space, capacity, engine->verbose, me->name);
     if (space == NULL || mem == 0) {
+        RKLog("%s Error. Unable to allocate memory for moment scratch\n", me->name);
         exit(EXIT_FAILURE);
     }
 
@@ -642,7 +643,7 @@ static void *pulseGatherer(void *_in) {
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
         }
-        if (pthread_create(&worker->tid, NULL, momentCore, worker) != 0) {
+        if (pthread_create(&worker->tid, NULL, momentEngineCore, worker) != 0) {
             RKLog(">%s Error. Failed to start a moment core.\n", engine->name);
             return (void *)RKResultFailedToStartMomentCore;
         }
@@ -668,12 +669,15 @@ static void *pulseGatherer(void *_in) {
     gettimeofday(&t1, NULL); t1.tv_sec -= 1;
 
     // Here comes the busy loop
+    // i  anonymous
     j = 0;   // ray index for workers
     k = 0;   // pulse index
     c = 0;   // core index
-    s = 0;
+    s = 0;   // sleep counter
     while (engine->state & RKEngineStateWantActive) {
+        // The pulse
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
+        // Determine the engine state
         if (k == *engine->pulseIndex) {
             engine->state |= RKEngineStateSleep1;
         } else if ((pulse->header.s & RKPulseStatusReadyForMoments) != RKPulseStatusReadyForMoments) {
@@ -775,6 +779,10 @@ static void *pulseGatherer(void *_in) {
             engine->business--;
         }
 
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
+        RKMomentEngineUpdateMinMaxWorkerLag(engine);
+
         // Log a message if it has been a while
         gettimeofday(&t0, NULL);
         if (RKTimevalDiff(t0, t1) > 0.05) {
@@ -810,9 +818,11 @@ static void *pulseGatherer(void *_in) {
         pthread_join(worker->tid, NULL);
         sem_unlink(worker->semaphoreName);
     }
-
-    engine->state ^= RKEngineStateActive;
-
+    if (engine->state & RKEngineStateActive) {
+        engine->state ^= RKEngineStateActive;
+    } else {
+        RKLog("%s Warning. Pulse gatherer stopped without being active.\n", engine->name);
+    }
     return NULL;
 }
 
@@ -893,7 +903,7 @@ static void *pulseGathererV1(void *_in) {
         if (engine->verbose > 1) {
             RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
         }
-        if (pthread_create(&worker->tid, NULL, momentCore, worker) != 0) {
+        if (pthread_create(&worker->tid, NULL, momentEngineCore, worker) != 0) {
             RKLog(">%s Error. Failed to start a moment core.\n", engine->name);
             return (void *)RKResultFailedToStartMomentCore;
         }

@@ -1617,7 +1617,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         .pulseBufferDepth = RKMaximumPulsesPerRay + 500,   // Number of pulses the buffer can hold (RKBuffer pulses, be sure this is enough)
         .pulseCapacity = capacity,                         // Number of range gates each pulse can hold
         .rayBufferDepth = RKMaximumRaysPerSweep + 50,      // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
-        .filePrefix = "HRS",                               // A prefix for the output file name
+        .filePrefix = "BTC",                               // A prefix for the output file name
         .dataPath = "data",                                // A path to the output directory
         .latitude = 35.23682,
         .longitude = -97.46381,

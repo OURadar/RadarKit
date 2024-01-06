@@ -346,7 +346,7 @@ static void *pulseEngineCore(void *_in) {
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&busyPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&fullPeriods, RKMemoryAlignSize, RKWorkerDutyCycleBufferDepth * sizeof(double)))
     if (busyPeriods == NULL || fullPeriods == NULL) {
-        RKLog("Error. Unable to allocate resources for duty cycle calculation\n");
+        RKLog("%s Error. Unable to allocate resources for duty cycle calculation\n", me->name);
         return (void *)RKResultFailedToAllocateDutyCycleBuffer;
     }
     memset(busyPeriods, 0, RKWorkerDutyCycleBufferDepth * sizeof(double));
@@ -376,6 +376,7 @@ static void *pulseEngineCore(void *_in) {
     const uint32_t capacity = engine->radarDescription->pulseCapacity;
     engine->memoryUsage += RKCompressionScratchAlloc(&scratch, capacity, engine->verbose, me->name);
     if (scratch == NULL || mem == 0) {
+        RKLog("%s Error. Unable to allocate memory for compression scratch.\n", me->name);
         exit(EXIT_FAILURE);
     }
 
@@ -553,6 +554,192 @@ static void *pulseEngineCore(void *_in) {
 }
 
 static void *pulseWatcher(void *_in) {
+    RKPulseEngine *engine = (RKPulseEngine *)_in;
+
+    int c, i, j, k, s;
+    struct timeval t0, t1;
+
+    sem_t *sem[engine->coreCount];
+
+    unsigned int gid;
+    unsigned int planIndex = 0;
+    unsigned int skipCounter = 0;
+
+    if (engine->coreCount == 0) {
+        RKLog("Error. No processing core?\n");
+        return NULL;
+    }
+
+    RKPulse *pulse;
+    RKPulse *pulseToSkip;
+
+    // Update the engine state
+    engine->state |= RKEngineStateWantActive;
+    engine->state ^= RKEngineStateActivating;
+
+    // Spin off N workers to process I/Q pulses
+    memset(sem, 0, engine->coreCount * sizeof(sem_t *));
+    for (c = 0; c < engine->coreCount; c++) {
+        RKPulseWorker *worker = &engine->workers[c];
+        snprintf(worker->semaphoreName, sizeof(worker->semaphoreName), "rk-iq-%03d", c);
+        sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+        if (sem[c] == SEM_FAILED) {
+            if (engine->verbose > 1) {
+                RKLog(">%s Info. Semaphore %s exists. Try to remove and recreate.\n", engine->name, worker->semaphoreName);
+            }
+            if (sem_unlink(worker->semaphoreName)) {
+                RKLog(">%s Error. Unable to unlink semaphore %s.\n", engine->name, worker->semaphoreName);
+            }
+            // 2nd trial
+            sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+            if (sem[c] == SEM_FAILED) {
+                RKLog(">%s Error. Unable to remove then create semaphore %s\n", engine->name, worker->semaphoreName);
+                return (void *)RKResultFailedToInitiateSemaphore;
+            } else if (engine->verbose > 1) {
+                RKLog(">%s Info. Semaphore %s removed and recreated.\n", engine->name, worker->semaphoreName);
+            }
+        }
+        worker->id = c;
+        worker->sem = sem[c];
+        worker->parent = engine;
+        if (engine->verbose > 1) {
+            RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
+        }
+        if (pthread_create(&worker->tid, NULL, pulseEngineCore, worker) != 0) {
+            RKLog(">%s Error. Failed to start a compression core.\n", engine->name);
+            return (void *)RKResultFailedToStartCompressionCore;
+        }
+    }
+
+    // Wait for the workers to increase the tic count once
+    // Using sem_wait here could cause a stolen post within the worker
+    // Tested and removed on 9/29/2016
+    engine->state |= RKEngineStateSleep0;
+    for (c = 0; c < engine->coreCount; c++) {
+        while (engine->workers[c].tic == 0) {
+            usleep(10000);
+        }
+    }
+    engine->state ^= RKEngineStateSleep0;
+    engine->state |= RKEngineStateActive;
+
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+
+    // Increase the tic once to indicate the engine is ready
+    engine->tic = 1;
+
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
+
+    // Here comes the busy loop
+    // i  anonymous
+    // j  filter index
+    k = 0;   // pulse index
+    c = 0;   // core index
+    s = 0;   // sleep counter
+    while (engine->state & RKEngineStateWantActive) {
+        // The pulse
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
+        // Determine the engine state
+        if (k == *engine->pulseIndex) {
+            engine->state |= RKEngineStateSleep1;
+        } else if (!(pulse->header.s & RKPulseStatusHasIQData)) {
+            engine->state |= RKEngineStateSleep2;
+        } else if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
+            engine->almostFull++;
+            skipCounter = engine->radarDescription->pulseBufferDepth / 10;
+            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
+                engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
+            i = *engine->pulseIndex;
+            do {
+                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
+                engine->filterGid[i] = -1;
+                pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
+            } while (!(pulseToSkip->header.s & RKPulseStatusProcessed));
+        } else if (skipCounter > 0) {
+            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
+            engine->filterGid[k] = -1;
+            engine->planIndices[k][0] = 0;
+            if (--skipCounter == 0 && engine->verbose) {
+                RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs k = %d\n", engine->name, *engine->pulseIndex, k);
+            }
+        } else {
+            // Compute the filter group id to use
+            engine->filterGid[k] = (gid = pulse->header.i % engine->filterGroupCount);
+            //printf("pulse->header.i = %d   gid = %d\n", (uint32_t)pulse->header.i, gid);
+
+            // Find the right plan and increase the use count, assuming the compressor will use it
+            for (j = 0; j < engine->filterCounts[gid]; j++) {
+                planIndex = (unsigned int)ceilf(log2f((float)MIN(pulse->header.gateCount - engine->filterAnchors[gid][j].inputOrigin,
+                                                                 engine->filterAnchors[gid][j].maxDataLength + engine->filterAnchors[gid][j].length)));
+                engine->planIndices[k][j] = planIndex;
+                engine->fftModule->plans[planIndex].count++;
+            }
+            // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
+            pulse->header.s |= RKPulseStatusInspected;
+            // Now we post
+            #ifdef DEBUG_IQ
+            RKLog("%s posting core-%d for pulse %d w/ %d gates\n", engine->name, c, k, pulse->header.gateCount);
+            #endif
+            if (engine->useSemaphore) {
+                if (sem_post(sem[c])) {
+                    RKLog("Error. Failed in sem_post(), errno = %d\n", errno);
+                }
+            } else {
+                engine->workers[c].tic++;
+            }
+            c = RKNextModuloS(c, engine->coreCount);
+
+            // Update k to catch up for the next watch
+            k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+        }
+
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
+        RKPulseEngineUpdateMinMaxWorkerLag(engine);
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKPulseEngineUpdateStatusString(engine);
+        }
+        // Sleep if engine->state contains sleep flags
+        if (engine->state & RKEngineStateSleep1) {
+            engine->state ^= RKEngineStateSleep1;
+            if (++s % 4000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
+            }
+            usleep(50);
+        } else if (engine->state & RKEngineStateSleep2) {
+            engine->state ^= RKEngineStateSleep2;
+            if (++s % 4000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
+            }
+            usleep(50);
+        }
+        engine->tic++;
+    }
+
+    // Wait for workers to return
+    for (c = 0; c < engine->coreCount; c++) {
+        RKPulseWorker *worker = &engine->workers[c];
+        if (engine->useSemaphore) {
+            sem_post(worker->sem);
+        }
+        pthread_join(worker->tid, NULL);
+        sem_unlink(worker->semaphoreName);
+    }
+    if (engine->state & RKEngineStateActive) {
+        engine->state ^= RKEngineStateActive;
+    } else {
+        RKLog("%s Warning. Pulse watcher stopped without being active.\n", engine->name);
+    }
+    return NULL;
+}
+
+static void *pulseWatcherV1(void *_in) {
     RKPulseEngine *engine = (RKPulseEngine *)_in;
 
     int c, i, j, k, s;
@@ -1106,9 +1293,16 @@ int RKPulseEngineStart(RKPulseEngine *engine) {
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
-    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
-        RKLog("%s Error. Failed to start.\n", engine->name);
-        return RKResultFailedToStartPulseWatcher;
+    if (engine->useOldCodes) {
+        if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcherV1, engine) != 0) {
+            RKLog("%s Error. Failed to start.\n", engine->name);
+            return RKResultFailedToStartPulseWatcher;
+        }
+    } else {
+        if (pthread_create(&engine->tidPulseWatcher, NULL, pulseWatcher, engine) != 0) {
+            RKLog("%s Error. Failed to start.\n", engine->name);
+            return RKResultFailedToStartPulseWatcher;
+        }
     }
     while (engine->tic == 0) {
         usleep(10000);
