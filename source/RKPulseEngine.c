@@ -702,21 +702,22 @@ static void *pulseWatcher(void *_in) {
             t1 = t0;
             RKPulseEngineUpdateStatusString(engine);
         }
+
         // Sleep if engine->state contains sleep flags
-        if (engine->state & RKEngineStateSleep1) {
-            engine->state ^= RKEngineStateSleep1;
-            if (++s % 4000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
-            }
+        if (engine->state & RKEngineStateSleep1 || engine->state & RKEngineStateSleep2) {
             usleep(50);
-        } else if (engine->state & RKEngineStateSleep2) {
-            engine->state ^= RKEngineStateSleep2;
             if (++s % 4000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
+                RKLog("%s sleep %d/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
+                      engine->name,
+                      engine->state & RKEngineStateSleep1 ? 1 : (engine->state & RKEngineStateSleep2 ? 2 : 0),
+                      (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
             }
-            usleep(50);
+            if (engine->state & RKEngineStateSleep1) {
+                engine->state ^= RKEngineStateSleep1;
+            }
+            if (engine->state & RKEngineStateSleep2) {
+                engine->state ^= RKEngineStateSleep2;
+            }
         } else {
             // The pulse is considered "inspected" whether it will be skipped / compressed by the desingated worker
             pulse->header.s |= RKPulseStatusInspected;

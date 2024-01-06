@@ -193,3 +193,6 @@ install: showinfo
 uninstall:
 	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit
 	rm -rf ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
+
+reinstall: uninstall install
+	@echo "Reinstalled RadarKit."

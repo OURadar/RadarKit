@@ -3481,8 +3481,8 @@ void *RKTestPulseEngineSpeedWorker(void *in) {
 
     t = RKTimevalDiff(toc, tic);
 
-    // Store the result in engine->lag for main thread to read
-    engine->lag = count / t;
+    // Store the result in engine->rate for main thread to read
+    engine->rate = count / t;
 
     RKLog(">Test elapsed %.3f s (%.3f ms / pulse)\n", t, 1.0e3 * t / count);
     RKLog(">Speed: %s pulses / sec\n", RKIntegerToCommaStyleString(count / t));
@@ -3576,7 +3576,7 @@ void RKTestPulseEngineSpeed(const int cores) {
 
         pthread_join(tid, NULL);
 
-        p[t] = engine->lag;
+        p[t] = engine->rate;
 
         RKPulseEngineFree(engine);
 

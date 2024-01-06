@@ -76,6 +76,7 @@ struct rk_pulse_engine {
     RKEngineState                    state;
     uint64_t                         tic;
     float                            lag;
+    float                            rate;
     float                            minWorkerLag;
     float                            maxWorkerLag;
     int                              almostFull;
