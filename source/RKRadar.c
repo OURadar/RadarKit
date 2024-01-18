@@ -456,9 +456,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     RKSetUseDailyLog(true);
     if (strlen(desc.dataPath)) {
-        RKSetRootFolder(desc.dataPath);
+        RKSetRootDataFolder(desc.dataPath);
     } else {
-        RKSetRootFolder(RKDefaultDataPath);
+        RKSetRootDataFolder(RKDefaultDataPath);
     }
 
     RKLog("Initializing ... 0x%08x %s", desc.initFlags, desc.dataPath);
@@ -1391,7 +1391,7 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
 
 int RKSetDataPath(RKRadar *radar, const char *path) {
     memcpy(radar->desc.dataPath, path, RKMaximumPathLength - 1);
-    RKSetRootFolder(path);
+    RKSetRootDataFolder(path);
     return RKResultSuccess;
 }
 

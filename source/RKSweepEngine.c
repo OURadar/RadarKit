@@ -44,9 +44,14 @@ static void *rayReleaser(void *in) {
     int i, s;
     RKRay *ray;
 
-    // Grab the anchor reference as soon as possible. Modulo add 2 to get to the second oldest scratch space
-    const uint8_t index = RKNextNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth);
-    RKSweepScratchSpace *space = &engine->scratchSpaces[index];
+    // Grab the anchor reference as soon as possible. Modulo add 2 to get to
+    // the (RKSweepScratchSpaceDepth - 2)-th oldest scratch space
+    RKSweepScratchSpace *space = &engine->scratchSpaces[engine->scratchSpaceIndex];
+    const uint8_t count = engine->radarDescription->rayBufferDepth / space->rayCount;
+    const uint8_t index = count >= RKSweepScratchSpaceDepth
+                        ? RKNextNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth)
+                        : RKPreviousNModuloS(engine->scratchSpaceIndex, 2, RKSweepScratchSpaceDepth);
+    space = &engine->scratchSpaces[index];
 
     // Notify the thread creator that I have grabbed the parameter
     engine->tic++;
@@ -58,7 +63,7 @@ static void *rayReleaser(void *in) {
     } while (++s < 42 && engine->state & RKEngineStateWantActive);
 
     if (engine->verbose > 1) {
-        RKLog("%s rayReleaser()  index = %d\n", engine->name, index);
+        RKLog("%s rayReleaser()  index = %d   count = %d\n", engine->name, index, space->rayCount);
     }
     // Set them free
     for (i = 0; i < space->rayCount; i++) {
@@ -234,12 +239,13 @@ static void *sweepManager(void *in) {
             }
             RKPreparePath(filename);
             i = engine->productRecorder(product, filename);
-            if (i != RKResultSuccess) {
+            if (i == RKResultSuccess) {
+                // Notify file manager of a new addition if the file handling script does not remove them
+                if (engine->fileManager && !(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
+                    RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
+                }
+            } else {
                 RKLog("%s Error creating %s\n", engine->name, filename);
-            }
-            // Notify file manager of a new addition if the file handling script does not remove them
-            if (engine->fileManager && !(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
-                RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
             }
         } else if (engine->verbose > 1) {
             RKLog("%s Skipping %s ...\n", engine->name, filename);
@@ -262,6 +268,9 @@ static void *sweepManager(void *in) {
             summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
     }
+
+    // Save a copy of the last recorded scratch space index
+    engine->lastRecordedScratchSpaceIndex = index;
 
     // Unmark the state
     engine->state ^= RKEngineStateWritingFile;
@@ -407,7 +416,10 @@ static void *rayGatherer(void *in) {
         engine->lag = fmodf(((float)*engine->rayIndex + engine->radarDescription->rayBufferDepth - j) / engine->radarDescription->rayBufferDepth, 1.0f);
 
         // A sweep is complete
-        if (ray->header.marker & RKMarkerSweepEnd) {
+        if (ray->header.marker & RKMarkerSweepEnd && is == j) {
+            RKLog("%s Warning. A sweep is complete is == j.\n", engine->name);
+            ray->header.s = RKRayStatusVacant;
+        } else if (ray->header.marker & RKMarkerSweepEnd) {
             // Gather the rays
             n = 0;
             do {
@@ -610,6 +622,11 @@ void RKSweepEngineFlush(RKSweepEngine *engine) {
     do {
         usleep(1000);
     } while (k++ < 50 && *engine->rayIndex == waitIndex);
+    // Nothing to flush if the engine is not busy
+    if (engine->business == 0) {
+        RKLog("%s Nothing to flush.\n", engine->name);
+        return;
+    }
     if (engine->verbose > 1) {
         RKLog("%s Engine->state = %s   tic = %zu\n", engine->name,
             engine->state & RKEngineStateSleep1 ? "sleep 1" : (
@@ -867,6 +884,13 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
               overallMomentList, overallBaseProductList,
               RKIntegerToCommaStyleString(S->header.gateCount), n, 1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
     }
+
+    // if (S->header.configIndex == T->header.configIndex && S->header.configIndex == E->header.configIndex &&
+    //     n > 1 && T->header.gateCount == 0) {
+    //     if (engine->verbose) {
+    //         RKLog("%s Transition sweep", engine->name);
+    //     }
+    // }
 
     k = 0;
     if (n > 360 && n < 380) {

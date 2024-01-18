@@ -531,7 +531,7 @@ void proc(UserParams *arg) {
                 pulse->parameters.filterCounts[0] = j;
                 pulse->parameters.filterCounts[1] = j;
                 pulse->header.pulseWidthSampleCount = blindGateCount;
-                pulse->header.gateCount -= blindGateCount;
+                pulse->header.gateCount += 1 - blindGateCount;
                 pulse->header.s |= RKPulseStatusCompressed;
 
                 // Down-sampling
@@ -559,7 +559,7 @@ void proc(UserParams *arg) {
                     fwrite(RKGetComplexDataFromPulse(pulse, 1), sizeof(RKComplex), pulse->header.downSampledGateCount, outfid);
                 }
             } else {
-                pulse->header.s |= RKPulseStatusReadyForMoments;
+                pulse->header.s |= RKPulseStatusCompleteForMoments;
             }
 
             // Mark for process later

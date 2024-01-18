@@ -750,6 +750,54 @@ void RKUTCTime(struct timespec *t) {
 #endif
 }
 
+char *RKTimevalToString(const struct timeval time, int format) {
+    static int ibuf = 0;
+    static char stringBuffer[16][64];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    if (time.tv_sec == (unsigned long)0xFEEDFACE) {
+        #if defined(DEBUG_MUTEX_DESTROY)
+        fprintf(stderr, "RKTimevalToString: Destroying mutex lock ...\n");
+        #endif
+        pthread_mutex_destroy(&lock);
+        return NULL;
+    }
+
+    pthread_mutex_lock(&lock);
+    char *string = stringBuffer[ibuf];
+    ibuf = ibuf == 15 ? 0 : ibuf + 1;
+    pthread_mutex_unlock(&lock);
+
+    char formatString[8];
+    int n = 0, o = 0;
+
+    if (format >= 1080) {
+        strftime(string, 20, "%Y/%m/%d %H:%M:%S", localtime(&time.tv_sec));
+        n = CLAMP(format - 1080, 0, 6);
+        o = 19;
+    } else if (format >= 860) {
+        strftime(string, 16, "%Y%m%d-%H%M%S", localtime(&time.tv_sec));
+        n = CLAMP(format - 860, 0, 6);
+        o = 15;
+    } else if (format >= 80) {
+        strftime(string, 9, "%H:%M:%S", localtime(&time.tv_sec));
+        n = CLAMP(format - 80, 0, 6);
+        o = 8;
+    } else if (format >= 60) {
+        strftime(string, 7, "%H%M%S", localtime(&time.tv_sec));
+        n = CLAMP(format - 60, 0, 6);
+        o = 6;
+    } else {
+        strftime(string, 16, "%Y%m%d-%H%M%S", localtime(&time.tv_sec));
+    }
+    if (n > 0) {
+        snprintf(formatString, 7, ".%%0%du", n);
+        snprintf(string + o, 63 - o, formatString, (uint32_t)time.tv_usec / (uint32_t)pow(10, 6 - n));
+    }
+
+    return string;
+}
+
 #pragma mark - File / Path
 
 bool RKFilenameExists(const char *filename) {

@@ -83,6 +83,10 @@ RKUIntegerToCommaStyleString(sizeof(x)), \
 sizeof(x) % RKMemoryAlignSize == 0 ? "True" : "False", \
 sizeof(x) % RKMemoryAlignSize != 0 ? RKWarningColor " WARNING " RKNoColor : "");
 
+#ifndef CLAMP
+#define CLAMP(x, lo, hi)     MIN(MAX((x), (lo)), (hi))
+#endif
+
 #if defined(__APPLE__)
 
 #define SYSCTL_CORE_COUNT   "machdep.cpu.core_count"
@@ -220,6 +224,9 @@ double RKTimespecDiff(const struct timespec minuend, const struct timespec subtr
 
 // Gets the current UTC time in struct timespec
 void RKUTCTime(struct timespec *);
+
+// Returns a string of the supplied timeval
+char *RKTimevalToString(const struct timeval, int);
 
 //
 //

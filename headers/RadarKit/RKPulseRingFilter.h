@@ -47,6 +47,7 @@ struct rk_pulse_ring_filter_engine {
     uint8_t                          verbose;
     uint8_t                          coreCount;
     uint8_t                          coreOrigin;
+    bool                             useOldCodes;
     bool                             useSemaphore;
     bool                             useFilter;                                // Use FIR/IIR filter
     RKIIRFilter                      filter;                                   // The FIR/IIR filter coefficients
@@ -64,6 +65,8 @@ struct rk_pulse_ring_filter_engine {
     RKEngineState                    state;
     uint64_t                         tic;
     float                            lag;
+    float                            minWorkerLag;
+    float                            maxWorkerLag;
     int                              almostFull;
     size_t                           memoryUsage;
 };

@@ -165,8 +165,6 @@
 #define HIGHLIGHT(x)         "\033[38;5;82;48;5;238m" x "\033[m"
 #define UNDERLINE_ITALIC(x)  "\033[3;4m" x "\033[23;24m"
 
-#define CLAMP(x, lo, hi)     MIN(MAX((x), (lo)), (hi))
-
 #define RKFilterAnchorDefault                           {{.length = 1, .maxDataLength = RKMaximumGateCount, .filterGain = 1.0f}}
 #define RKFilterAnchorDefaultWithMaxDataLength(x)       {{.length = 1, .maxDataLength = (x), .filterGain = 1.0f}}
 #define RKFilterAnchorOfLengthAndMaxDataLength(x, y)    {{.length = (x), .maxDataLength = (y), .filterGain = 1.0f}}
@@ -581,9 +579,15 @@ enum {
     RKPulseStatusRingFiltered                    = (1 << 8),                   // 0x100
     RKPulseStatusRingSkipped                     = (1 << 9),                   // 0x200
     RKPulseStatusRingProcessed                   = (1 << 10),                  // 0x400
-    RKPulseStatusReadyForMoments                 = (RKPulseStatusProcessed
+    RKPulseStatusReadyForMomentEngine            = (RKPulseStatusRingProcessed
+                                                 | RKPulseStatusProcessed
+                                                 | RKPulseStatusHasPosition
+                                                 | RKPulseStatusHasIQData),
+    RKPulseStatusCompleteForMoments              = (RKPulseStatusRingProcessed
+                                                 | RKPulseStatusProcessed
+                                                 | RKPulseStatusDownSampled
                                                  | RKPulseStatusCompressed
-                                                 | RKPulseStatusRingProcessed
+                                                 | RKPulseStatusInspected
                                                  | RKPulseStatusHasPosition
                                                  | RKPulseStatusHasIQData),
     RKPulseStatusUsedForMoments                  = (1 << 11),

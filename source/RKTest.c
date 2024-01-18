@@ -452,8 +452,25 @@ void RKTestPrettyStrings(void) {
     i32 = 0x303f;
     c = RKVariableInString("mask", &i32, RKValueTypeInt32InHex);
     printf("%s (len = %zu)\n", c, strlen(c));
-    //
     printf("\n");
+    //
+    printf("RKTimevalToString():\n");
+    struct timeval tv = {
+        .tv_sec = 1704934863,
+        .tv_usec = 190103
+    };
+    int formats[] = {
+        1086, 1083, 1082, 1081, 1080,
+        866, 863, 862, 861, 860,
+        86, 83, 82, 80,
+        66, 63, 62, 60
+    };
+    for (int k = 0; k < sizeof(formats) / sizeof(int); k++) {
+        int format = formats[k];
+        printf("Format %4d: %s\n", format, RKTimevalToString(tv, format));
+    }
+    printf("\n");
+    //
     char status[] = "0{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":0}, \"Log Time\":1570804516}";
     *status = '\x03';
     size_t payload_size = 100;
@@ -1617,7 +1634,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         .pulseBufferDepth = RKMaximumPulsesPerRay + 500,   // Number of pulses the buffer can hold (RKBuffer pulses, be sure this is enough)
         .pulseCapacity = capacity,                         // Number of range gates each pulse can hold
         .rayBufferDepth = RKMaximumRaysPerSweep + 50,      // Number of rays the buffer can hold (RKBuffer rays, be consitent with pulseToRayRatio)
-        .filePrefix = "HRS",                               // A prefix for the output file name
+        .filePrefix = "BTC",                               // A prefix for the output file name
         .dataPath = "data",                                // A path to the output directory
         .latitude = 35.23682,
         .longitude = -97.46381,
@@ -1877,7 +1894,7 @@ void RKTestSimpleMomentEngine(const int mode) {
                 x.q[g] = -0.01234f;
             }
         }
-        pulse->header.s = RKPulseStatusReadyForMoments;
+        pulse->header.s = RKPulseStatusCompleteForMoments;
         usleep(500);
         k++;
     } while (s < 2);
@@ -3481,8 +3498,8 @@ void *RKTestPulseEngineSpeedWorker(void *in) {
 
     t = RKTimevalDiff(toc, tic);
 
-    // Store the result in engine->lag for main thread to read
-    engine->lag = count / t;
+    // Store the result in engine->rate for main thread to read
+    engine->rate = count / t;
 
     RKLog(">Test elapsed %.3f s (%.3f ms / pulse)\n", t, 1.0e3 * t / count);
     RKLog(">Speed: %s pulses / sec\n", RKIntegerToCommaStyleString(count / t));
@@ -3576,7 +3593,7 @@ void RKTestPulseEngineSpeed(const int cores) {
 
         pthread_join(tid, NULL);
 
-        p[t] = engine->lag;
+        p[t] = engine->rate;
 
         RKPulseEngineFree(engine);
 

@@ -83,6 +83,28 @@ static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine)
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
+static void RKPulseRingFilterEngineVerifyWiring(RKPulseRingFilterEngine *engine) {
+    if (engine->radarDescription == NULL ||
+        engine->configBuffer == NULL || engine->configIndex == NULL ||
+        engine->pulseBuffer == NULL || engine->pulseIndex == NULL) {
+        engine->state &= ~RKEngineStateProperlyWired;
+        return;
+    }
+    engine->state |= RKEngineStateProperlyWired;
+}
+
+static void RKPulseRingFilterEngineUpdateMinMaxWorkerLag(RKPulseRingFilterEngine *engine) {
+    int i;
+    float minWorkerLag = engine->workers[0].lag;
+    float maxWorkerLag = engine->workers[0].lag;
+    for (i = 1; i < engine->coreCount; i++) {
+        minWorkerLag = MIN(minWorkerLag, engine->workers[i].lag);
+        maxWorkerLag = MAX(maxWorkerLag, engine->workers[i].lag);
+    }
+    engine->minWorkerLag = minWorkerLag;
+    engine->maxWorkerLag = maxWorkerLag;
+}
+
 #pragma mark - Delegate Workers
 
 static void *ringFilterCore(void *_in) {
@@ -250,7 +272,7 @@ static void *ringFilterCore(void *_in) {
             j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
             fprintf(stderr, "j = %d  --> %d\n", j, engine->workerTaskDone[i0 * engine->coreCount + c]);
         }
-        if (engine->useFilter) {
+        if (engine->useFilter && !(pulse->header.s & RKPulseStatusSkipped)) {
             // Now we perform the difference equation on each polarization
             // y[n] = B[0] * x[n] + B[1] * x[n - 1] + ...
             //
@@ -397,11 +419,8 @@ static void *pulseRingWatcher(void *_in) {
 
     int c, i, j, k, s;
 	struct timeval t0, t1;
-	float lag;
 
 	sem_t *sem[engine->coreCount];
-
-    unsigned int skipCounter = 0;
 
     bool allDone;
     bool *workerTaskDone;
@@ -415,7 +434,265 @@ static void *pulseRingWatcher(void *_in) {
     uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->ringFilterGateCount);
 
     RKPulse *pulse;
-    RKPulse *pulseToSkip;
+
+	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
+    engine->workerTaskDone = (bool *)malloc(engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
+    memset(engine->workerTaskDone, 0, engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
+
+	// Update the engine state
+    engine->state |= RKEngineStateWantActive;
+    engine->state ^= RKEngineStateActivating;
+
+    // Show filter summary
+    RKPulseRingFilterEngineShowFilterSummary(engine);
+
+    // Spin off N workers to process I/Q pulses
+    memset(sem, 0, engine->coreCount * sizeof(sem_t *));
+    uint32_t paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKMemoryAlignSize) * engine->coreCount * RKMemoryAlignSize / sizeof(RKFloat));
+    uint32_t length = paddedGateCount / engine->coreCount;
+    uint32_t origin = 0;
+    if (engine->verbose > 2) {
+        RKLog("%s Initial paddedGateCount = %s   length = %s\n", engine->name, RKUIntegerToCommaStyleString(paddedGateCount), RKUIntegerToCommaStyleString(length));
+    }
+    for (c = 0; c < engine->coreCount; c++) {
+        RKPulseRingFilterWorker *worker = &engine->workers[c];
+        snprintf(worker->semaphoreName, sizeof(worker->semaphoreName), "rk-cf-%03d", c);
+        sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+        if (sem[c] == SEM_FAILED) {
+            if (engine->verbose > 1) {
+                RKLog(">%s Info. Semaphore %s exists. Try to remove and recreate.\n", engine->name, worker->semaphoreName);
+            }
+            if (sem_unlink(worker->semaphoreName)) {
+                RKLog(">%s Error. Unable to unlink semaphore %s.\n", engine->name, worker->semaphoreName);
+            }
+            // 2nd trial
+            sem[c] = sem_open(worker->semaphoreName, O_CREAT | O_EXCL, 0600, 0);
+            if (sem[c] == SEM_FAILED) {
+                RKLog(">%s Error. Unable to remove then create semaphore %s\n", engine->name, worker->semaphoreName);
+                return (void *)RKResultFailedToInitiateSemaphore;
+            } else if (engine->verbose > 1) {
+                RKLog(">%s Info. Semaphore %s removed and recreated.\n", engine->name, worker->semaphoreName);
+            }
+        }
+        worker->id = c;
+        worker->sem = sem[c];
+        worker->parent = engine;
+        worker->processOrigin = origin;
+        worker->processLength = length;
+        worker->outputLength = MIN(gateCount - origin, length);
+        origin += length;
+        if (engine->verbose > 1) {
+            RKLog(">%s %s @ %p\n", engine->name, worker->semaphoreName, worker->sem);
+        }
+        if (pthread_create(&worker->tid, NULL, ringFilterCore, worker) != 0) {
+            RKLog(">%s Error. Failed to start a ring core.\n", engine->name);
+            return (void *)RKResultFailedToStartRingCore;
+        }
+    }
+
+    // Wait for the workers to increase the tic count once
+    engine->state |= RKEngineStateSleep0;
+    for (c = 0; c < engine->coreCount; c++) {
+        while (engine->workers[c].tic == 0) {
+            usleep(1000);
+        }
+    }
+    engine->state ^= RKEngineStateSleep0;
+    engine->state |= RKEngineStateActive;
+
+    RKLog("%s Started.   mem = %s B   pulseIndex = %d\n", engine->name, RKUIntegerToCommaStyleString(engine->memoryUsage), *engine->pulseIndex);
+
+	// Increase the tic once to indicate the engine is ready
+	engine->tic = 1;
+
+    gettimeofday(&t1, NULL); t1.tv_sec -= 1;
+
+    // Here comes the busy loop
+    // i  anonymous
+	// c  core index
+    j = 0;   // filtered pulse index
+    k = 0;   // pulse index
+    s = 0;   // sleep counter
+    while (engine->state & RKEngineStateWantActive) {
+        // The pulse
+        pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
+        // Determine the engine state
+        if (k == *engine->pulseIndex) {
+            engine->state |= RKEngineStateSleep1;
+        } else if (!(pulse->header.s & RKPulseStatusProcessed)) {
+            engine->state |= RKEngineStateSleep2;
+        } else {
+            // The config to get PulseRingFilterGateCount
+            i = RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth);
+            config = &engine->configBuffer[i];
+            // Update processing region if necessary
+            if (gateCount != MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount) && pulse->header.s & RKPulseStatusProcessed) {
+                gateCount = MIN(pulse->header.downSampledGateCount, config->ringFilterGateCount);
+                paddedGateCount = ((int)ceilf((float)gateCount * sizeof(RKFloat) / engine->coreCount / RKMemoryAlignSize) * engine->coreCount * RKMemoryAlignSize / sizeof(RKFloat));
+                if (engine->verbose) {
+                    RKLog("%s Info. Config update    gateCount = %s   paddedGateCount = %s", engine->name,
+                        RKIntegerToCommaStyleString(gateCount),
+                        RKIntegerToCommaStyleString(paddedGateCount));
+                }
+                length = engine->coreCount < 2 ? paddedGateCount : paddedGateCount / engine->coreCount;
+                origin = 0;
+                for (c = 0; c < engine->coreCount; c++) {
+                    RKPulseRingFilterWorker *worker = &engine->workers[c];
+                    worker->processOrigin = origin;
+                    worker->processLength = length;
+                    worker->outputLength = MIN(gateCount - origin, length);
+                    origin += length;
+                    if (engine->verbose) {
+                        RKLog("%s C%d %s    %s    %s  %s\n", engine->name, c,
+                            RKVariableInString("gateCount", &gateCount, RKValueTypeUInt32),
+                            RKVariableInString("origin", &worker->processOrigin, RKValueTypeUInt32),
+                            RKVariableInString("length", &worker->processLength, RKValueTypeUInt32),
+                            RKVariableInString("outputLength", &worker->processLength, RKValueTypeUInt32));
+                    }
+                }
+            }
+        }
+
+        // Lag of the engine
+        engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
+        RKPulseRingFilterEngineUpdateMinMaxWorkerLag(engine);
+
+        // Log a message if it has been a while
+        gettimeofday(&t0, NULL);
+        if (RKTimevalDiff(t0, t1) > 0.05) {
+            t1 = t0;
+            RKPulseRingFilterUpdateStatusString(engine);
+            if (engine->verbose > 2) {
+                RKLog("%s %s\n", engine->name, RKVariableInString("useFilter", &engine->useFilter, RKValueTypeBool));
+                for (c = 0; c < engine->coreCount; c++) {
+                    RKLog("%s %d %s   %s   %s\n", engine->name, c,
+                          RKVariableInString("origin", &engine->workers[c].processOrigin, RKValueTypeUInt32),
+                          RKVariableInString("length", &engine->workers[c].processLength, RKValueTypeUInt32),
+                          RKVariableInString("output", &engine->workers[c].outputLength, RKValueTypeUInt32));
+                }
+            }
+        }
+
+        // Sleep if engine->state contains sleep flags
+        if (engine->state & RKEngineStateSleep1) {
+            engine->state ^= RKEngineStateSleep1;
+            if (++s % 1000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 1/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
+            }
+            usleep(200);
+        } else if (engine->state & RKEngineStateSleep2) {
+            engine->state ^= RKEngineStateSleep2;
+            if (++s % 1000 == 0 && engine->verbose > 1) {
+                RKLog("%s sleep 2/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name, (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
+            }
+            usleep(200);
+        } else {
+            if (!(pulse->header.s & RKPulseStatusProcessed)) {
+                RKLog("%s Warning. Pulse has not been processed.   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                        engine->name, j, k , *engine->pulseIndex, pulse->header.s);
+            }
+            // The pulse is considered "inspected" whether it will be skipped / filtered by the designated worker
+            pulse->header.s |= RKPulseStatusRingInspected;
+
+            #ifdef _SHOW_RING_FILTER_DOUBLE_BUFFERING
+            for (c = 0; c < engine->coreCount; c++) {
+                *workerTaskDone++ = false;
+            }
+            for (c = 0; c < engine->coreCount; c++) {
+                printf("c=%d:", c);
+                for (i = 0; i < engine->radarDescription->pulseBufferDepth; i++) {
+                    printf(" %d", engine->workerTaskDone[i * engine->coreCount + c]);
+                }
+                printf("\n");
+            }
+            printf("===\n");
+            RKLog("%s k = %d   pulseIndex = %u / %zu\n", engine->name, k, *engine->pulseIndex, pulse->header.i);
+            #endif
+
+            // Now we set this pulse to be "not done" and post
+            workerTaskDone = engine->workerTaskDone + k * engine->coreCount;
+            for (c = 0; c < engine->coreCount; c++) {
+                *workerTaskDone++ = false;
+                if (engine->useSemaphore) {
+                    if (sem_post(sem[c])) {
+                        RKLog("%s Error. Failed in sem_post(), errno = %d\n", engine->name, errno);
+                    }
+                } else {
+                    engine->workers[c].tic++;
+                }
+            }
+            // Update k to catch up for the next watch
+            k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+            s = 0;
+        }
+
+		// Now we check on and catch up with the pulses that are done
+        allDone = true;
+        while (j != k && allDone) {
+            // Decide whether the pulse has been processed by FIR/IIR filter
+            workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
+            for (c = 0; c < engine->coreCount; c++) {
+                allDone &= *workerTaskDone++;
+            }
+            if (allDone) {
+                pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
+                if (engine->useFilter) {
+                    if (!(pulse->header.s & RKPulseStatusSkipped)) {
+                        pulse->header.s |= RKPulseStatusRingFiltered;
+                    } else {
+                        pulse->header.s |= RKPulseStatusRingSkipped;
+                    }
+                }
+                pulse->header.s |= RKPulseStatusRingProcessed;
+                j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+            }
+        }
+
+		engine->tic++;
+    }
+
+    // Wait for workers to return
+    for (c = 0; c < engine->coreCount; c++) {
+        RKPulseRingFilterWorker *worker = &engine->workers[c];
+        if (engine->useSemaphore) {
+            sem_post(worker->sem);
+        }
+        pthread_join(worker->tid, NULL);
+        sem_unlink(worker->semaphoreName);
+    }
+    if (engine->state & RKEngineStateActive) {
+        engine->state ^= RKEngineStateActive;
+    } else {
+        RKLog("%s Warning. Pulse ring watcher stopped without being active.\n", engine->name);
+    }
+    // Clean up
+    free(engine->workerTaskDone);
+    return NULL;
+}
+
+static void *pulseRingWatcherV1(void *_in) {
+    RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)_in;
+
+    int c, i, j, k, s;
+	struct timeval t0, t1;
+	float lag;
+
+	sem_t *sem[engine->coreCount];
+
+    bool allDone;
+    bool *workerTaskDone;
+
+    if (engine->coreCount == 0) {
+        RKLog("%s Error. No processing core?\n", engine->name);
+        return NULL;
+    }
+
+    RKConfig *config = &engine->configBuffer[RKPreviousModuloS(*engine->configIndex, engine->radarDescription->configBufferDepth)];
+    uint32_t gateCount = MIN(engine->radarDescription->pulseCapacity, config->ringFilterGateCount);
+
+    RKPulse *pulse;
 
 	// Filter status of each worker: the beginning of the buffer is a pulse, it has the capacity info
     engine->workerTaskDone = (bool *)malloc(engine->radarDescription->pulseBufferDepth * engine->coreCount * sizeof(bool));
@@ -507,6 +784,24 @@ static void *pulseRingWatcher(void *_in) {
                 RKLog("%s sleep 1/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
                       engine->name, (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
             }
+
+            // Check finished pulses
+            allDone = true;
+            while (j != k && allDone) {
+                // Decide whether the pulse has been processed by FIR/IIR filter
+                workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
+                for (c = 0; c < engine->coreCount; c++) {
+                    allDone &= *workerTaskDone++;
+                }
+                if (allDone) {
+                    pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
+                    if (engine->useFilter) {
+                        pulse->header.s |= RKPulseStatusRingFiltered;
+                    }
+                    pulse->header.s |= RKPulseStatusRingProcessed;
+                    j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
+                }
+            }
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
@@ -532,26 +827,6 @@ static void *pulseRingWatcher(void *_in) {
         lag = engine->workers[0].lag;
         for (i = 1; i < engine->coreCount; i++) {
             lag = MAX(lag, engine->workers[i].lag);
-        }
-        if (skipCounter == 0 && lag > 0.9f) {
-            engine->almostFull++;
-            skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an I/Q Buffer overflow.\n", engine->name);
-            i = *engine->pulseIndex;
-            do {
-                i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
-                // Have some way to skip processing
-                pulseToSkip = RKGetPulseFromBuffer(engine->pulseBuffer, i);
-            } while (!(pulseToSkip->header.s & RKPulseStatusRingFiltered));
-        } else if (skipCounter > 0) {
-            // Skip processing if the buffer is getting full (avoid hitting SEM_VALUE_MAX)
-            // Have some way to record skipping
-            if (--skipCounter == 0) {
-                RKLog(">%s Info. Skipped a chunk.\n", engine->name);
-                for (i = 0; i < engine->coreCount; i++) {
-                    engine->workers[i].lag = 0.0f;
-                }
-            }
         }
 
         // The config to get PulseRingFilterGateCount
@@ -616,17 +891,22 @@ static void *pulseRingWatcher(void *_in) {
 		}
 
 		// Now we check on and catch up with the pulses that are done
+        // updateDonePulses(engine, &j, i, k);
         allDone = true;
         while (j != k && allDone) {
             // Decide whether the pulse has been processed by FIR/IIR filter
             workerTaskDone = engine->workerTaskDone + j * engine->coreCount;
-            for (c = 0; i < engine->coreCount; c++) {
+            for (c = 0; c < engine->coreCount; c++) {
                 allDone &= *workerTaskDone++;
             }
             if (allDone) {
                 pulse = RKGetPulseFromBuffer(engine->pulseBuffer, j);
                 if (engine->useFilter) {
-                    pulse->header.s |= RKPulseStatusRingFiltered;
+                    if (!(pulse->header.s & RKPulseStatusSkipped)) {
+                        pulse->header.s |= RKPulseStatusRingFiltered;
+                    } else {
+                        pulse->header.s |= RKPulseStatusRingSkipped;
+                    }
                 }
                 pulse->header.s |= RKPulseStatusRingProcessed;
                 j = RKNextModuloS(j, engine->radarDescription->pulseBufferDepth);
@@ -715,8 +995,7 @@ void RKPulseRingFilterEngineSetEssentials(RKPulseRingFilterEngine *engine, const
     engine->configIndex       = configIndex;
     engine->pulseBuffer       = pulseBuffer;
     engine->pulseIndex        = pulseIndex;
-
-    engine->state |= RKEngineStateProperlyWired;
+    RKPulseRingFilterEngineVerifyWiring(engine);
 }
 
 void RKPulseRingFilterEngineSetCoreCount(RKPulseRingFilterEngine *engine, const uint8_t count) {
@@ -779,9 +1058,16 @@ int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     RKLog("%s Starting ...\n", engine->name);
     engine->tic = 0;
     engine->state |= RKEngineStateActivating;
-    if (pthread_create(&engine->tidPulseWatcher, NULL, pulseRingWatcher, engine) != 0) {
-        RKLog("%s Error. Failed to start.\n", engine->name);
-        return RKResultFailedToStartRingPulseWatcher;
+    if (engine->useOldCodes) {
+        if (pthread_create(&engine->tidPulseWatcher, NULL, pulseRingWatcherV1, engine) != 0) {
+            RKLog("%s Error. Failed to start.\n", engine->name);
+            return RKResultFailedToStartRingPulseWatcher;
+        }
+    } else {
+        if (pthread_create(&engine->tidPulseWatcher, NULL, pulseRingWatcher, engine) != 0) {
+            RKLog("%s Error. Failed to start.\n", engine->name);
+            return RKResultFailedToStartRingPulseWatcher;
+        }
     }
     while (engine->tic == 0) {
         usleep(10000);

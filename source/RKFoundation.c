@@ -274,6 +274,7 @@ void RKExit(int e) {
     RKIntegerToCommaStyleString((long long)0xFEEDFACECAFEBEEF);
     RKIntegerToHexStyleString((long long)0xFEEDFACECAFEBEEF);
     RKFloatToCommaStyleString((double)0xFEEDFACECAFEBEEF);
+    RKTimevalToString((struct timeval){0xFEEDFACE, 0}, 0);
     pthread_mutex_destroy(&rkGlobalParameters.lock);
     RKLog(NULL, NULL);
     exit(e);
@@ -321,6 +322,10 @@ void RKSetWantScreenOutput(const bool yes) {
     }
 }
 
+bool RKGetWantScreenOutput(void) {
+    return rkGlobalParameters.stream != NULL;
+}
+
 void RKSetUseDailyLog(const bool dailyLog) {
     rkGlobalParameters.dailyLog = dailyLog;
     rkGlobalParameters.logTimeOnly = true;
@@ -332,6 +337,11 @@ int RKSetProgramName(const char *name) {
 }
 
 int RKSetRootFolder(const char *folder) {
+    RKLog("Warning. RKSetRootFolder() is deprecated. Use RKSetRootDataFolder() instead.\n");
+    return RKSetRootDataFolder(folder);
+}
+
+int RKSetRootDataFolder(const char *folder) {
     if (strlen(folder) > RKMaximumPathLength - 64) {
         fprintf(stderr, "WARNING. Very long root folder.\n");
     }
@@ -1244,7 +1254,6 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.rawElevation = headerV1->rawElevation;
             pulse->header.configIndex = headerV1->configIndex;
             pulse->header.configSubIndex = headerV1->configSubIndex;
-            pulse->header.positionIndex = headerV1->azimuthBinIndex;
             pulse->header.gateSizeMeters = headerV1->gateSizeMeters;
             pulse->header.elevationDegrees = headerV1->elevationDegrees;
             pulse->header.azimuthDegrees = headerV1->azimuthDegrees;
@@ -1267,7 +1276,6 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
             pulse->header.timeDouble = header->timeDouble;
             pulse->header.rawAzimuth = header->rawAzimuth;
             pulse->header.rawElevation = header->rawElevation;
-            pulse->header.positionIndex = header->positionIndex;
             pulse->header.gateSizeMeters = header->gateSizeMeters;
             pulse->header.elevationDegrees = header->elevationDegrees;
             pulse->header.azimuthDegrees = header->azimuthDegrees;
@@ -1327,6 +1335,7 @@ RKPulse *RKGetVacantPulseFromBuffer(RKBuffer pulses, uint32_t *index, const uint
     pulse->header.timeDouble = 0.0;
     pulse->header.time.tv_sec = 0;
     pulse->header.time.tv_usec = 0;
+    pulse->header.positionIndex = (uint32_t)-1;
     pulse->header.i += depth;
     *index = RKNextModuloS(*index, depth);
     return pulse;

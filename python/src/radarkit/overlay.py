@@ -250,12 +250,13 @@ class Overlay(Grid):
     def draw(self, ax):
         ax.set(xlim=self.extent[::2], ylim=self.extent[1::2], xticks=[], yticks=[])
         linewidth = 1.5 * self.s
+        gridwidth = max(1.0, 0.8 * self.s)
         for p in self.county:
             ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.county, linewidth=linewidth))
         for p in self.highway:
             ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.highway, linewidth=linewidth))
         for p in self.rings:
-            ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.ring, linewidth=self.s))
+            ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.ring, linewidth=gridwidth))
         occupied = []
         for x, y, c, label, pop in self.labels:
             size = self._pop2size(pop)
@@ -297,7 +298,7 @@ class PolarGrid(Grid):
         self.radii = radii(max_range=self.extent[2], about=5)
 
     def load(self):
-        e_max = self.extent[3]
+        e_max = 90 if self.extent[3] < 90 else 180
         self.grids = []
         self.ee = np.radians(np.arange(0, e_max, 2))
         xx = np.outer(np.cos(self.ee), self.radii)
@@ -329,8 +330,9 @@ class PolarGrid(Grid):
 
     def draw(self, ax):
         ax.set(xlim=[0, self.extent[2]], ylim=[0, self.ymax], xticks=[], yticks=[])
+        gridwidth = max(1.0, 0.8 * self.s)
         for x, y in self.grids:
-            line = matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=self.s)
+            line = matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=gridwidth)
             ax.add_artist(line)
         for x, y, label in self.labels:
             text = matplotlib.text.Text(x, y, label, color=colors.ring, fontsize=self.size1, **self.label_props)

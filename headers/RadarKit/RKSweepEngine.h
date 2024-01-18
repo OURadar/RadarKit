@@ -52,6 +52,7 @@ struct rk_sweep_engine {
     pthread_t                        tidRayGatherer;
     RKSweepScratchSpace              scratchSpaces[RKSweepScratchSpaceDepth];
     uint8_t                          scratchSpaceIndex;
+    uint8_t                          lastRecordedScratchSpaceIndex;
     RKProduct                        *productBuffer;
     uint32_t                         productBufferDepth;
     uint32_t                         productIndex;
