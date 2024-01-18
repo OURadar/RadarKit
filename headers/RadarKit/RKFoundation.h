@@ -129,9 +129,11 @@ int RKFileSeek(FILE *, long);
 void RKSetStatusColor(const bool);
 void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
+bool RKGetWantScreenOutput(void);
 void RKSetUseDailyLog(const bool);
 int RKSetProgramName(const char *);
-int RKSetRootFolder(const char *);
+int RKSetRootFolder(const char *) __attribute__ ((deprecated));
+int RKSetRootDataFolder(const char *);
 int RKSetLogfile(const char *);
 int RKSetLogfileToDefault(void);
 

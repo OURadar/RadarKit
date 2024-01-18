@@ -17,6 +17,7 @@ CFLAGS = -O2
 # CFLAGS += -DDEBUG_IQ
 # CFLAGS += -DDEBUG_FILE_MANAGER
 # CFLAGS += -DDEBUG_WAVEFORM_NORMALIZATION
+# CFLAGS += -D_SHOW_RING_FILTER_DOUBLE_BUFFERING
 # CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
 # CFLAGS += -DDEBUG_PULSE_ENGINE_WAIT
 # CFLAGS += -DDEBUG_MUTEX_DESTROY
@@ -192,3 +193,6 @@ install: showinfo
 uninstall:
 	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit
 	rm -rf ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
+
+reinstall: uninstall install
+	@echo "Reinstalled RadarKit."

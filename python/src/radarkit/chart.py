@@ -199,7 +199,7 @@ class Chart:
             ]
             z = shade((80, 50), (0.4, 0.5), [0, 0, 0, 0.5], direction="se")
             # Colorbar
-            c = min(height - 4 * p, 512) / height
+            c = min(height - 4 * p, 512 * self.s) / height
             w = 3 * self.captionsize + t
             cq = [
                 q[0] + q[2] - w / width,
@@ -208,7 +208,7 @@ class Chart:
                 c * q[3],
             ]
         else:
-            c = min(width - 4 * p, 512) / width
+            c = min(width - 4 * p, 512 * self.s) / width
             # Background shade, from top: p, captionsize, p, t, p, labelsize, 2p
             h = 5 * p + self.captionsize + t + self.labelsize
             bq = [

@@ -516,8 +516,8 @@ void RKConcludeControls(RKRadar *);                                             
 | `RKPulseStatusRingProcessed`                             | `RKPulseRingerFilter` sets this                        |
 |                                                          | `RKPositionEngine` waits for this                      |
 | `RKPulseStatusHasPosition`                               | `RKPositionEngine` sets this                           |
-| `RKPulseStatusReadyForMoments`                           | `RKMomentEngine` waits for this                        |
-|                                                          | `RKMomentEngine` waits for this                        |
+| `RKPulseStatusReadyForMomentEngine`                      | `RKMomentEngine` waits for this                        |
+| `RKPulseStatusCompleteForMoments`                        | `RKMomentEngine` waits for this                        |
 | `RKPulseStatusUsedForMoments`                            | `RKMomentEngine` sets this                             |
 | `RKPulseStatusRecorded`                                  | `RKSweepEngine` sets this                              |
 | `RKPulseStatusConsumed`                                  | `RKPulseEngine` sets this                              |
