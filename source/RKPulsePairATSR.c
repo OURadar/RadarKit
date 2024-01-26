@@ -45,6 +45,9 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     RKVec *l_pf;
     RKFloat *ri;
     RKFloat *rq;
+    RKFloat *ci;
+    RKFloat *cq;
+
     int p, k, K = (gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     for (p = 0; p < 2; p++) {
         n = MAX(tiny, space->noise[p]);
@@ -196,11 +199,26 @@ void RKUpdateATSRProductsInScratchSpace(RKMomentScratch *space, const int gateCo
     s = space->PhiDP;
     v = space->KDP;
     w = space->pcal;
-    ri = space->C[0].i;
-    rq = space->C[0].q;
-    s[0] = atan2f(*rq++, *ri++);
+    ri = space->C[0].i;      // Re(Ra) a
+    rq = space->C[0].q;      // Im(Ra) bi
+    ci = space->C[1].i;      // Re(Rb) c
+    cq = space->C[1].q;      // Im(Rb) di
+    s[0] = 0.5f * atan2f(*rq * *ci - *ri * *cq, *ri * *ci + *rq * *cq) + *w++;
+    ri++;
+    rq++;
+    ci++;
+    cq++;
+    // arg( Ra * Rb')
+    // arg( ( a+bi ) * ( c+di )')
+    // arg( ( a+bi ) * ( c-di ))
+    // arg( ( ac + bd ) * ( bc-ad )i)
+    // atan2( bc-ad, ac + bd)
     for (k = 1; k < gateCount; k++) {
-        s[k] = atan2f(*rq++, *ri++) + *w++;
+        s[k] = 0.5f * atan2f(*rq * *ci - *ri * *cq, *ri * *ci + *rq * *cq) + *w++;
+        ri++;
+        rq++;
+        ci++;
+        cq++;
         if (s[k] < -M_PI) {
             s[k] += 2.0f * M_PI;
         } else if (s[k] >= M_PI) {
@@ -230,7 +248,7 @@ int RKPulsePairATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pul
     //   - RX[1][lag] vx (v-cross-polar) from even pulses V channel receive
     //
     //   - CCF
-    //   - C[0] Ca               hc[n] * vc[n+1]'
+    //   - C[0] Ca               hc[n]' * vc[n+1]
     //   - C[1] Cb               hc[n] * vc[n-1]'
     //   - CX[0][lag] hcvx       hc[] * vx[]'
     //   - CX[1][lag] vchx       vc[] * hx[]'
@@ -367,7 +385,7 @@ int RKPulsePairATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pul
     for (; n < pulseCount-1; n += 2) {
         Xn = RKGetSplitComplexDataFromPulse(pulses[n], 0);
         Xk = RKGetSplitComplexDataFromPulse(pulses[n + 1], 1);
-        RKSIMD_zcma(&Xn, &Xk, &space->C[0], gateCount, 1);                                         // Ca = C[0] += H[n] * V[n+1]'
+        RKSIMD_zcma(&Xk, &Xn, &space->C[0], gateCount, 1);                                         // Ca = C[0] += H[n]' * V[n+1]
         j++;
     }
     RKSIMD_izscl(&space->C[0], 1.0f / (float)(j), gateCount);                                      // Ca /= j   (unbiased)
