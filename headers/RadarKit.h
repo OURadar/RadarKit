@@ -2,8 +2,47 @@
 //  RadarKit.h
 //  RadarKit
 //
+//  Copyright 2015-2024 Boonleng Cheong
+//
 //  Created by Boonleng Cheong on 3/17/15.
 //
+
+#ifndef __RadarKit__
+#define __RadarKit__
+
+/*!
+ @framework RadarKit Framework Reference
+ @author Boonleng Cheong
+ @abstract
+ @discussion The RadarKit framework provides the APIs and support for fundamental
+ radar time-series data processing. It defines the base structure for base level
+ raw I/Q data, 16-bit straight from the analog-to-digital converters, fundamental
+ processing such as auto-correlation calculations, pulse compressions, FIR (finite
+ impulse response) and IIR (infinite impulse response) filtering, window functions,
+ data transportation across network, etc.
+
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <RadarKit/RKRadar.h>
+#include <RadarKit/RKTest.h>
+#include <RadarKit/RKCommandCenter.h>
+#include <RadarKit/RKPedestalPedzy.h>
+#include <RadarKit/RKHealthRelayTweeta.h>
+#include <RadarKit/RKHealthRelayNaveen.h>
+#include <RadarKit/RKRadarRelay.h>
+#include <RadarKit/RKHostMonitor.h>
+#include <RadarKit/RKReporter.h>
+#include <RadarKit/RKFileHeader.h>
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* defined(__RadarKit__) */
 
 //
 //  █
@@ -17,11 +56,82 @@
 //         - Minor:
 //           - Mapping coefficients to product files
 //
-//  4.0    - Q2 2023
-//         - Added RKSteerEngine for volume scanning actions
-//           - New types RKScan, RKScanMode, etc.
-//         - Added new stream '8'
-//         - Added new streaming control, see project 'pedzy'
+//
+//  5.7    - 01/19/2024
+//         - New sleep cycles for RKPulseEngine, RKPulseRingEngine, RKMomentEngine
+//         - New state to differentiate ready for moment engine and complete for moment calculation
+//         - New Python reading and visualization tools
+//         - General bug fixes and improvements
+//
+//  5.6.1  - 12/20/2023
+//         - Fixed RKSIMD_sum() goes over the bound
+//
+//  5.6    - 10/14/2023
+//         - Added new state RKPulseStatusConsumed
+//         - Added RKPulseEngineGetProcessedPulse()
+//
+//  5.5    - Somehow skipped
+//
+//  5.4    - 06/12/2023
+//         - Added RKHealthRelayNaveen for NMEA ingest
+//         - Added delayed user module deallocation
+//         - Improved Makefile
+//         - Removed m4
+//
+//  5.3    - 06/08/2023
+//         - Introduced new RKPulseEngineGetVacantPulse with custom wait
+//
+//  5.2    - 06/07/2023
+//         - Added shared library for Python ctypes
+//         - Added static mutex deallocation
+//         - Added window blending
+//
+//  5.1    - 06/01/2023
+//         - Added new initialization flags
+//         - Added new arrays in compression scratch
+//         - Renamed some internal SIMD intrinsics for consistency
+//
+//  5.0.1  - 05/31/2023
+//         - Bug fixes on RKSteerEngine
+//
+//  5.0    - 05/19/2023
+//         - New compressor and calibrator interfaces
+//         - New backward-compatible file header reading
+//         - Added double buffering to pulse header reading
+//         - Reworked scratch space allocation
+//         - Reworked engine lag calculation
+//         - Reworked product buffer allocation
+//         - Minor bug fixes
+//
+//  4.3    - 05/07/2023
+//         - Added empty folder removal during startup of RKFileManager
+//         - Added new command v next for subsequent volume
+//         - Removed RKPedestalPedzy.headingOffset
+//         - VCP help text revised
+//         - General bug fixes
+//
+//  4.2    - 05/04/2023
+//         - SIMD module updated
+//           - Added RKTestSIMDBasic
+//           - Some macros renamed for clarity
+//         - Steer engine updated
+//           - Pedestal action is only sent if it is not None
+//           - Command v point is immediate
+//           - Command v home is immediate
+//           - Commands p is restored
+//         - Bug fixes
+//
+//  4.1    - 04/29/2023
+//         - RKSIMD module adds support for ARM processors
+//         - RKSteerEngine adds support for multiple pp sentences under vol
+//         - Improved consistency among RKTestTransceiver-Pedestal-HealthRelay
+//         - General cleanup and bug fixes
+//
+//  4.0    - 04/16/2023
+//         - New RKSteerEngine for VCP control
+//         - New stream 8 for monitoring pedestal action
+//         - RKTestPedestal reworked for improved emulation
+//         - RKPedestalPedzy reworked for new steer engine
 //
 //  3.2    - 02/25/2023
 //         - Added RKReporter for RadarHub communication
@@ -305,40 +415,3 @@
 //  0.1    - 3/17/2015
 //         - Initial scaffold
 //
-
-#ifndef __RadarKit__
-#define __RadarKit__
-
-/*!
- @framework RadarKit Framework Reference
- @author Boonleng Cheong
- @abstract
- @discussion The RadarKit Framework provides the APIs and support for fundamental
- radar time-series data processing. It defines the base structure for base level
- raw I/Q data, 16-bit straight from the analog-to-digital converters, fundamental
- processing such as auto-correlation calculations, pulse compressions, FIR (finite
- impulse response) and IIR (infinite impulse response) filtering, window functions,
- data transportation across network, etc.
-
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <RadarKit/RKRadar.h>
-#include <RadarKit/RKTest.h>
-#include <RadarKit/RKCommandCenter.h>
-#include <RadarKit/RKPedestalPedzy.h>
-#include <RadarKit/RKHealthRelayTweeta.h>
-#include <RadarKit/RKHealthRelayNaveen.h>
-#include <RadarKit/RKRadarRelay.h>
-#include <RadarKit/RKHostMonitor.h>
-#include <RadarKit/RKReporter.h>
-#include <RadarKit/RKFileHeader.h>
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* defined(__RadarKit__) */

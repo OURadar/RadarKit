@@ -4,7 +4,7 @@
       "name": "macos-clang-arm64",
       "includePath": [
         "${workspaceFolder}/**",
-        "${workspaceFolder}/headers/RadarKit",
+        "${workspaceFolder}/headers",
         "${HOMEBREW_PREFIX}/include",
         "${HOMEBREW_PREFIX}/opt/openssl@1.1/include"
       ],
@@ -20,8 +20,8 @@
     {
       "name": "linux-gcc-x86_64",
       "includePath": [
+        "${workspaceFolder}/**",
         "${workspaceFolder}/headers",
-        "${workspaceFolder}/headers/RadarKit",
         "/usr/include",
         "/usr/local/include"
       ],
@@ -34,8 +34,8 @@
     {
       "name": "linux-gcc-x86_64-avx512",
       "includePath": [
+        "${workspaceFolder}/**",
         "${workspaceFolder}/headers",
-        "${workspaceFolder}/headers/RadarKit",
         "/usr/include",
         "/usr/local/include"
       ],

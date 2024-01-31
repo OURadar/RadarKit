@@ -583,13 +583,9 @@ enum {
                                                  | RKPulseStatusProcessed
                                                  | RKPulseStatusHasPosition
                                                  | RKPulseStatusHasIQData),
-    RKPulseStatusCompleteForMoments              = (RKPulseStatusRingProcessed
-                                                 | RKPulseStatusProcessed
+    RKPulseStatusCompleteForMoments              = (RKPulseStatusReadyForMomentEngine
                                                  | RKPulseStatusDownSampled
-                                                 | RKPulseStatusCompressed
-                                                 | RKPulseStatusInspected
-                                                 | RKPulseStatusHasPosition
-                                                 | RKPulseStatusHasIQData),
+                                                 | RKPulseStatusCompressed),
     RKPulseStatusUsedForMoments                  = (1 << 11),
     RKPulseStatusProcessMask                     = (RKPulseStatusInspected
                                                  | RKPulseStatusCompressed
@@ -1416,12 +1412,12 @@ typedef struct rk_ray_header {
     float                sweepAzimuth;                                         // Sweep azimuth for RHI
     struct timeval       startTime;                                            // Start time of the ray in UNIX time
     double               startTimeDouble;                                      // Start time in double representation
-    float                startAzimuth;                                         // End time in double representation
-    float                startElevation;                                       //
+    float                startAzimuth;                                         // Start azimuth of a ray
+    float                startElevation;                                       // Start elevation of a ray
     struct timeval       endTime;                                              // End time of the ray in UNIX time
-    double               endTimeDouble;                                        //
-    float                endAzimuth;                                           //
-    float                endElevation;                                         //
+    double               endTimeDouble;                                        // End time in double representation
+    float                endAzimuth;                                           // End azimuth of a ray
+    float                endElevation;                                         // End elevation of a ray
     uint8_t              fftOrder;                                             // The order of FFT (2^N) = plan index of FFTModule
     uint8_t              reserved1;                                            //
     uint8_t              reserved2;                                            //

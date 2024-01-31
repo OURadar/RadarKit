@@ -1,7 +1,7 @@
 r"""Wrapper for RKTypes.h
 
 Generated with:
-/Users/boonleng/.pyenv/versions/3.8.11/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKPulsePairHop.h headers/RadarKit/RKPulsePairATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/src/radarkit/_ctypes_.py
+/Users/boonleng/.pyenv/versions/3.11.4/bin/ctypesgen -I/opt/homebrew/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit headers/RadarKit/RKTypes.h headers/RadarKit/RKMisc.h headers/RadarKit/RKFoundation.h headers/RadarKit/RKConfig.h headers/RadarKit/RKDSP.h headers/RadarKit/RKPulseEngine.h headers/RadarKit/RKFileHeader.h headers/RadarKit/RKScratch.h headers/RadarKit/RKRawDataRecorder.h headers/RadarKit/RKMomentEngine.h headers/RadarKit/RKNoiseEstimator.h headers/RadarKit/RKSweepEngine.h headers/RadarKit/RKPulseRingFilter.h headers/RadarKit/RKMultiLag.h headers/RadarKit/RKSpectralMoment.h headers/RadarKit/RKPulsePair.h headers/RadarKit/RKPulsePairHop.h headers/RadarKit/RKPulsePairATSR.h headers/RadarKit/RKWaveform.h headers/RadarKit.h headers/RadarKit/RKTest.h -o python/src/radarkit/_ctypes_.py
 
 Do not modify this file.
 """
@@ -867,19 +867,19 @@ _libs["radarkit"] = load_library("radarkit")
 
 # No modules
 
-__uint8_t = c_ubyte# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 19
+__uint8_t = c_ubyte# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 19
 
-__uint16_t = c_ushort# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 21
+__uint16_t = c_ushort# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 21
 
-__uint32_t = c_uint# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 23
+__uint32_t = c_uint# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 23
 
-__darwin_time_t = c_long# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 98
+__darwin_time_t = c_long# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 98
 
-__darwin_off_t = c_int64# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 71
+__darwin_off_t = c_int64# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 71
 
-__darwin_suseconds_t = c_int32# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 74
+__darwin_suseconds_t = c_int32# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 74
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 57
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 57
 class struct___darwin_pthread_handler_rec(Structure):
     pass
 
@@ -894,7 +894,7 @@ struct___darwin_pthread_handler_rec._fields_ = [
     ('__next', POINTER(struct___darwin_pthread_handler_rec)),
 ]
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 63
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 63
 class struct__opaque_pthread_attr_t(Structure):
     pass
 
@@ -907,7 +907,7 @@ struct__opaque_pthread_attr_t._fields_ = [
     ('__opaque', c_char * int(56)),
 ]
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 78
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 78
 class struct__opaque_pthread_mutex_t(Structure):
     pass
 
@@ -920,7 +920,7 @@ struct__opaque_pthread_mutex_t._fields_ = [
     ('__opaque', c_char * int(56)),
 ]
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 103
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 103
 class struct__opaque_pthread_t(Structure):
     pass
 
@@ -935,15 +935,15 @@ struct__opaque_pthread_t._fields_ = [
     ('__opaque', c_char * int(8176)),
 ]
 
-__darwin_pthread_attr_t = struct__opaque_pthread_attr_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 109
+__darwin_pthread_attr_t = struct__opaque_pthread_attr_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 109
 
-__darwin_pthread_mutex_t = struct__opaque_pthread_mutex_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 113
+__darwin_pthread_mutex_t = struct__opaque_pthread_mutex_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 113
 
-__darwin_pthread_t = POINTER(struct__opaque_pthread_t)# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 118
+__darwin_pthread_t = POINTER(struct__opaque_pthread_t)# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 118
 
-fpos_t = __darwin_off_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 81
+fpos_t = __darwin_off_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 81
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 92
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 92
 class struct___sbuf(Structure):
     pass
 
@@ -956,11 +956,11 @@ struct___sbuf._fields_ = [
     ('_size', c_int),
 ]
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 98
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 98
 class struct___sFILEX(Structure):
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
 class struct___sFILE(Structure):
     pass
 
@@ -1009,19 +1009,19 @@ struct___sFILE._fields_ = [
     ('_offset', fpos_t),
 ]
 
-FILE = struct___sFILE# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
+FILE = struct___sFILE# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
 
-pthread_attr_t = __darwin_pthread_attr_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h: 31
+pthread_attr_t = __darwin_pthread_attr_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h: 31
 
-uint8_t = c_ubyte# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h: 31
+uint8_t = c_ubyte# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h: 31
 
-uint16_t = c_ushort# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h: 31
+uint16_t = c_ushort# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h: 31
 
-uint32_t = c_uint# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h: 31
+uint32_t = c_uint# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h: 31
 
-uint64_t = c_ulonglong# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h: 31
+uint64_t = c_ulonglong# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h: 31
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h: 34
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h: 34
 class struct_timeval(Structure):
     pass
 
@@ -1034,7 +1034,7 @@ struct_timeval._fields_ = [
     ('tv_usec', __darwin_suseconds_t),
 ]
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
 class struct_fd_set(Structure):
     pass
 
@@ -1045,9 +1045,9 @@ struct_fd_set._fields_ = [
     ('fds_bits', c_int32 * int(((1024 % (sizeof(c_int32) * 8)) == 0) and (1024 / (sizeof(c_int32) * 8)) or ((1024 / (sizeof(c_int32) * 8)) + 1))),
 ]
 
-fd_set = struct_fd_set# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
+fd_set = struct_fd_set# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h: 33
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h: 33
 class struct_timespec(Structure):
     pass
 
@@ -1060,43 +1060,43 @@ struct_timespec._fields_ = [
     ('tv_nsec', c_long),
 ]
 
-time_t = __darwin_time_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_time_t.h: 31
+time_t = __darwin_time_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_time_t.h: 31
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 377
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 377
 if _libs["radarkit"].has("log10f", "cdecl"):
     log10f = _libs["radarkit"].get("log10f", "cdecl")
     log10f.argtypes = [c_float]
     log10f.restype = c_float
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 417
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 417
 if _libs["radarkit"].has("fabsf", "cdecl"):
     fabsf = _libs["radarkit"].get("fabsf", "cdecl")
     fabsf.argtypes = [c_float]
     fabsf.restype = c_float
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 460
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 460
 if _libs["radarkit"].has("floorf", "cdecl"):
     floorf = _libs["radarkit"].get("floorf", "cdecl")
     floorf.argtypes = [c_float]
     floorf.restype = c_float
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 476
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 476
 if _libs["radarkit"].has("roundf", "cdecl"):
     roundf = _libs["radarkit"].get("roundf", "cdecl")
     roundf.argtypes = [c_float]
     roundf.restype = c_float
 
-in_addr_t = __uint32_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_addr_t.h: 31
+in_addr_t = __uint32_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_addr_t.h: 31
 
-in_port_t = __uint16_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h: 31
+in_port_t = __uint16_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h: 31
 
-pthread_mutex_t = __darwin_pthread_mutex_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutex_t.h: 31
+pthread_mutex_t = __darwin_pthread_mutex_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutex_t.h: 31
 
-pthread_t = __darwin_pthread_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_t.h: 31
+pthread_t = __darwin_pthread_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_t.h: 31
 
-sem_t = c_int# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/semaphore.h: 43
+sem_t = c_int# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/semaphore.h: 43
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 80
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 80
 if _libs["radarkit"].has("__error", "cdecl"):
     __error = _libs["radarkit"].get("__error", "cdecl")
     __error.argtypes = []
@@ -1972,7 +1972,7 @@ RKPulseStatusRingProcessed = (1 << 10)# /Users/boonleng/Developer/radarkit/heade
 
 RKPulseStatusReadyForMomentEngine = (((RKPulseStatusRingProcessed | RKPulseStatusProcessed) | RKPulseStatusHasPosition) | RKPulseStatusHasIQData)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 568
 
-RKPulseStatusCompleteForMoments = ((((((RKPulseStatusRingProcessed | RKPulseStatusProcessed) | RKPulseStatusDownSampled) | RKPulseStatusCompressed) | RKPulseStatusInspected) | RKPulseStatusHasPosition) | RKPulseStatusHasIQData)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 568
+RKPulseStatusCompleteForMoments = ((RKPulseStatusReadyForMomentEngine | RKPulseStatusDownSampled) | RKPulseStatusCompressed)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 568
 
 RKPulseStatusUsedForMoments = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 568
 
@@ -1984,913 +1984,913 @@ RKPulseStatusStreamed = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/Ra
 
 RKPulseStatusConsumed = (1 << 14)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 568
 
-RKRayStatus = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 609
+RKRayStatus = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 605
 
-enum_anon_30 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+enum_anon_30 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusVacant = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusVacant = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusProcessing = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusProcessing = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusProcessed = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusProcessed = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusSkipped = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusSkipped = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusReady = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusReady = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusStreamed = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusStreamed = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusConsumed = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusConsumed = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKRayStatusOverviewed = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 610
+RKRayStatusOverviewed = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 606
 
-RKInitFlag = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 621
+RKInitFlag = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 617
 
-enum_anon_31 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+enum_anon_31 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagVerbose = 0x00000001# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagVerbose = 0x00000001# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagVeryVerbose = 0x00000002# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagVeryVerbose = 0x00000002# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagVeryVeryVerbose = 0x00000004# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagVeryVeryVerbose = 0x00000004# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagShowClockOffset = 0x00000008# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagShowClockOffset = 0x00000008# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagManuallyAssignCPU = 0x00000010# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagManuallyAssignCPU = 0x00000010# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagIgnoreGPS = 0x00000020# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagIgnoreGPS = 0x00000020# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagIgnoreHeading = 0x00000040# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagIgnoreHeading = 0x00000040# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagReserved4 = 0x00000080# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagReserved4 = 0x00000080# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocStatusBuffer = 0x00000100# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocStatusBuffer = 0x00000100# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocConfigBuffer = 0x00000200# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocConfigBuffer = 0x00000200# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocRawIQBuffer = 0x00000400# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocRawIQBuffer = 0x00000400# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocPositionBuffer = 0x00000800# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocPositionBuffer = 0x00000800# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocMomentBuffer = 0x00001000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocMomentBuffer = 0x00001000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocHealthBuffer = 0x00002000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocHealthBuffer = 0x00002000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocHealthNodes = 0x00004000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocHealthNodes = 0x00004000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagReserved1 = 0x00008000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagReserved1 = 0x00008000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagPulsePositionCombiner = 0x00010000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagPulsePositionCombiner = 0x00010000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagPositionSteerEngine = 0x00020000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagPositionSteerEngine = 0x00020000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagSignalProcessor = 0x00040000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagSignalProcessor = 0x00040000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagStartPulseEngine = 0x00100000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagStartPulseEngine = 0x00100000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagStartRingFilterEngine = 0x00200000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagStartRingFilterEngine = 0x00200000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagStartMomentEngine = 0x00400000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagStartMomentEngine = 0x00400000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagRelay = 0x00007703# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagRelay = 0x00007703# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagIQPlayback = 0x00047701# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagIQPlayback = 0x00047701# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocEverything = 0x00077F01# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocEverything = 0x00077F01# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKInitFlagAllocEverythingQuiet = 0x00077F00# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 622
+RKInitFlagAllocEverythingQuiet = 0x00077F00# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 618
 
-RKMomentList = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 654
+RKMomentList = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 650
 
-enum_anon_32 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+enum_anon_32 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHm = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHm = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHmi = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHmi = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHmq = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHmq = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR0 = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR0 = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR1 = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR1 = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR1i = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR1i = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR1q = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR1q = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR2 = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR2 = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR3 = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR3 = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListHR4 = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListHR4 = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVm = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVm = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVmi = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVmi = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVmq = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVmq = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR0 = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR0 = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR1 = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR1 = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR1i = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR1i = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR1q = (1 << 12)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR1q = (1 << 12)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR2 = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR2 = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR3 = (1 << 14)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR3 = (1 << 14)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListVR4 = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListVR4 = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListC0 = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListC0 = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListC0i = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListC0i = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListC0q = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListC0q = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCn1 = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCn1 = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCp1 = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCp1 = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCn2 = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCn2 = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCp2 = (1 << 21)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCp2 = (1 << 21)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCn3 = (1 << 22)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCn3 = (1 << 22)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCp3 = (1 << 23)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCp3 = (1 << 23)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCn4 = (1 << 24)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCn4 = (1 << 24)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCp4 = (1 << 25)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCp4 = (1 << 25)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCa0 = (1 << 26)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCa0 = (1 << 26)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCb0 = (1 << 27)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCb0 = (1 << 27)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListChcvx0 = (1 << 28)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListChcvx0 = (1 << 28)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentListCvchx0 = (1 << 29)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 655
+RKMomentListCvchx0 = (1 << 29)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 651
 
-RKMomentIndex = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 694
+RKMomentIndex = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 690
 
-enum_anon_33 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+enum_anon_33 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHmi = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHmi = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHmq = (RKMomentIndexHmi + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHmq = (RKMomentIndexHmi + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHR0 = (RKMomentIndexHmq + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHR0 = (RKMomentIndexHmq + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHR1i = (RKMomentIndexHR0 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHR1i = (RKMomentIndexHR0 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHR1q = (RKMomentIndexHR1i + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHR1q = (RKMomentIndexHR1i + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHR2 = (RKMomentIndexHR1q + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHR2 = (RKMomentIndexHR1q + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHR3 = (RKMomentIndexHR2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHR3 = (RKMomentIndexHR2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexHR4 = (RKMomentIndexHR3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexHR4 = (RKMomentIndexHR3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVmi = (RKMomentIndexHR4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVmi = (RKMomentIndexHR4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVmq = (RKMomentIndexVmi + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVmq = (RKMomentIndexVmi + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVR0 = (RKMomentIndexVmq + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVR0 = (RKMomentIndexVmq + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVR1i = (RKMomentIndexVR0 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVR1i = (RKMomentIndexVR0 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVR1q = (RKMomentIndexVR1i + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVR1q = (RKMomentIndexVR1i + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVR2 = (RKMomentIndexVR1q + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVR2 = (RKMomentIndexVR1q + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVR3 = (RKMomentIndexVR2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVR3 = (RKMomentIndexVR2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexVR4 = (RKMomentIndexVR3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexVR4 = (RKMomentIndexVR3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexC0i = (RKMomentIndexVR4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexC0i = (RKMomentIndexVR4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexC0q = (RKmomentIndexC0i + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexC0q = (RKmomentIndexC0i + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCn1 = (RKmomentIndexC0q + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCn1 = (RKmomentIndexC0q + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCp1 = (RKmomentIndexCn1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCp1 = (RKmomentIndexCn1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCn2 = (RKmomentIndexCp1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCn2 = (RKmomentIndexCp1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCp2 = (RKmomentIndexCn2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCp2 = (RKmomentIndexCn2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCn3 = (RKmomentIndexCp2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCn3 = (RKmomentIndexCp2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCp3 = (RKmomentIndexCn3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCp3 = (RKmomentIndexCn3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCn4 = (RKmomentIndexCp3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCn4 = (RKmomentIndexCp3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKmomentIndexCp4 = (RKmomentIndexCn4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKmomentIndexCp4 = (RKmomentIndexCn4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKMomentIndexCount = (RKmomentIndexCp4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 695
+RKMomentIndexCount = (RKmomentIndexCp4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 691
 
-RKBaseProductList = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 726
+RKBaseProductList = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 722
 
-enum_anon_34 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+enum_anon_34 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8Z = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8Z = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8V = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8V = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8W = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8W = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8D = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8D = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8P = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8P = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8R = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8R = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8K = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8K = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8Sh = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8Sh = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8Sv = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8Sv = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8Q = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8Q = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8U6 = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8U6 = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8U5 = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8U5 = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8U4 = (1 << 12)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8U4 = (1 << 12)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8U3 = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8U3 = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8U2 = (1 << 14)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8U2 = (1 << 14)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8U1 = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8U1 = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8ZVWDPR = 0x0000003F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8ZVWDPR = 0x0000003F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8ZVWDPRK = 0x0000007F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8ZVWDPRK = 0x0000007F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8ZVWDPRKS = 0x000001FF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8ZVWDPRKS = 0x000001FF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8ZVWDPRKSQ = 0x000003FF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8ZVWDPRKSQ = 0x000003FF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListUInt8All = 0x0000FFFF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListUInt8All = 0x0000FFFF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatZ = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatZ = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatV = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatV = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatW = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatW = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatD = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatD = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatP = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatP = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatR = (1 << 21)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatR = (1 << 21)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatK = (1 << 22)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatK = (1 << 22)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatSh = (1 << 23)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatSh = (1 << 23)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatSv = (1 << 24)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatSv = (1 << 24)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatQ = (1 << 25)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatQ = (1 << 25)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatLh = (1 << 26)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatLh = (1 << 26)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatLv = (1 << 27)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatLv = (1 << 27)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatRXh = (1 << 28)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatRXh = (1 << 28)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatRXv = (1 << 29)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatRXv = (1 << 29)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatPXh = (1 << 30)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatPXh = (1 << 30)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatPXv = (1 << 31)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatPXv = (1 << 31)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatZVWDPR = 0x003F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatZVWDPR = 0x003F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatZVWDPRK = 0x007F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatZVWDPRK = 0x007F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatZVWDPRKS = 0x01FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatZVWDPRKS = 0x01FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatZVWDPRKLRXPX = 0xFC7F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatZVWDPRKLRXPX = 0xFC7F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatATSR = 0xFDFF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatATSR = 0xFDFF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatZVWDPRKSQ = 0x03FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatZVWDPRKSQ = 0x03FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductListFloatAll = 0xFFFF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 727
+RKBaseProductListFloatAll = 0xFFFF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 723
 
-RKBaseProductIndex = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 775
+RKBaseProductIndex = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 771
 
-enum_anon_35 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+enum_anon_35 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexZ = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexZ = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexV = (RKBaseProductIndexZ + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexV = (RKBaseProductIndexZ + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexW = (RKBaseProductIndexV + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexW = (RKBaseProductIndexV + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexD = (RKBaseProductIndexW + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexD = (RKBaseProductIndexW + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexP = (RKBaseProductIndexD + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexP = (RKBaseProductIndexD + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexR = (RKBaseProductIndexP + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexR = (RKBaseProductIndexP + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexK = (RKBaseProductIndexR + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexK = (RKBaseProductIndexR + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexSh = (RKBaseProductIndexK + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexSh = (RKBaseProductIndexK + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexSv = (RKBaseProductIndexSh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexSv = (RKBaseProductIndexSh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexQ = (RKBaseProductIndexSv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexQ = (RKBaseProductIndexSv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexLh = (RKBaseProductIndexQ + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexLh = (RKBaseProductIndexQ + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexLv = (RKBaseProductIndexLh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexLv = (RKBaseProductIndexLh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexRXh = (RKBaseProductIndexLv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexRXh = (RKBaseProductIndexLv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexRXv = (RKBaseProductIndexRXh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexRXv = (RKBaseProductIndexRXh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexPXh = (RKBaseProductIndexRXv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexPXh = (RKBaseProductIndexRXv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexPXv = (RKBaseProductIndexPXh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexPXv = (RKBaseProductIndexPXh + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexZv = (RKBaseProductIndexPXv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexZv = (RKBaseProductIndexPXv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexVv = (RKBaseProductIndexZv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexVv = (RKBaseProductIndexZv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexWv = (RKBaseProductIndexVv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexWv = (RKBaseProductIndexVv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKBaseProductIndexCount = (RKBaseProductIndexWv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 776
+RKBaseProductIndexCount = (RKBaseProductIndexWv + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 772
 
-RKProductType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 799
+RKProductType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 795
 
-enum_anon_36 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 800
+enum_anon_36 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 796
 
-RKProductTypeUnknown = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 800
+RKProductTypeUnknown = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 796
 
-RKProductTypeCellMatch = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 800
+RKProductTypeCellMatch = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 796
 
-RKProductTypePPI = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 800
+RKProductTypePPI = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 796
 
-RKProductTypeCAPPI = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 800
+RKProductTypeCAPPI = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 796
 
-RKConfigKey = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 807
+RKConfigKey = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 803
 
-enum_anon_37 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+enum_anon_37 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySweepElevation = (RKConfigKeyNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySweepElevation = (RKConfigKeyNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySweepAzimuth = (RKConfigKeySweepElevation + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySweepAzimuth = (RKConfigKeySweepElevation + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyPositionMarker = (RKConfigKeySweepAzimuth + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyPositionMarker = (RKConfigKeySweepAzimuth + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyPRT = (RKConfigKeyPositionMarker + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyPRT = (RKConfigKeyPositionMarker + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyPRF = (RKConfigKeyPRT + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyPRF = (RKConfigKeyPRT + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyDualPRF = (RKConfigKeyPRF + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyDualPRF = (RKConfigKeyPRF + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyPulseGateCount = (RKConfigKeyDualPRF + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyPulseGateCount = (RKConfigKeyDualPRF + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyPulseGateSize = (RKConfigKeyPulseGateCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyPulseGateSize = (RKConfigKeyPulseGateCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyPulseWidth = (RKConfigKeyPulseGateSize + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyPulseWidth = (RKConfigKeyPulseGateSize + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyWaveform = (RKConfigKeyPulseWidth + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyWaveform = (RKConfigKeyPulseWidth + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyWaveformDecimate = (RKConfigKeyWaveform + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyWaveformDecimate = (RKConfigKeyWaveform + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyWaveformId = (RKConfigKeyWaveformDecimate + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyWaveformId = (RKConfigKeyWaveformDecimate + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyWaveformName = (RKConfigKeyWaveformId + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyWaveformName = (RKConfigKeyWaveformId + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySystemNoise = (RKConfigKeyWaveformName + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySystemNoise = (RKConfigKeyWaveformName + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySystemZCal = (RKConfigKeySystemNoise + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySystemZCal = (RKConfigKeySystemNoise + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySystemDCal = (RKConfigKeySystemZCal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySystemDCal = (RKConfigKeySystemZCal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySystemPCal = (RKConfigKeySystemDCal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySystemPCal = (RKConfigKeySystemDCal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyWaveformCalibration = (RKConfigKeySystemPCal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyWaveformCalibration = (RKConfigKeySystemPCal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySNRThreshold = (RKConfigKeyWaveformCalibration + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySNRThreshold = (RKConfigKeyWaveformCalibration + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeySQIThreshold = (RKConfigKeySNRThreshold + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeySQIThreshold = (RKConfigKeySNRThreshold + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyVCPDefinition = (RKConfigKeySQIThreshold + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyVCPDefinition = (RKConfigKeySQIThreshold + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyRingFilterGateCount = (RKConfigKeyVCPDefinition + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyRingFilterGateCount = (RKConfigKeyVCPDefinition + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyTransitionGateCount = (RKConfigKeyRingFilterGateCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyTransitionGateCount = (RKConfigKeyRingFilterGateCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyUserIntegerParameters = (RKConfigKeyTransitionGateCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyUserIntegerParameters = (RKConfigKeyTransitionGateCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyUserFloatParameters = (RKConfigKeyUserIntegerParameters + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyUserFloatParameters = (RKConfigKeyUserIntegerParameters + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyUserResource = (RKConfigKeyUserFloatParameters + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyUserResource = (RKConfigKeyUserFloatParameters + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKConfigKeyCount = (RKConfigKeyUserResource + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 808
+RKConfigKeyCount = (RKConfigKeyUserResource + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 804
 
-RKHealthNode = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 839
+RKHealthNode = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 835
 
-enum_anon_38 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+enum_anon_38 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeRadarKit = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeRadarKit = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeTransceiver = (RKHealthNodeRadarKit + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeTransceiver = (RKHealthNodeRadarKit + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodePedestal = (RKHealthNodeTransceiver + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodePedestal = (RKHealthNodeTransceiver + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeTweeta = (RKHealthNodePedestal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeTweeta = (RKHealthNodePedestal + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser1 = (RKHealthNodeTweeta + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser1 = (RKHealthNodeTweeta + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser2 = (RKHealthNodeUser1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser2 = (RKHealthNodeUser1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser3 = (RKHealthNodeUser2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser3 = (RKHealthNodeUser2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser4 = (RKHealthNodeUser3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser4 = (RKHealthNodeUser3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser5 = (RKHealthNodeUser4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser5 = (RKHealthNodeUser4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser6 = (RKHealthNodeUser5 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser6 = (RKHealthNodeUser5 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser7 = (RKHealthNodeUser6 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser7 = (RKHealthNodeUser6 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeUser8 = (RKHealthNodeUser7 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeUser8 = (RKHealthNodeUser7 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeCount = (RKHealthNodeUser8 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeCount = (RKHealthNodeUser8 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKHealthNodeInvalid = (RKHealthNode (ord_if_char((-1)))).value# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 840
+RKHealthNodeInvalid = (RKHealthNode (ord_if_char((-1)))).value# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 836
 
-RKScriptProperty = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 857
+RKScriptProperty = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 853
 
-enum_anon_39 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+enum_anon_39 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyProduceZip = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyProduceZip = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyProduceTgz = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyProduceTgz = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyProduceTarXz = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyProduceTarXz = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyProduceTxz = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyProduceTxz = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyProduceArchive = (((RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz) | RKScriptPropertyProduceTarXz) | RKScriptPropertyProduceTxz)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyProduceArchive = (((RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz) | RKScriptPropertyProduceTarXz) | RKScriptPropertyProduceTxz)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKScriptPropertyRemoveNCFiles = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 858
+RKScriptPropertyRemoveNCFiles = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 854
 
-RKEngineState = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 894
+RKEngineState = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 890
 
-enum_anon_40 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+enum_anon_40 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateSleep0 = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateSleep0 = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateSleep1 = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateSleep1 = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateSleep2 = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateSleep2 = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateSleep3 = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateSleep3 = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateSleepMask = 0x0000000F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateSleepMask = 0x0000000F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateWritingFile = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateWritingFile = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateMemoryChange = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateMemoryChange = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateSuspended = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateSuspended = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateBusyMask = 0x000000F0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateBusyMask = 0x000000F0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateReserved = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateReserved = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateAllocated = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateAllocated = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateProperlyWired = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateProperlyWired = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateActivating = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateActivating = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateDeactivating = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateDeactivating = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateActive = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateActive = (1 << 13)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateWantActive = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateWantActive = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateMainMask = 0x0000FF00# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateMainMask = 0x0000FF00# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateChildAllocated = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateChildAllocated = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateChildProperlyWired = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateChildProperlyWired = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateChildActivating = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateChildActivating = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateChildDeactivating = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateChildDeactivating = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateChildActive = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateChildActive = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKEngineStateChildMask = 0x001F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 895
+RKEngineStateChildMask = 0x001F0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 891
 
-RKStatusEnum = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 922
+RKStatusEnum = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 918
 
-enum_anon_41 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+enum_anon_41 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumUnknown = (-3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumUnknown = (-3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumOld = (-3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumOld = (-3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumInvalid = (-2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumInvalid = (-2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumTooLow = (-2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumTooLow = (-2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumLow = (-1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumLow = (-1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumNormal = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumNormal = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumActive = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumActive = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumHigh = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumHigh = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumStandby = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumStandby = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumInactive = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumInactive = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumOutOfRange = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumOutOfRange = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumTooHigh = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumTooHigh = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumNotOperational = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumNotOperational = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumOff = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumOff = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumFault = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumFault = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumNotWired = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumNotWired = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKStatusEnumCritical = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 923
+RKStatusEnumCritical = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 919
 
-RKFileType = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 943
+RKFileType = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 939
 
-enum_anon_42 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 944
+enum_anon_42 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 940
 
-RKFileTypeIQ = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 944
+RKFileTypeIQ = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 940
 
-RKFileTypeMoment = (RKFileTypeIQ + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 944
+RKFileTypeMoment = (RKFileTypeIQ + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 940
 
-RKFileTypeHealth = (RKFileTypeMoment + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 944
+RKFileTypeHealth = (RKFileTypeMoment + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 940
 
-RKFileTypeLog = (RKFileTypeHealth + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 944
+RKFileTypeLog = (RKFileTypeHealth + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 940
 
-RKFileTypeCount = (RKFileTypeLog + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 944
+RKFileTypeCount = (RKFileTypeLog + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 940
 
-RKStream = uint64_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 952
+RKStream = uint64_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 948
 
-enum_anon_43 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+enum_anon_43 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusMask = 0x0F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusMask = 0x0F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusPositions = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusPositions = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusPulses = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusPulses = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusRays = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusRays = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusIngest = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusIngest = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusEngines = 5# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusEngines = 5# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusBuffers = 6# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusBuffers = 6# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamASCIIArtZ = 7# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamASCIIArtZ = 7# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamASCIIArtHealth = 8# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamASCIIArtHealth = 8# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamASCIIArtVCP = 9# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamASCIIArtVCP = 9# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusAll = 0xFF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusAll = 0xFF# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamHealthInJSON = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamHealthInJSON = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusEngineBinary = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusEngineBinary = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusProcessorStatus = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusProcessorStatus = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayIQ = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayIQ = (1 << 8)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayIQFiltered = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayIQFiltered = (1 << 9)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductIQ = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductIQ = (1 << 10)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductIQFiltered = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductIQFiltered = (1 << 11)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamControl = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamControl = (1 << 15)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamScopeStuff = 0x0000000000000300# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamScopeStuff = 0x0000000000000300# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayZ = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayZ = (1 << 16)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayV = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayV = (1 << 17)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayW = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayW = (1 << 18)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayD = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayD = (1 << 19)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayP = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayP = (1 << 20)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayR = (1 << 21)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayR = (1 << 21)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayK = (1 << 22)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayK = (1 << 22)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplaySh = (1 << 23)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplaySh = (1 << 23)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplaySv = (1 << 24)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplaySv = (1 << 24)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayQ = (1 << 25)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayQ = (1 << 25)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayZVWDPRKS = 0x0000000001FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayZVWDPRKS = 0x0000000001FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamDisplayAll = 0x0000000003FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamDisplayAll = 0x0000000003FF0000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductZ = (1 << 32)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductZ = (1 << 32)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductV = (1 << 33)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductV = (1 << 33)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductW = (1 << 34)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductW = (1 << 34)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductD = (1 << 35)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductD = (1 << 35)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductP = (1 << 36)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductP = (1 << 36)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductR = (1 << 37)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductR = (1 << 37)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductK = (1 << 38)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductK = (1 << 38)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductSh = (1 << 39)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductSh = (1 << 39)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductSv = (1 << 40)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductSv = (1 << 40)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductQ = (1 << 41)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductQ = (1 << 41)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductZVWDPRKS = 0x000001FF00000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductZVWDPRKS = 0x000001FF00000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamProductAll = 0x000003FF00000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamProductAll = 0x000003FF00000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepZ = (1 << 48)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepZ = (1 << 48)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepV = (1 << 49)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepV = (1 << 49)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepW = (1 << 50)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepW = (1 << 50)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepD = (1 << 51)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepD = (1 << 51)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepP = (1 << 52)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepP = (1 << 52)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepR = (1 << 53)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepR = (1 << 53)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepK = (1 << 54)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepK = (1 << 54)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepSh = (1 << 55)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepSh = (1 << 55)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepSv = (1 << 56)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepSv = (1 << 56)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepQ = (1 << 57)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepQ = (1 << 57)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepZVWDPRKS = 0x01FF000000000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepZVWDPRKS = 0x01FF000000000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamSweepAll = 0x03FF000000000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamSweepAll = 0x03FF000000000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamAlmostEverything = 0x03FF03FF03FFF000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamAlmostEverything = 0x03FF03FF03FFF000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKStreamStatusTerminalChange = 0x0400000000000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 953
+RKStreamStatusTerminalChange = 0x0400000000000000# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 949
 
-RKHostStatus = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1015
+RKHostStatus = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1011
 
-enum_anon_44 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1016
+enum_anon_44 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1012
 
-RKHostStatusUnknown = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1016
+RKHostStatusUnknown = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1012
 
-RKHostStatusUnreachable = (RKHostStatusUnknown + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1016
+RKHostStatusUnreachable = (RKHostStatusUnknown + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1012
 
-RKHostStatusPartiallyReachable = (RKHostStatusUnreachable + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1016
+RKHostStatusPartiallyReachable = (RKHostStatusUnreachable + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1012
 
-RKHostStatusReachableUnusual = (RKHostStatusPartiallyReachable + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1016
+RKHostStatusReachableUnusual = (RKHostStatusPartiallyReachable + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1012
 
-RKHostStatusReachable = (RKHostStatusReachableUnusual + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1016
+RKHostStatusReachable = (RKHostStatusReachableUnusual + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1012
 
-RKProductStatus = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1024
+RKProductStatus = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1020
 
-enum_anon_45 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+enum_anon_45 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusVacant = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusVacant = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusActive = (1 << 0)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusActive = (1 << 0)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusBusy = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusBusy = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusSkipped = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusSkipped = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusSleep0 = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusSleep0 = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusSleep1 = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusSleep1 = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusSleep2 = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusSleep2 = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKProductStatusSleep3 = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1025
+RKProductStatusSleep3 = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1021
 
-RKTextPreferences = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1036
+RKTextPreferences = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1032
 
-enum_anon_46 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+enum_anon_46 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesShowColor = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesShowColor = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesDrawBackground = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesDrawBackground = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSizeMask = (7 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSizeMask = (7 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSize80x25 = (0 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSize80x25 = (0 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSize80x40 = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSize80x40 = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSize80x50 = (2 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSize80x50 = (2 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSize120x40 = (3 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSize120x40 = (3 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSize120x50 = (4 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSize120x50 = (4 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesWindowSize120x80 = (5 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesWindowSize120x80 = (5 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKTextPreferencesShowDebuggingMessage = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1037
+RKTextPreferencesShowDebuggingMessage = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1033
 
-RKWaveformType = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1051
+RKWaveformType = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1047
 
-enum_anon_47 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+enum_anon_47 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeIsComplex = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeIsComplex = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeSingleTone = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeSingleTone = (1 << 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeFrequencyHopping = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeFrequencyHopping = (1 << 2)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeLinearFrequencyModulation = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeLinearFrequencyModulation = (1 << 3)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeTimeFrequencyMultiplexing = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeTimeFrequencyMultiplexing = (1 << 4)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeFromFile = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeFromFile = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeFlatAnchors = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeFlatAnchors = (1 << 6)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKWaveformTypeFrequencyHoppingChirp = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1052
+RKWaveformTypeFrequencyHoppingChirp = (1 << 7)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1048
 
-RKEventType = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1064
+RKEventType = uint32_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1060
 
-enum_anon_48 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1065
+enum_anon_48 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1061
 
-RKEventTypeNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1065
+RKEventTypeNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1061
 
-RKEventTypeRaySweepBegin = (RKEventTypeNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1065
+RKEventTypeRaySweepBegin = (RKEventTypeNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1061
 
-RKEventTypeRaySweepEnd = (RKEventTypeRaySweepBegin + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1065
+RKEventTypeRaySweepEnd = (RKEventTypeRaySweepBegin + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1061
 
-RKFilterType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1071
+RKFilterType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1067
 
-enum_anon_49 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+enum_anon_49 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeElliptical1 = (RKFilterTypeNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeElliptical1 = (RKFilterTypeNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeElliptical2 = (RKFilterTypeElliptical1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeElliptical2 = (RKFilterTypeElliptical1 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeElliptical3 = (RKFilterTypeElliptical2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeElliptical3 = (RKFilterTypeElliptical2 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeElliptical4 = (RKFilterTypeElliptical3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeElliptical4 = (RKFilterTypeElliptical3 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeImpulse = (RKFilterTypeElliptical4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeImpulse = (RKFilterTypeElliptical4 + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeCount = (RKFilterTypeImpulse + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeCount = (RKFilterTypeImpulse + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeUserDefined = (RKFilterTypeCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeUserDefined = (RKFilterTypeCount + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKFilterTypeTest1 = (RKFilterTypeUserDefined + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1072
+RKFilterTypeTest1 = (RKFilterTypeUserDefined + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1068
 
-RKPedestalInstructType = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1084
+RKPedestalInstructType = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1080
 
-enum_anon_50 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+enum_anon_50 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeNone = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeStandby = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeStandby = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeEnable = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeEnable = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeDisable = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeDisable = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeSlew = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeSlew = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModePoint = 5# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModePoint = 5# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeReset = 6# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeReset = 6# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeTest = 7# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeTest = 7# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeModeMask = 0x0F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeModeMask = 0x0F# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeAxisElevation = 0x10# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeAxisElevation = 0x10# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeAxisAzimuth = 0x20# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeAxisAzimuth = 0x20# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKPedestalInstructTypeAxisMask = 0x30# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1085
+RKPedestalInstructTypeAxisMask = 0x30# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1081
 
-RKRawDataType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1100
+RKRawDataType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1096
 
-enum_anon_51 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1101
+enum_anon_51 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1097
 
-RKRawDataTypeNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1101
+RKRawDataTypeNull = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1097
 
-RKRawDataTypeFromTransceiver = (RKRawDataTypeNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1101
+RKRawDataTypeFromTransceiver = (RKRawDataTypeNull + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1097
 
-RKRawDataTypeAfterMatchedFilter = (RKRawDataTypeFromTransceiver + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1101
+RKRawDataTypeAfterMatchedFilter = (RKRawDataTypeFromTransceiver + 1)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1097
 
-RKCompressorOption = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1107
+RKCompressorOption = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1103
 
-enum_anon_52 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1108
+enum_anon_52 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1104
 
-RKCompressorOptionRKInt16C = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1108
+RKCompressorOptionRKInt16C = 0# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1104
 
-RKCompressorOptionRKComplex = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1108
+RKCompressorOptionRKComplex = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1104
 
-RKCompressorOptionSingleChannel = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1108
+RKCompressorOptionSingleChannel = (1 << 5)# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1104
 
-RadarHubType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1114
+RadarHubType = uint8_t# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1110
 
-enum_anon_53 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+enum_anon_53 = c_int# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeHandshake = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeHandshake = 1# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeControl = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeControl = 2# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeHealth = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeHealth = 3# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserve4 = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserve4 = 4# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeScope = 5# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeScope = 5# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeResponse = 6# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeResponse = 6# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved7 = 7# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved7 = 7# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved8 = 8# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved8 = 8# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved9 = 9# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved9 = 9# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved10 = 10# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved10 = 10# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved11 = 11# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved11 = 11# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved12 = 12# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved12 = 12# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved13 = 13# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved13 = 13# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved14 = 14# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved14 = 14# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeReserved15 = 15# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeReserved15 = 15# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeRadialZ = 16# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeRadialZ = 16# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeRadialV = 17# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeRadialV = 17# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeRadialW = 18# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeRadialW = 18# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeRadialD = 19# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeRadialD = 19# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeRadialP = 20# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeRadialP = 20# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-RKRadarHubTypeRadialR = 21# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1115
+RKRadarHubTypeRadialR = 21# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1111
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1140
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1136
 class struct_anon_54(Structure):
     pass
 
@@ -2910,7 +2910,7 @@ struct_anon_54._fields_ = [
     ('endAzimuth', c_int16),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1148
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1144
 class union_rk_radarhub_ray_header(Union):
     pass
 
@@ -2927,9 +2927,9 @@ union_rk_radarhub_ray_header._fields_ = [
     ('bytes', RKByte * int(10)),
 ]
 
-RKRadarHubRayHeader = union_rk_radarhub_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1148
+RKRadarHubRayHeader = union_rk_radarhub_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1144
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1151
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1147
 class struct_anon_55(Structure):
     pass
 
@@ -2943,7 +2943,7 @@ struct_anon_55._fields_ = [
     ('data', RKByte * int(262144)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1156
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1152
 class union_rk_radarhub_ray(Union):
     pass
 
@@ -2960,9 +2960,9 @@ union_rk_radarhub_ray._fields_ = [
     ('bytes', POINTER(RKByte)),
 ]
 
-RKRadarHubRay = union_rk_radarhub_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1156
+RKRadarHubRay = union_rk_radarhub_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1152
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1201
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1197
 class struct_rk_radar_desc(Structure):
     pass
 
@@ -3042,9 +3042,9 @@ struct_rk_radar_desc._fields_ = [
     ('dataPath', c_char * int(768)),
 ]
 
-RKRadarDesc = struct_rk_radar_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1201
+RKRadarDesc = struct_rk_radar_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1197
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1214
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1210
 class struct_rk_waveform(Structure):
     pass
 
@@ -3074,9 +3074,9 @@ struct_rk_waveform._fields_ = [
     ('iSamples', POINTER(RKInt16C) * int(22)),
 ]
 
-RKWaveform = struct_rk_waveform# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1214
+RKWaveform = struct_rk_waveform# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1210
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1217
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1213
 class struct_anon_56(Structure):
     pass
 
@@ -3100,7 +3100,7 @@ struct_anon_56._fields_ = [
     ('filterCounts', uint8_t * int(22)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1227
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1223
 class union_rk_wave_file_header(Union):
     pass
 
@@ -3117,9 +3117,9 @@ union_rk_wave_file_header._fields_ = [
     ('bytes', c_char * int(512)),
 ]
 
-RKWaveFileGlobalHeader = union_rk_wave_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1227
+RKWaveFileGlobalHeader = union_rk_wave_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1223
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1236
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1232
 class struct_rk_waveform_cal(Structure):
     pass
 
@@ -3141,9 +3141,9 @@ struct_rk_waveform_cal._fields_ = [
     ('PCal', RKFloat * int(8)),
 ]
 
-RKWaveformCalibration = struct_rk_waveform_cal# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1236
+RKWaveformCalibration = struct_rk_waveform_cal# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1232
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1243
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1239
 class struct_rk_waveform_response(Structure):
     pass
 
@@ -3161,9 +3161,9 @@ struct_rk_waveform_response._fields_ = [
     ('phaseResponse', POINTER(POINTER(RKFloat))),
 ]
 
-RKWaveformResponse = struct_rk_waveform_response# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1243
+RKWaveformResponse = struct_rk_waveform_response# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1239
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1249
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1245
 class struct_anon_57(Structure):
     pass
 
@@ -3227,7 +3227,7 @@ struct_anon_57._fields_ = [
     ('vcpDefinition', c_char * int(512)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1279
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1275
 class union_rk_config(Union):
     pass
 
@@ -3244,9 +3244,9 @@ union_rk_config._fields_ = [
     ('bytes', RKByte * int(1024)),
 ]
 
-RKConfig = union_rk_config# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1279
+RKConfig = union_rk_config# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1275
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1285
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1281
 class struct_anon_58(Structure):
     pass
 
@@ -3266,7 +3266,7 @@ struct_anon_58._fields_ = [
     ('string', c_char * int(4096)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1293
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1289
 class union_rk_heath(Union):
     pass
 
@@ -3283,9 +3283,9 @@ union_rk_heath._fields_ = [
     ('bytes', POINTER(RKByte)),
 ]
 
-RKHealth = union_rk_heath# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1293
+RKHealth = union_rk_heath# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1289
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1302
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1298
 class struct_rk_nodal_health(Structure):
     pass
 
@@ -3301,9 +3301,9 @@ struct_rk_nodal_health._fields_ = [
     ('active', c_bool),
 ]
 
-RKNodalHealth = struct_rk_nodal_health# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1302
+RKNodalHealth = struct_rk_nodal_health# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1298
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1308
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1304
 class struct_anon_59(Structure):
     pass
 
@@ -3363,7 +3363,7 @@ struct_anon_59._fields_ = [
     ('timeDouble', c_double),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1336
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1332
 class union_rk_position(Union):
     pass
 
@@ -3380,9 +3380,9 @@ union_rk_position._fields_ = [
     ('bytes', RKByte * int(128)),
 ]
 
-RKPosition = union_rk_position# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1336
+RKPosition = union_rk_position# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1332
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1343
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1339
 class struct_rk_scan_action(Structure):
     pass
 
@@ -3400,9 +3400,9 @@ struct_rk_scan_action._fields_ = [
     ('sweepAzimuth', c_float),
 ]
 
-RKScanAction = struct_rk_scan_action# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1343
+RKScanAction = struct_rk_scan_action# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1339
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1346
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1342
 class struct_anon_60(Structure):
     pass
 
@@ -3456,7 +3456,7 @@ struct_anon_60._fields_ = [
     ('compressorDataType', RKCompressorOption),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1371
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1367
 class union_rk_pulse_header(Union):
     pass
 
@@ -3473,9 +3473,9 @@ union_rk_pulse_header._fields_ = [
     ('bytes', RKByte * int(192)),
 ]
 
-RKPulseHeader = union_rk_pulse_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1371
+RKPulseHeader = union_rk_pulse_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1367
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1381
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1377
 class struct_rk_pulse_parameters(Structure):
     pass
 
@@ -3493,9 +3493,9 @@ struct_rk_pulse_parameters._fields_ = [
     ('planSizes', (uint32_t * int(8)) * int(2)),
 ]
 
-RKPulseParameters = struct_rk_pulse_parameters# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1381
+RKPulseParameters = struct_rk_pulse_parameters# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1377
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1390
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1386
 class struct_anon_61(Structure):
     pass
 
@@ -3509,7 +3509,7 @@ struct_anon_61._fields_ = [
     ('parameters', RKPulseParameters),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1389
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1385
 class union_anon_62(Union):
     pass
 
@@ -3526,7 +3526,7 @@ union_anon_62._fields_ = [
     ('headerBytes', RKByte * int(384)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1397
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1393
 class struct_rk_pulse(Structure):
     pass
 
@@ -3543,9 +3543,9 @@ struct_rk_pulse._fields_ = [
     ('data', RKByte * int(0)),
 ]
 
-RKPulse = struct_rk_pulse# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1397
+RKPulse = struct_rk_pulse# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1393
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1429
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1425
 class struct_rk_ray_header(Structure):
     pass
 
@@ -3607,9 +3607,9 @@ struct_rk_ray_header._fields_ = [
     ('reserved3', uint8_t),
 ]
 
-RKRayHeader = struct_rk_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1429
+RKRayHeader = struct_rk_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1425
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1437
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1433
 class union_anon_63(Union):
     pass
 
@@ -3623,7 +3623,7 @@ union_anon_63._fields_ = [
     ('headerBytes', RKByte * int(128)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1442
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1438
 class struct_rk_ray(Structure):
     pass
 
@@ -3640,9 +3640,9 @@ struct_rk_ray._fields_ = [
     ('data', RKByte * int(0)),
 ]
 
-RKRay = struct_rk_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1442
+RKRay = struct_rk_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1438
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1462
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1458
 class struct_rk_sweep_header(Structure):
     pass
 
@@ -3680,9 +3680,9 @@ struct_rk_sweep_header._fields_ = [
     ('filename', c_char * int((1024 - 80))),
 ]
 
-RKSweepHeader = struct_rk_sweep_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1462
+RKSweepHeader = struct_rk_sweep_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1458
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1471
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1467
 class struct_rk_sweep(Structure):
     pass
 
@@ -3698,9 +3698,9 @@ struct_rk_sweep._fields_ = [
     ('rays', POINTER(RKRay) * int(1500)),
 ]
 
-RKSweep = struct_rk_sweep# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1471
+RKSweep = struct_rk_sweep# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1467
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1474
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1470
 class struct_anon_64(Structure):
     pass
 
@@ -3722,7 +3722,7 @@ struct_anon_64._fields_ = [
     ('config', RKConfig),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1483
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1479
 class union_rk_file_header(Union):
     pass
 
@@ -3739,9 +3739,9 @@ union_rk_file_header._fields_ = [
     ('bytes', RKByte * int(4096)),
 ]
 
-RKFileHeader = union_rk_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1483
+RKFileHeader = union_rk_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1479
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1497
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1493
 class struct_rk_preferene_object(Structure):
     pass
 
@@ -3767,9 +3767,9 @@ struct_rk_preferene_object._fields_ = [
     ('boolValues', c_bool * int(4)),
 ]
 
-RKPreferenceObject = struct_rk_preferene_object# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1497
+RKPreferenceObject = struct_rk_preferene_object# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1493
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1508
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1504
 class struct_rk_control(Structure):
     pass
 
@@ -3789,9 +3789,9 @@ struct_rk_control._fields_ = [
     ('command', c_char * int(512)),
 ]
 
-RKControl = struct_rk_control# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1508
+RKControl = struct_rk_control# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1504
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1532
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1528
 class struct_rk_status(Structure):
     pass
 
@@ -3833,9 +3833,9 @@ struct_rk_status._fields_ = [
     ('recorderLag', uint8_t),
 ]
 
-RKStatus = struct_rk_status# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1532
+RKStatus = struct_rk_status# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1528
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1546
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1542
 class struct_rk_simple_engine(Structure):
     pass
 
@@ -3857,9 +3857,9 @@ struct_rk_simple_engine._fields_ = [
     ('userResource', POINTER(None)),
 ]
 
-RKSimpleEngine = struct_rk_simple_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1546
+RKSimpleEngine = struct_rk_simple_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1542
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1560
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1556
 class struct_rk_file_monitor(Structure):
     pass
 
@@ -3885,9 +3885,9 @@ struct_rk_file_monitor._fields_ = [
     ('userResource', POINTER(None)),
 ]
 
-RKFileMonitor = struct_rk_file_monitor# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1560
+RKFileMonitor = struct_rk_file_monitor# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1556
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1567
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1563
 class struct_anon_65(Structure):
     pass
 
@@ -3925,7 +3925,7 @@ struct_anon_65._fields_ = [
     ('baseProductList', RKBaseProductList),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1584
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1580
 class union_rk_product_desc(Union):
     pass
 
@@ -3942,9 +3942,9 @@ union_rk_product_desc._fields_ = [
     ('bytes', RKByte * int(1024)),
 ]
 
-RKProductDesc = union_rk_product_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1584
+RKProductDesc = union_rk_product_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1580
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1587
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1583
 class struct_anon_66(Structure):
     pass
 
@@ -4012,7 +4012,7 @@ struct_anon_66._fields_ = [
     ('suggestedFilename', c_char * int(1024)),
 ]
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1619
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1615
 class union_rk_product_header(Union):
     pass
 
@@ -4029,9 +4029,9 @@ union_rk_product_header._fields_ = [
     ('bytes', RKByte * int(2048)),
 ]
 
-RKProductHeader = union_rk_product_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1619
+RKProductHeader = union_rk_product_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1615
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1634
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1630
 class struct_rk_product(Structure):
     pass
 
@@ -4065,9 +4065,9 @@ struct_rk_product._fields_ = [
     ('data', POINTER(RKFloat)),
 ]
 
-RKProduct = struct_rk_product# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1634
+RKProduct = struct_rk_product# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1630
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1639
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1635
 class struct_rk_product_collection(Structure):
     pass
 
@@ -4081,9 +4081,9 @@ struct_rk_product_collection._fields_ = [
     ('products', POINTER(RKProduct)),
 ]
 
-RKProductCollection = struct_rk_product_collection# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1639
+RKProductCollection = struct_rk_product_collection# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1635
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1648
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1644
 class struct_rk_iir_filter(Structure):
     pass
 
@@ -4105,9 +4105,9 @@ struct_rk_iir_filter._fields_ = [
     ('A', RKComplex * int(8)),
 ]
 
-RKIIRFilter = struct_rk_iir_filter# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1648
+RKIIRFilter = struct_rk_iir_filter# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1644
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1654
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1650
 class struct_rk_task(Structure):
     pass
 
@@ -4123,9 +4123,9 @@ struct_rk_task._fields_ = [
     ('endingEvent', RKEventType),
 ]
 
-RKTask = struct_rk_task# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1654
+RKTask = struct_rk_task# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1650
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1666
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1662
 class struct_rk_command_queue(Structure):
     pass
 
@@ -4153,11 +4153,11 @@ struct_rk_command_queue._fields_ = [
     ('toc', uint32_t),
 ]
 
-RKCommandQueue = struct_rk_command_queue# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1666
+RKCommandQueue = struct_rk_command_queue# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1662
 
-sa_family_t = __uint8_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_sa_family_t.h: 31
+sa_family_t = __uint8_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_sa_family_t.h: 31
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 301
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 301
 class struct_in_addr(Structure):
     pass
 
@@ -4168,7 +4168,7 @@ struct_in_addr._fields_ = [
     ('s_addr', in_addr_t),
 ]
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 374
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 374
 class struct_sockaddr_in(Structure):
     pass
 
@@ -5103,73 +5103,79 @@ if _libs["radarkit"].has("RKPulseBufferAllocCopyFromBuffer", "cdecl"):
     RKPulseBufferAllocCopyFromBuffer.argtypes = [RKBuffer, uint32_t, uint32_t, uint32_t]
     RKPulseBufferAllocCopyFromBuffer.restype = RKBuffer
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 180
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 178
+if _libs["radarkit"].has("RKPulseDuplicateSplitComplex", "cdecl"):
+    RKPulseDuplicateSplitComplex = _libs["radarkit"].get("RKPulseDuplicateSplitComplex", "cdecl")
+    RKPulseDuplicateSplitComplex.argtypes = [POINTER(RKPulse)]
+    RKPulseDuplicateSplitComplex.restype = None
+
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 181
 if _libs["radarkit"].has("RKRayBufferAlloc", "cdecl"):
     RKRayBufferAlloc = _libs["radarkit"].get("RKRayBufferAlloc", "cdecl")
     RKRayBufferAlloc.argtypes = [POINTER(RKBuffer), uint32_t, uint32_t]
     RKRayBufferAlloc.restype = c_size_t
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 181
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 182
 if _libs["radarkit"].has("RKRayBufferFree", "cdecl"):
     RKRayBufferFree = _libs["radarkit"].get("RKRayBufferFree", "cdecl")
     RKRayBufferFree.argtypes = [RKBuffer]
     RKRayBufferFree.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 182
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 183
 if _libs["radarkit"].has("RKGetRayFromBuffer", "cdecl"):
     RKGetRayFromBuffer = _libs["radarkit"].get("RKGetRayFromBuffer", "cdecl")
     RKGetRayFromBuffer.argtypes = [RKBuffer, uint32_t]
     RKGetRayFromBuffer.restype = POINTER(RKRay)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 183
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 184
 if _libs["radarkit"].has("RKGetInt16DataFromRay", "cdecl"):
     RKGetInt16DataFromRay = _libs["radarkit"].get("RKGetInt16DataFromRay", "cdecl")
     RKGetInt16DataFromRay.argtypes = [POINTER(RKRay), RKMomentIndex]
     RKGetInt16DataFromRay.restype = POINTER(c_int16)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 184
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 185
 if _libs["radarkit"].has("RKGetUInt8DataFromRay", "cdecl"):
     RKGetUInt8DataFromRay = _libs["radarkit"].get("RKGetUInt8DataFromRay", "cdecl")
     RKGetUInt8DataFromRay.argtypes = [POINTER(RKRay), RKBaseProductIndex]
     RKGetUInt8DataFromRay.restype = POINTER(uint8_t)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 185
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 186
 if _libs["radarkit"].has("RKGetFloatDataFromRay", "cdecl"):
     RKGetFloatDataFromRay = _libs["radarkit"].get("RKGetFloatDataFromRay", "cdecl")
     RKGetFloatDataFromRay.argtypes = [POINTER(RKRay), RKBaseProductIndex]
     RKGetFloatDataFromRay.restype = POINTER(c_float)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 186
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 187
 if _libs["radarkit"].has("RKClearRayBuffer", "cdecl"):
     RKClearRayBuffer = _libs["radarkit"].get("RKClearRayBuffer", "cdecl")
     RKClearRayBuffer.argtypes = [RKBuffer, uint32_t]
     RKClearRayBuffer.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 187
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 188
 if _libs["radarkit"].has("RKGetVacantRayFromBuffer", "cdecl"):
     RKGetVacantRayFromBuffer = _libs["radarkit"].get("RKGetVacantRayFromBuffer", "cdecl")
     RKGetVacantRayFromBuffer.argtypes = [RKBuffer, POINTER(uint32_t), uint32_t]
     RKGetVacantRayFromBuffer.restype = POINTER(RKRay)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 190
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 191
 if _libs["radarkit"].has("RKFileMonitorInit", "cdecl"):
     RKFileMonitorInit = _libs["radarkit"].get("RKFileMonitorInit", "cdecl")
     RKFileMonitorInit.argtypes = [String, CFUNCTYPE(UNCHECKED(None), POINTER(None)), POINTER(None)]
     RKFileMonitorInit.restype = POINTER(RKFileMonitor)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 191
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 192
 if _libs["radarkit"].has("RKFileMonitorFree", "cdecl"):
     RKFileMonitorFree = _libs["radarkit"].get("RKFileMonitorFree", "cdecl")
     RKFileMonitorFree.argtypes = [POINTER(RKFileMonitor)]
     RKFileMonitorFree.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 194
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 195
 if _libs["radarkit"].has("RKStreamFromString", "cdecl"):
     RKStreamFromString = _libs["radarkit"].get("RKStreamFromString", "cdecl")
     RKStreamFromString.argtypes = [String]
     RKStreamFromString.restype = RKStream
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 195
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 196
 if _libs["radarkit"].has("RKStringOfStream", "cdecl"):
     RKStringOfStream = _libs["radarkit"].get("RKStringOfStream", "cdecl")
     RKStringOfStream.argtypes = [RKStream]
@@ -5179,31 +5185,31 @@ if _libs["radarkit"].has("RKStringOfStream", "cdecl"):
         RKStringOfStream.restype = String
         RKStringOfStream.errcheck = ReturnString
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 196
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 197
 if _libs["radarkit"].has("RKStringFromStream", "cdecl"):
     RKStringFromStream = _libs["radarkit"].get("RKStringFromStream", "cdecl")
     RKStringFromStream.argtypes = [String, RKStream]
     RKStringFromStream.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 198
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 199
 if _libs["radarkit"].has("RKGetNextProductDescription", "cdecl"):
     RKGetNextProductDescription = _libs["radarkit"].get("RKGetNextProductDescription", "cdecl")
     RKGetNextProductDescription.argtypes = [POINTER(RKBaseProductList)]
     RKGetNextProductDescription.restype = RKProductDesc
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 201
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 202
 if _libs["radarkit"].has("RKParseCommaDelimitedValues", "cdecl"):
     RKParseCommaDelimitedValues = _libs["radarkit"].get("RKParseCommaDelimitedValues", "cdecl")
     RKParseCommaDelimitedValues.argtypes = [POINTER(None), RKValueType, c_size_t, String]
     RKParseCommaDelimitedValues.restype = c_size_t
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 202
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 203
 if _libs["radarkit"].has("RKParseNumericArray", "cdecl"):
     RKParseNumericArray = _libs["radarkit"].get("RKParseNumericArray", "cdecl")
     RKParseNumericArray.argtypes = [POINTER(None), RKValueType, c_size_t, String]
     RKParseNumericArray.restype = c_size_t
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 203
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 204
 if _libs["radarkit"].has("RKParseQuotedStrings", "cdecl"):
     _func = _libs["radarkit"].get("RKParseQuotedStrings", "cdecl")
     _restype = None
@@ -5211,97 +5217,97 @@ if _libs["radarkit"].has("RKParseQuotedStrings", "cdecl"):
     _argtypes = [String]
     RKParseQuotedStrings = _variadic_function(_func,_restype,_argtypes,_errcheck)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 204
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 205
 if _libs["radarkit"].has("RKMakeJSONStringFromControls", "cdecl"):
     RKMakeJSONStringFromControls = _libs["radarkit"].get("RKMakeJSONStringFromControls", "cdecl")
     RKMakeJSONStringFromControls.argtypes = [String, POINTER(RKControl), uint32_t]
     RKMakeJSONStringFromControls.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 205
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 206
 if _libs["radarkit"].has("RKValueToEnum", "cdecl"):
     RKValueToEnum = _libs["radarkit"].get("RKValueToEnum", "cdecl")
     RKValueToEnum.argtypes = [RKConst, RKConst, RKConst, RKConst, RKConst, RKConst, RKConst]
     RKValueToEnum.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 206
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 207
 if _libs["radarkit"].has("RKStatusFromTemperatureForCE", "cdecl"):
     RKStatusFromTemperatureForCE = _libs["radarkit"].get("RKStatusFromTemperatureForCE", "cdecl")
     RKStatusFromTemperatureForCE.argtypes = [RKConst]
     RKStatusFromTemperatureForCE.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 207
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 208
 if _libs["radarkit"].has("RKStatusFromTemperatureForIE", "cdecl"):
     RKStatusFromTemperatureForIE = _libs["radarkit"].get("RKStatusFromTemperatureForIE", "cdecl")
     RKStatusFromTemperatureForIE.argtypes = [RKConst]
     RKStatusFromTemperatureForIE.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 208
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 209
 if _libs["radarkit"].has("RKStatusFromTemperatureForComputers", "cdecl"):
     RKStatusFromTemperatureForComputers = _libs["radarkit"].get("RKStatusFromTemperatureForComputers", "cdecl")
     RKStatusFromTemperatureForComputers.argtypes = [RKConst]
     RKStatusFromTemperatureForComputers.restype = RKStatusEnum
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 209
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 210
 if _libs["radarkit"].has("RKFindCondition", "cdecl"):
     RKFindCondition = _libs["radarkit"].get("RKFindCondition", "cdecl")
     RKFindCondition.argtypes = [String, RKStatusEnum, c_bool, String, String]
     RKFindCondition.restype = c_bool
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 210
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 211
 if _libs["radarkit"].has("RKAnyCritical", "cdecl"):
     RKAnyCritical = _libs["radarkit"].get("RKAnyCritical", "cdecl")
     RKAnyCritical.argtypes = [String, c_bool, String, String]
     RKAnyCritical.restype = c_bool
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 211
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 212
 if _libs["radarkit"].has("RKParseProductDescription", "cdecl"):
     RKParseProductDescription = _libs["radarkit"].get("RKParseProductDescription", "cdecl")
     RKParseProductDescription.argtypes = [POINTER(RKProductDesc), String]
     RKParseProductDescription.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 212
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 213
 if _libs["radarkit"].has("RKProductIdFromString", "cdecl"):
     RKProductIdFromString = _libs["radarkit"].get("RKProductIdFromString", "cdecl")
     RKProductIdFromString.argtypes = [String]
     RKProductIdFromString.restype = RKProductId
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 213
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 214
 if _libs["radarkit"].has("RKIdentifierFromString", "cdecl"):
     RKIdentifierFromString = _libs["radarkit"].get("RKIdentifierFromString", "cdecl")
     RKIdentifierFromString.argtypes = [String]
     RKIdentifierFromString.restype = RKIdentifier
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 216
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 217
 if _libs["radarkit"].has("RKSimpleEngineFree", "cdecl"):
     RKSimpleEngineFree = _libs["radarkit"].get("RKSimpleEngineFree", "cdecl")
     RKSimpleEngineFree.argtypes = [POINTER(RKSimpleEngine)]
     RKSimpleEngineFree.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 219
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 220
 if _libs["radarkit"].has("RKCommandQueueInit", "cdecl"):
     RKCommandQueueInit = _libs["radarkit"].get("RKCommandQueueInit", "cdecl")
     RKCommandQueueInit.argtypes = [uint16_t, c_bool]
     RKCommandQueueInit.restype = POINTER(RKCommandQueue)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 220
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 221
 if _libs["radarkit"].has("RKCommandQueuePop", "cdecl"):
     RKCommandQueuePop = _libs["radarkit"].get("RKCommandQueuePop", "cdecl")
     RKCommandQueuePop.argtypes = [POINTER(RKCommandQueue)]
     RKCommandQueuePop.restype = POINTER(RKCommand)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 221
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 222
 if _libs["radarkit"].has("RKCommandQueuePush", "cdecl"):
     RKCommandQueuePush = _libs["radarkit"].get("RKCommandQueuePush", "cdecl")
     RKCommandQueuePush.argtypes = [POINTER(RKCommandQueue), POINTER(RKCommand)]
     RKCommandQueuePush.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 222
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 223
 if _libs["radarkit"].has("RKCommandQueueFree", "cdecl"):
     RKCommandQueueFree = _libs["radarkit"].get("RKCommandQueueFree", "cdecl")
     RKCommandQueueFree.argtypes = [POINTER(RKCommandQueue)]
     RKCommandQueueFree.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 225
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 226
 if _libs["radarkit"].has("RKPedestalActionString", "cdecl"):
     RKPedestalActionString = _libs["radarkit"].get("RKPedestalActionString", "cdecl")
     RKPedestalActionString.argtypes = [POINTER(RKScanAction)]
@@ -8551,81 +8557,81 @@ try:
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 695
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 695
 try:
     M_PI = 3.14159265358979323846264338327950288
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/param.h: 215
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/param.h: 215
 def MIN(a, b):
     return (a < b) and a or b
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/param.h: 218
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/param.h: 218
 def MAX(a, b):
     return (a > b) and a or b
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 81
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 81
 try:
     errno = ((__error ())[0])
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 91
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 91
 try:
     EINTR = 4
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 92
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 92
 try:
     EIO = 5
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 96
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 96
 try:
     EBADF = 9
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 101
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 101
 try:
     EACCES = 13
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 102
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 102
 try:
     EFAULT = 14
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 112
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 112
 try:
     EINVAL = 22
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 129
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 129
 try:
     EAGAIN = 35
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 178
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 178
 try:
     ECONNREFUSED = 61
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 185
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 185
 try:
     EHOSTDOWN = 64
 except:
     pass
 
-# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 187
+# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 187
 try:
     EHOSTUNREACH = 65
 except:
@@ -9419,69 +9425,69 @@ rk_double_float_t = union_rk_double_float_t# /Users/boonleng/Developer/radarkit/
 
 rk_filter_anchor = union_rk_filter_anchor# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 322
 
-rk_radarhub_ray_header = union_rk_radarhub_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1148
+rk_radarhub_ray_header = union_rk_radarhub_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1144
 
-rk_radarhub_ray = union_rk_radarhub_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1156
+rk_radarhub_ray = union_rk_radarhub_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1152
 
-rk_radar_desc = struct_rk_radar_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1201
+rk_radar_desc = struct_rk_radar_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1197
 
-rk_waveform = struct_rk_waveform# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1214
+rk_waveform = struct_rk_waveform# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1210
 
-rk_wave_file_header = union_rk_wave_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1227
+rk_wave_file_header = union_rk_wave_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1223
 
-rk_waveform_cal = struct_rk_waveform_cal# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1236
+rk_waveform_cal = struct_rk_waveform_cal# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1232
 
-rk_waveform_response = struct_rk_waveform_response# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1243
+rk_waveform_response = struct_rk_waveform_response# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1239
 
-rk_config = union_rk_config# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1279
+rk_config = union_rk_config# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1275
 
-rk_heath = union_rk_heath# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1293
+rk_heath = union_rk_heath# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1289
 
-rk_nodal_health = struct_rk_nodal_health# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1302
+rk_nodal_health = struct_rk_nodal_health# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1298
 
-rk_position = union_rk_position# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1336
+rk_position = union_rk_position# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1332
 
-rk_scan_action = struct_rk_scan_action# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1343
+rk_scan_action = struct_rk_scan_action# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1339
 
-rk_pulse_header = union_rk_pulse_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1371
+rk_pulse_header = union_rk_pulse_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1367
 
-rk_pulse_parameters = struct_rk_pulse_parameters# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1381
+rk_pulse_parameters = struct_rk_pulse_parameters# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1377
 
-rk_pulse = struct_rk_pulse# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1397
+rk_pulse = struct_rk_pulse# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1393
 
-rk_ray_header = struct_rk_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1429
+rk_ray_header = struct_rk_ray_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1425
 
-rk_ray = struct_rk_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1442
+rk_ray = struct_rk_ray# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1438
 
-rk_sweep_header = struct_rk_sweep_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1462
+rk_sweep_header = struct_rk_sweep_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1458
 
-rk_sweep = struct_rk_sweep# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1471
+rk_sweep = struct_rk_sweep# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1467
 
-rk_file_header = union_rk_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1483
+rk_file_header = union_rk_file_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1479
 
-rk_preferene_object = struct_rk_preferene_object# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1497
+rk_preferene_object = struct_rk_preferene_object# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1493
 
-rk_control = struct_rk_control# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1508
+rk_control = struct_rk_control# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1504
 
-rk_status = struct_rk_status# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1532
+rk_status = struct_rk_status# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1528
 
-rk_simple_engine = struct_rk_simple_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1546
+rk_simple_engine = struct_rk_simple_engine# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1542
 
-rk_file_monitor = struct_rk_file_monitor# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1560
+rk_file_monitor = struct_rk_file_monitor# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1556
 
-rk_product_desc = union_rk_product_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1584
+rk_product_desc = union_rk_product_desc# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1580
 
-rk_product_header = union_rk_product_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1619
+rk_product_header = union_rk_product_header# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1615
 
-rk_product = struct_rk_product# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1634
+rk_product = struct_rk_product# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1630
 
-rk_product_collection = struct_rk_product_collection# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1639
+rk_product_collection = struct_rk_product_collection# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1635
 
-rk_iir_filter = struct_rk_iir_filter# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1648
+rk_iir_filter = struct_rk_iir_filter# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1644
 
-rk_task = struct_rk_task# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1654
+rk_task = struct_rk_task# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1650
 
-rk_command_queue = struct_rk_command_queue# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1666
+rk_command_queue = struct_rk_command_queue# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1662
 
 cpu_set = struct_cpu_set# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKMisc.h: 96
 

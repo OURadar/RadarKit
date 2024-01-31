@@ -1363,6 +1363,17 @@ RKBuffer RKPulseBufferAllocCopyFromBuffer(RKBuffer pulses, const uint32_t start,
     return (RKBuffer)array;
 }
 
+void RKPulseDuplicateSplitComplex(RKPulse *pulse) {
+    for (int c = 0; c < 2; c++) {
+        RKComplex *x = RKGetComplexDataFromPulse(pulse, c);
+        RKIQZ z = RKGetSplitComplexDataFromPulse(pulse, c);
+        for (int i = 0; i < pulse->header.gateCount; i++) {
+            z.i[i] = x[i].i;
+            z.q[i] = x[i].q;
+        }
+    }
+}
+
 #pragma mark - Ray
 
 //
