@@ -6,7 +6,7 @@ The RadarKit framework is a straight C framework. This is a library toolkit that
 
 ## System Requirements
 
-- Processors capable of SSE, SSE2, SSE3
+- Processors capable of SSE, SSE2, SSE3, or NEON (Apple Silicon)
 - Optional: AVX, AVX-256, AVX-512
 
 ## Getting the Project
@@ -34,14 +34,7 @@ Follow these steps to get the project
    ##### Debian / Ubuntu
 
    ```shell
-   apt-get install libfftw3-dev libnetcdf-dev libssl-dev
-   ```
-
-   ##### CentOS 7
-
-   ```shell
-   yum install epel-release
-   yum install fftw-devel netcdf-devel ssl-devel
+   apt install libfftw3-dev libnetcdf-dev libssl-dev
    ```
 
    ##### macOS
@@ -52,9 +45,9 @@ Follow these steps to get the project
    brew install fftw netcdf openssl@1.1
    ```
 
-   ##### Special Notes About NetCDF shared library
+   ##### Special Notes About NetCDF Shared Library
 
-   Some operating systems require the following line in your shell profile for the netcdf shared library to be found.
+   Not always, but some operating systems require the following line in your shell profile for the netcdf shared library to be found.
 
    ```shell
    export LD_LIBRARY_PATH=/usr/local/lib
@@ -67,9 +60,12 @@ Follow these steps to get the project
    sudo make install
    ```
 
-4. Try the test program to simulate a Level-1 system.
+4. Try the utility program `rkutil` to run some basic tests and simulate a Level-1 system.
 
    ```shell
+   rkutil -T0
+   rkutil -T30
+   rkutil -T60
    rkutil -vs1
    ```
 
@@ -101,7 +97,7 @@ Follow these steps to get the project
 [netcdf]: http://www.unidata.ucar.edu/software/netcdf
 [homebrew]: http://brew.sh
 
-## Basic Usage on a Radar Host
+## Basic Usage on Radar Host
 
 1. Initialize an `RKRadar` object (although RadarKit is not an objective implementation but it is easier to think this way). Supply the necessary _tranceiver_ routines and _pedestal_ routines. The _health relay_ is omitted here for simplicity.
 
