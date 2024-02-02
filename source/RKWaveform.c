@@ -242,7 +242,6 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(void) {
     }
 
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return waveform;
 }
 
@@ -410,7 +409,6 @@ void RKWaveformOnes(RKWaveform *waveform) {
         }
     }
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 void RKWaveformSingleTone(RKWaveform *waveform, const double fs, const double fc) {
@@ -470,7 +468,6 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
         w++;
     }
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
     return;
 }
 
@@ -539,7 +536,6 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
         }
     }
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, const double fc, const double bandwidth) {
@@ -615,7 +611,6 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
         }
     }
     RKWaveformNormalizeNoiseGain(waveform);
-    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 #pragma mark - Generic Manipulation
@@ -822,6 +817,7 @@ void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
             #endif
         }
     }
+    RKWaveformCalculateGain(waveform, RKWaveformGainAll);
 }
 
 void RKWaveformSummary(RKWaveform *waveform) {

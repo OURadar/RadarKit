@@ -184,6 +184,7 @@ cleanctypes:
 	rm -f $(CTYPES_OUT_PATH/_ctypes_.py
 
 install: showinfo
+	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
 	cp -rp headers/RadarKit headers/RadarKit.h ${PREFIX}/include/
 	cp -p $(STATIC_LIB) ${PREFIX}/lib/
 	cp -p $(SHARED_LIB) ${PREFIX}/lib/$(SHARED_LIB).$(VERSION)
@@ -191,8 +192,7 @@ install: showinfo
 	ln -s ${PREFIX}/lib/$(SHARED_LIB).$(VERSION) ${PREFIX}/lib/$(SHARED_LIB)
 
 uninstall:
-	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit
-	rm -rf ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
+	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
 
 reinstall: uninstall install
 	@echo "Reinstalled RadarKit."
