@@ -76,10 +76,13 @@ class Chart:
     ax = [None] * 6
     cb = [None] * 6
     st = [None] * 6
+    ms = [None] * 6
     r = None
     e = None
     a = None
+    title = None
     overlay = None
+    symbols = ["Z", "V", "W", "D", "P", "R"]
     labelfont = blib.getFontOfWeight(weight=500)
     titlefont = blib.getFontOfWeight(weight=700)
 
@@ -251,47 +254,78 @@ class Chart:
         return ax, cb, st
 
     def _update_data_only(self, sweep: sweep.Sweep):
-        self.mz.set_array(sweep.products["Z"].ravel())
-        self.mv.set_array(sweep.products["V"].ravel())
-        self.mw.set_array(sweep.products["W"].ravel())
-        self.md.set_array(sweep.products["D"].ravel())
-        self.mp.set_array(sweep.products["P"].ravel())
-        self.mr.set_array(rho2ind(sweep.products["R"]).ravel())
+        assert self.symbols != sweep.products.keys(), "Mismatch in symbols."
+        for m, symbol in zip(self.ms, self.symbols):
+            if symbol == "R":
+                m.set_array(rho2ind(sweep.products[symbol]).ravel())
+                continue
+            m.set_array(sweep.products[symbol].ravel())
 
     def _update_coordinate_data(self, xx, yy, sweep: sweep.Sweep):
         if self.overlay:
-            self.mz.remove()
-            self.mv.remove()
-            self.mw.remove()
-            self.md.remove()
-            self.mp.remove()
-            self.mr.remove()
-
-        self.mz = self.ax[0].pcolormesh(xx, yy, sweep.products["Z"], shading="flat", cmap=zmap, vmin=-32, vmax=96)
-        self.mv = self.ax[1].pcolormesh(xx, yy, sweep.products["V"], shading="flat", cmap=vmap, vmin=-64, vmax=64)
-        self.mw = self.ax[2].pcolormesh(xx, yy, sweep.products["W"], shading="flat", cmap=wmap, vmin=0, vmax=12.8)
-        self.md = self.ax[3].pcolormesh(xx, yy, sweep.products["D"], shading="flat", cmap=dmap, vmin=-10, vmax=15.5)
-        self.mp = self.ax[4].pcolormesh(xx, yy, sweep.products["P"], shading="flat", cmap=pmap, vmin=-np.pi, vmax=np.pi)
-        self.mr = self.ax[5].pcolormesh(xx, yy, rho2ind(sweep.products["R"]), shading="flat", cmap=rmap, vmin=0, vmax=256)
+            for m in self.mesh:
+                m.remove()
+        # Update self.symbols
+        self.symbols = sweep.products.keys()
+        for k, symbol in enumerate(self.symbols):
+            if symbol[0] == "Z":
+                value = sweep.products[symbol]
+                cmap = zmap
+                vmin = -32
+                vmax = 96
+            elif symbol[0] == "V":
+                value = sweep.products[symbol]
+                cmap = vmap
+                vmin = -64
+                vmax = 64
+            elif symbol[0] == "W":
+                value = sweep.products[symbol]
+                cmap = wmap
+                vmin = 0
+                vmax = 12.8
+            elif symbol == "P":
+                value = sweep.products[symbol]
+                cmap = pmap
+                vmin = -np.pi
+                vmax = np.pi
+            elif symbol == "D":
+                value = sweep.products[symbol]
+                cmap = dmap
+                vmin = -10
+                vmax = 15.5
+            elif symbol == "R":
+                value = rho2ind(sweep.products[symbol])
+                cmap = rmap
+                vmin = 0
+                vmax = 256
+            else:
+                value = sweep.products[symbol]
+                cmap = zmap
+                vmin = np.min(value.flatten())
+                vmax = np.max(value.flatten())
+            self.ms[k] = self.ax[k].pcolormesh(xx, yy, value, shading="flat", cmap=cmap, vmin=vmin, vmax=vmax)
         self.r = sweep.meshCoordinate.r
         self.a = sweep.meshCoordinate.a
         self.e = sweep.meshCoordinate.e
 
     def _setup_colorbars(self):
         # Colorbars
-        plt.colorbar(self.mz, ax=self.ax[0], cax=self.cb[0], orientation=self.orientation)
-        plt.colorbar(self.mv, ax=self.ax[1], cax=self.cb[1], orientation=self.orientation)
-        plt.colorbar(self.mw, ax=self.ax[2], cax=self.cb[2], orientation=self.orientation)
-        plt.colorbar(self.md, ax=self.ax[3], cax=self.cb[3], orientation=self.orientation)
-        plt.colorbar(self.mp, ax=self.ax[4], cax=self.cb[4], orientation=self.orientation)
-        plt.colorbar(self.mr, ax=self.ax[5], cax=self.cb[5], orientation=self.orientation)
+        for m, a, c in zip(self.ms, self.ax, self.cb):
+            plt.colorbar(m, ax=a, cax=c, orientation=self.orientation)
         # Colorbar labels
-        self.st[0].set_text("Z - Reflectivity (dBZ)")
-        self.st[1].set_text("V - Velocity (m/s)")
-        self.st[2].set_text("W - Spectrum Width (m/s)")
-        self.st[3].set_text("D - Differential Reflectivity (dB)")
-        self.st[4].set_text("P - Differential Phase (°)")
-        self.st[5].set_text("R - Correlation Coefficient")
+        for k, symbol in enumerate(self.symbols):
+            if symbol[0] == "Z":
+                self.st[k].set_text(f"{symbol} - Reflectivity (dBZ)")
+            elif symbol[0] == "V":
+                self.st[k].set_text(f"{symbol} - Velocity (m/s)")
+            elif symbol[0] == "W":
+                self.st[k].set_text(f"{symbol} - Spectrum Width (m/s)")
+            elif symbol == "P":
+                self.st[k].set_text("P - Differential Phase (°)")
+            elif symbol == "D":
+                self.st[k].set_text("D - Differential Reflectivity (dB)")
+            elif symbol == "R":
+                self.st[k].set_text("R - Correlation Coefficient")
 
         # Colorbar ticks
         tick_props = {
@@ -308,29 +342,65 @@ class Chart:
                 self.cb[k].set_xticks(ticks, labels=ticklabels, **tick_props)
                 self.cb[k].set_xlim(lo, hi)
 
-        ticks = np.arange(-20, 61, 20)
-        setup_ticks(0, ticks, ticks, -10, 75)
-        ticks = np.arange(-20, 21, 10)
-        setup_ticks(1, ticks, ticks, -30, 30)
-        ticks = np.arange(2, 9, 2)
-        setup_ticks(2, ticks, ticks, 0, 10)
-        ticks = np.arange(-4, 5, 2)
-        setup_ticks(3, ticks, ticks, -6, 6)
-        ticks = np.arange(-120, 121, 60)
-        setup_ticks(4, np.radians(ticks), ticks, -np.pi, np.pi)
-        ticks = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02])
-        setup_ticks(5, rho2ind(ticks), ticks, 0, 180)
+        for k, symbol in enumerate(self.symbols):
+            if symbol[0] == "Z":
+                ticks = np.arange(-20, 61, 20)
+                setup_ticks(k, ticks, ticks, -10, 75)
+            elif symbol[0] == "V":
+                ticks = np.arange(-20, 21, 10)
+                setup_ticks(k, ticks, ticks, -30, 30)
+            elif symbol[0] == "W":
+                ticks = np.arange(2, 9, 2)
+                setup_ticks(k, ticks, ticks, 0, 10)
+            elif symbol == "P":
+                ticks = np.arange(-120, 121, 60)
+                setup_ticks(k, np.radians(ticks), ticks, -np.pi, np.pi)
+            elif symbol == "D":
+                ticks = np.arange(-4, 5, 2)
+                setup_ticks(k, ticks, ticks, -6, 6)
+            elif symbol == "R":
+                ticks = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02])
+                setup_ticks(k, rho2ind(ticks), ticks, 0, 180)
 
-    def set(self, **kwargs):
-        if "title" in kwargs:
-            self.set_title(kwargs["title"])
-        if "xlim" in kwargs:
-            self.set_xlim(kwargs["xlim"][0], kwargs["xlim"][1])
-        if "ylim" in kwargs:
-            self.set_ylim(kwargs["ylim"][0], kwargs["ylim"][1])
+    def update_title(self, text):
+        if self.title is None:
+            return self.set_title(text)
+        if self.title.get_horizontalalignment() != "left":
+            extent = self.title.get_window_extent()
+            self.title.remove()
+            # Do a test run to get the proper position of the title, then use left alignment to avoid jitters in animations
+            y = (self.size[1] - self.titlesize - self.m) / self.size[1]
+            title_props = {
+                "fontproperties": self.titlefont,
+                "fontsize": self.titlesize,
+                "color": self.titlecolor,
+                "horizontalalignment": "center",
+                "verticalalignment": "bottom",
+            }
+            title = self.fig.text(0.5, y, text, **title_props)
+            extent = title.get_window_extent()
+            title.remove()
+            title_props["horizontalalignment"] = "left"
+            x = extent.x0 / self.size[0] * self.dpi / self.fig.dpi
+            self.title = self.fig.text(x, y, text, **title_props)
+            return
+        self.title.set_text(text)
 
-    def set_title(self, title):
-        self.title.set_text(title)
+    def set_title(self, text):
+        if self.title:
+            if len(self.title.get_text()) == len(text):
+                self.title.set_text(text)
+                return
+            self.title.remove()
+        y = (self.size[1] - self.titlesize - self.m) / self.size[1]
+        title_props = {
+            "fontproperties": self.titlefont,
+            "fontsize": self.titlesize,
+            "color": self.titlecolor,
+            "horizontalalignment": "center",
+            "verticalalignment": "bottom",
+        }
+        self.title = self.fig.text(0.5, y, text, **title_props)
 
     def set_xlim(self, lo, hi):
         for ax in self.ax:
@@ -339,6 +409,14 @@ class Chart:
     def set_ylim(self, lo, hi):
         for ax in self.ax:
             ax.set_ylim(lo, hi)
+
+    def set(self, **kwargs):
+        if "title" in kwargs:
+            self.set_title(kwargs["title"])
+        if "xlim" in kwargs:
+            self.set_xlim(kwargs["xlim"][0], kwargs["xlim"][1])
+        if "ylim" in kwargs:
+            self.set_ylim(kwargs["ylim"][0], kwargs["ylim"][1])
 
     def close(self):
         plt.close(self.fig)
@@ -353,22 +431,6 @@ class ChartRHI(Chart):
 
             for i in range(6):
                 self.ax[i], self.cb[i], self.st[i] = self._add_axes(231 + i)
-
-            # Do a test run to get the proper position of the title, then use left alignment to avoid jitters in animations
-            y = (self.size[1] - self.titlesize - self.m) / self.size[1]
-            title_props = {
-                "fontproperties": self.titlefont,
-                "fontsize": self.titlesize,
-                "color": self.titlecolor,
-                "horizontalalignment": "center",
-                "verticalalignment": "bottom",
-            }
-            title = self.fig.text(0.5, y, "8888/88/88 88:88:88 UTC", **title_props)
-            extent = title.get_window_extent()
-            title.remove()
-            title_props["horizontalalignment"] = "left"
-            x = extent.x0 / self.size[0] * self.dpi / self.fig.dpi
-            self.title = self.fig.text(x, y, "", **title_props)
 
     def _update_data_only(self, sweep: sweep.Sweep, ymax=None):
         super()._update_data_only(sweep)
@@ -399,8 +461,9 @@ class ChartRHI(Chart):
 
             super()._setup_colorbars()
 
-        title = sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC")
-        self.title.set_text(title)
+        if sweep.time is None:
+            return
+        self.update_title(sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC"))
 
 
 class ChartPPI(Chart):
@@ -462,8 +525,9 @@ class ChartPPI(Chart):
                 self.overlay.draw(ax)
             super()._setup_colorbars()
 
-        title = sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC")
-        self.title.set_text(title)
+        if sweep.time is None:
+            return
+        self.update_title(sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC"))
 
     def set(self, **kwargs):
         if "rmax" in kwargs:

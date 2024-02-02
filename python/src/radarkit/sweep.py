@@ -15,13 +15,13 @@ class MeshCoordinate:
 
 
 class Sweep:
-    def __init__(self, input=None, verbose=0):
+    def __init__(self, input=None, verbose=0, **kwargs):
         self.time = None
         self.longitude = -97.0
         self.latitude = 32.0
         self.scanType = "UNK"
-        self.scanElevation = None
-        self.scanAzimuth = None
+        self.scanElevation = 0.0
+        self.scanAzimuth = 0.0
         self.prf = 1
         self.waveform = "u"
         self.gatewidth = 1.0
@@ -30,17 +30,19 @@ class Sweep:
         self.products = {}
         self.archive = None
         self.meshCoordinate = MeshCoordinate()
-        if input:
+        if input is None:
+            return
+        if isinstance(input, str) and os.path.exists(input):
             self.read(input, verbose=verbose)
+        elif isinstance(input, np.ndarray) and len(input.shape) == 3 and input.shape[0] == 6:
+            self.plain(input, **kwargs)
 
     def __repr__(self):
-        scanAngle = (
-            self.scanElevation if self.scanType.lower() == "ppi" else self.scanAzimuth if self.scanType.lower() == "rhi" else -999.0
-        )
-        return f"Sweep: {self.scanType} {scanAngle:.1f}° - {list(self.products.keys())}"
+        a = self.scanElevation if self.scanType.lower() == "ppi" else self.scanAzimuth if self.scanType.lower() == "rhi" else -999.0
+        return f"Sweep: {self.scanType} {a:.1f} - {list(self.products.keys())}"
 
     def __str__(self):
-        return f"Sweep: {self.sweep} of {self.archive}"
+        return f"Sweep: {self.scanType} of {self.archive}"
 
     def read(self, input, verbose=0):
         path, basename = os.path.split(input)
@@ -114,3 +116,42 @@ class Sweep:
         mask = self.products["Z"] < -999.0
         for key in symbols:
             self.products[key][mask] = np.nan
+
+    def plain(self, array, **kwargs):
+        symbols = kwargs["symbols"] if "symbols" in kwargs else ["Z", "V", "W", "D", "P", "R"]
+        for i, symbol in enumerate(symbols):
+            self.products.update({symbol: array[i]})
+        shape = self.products["Z"].shape
+        if "scanType" in kwargs or "type" in kwargs:
+            self.scanType = kwargs["scanType"] if "scanType" in kwargs else kwargs["type"]
+        else:
+            if self.products["Z"].shape[0] < 90:
+                self.scanType = "RHI"
+            else:
+                self.scanType = "PPI"
+        if "gatewidth" in kwargs:
+            self.gatewidth = kwargs["gatewidth"]
+        if "e" in kwargs:
+            self.meshCoordinate.e = kwargs["e"]
+        if "a" in kwargs:
+            self.meshCoordinate.a = kwargs["a"]
+        if "r" in kwargs:
+            self.meshCoordinate.r = kwargs["r"]
+        if self.scanType.lower() == "rhi":
+            if len(self.meshCoordinate.e) != shape[0] + 1:
+                self.meshCoordinate.e = np.arange(shape[0] + 1, dtype=float)
+                if "de" in kwargs:
+                    self.meshCoordinate.e *= kwargs["de"]
+            if len(self.meshCoordinate.r) != shape[1] + 1:
+                self.meshCoordinate.r = np.arange(shape[1] + 1, dtype=float) * 1.0e-3 * self.gatewidth
+                if "dr" in kwargs:
+                    self.meshCoordinate.r *= kwargs["dr"]
+        elif self.scanType.lower() == "ppi":
+            if len(self.meshCoordinate.a) != shape[0] + 1:
+                self.meshCoordinate.a = np.arange(shape[0] + 1)
+                if "da" in kwargs:
+                    self.meshCoordinate.a *= kwargs["da"]
+            if len(self.meshCoordinate.r) != shape[1] + 1:
+                self.meshCoordinate.r = np.arange(shape[1] + 1) * 1.0e-3 * self.gatewidth
+                if "dr" in kwargs:
+                    self.meshCoordinate.r *= kwargs["dr"]

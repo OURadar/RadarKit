@@ -373,13 +373,16 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     #endif
 
     // Grab the data from scratch space.
-    RKFloat *Si = scratch->S[0],  *So = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
-    RKFloat *Ti = scratch->S[1],  *To = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
-    RKFloat *Zi = scratch->Z[0],  *Zo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
-    RKFloat *Vi = scratch->V[0],  *Vo = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
-    RKFloat *Wi = scratch->W[0],  *Wo = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
-    RKFloat *Qi = scratch->Q[0],  *Qo = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
-    RKFloat *Oi = scratch->Q[1];
+    RKFloat *SHi = scratch->S[0],  *SHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
+    RKFloat *ZHi = scratch->Z[0],  *ZHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+    RKFloat *VHi = scratch->V[0],  *VHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
+    RKFloat *WHi = scratch->W[0],  *WHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
+    RKFloat *SVi = scratch->S[1],  *SVo = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
+    RKFloat *ZVi = scratch->Z[1],  *ZVo = RKGetFloatDataFromRay(ray, RKBaseProductIndexZv);
+    RKFloat *VVi = scratch->V[1],  *VVo = RKGetFloatDataFromRay(ray, RKBaseProductIndexVv);
+    RKFloat *WVi = scratch->W[1],  *WVo = RKGetFloatDataFromRay(ray, RKBaseProductIndexWv);
+    RKFloat *QHi = scratch->Q[0],  *QHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
+    RKFloat *QVi = scratch->Q[1];
     RKFloat *LHi = scratch->L[0],  *LHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexLh);
     RKFloat *LVi = scratch->L[1],  *LVo = RKGetFloatDataFromRay(ray, RKBaseProductIndexLv);
     RKFloat *RhoXHi = scratch->RhoXP[0],  *RhoXHo = RKGetFloatDataFromRay(ray, RKBaseProductIndexRXh);
@@ -396,21 +399,21 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     mask = scratch->mask;
     // Masking based on SNR and SQI
     for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {
-        SNRh = *Si / scratch->noise[0];
-        SNRv = *Ti / scratch->noise[1];
-        *So++ = 10.0f * log10f(*Si++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
-        *To++ = 10.0f * log10f(*Ti++) - 80.0f;
-        *Qo++ = *Qi;
+        SNRh = *SHi / scratch->noise[0];
+        SNRv = *SVi / scratch->noise[1];
+        *SHo++ = 10.0f * log10f(*SHi++) - 80.0f;                    // Still need the mapping coefficient from ADU-dB to dBm
+        *SVo++ = 10.0f * log10f(*SVi++) - 80.0f;
+        *QHo++ = *QHi;
         *mask = RKCellMaskNull;
-        if (SNRh > SNRThreshold && *Qi > SQIThreshold) {
+        if (SNRh > SNRThreshold && *QHi > SQIThreshold) {
             *mask |= RKCellMaskKeepH;
         }
-        if (SNRv > SNRThreshold && *Oi > SQIThreshold) {
+        if (SNRv > SNRThreshold && *QVi > SQIThreshold) {
             *mask |= RKCellMaskKeepV;
         }
         mask++;
-        Qi++;
-        Oi++;
+        QHi++;
+        QVi++;
     }
     // Simple despeckling: censor the current cell if the next cell is censored
     mask = scratch->mask;
@@ -427,13 +430,19 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     mask = scratch->mask;
     for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {
         if (*mask & RKCellMaskKeepH) {
-            *Zo++ = *Zi;
-            *Vo++ = *Vi;
-            *Wo++ = *Wi;
+            *ZHo++ = *ZHi;
+            *VHo++ = *VHi;
+            *WHo++ = *WHi;
+            *ZVo++ = *ZVi;
+            *VVo++ = *VVi;
+            *WVo++ = *WVi;
         } else {
-            *Zo++ = NAN;
-            *Vo++ = NAN;
-            *Wo++ = NAN;
+            *ZHo++ = NAN;
+            *VHo++ = NAN;
+            *WHo++ = NAN;
+            *ZVo++ = NAN;
+            *VVo++ = NAN;
+            *WVo++ = NAN;
         }
         if (*mask == RKCellMaskKeepBoth) {
             *Do++ = *Di;
@@ -459,9 +468,12 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
             *PhiXVo++ = NAN;
         }
         mask++;
-        Zi++;
-        Vi++;
-        Wi++;
+        ZHi++;
+        VHi++;
+        WHi++;
+        ZVi++;
+        VVi++;
+        WVi++;
         Di++;
         Pi++;
         Ki++;
@@ -475,10 +487,11 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     }
     // Record down the down-sampled gate count
     ray->header.gateCount = k;
-    RKFloat lhma[4];
-    const int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
 
     // Convert float to 8-bit representation (0.0 - 255.0) using M * (value) + A; RhoHV is special
+    #if defined(_COMPUTE_DISPLAY_8)
+    RKFloat lhma[4];
+    const int K = (ray->header.gateCount * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKSLHMAC   RKVec sl = _rk_mm_set1(lhma[0]);  RKVec sh = _rk_mm_set1(lhma[1]);  RKVec sm = _rk_mm_set1(lhma[2]);  RKVec sa = _rk_mm_set1(lhma[3]);
     RKZLHMAC   RKVec zl = _rk_mm_set1(lhma[0]);  RKVec zh = _rk_mm_set1(lhma[1]);  RKVec zm = _rk_mm_set1(lhma[2]);  RKVec za = _rk_mm_set1(lhma[3]);
     RKV2LHMAC  RKVec vl = _rk_mm_set1(lhma[0]);  RKVec vh = _rk_mm_set1(lhma[1]);  RKVec vm = _rk_mm_set1(lhma[2]);  RKVec va = _rk_mm_set1(lhma[3]);
@@ -489,11 +502,14 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     RKKLHMAC   RKVec kl = _rk_mm_set1(lhma[0]);  RKVec kh = _rk_mm_set1(lhma[1]);  RKVec km = _rk_mm_set1(lhma[2]);  RKVec ka = _rk_mm_set1(lhma[3]);
     RKLLHMAC   RKVec ll = _rk_mm_set1(lhma[0]);  RKVec lh = _rk_mm_set1(lhma[1]);  RKVec lm = _rk_mm_set1(lhma[2]);  RKVec la = _rk_mm_set1(lhma[3]);
     RKRLHMAC   RKVec rl = _rk_mm_set1(lhma[0]);  RKVec rh = _rk_mm_set1(lhma[1]);
-    RKVec *Si_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSh); RKVec *So_pf = (RKVec *)scratch->S[0];
-    RKVec *Ti_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSv); RKVec *To_pf = (RKVec *)scratch->S[1];
-    RKVec *Zi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *Zo_pf = (RKVec *)scratch->Z[0];
-    RKVec *Vi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexV);  RKVec *Vo_pf = (RKVec *)scratch->V[0];
-    RKVec *Wi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexW);  RKVec *Wo_pf = (RKVec *)scratch->W[0];
+    RKVec *SHi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSh); RKVec *SHo_pf = (RKVec *)scratch->S[0];
+    RKVec *ZHi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);  RKVec *ZHo_pf = (RKVec *)scratch->Z[0];
+    RKVec *VHi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexV);  RKVec *VHo_pf = (RKVec *)scratch->V[0];
+    RKVec *WHi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexW);  RKVec *WHo_pf = (RKVec *)scratch->W[0];
+    RKVec *SVi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexSv); RKVec *SVo_pf = (RKVec *)scratch->S[1];
+    RKVec *ZVi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexZv); RKVec *ZVo_pf = (RKVec *)scratch->Z[1];
+    RKVec *VVi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexVv); RKVec *VVo_pf = (RKVec *)scratch->V[1];
+    RKVec *WVi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexWv); RKVec *WVo_pf = (RKVec *)scratch->W[1];
     RKVec *Qi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);  RKVec *Qo_pf = (RKVec *)scratch->Q[0];
     RKVec *Di_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexD);  RKVec *Do_pf = (RKVec *)scratch->ZDR;
     RKVec *Pi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexP);  RKVec *Po_pf = (RKVec *)scratch->PhiDP;
@@ -507,11 +523,14 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     RKVec *PhiXVi_pf = (RKVec *)RKGetFloatDataFromRay(ray, RKBaseProductIndexPXv);  RKVec *PhiXVo_pf = (RKVec *)scratch->PhiXP[1];
 
     for (k = 0; k < K; k++) {
-        *So_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Si_pf++, sl), sh), sm), sa);
-        *To_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Ti_pf++, sl), sh), sm), sa);
-        *Zo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Zi_pf++, zl), zh), zm), za);
-        *Vo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Vi_pf++, vl), vh), vm), va);
-        *Wo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Wi_pf++, wl), wh), wm), wa);
+        *SHo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*SHi_pf++, sl), sh), sm), sa);
+        *ZHo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*ZHi_pf++, zl), zh), zm), za);
+        *VHo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*VHi_pf++, vl), vh), vm), va);
+        *WHo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*WHi_pf++, wl), wh), wm), wa);
+        *SVo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*SVi_pf++, sl), sh), sm), sa);
+        *ZVo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*ZVi_pf++, zl), zh), zm), za);
+        *VVo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*VVi_pf++, vl), vh), vm), va);
+        *WVo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*WVi_pf++, wl), wh), wm), wa);
         *Qo_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Qi_pf++, ql), qh), qm), qa);
         *Do_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Di_pf++, dl), dh), dm), da);
         *Po_pf++ = _rk_mm_add(_rk_mm_mul(_rk_mm_min(_rk_mm_max(*Pi_pf++, pl), ph), pm), pa);
@@ -525,12 +544,15 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         *Ro_pf++ = _rk_mm_min(_rk_mm_max(*Ri_pf++, rl), rh);
     }
     // Convert to uint8 type
-    Si = scratch->S[0];  uint8_t *su = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
-    Ti = scratch->S[1];  uint8_t *tu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
-    Zi = scratch->Z[0];  uint8_t *zu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-    Vi = scratch->V[0];  uint8_t *vu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
-    Wi = scratch->W[0];  uint8_t *wu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
-    Qi = scratch->Q[0];  uint8_t *qu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexQ);
+    SHi = scratch->S[0];  uint8_t *shu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
+    ZHi = scratch->Z[0];  uint8_t *zhu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+    VHi = scratch->V[0];  uint8_t *vhu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
+    WHi = scratch->W[0];  uint8_t *whu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
+    SVi = scratch->S[1];  uint8_t *svu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
+    ZVi = scratch->Z[1];  uint8_t *zvu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZv);
+    VVi = scratch->V[1];  uint8_t *vvu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexVv);
+    WVi = scratch->W[1];  uint8_t *wvu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexWv);
+    QHi = scratch->Q[0];  uint8_t *qu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexQ);
     Di = scratch->ZDR;   uint8_t *du = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
     Pi = scratch->PhiDP; uint8_t *pu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
     Ki = scratch->KDP;   uint8_t *ku = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
@@ -542,13 +564,16 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     PhiXHi = scratch->PhiXP[0];  uint8_t *phu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexPXh);
     PhiXVi = scratch->PhiXP[1];  uint8_t *pvu = RKGetUInt8DataFromRay(ray, RKBaseProductIndexPXv);
     for (k = 0; k < ray->header.gateCount; k++) {
-        *su++ = *Si++;
-        *tu++ = *Ti++;
-        if (isfinite(*Zi)) {
-            *zu++ = (uint8_t)*Zi;
-            *vu++ = (uint8_t)*Vi;
-            *wu++ = (uint8_t)*Wi;
-            *qu++ = (uint8_t)*Qi;
+        *shu++ = *SHi++;
+        *svu++ = *SVi++;
+        if (isfinite(*ZHi)) {
+            *zhu++ = (uint8_t)*ZHi;
+            *vhu++ = (uint8_t)*VHi;
+            *whu++ = (uint8_t)*WHi;
+            *zvu++ = (uint8_t)*ZVi;
+            *vvu++ = (uint8_t)*VVi;
+            *wvu++ = (uint8_t)*WVi;
+            *qu++ = (uint8_t)*QHi;
             *du++ = (uint8_t)*Di;
             *pu++ = (uint8_t)*Pi;
             *ku++ = (uint8_t)*Ki;
@@ -561,9 +586,12 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
             *pvu++ = (uint8_t)*PhiXVi;
         } else {
             // Uint8 = 0 = transparent color
-            *zu++ = 0;
-            *vu++ = 0;
-            *wu++ = 0;
+            *zhu++ = 0;
+            *vhu++ = 0;
+            *whu++ = 0;
+            *zvu++ = 0;
+            *vvu++ = 0;
+            *wvu++ = 0;
             *qu++ = 0;
             *du++ = 0;
             *pu++ = 0;
@@ -576,10 +604,13 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
             *phu++ = 0;
             *pvu++ = 0;
         }
-        Zi++;
-        Vi++;
-        Wi++;
-        Qi++;
+        ZHi++;
+        VHi++;
+        WHi++;
+        ZVi++;
+        VVi++;
+        WVi++;
+        QHi++;
         Di++;
         Pi++;
         Ki++;
@@ -592,12 +623,15 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         PhiXVi++;
     }
     // If the space has been used for the same gateCount calculations, it should remain zero
-    if (*Zi != 0.0 || *zu != 0) {
-        memset(su, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
-        memset(tu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
-        memset(zu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
-        memset(vu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
-        memset(wu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+    if (*ZHi != 0.0 || *zhu != 0) {
+        memset(shu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(zhu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(vhu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(whu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(svu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(zvu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(vvu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
+        memset(wvu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(qu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(du, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(pu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
@@ -609,12 +643,15 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         memset(rvu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(phu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
         memset(pvu, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(uint8_t));
-        memset(Si, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
-        memset(Ti, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
-        memset(Zi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
-        memset(Vi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
-        memset(Wi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
-        memset(Qi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(SVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(ZHi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(VHi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(WHi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(SHi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(ZVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(VVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(WVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
+        memset(QHi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Di, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Pi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         memset(Ki, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
@@ -627,6 +664,7 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         memset(PhiXVi, 0, (ray->header.capacity - ray->header.gateCount) * sizeof(RKFloat));
         ray->header.marker |= RKMarkerMemoryManagement;
     }
+    #endif
     // ray->header.baseProductList = RKBaseProductListFloatAll | RKBaseProductListUInt8ZVWDPRKSQ;
     ray->header.baseProductList = scratch->calculatedProducts;
     if (scratch->fftOrder > 0) {

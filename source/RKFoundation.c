@@ -1380,9 +1380,9 @@ void RKPulseDuplicateSplitComplex(RKPulse *pulse) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    uint8_t            idata[RKBaseProductCount][capacity];
+//    uint8_t            idata[RKBaseProductCount][capacity];  (deprecating)
 //    float              fdata[RKBaseProductCount][capacity];
-//    int16_t            sdata[RKMomentCount][capacity];
+//    int16_t            sdata[RKMomentCount][capacity];       (deprecating)
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
     size_t alignment = RKMemoryAlignSize / sizeof(RKFloat);
