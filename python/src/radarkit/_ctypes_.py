@@ -867,19 +867,19 @@ _libs["radarkit"] = load_library("radarkit")
 
 # No modules
 
-__uint8_t = c_ubyte# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 19
+__uint8_t = c_ubyte# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 19
 
-__uint16_t = c_ushort# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 21
+__uint16_t = c_ushort# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 21
 
-__uint32_t = c_uint# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 23
+__uint32_t = c_uint# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 23
 
-__darwin_time_t = c_long# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 98
+__darwin_time_t = c_long# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h: 98
 
-__darwin_off_t = c_int64# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 71
+__darwin_off_t = c_int64# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 71
 
-__darwin_suseconds_t = c_int32# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 74
+__darwin_suseconds_t = c_int32# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types.h: 74
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 57
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 57
 class struct___darwin_pthread_handler_rec(Structure):
     pass
 
@@ -894,7 +894,7 @@ struct___darwin_pthread_handler_rec._fields_ = [
     ('__next', POINTER(struct___darwin_pthread_handler_rec)),
 ]
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 63
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 63
 class struct__opaque_pthread_attr_t(Structure):
     pass
 
@@ -907,7 +907,7 @@ struct__opaque_pthread_attr_t._fields_ = [
     ('__opaque', c_char * int(56)),
 ]
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 78
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 78
 class struct__opaque_pthread_mutex_t(Structure):
     pass
 
@@ -920,7 +920,7 @@ struct__opaque_pthread_mutex_t._fields_ = [
     ('__opaque', c_char * int(56)),
 ]
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 103
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 103
 class struct__opaque_pthread_t(Structure):
     pass
 
@@ -935,15 +935,15 @@ struct__opaque_pthread_t._fields_ = [
     ('__opaque', c_char * int(8176)),
 ]
 
-__darwin_pthread_attr_t = struct__opaque_pthread_attr_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 109
+__darwin_pthread_attr_t = struct__opaque_pthread_attr_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 109
 
-__darwin_pthread_mutex_t = struct__opaque_pthread_mutex_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 113
+__darwin_pthread_mutex_t = struct__opaque_pthread_mutex_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 113
 
-__darwin_pthread_t = POINTER(struct__opaque_pthread_t)# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 118
+__darwin_pthread_t = POINTER(struct__opaque_pthread_t)# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h: 118
 
-fpos_t = __darwin_off_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 81
+fpos_t = __darwin_off_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 81
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 92
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 92
 class struct___sbuf(Structure):
     pass
 
@@ -956,11 +956,11 @@ struct___sbuf._fields_ = [
     ('_size', c_int),
 ]
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 98
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 98
 class struct___sFILEX(Structure):
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
 class struct___sFILE(Structure):
     pass
 
@@ -1009,19 +1009,19 @@ struct___sFILE._fields_ = [
     ('_offset', fpos_t),
 ]
 
-FILE = struct___sFILE# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
+FILE = struct___sFILE# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h: 157
 
-pthread_attr_t = __darwin_pthread_attr_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h: 31
+pthread_attr_t = __darwin_pthread_attr_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h: 31
 
-uint8_t = c_ubyte# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h: 31
+uint8_t = c_ubyte# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h: 31
 
-uint16_t = c_ushort# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h: 31
+uint16_t = c_ushort# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h: 31
 
-uint32_t = c_uint# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h: 31
+uint32_t = c_uint# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint32_t.h: 31
 
-uint64_t = c_ulonglong# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h: 31
+uint64_t = c_ulonglong# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h: 31
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h: 34
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h: 34
 class struct_timeval(Structure):
     pass
 
@@ -1034,7 +1034,7 @@ struct_timeval._fields_ = [
     ('tv_usec', __darwin_suseconds_t),
 ]
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
 class struct_fd_set(Structure):
     pass
 
@@ -1045,9 +1045,9 @@ struct_fd_set._fields_ = [
     ('fds_bits', c_int32 * int(((1024 % (sizeof(c_int32) * 8)) == 0) and (1024 / (sizeof(c_int32) * 8)) or ((1024 / (sizeof(c_int32) * 8)) + 1))),
 ]
 
-fd_set = struct_fd_set# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
+fd_set = struct_fd_set# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h: 52
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h: 33
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h: 33
 class struct_timespec(Structure):
     pass
 
@@ -1060,43 +1060,43 @@ struct_timespec._fields_ = [
     ('tv_nsec', c_long),
 ]
 
-time_t = __darwin_time_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_time_t.h: 31
+time_t = __darwin_time_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_time_t.h: 31
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 377
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 377
 if _libs["radarkit"].has("log10f", "cdecl"):
     log10f = _libs["radarkit"].get("log10f", "cdecl")
     log10f.argtypes = [c_float]
     log10f.restype = c_float
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 417
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 417
 if _libs["radarkit"].has("fabsf", "cdecl"):
     fabsf = _libs["radarkit"].get("fabsf", "cdecl")
     fabsf.argtypes = [c_float]
     fabsf.restype = c_float
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 460
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 460
 if _libs["radarkit"].has("floorf", "cdecl"):
     floorf = _libs["radarkit"].get("floorf", "cdecl")
     floorf.argtypes = [c_float]
     floorf.restype = c_float
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 476
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 476
 if _libs["radarkit"].has("roundf", "cdecl"):
     roundf = _libs["radarkit"].get("roundf", "cdecl")
     roundf.argtypes = [c_float]
     roundf.restype = c_float
 
-in_addr_t = __uint32_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_addr_t.h: 31
+in_addr_t = __uint32_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_addr_t.h: 31
 
-in_port_t = __uint16_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h: 31
+in_port_t = __uint16_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h: 31
 
-pthread_mutex_t = __darwin_pthread_mutex_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutex_t.h: 31
+pthread_mutex_t = __darwin_pthread_mutex_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutex_t.h: 31
 
-pthread_t = __darwin_pthread_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_t.h: 31
+pthread_t = __darwin_pthread_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_t.h: 31
 
-sem_t = c_int# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/semaphore.h: 43
+sem_t = c_int# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/semaphore.h: 43
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 80
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 80
 if _libs["radarkit"].has("__error", "cdecl"):
     __error = _libs["radarkit"].get("__error", "cdecl")
     __error.argtypes = []
@@ -4155,9 +4155,9 @@ struct_rk_command_queue._fields_ = [
 
 RKCommandQueue = struct_rk_command_queue# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 1662
 
-sa_family_t = __uint8_t# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/_types/_sa_family_t.h: 31
+sa_family_t = __uint8_t# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_sa_family_t.h: 31
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 301
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 301
 class struct_in_addr(Structure):
     pass
 
@@ -4168,7 +4168,7 @@ struct_in_addr._fields_ = [
     ('s_addr', in_addr_t),
 ]
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 374
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h: 374
 class struct_sockaddr_in(Structure):
     pass
 
@@ -5351,7 +5351,7 @@ if _libs["radarkit"].has("RKConfigWithId", "cdecl"):
 
 RKWindowType = c_int# /opt/homebrew/include/RadarKit/RKWindow.h: 14
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 26
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 24
 class struct_rk_fft_resource(Structure):
     pass
 
@@ -5372,9 +5372,9 @@ struct_rk_fft_resource._fields_ = [
     ('backwardOutPlace', fftwf_plan),
 ]
 
-RKFFTResource = struct_rk_fft_resource# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 26
+RKFFTResource = struct_rk_fft_resource# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 24
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 35
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 33
 class struct_rk_fft_module(Structure):
     pass
 
@@ -5382,22 +5382,22 @@ struct_rk_fft_module.__slots__ = [
     'name',
     'verbose',
     'exportWisdom',
-    'wisdomFile',
     'count',
+    'wisdomFile',
     'plans',
 ]
 struct_rk_fft_module._fields_ = [
     ('name', RKName),
     ('verbose', c_int),
     ('exportWisdom', c_bool),
-    ('wisdomFile', c_char * int(64)),
     ('count', c_uint),
-    ('plans', RKFFTResource * int(18)),
+    ('wisdomFile', c_char * int(1024)),
+    ('plans', POINTER(RKFFTResource)),
 ]
 
-RKFFTModule = struct_rk_fft_module# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 35
+RKFFTModule = struct_rk_fft_module# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 33
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 41
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 39
 class struct_rk_gaussian(Structure):
     pass
 
@@ -5412,99 +5412,99 @@ struct_rk_gaussian._fields_ = [
     ('sigma', RKFloat),
 ]
 
-RKGaussian = struct_rk_gaussian# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 41
+RKGaussian = struct_rk_gaussian# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 39
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 47
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 45
 if _libs["radarkit"].has("RKGetSignedMinorSectorInDegrees", "cdecl"):
     RKGetSignedMinorSectorInDegrees = _libs["radarkit"].get("RKGetSignedMinorSectorInDegrees", "cdecl")
     RKGetSignedMinorSectorInDegrees.argtypes = [c_float, c_float]
     RKGetSignedMinorSectorInDegrees.restype = c_float
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 48
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 46
 if _libs["radarkit"].has("RKGetMinorSectorInDegrees", "cdecl"):
     RKGetMinorSectorInDegrees = _libs["radarkit"].get("RKGetMinorSectorInDegrees", "cdecl")
     RKGetMinorSectorInDegrees.argtypes = [c_float, c_float]
     RKGetMinorSectorInDegrees.restype = c_float
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 49
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 47
 if _libs["radarkit"].has("RKInterpolatePositiveAngles", "cdecl"):
     RKInterpolatePositiveAngles = _libs["radarkit"].get("RKInterpolatePositiveAngles", "cdecl")
     RKInterpolatePositiveAngles.argtypes = [c_float, c_float, c_float]
     RKInterpolatePositiveAngles.restype = c_float
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 50
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 48
 if _libs["radarkit"].has("RKInterpolateAngles", "cdecl"):
     RKInterpolateAngles = _libs["radarkit"].get("RKInterpolateAngles", "cdecl")
     RKInterpolateAngles.argtypes = [c_float, c_float, c_float]
     RKInterpolateAngles.restype = c_float
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 52
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 50
 if _libs["radarkit"].has("RKMeasureNoiseFromPulse", "cdecl"):
     RKMeasureNoiseFromPulse = _libs["radarkit"].get("RKMeasureNoiseFromPulse", "cdecl")
     RKMeasureNoiseFromPulse.argtypes = [POINTER(RKFloat), POINTER(RKPulse), c_int]
     RKMeasureNoiseFromPulse.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 53
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 51
 if _libs["radarkit"].has("RKBestStrideOfHopsV1", "cdecl"):
     RKBestStrideOfHopsV1 = _libs["radarkit"].get("RKBestStrideOfHopsV1", "cdecl")
     RKBestStrideOfHopsV1.argtypes = [c_int, c_bool]
     RKBestStrideOfHopsV1.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 54
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 52
 if _libs["radarkit"].has("RKBestStrideOfHops", "cdecl"):
     RKBestStrideOfHops = _libs["radarkit"].get("RKBestStrideOfHops", "cdecl")
     RKBestStrideOfHops.argtypes = [c_int, c_bool]
     RKBestStrideOfHops.restype = c_int
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 56
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 54
 if _libs["radarkit"].has("RKHilbertTransform", "cdecl"):
     RKHilbertTransform = _libs["radarkit"].get("RKHilbertTransform", "cdecl")
     RKHilbertTransform.argtypes = [POINTER(RKFloat), POINTER(RKComplex), c_int]
     RKHilbertTransform.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 58
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 56
 if _libs["radarkit"].has("RKFasterSineCosine", "cdecl"):
     RKFasterSineCosine = _libs["radarkit"].get("RKFasterSineCosine", "cdecl")
     RKFasterSineCosine.argtypes = [c_float, POINTER(c_float), POINTER(c_float)]
     RKFasterSineCosine.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 59
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 57
 if _libs["radarkit"].has("RKFastSineCosine", "cdecl"):
     RKFastSineCosine = _libs["radarkit"].get("RKFastSineCosine", "cdecl")
     RKFastSineCosine.argtypes = [c_float, POINTER(c_float), POINTER(c_float)]
     RKFastSineCosine.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 65
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 63
 if _libs["radarkit"].has("RKGetFilterCoefficients", "cdecl"):
     RKGetFilterCoefficients = _libs["radarkit"].get("RKGetFilterCoefficients", "cdecl")
     RKGetFilterCoefficients.argtypes = [POINTER(RKIIRFilter), RKFilterType]
     RKGetFilterCoefficients.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 71
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 69
 if _libs["radarkit"].has("RKFFTModuleInit", "cdecl"):
     RKFFTModuleInit = _libs["radarkit"].get("RKFFTModuleInit", "cdecl")
     RKFFTModuleInit.argtypes = [uint32_t, c_int]
     RKFFTModuleInit.restype = POINTER(RKFFTModule)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 72
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 70
 if _libs["radarkit"].has("RKFFTModuleFree", "cdecl"):
     RKFFTModuleFree = _libs["radarkit"].get("RKFFTModuleFree", "cdecl")
     RKFFTModuleFree.argtypes = [POINTER(RKFFTModule)]
     RKFFTModuleFree.restype = None
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 78
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 76
 if _libs["radarkit"].has("RKSGFit", "cdecl"):
     RKSGFit = _libs["radarkit"].get("RKSGFit", "cdecl")
     RKSGFit.argtypes = [POINTER(RKFloat), POINTER(RKComplex), c_int]
     RKSGFit.restype = RKGaussian
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 84
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 82
 if _libs["radarkit"].has("RKSingle2Double", "cdecl"):
     RKSingle2Double = _libs["radarkit"].get("RKSingle2Double", "cdecl")
     RKSingle2Double.argtypes = [RKWordFloat32]
     RKSingle2Double.restype = RKWordFloat64
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 85
+# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 83
 if _libs["radarkit"].has("RKHalf2Single", "cdecl"):
     RKHalf2Single = _libs["radarkit"].get("RKHalf2Single", "cdecl")
     RKHalf2Single.argtypes = [RKWordFloat16]
@@ -8557,81 +8557,81 @@ try:
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/math.h: 695
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h: 695
 try:
     M_PI = 3.14159265358979323846264338327950288
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/param.h: 215
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/param.h: 215
 def MIN(a, b):
     return (a < b) and a or b
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/param.h: 218
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/param.h: 218
 def MAX(a, b):
     return (a > b) and a or b
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 81
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 81
 try:
     errno = ((__error ())[0])
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 91
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 91
 try:
     EINTR = 4
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 92
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 92
 try:
     EIO = 5
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 96
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 96
 try:
     EBADF = 9
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 101
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 101
 try:
     EACCES = 13
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 102
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 102
 try:
     EFAULT = 14
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 112
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 112
 try:
     EINVAL = 22
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 129
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 129
 try:
     EAGAIN = 35
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 178
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 178
 try:
     ECONNREFUSED = 61
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 185
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 185
 try:
     EHOSTDOWN = 64
 except:
     pass
 
-# /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 187
+# /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h: 187
 try:
     EHOSTUNREACH = 65
 except:
@@ -8717,7 +8717,7 @@ except:
 
 # /Users/boonleng/Developer/radarkit/headers/RadarKit/RKTypes.h: 73
 try:
-    RKBaseProductCount = 16
+    RKBaseProductCount = 19
 except:
     pass
 
@@ -9347,12 +9347,6 @@ def RKInstructIsDisable(i):
 def RKInstructIsEnable(i):
     return ((i & RKPedestalInstructTypeModeMask) == RKPedestalInstructTypeModeEnable)
 
-# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 17
-try:
-    RKCommonFFTPlanCount = 18
-except:
-    pass
-
 # /opt/homebrew/include/RadarKit/RKWaveform.h: 15
 try:
     RKWaveformDefaultDepth = 1024
@@ -9493,11 +9487,11 @@ cpu_set = struct_cpu_set# /Users/boonleng/Developer/radarkit/headers/RadarKit/RK
 
 RKGlobalParameterStruct = struct_RKGlobalParameterStruct# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKFoundation.h: 92
 
-rk_fft_resource = struct_rk_fft_resource# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 26
+rk_fft_resource = struct_rk_fft_resource# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 24
 
-rk_fft_module = struct_rk_fft_module# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 35
+rk_fft_module = struct_rk_fft_module# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 33
 
-rk_gaussian = struct_rk_gaussian# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 41
+rk_gaussian = struct_rk_gaussian# /Users/boonleng/Developer/radarkit/headers/RadarKit/RKDSP.h: 39
 
 rk_compression_scratch = struct_rk_compression_scratch# /opt/homebrew/include/RadarKit/RKScratch.h: 52
 
