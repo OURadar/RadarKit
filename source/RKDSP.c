@@ -483,23 +483,24 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     module->verbose = verbose;
 
+    // Compute the plan count
+    uint32_t planCount = (int)ceilf(log2f((float)capacity)) + 1;
+    module->plans = (RKFFTResource *)malloc(planCount * sizeof(RKFFTResource));
+    if (module->plans == NULL) {
+        RKLog("Error. Unable to allocate RKFFTResource.\n");
+        exit(EXIT_FAILURE);
+    }
+
     // DFT Wisdom
     char *wisdom = (char *)malloc(1024 * 1024);
-    sprintf(module->wisdomFile, RKFFTWisdomFile);
+    sprintf(module->wisdomFile, "%s/%s", rkGlobalParameters.rootDataFolder, RKFFTWisdomFile);
     if (RKFilenameExists(module->wisdomFile)) {
-        RKLog("%s Loading DFT wisdom ...\n", module->name);
+        RKLog("%s Loading DFT wisdom %s ...\n", module->name, module->wisdomFile);
         fftwf_import_wisdom_from_filename(module->wisdomFile);
         strcpy(wisdom, fftwf_export_wisdom_to_string());
     } else {
         RKLog("%s DFT wisdom file not found.\n", module->name);
         module->exportWisdom = true;
-    }
-
-    // Compute the maximum plan size
-    uint32_t planCount = (int)ceilf(log2f((float)MIN(RKMaximumGateCount, capacity))) + 1;
-    if (planCount >= RKCommonFFTPlanCount) {
-        RKLog("%s Error. Unexpected planCount = %s.\n", module->name, RKIntegerToCommaStyleString(planCount));
-        exit(EXIT_FAILURE);
     }
 
     // Temporary buffers
@@ -510,7 +511,8 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
 
     // Create FFT plans
     if (module->verbose) {
-        RKLog("%s Allocating FFT resources with capacity %s ...\n", module->name, RKIntegerToCommaStyleString(internalCapacity));
+        RKLog("%s Allocating FFT resources with capacity %s (%d) ...\n",
+            module->name, RKIntegerToCommaStyleString(internalCapacity), planCount);
     }
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
@@ -529,7 +531,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         }
     }
     if (module->exportWisdom) {
-        RKLog("%s Saving DFT wisdom ...\n", module->name);
+        RKLog("%s Saving DFT wisdom %s ...\n", module->name, module->wisdomFile);
         fftwf_export_wisdom_to_filename(module->wisdomFile);
         module->exportWisdom = false;
     }
@@ -570,8 +572,9 @@ void RKFFTModuleFree(RKFFTModule *module) {
         module->plans[k].forwardOutPlace = NULL;
         module->plans[k].backwardInPlace = NULL;
         module->plans[k].backwardOutPlace = NULL;
+        module->count--;
     }
-    module->count = 0;
+    free(module->plans);
     free(module);
 }
 

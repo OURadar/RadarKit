@@ -16,6 +16,22 @@ class MeshCoordinate:
 
 class Sweep:
     def __init__(self, input=None, verbose=0, **kwargs):
+        """
+        Sweep class to handle radar data
+
+        Parameters
+        ----------
+        input : str or np.ndarray
+            If str, it is the path to a file or a tar archive containing radar data.
+            Currently support RadarKit format only.
+
+            If np.ndarray, it is a 3D array of radar data with shape (6, n, m) where
+            n is the number of elevation or azimuth angles and m is the number of range gates.
+
+        Returns
+        -------
+        A Sweep object
+        """
         self.time = None
         self.longitude = -97.0
         self.latitude = 32.0

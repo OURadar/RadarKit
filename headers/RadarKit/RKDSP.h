@@ -14,8 +14,6 @@
 #include <RadarKit/RKWindow.h>
 #include <RadarKit/RKRamp.h>
 
-#define RKCommonFFTPlanCount 18
-
 typedef struct rk_fft_resource {
     unsigned int                     size;
     unsigned int                     count;
@@ -29,9 +27,9 @@ typedef struct rk_fft_module {
     RKName                           name;
     int                              verbose;
     bool                             exportWisdom;
-    char                             wisdomFile[64];
     unsigned int                     count;
-    RKFFTResource                    plans[RKCommonFFTPlanCount];
+    char                             wisdomFile[RKMaximumPathLength];
+    RKFFTResource                    *plans;
 } RKFFTModule;
 
 typedef struct rk_gaussian {

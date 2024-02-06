@@ -86,8 +86,34 @@ class Chart:
     labelfont = blib.getFontOfWeight(weight=500)
     titlefont = blib.getFontOfWeight(weight=700)
 
-    def __init__(self, size=(1280, 720), **kwargs):
-        self.size = size
+    def __init__(self, **kwargs):
+        """
+        Create a new chart.
+
+        Parameters
+        ----------
+        size: (float, float), default: (1280, 720)
+            The size of the chart in pixels.
+
+        dpi: float, default: 72
+            The resolution of the chart in dots per inch.
+
+        s: float, default: 1.0
+            The scaling factor for the chart.
+
+        titlecolor: (float, float, float), default: :rc:`text.color`
+            The color of the title.
+
+        orientation: str, default: "horizontal"
+            The orientation of the colorbars.
+
+        Returns
+        -------
+        A new chart.
+        """
+        self.size = (1280, 720)
+        if "size" in kwargs:
+            self.size = kwargs["size"]
         if "dpi" in kwargs:
             self.dpi = kwargs["dpi"]
         if "s" in kwargs:
@@ -254,7 +280,7 @@ class Chart:
         return ax, cb, st
 
     def _update_data_only(self, sweep: sweep.Sweep):
-        assert self.symbols != sweep.products.keys(), "Mismatch in symbols."
+        assert self.symbols == list(sweep.products.keys()), "Mismatch in symbols."
         for m, symbol in zip(self.ms, self.symbols):
             if symbol == "R":
                 m.set_array(rho2ind(sweep.products[symbol]).ravel())
@@ -266,7 +292,7 @@ class Chart:
             for m in self.mesh:
                 m.remove()
         # Update self.symbols
-        self.symbols = sweep.products.keys()
+        self.symbols = list(sweep.products.keys())
         for k, symbol in enumerate(self.symbols):
             if symbol[0] == "Z":
                 value = sweep.products[symbol]
@@ -423,14 +449,28 @@ class Chart:
 
 
 class ChartRHI(Chart):
-    def __init__(self, size=(1280, 720), **kwargs):
-        super().__init__(size, **kwargs)
+    def __init__(self, sweep: sweep.Sweep = None, **kwargs):
+        """
+        Create a new RHI chart.
+
+        Parameters
+        ----------
+        sweep : sweep.Sweep
+            The sweep to be displayed.
+
+        Returns
+        -------
+        A new RHI chart.
+        """
+        super().__init__(**kwargs)
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
-
             for i in range(6):
                 self.ax[i], self.cb[i], self.st[i] = self._add_axes(231 + i)
+
+        if sweep:
+            self.set_data(sweep)
 
     def _update_data_only(self, sweep: sweep.Sweep, ymax=None):
         super()._update_data_only(sweep)
@@ -467,32 +507,30 @@ class ChartRHI(Chart):
 
 
 class ChartPPI(Chart):
-    def __init__(self, size=(1280, 720), **kwargs):
+    def __init__(self, sweep: sweep.Sweep = None, **kwargs):
+        """
+        Create a new PPI chart.
+
+        Parameters
+        ----------
+        sweep : sweep.Sweep
+            The sweep to be displayed.
+
+        Returns
+        -------
+        A new PPI chart.
+        """
         if "orientation" not in kwargs:
             kwargs["orientation"] = "vertical"
-        super().__init__(size, **kwargs)
+        super().__init__(**kwargs)
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
-
             for i in range(6):
                 self.ax[i], self.cb[i], self.st[i] = self._add_axes(321 + i)
 
-            # Do a test run to get the proper position of the title, then use left alignment to avoid jitters in animations
-            y = (self.size[1] - self.titlesize - self.m) / self.size[1]
-            title_props = {
-                "fontproperties": self.titlefont,
-                "fontsize": self.titlesize,
-                "color": self.titlecolor,
-                "horizontalalignment": "center",
-                "verticalalignment": "bottom",
-            }
-            title = self.fig.text(0.5, y, "8888/88/88 88:88:88 UTC", **title_props)
-            extent = title.get_window_extent()
-            title.remove()
-            title_props["horizontalalignment"] = "left"
-            x = extent.x0 / self.size[0] * self.dpi / self.fig.dpi
-            self.title = self.fig.text(x, y, "", **title_props)
+        if sweep:
+            self.set_data(sweep)
 
     def __repr__(self):
         return self.fig.__repr__()
