@@ -1,9 +1,18 @@
+stages:
+  - build
+
+variables:
+  CC: "gcc"
+
+before_script:
+  - ln -sf /usr/share/zoneinfo/GMT /etc/localtime
+
 build:
   stage: build
   image: ubuntu:20.04
-  <<: *run_normally
-  before_install:
-    - sudo apt install libfftw3-dev libnetcdf-dev libssl-dev
+    - apt update && apt install -y build-essential libfftw3-dev libnetcdf-dev libssl-dev
   script:
-    make
-    echo "make okay"
+    - git clone https://git.arrc.ou.edu/radar/radarkit.git
+    - cd radarkit
+    - make
+    - echo DONE
