@@ -9,8 +9,8 @@ before_script:
 
 build:
   stage: build
-  image: ubuntu:20.04
-    - apt update && apt install -y build-essential libfftw3-dev libnetcdf-dev libssl-dev
+  image: gcc
+    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   script:
     - git clone https://git.arrc.ou.edu/radar/radarkit.git
     - cd radarkit
