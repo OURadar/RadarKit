@@ -1,6 +1,9 @@
-language: c
-sudo: required
-before_install:
-    - sudo apt-get install libfftw3-dev libnetcdf-dev
-script: echo test-passed
-
+build:
+  stage: build
+  image: ubuntu:20.04
+  <<: *run_normally
+  before_install:
+    - sudo apt install libfftw3-dev libnetcdf-dev libssl-dev
+  script:
+    make
+    echo "make okay"
