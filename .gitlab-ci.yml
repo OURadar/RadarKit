@@ -8,13 +8,19 @@ before_script:
   - ln -sf /usr/share/zoneinfo/GMT /etc/localtime
 
 build:
-  stage: build
-  image: ubuntu:20.04
-    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   tags:
     - linux
+  stage: build
+  image: gcc
+  before_script:
+    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   script:
     - git clone https://git.arrc.ou.edu/radar/radarkit.git
     - cd radarkit
     - make
     - echo DONE
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - radarkit/libradarkit.a
+      - radarkit/rkutil

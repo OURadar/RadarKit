@@ -133,6 +133,7 @@ char *RKTestByNumberDescription(const int indent) {
     "35 - Show ring filter coefficients\n"
     "36 - RKCommandQueue unit test\n"
     "37 - Show ramp types\n"
+    "38 - Test half-single-double conversion\n"
     "\n"
     "40 - Make a frequency hopping sequence\n"
     "41 - Make a TFM waveform\n"
@@ -316,6 +317,9 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
         case 37:
             RKTestRamp();
+            break;
+        case 38:
+            RKTestHalfSingleDoubleConversion();
             break;
         case 40:
             RKTestMakeHops();
@@ -2820,6 +2824,48 @@ void RKTestRamp(void) {
     printf("\n");
 
     free(ramp);
+}
+
+void RKTestHalfSingleDoubleConversion(void) {
+    SHOW_FUNCTION_NAME
+    RKWordFloat16 w16;
+    RKWordFloat32 w32;
+    RKWordFloat64 w64;
+
+    printf("sizeof(RKWordFloat16) = %zu   sizeof(RKWordFloat32) = %zu   sizeof(RKWordFloat64) = %zu\n\n",
+        sizeof(RKWordFloat16), sizeof(RKWordFloat32), sizeof(RKWordFloat64));
+
+    const float f = -3.1415926535f;
+
+    w32.value = f;
+    printf("w32: "); RKShowWordFloat32(w32, f);
+
+    w64 = RKSingle2Double(w32);
+    printf("w64: "); RKShowWordFloat64(w64, f);
+
+    w64.value = (double)f;
+    printf("w64: "); RKShowWordFloat64(w64, f);
+
+    printf("\n");
+
+    // Half float of the following bytes should get -2.9551, 2.5469
+    const uint8_t bytes[] = {233, 193, 24, 65};
+
+    w16.bytes[0] = bytes[0];
+    w16.bytes[1] = bytes[1];
+    printf("w16: "); RKShowWordFloat16(w16, -2.9551f);
+
+    uint16_t *p16 = (uint16_t *)bytes;
+    w16.word = *p16;
+    printf("w16: "); RKShowWordFloat16(w16, -2.9551f);
+
+    w32 = RKHalf2Single(w16);
+    printf("w32: "); RKShowWordFloat32(w32, -2.9551f);
+
+    p16++;
+    w16.word = *p16;
+    w32 = RKHalf2Single(w16);
+    printf("w32: "); RKShowWordFloat32(w32, 2.5469f);
 }
 
 #pragma mark - Waveform Tests

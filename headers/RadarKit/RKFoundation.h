@@ -87,6 +87,7 @@ typedef struct RKGlobalParameterStruct {
     bool             dailyLog;                                                                     // Daily mode where log file is {logFolder}/YYYYMMDD.log
     bool             showColor;                                                                    // Show colors on screen
     bool             statusColor;                                                                  // Color terminal
+    RKSignalLocale   convention;                                                                   // Signal convention
     pthread_mutex_t  lock;                                                                         // Mutual exclusive access
     FILE             *stream;                                                                      // Secondary output stream, can be NULL
 } RKGlobalParameters;

@@ -82,4 +82,18 @@ RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count);
 RKWordFloat64 RKSingle2Double(const RKWordFloat32 x);
 RKWordFloat32 RKHalf2Single(const RKWordFloat16 x);
 
+//
+// Bit Manipulation
+//
+uint32_t RKBitReverse32(uint32_t);
+uint16_t RKBitReverse64(uint16_t);
+uint8_t RKBitReverse8(uint8_t);
+
+//
+// Visual
+//
+void RKShowWordFloat16(const RKWordFloat16, const float);
+void RKShowWordFloat32(const RKWordFloat32, const float);
+void RKShowWordFloat64(const RKWordFloat64, const float);
+
 #endif /* defined(__RadarKit_RKDSP__) */

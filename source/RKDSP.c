@@ -494,6 +494,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     // DFT Wisdom
     char *wisdom = (char *)malloc(1024 * 1024);
     sprintf(module->wisdomFile, "%s/%s", rkGlobalParameters.rootDataFolder, RKFFTWisdomFile);
+    RKPreparePath(module->wisdomFile);
     if (RKFilenameExists(module->wisdomFile)) {
         RKLog("%s Loading DFT wisdom %s ...\n", module->name, module->wisdomFile);
         fftwf_import_wisdom_from_filename(module->wisdomFile);
@@ -615,7 +616,7 @@ RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
 RKWordFloat64 RKSingle2Double(const RKWordFloat32 s) {
     RKWordFloat64 d;
     d.s = s.s;
-    d.e = s.e == 0 ? 0 : (((int16_t)s.e - 127) & 0x7FF) + 1023;
+    d.e = s.e == 0 ? 0 : (uint16_t)s.e - 127 + 1023;
     d.m = (uint64_t)s.m << 29;
     return d;
 }
@@ -623,7 +624,71 @@ RKWordFloat64 RKSingle2Double(const RKWordFloat32 s) {
 RKWordFloat32 RKHalf2Single(const RKWordFloat16 s) {
     RKWordFloat32 d;
     d.s = s.s;
-    d.e = s.e == 0 ? 0 : (((int8_t)s.e - 15) & 0xFF) + 127;
-    d.m = (uint16_t)s.m << 13;
+    d.e = s.e == 0 ? 0 : s.e - 15 + 127;
+    d.m = (uint32_t)s.m << 13;
     return d;
+}
+
+uint32_t RKBitReverse32(uint32_t b) {
+   uint32_t mask = 0b11111111111111110000000000000000;
+   b = (b & mask) >> 16 | (b & ~mask) << 16;
+   mask = 0b11111111000000001111111100000000;
+   b = (b & mask) >> 8 | (b & ~mask) << 8;
+   mask = 0b11110000111100001111000011110000;
+   b = (b & mask) >> 4 | (b & ~mask) << 4;
+   mask = 0b11001100110011001100110011001100;
+   b = (b & mask) >> 2 | (b & ~mask) << 2;
+   mask = 0b10101010101010101010101010101010;
+   b = (b & mask) >> 1 | (b & ~mask) << 1;
+   return b;
+}
+
+uint16_t RKBitReverse16(uint16_t b) {
+   uint16_t mask = 0b1111111100000000;
+   b = (b & mask) >> 8 | (b & ~mask) << 8;
+   mask = 0b1111000011110000;
+   b = (b & mask) >> 4 | (b & ~mask) << 4;
+   mask = 0b1100110011001100;
+   b = (b & mask) >> 2 | (b & ~mask) << 2;
+   mask = 0b1010101010101010;
+   b = (b & mask) >> 1 | (b & ~mask) << 1;
+   return b;
+}
+
+uint8_t RKBitReverse8(uint8_t b) {
+   uint8_t mask = 0b11110000;
+   b = (b & mask) >> 4 | (b & ~mask) << 4;
+   mask = 0b11001100;
+   b = (b & mask) >> 2 | (b & ~mask) << 2;
+   mask = 0b10101010;
+   b = (b & mask) >> 1 | (b & ~mask) << 1;
+   return b;
+}
+
+void RKShowWordFloat16(const RKWordFloat16 s, const float answer) {
+    float v = RKHalf2Single(s).value;
+    bool good = fabs(answer - v) / answer < 1.0e-3f;
+    printf("s = %x   e = %3xh (%4u)   m =           %03xh   word =             %04xh   value = %.4f (d)   %s%s%s\n",
+        s.s, s.e, s.e, s.m, s.word, v,
+        rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
+        good ? "ok" : "failed",
+        rkGlobalParameters.showColor ? RKNoColor : "");
+}
+
+void RKShowWordFloat32(const RKWordFloat32 s, const float answer) {
+    bool good = fabs(answer - s.value) / answer < 1.0e-4f;
+    printf("s = %x   e = %3xh (%4u)   m =        %06xh   word =         %08xh   value = %11.8f   %s%s%s\n",
+        s.s, s.e, s.e, s.m, s.word, s.value,
+        rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
+        good ? "ok" : "failed",
+        rkGlobalParameters.showColor ? RKNoColor : "");
+}
+
+void RKShowWordFloat64(const RKWordFloat64 s, const float answer) {
+    bool good = fabs(answer - s.value) / answer < 1.0e-7;
+    printf("s = %x   e = %3xh (%4u)   m = %013llxh   word = %016llxh   value = %.16f   %s%s%s\n",
+        s.s, s.e, s.e, s.m, s.word, s.value,
+        rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
+        good ? "ok" : "failed",
+        rkGlobalParameters.showColor ? RKNoColor : "");
 }
