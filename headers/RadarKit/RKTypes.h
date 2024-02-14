@@ -253,10 +253,10 @@ typedef struct rk_modulo_path {
 //
 typedef union rk_four_byte {
     struct { RKByte byte[4]; };
-    struct { uint8_t u8, u8_2, u8_3, u8_4; };
-    struct { int8_t i8, i8_2, i8_3, i8_4; };
-    struct { uint16_t u16, u16_2; };
-    struct { int16_t i16, i16_2; };
+    struct { uint8_t u8_1, u8_2, u8_3, u8_4; };
+    struct { int8_t i8_1, i8_2, i8_3, i8_4; };
+    struct { uint16_t u16_1, u16_2; };
+    struct { int16_t i16_1, i16_2; };
     struct { uint32_t u32; };
     struct { int32_t i32; };
     struct { float f; };
@@ -268,7 +268,7 @@ typedef union rk_four_byte {
 typedef union rk_half_float_t {
     struct {
         uint16_t m:10;                                                         // mantissa (mask 0x3FF)
-        int8_t   e:5;                                                          // exponent 2 ** 4 - 1 = 15 (mask 0x1F)
+        uint8_t  e:5;                                                          // exponent 2 ** 4 - 1 = 15 (mask 0x1F)
         uint8_t  s:1;                                                          // sign bit
     };
     uint8_t bytes[2];                                                          // raw bytes
@@ -281,7 +281,7 @@ typedef union rk_half_float_t {
 typedef union rk_single_float_t {
     struct {
         uint32_t m:23;                                                         // mantissa (mask 0x7FFFFF)
-        int8_t   e:8;                                                          // exponent  2 ** 7 - 1 = 127 (mask 0xFF)
+        uint8_t  e:8;                                                          // exponent  2 ** 7 - 1 = 127 (mask 0xFF)
         uint8_t  s:1;                                                          // sign bit
     };
     uint8_t bytes[4];                                                          // raw bytes
@@ -295,7 +295,7 @@ typedef union rk_single_float_t {
 typedef union rk_double_float_t {
     struct {
         uint64_t m:52;                                                         // mantissa (mask 0xFFFFFFFFFFFFF)
-        int16_t  e:11;                                                         // exponent 2 ** 10 - 1 = 1023 (mask 0x3FF)
+        uint16_t e:11;                                                         // exponent 2 ** 10 - 1 = 1023 (mask 0x3FF)
         uint8_t  s:1;                                                          // sign bit
     };
     uint8_t bytes[8];                                                          // raw bytes
@@ -510,6 +510,12 @@ enum {
     RKPositionFlagAzimuthModeMask                = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint),
     RKPositionFlagElevationModeMask              = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint),
     RKPositionFlagScanModeMask                   = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)
+};
+
+typedef uint8_t RKSignalLocale;
+enum {
+    RKSignalLocaleNormal,
+    RKSignalLocaleFirstNyquist,
 };
 
 typedef uint32_t RKHeadingType;

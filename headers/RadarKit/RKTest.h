@@ -147,6 +147,7 @@ void RKTestHilbertTransform(void);
 void RKTestWriteFFTWisdom(const int);
 void RKTestRingFilterShowCoefficients(void);
 void RKTestRamp(void);
+void RKTestHalfSingleDoubleConversion(void);
 
 #pragma mark - Waveform Tests
 
