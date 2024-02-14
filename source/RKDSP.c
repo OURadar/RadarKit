@@ -677,8 +677,8 @@ void RKShowWordFloat16(const RKWordFloat16 s, const float answer) {
 
 void RKShowWordFloat32(const RKWordFloat32 s, const float answer) {
     bool good = fabs(answer - s.value) / answer < 1.0e-4f;
-    printf("s = %x   e = %3xh (%4u)   m =        %06xh   word =         %08xh   value = %11.8f   %s%s%s\n",
-        s.s, s.e, s.e, s.m, s.word, s.value,
+    printf("s = %x   e = %3xh (%4u)   m =        %06luxh   word =         %08luxh   value = %11.8f   %s%s%s\n",
+        s.s, s.e, s.e, (unsigned long)s.m, (unsigned long)s.word, s.value,
         rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
         good ? "ok" : "failed",
         rkGlobalParameters.showColor ? RKNoColor : "");
@@ -686,8 +686,8 @@ void RKShowWordFloat32(const RKWordFloat32 s, const float answer) {
 
 void RKShowWordFloat64(const RKWordFloat64 s, const float answer) {
     bool good = fabs(answer - s.value) / answer < 1.0e-7;
-    printf("s = %x   e = %3xh (%4u)   m = %013llxh   word = %016llxh   value = %.16f   %s%s%s\n",
-        s.s, s.e, s.e, s.m, s.word, s.value,
+    printf("s = %x   e = %3xh (%4u)   m = %013luxh   word = %016luxh   value = %.16f   %s%s%s\n",
+        s.s, s.e, s.e, (unsigned long)s.m, (unsigned long)s.word, s.value,
         rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
         good ? "ok" : "failed",
         rkGlobalParameters.showColor ? RKNoColor : "");
