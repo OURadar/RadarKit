@@ -11,6 +11,8 @@ build:
   stage: build
   image: gcc
     - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
+  tags:
+    - linux
   script:
     - git clone https://git.arrc.ou.edu/radar/radarkit.git
     - cd radarkit
