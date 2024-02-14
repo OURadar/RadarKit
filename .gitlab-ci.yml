@@ -17,6 +17,7 @@ build:
   script:
     - git clone https://git.arrc.ou.edu/radar/radarkit.git
     - cd radarkit
+    - git checkout ${CI_COMMIT_BRANCH}
     - make
     - echo DONE
   artifacts:
