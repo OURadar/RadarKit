@@ -9,7 +9,7 @@ before_script:
 
 build:
   stage: build
-  image: gcc
+  image: ubuntu:20.04
     - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   tags:
     - linux
