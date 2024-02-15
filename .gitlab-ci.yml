@@ -1,5 +1,6 @@
 stages:
   - build
+  - test
 
 variables:
   CC: "gcc"
@@ -24,4 +25,54 @@ build:
     expire_in: 1 week
     paths:
       - radarkit/libradarkit.a
+      - radarkit/libradarkit.so
       - radarkit/rkutil
+
+basic:
+  tags:
+    - linux
+  stage: test
+  image: gcc
+  before_script:
+    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
+  needs:
+    - build
+  script:
+    - export TERM=xterm-256color
+    - cd radarkit
+    - ./rkutil -T0
+    - ./rkutil -T30
+    - ./rkutil -T38
+
+numeric:
+  tags:
+    - linux
+  stage: test
+  image: gcc
+  before_script:
+    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
+  needs:
+    - build
+  script:
+    - export TERM=xterm-256color
+    - cd radarkit
+    - ./rkutil -T50
+    - ./rkutil -T51
+    - ./rkutil -T52
+    - ./rkutil -T53
+    - ./rkutil -T54
+    - ./rkutil -T55
+    - ./rkutil -T56
+
+performance:
+  tags:
+    - linux
+  image: gcc
+  before_script:
+    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
+  needs:
+    - build
+  script:
+    - export TERM=xterm-256color
+    - cd radarkit
+    - ./rkutil -T60
