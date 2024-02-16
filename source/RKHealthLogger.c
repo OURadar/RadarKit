@@ -150,7 +150,7 @@ static void *healthLogger(void *in) {
 
 #pragma mark - Life Cycle
 
-RKHealthLogger *RKHealthLoggerInit() {
+RKHealthLogger *RKHealthLoggerInit(void) {
     RKHealthLogger *engine = (RKHealthLogger *)malloc(sizeof(RKHealthLogger));
     memset(engine, 0, sizeof(RKHealthLogger));
     sprintf(engine->name, "%s<HealthLogWriter>%s",

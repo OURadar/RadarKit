@@ -149,7 +149,7 @@ char *RKTestByNumberDescription(const int indent) {
     "54 - Compute one ray using the Multi-Lag method with L = 2\n"
     "55 - Compute one ray using the Multt-Lag method with L = 3\n"
     "56 - Compute one ray using the Multi-Lag method with L = 4\n"
-    "57 - Compute one ray using the Spectral Moment method (** WIP **)\n"
+    "57 - Compute one ray using the Spectral Moment method\n"
     "\n"
     "60 - Measure the speed of SIMD calculations\n"
     "61 - Measure the speed of pulse compression math\n"
@@ -1687,7 +1687,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKPulseEngineSetFilterByWaveform(engine, waveform);
 
     // Launch a separate thread to retrieve processed pulses
-    pthread_t tid;
+    pthread_t tid = NULL;
     if (status == RKPulseStatusConsumed) {
         pthread_create(&tid, NULL, RKTestSimplePulseEngineRetriever, engine);
     }
@@ -1718,7 +1718,9 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
         while (engine->doneIndex != 1000) {
             usleep(10000);
         }
-        pthread_join(tid, NULL);
+        if (tid) {
+            pthread_join(tid, NULL);
+        }
     } else {
         RKPulseEngineWaitWhileBusy(engine);
     }
@@ -3489,6 +3491,8 @@ void *RKTestPulseEngineSpeedWorker(void *in) {
     double t;
     int n, o = 0;
 
+    gettimeofday(&tic, NULL);
+
     int k = 0;
     do {
         pulse = RKPulseEngineGetProcessedPulse(engine, true);
@@ -3639,19 +3643,49 @@ void RKTestMomentProcessorSpeed(void) {
     int i, j, k;
     RKFFTModule *fftModule;
     RKMomentScratch *space;
+    RKConfig *configBuffer;
     RKBuffer pulseBuffer;
     RKBuffer rayBuffer;
-    const int testCount = 500;
+
+    const int rayCount = 100;
     const int pulseCount = 100;
     const int pulseCapacity = 1 << 12;
 
+    RKWaveform *waveform = RKWaveformInitAsImpulse();
+
+    RKConfigBufferAlloc(&configBuffer, 2);
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKRayBufferAlloc(&rayBuffer, pulseCapacity, 1);
 
-    RKMomentScratchAlloc(&space, pulseCapacity, true, NULL);
+    RKConfig *config = &configBuffer[1];
+    strcpy(config->vcpDefinition, "vcp1");
+    strcpy(config->waveformName, waveform->name);
+    config->waveform = waveform;
+    config->waveformDecimate = waveform;
+    config->sweepAzimuth = 42.0;                                               // For RHI mode
+    config->sweepElevation = 0.0;                                              // For PPI mode
+    config->systemZCal[0] = 48.0;                                              // H-channel Z calibration
+    config->systemZCal[1] = 48.0;                                              // V-channel Z calibration
+    config->systemDCal = 0.02;
+    config->systemPCal = 0.2;
+    config->prt[0] = 0.5e-3f;
+    config->startMarker = RKMarkerScanTypeRHI | RKMarkerSweepBegin;
+    config->noise[0] = 0.00011;
+    config->noise[1] = 0.00012;
+    config->SNRThreshold = -3.0f;
+    config->SQIThreshold = 0.01f;
+    config->transitionGateCount = 100;                                         // For TFM / other compression algorithms
+
+    RKMomentScratchAlloc(&space, pulseCapacity, 1, NULL);
     fftModule = RKFFTModuleInit(pulseCapacity, 0);
+    space->config = config;
     space->fftModule = fftModule;
     space->gateCount = pulseCapacity;
+    space->gateSizeMeters = 30.0f;
+    space->velocityFactor = 1.0f;
+    space->widthFactor = 1.0f;
+    space->noise[0] = config->noise[0];                                        // Use system config noise
+    space->noise[1] = config->noise[1];
 
     RKPulse *pulses[pulseCount];
     RKComplex *X;
@@ -3690,54 +3724,60 @@ void RKTestMomentProcessorSpeed(void) {
         switch (j) {
             default:
                 method = RKPulsePair;
-                RKLog(UNDERLINE("PulsePair:") "\n");
+                RKLog(rkGlobalParameters.showColor ? RKPinkColor "PulsePair:" RKNoColor : "PulsePair:\n");
                 break;
             case 1:
                 method = RKPulsePairHop;
-                RKLog(UNDERLINE("PulsePairHop:") "\n");
+                RKLog(rkGlobalParameters.showColor ? RKPinkColor "PulsePairHop:" RKNoColor : "PulsePairHop:\n");
                 break;
             case 2:
                 method = RKMultiLag;
                 space->userLagChoice = 2;
-                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                RKLog(rkGlobalParameters.showColor ? RKPinkColor "MultiLag (L = 2):" RKNoColor : "MultiLag (L = 2):\n");
                 break;
             case 3:
                 method = RKMultiLag;
                 space->userLagChoice = 3;
-                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                RKLog(rkGlobalParameters.showColor ? RKPinkColor "MultiLag (L = 3):" RKNoColor : "MultiLag (L = 3):\n");
                 break;
             case 4:
                 method = RKMultiLag;
                 space->userLagChoice = 4;
-                RKLog(UNDERLINE("MultiLag (L = %d):") "\n", space->userLagChoice);
+                RKLog(rkGlobalParameters.showColor ? RKPinkColor "MultiLag (L = 4):" RKNoColor : "MultiLag (L = 4):\n");
                 break;
             case 5:
                 method = RKSpectralMoment;
                 space->fftOrder = (uint8_t)ceilf(log2f((float)pulseCount));
-                RKLog(UNDERLINE("SpectralMoment:") "\n");
+                RKLog(rkGlobalParameters.showColor ? RKPinkColor "SpectralMoment:" RKNoColor : "SpectralMoment:\n");
                 break;
         }
         mint = INFINITY;
         for (i = 0; i < 3; i++) {
             gettimeofday(&tic, NULL);
-            for (k = 0; k < testCount; k++) {
+            for (k = 0; k < rayCount; k++) {
                 method(space, pulses, pulseCount);
                 makeRayFromScratch(space, ray);
             }
             gettimeofday(&toc, NULL);
             t = RKTimevalDiff(toc, tic);
-            RKLog(">Test %d -> %.2f ms\n", i, 1.0e3 * t / testCount);
+            RKLog(">Test %d -> %.2f ms\n", i, 1.0e3 * t / rayCount);
             mint = MIN(mint, t);
         }
         RKLog(">Time for each ray (%s pulses x %s gates) = %.2f ms (Best of 3)\n",
-              RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3 * mint / testCount);
-        RKLog(">Speed: %.2f rays / sec / core\n", testCount / mint);
+              RKIntegerToCommaStyleString(pulseCount), RKIntegerToCommaStyleString(pulseCapacity), 1.0e3f * mint / rayCount);
+        RKLog(">Speed: %s%.2f%s rays / sec / core\n",
+            rkGlobalParameters.showColor ? RKMonokaiGreen : "",
+            (float)rayCount / mint,
+            rkGlobalParameters.showColor ? RKNoColor : ""
+            );
     }
 
     RKFFTModuleFree(fftModule);
     RKMomentScratchFree(space);
-    free(pulseBuffer);
-    free(rayBuffer);
+    RKConfigBufferFree(configBuffer);
+    RKPulseBufferFree(pulseBuffer);
+    RKRayBufferFree(rayBuffer);
+    RKLog("Done\n");
 }
 
 void RKTestCacheWrite(void) {

@@ -64,7 +64,7 @@ void *exitAfterAWhile(void *s) {
 
 #pragma mark - Local Functions
 
-static void showHelp() {
+static void showHelp(void) {
     char name[] = __FILE__;
     *strrchr(name, '.') = '\0';
     printf("RadarKit Utility\n\n"

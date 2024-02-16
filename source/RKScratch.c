@@ -415,6 +415,7 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         QHi++;
         QVi++;
     }
+
     // Simple despeckling: censor the current cell if the next cell is censored
     mask = scratch->mask;
     for (k = 0; k < MIN(scratch->capacity, scratch->gateCount) - 1; k++) {
@@ -426,6 +427,7 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
         }
         mask++;
     }
+
     // Now we copy out the values based on mask
     mask = scratch->mask;
     for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {

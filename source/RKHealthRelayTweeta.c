@@ -60,7 +60,7 @@ static int healthRelayTweetaRead(RKClient *client) {
 static int healthRelayTweetaGreet(RKClient *client) {
     ssize_t s = RKNetworkSendPackets(client->sd, "\n", 1, NULL);
     if (s < 0) {
-        return -s;
+        return (int)-s;
     }
     RKLog("%s Tweeta @ %s:%d connected.\n", client->name, client->hostIP, client->port);
     return RKResultSuccess;

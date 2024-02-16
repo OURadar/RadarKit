@@ -270,7 +270,7 @@ static void *fileRemover(void *in) {
 
     const int c = me->id;
 
-    char path[RKMaximumPathLength];
+    char path[RKMaximumPathLength + 256];
     char command[RKMaximumPathLength];
     char parentFolder[RKFileManagerFilenameLength] = "";
     struct timeval time = {0, 0};
@@ -536,16 +536,17 @@ static void *folderWatcher(void *in) {
 
     for (k = 0; k < engine->workerCount; k++) {
         RKFileRemover *worker = &engine->workers[k];
+        const char *folder = folders[k];
 
         worker->id = k;
         worker->parent = engine;
         worker->capacity = capacities[k];
         if (engine->radarDescription != NULL && strlen(engine->radarDescription->dataPath)) {
-            snprintf(worker->path, sizeof(worker->path), "%s/%s", engine->radarDescription->dataPath, folders[k]);
+            snprintf(worker->path, sizeof(worker->path), "%s/%s", engine->radarDescription->dataPath, folder);
         } else if (strlen(engine->dataPath)) {
-            snprintf(worker->path, sizeof(worker->path), "%s/%s", engine->dataPath, folders[k]);
+            snprintf(worker->path, sizeof(worker->path), "%s/%s", engine->dataPath, folder);
         } else {
-            snprintf(worker->path, sizeof(worker->path), "%s", folders[k]);
+            snprintf(worker->path, sizeof(worker->path), "%s", folder);
         }
 
         if (userLimits[k]) {
@@ -624,7 +625,7 @@ static void *folderWatcher(void *in) {
 
 #pragma mark - Life Cycle
 
-RKFileManager *RKFileManagerInit() {
+RKFileManager *RKFileManagerInit(void) {
     RKFileManager *engine = (RKFileManager *)malloc(sizeof(RKFileManager));
     if (engine == NULL) {
         RKLog("Error. Unable to allocate a file manager.\n");

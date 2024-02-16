@@ -24,7 +24,7 @@
 #elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
 // GCC-compatible compiler, targeting x86/x86-64
 #include <x86intrin.h>
-#elif defined(__GNUC__) && defined(__ARM_NEON__)
+#elif defined(__GNUC__) && (defined(__ARM_NEON__) || defined(__ARM_NEON))
 // GCC-compatible compiler, targeting ARM with NEON
 #include <arm_neon.h>
 #elif defined(__GNUC__) && defined(__IWMMXT__)
@@ -128,7 +128,7 @@ typedef __m128 RKVec;
 #define _rk_mm_sqrt(a)               _mm_sqrt_ps(a)
 #define _rk_mm_rcp(a)                _mm_rcp_ps(a)
 
-#elif defined(__ARM_NEON__)
+#elif defined(__ARM_NEON__) || defined(__ARM_NEON)
 
 typedef float32x4_t RKVec;
 #define _rk_mm_set1(a)               vld1q_dup_f32((float *)&a)

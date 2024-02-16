@@ -668,7 +668,7 @@ uint8_t RKBitReverse8(uint8_t b) {
 void RKShowWordFloat16(const RKWordFloat16 s, const float answer) {
     float v = RKHalf2Single(s).value;
     bool good = fabs(answer - v) / answer < 1.0e-3f;
-    printf("s = %x   e = %3xh (%4u)   m =           %03xh   word =             %04xh   value = %.4f (d)   %s%s%s\n",
+    printf("16: s = %x   e = %3xh (%4u)   m =               %03xh   word =                  %04xh   value = %.4f (d)   %s%s%s\n",
         s.s, s.e, s.e, s.m, s.word, v,
         rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
         good ? "ok" : "failed",
@@ -677,7 +677,7 @@ void RKShowWordFloat16(const RKWordFloat16 s, const float answer) {
 
 void RKShowWordFloat32(const RKWordFloat32 s, const float answer) {
     bool good = fabs(answer - s.value) / answer < 1.0e-4f;
-    printf("s = %x   e = %3xh (%4u)   m =        %06luxh   word =         %08luxh   value = %11.8f   %s%s%s\n",
+    printf("32: s = %x   e = %3xh (%4u)   m =          %06luxh   word =           %08luxh   value = %11.8f   %s%s%s\n",
         s.s, s.e, s.e, (unsigned long)s.m, (unsigned long)s.word, s.value,
         rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
         good ? "ok" : "failed",
@@ -686,7 +686,7 @@ void RKShowWordFloat32(const RKWordFloat32 s, const float answer) {
 
 void RKShowWordFloat64(const RKWordFloat64 s, const float answer) {
     bool good = fabs(answer - s.value) / answer < 1.0e-7;
-    printf("s = %x   e = %3xh (%4u)   m = %013luxh   word = %016luxh   value = %.16f   %s%s%s\n",
+    printf("64: s = %x   e = %3xh (%4u)   m = %013luxh   word = %016luxh   value = %.8f   %s%s%s\n",
         s.s, s.e, s.e, (unsigned long)s.m, (unsigned long)s.word, s.value,
         rkGlobalParameters.showColor ? (good ? RKGreenColor : RKOrangeColor) : "",
         good ? "ok" : "failed",

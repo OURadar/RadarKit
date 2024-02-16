@@ -109,7 +109,7 @@ static int pedestalPedzyRead(RKClient *client) {
 static int pedestalPedzyGreet(RKClient *client) {
     ssize_t s = RKNetworkSendPackets(client->sd, "\n", 1, NULL);
     if (s < 0) {
-        return -s;
+        return (int)-s;
     }
     RKLog("%s Pedzy @ %s:%d connected.\n", client->name, client->hostIP, client->port);
     // The shared user resource pointer

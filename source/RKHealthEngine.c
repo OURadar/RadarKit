@@ -294,7 +294,7 @@ static void *healthConsolidator(void *_in) {
 
 #pragma mark - Life Cycle
 
-RKHealthEngine *RKHealthEngineInit() {
+RKHealthEngine *RKHealthEngineInit(void) {
     RKHealthEngine *engine = (RKHealthEngine *)malloc(sizeof(RKHealthEngine));
     memset(engine, 0, sizeof(RKHealthEngine));
     sprintf(engine->name, "%s<HealthCollector>%s",

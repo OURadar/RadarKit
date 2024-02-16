@@ -347,7 +347,7 @@ static void *pulseTagger(void *_in) {
 
 #pragma mark - Life Cycle
 
-RKPositionEngine *RKPositionEngineInit() {
+RKPositionEngine *RKPositionEngineInit(void) {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
     sprintf(engine->name, "%s<PulsePositioner>%s",
