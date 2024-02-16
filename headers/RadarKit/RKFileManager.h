@@ -74,7 +74,7 @@ struct rk_file_remover {
     int                              capacity;                            // Capcity of *folders, *filenames and *indexedStats
     size_t                           usage;
     size_t                           limit;
-    char                             path[RKMaximumFolderPathLength + 32];
+    char                             path[RKMaximumFolderPathLength + 384];
 
     void                             *folders;
     void                             *filenames;

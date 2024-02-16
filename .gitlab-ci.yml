@@ -1,26 +1,50 @@
+# Running docker containers as:
+#
+# macOS running as x86: docker run --platform=linux/amd64 -it -v ${PWD}:/radarkit gcc
+# macOS running as arm: docker run -it -v ${PWD}:/radarkit gcc
+# linux running native: docker run -it -v ${PWD}:/radarkit gcc
+
 stages:
   - build
   - test
 
 variables:
   CC: "gcc"
+  PASS_STRING: "\e[38;5;46mPassed\e[m"
+  FAIL_STRING: "\e[38;5;214mFailed\e[m"
+  ALL_PASS_STRING: "\e[38;5;46mAll tests passed\e[m"
 
 before_script:
-  - ln -sf /usr/share/zoneinfo/GMT /etc/localtime
+  - export TERM=xterm-256color
+  - apt update && apt install -y bc libfftw3-dev libnetcdf-dev libssl-dev
 
-build:
+build_linux:
   tags:
-    - linux
+    - linux, x86_64
   stage: build
   image: gcc
-  before_script:
-    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   script:
     - git clone https://git.arrc.ou.edu/radar/radarkit.git
     - cd radarkit
     - git checkout ${CI_COMMIT_BRANCH}
     - make
-    - echo DONE
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - radarkit/libradarkit.a
+      - radarkit/libradarkit.so
+      - radarkit/rkutil
+
+build_mac:
+  tags:
+    - macos, arm64
+  stage: build
+  image: gcc
+  script:
+    - git clone https://git.arrc.ou.edu/radar/radarkit.git
+    - cd radarkit
+    - git checkout ${CI_COMMIT_BRANCH}
+    - make
   artifacts:
     expire_in: 1 week
     paths:
@@ -33,46 +57,68 @@ basic:
     - linux
   stage: test
   image: gcc
-  before_script:
-    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   needs:
-    - build
+    - build_linux
   script:
-    - export TERM=xterm-256color
     - cd radarkit
-    - ./rkutil -T0
-    - ./rkutil -T30
-    - ./rkutil -T38
+    - ee=0
+    - ./rkutil -T0; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T1; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T2; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T3; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T4; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T5; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T11; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - echo -n "" && [[ $ee == 0 ]] && echo ${ALL_PASS_STRING} || echo ${FAIL_STRING}
+    - exit ${ee}
 
 numeric:
   tags:
     - linux
   stage: test
   image: gcc
-  before_script:
-    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   needs:
-    - build
+    - build_linux
   script:
-    - export TERM=xterm-256color
     - cd radarkit
-    - ./rkutil -T50
-    - ./rkutil -T51
-    - ./rkutil -T52
-    - ./rkutil -T53
-    - ./rkutil -T54
-    - ./rkutil -T55
-    - ./rkutil -T56
+    - ee=0
+    - ./rkutil -T30; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T31; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T38; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T50; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T51; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T52; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T53; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T54; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T55; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T56; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - echo -n "" && [[ $ee == 0 ]] && echo ${ALL_PASS_STRING} || echo ${FAIL_STRING}
+    - exit ${ee}
 
 performance:
   tags:
     - linux
+  stage: test
   image: gcc
-  before_script:
-    - apt update && apt install -y libfftw3-dev libnetcdf-dev libssl-dev
   needs:
-    - build
+    - build_linux
   script:
-    - export TERM=xterm-256color
     - cd radarkit
-    - ./rkutil -T60
+    - ee=0
+    - ./rkutil -T60; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T61; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T62; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T63; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
+    - echo -n "" && [[ $ee == 0 ]] && echo ${ALL_PASS_STRING} || echo ${FAIL_STRING}
+    - exit ${ee}
+
+# should_fail:
+#   tags:
+#     - linux
+#   stage: test
+#   image: gcc
+#   needs:
+#     - build_linux
+#   script:
+#     - cd radarkit
+#     - exit 1

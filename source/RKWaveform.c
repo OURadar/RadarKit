@@ -133,7 +133,7 @@ RKWaveform *RKWaveformInitFromSampleArrays(RKComplex **samples, const int count,
     return waveform;
 }
 
-RKWaveform *RKWaveformInit() {
+RKWaveform *RKWaveformInit(void) {
     return RKWaveformInitWithCountAndDepth(1, RKWaveformDefaultDepth);
 }
 
