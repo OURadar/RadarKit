@@ -45,12 +45,6 @@ build_mac:
     - cd radarkit
     - git checkout ${CI_COMMIT_BRANCH}
     - make
-  artifacts:
-    expire_in: 1 week
-    paths:
-      - radarkit/libradarkit.a
-      - radarkit/libradarkit.so
-      - radarkit/rkutil
 
 basic:
   tags:

@@ -1687,7 +1687,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKPulseEngineSetFilterByWaveform(engine, waveform);
 
     // Launch a separate thread to retrieve processed pulses
-    pthread_t tid = NULL;
+    pthread_t tid = 0;
     if (status == RKPulseStatusConsumed) {
         pthread_create(&tid, NULL, RKTestSimplePulseEngineRetriever, engine);
     }
