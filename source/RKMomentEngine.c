@@ -448,6 +448,7 @@ static void *momentEngineCore(void *in) {
             pulses[k++] = pulse;
             i = RKNextModuloS(i, engine->radarDescription->pulseBufferDepth);
         } while (k <= path.length);
+        path.length++;
         // printf("k = %d   is = %u   ie = %u\n", k, is, ie);
 
         // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
@@ -487,6 +488,7 @@ static void *momentEngineCore(void *in) {
             }
             ray->header.s |= RKRayStatusSkipped;
         }
+        path.length--;
         k = 0;
         do {
             pulse = pulses[k++];

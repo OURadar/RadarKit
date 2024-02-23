@@ -491,7 +491,7 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
                 RKShowVecFloat(variable, space->aR[p][k], gateShown);
             }
             printf(RKEOL);
-            sprintf(variable, "  S2Z = ");
+            sprintf(variable, "   S2Z = ");
             RKShowVecFloat(variable, space->S2Z[p], gateShown);
             printf(RKEOL);
             sprintf(variable, "    Z%s = ", p == 0 ? "h" : "v");
