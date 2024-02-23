@@ -10,9 +10,8 @@ stages:
 
 variables:
   CC: "gcc"
-  PASS_STRING: "\e[38;5;46mPassed\e[m"
   FAIL_STRING: "\e[38;5;214mFailed\e[m"
-  ALL_PASS_STRING: "\e[38;5;46mAll tests passed\e[m"
+  PASS_STRING: "\e[38;5;46mAll tests passed\e[m"
 
 before_script:
   - export TERM=xterm-256color
@@ -56,14 +55,14 @@ basic:
   script:
     - cd radarkit
     - ee=0
-    - ./rkutil -T0; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T1; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T2; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T3; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T4; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T5; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T11; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - echo -n "" && [[ $ee == 0 ]] && echo ${ALL_PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T0; ee=$((ee+$?))
+    - ./rkutil -T1; ee=$((ee+$?))
+    - ./rkutil -T2; ee=$((ee+$?))
+    - ./rkutil -T3; ee=$((ee+$?))
+    - ./rkutil -T4; ee=$((ee+$?))
+    - ./rkutil -T5; ee=$((ee+$?))
+    - ./rkutil -T11; ee=$((ee+$?))
+    - echo -n "" && [[ ${ee} == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
     - exit ${ee}
 
 numeric:
@@ -76,17 +75,17 @@ numeric:
   script:
     - cd radarkit
     - ee=0
-    - ./rkutil -T30; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T31; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T38; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T50; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T51; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T52; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T53; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T54; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T55; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T56; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - echo -n "" && [[ $ee == 0 ]] && echo ${ALL_PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T30; ee=$((ee+$?))
+    - ./rkutil -T31; ee=$((ee+$?))
+    - ./rkutil -T38; ee=$((ee+$?))
+    - ./rkutil -T50; ee=$((ee+$?))
+    - ./rkutil -T51; ee=$((ee+$?))
+    - ./rkutil -T52; ee=$((ee+$?))
+    - ./rkutil -T53; ee=$((ee+$?))
+    - ./rkutil -T54; ee=$((ee+$?))
+    - ./rkutil -T55; ee=$((ee+$?))
+    - ./rkutil -T56; ee=$((ee+$?))
+    - echo -n "" && [[ ${ee} == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
     - exit ${ee}
 
 performance:
@@ -99,11 +98,11 @@ performance:
   script:
     - cd radarkit
     - ee=0
-    - ./rkutil -T60; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T61; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T62; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - ./rkutil -T63; e=$?; ee=$((ee+e)); [[ $e == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
-    - echo -n "" && [[ $ee == 0 ]] && echo ${ALL_PASS_STRING} || echo ${FAIL_STRING}
+    - ./rkutil -T60; ee=$((ee+$?))
+    - ./rkutil -T61; ee=$((ee+$?))
+    - ./rkutil -T62; ee=$((ee+$?))
+    - ./rkutil -T63; ee=$((ee+$?))
+    - echo -n "" && [[ ${ee} == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
     - exit ${ee}
 
 # should_fail:

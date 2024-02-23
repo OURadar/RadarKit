@@ -3239,7 +3239,19 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         pulses[k] = pulse;
     }
 
-    //printf("pcal[0] = %.2f\n", space->pcal[0]);
+    #if defined(_DEBUG_TEST_ONE_RAY_PRINT_X)
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
+        for (p = 0; p < 2; p++) {
+            printf("X[%d][%d][...] =", k, p);
+            RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
+            for (g = 0; g < gateCount; g++) {
+                printf("  %.1f + %.1fi", Y[g].i, Y[g].q);
+            }
+            printf("\n");
+        }
+    }
+    #endif
 
     if (method == RKPulsePairHop) {
         RKLog("Info. Pulse Pair for Frequency Hopping.\n");
@@ -3264,25 +3276,25 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
 
     // Results for pulse-pair, pulse-pair for hops, multilag for lags 2, 3, and 4
     RKFloat D[][7] = {
-        { 1.7216, -2.5106, -1.9448,  -1.3558, -0.2018,  -0.9616},  // pulse-pair / spectral moment
-        { 2.2780,  2.6324,  2.7621,   2.3824,  3.1231,   2.3561},  // pulse-pair for hops
-        { 4.3376, -7.4963, -7.8030, -11.6505, -1.1906, -11.4542},  // multilag 2
-        { 2.7106, -8.4965, -7.8061,  -9.1933, -0.7019,  -8.4546},  // multilag 3
-        { 3.7372, -4.2926, -4.1635,  -6.0751, -0.7788,  -5.9091},  // multilag 4
+        { 1.7216f, -2.5106f, -1.9448f,  -1.3558f, -0.2018f,  -0.9616f},  // pulse-pair / spectral moment
+        { 2.2780f,  2.6324f,  2.7621f,   2.3824f,  3.1231f,   2.3561f},  // pulse-pair for hops
+        { 4.3376f, -7.4963f, -7.8030f, -11.6505f, -1.1906f, -11.4542f},  // multilag 2
+        { 2.7106f, -8.4965f, -7.8061f,  -9.1933f, -0.7019f,  -8.4546f},  // multilag 3
+        { 3.7372f, -4.2926f, -4.1635f,  -6.0751f, -0.7788f,  -5.9091f},  // multilag 4
     };
     RKFloat P[][7] = {
-        { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
-        { 0.4155, -0.8567, -0.7188, -0.7400, -0.4405, -0.6962},
-        { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
-        { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
-        { 0.4856, -0.4533, -0.4636, -0.5404, -0.4298, -0.5248},
+        { 0.4856f, -0.4533f, -0.4636f, -0.5404f, -0.4298f, -0.5248f},
+        { 0.4155f, -0.8567f, -0.7188f, -0.7400f, -0.4405f, -0.6962f},
+        { 0.4856f, -0.4533f, -0.4636f, -0.5404f, -0.4298f, -0.5248f},
+        { 0.4856f, -0.4533f, -0.4636f, -0.5404f, -0.4298f, -0.5248f},
+        { 0.4856f, -0.4533f, -0.4636f, -0.5404f, -0.4298f, -0.5248f},
     };
     RKFloat R[][7] = {
-        {0.9024, 0.7063, 0.8050, 0.7045, 0.8717, 0.7079},
-        {0.9858, 0.8144, 0.8593, 0.9104, 0.9476, 0.9236},
-        {1.8119, 2.5319, 2.9437, 6.7856, 2.6919, 8.4917},
-        {1.0677, 1.1674, 1.3540, 2.2399, 1.3389, 2.6234},
-        {1.3820, 1.4968, 1.6693, 2.4468, 1.6047, 2.7012},
+        {0.9024f, 0.7063f, 0.8050f, 0.7045f, 0.8717f, 0.7079f},
+        {0.9858f, 0.8144f, 0.8593f, 0.9104f, 0.9476f, 0.9236f},
+        {1.8119f, 2.5319f, 2.9437f, 6.7856f, 2.6919f, 8.4917f},
+        {1.0677f, 1.1674f, 1.3540f, 2.2399f, 1.3389f, 2.6234f},
+        {1.3820f, 1.4968f, 1.6693f, 2.4468f, 1.6047f, 2.7012f},
     };
 
     // Select the row for the correct answer
@@ -3299,7 +3311,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         err += D[row][k] - space->ZDR[k];
     }
     err /= (RKFloat)gateCount;
-    sprintf(str, "Delta ZDR = %.4e", err);
+    sprintf(str, "Delta ZDR = %+.4e", err);
     TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     // Error of PhiDP
@@ -3308,7 +3320,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         err += P[row][k] - space->PhiDP[k];
     }
     err /= (RKFloat)gateCount;
-    sprintf(str, "Delta PhiDP = %.4e", err);
+    sprintf(str, "Delta PhiDP = %+.4e", err);
     TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     // Error of RhoHV
@@ -3317,7 +3329,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         err += R[row][k] - space->RhoHV[k];
     }
     err /= (RKFloat)gateCount;
-    sprintf(str, "Delta RhoHV = %.4e", err);
+    sprintf(str, "Delta RhoHV = %+.4e", err);
     TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     RKLog("Deallocating buffers ...\n");
