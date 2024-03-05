@@ -1,4 +1,5 @@
-![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)
+[![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)](https://git.arrc.ou.edu/radar/radarkit/-/commits/master)
+[![Latest Release](https://git.arrc.ou.edu/radar/radarkit/-/badges/release.svg)](https://git.arrc.ou.edu/radar/radarkit/-/releases)
 
 # RadarKit
 
