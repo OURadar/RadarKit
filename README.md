@@ -1,3 +1,5 @@
+![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)
+
 # RadarKit
 
 First of all, many thanks for your interest in the framework! :smile: :thumbsup: :punch:
