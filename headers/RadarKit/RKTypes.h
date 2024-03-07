@@ -1206,7 +1206,7 @@ typedef struct rk_waveform {
     RKName               name;                                                 // Waveform name in plain string
     RKWaveformType       type;                                                 // Various type of waveforms
     uint8_t              count;                                                // Number of groups
-    int                  depth;                                                // Maximum number of samples
+    uint32_t             depth;                                                // Maximum number of samples
     double               fc;                                                   // Carrier frequency (Hz)
     double               fs;                                                   // Sampling frequency (Hz)
     uint8_t              filterCounts[RKMaximumWaveformCount];                 // Number of filters (see filterAnchors)
