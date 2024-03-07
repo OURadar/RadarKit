@@ -61,7 +61,7 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
 
 #pragma mark - Life Cycle
 
-RKWaveform *RKWaveformInitWithCountAndDepth(const int count, const int depth) {
+RKWaveform *RKWaveformInitWithCountAndDepth(const uint8_t count, const uint32_t depth) {
     int k;
     RKWaveform *waveform = (RKWaveform *)malloc(sizeof(RKWaveform));
     memset(waveform, 0, sizeof(RKWaveform));
@@ -95,11 +95,11 @@ RKWaveform *RKWaveformInitFromFile(const char *filename) {
     return waveform;
 }
 
-RKWaveform *RKWaveformInitFromSamples(RKComplex *samples, const int depth, const char * _Nullable name) {
+RKWaveform *RKWaveformInitFromSamples(const RKComplex *samples, const uint32_t depth, const char * _Nullable name) {
     return RKWaveformInitFromSampleArrays(&samples, 1, depth, name);
 }
 
-RKWaveform *RKWaveformInitFromSampleArrays(RKComplex **samples, const int count, const int depth, const char * _Nullable name) {
+RKWaveform *RKWaveformInitFromSampleArrays(const RKComplex **samples, const uint8_t count, const uint32_t depth, const char * _Nullable name) {
     RKWaveform *waveform = RKWaveformInitWithCountAndDepth(count, depth);
     waveform->fc = 0.0f;
     waveform->fs = 1.0f;
@@ -182,7 +182,7 @@ RKWaveform *RKWaveformInitAsLinearFrequencyModulation(const double fs, const dou
 }
 
 RKWaveform *RKWaveformInitAsFrequencyHops(const double fs, const double fc, const double pulsewidth, const double bandwidth, const int hops) {
-    uint32_t depth = (uint32_t)round(pulsewidth * fs);
+    const uint32_t depth = (uint32_t)round(pulsewidth * fs);
     if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
         RKLog("Info. Waveform depth %.2f us --> %.2f us due to rounding @ fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
     }
@@ -196,7 +196,8 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(void) {
     const uint32_t longPulseWidth = 500 * 8;
     const uint32_t shortPulseWidth = 50 * 8;
     const uint32_t transitionWidth = 100 * 8;
-    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, longPulseWidth + shortPulseWidth);
+    const uint32_t depth = longPulseWidth + shortPulseWidth;
+    RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, depth);
 
     waveform->fs = 80.0e6;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeTimeFrequencyMultiplexing;
@@ -263,7 +264,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
 }
 
 RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double fc, const double bandwidth, const double pulsewidth, const int count) {
-    uint32_t depth = (uint32_t)round(pulsewidth * fs);
+    const uint32_t depth = (uint32_t)round(pulsewidth * fs);
     if (fabs(depth / fs - pulsewidth) / pulsewidth > 0.1) {
         RKLog("Info. Waveform depth %.2f us --> %.2f us due to rounding @ fs = %.2f MHz.\n", 1.0e6 * pulsewidth, 1.0e6 * depth / fs, 1.0e-6 * fs);
     }

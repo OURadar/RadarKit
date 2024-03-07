@@ -157,6 +157,19 @@ typedef struct rk_pulse_v1 {
     RKByte               data[0];                                              //
 } RKPulseV1;
 
+typedef struct rk_waveform_v1 {
+    RKName               name;                                                 // Waveform name in plain string
+    RKWaveformType       type;                                                 // Various type of waveforms
+    uint8_t              count;                                                // Number of groups
+    int                  depth;                                                // Maximum number of samples
+    double               fc;                                                   // Carrier frequency (Hz)
+    double               fs;                                                   // Sampling frequency (Hz)
+    uint8_t              filterCounts[RKMaximumWaveformCount];                 // Number of filters (see filterAnchors)
+    RKFilterAnchorGroup  filterAnchors[RKMaximumWaveformCount];                // Filter anchors of each sub-waveform for de-multiplexing
+    RKComplex            *samples[RKMaximumWaveformCount];                     // Samples up to amplitude of 1.0 (for compression, non-distorted)
+    RKInt16C             *iSamples[RKMaximumWaveformCount];                    // 16-bit full-scale equivalence of the waveforms (pre-distorted)
+} RKWaveformV1;
+
 #pragma pack(pop)
 
 #endif
