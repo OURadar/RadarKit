@@ -680,7 +680,7 @@ static void *pulseGatherer(void *_in) {
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
-        // Determine the engine state
+        // Prep: determine the engine state / prcessing parameters
         if (k == *engine->pulseIndex) {
             engine->state |= RKEngineStateSleep1;
         } else if ((pulse->header.s & RKPulseStatusReadyForMomentEngine) != RKPulseStatusReadyForMomentEngine) {
@@ -729,11 +729,12 @@ static void *pulseGatherer(void *_in) {
             if (i1 != i0 || count == RKMaximumPulsesPerRay || pulse->header.marker & RKMarkerSweepEnd) {
                 i1 = i0;
                 if (engine->excludeBoundaryPulses) {
-                    if (pulse->header.marker & RKMarkerSweepEnd) {
-                        count++;
-                    }
+                    // Sweep engine looks for i0 change and share that pulse. Remove for non-sharing mode.
                     if (count > 1) {
                         count--;
+                    }
+                    if (pulse->header.marker & RKMarkerSweepEnd) {
+                        count++;
                     }
                 }
                 if (count > 0) {
@@ -769,6 +770,9 @@ static void *pulseGatherer(void *_in) {
                     count = 0;
                 } else {
                     // Just started, i0 could refer to any azimuth bin
+                    if (engine->verbose > 1) {
+                        RKLog("%s count = %d   i1 = %d   i0 = %d\n", engine->name, count, i1, i0);
+                    }
                 }
             }
             // Keep counting up
@@ -783,7 +787,7 @@ static void *pulseGatherer(void *_in) {
             engine->business--;
         }
 
-        // Lag of the engine
+        // Lag of the engine and its workers
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         RKMomentEngineUpdateMinMaxWorkerLag(engine);
 
@@ -795,21 +799,21 @@ static void *pulseGatherer(void *_in) {
             RKMomentEngineUpdateStatusString(engine);
         }
 
-        // Sleep if engine->state contains sleep flags
-        if (engine->state & RKEngineStateSleep1) {
-            engine->state ^= RKEngineStateSleep1;
-            if (++s % 200 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
-            }
+        // Actual work: sleep / signal the workers
+        if (engine->state & RKEngineStateSleep1 || engine->state & RKEngineStateSleep2) {
             usleep(1000);
-        } else if (engine->state & RKEngineStateSleep2) {
-            engine->state ^= RKEngineStateSleep2;
             if (++s % 200 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep %d/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name,
+                      engine->state & RKEngineStateSleep1 ? 1 : 2,
+                      (float)s * 0.001f, k , *engine->pulseIndex, pulse->header.s);
             }
-            usleep(1000);
+            if (engine->state & RKEngineStateSleep1) {
+                engine->state ^= RKEngineStateSleep1;
+            }
+            if (engine->state & RKEngineStateSleep2) {
+                engine->state ^= RKEngineStateSleep2;
+            }
         } else {
             // Update k to catch up for the next watch
             k = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);

@@ -649,7 +649,7 @@ static void *pulseWatcher(void *_in) {
     while (engine->state & RKEngineStateWantActive) {
         // The pulse
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, k);
-        // Determine the engine state
+        // Prep: determine the engine state / processing parameters
         if (k == *engine->pulseIndex) {
             engine->state |= RKEngineStateSleep1;
         } else if (!(pulse->header.s & RKPulseStatusHasIQData)) {
@@ -658,7 +658,7 @@ static void *pulseWatcher(void *_in) {
             engine->almostFull++;
             engine->filterGid[k] = -1;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
+            RKLog("%s Warning. Projected an overflow.   lead-min-max lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
                 engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
             i = *engine->pulseIndex;
             if (engine->verbose) {
@@ -694,7 +694,7 @@ static void *pulseWatcher(void *_in) {
             }
         }
 
-        // Lag of the engine
+        // Lag of the engine and its workers
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         RKPulseEngineUpdateMinMaxWorkerLag(engine);
 
@@ -705,13 +705,13 @@ static void *pulseWatcher(void *_in) {
             RKPulseEngineUpdateStatusString(engine);
         }
 
-        // Sleep if engine->state contains sleep flags
+        // Actual work: sleep / signal the workers
         if (engine->state & RKEngineStateSleep1 || engine->state & RKEngineStateSleep2) {
             usleep(50);
             if (++s % 4000 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep %d/%.1f s   k = %d   pulseIndex = %d   doneIndex = %d   header.s = 0x%02x\n",
                       engine->name,
-                      engine->state & RKEngineStateSleep1 ? 1 : (engine->state & RKEngineStateSleep2 ? 2 : 0),
+                      engine->state & RKEngineStateSleep1 ? 1 : 2,
                       (float)s * 0.000050f, k , *engine->pulseIndex, engine->doneIndex, pulse->header.s);
             }
             if (engine->state & RKEngineStateSleep1) {

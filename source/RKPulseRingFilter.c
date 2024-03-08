@@ -553,7 +553,7 @@ static void *pulseRingWatcher(void *_in) {
             }
         }
 
-        // Lag of the engine
+        // Lag of the engine and its workers
         engine->lag = fmodf(((float)*engine->pulseIndex + engine->radarDescription->pulseBufferDepth - k) / engine->radarDescription->pulseBufferDepth, 1.0f);
         RKPulseRingFilterEngineUpdateMinMaxWorkerLag(engine);
 
@@ -574,20 +574,20 @@ static void *pulseRingWatcher(void *_in) {
         }
 
         // Sleep if engine->state contains sleep flags
-        if (engine->state & RKEngineStateSleep1) {
-            engine->state ^= RKEngineStateSleep1;
-            if (++s % 1000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 1/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
-            }
+        if (engine->state & RKEngineStateSleep1 || engine->state & RKEngineStateSleep2) {
             usleep(200);
-        } else if (engine->state & RKEngineStateSleep2) {
-            engine->state ^= RKEngineStateSleep2;
             if (++s % 1000 == 0 && engine->verbose > 1) {
-                RKLog("%s sleep 2/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
+                RKLog("%s sleep %d/%.1f s   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
+                      engine->name,
+                      engine->state & RKEngineStateSleep1 ? 1 : 2,
+                      (float)s * 0.0002f, j, k , *engine->pulseIndex, pulse->header.s);
             }
-            usleep(200);
+            if (engine->state & RKEngineStateSleep1) {
+                engine->state ^= RKEngineStateSleep1;
+            }
+            if (engine->state & RKEngineStateSleep2) {
+                engine->state ^= RKEngineStateSleep2;
+            }
         } else {
             if (!(pulse->header.s & RKPulseStatusProcessed)) {
                 RKLog("%s Warning. Pulse has not been processed.   j = %d   k = %d   pulseIndex = %d   header.s = 0x%02x\n",

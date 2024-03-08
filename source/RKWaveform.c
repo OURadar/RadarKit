@@ -616,7 +616,7 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
 
 #pragma mark - Generic Manipulation
 
-void RKWaveformConjuate(RKWaveform *waveform) {
+void RKWaveformConjugate(RKWaveform *waveform) {
     int i, k;
     RKComplex *x;
     RKInt16C *w;

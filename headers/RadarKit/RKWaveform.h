@@ -43,7 +43,7 @@ void RKWaveformFrequencyHops(RKWaveform *, const double fs, const double fc, con
 void RKWaveformFrequencyHoppingChirp(RKWaveform *, const double fs, const double fc, const double bw);
 
 void RKWaveformDecimate(RKWaveform *, const int);
-void RKWaveformConjuate(RKWaveform *);
+void RKWaveformConjugate(RKWaveform *);
 void RKWaveformDownConvert(RKWaveform *);
 
 void RKWaveformNormalizeNoiseGain(RKWaveform *);
