@@ -405,7 +405,7 @@ void RKWaveformOnes(RKWaveform *);
 void RKWaveformHops(RKWaveform *, const double fs, const double fc, const double bandwidth);
 void RKWaveformLinearFrequencyModulation(RKWaveform *, const double fs, const double fc, const double pulsewidth, const double bandwidth);
 void RKWaveformDecimate(RKWaveform *, const int);
-void RKWaveformConjuate(RKWaveform *);
+void RKWaveformConjugate(RKWaveform *);
 void RKWaveformDownConvert(RKWaveform *);
 void RKWaveformWrite(RKWaveform *, const char *);
 void RKWaveformNormalizeNoiseGain(RKWaveform *);

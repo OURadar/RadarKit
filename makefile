@@ -6,23 +6,22 @@ CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
-# ifneq ($(GIT_BRANCH), master)
-# 	CFLAGS += -g -DBETA_BRANCH
+ifneq ($(GIT_BRANCH), master)
+	CFLAGS += -g
+	# VERSION := $(VERSION)b
 
-# 	VERSION := $(VERSION)b
-# endif
-
-# Some other heavy debuggning flags
-# CFLAGS += -DDEBUG_IIR
-# CFLAGS += -DDEBUG_IQ
-# CFLAGS += -DDEBUG_FILE_MANAGER
-# CFLAGS += -DDEBUG_WAVEFORM_NORMALIZATION
-# CFLAGS += -D_SHOW_RING_FILTER_DOUBLE_BUFFERING
-# CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
-# CFLAGS += -DDEBUG_PULSE_ENGINE_WAIT
-# CFLAGS += -DDEBUG_RAY_GATHERER
-# CFLAGS += -DDEBUG_MUTEX_DESTROY
-# CFLAGS += -DDEBUG_NAVEEN
+	# Some other heavy debuggning flags
+	# CFLAGS += -DDEBUG_IIR
+	# CFLAGS += -DDEBUG_IQ
+	# CFLAGS += -DDEBUG_FILE_MANAGER
+	# CFLAGS += -DDEBUG_WAVEFORM_NORMALIZATION
+	# CFLAGS += -D_SHOW_RING_FILTER_DOUBLE_BUFFERING
+	# CFLAGS += -D_SHOW_PRETTY_STRING_MEMORY
+	# CFLAGS += -DDEBUG_PULSE_ENGINE_WAIT
+	# CFLAGS += -DDEBUG_RAY_GATHERER
+	# CFLAGS += -DDEBUG_MUTEX_DESTROY
+	# CFLAGS += -DDEBUG_NAVEEN
+endif
 
 CFLAGS += -std=c11
 CFLAGS += -Wall
