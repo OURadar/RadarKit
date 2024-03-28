@@ -108,7 +108,7 @@
 #define RKWaveformFolder                     "waveform"
 #define RKFFTWisdomFile                      "radarkit-fft-wisdom"
 
-#define RKNoColor                            "\033[m"
+#define RKNoColor                            "\033[0m"
 #define RKNoForegroundColor                  "\033[39m"
 #define RKNoBackgroundColor                  "\033[49m"
 #define RKBaseRedColor                       "\033[91m"

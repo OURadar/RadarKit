@@ -652,6 +652,12 @@ static void *pulseGatherer(void *_in) {
         }
     }
 
+    // Initialize oldIndex as 1/8-depth older than doneIndex
+    if (engine->doneIndex != 0) {
+        RKLog(">%s Warning. doneIndex = %u\n", engine->name, engine->doneIndex);
+    }
+    engine->oldIndex = RKPreviousNModuloS(engine->doneIndex, MAX(1, engine->radarDescription->rayBufferDepth / 8), engine->radarDescription->rayBufferDepth);
+
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
     // See RKPulseEngine.c
@@ -1355,7 +1361,10 @@ RKRay *RKMomentEngineGetProcessedRay(RKMomentEngine *engine, const bool blocking
         return NULL;
     }
     ray->header.s |= RKRayStatusConsumed;
+    RKRay *oldRay = RKGetRayFromBuffer(engine->rayBuffer, engine->oldIndex);
+    oldRay->header.s = RKRayStatusVacant;
     engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->rayBufferDepth);
+    engine->oldIndex = RKNextModuloS(engine->oldIndex, engine->radarDescription->rayBufferDepth);
     return ray;
 }
 

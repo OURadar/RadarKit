@@ -621,6 +621,12 @@ static void *pulseWatcher(void *_in) {
         }
     }
 
+    // Initialize oldIndex as 1/8-depth older than doneIndex
+    if (engine->doneIndex != 0) {
+        RKLog(">%s Warning. doneIndex = %u\n", engine->name, engine->doneIndex);
+    }
+    engine->oldIndex = RKPreviousNModuloS(engine->doneIndex, MAX(1, engine->radarDescription->pulseBufferDepth / 8), engine->radarDescription->pulseBufferDepth);
+
     // Wait for the workers to increase the tic count once
     // Using sem_wait here could cause a stolen post within the worker
     // Tested and removed on 9/29/2016
@@ -1407,8 +1413,10 @@ RKPulse *RKPulseEngineGetProcessedPulse(RKPulseEngine *engine, const bool blocki
         }
     }
     pulse->header.s |= RKPulseStatusConsumed;
+    RKPulse *oldPulse = RKGetPulseFromBuffer(engine->pulseBuffer, engine->oldIndex);
+    oldPulse->header.s = RKPulseStatusVacant;
     engine->doneIndex = RKNextModuloS(engine->doneIndex, engine->radarDescription->pulseBufferDepth);
-    // RKLog("%s engine->doneIndex = %d\n", engine->name, engine->doneIndex);
+    engine->oldIndex = RKNextModuloS(engine->oldIndex, engine->radarDescription->pulseBufferDepth);
     return pulse;
 }
 

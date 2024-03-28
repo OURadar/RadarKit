@@ -8,6 +8,7 @@ VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '
 CFLAGS = -O2
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -g
+	# CFLAGS += -DBETA_BRANCH
 	# VERSION := $(VERSION)b
 
 	# Some other heavy debuggning flags
