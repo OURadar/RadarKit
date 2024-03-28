@@ -49,6 +49,7 @@ struct rk_moment_engine {
     RKBuffer                         rayBuffer;
     uint32_t                         *rayIndex;
     uint32_t                         doneIndex;                                // Last retrieved ray index that's processed
+    uint32_t                         oldIndex;
     RKFFTModule                      *fftModule;
     RKUserModule                     userModule;
     uint8_t                          verbose;

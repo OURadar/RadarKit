@@ -46,6 +46,7 @@ struct rk_pulse_engine {
     RKBuffer                         pulseBuffer;                              // Buffer of raw pulses
     uint32_t                         *pulseIndex;                              // The reference index to watch for
     uint32_t                         doneIndex;                                // Last retrieved pulse index that's processed
+    uint32_t                         oldIndex;
     RKFFTModule                      *fftModule;
     RKUserModule                     userModule;
     uint8_t                          verbose;
