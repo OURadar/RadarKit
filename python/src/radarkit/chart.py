@@ -2,6 +2,7 @@ from . import sweep
 from . import overlay
 
 import numpy as np
+import matplotlib
 import matplotlib.patheffects
 import matplotlib.pyplot as plt
 
@@ -190,7 +191,7 @@ class Chart:
         y = (y * h) + (y + 1) * self.m / height
         return [x, y, w, h]
 
-    def _draw_box(self, q, xoff=0, yoff=0, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"]):
+    def _draw_box(self, q, xoff=0, yoff=0, c="#f7931a", b="#4d4d4d"):
         width, height = self.size
         x0 = q[0]
         x1 = x0 + 10 / width
@@ -210,8 +211,8 @@ class Chart:
         width, height = self.size
         q = self._get_pos(num)
         ax = self.fig.add_axes(q, frameon=False, snap=True)
-        ax.set(xticks=[], yticks=[])
-        self._draw_box(q)
+        ax.set(xticks=[], yticks=[], facecolor=None)
+        self._draw_box(q, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"])
         t = 10 * self.s
         p = self.p
         f = [0, 0, 0, 0.0]
@@ -262,7 +263,7 @@ class Chart:
         # Axis for colorbar
         cb = self.fig.add_axes(cq, frameon=False, snap=True)
         cb.set(xticks=[], yticks=[])
-        self._draw_box(cq, xoff=-1)
+        self._draw_box(cq, xoff=-1, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"])
         if self.orientation[:4] == "vert":
             st = matplotlib.text.Text(cq[0] - (self.captionsize + p) / width, cq[1] + 0.5 * cq[3], f"{num}")
             st.set(
