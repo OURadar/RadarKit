@@ -2,7 +2,6 @@ from . import sweep
 from . import overlay
 
 import numpy as np
-import matplotlib
 import matplotlib.patheffects
 import matplotlib.pyplot as plt
 
@@ -211,13 +210,12 @@ class Chart:
         width, height = self.size
         q = self._get_pos(num)
         ax = self.fig.add_axes(q, frameon=False, snap=True)
-        ax.set(xticks=[], yticks=[], facecolor=None)
-        self._draw_box(q, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"])
+        ax.set(xticks=[], yticks=[])
+        self._draw_box(q)
         t = 10 * self.s
         p = self.p
-        f = [0, 0, 0, 0.0]
-        g = [0, 0, 0, 0.5]
-        n = 50
+        shade_color = matplotlib.colors.to_rgb(matplotlib.rcParams["axes.facecolor"])
+
         if self.orientation[:4] == "vert":
             # Background shade, from right: p, 3 * labelsize, p, t, p, captionsize, 2p
             w = 5 * p + 3 * self.labelsize + t + self.captionsize
@@ -227,7 +225,7 @@ class Chart:
                 w / width,
                 q[3],
             ]
-            z = shade((80, 50), (0.4, 0.5), [0, 0, 0, 0.5], direction="se")
+            z = shade((80, 50), (0.4, 0.5), [*shade_color, 0.5], direction="se")
             # Colorbar
             c = min(height - 4 * p, 512 * self.s) / height
             w = 3 * self.captionsize + t
@@ -247,7 +245,7 @@ class Chart:
                 q[2],
                 h / height,
             ]
-            z = shade((50, 80), (0.4, 0.5), [0, 0, 0, 0.5], direction="nw")
+            z = shade((50, 80), (0.4, 0.5), [*shade_color, 0.5], direction="nw")
             # Colorbar
             h = 2 * p + self.captionsize + t
             cq = [
