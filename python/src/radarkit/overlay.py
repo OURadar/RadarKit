@@ -1,11 +1,11 @@
 import os
 import blib
 import json
-import importlib
 import matplotlib
 import matplotlib.patheffects
 import numpy as np
 
+# import importlib
 # prefix = os.path.join(os.path.dirname(importlib.util.find_spec("radarkit").origin), "maps")
 prefix = os.path.join(os.path.split(__file__)[0], "maps")
 
@@ -19,7 +19,7 @@ pop_med = 95000  # Norman is 95694
 class MapColor:
     def __init__(self, theme="light"):
         if theme == "light":
-            self.ring = "#00bbff"
+            self.ring = "#0099cc"
             self.state = "#40bf91"
             self.county = "#40bf91"
             self.highway = "#e6b955"
@@ -179,7 +179,8 @@ def radii(max_range=70.0, about=7):
 
 
 class Grid:
-    path_effects = [matplotlib.patheffects.Stroke(linewidth=2.5, foreground=(0.0, 0.0, 0.0, 0.6)), matplotlib.patheffects.Normal()]
+    c = matplotlib.colors.to_rgb(matplotlib.rcParams["axes.facecolor"])
+    path_effects = [matplotlib.patheffects.Stroke(linewidth=2.5, foreground=(*c, 0.6)), matplotlib.patheffects.Normal()]
     label_props = {
         "fontproperties": blib.getFontOfWeight(weight=600),
         "horizontalalignment": "center",
@@ -190,6 +191,22 @@ class Grid:
     size1 = 12
     size2 = 14
     size3 = 16
+
+    def __init__(self):
+        c = matplotlib.rcParams["text.color"]
+        if c in matplotlib.colors.CSS4_COLORS:
+            rgba = matplotlib.colors.to_rgba(matplotlib.colors.CSS4_COLORS[c])
+            hsv = matplotlib.colors.rgb_to_hsv(rgba[:3])
+        elif c[0] == "#":
+            rgba = matplotlib.colors.to_rgba(c)
+            hsv = matplotlib.colors.rgb_to_hsv(rgba[:3])
+        else:
+            hsv = (0, 0, 1)
+        global colors
+        if hsv[2] > 0.5:
+            colors = MapColor("dark")
+        else:
+            colors = MapColor("light")
 
 
 """
@@ -206,6 +223,7 @@ class Overlay(Grid):
     rings = None
 
     def __init__(self, origin=(-97.46381, 35.23682), extent=(-160, -90, 160, 90), **kwargs):
+        super().__init__()
         self.origin = origin
         self.extent = extent
         if "density" in kwargs:
@@ -217,6 +235,12 @@ class Overlay(Grid):
             self.size1 = 12 * self.s
             self.size2 = 14 * self.s
             self.size3 = 16 * self.s
+            c = matplotlib.colors.to_rgb(matplotlib.rcParams["axes.facecolor"])
+            self.label_props["path_effects"] = [
+                matplotlib.patheffects.Stroke(linewidth=2.5 * self.s, foreground=(*c, 0.6)),
+                matplotlib.patheffects.Normal(),
+            ]
+
         # TODO: Calculate "about" from extent and density
         self.radii = radii(max_range=self.rmax, about=7)
 
@@ -286,6 +310,7 @@ class PolarGrid(Grid):
     labels = []
 
     def __init__(self, **kwargs):
+        super().__init__()
         if "extent" in kwargs:
             self.extent = kwargs["extent"]
         if "s" in kwargs:
@@ -319,8 +344,9 @@ class PolarGrid(Grid):
             self.grids.append((x, y))
         # Labels
         self.labels = []
-        cc = np.cos(np.pi / 6)
-        ss = np.sin(np.pi / 6)
+        phi = np.radians(40)
+        cc = np.cos(phi)
+        ss = np.sin(phi)
         for r in self.radii[1:]:
             x = r * cc
             y = r * ss
