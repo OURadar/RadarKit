@@ -7,13 +7,6 @@ import matplotlib.pyplot as plt
 
 import blib
 
-zmap = blib.matplotlibColormap("rsz")
-vmap = blib.matplotlibColormap("v")
-wmap = blib.matplotlibColormap("w")
-dmap = blib.matplotlibColormap("rsd")
-pmap = blib.matplotlibColormap("p")
-rmap = blib.matplotlibColormap("rsr")
-
 
 def rho2ind(values):
     m3 = values > 0.93
@@ -68,25 +61,24 @@ def shade(shape, xy=(0.5, 0.5), rgba=[0, 0, 0, 0.5], direction="southeast"):
 
 
 class Chart:
-    fig = None
+    size = (1280, 720)
+    seed = 611
     dpi = 72
     s = 1.0
+    frameon = True
     titlecolor = None
     orientation = "horizontal"
-    ax = [None] * 6
-    cb = [None] * 6
-    st = [None] * 6
-    ms = [None] * 6
+    fig = None
     r = None
     e = None
     a = None
     title = None
     overlay = None
-    symbols = ["Z", "V", "W", "D", "P", "R"]
     labelfont = blib.getFontOfWeight(weight=500)
     titlefont = blib.getFontOfWeight(weight=700)
+    symbols = ["Z", "V", "W", "D", "P", "R"]
 
-    def __init__(self, **kwargs):
+    def __init__(self, n=6, **kwargs):
         """
         Create a new chart.
 
@@ -111,9 +103,10 @@ class Chart:
         -------
         A new chart.
         """
-        self.size = (1280, 720)
         if "size" in kwargs:
             self.size = kwargs["size"]
+        if "seed" in kwargs:
+            self.seed = kwargs["seed"]
         if "dpi" in kwargs:
             self.dpi = kwargs["dpi"]
         if "s" in kwargs:
@@ -127,6 +120,10 @@ class Chart:
         self.labelsize = 12 * self.s
         self.titlesize = 28 * self.s
         self.captionsize = 14 * self.s
+        self.ax = [None] * n
+        self.cb = [None] * n
+        self.st = [None] * n
+        self.ms = [None] * n
 
         width, height = self.size
         self.figsize = (width / self.dpi, height / self.dpi)
@@ -174,11 +171,16 @@ class Chart:
         width, height = self.size
         ww = width
         hh = height - self.titlesize - self.m
-        cols = num // 100
-        rows = (num - cols * 100) // 10
+        if num > 1000:
+            cols = num // 1000
+            rows = (num - cols * 1000) // 100
+            i = num % 100
+        else:
+            cols = num // 100
+            rows = (num - cols * 100) // 10
+            i = num % 10
         w = round((ww - (cols + 1) * self.m) / cols) / width
         h = round((hh - (rows + 1) * self.m) / rows) / height
-        i = num % 10
         if cols < rows:
             x = (i - 1) // rows
             y = rows - 1 - (i - 1) % rows
@@ -211,7 +213,10 @@ class Chart:
         q = self._get_pos(num)
         ax = self.fig.add_axes(q, frameon=False, snap=True)
         ax.set(xticks=[], yticks=[])
-        self._draw_box(q)
+        if self.frameon:
+            self._draw_box(q, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"])
+        else:
+            self._draw_box(q)
         t = 10 * self.s
         p = self.p
         shade_color = matplotlib.colors.to_rgb(matplotlib.rcParams["axes.facecolor"])
@@ -227,16 +232,15 @@ class Chart:
             ]
             z = shade((80, 50), (0.4, 0.5), [*shade_color, 0.5], direction="se")
             # Colorbar
-            c = min(height - 4 * p, 512 * self.s) / height
+            c = min(q[3] * height - 4 * p, 512 * self.s) / height
             w = 3 * self.captionsize + t
             cq = [
                 q[0] + q[2] - w / width,
                 q[1] + 2 * p / height,
                 t / width,
-                c * q[3],
+                c,
             ]
         else:
-            c = min(width - 4 * p, 512 * self.s) / width
             # Background shade, from top: p, captionsize, p, t, p, labelsize, 2p
             h = 5 * p + self.captionsize + t + self.labelsize
             bq = [
@@ -247,11 +251,12 @@ class Chart:
             ]
             z = shade((50, 80), (0.4, 0.5), [*shade_color, 0.5], direction="nw")
             # Colorbar
+            c = min(q[2] * width - 4 * p, 512 * self.s) / width
             h = 2 * p + self.captionsize + t
             cq = [
                 q[0] + 2 * p / width,
                 q[1] + q[3] - h / height,
-                c * q[2],
+                c,
                 t / height,
             ]
         # Axis for background shade
@@ -295,37 +300,37 @@ class Chart:
         for k, symbol in enumerate(self.symbols):
             if symbol[0] == "Z":
                 value = sweep.products[symbol]
-                cmap = zmap
+                cmap = blib.matplotlibColormap("rsz")
                 vmin = -32
                 vmax = 96
             elif symbol[0] == "V":
                 value = sweep.products[symbol]
-                cmap = vmap
+                cmap = blib.matplotlibColormap("v")
                 vmin = -64
                 vmax = 64
             elif symbol[0] == "W":
                 value = sweep.products[symbol]
-                cmap = wmap
+                cmap = blib.matplotlibColormap("w")
                 vmin = 0
                 vmax = 12.8
-            elif symbol == "P":
-                value = sweep.products[symbol]
-                cmap = pmap
-                vmin = -np.pi
-                vmax = np.pi
             elif symbol == "D":
                 value = sweep.products[symbol]
-                cmap = dmap
+                cmap = blib.matplotlibColormap("rsd")
                 vmin = -10
                 vmax = 15.5
+            elif symbol == "P":
+                value = sweep.products[symbol]
+                cmap = blib.matplotlibColormap("p")
+                vmin = -np.pi
+                vmax = np.pi
             elif symbol == "R":
                 value = rho2ind(sweep.products[symbol])
-                cmap = rmap
+                cmap = blib.matplotlibColormap("rsr")
                 vmin = 0
                 vmax = 256
             else:
                 value = sweep.products[symbol]
-                cmap = zmap
+                cmap = blib.matplotlibColormap("rsz")
                 vmin = np.min(value.flatten())
                 vmax = np.max(value.flatten())
             self.ms[k] = self.ax[k].pcolormesh(xx, yy, value, shading="flat", cmap=cmap, vmin=vmin, vmax=vmax)
@@ -448,6 +453,8 @@ class Chart:
 
 
 class ChartRHI(Chart):
+    seed = 231
+
     def __init__(self, sweep: sweep.Sweep = None, **kwargs):
         """
         Create a new RHI chart.
@@ -466,7 +473,7 @@ class ChartRHI(Chart):
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
             for i in range(6):
-                self.ax[i], self.cb[i], self.st[i] = self._add_axes(231 + i)
+                self.ax[i], self.cb[i], self.st[i] = self._add_axes(self.seed + i)
 
         if sweep:
             self.set_data(sweep)
@@ -506,6 +513,8 @@ class ChartRHI(Chart):
 
 
 class ChartPPI(Chart):
+    seed = 321
+
     def __init__(self, sweep: sweep.Sweep = None, **kwargs):
         """
         Create a new PPI chart.
@@ -526,7 +535,7 @@ class ChartPPI(Chart):
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
             for i in range(6):
-                self.ax[i], self.cb[i], self.st[i] = self._add_axes(321 + i)
+                self.ax[i], self.cb[i], self.st[i] = self._add_axes(self.seed + i)
 
         if sweep:
             self.set_data(sweep)
@@ -577,3 +586,13 @@ class ChartPPI(Chart):
         self.set(rmax=rmax)
 
     # TODO: Add methods to set rmax, x-offset, y-offset, etc.
+
+
+class ChartRHITall(ChartRHI):
+    seed = 161
+    size = (640, 1440)
+
+
+class ChartRHIWide(ChartRHI):
+    seed = 611
+    size = (3840, 250)
