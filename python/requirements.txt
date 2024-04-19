@@ -1,5 +1,6 @@
+tqdm
 numpy
 wheel
-ctypesgen
-tqdm
 blib-py
+netCDF4
+ctypesgen
