@@ -184,7 +184,7 @@ clean:
 cleanctypes:
 	rm -f $(CTYPES_OUT_PATH/_ctypes_.py
 
-install: showinfo
+install:
 	rm -rf ${PREFIX}/include/RadarKit.h ${PREFIX}/include/RadarKit ${PREFIX}/lib/$(STATIC_LIB) ${PREFIX}/lib/$(SHARED_LIB)*
 	cp -rp headers/RadarKit headers/RadarKit.h ${PREFIX}/include/
 	cp -p $(STATIC_LIB) ${PREFIX}/lib/

@@ -69,7 +69,7 @@ class Sweep:
                 with netCDF4.Dataset("memory", mode="r", memory=fid.read()) as nc:
                     atts = nc.ncattrs()
                     name = nc.getncattr("TypeName")
-                    self.time = datetime.datetime.utcfromtimestamp(nc.getncattr("Time"))
+                    self.time = datetime.datetime.fromtimestamp(nc.getncattr("Time"))
                     self.longitude = nc.getncattr("Longitude")
                     self.latitude = nc.getncattr("Latitude")
                     self.scanElevation = nc.getncattr("Elevation")

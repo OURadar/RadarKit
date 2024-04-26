@@ -46,6 +46,24 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     float tmpf;
     float *x;
 
+    // Check for basic requirements
+    if (strlen(product->desc.name) == 0) {
+        RKLog("Error. Product name is empty.\n");
+        return RKResultProductDescriptionNotSet;
+    }
+    if (product->header.rayCount == 0 || product->header.gateCount == 0) {
+        RKLog("Error. Product dimensions are zero.\n");
+        return RKResultProductDimensionsNotSet;
+    }
+    if (product->header.startTime == 0) {
+        RKLog("Error. Product start time is zero.\n");
+        return RKResultProductStartTimeNotSet;
+    }
+    if (product->header.gateSizeMeters == 0.0f) {
+        RKLog("Error. Product gate size is zero.\n");
+        return RKResultProductGateSizeNotSet;
+    }
+
     // Open a file
     if ((j = nc_create(filename, NC_MODE, &ncid)) > 0) {
         RKLog("Error. Unable to create %s   nc_create returned %d\n", filename, j);
@@ -191,8 +209,14 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
 
     nc_put_var_float(ncid, variableIdAzimuth, product->startAzimuth);
     nc_put_var_float(ncid, variableIdElevation, product->startElevation);
-    for (j = 0; j < product->header.rayCount; j++) {
-        array1D[j] = RKUMinDiff(product->endAzimuth[j], product->startAzimuth[j]);
+    if (product->header.isPPI) {
+        for (j = 0; j < product->header.rayCount; j++) {
+            array1D[j] = RKUMinDiff(product->endAzimuth[j], product->startAzimuth[j]);
+        }
+    } else if (product->header.isRHI) {
+        for (j = 0; j < product->header.rayCount; j++) {
+            array1D[j] = RKUMinDiff(product->endElevation[j], product->startElevation[j]);
+        }
     }
     nc_put_var_float(ncid, variableIdBeamwidth, array1D);
     for (j = 0; j < product->header.rayCount; j++) {
@@ -213,8 +237,14 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
 
     nc_put_var_double(ncid, variableIdAzimuth, product->startAzimuth);
     nc_put_var_double(ncid, variableIdElevation, product->startElevation);
-    for (j = 0; j < product->header.rayCount; j++) {
-        array1D[j] = RKUMinDiff(product->endAzimuth[j], product->startAzimuth[j]);
+    if (product->header.isPPI) {
+        for (j = 0; j < product->header.rayCount; j++) {
+            array1D[j] = RKUMinDiff(product->endAzimuth[j], product->startAzimuth[j]);
+        }
+    } else if (product->header.isRHI) {
+        for (j = 0; j < product->header.rayCount; j++) {
+            array1D[j] = RKUMinDiff(product->endElevation[j], product->startElevation[j]);
+        }
     }
     nc_put_var_double(ncid, variableIdBeamwidth, array1D);
     for (j = 0; j < product->header.rayCount; j++) {

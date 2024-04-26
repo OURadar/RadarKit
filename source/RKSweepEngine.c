@@ -112,7 +112,7 @@ static void *sweepManager(void *in) {
     }
     RKRay *S = sweep->rays[0];
     RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-    RKLog("%s C%02d concluded   S%d   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s x %s%d%s, %.1f km)\n",
+    RKLog("%s C%02d concluded   S%d   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%s%d%s x %s, %.1f km)\n",
             engine->name,
             S->header.configIndex,
             index,
@@ -120,10 +120,10 @@ static void *sweepManager(void *in) {
             S->header.startElevation , E->header.endElevation,
             S->header.startAzimuth   , E->header.endAzimuth,
             S->header.marker & 0xFF  , E->header.marker & 0xFF,
-            RKIntegerToCommaStyleString(sweep->header.gateCount),
             rkGlobalParameters.showColor && sweep->header.rayCount != 360 ? RKGetColorOfIndex(1) : "",
             sweep->header.rayCount,
             rkGlobalParameters.showColor ? RKNoColor : "",
+            RKIntegerToCommaStyleString(sweep->header.gateCount),
             1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
 
     // Increase the sweep identifier

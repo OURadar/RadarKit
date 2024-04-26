@@ -112,18 +112,19 @@ char *RKTestByNumberDescription(const int indent) {
     "13 - Get a country name from a position\n"
     "14 - Generating text for buffer overview\n"
     "15 - Generating text for health overview\n"
-    "16 - Write a .nc file using RKProductFileWriterNC()\n"
-    "17 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
-    "18 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
-    "19 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
-    "20 - Reading a .rkc file; -T20 FILENAME\n"
-    "21 - RKTestReviseLogicalValues()\n"
-    "22 - RKPreparePath unit test\n"
-    "23 - RKWebSocket unit test\n"
-    "24 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
-    "25 - Connect to RadarHub - RKReporterInit()\n"
-    "26 - Illustrate a simple RKPulseEngine() -T26 MODE (0 = no wait, 1 = process, 2 = consume)\n"
-    "27 - Illustrate a simple RKMomentEngine() -T27 MODE (0 = show, 1 = archive)\n"
+    "16 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
+    "17 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
+    "18 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
+    "19 - Reading a .rkc file; -T20 FILENAME\n"
+    "20 - Write a .nc file using RKProductFileWriterNC()\n"
+    "21 - Write a .nc file from converting a plain file. RKTestProductFromPlain()\n"
+    "22 - RKTestReviseLogicalValues()\n"
+    "23 - RKPreparePath unit test\n"
+    "24 - RKWebSocket unit test\n"
+    "25 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
+    "26 - Connect to RadarHub - RKReporterInit()\n"
+    "27 - Illustrate a simple RKPulseEngine() -T26 MODE (0 = no wait, 1 = process, 2 = consume)\n"
+    "28 - Illustrate a simple RKMomentEngine() -T27 MODE (0 = show, 1 = archive)\n"
     "\n"
     "30 - SIMD quick test\n"
     "31 - SIMD test with numbers shown\n"
@@ -217,53 +218,57 @@ void RKTestByNumber(const int number, const void *arg) {
         case 15:
             RKTestHealthOverviewText((char *)arg);
             break;
+
         case 16:
-            RKTestProductWrite();
-            break;
-        case 17:
             if (arg == NULL) {
                 RKLog("No filename given.\n");
                 exit(EXIT_FAILURE);
             }
             RKTestSweepRead((char *)arg);
             break;
-        case 18:
+        case 17:
             if (arg == NULL) {
                 RKLog("No filename given.\n");
                 exit(EXIT_FAILURE);
             }
             RKTestProductRead((char *)arg);
             break;
-        case 19:
+        case 18:
             if (arg == NULL) {
                 RKLog("No filename given.\n");
                 exit(EXIT_FAILURE);
             }
             RKProductCollectionInitWithFilename((char *)arg);
             break;
-        case 20:
+        case 19:
             if (arg == NULL) {
                 RKLog("No filename given.\n");
                 exit(EXIT_FAILURE);
             }
             RKTestReadIQ((char *)arg);
             break;
+        case 20:
+            RKTestProductWrite();
+            break;
         case 21:
-            RKTestReviseLogicalValues();
+            RKTestSweepFromPlain();
             break;
         case 22:
-            RKTestPreparePath();
+            RKTestReviseLogicalValues();
             break;
         case 23:
-            RKTestWebSocket();
+            RKTestPreparePath();
             break;
         case 24:
-            RKTestReadBareRKComplex((char *)arg);
+            RKTestWebSocket();
             break;
         case 25:
-            RKTestRadarHub();
+            RKTestReadBareRKComplex((char *)arg);
             break;
         case 26:
+            RKTestRadarHub();
+            break;
+        case 27:
             if (arg) {
                 n = atoi(arg);
             } else {
@@ -275,7 +280,7 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestSimplePulseEngine(n == 1 ? RKPulseStatusProcessed : (
                                     n == 2 ? RKPulseStatusConsumed : RKPulseStatusNull));
             break;
-        case 27:
+        case 28:
             if (arg) {
                 n = atoi(arg);
             } else {
@@ -402,7 +407,7 @@ void RKTestByNumber(const int number, const void *arg) {
     }
 }
 
-#pragma mark - Fundamental Functions
+#pragma region Basic Tests
 
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
@@ -1260,74 +1265,6 @@ void RKTestHealthOverviewText(const char *options) {
     printf("%s", destiny);
     printf("-- %d / %d\n\n", (int)strlen(destiny), m);
     free(destiny);
-}
-
-void RKTestSweepRead(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepFileRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
-    }
-}
-
-void RKTestProductRead(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKProduct *product = RKProductFileReaderNC(file, true);
-    if (product) {
-        RKProductFree(product);
-    }
-}
-
-void RKTestProductWrite(void) {
-    SHOW_FUNCTION_NAME
-    int g, k;
-    float *v;
-    RKProduct *product;
-    RKProductBufferAlloc(&product, 1, 360, 8);
-    product->desc.type = RKProductTypePPI;
-    sprintf(product->desc.name, "Reflectivity");
-    sprintf(product->desc.unit, "dBZ");
-    sprintf(product->desc.colormap, "Reflectivity");
-    sprintf(product->header.radarName, "RadarKit");
-    product->header.latitude = 35.23682;
-    product->header.longitude = -97.46381;
-    product->header.heading = 0.0f;
-    product->header.wavelength = 0.0314f;
-    product->header.sweepElevation = 2.4f;
-    product->header.rayCount = 360;
-    product->header.gateCount = 8;
-    product->header.gateSizeMeters = 7500.0f;
-    product->header.prt[0] = 1.0e-3f;
-    product->header.isPPI = true;
-    product->header.startTime = 201443696;
-    product->header.endTime = 201443696 + 10;
-    float az = 90.0f;
-    for (k = 0; k < 360; k++) {
-        product->startAzimuth[k] = az;
-        if (az >= 359.0f) {
-            az = az - 359.0f;
-        } else {
-            az += 1.0f;
-        }
-        product->endAzimuth[k] = az;
-        product->startElevation[k] = 2.4f;
-        product->endElevation[k] = 2.4f;
-    }
-    v = product->data;
-    for (k = 0; k < 360; k++) {
-        for (g = 0; g < 8; g++) {
-            *v++ = NAN;
-        }
-    }
-    RKProductFileWriterNC(product, "blank.nc");
-    v = product->data;
-    for (k = 0; k < 360; k++) {
-        for (g = 0; g < 8; g++) {
-            *v++ = (float)(k % 15) * 5.0f - 5.0f;
-        }
-    }
-    RKProductFileWriterNC(product, "rainbow.nc");
-    RKProductBufferFree(product, 1);
 }
 
 void RKTestReviseLogicalValues(void) {
@@ -5399,8 +5336,355 @@ void RKTestMakePositionStatusString(void) {
     free(position);
 }
 
-void RKTestExperiment(void) {
+void RKTestSweepFromPlain(void) {
     SHOW_FUNCTION_NAME
+    int j, p;
+    RKRay *ray;
+    const float de = 0.5f, oe = 1.5f;
+
+    FILE *fid = fopen("blob/plain-sweep.raw", "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file.\n");
+        return;
+    }
+    float *data = (float *)malloc(6 * 64 * 4096 * sizeof(float));
+    size_t count = fread(data, sizeof(float), 6 * 64 * 4096, fid);
+    fclose(fid);
+
+    uint32_t rayCount = 64;
+    uint32_t gateCount = count / 6 / rayCount;
+    uint32_t capacity = (uint32_t)ceilf((float)gateCount / RKMemoryAlignSize) * RKMemoryAlignSize;
+
+    RKLog("Read %lu floats  -> 6 x %u x %u\n", count, rayCount, gateCount);
+
+    RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
+    if (sweep == NULL) {
+        RKLog("Error. Unable to allocate memory.\n");
+        free(data);
+        return;
+    }
+    memset(sweep, 0, sizeof(RKSweep));
+    RKRayBufferAlloc(&sweep->rayBuffer, capacity, rayCount);
+    for (j = 0; j < rayCount; j++) {
+        sweep->rays[j] = RKGetRayFromBuffer(sweep->rayBuffer, j);
+    }
+
+    // Hard code some radar attributes
+    sweep->header.desc.longitude = -97.4373016;
+    sweep->header.desc.latitude = 35.1812820;
+    sweep->header.desc.wavelength = 0.10f;
+    sweep->header.config.sweepAzimuth = 69.0f;
+    sweep->header.config.sweepElevation = 0.0f;
+    sweep->header.baseProductList= RKBaseProductListFloatZVWDPR;
+    sweep->header.startTime = 1696390566;
+    sweep->header.config.prt[0] = 1.0e-3f;
+    sweep->header.rayCount = rayCount;
+    sweep->header.gateCount = gateCount;
+    sweep->header.gateSizeMeters = 19.2f;
+
+    float *src, *dst;
+    RKBaseProductIndex productIndices[] = {
+        RKBaseProductIndexZ,
+        RKBaseProductIndexV,
+        RKBaseProductIndexW,
+        RKBaseProductIndexD,
+        RKBaseProductIndexP,
+        RKBaseProductIndexR
+    };
+
+    for (j = 0; j < rayCount; j++) {
+        ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
+        ray->header.sweepAzimuth = 69.0f;
+        ray->header.sweepElevation = 0.0f;
+        ray->header.startElevation = (float)j * de + oe;
+        ray->header.endElevation = ray->header.startElevation + de;
+        ray->header.startAzimuth = 0.0f;
+        ray->header.endAzimuth = 0.0f;
+        ray->header.gateCount = gateCount;
+        ray->header.gateSizeMeters = 19.2f;
+        ray->header.baseProductList = RKBaseProductListFloatZVWDPR;
+        ray->header.s = RKRayStatusReady;
+
+        ray->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
+        if (j == 0) {
+            ray->header.marker |= RKMarkerSweepBegin;
+        } else if (j == rayCount - 1) {
+            ray->header.marker |= RKMarkerSweepEnd;
+        }
+
+        for (p = 0; p < 6; p++) {
+            src = data + p * rayCount * gateCount + j * gateCount;
+            dst = RKGetFloatDataFromRay(ray, productIndices[p]);
+            memcpy(dst, src, gateCount * sizeof(float));
+        }
+    }
+
+    RKRay *S = sweep->rays[0];
+    RKRay *E = sweep->rays[sweep->header.rayCount - 1];
+    RKLog("C%02d concluded   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%u x %s, %.1f km)\n",
+            S->header.configIndex,
+            sweep->header.config.sweepElevation,
+            S->header.startElevation , E->header.endElevation,
+            S->header.startAzimuth   , E->header.endAzimuth,
+            S->header.marker & 0xFF  , E->header.marker & 0xFF,
+            sweep->header.rayCount,
+            RKIntegerToCommaStyleString(sweep->header.gateCount),
+            1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+
+    printf("sweep->header.startTime = %lu\n", sweep->header.startTime);
+
+    RKProduct *products;
+    RKProductBufferAlloc(&products, 6, rayCount, gateCount);
+
+    const struct timeval t = {sweep->header.startTime, 0};
+    char *datestring = RKTimevalToString(t, 860);
+
+    char filename[256];
+    for (j = 0; j < 6; j++) {
+        RKProduct *product = &products[j];
+        switch (j)
+        {
+            case 0:
+                strcpy(product->desc.name, "Reflectivity");
+                strcpy(product->desc.unit, "dBZ");
+                strcpy(product->desc.symbol, "Z");
+                strcpy(product->desc.colormap, "Reflectivity");
+                break;
+            case 1:
+                strcpy(product->desc.name, "Radial_Velocity");
+                strcpy(product->desc.symbol, "V");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Velocity");
+                break;
+            case 2:
+                strcpy(product->desc.name, "Width");
+                strcpy(product->desc.symbol, "W");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Width");
+                break;
+            case 3:
+                strcpy(product->desc.name, "Differential_Reflectivity");
+                strcpy(product->desc.unit, "dB");
+                strcpy(product->desc.symbol, "D");
+                strcpy(product->desc.colormap, "Differential_Reflectivity");
+                break;
+            case 4:
+                strcpy(product->desc.name, "PhiDP");
+                strcpy(product->desc.unit, "Degrees");
+                strcpy(product->desc.symbol, "P");
+                strcpy(product->desc.colormap, "PhiDP");
+                break;
+            case 5:
+                strcpy(product->desc.name, "RhoHV");
+                strcpy(product->desc.unit, "Unitless");
+                strcpy(product->desc.symbol, "R");
+                strcpy(product->desc.colormap, "RhoHV");
+                break;
+        }
+        RKProductInitFromSweep(product, sweep);
+        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
+        printf("Output: %s\n", filename);
+        RKProductFileWriterNC(product, filename);
+    }
+
+    RKProductBufferFree(products, 6);
+
+    free(sweep);
+    free(data);
+}
+
+#pragma region Sweep Files
+
+void RKTestSweepRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKSweep *sweep = RKSweepFileRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
+    }
+}
+
+void RKTestProductRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    RKProduct *product = RKProductFileReaderNC(file, true);
+    if (product) {
+        RKProductFree(product);
+    }
+}
+
+void RKTestProductWrite(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    float *v;
+    RKProduct *product;
+    RKProductBufferAlloc(&product, 1, 360, 8);
+    product->desc.type = RKProductTypePPI;
+    sprintf(product->desc.name, "Reflectivity");
+    sprintf(product->desc.unit, "dBZ");
+    sprintf(product->desc.colormap, "Reflectivity");
+    sprintf(product->header.radarName, "RadarKit");
+    product->header.latitude = 35.23682;
+    product->header.longitude = -97.46381;
+    product->header.heading = 0.0f;
+    product->header.wavelength = 0.0314f;
+    product->header.sweepElevation = 2.4f;
+    product->header.rayCount = 360;
+    product->header.gateCount = 8;
+    product->header.gateSizeMeters = 7500.0f;
+    product->header.prt[0] = 1.0e-3f;
+    product->header.isPPI = true;
+    product->header.startTime = 201443696;
+    product->header.endTime = 201443696 + 10;
+    float az = 90.0f;
+    for (k = 0; k < 360; k++) {
+        product->startAzimuth[k] = az;
+        if (az >= 359.0f) {
+            az = az - 359.0f;
+        } else {
+            az += 1.0f;
+        }
+        product->endAzimuth[k] = az;
+        product->startElevation[k] = 2.4f;
+        product->endElevation[k] = 2.4f;
+    }
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = NAN;
+        }
+    }
+    RKProductFileWriterNC(product, "blank.nc");
+    v = product->data;
+    for (k = 0; k < 360; k++) {
+        for (g = 0; g < 8; g++) {
+            *v++ = (float)(k % 15) * 5.0f - 5.0f;
+        }
+    }
+    RKProductFileWriterNC(product, "rainbow.nc");
+    RKProductBufferFree(product, 1);
+}
+
+void RKTestProductFromPlain(void) {
+    SHOW_FUNCTION_NAME
+    int j, p;
+    const float de = 0.5f, oe = 1.5f;
+    char filename[128] = "blob/plain-sweep.raw";
+    char command[256];
+
+    if (!RKFilenameExists(filename)) {
+        RKLog("Downloading test file ...\n");
+        sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
+        system(command);
+    }
+    FILE *fid = fopen(filename, "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file.\n");
+        return;
+    }
+    float *data = (float *)malloc(6 * 64 * 4096 * sizeof(float));
+    size_t count = fread(data, sizeof(float), 6 * 64 * 4096, fid);
+    fclose(fid);
+
+    uint32_t rayCount = 64;
+    uint32_t gateCount = count / 6 / rayCount;
+
+    RKLog("Read %lu floats  -> 6 x %u x %u\n", count, rayCount, gateCount);
+
+    RKProduct *product;
+    RKProductBufferAlloc(&product, 1, rayCount, gateCount);
+
+    time_t startTime = 1696390566;
+    const struct timeval t = {startTime, 0};
+    char *datestring = RKTimevalToString(t, 860);
+
+    for (p = 0; p < 6; p++) {
+        float *src = data + p * rayCount * gateCount;
+        switch (p)
+        {
+            case 0:
+                strcpy(product->desc.name, "Reflectivity");
+                strcpy(product->desc.unit, "dBZ");
+                strcpy(product->desc.symbol, "Z");
+                strcpy(product->desc.colormap, "Reflectivity");
+                break;
+            case 1:
+                strcpy(product->desc.name, "Radial_Velocity");
+                strcpy(product->desc.symbol, "V");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Velocity");
+                break;
+            case 2:
+                strcpy(product->desc.name, "Width");
+                strcpy(product->desc.symbol, "W");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Width");
+                break;
+            case 3:
+                strcpy(product->desc.name, "Differential_Reflectivity");
+                strcpy(product->desc.unit, "dB");
+                strcpy(product->desc.symbol, "D");
+                strcpy(product->desc.colormap, "Differential_Reflectivity");
+                break;
+            case 4:
+                strcpy(product->desc.name, "PhiDP");
+                strcpy(product->desc.unit, "Degrees");
+                strcpy(product->desc.symbol, "P");
+                strcpy(product->desc.colormap, "PhiDP");
+                break;
+            case 5:
+                strcpy(product->desc.name, "RhoHV");
+                strcpy(product->desc.unit, "Unitless");
+                strcpy(product->desc.symbol, "R");
+                strcpy(product->desc.colormap, "RhoHV");
+                break;
+        }
+
+        strcpy(product->header.radarName, "Radar");
+        product->header.latitude = 35.1812820;
+        product->header.longitude = -97.4373016;
+        product->header.heading = 0.0f;
+        product->header.wavelength = 0.10f;
+        product->header.sweepElevation = 0.0f;
+        product->header.sweepAzimuth = 88.0f;
+        product->header.startTime = 1696390566;
+        product->header.endTime = product->header.startTime + 2;
+        product->header.isPPI = false;
+        product->header.isRHI = true;
+        product->header.rayCount = rayCount;
+        product->header.gateCount = gateCount;
+        product->header.gateSizeMeters = 19.2f;
+
+        product->header.pw[0] = 25e-6f;
+        product->header.prt[0] = 0.5e-3f;
+        product->header.noise[0] = 1.0e-6f;
+        product->header.noise[1] = 1.0e-6f;
+        product->header.systemZCal[0] = 20.0f;
+        product->header.systemZCal[1] = 20.0f;
+        product->header.systemDCal = 0.0f;
+        product->header.systemPCal = 0.0f;
+        product->header.SNRThreshold = -3.0f;
+        product->header.SQIThreshold = 0.01f;
+        strcpy(product->header.waveformName, "t25");
+        strcpy(product->header.vcpDefinition, "1");
+
+        for (j = 0; j < rayCount; j++) {
+            product->startAzimuth[j] = 0.0f;
+            product->endAzimuth[j] = 0.0f;
+            product->startElevation[j] = (float)j * de + oe;
+            product->endElevation[j] = product->startElevation[j] + de;
+        }
+        memcpy(product->data, src, rayCount * gateCount * sizeof(float));
+
+        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
+        RKPreparePath(filename);
+        printf("filename = '%s'\n", filename);
+        RKProductFileWriterNC(product, filename);
+    }
+
+    RKProductBufferFree(product, 1);
 }
 
 #pragma mark -
+
+void RKTestExperiment(void) {
+    SHOW_FUNCTION_NAME
+}

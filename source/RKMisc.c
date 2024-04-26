@@ -779,6 +779,10 @@ char *RKTimevalToString(const struct timeval time, int format) {
         strftime(string, 16, "%Y%m%d-%H%M%S", localtime(&time.tv_sec));
         n = CLAMP(format - 860, 0, 6);
         o = 15;
+    } else if (format >= 800) {
+        strftime(string, 9, "%Y%m%d", localtime(&time.tv_sec));
+        n = CLAMP(format - 800, 0, 6);
+        o = 8;
     } else if (format >= 80) {
         strftime(string, 9, "%H:%M:%S", localtime(&time.tv_sec));
         n = CLAMP(format - 80, 0, 6);
