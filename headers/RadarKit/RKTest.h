@@ -105,12 +105,12 @@ typedef struct rk_test_health_relay {
     char           response[RKMaximumStringLength];
 } RKTestHealthRelay;
 
-#pragma mark - Test By Number
+// Test functions
 
 char *RKTestByNumberDescription(const int);
 void RKTestByNumber(const int, const void *);
 
-#pragma mark - Basic Tests
+// Basic Tests
 
 void RKTestTerminalColors(void);
 void RKTestPrettyStrings(void);
@@ -127,9 +127,6 @@ void RKTestTemperatureToStatus(void);
 void RKTestGetCountry(void);
 void RKTestBufferOverviewText(const char *);
 void RKTestHealthOverviewText(const char *);
-void RKTestSweepRead(const char *);
-void RKTestProductRead(const char *);
-void RKTestProductWrite(void);
 void RKTestReviseLogicalValues(void);
 void RKTestReadIQ(const char *);
 void RKTestPreparePath(void);
@@ -139,7 +136,7 @@ void RKTestRadarHub(void);
 void RKTestSimplePulseEngine(const RKPulseStatus);
 void RKTestSimpleMomentEngine(const int);
 
-#pragma mark - DSP Tests
+// DSP Tests
 
 void RKTestSIMD(const RKTestSIMDFlag, const int);
 void RKTestWindow(const int);
@@ -149,7 +146,7 @@ void RKTestRingFilterShowCoefficients(void);
 void RKTestRamp(void);
 void RKTestHalfSingleDoubleConversion(void);
 
-#pragma mark - Waveform Tests
+// Waveform Tests
 
 void RKTestMakeHops(void);
 void RKTestWaveformTFM(void);
@@ -158,39 +155,47 @@ void RKTestWaveformDownsampling(void);
 void RKTestWaveformShowProperties(void);
 void RKTestWaveformShowUserWaveformProperties(const char *filename);
 
-#pragma mark - Radar Signal Processing
+// Radar Signal Processing
 
 void RKTestPulseCompression(RKTestFlag);
 void RKTestOnePulse(void);
 void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int);
 void RKTestOneRaySpectra(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int lag);
 
-#pragma mark - Performance Tests
+// Performance Tests
 
 void RKTestPulseCompressionSpeed(const int);
 void RKTestPulseEngineSpeed(const int);
 void RKTestMomentProcessorSpeed(void);
 void RKTestCacheWrite(void);
 
-#pragma mark - Transceiver Emulator
+// Transceiver Emulator
 
 RKTransceiver RKTestTransceiverInit(RKRadar *, void *);
 int RKTestTransceiverExec(RKTransceiver, const char *, char *);
 int RKTestTransceiverFree(RKTransceiver);
 
-#pragma mark - Pedestal Emulator
+// Pedestal Emulator
 
 RKPedestal RKTestPedestalInit(RKRadar *, void *);
 int RKTestPedestalExec(RKPedestal, const char *, char *);
 int RKTestPedestalFree(RKPedestal);
 
-#pragma mark - Health Relay Emulator
+// Health Relay Emulator
 
 RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
 int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
 int RKTestHealthRelayFree(RKHealthRelay);
 
-#pragma mark -
+// Sweep Files
+
+void RKTestSweepRead(const char *);
+void RKTestProductRead(const char *);
+void RKTestProductWrite(void);
+void RKTestSweepFromPlain(void);
+void RKTestProductFromPlain(void);
+
+//
 
 void RKTestCommandQueue(void);
 void RKTestSingleCommand(void);

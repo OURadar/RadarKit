@@ -401,6 +401,10 @@ N(RKResultFailedToOpenFileForWriting) \
 N(RKResultRadarNotLive) \
 N(RKResultRawDataTypeUndefined) \
 N(RKResultNothingToRead) \
+N(RKResultProductDescriptionNotSet) \
+N(RKResultProductDimensionsNotSet) \
+N(RKResultProductStartTimeNotSet) \
+N(RKResultProductGateSizeNotSet) \
 N(RKResultNoRadar)
 
 #define N(x) x,
