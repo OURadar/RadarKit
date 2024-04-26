@@ -5573,7 +5573,11 @@ void RKTestProductFromPlain(void) {
     if (!RKFilenameExists(filename)) {
         RKLog("Downloading test file ...\n");
         sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
-        system(command);
+        j = system(command);
+        if (j) {
+            RKLog("Error. Unable to download the test file.\n");
+            return;
+        }
     }
     FILE *fid = fopen(filename, "rb");
     if (fid == NULL) {
