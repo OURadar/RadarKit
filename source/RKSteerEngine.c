@@ -714,6 +714,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (udel < RKPedestalPositionTolerance && udaz < RKPedestalPositionTolerance) {
                     action->mode[0] = RKPedestalInstructTypeModeSlew | RKPedestalInstructTypeAxisAzimuth;
                     action->value[0] = scan->azimuthSlew;
+                    action->mode[1] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
+                    action->value[1] = 0.0f;
                     V->tic = 0;
                     if (verbose) {
                         RKLog("%s Info. Ready for SEC sweep %d - EL %.1f° @ crossover AZ %.1f°\n", engine->name,
