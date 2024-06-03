@@ -490,6 +490,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         RKLog("Error. Unable to allocate RKFFTResource.\n");
         exit(EXIT_FAILURE);
     }
+    memset(module->plans, 0, planCount * sizeof(RKFFTResource));
 
     // DFT Wisdom
     char *wisdom = (char *)malloc(1024 * 1024);
@@ -518,7 +519,9 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
         if (module->verbose) {
-            RKLog(">%s Setting up plan[%d] @ nfft = %s\n", module->name, k, RKIntegerToCommaStyleString(module->plans[k].size));
+            RKLog(">%s Setting up plan[%d] @ nfft = %s   useCount = %s\n", module->name, k,
+                RKIntegerToCommaStyleString(module->plans[k].size),
+                RKIntegerToCommaStyleString(module->plans[k].count));
         }
         module->plans[k].forwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, in, in, FFTW_FORWARD, FFTW_MEASURE);
         module->plans[k].forwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, in, out, FFTW_FORWARD, FFTW_MEASURE);
