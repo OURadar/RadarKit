@@ -1066,7 +1066,11 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     strcpy(t, value);
     RKPrettyStringFromValueString(value, t);
 
-    size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+    if (rkGlobalParameters.showColor) {
+        size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+    } else {
+        size = sprintf(destination, "%s = %s", key, value);
+    }
     #ifdef _SHOW_PRETTY_STRING_MEMORY
     printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
            (int)size, (int)s,
