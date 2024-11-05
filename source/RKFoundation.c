@@ -979,7 +979,10 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
     }
     RKValueType type = RKGuessValueType(source);
     if (type == RKValueTypeNull) {
-        return sprintf(destination, RKMonokaiGreen "null" RKNoColor);
+        if (rkGlobalParameters.showColor) {
+            return sprintf(destination, RKMonokaiGreen "null" RKNoColor);
+        }
+        return sprintf(destination, "null");
     }
     if (type == RKValueTypeDictionary) {
         return RKPrettyStringFromKeyValueString(destination, source);
@@ -988,13 +991,22 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
         return RKPrettyStringFromKeyValueString(destination, source);
     }
     if (type == RKValueTypeBool || type == RKValueTypeInt || type == RKValueTypeFloat) {
-        return sprintf(destination, RKMonokaiPurple "%s" RKNoColor, source);
+        if (rkGlobalParameters.showColor) {
+            return sprintf(destination, RKMonokaiPurple "%s" RKNoColor, source);
+        }
+        return sprintf(destination, "%s", source);
     }
     if (type == RKValueTypeString) {
-        return sprintf(destination, RKMonokaiYellow "%s" RKNoColor, source);
+        if (rkGlobalParameters.showColor) {
+            return sprintf(destination, RKMonokaiYellow "%s" RKNoColor, source);
+        }
+        return sprintf(destination, "%s", source);
     }
     if (type == RKValueTypeVariable) {
-        return sprintf(destination, RKMonokaiOrange "%s" RKNoColor, source);
+        if (rkGlobalParameters.showColor) {
+            return sprintf(destination, RKMonokaiOrange "%s" RKNoColor, source);
+        }
+        return sprintf(destination, "%s", source);
     }
     return sprintf(destination, "%s", source);
 }
