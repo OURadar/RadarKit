@@ -15,6 +15,7 @@ variables:
 
 before_script:
   - export TERM=xterm-256color
+  - export LS_COLORS="rs=0:di=38;5;45:ln=38;5;51:mh=44;38;5;15:pi=40;38;5;11:so=38;5;13:do=38;5;5:bd=48;5;232;38;5;11:cd=48;5;232;38;5;3:or=48;5;232;38;5;9:mi=05;48;5;232;38;5;15:su=48;5;196;38;5;15:sg=48;5;11;38;5;16:ca=48;5;196;38;5;226:tw=48;5;10;38;5;16:ow=48;5;57;38;5;11:st=48;5;21;38;5;15:ex=38;5;82:*.py=38;5;228:*.c=38;5;220:*.cpp=38;5;220:*.js=38;5;227:*.mjs=38;5;227:*.jsx=38;5;31:*.h=38;5;208:*.hpp=38;5;208:*makefile=38;5;208:*.html=38;5;208:*.tar=38;5;178:*.tgz=38;5;178:*.txz=38;5;178:*.zip=38;5;178:*.z=38;5;178:*.Z=38;5;178:*.gz=38;5;178:*.xz=38;5;178:*.bz2=38;5;178:*.bz=38;5;178:*.rar=38;5;9:*.jpg=38;5;13:*.jpeg=38;5;13:*.gif=38;5;13:*.bmp=38;5;13:*.tif=38;5;13:*.tiff=38;5;13:*.png=38;5;13:*.svg=38;5;13:*.svgz=38;5;13:*.mp4=38;5;135:*.m4v=38;5;135:*.mkv=38;5;135:*.mov=38;5;135:*.mpg=38;5;135:*.mpeg=38;5;135:*.vob=38;5;135:*.qt=38;5;135:*.mp3=38;5;105:*.aac=38;5;105:*.mka=38;5;105:*.ogg=38;5;105:*.wav=38;5;105:*.flac=38;5;105"
   - apt update && apt install -y bc libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
 
 make_ctypes:
@@ -23,14 +24,11 @@ make_ctypes:
   stage: build
   image: python
   script:
-    - ls -al
+    - make showinfo
+    - ls -hal --group-directories-first --color
     - pip install -U pip && pip install ctypesgen
-    - git branch -D ${CI_COMMIT_BRANCH}
-    - git remote prune origin
-    - git checkout ${CI_COMMIT_BRANCH}
-    - git pull
     - make ctypes
-    - ls -al python/src/radarkit/
+    - ls -hal --group-directories-first --color python/src/radarkit/
     - sha1sum python/src/radarkit/_ctypes_.py
   artifacts:
     expire_in: 1 week
@@ -43,8 +41,6 @@ build_linux:
   stage: build
   image: gcc
   script:
-    - git checkout ${CI_COMMIT_BRANCH}
-    - git pull
     - make
   artifacts:
     expire_in: 1 week
@@ -59,8 +55,6 @@ build_mac:
   stage: build
   image: gcc
   script:
-    - git checkout ${CI_COMMIT_BRANCH}
-    - git pull
     - make
 
 basic:
@@ -71,7 +65,7 @@ basic:
   needs:
     - build_linux
   script:
-    - ls -al
+    - ls -hal --group-directories-first --color
     - ee=0
     - ./rkutil -T101; ee=$((ee+$?))
     - ./rkutil -T102; ee=$((ee+$?))
@@ -90,7 +84,7 @@ numeric:
   needs:
     - build_linux
   script:
-    - ls -al
+    - ls -hal --group-directories-first --color
     - ee=0
     - ./rkutil -T501; ee=$((ee+$?))
     - ./rkutil -T502; ee=$((ee+$?))
@@ -110,7 +104,7 @@ performance:
   needs:
     - build_linux
   script:
-    - ls -al
+    - ls -hal --group-directories-first --color
     - ee=0
     - ./rkutil -T601; ee=$((ee+$?))
     - ./rkutil -T602; ee=$((ee+$?))
