@@ -421,7 +421,7 @@ int RKPulsePairATSR(RKMomentScratch *space, RKPulse **pulses, const uint16_t pul
     //
     RKUpdateATSRProductsInScratchSpace(space, gateCount);
 
-    space->calculatedProducts = RKBaseProductListFloatAll | RKBaseProductListUInt8ZVWDPRKSQ;
+    space->calculatedProducts = RKProductListFloatAll | RKProductListUInt8ZVWDPRKSQ;
 
     return pulseCount;
 }

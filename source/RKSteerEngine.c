@@ -513,6 +513,8 @@ void RKSteerEngineUpdatePositionFlags(RKSteerEngine *engine, RKPosition *positio
         }
         position->sweepElevationDegrees = scan->elevationStart;
         position->sweepAzimuthDegrees = scan->azimuthStart;
+        position->volumeIndex = engine->volumeIndex;
+        position->sweepIndex = engine->sweepIndex;
     }
 }
 
@@ -856,6 +858,10 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 }
                 V->active = false;
             }
+            engine->volumeIndex++;
+            engine->sweepIndex = 0;
+        } else {
+            engine->sweepIndex++;
         }
         V->progress |= RKScanProgressSetup;
     }

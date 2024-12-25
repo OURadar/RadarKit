@@ -75,6 +75,12 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
     // Modify the values based on the supplied keys
     while (key != RKConfigKeyNull) {
         switch (key) {
+            case RKConfigKeyVolumeIndex:
+                newConfig->volumeIndex = va_arg(args, uint32_t);
+                break;
+            case RKConfigKeySweepIndex:
+                newConfig->sweepIndex = va_arg(args, uint32_t);
+                break;
             case RKConfigKeySweepElevation:
                 newConfig->sweepElevation = (float)va_arg(args, double);
                 break;
@@ -129,7 +135,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     sprintf(stringBuffer[0], "VCP = (NULL)\n");
                 } else {
                     sprintf(stringBuffer[0], "VCP = %s\n", string);
-                    strncpy(newConfig->vcpDefinition, string, RKMaximumCommandLength - 8);
+                    strncpy(newConfig->vcpDefinition, string, sizeof(newConfig->vcpDefinition) - 1);
                 }
                 break;
             case RKConfigKeySystemNoise:
@@ -165,9 +171,10 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     return;
                 }
                 newConfig->waveform = waveform;
-                //strncpy(newConfig->waveformName, waveform->name, RKNameLength - 1);
                 snprintf(newConfig->waveformName, RKNameLength, "%s", waveform->name) < 0 ? abort() : (void)0;
-                sprintf(stringBuffer[0], "Waveform = '%s' @ %p", waveform->name, waveform);
+                if (newConfig->waveform != oldConfig->waveform) {
+                    sprintf(stringBuffer[0], "Waveform = '%s' @ %p", waveform->name, waveform);
+                }
                 break;
             case RKConfigKeyWaveformDecimate:
                 waveform = (RKWaveform *)va_arg(args, void *);
@@ -239,23 +246,36 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeySNRThreshold:
                 newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
-                sprintf(stringBuffer[0], "SNRThreshold = %.2f dB", newConfig->SNRThreshold);
+                if (newConfig->SNRThreshold != oldConfig->SNRThreshold) {
+                    sprintf(stringBuffer[0], "SNRThreshold = %.2f dB", newConfig->SNRThreshold);
+                }
                 break;
             case RKConfigKeySQIThreshold:
                 newConfig->SQIThreshold = (RKFloat)va_arg(args, double);
-                sprintf(stringBuffer[0], "SQIThreshold = %.2f", newConfig->SQIThreshold);
+                if (newConfig->SQIThreshold != oldConfig->SQIThreshold) {
+                    sprintf(stringBuffer[0], "SQIThreshold = %.2f", newConfig->SQIThreshold);
+                }
                 break;
             case RKConfigKeyRingFilterGateCount:
                 newConfig->ringFilterGateCount = va_arg(args, uint32_t);
-                sprintf(stringBuffer[0], "RingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->ringFilterGateCount));
+                if (newConfig->ringFilterGateCount != oldConfig->ringFilterGateCount) {
+                    sprintf(stringBuffer[0], "RingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->ringFilterGateCount));
+                }
                 break;
             case RKConfigKeyTransitionGateCount:
                 newConfig->transitionGateCount = va_arg(args, uint32_t);
-                sprintf(stringBuffer[0], "TransitionGateCount = %s", RKIntegerToCommaStyleString(newConfig->transitionGateCount));
+                if (newConfig->transitionGateCount != oldConfig->transitionGateCount) {
+                    sprintf(stringBuffer[0], "TransitionGateCount = %s", RKIntegerToCommaStyleString(newConfig->transitionGateCount));
+                }
                 break;
             case RKConfigKeyUserResource:
                 newConfig->userResource = (RKUserResource)va_arg(args, void *);
-                sprintf(stringBuffer[0], "UserResource @ %p", newConfig->userResource);
+                if (newConfig->userResource != oldConfig->userResource) {
+                    sprintf(stringBuffer[0], "UserResource @ %p", newConfig->userResource);
+                }
+                break;
+            case RKConfigKeyMomentMethod:
+                newConfig->momentMethod = (RKMomentMethod)va_arg(args, int);
                 break;
             default:
                 sprintf(stringBuffer[0], "Key %d not understood.", key);

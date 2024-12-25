@@ -272,6 +272,6 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
         free(X);
     }
     // Mark the calculated products, exclude K here since it is not ready
-    space->calculatedProducts = RKBaseProductListFloatZVWDPR;
+    space->calculatedProducts = RKProductListFloatZVWDPR;
     return pulseCount;
 }

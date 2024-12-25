@@ -172,8 +172,8 @@ static void showHelp(void) {
            "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
            "\n"
-           "    -T60\n"
-           "         Runs the program to measure SIMD performance.\n"
+           "    -T601\n"
+           "         Runs the unit test to measure SIMD performance.\n"
            "\n\n"
            "%s / RadarKit " __RKVersion__ " / " __VERSION__
            "\n\n",
@@ -300,6 +300,7 @@ UserParams *systemPreferencesInit(void) {
     user->desc.wavelength = 0.0314f;
     user->desc.pulseToRayRatio = 1;
     user->desc.positionLatency = 0.00001;
+    user->desc.pulseSmoothFactor = 1000;
     user->port = 10000;
     user->recordLevel = 1;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
@@ -339,6 +340,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",           &user->desc.longitude,      RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHeight",         &user->desc.radarHeight,    RKParameterTypeFloat,  1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",             &user->desc.heading,        RKParameterTypeFloat,  1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilterGateCount", &user->ringFilterGateCount, RKParameterTypeUInt,   1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TransitionGateCount", &user->transitionGateCount, RKParameterTypeUInt,   1);
@@ -664,7 +666,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->tweetaHost[sizeof(user->tweetaHost) - 1] = '\0';
                 break;
             case 'u':
-                printf("Version %s\n", RKVersionString());
+                printf("Version %s / %s / %u.%u\n", RKVersionString(), __VERSION__, __GNUC__, __GNUC_MINOR__);
                 exit(EXIT_SUCCESS);
                 break;
             case 'v':
@@ -685,7 +687,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case '?':
             default:
                 if (optarg && strlen(optarg)) {
-                    fprintf(stderr, "I don't understand: -%c   optarg = %s\n", opt, optarg);
+                    fprintf(stderr, "I do not understand: -%c   optarg = %s\n", opt, optarg);
                 }
                 exit(EXIT_FAILURE);
                 break;
@@ -706,7 +708,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         }
     } else {
         if (!(user->desc.initFlags == RKInitFlagRelay) && !(user->desc.initFlags == RKInitFlagIQPlayback)) {
-            fprintf(stderr, "No options specified. Don't want to do anything?\n");
+            fprintf(stderr, "No options specified. Do nothing?\n");
             exit(EXIT_FAILURE);
         }
         if (user->prf) {
@@ -771,15 +773,33 @@ static void updateRadarParameters(UserParams *systemPreferences) {
     }
 
     // Moment methods
+    RKMomentMethod method;
     if (!strncasecmp(systemPreferences->momentMethod, "multilag", 8)) {
         int lagChoice = atoi(systemPreferences->momentMethod + 8);
         RKSetMomentProcessorToMultiLag(myRadar, lagChoice);
+        switch (lagChoice) {
+            case 2:
+                method = RKMomentMethodMultiLag2;
+                break;
+            case 3:
+                method = RKMomentMethodMultiLag3;
+                break;
+            case 4:
+                method = RKMomentMethodMultiLag4;
+                break;
+            default:
+                method = RKMomentMethodUserDefined;
+                break;
+        }
     } else if (!strncasecmp(systemPreferences->momentMethod, "pulsepairhop", 12)) {
         RKSetMomentProcessorToPulsePairHop(myRadar);
+        method = RKMomentMethodPulsePairHop;
     } else if (!strncasecmp(systemPreferences->momentMethod, "SpectralMoment", 14)) {
         RKSetMomentProcessorToSpectralMoment(myRadar);
+        method = RKMomentMethodSpectralMoment;
     } else {
         RKSetMomentProcessorToPulsePair(myRadar);
+        method = RKMomentMethodPulsePair;
     }
 
     // Always refresh the controls
@@ -822,11 +842,12 @@ static void updateRadarParameters(UserParams *systemPreferences) {
                 RKConfigKeySQIThreshold, systemPreferences->SQIThreshold,
                 RKConfigKeyTransitionGateCount, systemPreferences->transitionGateCount,
                 RKConfigKeyRingFilterGateCount, systemPreferences->ringFilterGateCount,
+                RKConfigKeyMomentMethod, method,
                 RKConfigKeyNull);
 
     // Force waveform reload to propagate the new waveform calibration values
-//    RKLog("waveform %p\n", myRadar->waveform);
-//    RKSetWaveform(myRadar, myRadar->waveform);
+    // RKLog("waveform %p\n", myRadar->waveform);
+    // RKSetWaveform(myRadar, myRadar->waveform);
 }
 
 static void handlePreferenceFileUpdate(void *in) {
@@ -997,6 +1018,11 @@ int main(int argc, const char **argv) {
             }
         }
 
+        if (systemPreferences->recordLevel >= 2) {
+            RKRawDataRecorderSetRecord(myRadar->rawDataRecorder, true);
+            RKRawDataRecorderStart(myRadar->rawDataRecorder);
+        }
+
         // Radar going live
         RKGoLive(myRadar);
 
@@ -1016,11 +1042,6 @@ int main(int argc, const char **argv) {
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
         RKExecuteCommand(myRadar, "v pp 2,4,6,8,10,12 15 -36", NULL);
-        // RKExecuteCommand(myRadar, "p rr 0,20 10,20,30 10", NULL);
-        // RKExecuteCommand(myRadar, "p vol p 2 15 -50/p 4 15 -50/p 6 15 -50/p 8 15 -50/p 10 15 -50", NULL);
-        // RKExecuteCommand(myRadar, "p vol s 2 5,25 25/s 4 45,15 -25", NULL);
-        // RKExecuteCommand(myRadar, "p vol s 2 355,325 -25/s 4 325,355 25", NULL);
-        // RKExecuteCommand(myRadar, "p vol s 2 270,0 25/s 4 0,270 -25/s 6 270,0 25/s 8 0,270 -25", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
@@ -1060,10 +1081,8 @@ int main(int argc, const char **argv) {
                          RKTestTransceiverExec,
                          RKTestTransceiverFree);
 
-        // Radar going live
+        // Radar going live, then wait indefinitely until something happens
         RKGoLive(myRadar);
-
-        // Wait indefinitely until something happens through a user command through the command center
         RKWaitWhileActive(myRadar);
 
     } else {

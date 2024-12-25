@@ -805,7 +805,7 @@ static void *pulseRingWatcherV1(void *_in) {
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
-        // Wait until the pulse has has been processed (compressed or skipped) so that this engine won't compete with the pulse compression engine to set the status.
+        // Wait until the pulse has has been processed (compressed or skipped) so that this engine does not compete with the pulse compression engine to set the status.
         s = 0;
         while (!(pulse->header.s & RKPulseStatusProcessed) && engine->state & RKEngineStateWantActive) {
             usleep(200);

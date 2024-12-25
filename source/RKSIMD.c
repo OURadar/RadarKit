@@ -66,6 +66,26 @@ void RKSIMD_show_count(const int n) {
 //
 // Single operations
 //
+void RKSIMD_scl (RKFloat *src, const float f, RKFloat *dst, const int n) {
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKVec *s = (RKVec *)src;
+    RKVec *d = (RKVec *)dst;
+    RKVec  c = _rk_mm_set1(f);
+    for (k = 0; k < K; k++) {
+        *d++ = _rk_mm_mul(*s++, c);
+    }
+}
+
+void RKSIMD_iscl(RKFloat *srcdst, const float f, const int n) {
+    int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
+    RKVec *s = (RKVec *)srcdst;
+    RKVec  c = _rk_mm_set1(f);
+    for (k = 0; k < K; k++) {
+        *s = _rk_mm_mul(*s, c);
+        s++;
+    }
+}
+
 void RKSIMD_mul(RKFloat *src1, RKFloat *src2, RKFloat *dst, const int n) {
     int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);
     RKVec *s1 = (RKVec *)src1;
@@ -527,6 +547,7 @@ static RKVec _RKSIMD_vsum(RKVec *src, const int n) {
     }
     return s;
 }
+
 // Sum a RKFloat array
 RKFloat RKSIMD_sum(RKFloat *src, const int n) {
     int k, K = (n * sizeof(RKFloat) + sizeof(RKVec) - 1) / sizeof(RKVec);

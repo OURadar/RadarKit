@@ -29,7 +29,7 @@ typedef struct rk_clock {
     uint32_t         size;                        // User changeable depth
 	uint32_t         block;                       // Block size of data during burst transfers
     uint32_t         stride;                      // Size to compute average
-    uint64_t         tic;                         // An internal tic in case user doesn't obey the rule
+    uint64_t         tic;                         // An internal tic in case user does not obey the rule
 
     // Program set parameters
     struct timeval   *tBuffer;                    // The time which a request was made (dirty)
@@ -37,10 +37,10 @@ typedef struct rk_clock {
     double           *uBuffer;                    // Driving reference (clean)
     double           *yBuffer;                    // Predicted time
     double           *zBuffer;                    // History of dx/du
-    
+
     double           a;                           // Major coefficient
     double           b;                           // Minor coefficient
-    
+
     uint32_t         index;
     uint64_t         count;
     double           initDay;
@@ -52,7 +52,7 @@ typedef struct rk_clock {
     double           dx;
     double           sum_x0;
     double           sum_u0;
-    
+
 } RKClock;
 
 RKClock *RKClockInitWithSize(const uint32_t, const uint32_t);

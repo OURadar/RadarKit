@@ -17,15 +17,14 @@ from ._ctypes_ import *
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 workspaces = []
-alignment = int(RKMemoryAlignSize / 4)
 Productdict = {
-    "S": RKBaseProductIndexSh,
-    "Z": RKBaseProductIndexZ,
-    "V": RKBaseProductIndexV,
-    "W": RKBaseProductIndexW,
-    "D": RKBaseProductIndexD,
-    "P": RKBaseProductIndexP,
-    "R": RKBaseProductIndexR,
+    "S": RKProductIndexSh,
+    "Z": RKProductIndexZ,
+    "V": RKProductIndexV,
+    "W": RKProductIndexW,
+    "D": RKProductIndexD,
+    "P": RKProductIndexP,
+    "R": RKProductIndexR,
 }
 
 
@@ -117,7 +116,7 @@ class Workspace(ctypes.Structure):
 
     def open(self, filename, cores=4):
         self.fid = RKFileOpen(filename, "r")
-        self.header = RKFileHeaderRead(self.fid).contents
+        self.header = RKFileHeaderInitFromFid(self.fid).contents
         self.filesize = RKFileGetSize(self.fid)
 
         if self.verbose:

@@ -662,7 +662,7 @@ char *RKIntegerToHexStyleString(const long long num) {
 //
 //  Float to string with 3-digit grouping
 //
-char *RKFloatToCommaStyleString(const double num) {
+char *RKFloatToCommaStyleStringAndDecimals(const double num, const int decimals) {
     int i, j, k;
     static int ibuf = 0;
     static char stringBuffer[32][32];
@@ -681,21 +681,21 @@ char *RKFloatToCommaStyleString(const double num) {
     ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
-    i = sprintf(string, "%.3f", num);
-    if (i <= 7) {
+    if (decimals <= 0) {
+        i = sprintf(string, "%.0f", num);
+    } else {
+        i = sprintf(string, "%.*f", decimals, num);
+    }
+    if ((num < 0 && i - decimals <= 4) || (num >= 0 && i - decimals <= 3) || !isfinite(num)) {
         return string;
     }
 
-    k = (int)(strlen(string) - 5) / 3;
-    i = (int)(strlen(string) + k);
-    j = 1;
-    string[i] = '\0';
-    string[i - 1] = string[i - k - 1];
-    string[i - 2] = string[i - k - 2];
-    string[i - 3] = string[i - k - 3];
-    string[i - 4] = '.';
-    i -= 4;
+    k = (int)(strlen(string) - decimals - (num < 0.0 ? 3 : 2)) / 3;
+    const int frac = decimals + 1;
+    memmove(string + i - frac + k, string + i - frac, frac + 1);
 
+    i -= frac - k;
+    j = 1;
     while (i > 0) {
         i--;
         string[i] = string[i - k];
@@ -707,6 +707,10 @@ char *RKFloatToCommaStyleString(const double num) {
         j++;
     }
     return string;
+}
+
+char *RKFloatToCommaStyleString(const double num) {
+    return RKFloatToCommaStyleStringAndDecimals(num, 3);
 }
 
 #pragma mark - Time
@@ -750,7 +754,29 @@ void RKUTCTime(struct timespec *t) {
 #endif
 }
 
-char *RKTimevalToString(const struct timeval time, int format) {
+struct timeval RKTimeStringInISOFormatToTimeval(const char *string) {
+    struct tm tm;
+    memset(&tm, 0, sizeof(tm));
+    strptime(string, "%Y-%m-%dT%H:%M:%S", &tm);
+    // Replace timezone with UTC
+    char *dot = strrchr(string, '.');
+    double frac = 0.0;
+    if (dot) {
+        sscanf(dot, ".%lf", &frac);
+    }
+    struct timeval t = {
+        .tv_sec = mktime(&tm),
+        .tv_usec = (suseconds_t)(frac * 1.0e6)
+    };
+    return t;
+}
+
+double RKTimeStringISOToTimeDouble(const char *string) {
+    struct timeval t = RKTimeStringInISOFormatToTimeval(string);
+    return (double)t.tv_sec + (double)t.tv_usec * 1.0e-6;
+}
+
+char *RKTimevalToString(const struct timeval time, const int format, const bool isUTC) {
     static int ibuf = 0;
     static char stringBuffer[16][64];
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -762,44 +788,53 @@ char *RKTimevalToString(const struct timeval time, int format) {
         pthread_mutex_destroy(&lock);
         return NULL;
     }
-
     pthread_mutex_lock(&lock);
     char *string = stringBuffer[ibuf];
     ibuf = ibuf == 15 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
-    char formatString[8];
-    int n = 0, o = 0;
+    struct tm *(*time_fn)(const time_t *) = isUTC ? localtime : gmtime;
 
-    if (format >= 1080) {
-        strftime(string, 20, "%Y/%m/%d %H:%M:%S", localtime(&time.tv_sec));
+    int n = 0, o = 0;
+    char formatString[8];
+    if (format == 1180) {
+        strftime(string, 20, "%Y-%m-%dT%H:%M:%S", time_fn(&time.tv_sec));
+    } else if (format >= 1080) {
+        strftime(string, 20, "%Y/%m/%d %H:%M:%S", time_fn(&time.tv_sec));
         n = CLAMP(format - 1080, 0, 6);
         o = 19;
     } else if (format >= 860) {
-        strftime(string, 16, "%Y%m%d-%H%M%S", localtime(&time.tv_sec));
+        strftime(string, 16, "%Y%m%d-%H%M%S", time_fn(&time.tv_sec));
         n = CLAMP(format - 860, 0, 6);
         o = 15;
     } else if (format >= 800) {
-        strftime(string, 9, "%Y%m%d", localtime(&time.tv_sec));
+        strftime(string, 9, "%Y%m%d", time_fn(&time.tv_sec));
         n = CLAMP(format - 800, 0, 6);
         o = 8;
     } else if (format >= 80) {
-        strftime(string, 9, "%H:%M:%S", localtime(&time.tv_sec));
+        strftime(string, 9, "%H:%M:%S", time_fn(&time.tv_sec));
         n = CLAMP(format - 80, 0, 6);
         o = 8;
     } else if (format >= 60) {
-        strftime(string, 7, "%H%M%S", localtime(&time.tv_sec));
+        strftime(string, 7, "%H%M%S", time_fn(&time.tv_sec));
         n = CLAMP(format - 60, 0, 6);
         o = 6;
     } else {
-        strftime(string, 16, "%Y%m%d-%H%M%S", localtime(&time.tv_sec));
+        strftime(string, 16, "%Y%m%d-%H%M%S", time_fn(&time.tv_sec));
     }
     if (n > 0) {
         snprintf(formatString, 7, ".%%0%du", n);
         snprintf(string + o, 63 - o, formatString, (uint32_t)time.tv_usec / (uint32_t)pow(10, 6 - n));
     }
-
     return string;
+}
+
+char *RKTimeDoubleToString(const double time, const int format, const bool isUTC) {
+    const struct timeval t = {
+        .tv_sec = (time_t)time,
+        .tv_usec = (suseconds_t)((time - (double)((time_t)time)) * 1.0e6)
+    };
+    return RKTimevalToString(t, format, isUTC);
 }
 
 #pragma mark - File / Path
@@ -851,16 +886,19 @@ void RKPreparePath(const char *filename) {
 }
 
 long RKCountFilesInPath(const char *path) {
-    //struct dirent *dir;
+    struct dirent *entry;
     DIR *did = opendir(path);
     if (did == NULL) {
         fprintf(stderr, "Unable to open directory %s\n", path);
         return 0;
     }
-    long offset = telldir(did);
-    printf("offset = %ld\n", offset);
-    seekdir(did, offset + 3);
-    long count = telldir(did);
+    long count = 0;
+    while ((entry = readdir(did)) != NULL) {
+        // Skip the special entries "." and ".."
+        if (entry->d_type == DT_REG) {
+            count++;
+        }
+    }
     closedir(did);
     return count;
 }
@@ -912,7 +950,7 @@ char *RKFolderOfFilename(const char *filename) {
     } else if (s == filename) {
         strcpy(folder, "/");
     } else {
-        strncpy(folder, filename, sizeof(folder) - 1);
+        strncpy(folder, filename, MIN((size_t)(s - filename), sizeof(folder) - 1));
         folder[sizeof(folder) - 1] = '\0';
     }
     return folder;
@@ -924,6 +962,14 @@ char *RKFileExtension(const char *filename) {
     if (e == NULL) {
         ext[0] = '\0';
         return ext;
+    }
+    if (!strcmp(e, ".gz") || !strcmp(e, ".xz")) {
+        *e = '\0';
+        char *f = strrchr(filename, '.');
+        *e = '.';
+        if (f != NULL) {
+            e = f;
+        }
     }
     strcpy(ext, e);
     return ext;
@@ -1665,11 +1711,6 @@ char *RKBinaryString(char *dst, void *src, const size_t count) {
     return dst;
 }
 
-void RKHeadTailBinaryString(char *dst, void *src, const size_t count) {
-    char *tail = RKBinaryString(dst, src, 25);
-    RKBinaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
-}
-
 char *RKStringLower(char *string) {
     char *c = string;
     char *e = c + strlen(c);
@@ -1696,6 +1737,11 @@ void RKHeadTailBytesInHex(char *dst, void *src, const size_t count) {
     RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
 }
 
+void RKHeadTailBinaryString(char *dst, void *src, const size_t count) {
+    char *tail = RKBinaryString(dst, src, 25);
+    RKBinaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
+}
+
 void RKRadarHubPayloadString(char *dst, void *src, const size_t count) {
     int i;
     uint8_t *c = (uint8_t *)src;
@@ -1713,5 +1759,12 @@ void RKRadarHubPayloadString(char *dst, void *src, const size_t count) {
         c = (uint8_t *)src;
         r = sprintf(dst, "b'\\x%02x'", *c++);
         RKHeadTailBytesInHex(dst + r, c, count - 1);
+    }
+}
+
+void RKSetArrayToFloat32(void *array, const float value, const size_t count) {
+    float *f = (float *)array;
+    for (int i = 0; i < count; i++) {
+        *f++ = value;
     }
 }

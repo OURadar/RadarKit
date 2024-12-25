@@ -38,14 +38,13 @@ struct rk_sweep_engine {
     uint32_t                         *configIndex;
     uint8_t                          verbose;
     bool                             record;
-    bool                             convertToDegrees;
     bool                             hasFileHandlingScript;
     char                             fileHandlingScript[RKMaximumPathLength];
     RKScriptProperty                 fileHandlingScriptProperties;
     RKFileManager                    *fileManager;
-    uint32_t                         productTimeoutSeconds;
     char                             productFileExtension[RKMaximumFileExtensionLength];
     int                              (*productRecorder)(RKProduct *, const char *);
+    int                              (*productCollectionRecorder)(RKProductCollection *, const char *, uint32_t);
 
     // Program set variables
     RKIdentifier                     sweepIndex;
@@ -57,8 +56,8 @@ struct rk_sweep_engine {
     uint32_t                         productBufferDepth;
     uint32_t                         productIndex;
     pthread_mutex_t                  productMutex;
-    RKBaseProductList                baseProductList;
-    RKProductId                      baseMomentProductIds[RKBaseProductIndexCount];
+    RKProductList                    productList;
+    RKProductId                      productIds[RKProductIndexCount];
     uint32_t                         business;
 
     // Status / health

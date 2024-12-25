@@ -1,6 +1,7 @@
 KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
+NETCDF_VER := $(shell nc-config --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
@@ -45,10 +46,9 @@ endif
 
 CFLAGS += -Iheaders -Iheaders/RadarKit
 CFLAGS += -I${PREFIX}/include
-CFLAGS += -I${PREFIX}/opt/openssl@1.1/include
 
-LDFLAGS = -L${PREFIX}/lib
-LDFLAGS += -L${PREFIX}/opt/openssl@1.1/lib
+LDFLAGS = -L/usr/lib
+LDFLAGS += -L${PREFIX}/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
@@ -84,10 +84,17 @@ SHARED_LIB = libradarkit.so
 
 PROGS = rkutil
 
+ifeq ($(shell printf '%s\n' "4.7" "$(NETCDF_VER)" | sort -V | head -n1), 4.7)
+	CFLAGS += -D_HAS_NETCDF_MEM_H
+endif
+
 ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
-	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations -fms-extensions -Wno-microsoft
+	CFLAGS += -D_DARWIN_C_SOURCE -fms-extensions -Wno-microsoft
+	CFLAGS += -I${PREFIX}/opt/openssl@1.1/include
+	CFLAGS += -I${PREFIX}/opt/libarchive/include
+	LDFLAGS += -L${PREFIX}/opt/openssl@1.1/lib
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
@@ -99,7 +106,7 @@ else
 	endif
 endif
 
-LDFLAGS += -lfftw3f -lnetcdf -lpthread -lz -lm -lssl
+LDFLAGS += -lfftw3f -lnetcdf -lpthread -larchive -lz -lm -lssl
 
 ifneq ($(KERNEL), Darwin)
 	LDFLAGS += -lrt
@@ -114,6 +121,7 @@ all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS) $(EXAMPLES)
 showinfo:
 	@echo $(EFLAG) "\
 	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
+	NETCDF_VER = \033[38;5;15m$(NETCDF_VER)\033[m\n\
 	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
 	MACHINE = \033[38;5;87m$(MACHINE)\033[m\n\
 	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
@@ -122,12 +130,18 @@ showinfo:
 	EFLAG = \033[38;5;208m$(EFLAG)\033[m\n\
 	CPUS = \033[38;5;203m$(CPUS)\033[m\n\
 	OBJS = \033[38;5;213m$(OBJS)\033[m\n\
+	CFLAGS = \033[38;5;141m$(CFLAGS)\033[m\n\
 	EXAMPLES = \033[38;5;45m$(EXAMPLES)\033[m\n\
 	"
 
 # IMPORTANT: KEEP THOSE SPACES BEFORE THE SLASHES
 ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
-	ctypesgen -I$(PREFIX)/include -Iheaders -Iheaders/RadarKit -L./ -lradarkit \
+	ctypesgen \
+	-I${PREFIX}/include -Iheaders -Iheaders/RadarKit \
+	--strip-build-path=$(shell pwd)/headers/RadarKit \
+	--no-macro-warnings \
+	-lradarkit \
+	-o $(CTYPES_OUT_PATH)/_ctypes_.py \
 	headers/RadarKit/RKTypes.h \
 	headers/RadarKit/RKMisc.h \
 	headers/RadarKit/RKFoundation.h \
@@ -142,14 +156,14 @@ ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
 	headers/RadarKit/RKSweepEngine.h \
 	headers/RadarKit/RKPulseRingFilter.h \
 	headers/RadarKit/RKMultiLag.h \
-	headers/RadarKit/RKSpectralMoment.h \
 	headers/RadarKit/RKPulsePair.h \
 	headers/RadarKit/RKPulsePairHop.h \
 	headers/RadarKit/RKPulsePairATSR.h \
+	headers/RadarKit/RKSpectralMoment.h \
 	headers/RadarKit/RKWaveform.h \
-	headers/RadarKit.h \
-	headers/RadarKit/RKTest.h \
-	-o $(CTYPES_OUT_PATH)/_ctypes_.py
+	headers/RadarKit/RKTest.h
+	@echo $(EFLAG) "\033[38;5;228m$(CTYPES_OUT_PATH)/_ctypes_.py\033[m"
+	sha1sum $(CTYPES_OUT_PATH)/_ctypes_.py
 
 MAKEFLAGS += --jobs=$(CPUS)
 

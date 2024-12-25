@@ -119,7 +119,6 @@ void RKUpdateRadarProductsInScratchSpace(RKMomentScratch *space, const int gateC
         *r_pf = _rk_mm_mul(_rk_mm_add(one_pf, _rk_mm_rcp(*h_pf)), _rk_mm_add(one_pf, _rk_mm_rcp(*v_pf)));
         *r_pf = _rk_mm_mul(*s_pf, _rk_mm_sqrt(*r_pf));
         // *r_pf = *s_pf;
-
         z_pf++;
         a_pf++;
         w_pf++;
@@ -425,7 +424,7 @@ int RKPulsePair(RKMomentScratch *space, RKPulse **pulses, const uint16_t count) 
     RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
     // Mark the calculated products, exclude K here since it is not ready
-    space->calculatedProducts = RKBaseProductListFloatZVWDPR;
+    space->calculatedProducts = RKProductListFloatZVWDPR;
 
     if (space->verbose && count < 50 && gateCount < 50) {
         char variable[RKNameLength];
@@ -546,7 +545,7 @@ int RKPulsePairStaggeredPRT(RKMomentScratch *space, RKPulse **pulses, const uint
                              | RKMomentListC0;
 
     // Mark the calculated products, exclude K here since it is not ready
-    space->calculatedProducts = RKBaseProductListFloatZVWDPR;
+    space->calculatedProducts = RKProductListFloatZVWDPR;
 
     return 0;
 }

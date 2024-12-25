@@ -119,12 +119,14 @@ RKComplex RKComplexArraySum(RKComplex *src, const int);
 int RKLog(const char *, ...);
 void RKExit(int);
 
-// File operations
+// File operations (they just directly copied for ctypes to work)
 FILE *RKFileOpen(const char *, const char *);
 int RKFileClose(FILE *);
 long RKFileTell(FILE *);
 size_t RKFileGetSize(FILE *);
 int RKFileSeek(FILE *, long);
+size_t RKFileWrite(const void *, size_t, size_t, FILE *);
+size_t RKFileRead(void *, size_t, size_t, FILE *);
 
 // Variables in rkGlobalVariable / Presentation
 void RKSetStatusColor(const bool);
@@ -142,6 +144,7 @@ char *RKVersionString(void);
 RKValueType RKGuessValueType(const char *);
 
 // Filename / string
+int RKIsFilenameStandard(const char *filename);
 bool RKGetSymbolFromFilename(const char *filename, char *symbol);
 bool RKGetPrefixFromFilename(const char *filename, char *prefix);
 int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLength]);
@@ -159,7 +162,8 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type);
 size_t RKPrettyStringSizeEstimate(const char *);
 size_t RKPrettyStringFromKeyValueString(char *, const char *);
 
-// Clearing buffer
+// Buffer
+void *RKMalloc(const uint32_t capacity);
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity);
 void RKZeroOutIQZ(RKIQZ *data, const uint32_t capacity);
 void RKZeroTailFloat(RKFloat *data, const uint32_t capacity, const uint32_t origin);
@@ -182,9 +186,8 @@ void RKPulseDuplicateSplitComplex(RKPulse *);
 size_t RKRayBufferAlloc(RKBuffer *, const uint32_t capacity, const uint32_t count);
 void RKRayBufferFree(RKBuffer);
 RKRay *RKGetRayFromBuffer(RKBuffer, const uint32_t);
-int16_t *RKGetInt16DataFromRay(RKRay *, const RKMomentIndex);
-uint8_t *RKGetUInt8DataFromRay(RKRay *, const RKBaseProductIndex);
-float *RKGetFloatDataFromRay(RKRay *, const RKBaseProductIndex);
+uint8_t *RKGetUInt8DataFromRay(RKRay *, const RKProductIndex);
+float *RKGetFloatDataFromRay(RKRay *, const RKProductIndex);
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t);
 RKRay *RKGetVacantRayFromBuffer(RKBuffer, uint32_t *, const uint32_t);
 
@@ -196,8 +199,8 @@ int RKFileMonitorFree(RKFileMonitor *);
 RKStream RKStreamFromString(const char *);
 char *RKStringOfStream(RKStream);
 int RKStringFromStream(char *, RKStream);
-//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKBaseProductIndex *, RKBaseProductList *);
-RKProductDesc RKGetNextProductDescription(RKBaseProductList *);
+//int RKGetNextProductDescription(char *symbol, char *name, char *unit, char *colormap, RKProductIndex *, RKProductList *);
+RKProductDesc RKGetNextProductDescription(RKProductList *);
 
 // Parser, enum, strings
 size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const char *);

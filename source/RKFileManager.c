@@ -502,9 +502,9 @@ static void *folderWatcher(void *in) {
     #else
 
     const int capacities[] = {
-        24 * 3600 / 2 * 10,                // Assume a file every 2 seconds, 10 folders
-        24 * 3600 / 2 * 8 * 10,            // Assume 8 files every 2 seconds, 10 folders
-        24 * 60 * 50,                      // Assume a file every minute, 50 folders
+        24 * 3600 / 2 * 20,                // Assume a file every 2 seconds, 20 folders
+        24 * 3600 * 365,                   // Assume a file every second, 365 folders
+        24 * 60 * 365,                     // Assume a file every minute, 365 folders
         0
     };
     const size_t limits[] = {

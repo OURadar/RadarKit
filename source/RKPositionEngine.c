@@ -52,7 +52,7 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     string[i] = '#';
     i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
-    snprintf(string + i, RKStatusStringLength - i, " %010lu  %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f° @ %+6.1f°/s [%6.2f°]   %08x",
+    snprintf(string + i, RKStatusStringLength - i, " %010lu  %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f° @ %+6.1f°/s [%6.2f°]   V%u-S%u  %08x",
              (unsigned long)position->i,
              rkGlobalParameters.statusColor ? RKPositionElevationFlagColor(position->flag) : "",
              rkGlobalParameters.statusColor ? RKNoColor : "",
@@ -64,6 +64,8 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
              position->azimuthDegrees,
              position->azimuthVelocityDegreesPerSecond,
              position->sweepAzimuthDegrees,
+             position->volumeIndex,
+             position->sweepIndex,
              position->flag);
     //
     // There is a memory leak here, maybe the capacity?
@@ -277,11 +279,13 @@ static void *pulseTagger(void *_in) {
 
         if (marker0 & RKMarkerSweepBegin || (marker0 & RKMarkerScanTypeMask) != (marker1 & RKMarkerScanTypeMask)) {
             if (engine->verbose) {
-                RKLog("%s C%02d New sweep   EL %.2f°   AZ %.2f°\n", engine->name,
-                      *engine->configIndex, positionAfter->sweepElevationDegrees, positionAfter->sweepAzimuthDegrees);
+                RKLog("%s C%02d New sweep   EL %.2f°   AZ %.2f°   sweepIndex %u\n", engine->name,
+                      *engine->configIndex, positionAfter->sweepElevationDegrees, positionAfter->sweepAzimuthDegrees, positionAfter->sweepIndex);
             }
             // Add another configuration
             RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
+                                    RKConfigKeyVolumeIndex, positionAfter->volumeIndex,
+                                    RKConfigKeySweepIndex, positionAfter->sweepIndex,
                                     RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
                                     RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
                                     RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,

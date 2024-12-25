@@ -1006,7 +1006,7 @@ size_t RKWaveformWriteToReference(RKWaveform *waveform, FILE *fid) {
 }
 
 RKResult RKWaveformWriteFile(RKWaveform *waveform, const char *filename) {
-    // Get the path created if it doesn't exist
+    // Get the path created if it does not exist
     RKPreparePath(filename);
     FILE *fid = fopen(filename, "w");
     if (fid == NULL) {

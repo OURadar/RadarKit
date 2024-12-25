@@ -11,6 +11,8 @@
 
 #include <RadarKit/RKRadar.h>
 
+// Keep PAYLOAD_DEPTH of display payload. 0 - Health, 1 - Scope, 2 - Reserved, 3 - Reserved, 4+ - Display
+#define PAYLOAD_DEPTH       8
 #define PAYLOAD_CAPACITY    (1024 * 1024)
 
 typedef struct rk_reporter {
@@ -23,7 +25,7 @@ typedef struct rk_reporter {
     char                             control[RKMaximumStringLength];
     char                             message[RKMaximumStringLength];
     char                             scratch[RKMaximumStringLength];
-    char                             payload[4][PAYLOAD_CAPACITY];
+    char                             payload[4 + PAYLOAD_DEPTH][PAYLOAD_CAPACITY];
     int                              verbose;
     RKRadar                          *radar;
 

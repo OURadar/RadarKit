@@ -78,11 +78,11 @@ def makeRotationForCoord(lon=-97.46381, lat=35.23682):
 
 
 def project(coords, rotation=makeRotationForCoord()):
-    lon, lat = coords[:, 1], coords[:, 0]
-    m = r_earth * np.cos(lon)
-    y = r_earth * np.sin(lon)
-    z = m * np.cos(lat)
-    x = m * np.sin(lat)
+    lon, lat = coords[:, 0], coords[:, 1]
+    m = r_earth * np.cos(lat)
+    y = r_earth * np.sin(lat)
+    z = m * np.cos(lon)
+    x = m * np.sin(lon)
     p = np.array((x, y, z)).transpose()
     return np.matmul(p, rotation)
 
@@ -344,14 +344,20 @@ class PolarGrid(Grid):
             self.grids.append((x, y))
         # Labels
         self.labels = []
-        phi = np.radians(40)
-        cc = np.cos(phi)
-        ss = np.sin(phi)
-        for r in self.radii[1:]:
-            x = r * cc
-            y = r * ss
-            if y > 0.85 * self.ymax:
-                break
+        # phi = np.radians(40)
+        # cc = np.cos(phi)
+        # ss = np.sin(phi)
+        # for r in self.radii[1:]:
+        #     x = r * cc
+        #     y = r * ss
+        #     if y > 0.85 * self.ymax:
+        #         break
+        #     self.labels.append((x, y, f"{r:.0f} km"))
+        points = [[40.0, 10.0], [20.0, 20.0]]
+        for pos in points:
+            phi, r = np.radians(pos[0]), pos[1]
+            x = r * np.cos(phi)
+            y = r * np.sin(phi)
             self.labels.append((x, y, f"{r:.0f} km"))
 
     def draw(self, ax):

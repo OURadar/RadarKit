@@ -42,7 +42,7 @@ static void consolidateStreams(RKCommandCenter *engine) {
     }
 }
 
-static void copyRayHeader(RKRayHeaderV1 *destination, RKRayHeader *source) {
+static void copyRayHeader(RKRayHeaderF1 *destination, RKRayHeader *source) {
     destination->capacity        = source->capacity;
     destination->s               = source->s;
     destination->i               = source->i;
@@ -77,7 +77,6 @@ int socketCommandHandler(RKOperator *O) {
 
     int j, k;
 
-    char symbol[8];
     char name[RKNameLength];
     memcpy(name, engine->name, RKNameLength);
 
@@ -186,7 +185,7 @@ int socketCommandHandler(RKOperator *O) {
                     // DSP related
                     switch (commandString[commandString[1] == ' ' ? 2 : 1]) {
                         case 'r':
-                            // Suspend all user straems
+                            // Suspend all user streams
                             for (k = 0; k < RKCommandCenterMaxConnections; k++) {
                                 if (engine->users[k].radar == user->radar && engine->users[k].streams != RKStreamNull) {
                                     pthread_mutex_lock(&engine->users[k].mutex);
@@ -282,31 +281,6 @@ int socketCommandHandler(RKOperator *O) {
                     pthread_mutex_unlock(&user->mutex);
                     sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%016lx, \"streams\": 0x%lx, \"indices\": [%d, %d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
-                    RKOperatorSendCommandResponse(O, user->commandResponse);
-                    break;
-
-                case 'u':
-                    // Turn this user into an active node with user product return
-                    RKParseProductDescription(&user->productDescriptions[user->productCount], commandString + 1);
-                    RKLog("%s Registering external product %d: '%s' (%s) ...", engine->name,
-                          user->productDescriptions[user->productCount].key,
-                          user->productDescriptions[user->productCount].name,
-                          user->productDescriptions[user->productCount].symbol);
-                    user->productIds[user->productCount] = RKSweepEngineDescribeProduct(user->radar->sweepEngine, user->productDescriptions[user->productCount]);
-                    if (user->productIds[user->productCount]) {
-                        // sprintf(user->commandResponse, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
-                        //         user->productDescriptions[user->productCount].key,
-                        //         user->productDescriptions[user->productCount].symbol,
-                        //         user->productIds[user->productCount]);
-                        strncpy(symbol, user->productDescriptions[user->productCount].symbol, 7);
-                        snprintf(user->commandResponse, RKMaximumCommandLength, "ACK. {\"type\": \"productDescription\", \"key\":%u, \"symbol\":\"%s\", \"pid\":%u}" RKEOL,
-                                user->productDescriptions[user->productCount].key,
-                                symbol,
-                                user->productIds[user->productCount]);
-                        user->productCount++;
-                    } else {
-                        sprintf(user->commandResponse, "NAK. Unable to register product." RKEOL);
-                    }
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
 
@@ -411,7 +385,7 @@ int socketStreamHandler(RKOperator *O) {
 
     RKRay *ray;
     RKRayHeader rayHeader;
-    RKRayHeaderV1 rayHeaderV1;
+    RKRayHeaderF1 rayHeaderV1;
 
     RKSweep *sweep;
     RKSweepHeader sweepHeader;
@@ -613,7 +587,7 @@ int socketStreamHandler(RKOperator *O) {
                     }
                     k += sprintf(user->string + k, "%04d %5.2f %6.2f ", (int)(ray->header.i % 1000), ray->header.startElevation, ray->header.startAzimuth);
                     // Now we paint the ASCII art
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                     j = -1;
                     for (s = 0; s < MIN(ray->header.gateCount / user->asciiArtStride, (user->terminalSize.ws_col - 20)); s++) {
                         // 20.0 dBZ --> (20.0) * 2 + 64 = 104 --> ((104) - 54) / 10 = 5.0 = 5
@@ -752,7 +726,7 @@ int socketStreamHandler(RKOperator *O) {
     //    iii) For a pulse, it has RKPulseStatusReadyForMoments set
     //     iv) For a sweep, scratchSpaceIndex has increased
     // 3) Once the first payload is sent, the stream is consider in progress (streamsInProgress)
-    // 4) If (2) can't be met within X secs, in progress flag is not set so (2) will be checked
+    // 4) If (2) cannot be met within X secs, in progress flag is not set so (2) will be checked
     //    again in the next iteraction.
 
     // Processor Status
@@ -828,7 +802,7 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
-    // Product or display streams - no skipping
+    // Product or display streams - no skipping (deprecating)
     if (user->streams & user->access & RKStreamProductAll) {
         #pragma mark Product Streams
         // Product streams - assume no display as display data can be derived later
@@ -862,38 +836,38 @@ int socketStreamHandler(RKOperator *O) {
                 //memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
                 copyRayHeader(&rayHeaderV1, &ray->header);
                 // Gather the products to be sent
-                rayHeaderV1.baseProductList = RKBaseProductListNone;
+                rayHeaderV1.productList = RKProductListNone;
                 if (user->streams & RKStreamProductZ) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatZ;
+                    rayHeaderV1.productList |= RKProductListFloatZ;
                 }
                 if (user->streams & RKStreamProductV) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatV;
+                    rayHeaderV1.productList |= RKProductListFloatV;
                 }
                 if (user->streams & RKStreamProductW) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatW;
+                    rayHeaderV1.productList |= RKProductListFloatW;
                 }
                 if (user->streams & RKStreamProductD) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatD;
+                    rayHeaderV1.productList |= RKProductListFloatD;
                 }
                 if (user->streams & RKStreamProductP) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatP;
+                    rayHeaderV1.productList |= RKProductListFloatP;
                 }
                 if (user->streams & RKStreamProductR) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatR;
+                    rayHeaderV1.productList |= RKProductListFloatR;
                 }
                 if (user->streams & RKStreamProductK) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatK;
+                    rayHeaderV1.productList |= RKProductListFloatK;
                 }
                 if (user->streams & RKStreamProductQ) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatQ;
+                    rayHeaderV1.productList |= RKProductListFloatQ;
                 }
                 if (user->streams & RKStreamProductSh) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatSh;
+                    rayHeaderV1.productList |= RKProductListFloatSh;
                 }
                 if (user->streams & RKStreamProductSv) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListFloatSv;
+                    rayHeaderV1.productList |= RKProductListFloatSv;
                 }
-                uint32_t productList = rayHeaderV1.baseProductList & RKBaseProductListFloatZVWDPRKSQ;
+                uint32_t productList = rayHeaderV1.productList & RKProductListFloatZVWDPRKSQ;
                 uint32_t productCount = __builtin_popcount(productList);
                 //RKLog("ProductCount = %d / %x\n", productCount, productList);
 
@@ -905,36 +879,36 @@ int socketStreamHandler(RKOperator *O) {
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
 
                 for (j = 0; j < productCount; j++) {
-                    if (productList & RKBaseProductListFloatZ) {
-                        productList ^= RKBaseProductListFloatZ;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
-                    } else if (productList & RKBaseProductListFloatV) {
-                        productList ^= RKBaseProductListFloatV;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
-                    } else if (productList & RKBaseProductListFloatW) {
-                        productList ^= RKBaseProductListFloatW;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
-                    } else if (productList & RKBaseProductListFloatD) {
-                        productList ^= RKBaseProductListFloatD;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
-                    } else if (productList & RKBaseProductListFloatP) {
-                        productList ^= RKBaseProductListFloatP;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
-                    } else if (productList & RKBaseProductListFloatR) {
-                        productList ^= RKBaseProductListFloatR;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
-                    } else if (productList & RKBaseProductListFloatK) {
-                        productList ^= RKBaseProductListFloatK;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
-                    } else if (productList & RKBaseProductListFloatQ) {
-                        productList ^= RKBaseProductListFloatK;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
-                    } else if (productList & RKBaseProductListFloatSh) {
-                        productList ^= RKBaseProductListFloatSh;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
-                    } else if (productList & RKBaseProductListFloatSv) {
-                        productList ^= RKBaseProductListFloatSv;
-                        f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
+                    if (productList & RKProductListFloatZ) {
+                        productList ^= RKProductListFloatZ;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+                    } else if (productList & RKProductListFloatV) {
+                        productList ^= RKProductListFloatV;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexV);
+                    } else if (productList & RKProductListFloatW) {
+                        productList ^= RKProductListFloatW;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexW);
+                    } else if (productList & RKProductListFloatD) {
+                        productList ^= RKProductListFloatD;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexD);
+                    } else if (productList & RKProductListFloatP) {
+                        productList ^= RKProductListFloatP;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexP);
+                    } else if (productList & RKProductListFloatR) {
+                        productList ^= RKProductListFloatR;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexR);
+                    } else if (productList & RKProductListFloatK) {
+                        productList ^= RKProductListFloatK;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
+                    } else if (productList & RKProductListFloatQ) {
+                        productList ^= RKProductListFloatK;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexQ);
+                    } else if (productList & RKProductListFloatSh) {
+                        productList ^= RKProductListFloatSh;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSh);
+                    } else if (productList & RKProductListFloatSv) {
+                        productList ^= RKProductListFloatSv;
+                        f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSv);
                     } else {
                         f32Data = NULL;
                     }
@@ -996,38 +970,38 @@ int socketStreamHandler(RKOperator *O) {
                 copyRayHeader(&rayHeaderV1, &ray->header);
 
                 // Gather the products to be sent
-                rayHeaderV1.baseProductList = RKBaseProductListNone;
+                rayHeaderV1.productList = RKProductListNone;
                 if (user->streams & RKStreamDisplayZ) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Z;
+                    rayHeaderV1.productList |= RKProductListUInt8Z;
                 }
                 if (user->streams & RKStreamDisplayV) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8V;
+                    rayHeaderV1.productList |= RKProductListUInt8V;
                 }
                 if (user->streams & RKStreamDisplayW) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8W;
+                    rayHeaderV1.productList |= RKProductListUInt8W;
                 }
                 if (user->streams & RKStreamDisplayD) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8D;
+                    rayHeaderV1.productList |= RKProductListUInt8D;
                 }
                 if (user->streams & RKStreamDisplayP) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8P;
+                    rayHeaderV1.productList |= RKProductListUInt8P;
                 }
                 if (user->streams & RKStreamDisplayR) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8R;
+                    rayHeaderV1.productList |= RKProductListUInt8R;
                 }
                 if (user->streams & RKStreamDisplayK) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8K;
+                    rayHeaderV1.productList |= RKProductListUInt8K;
                 }
                 if (user->streams & RKStreamDisplayQ) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Q;
+                    rayHeaderV1.productList |= RKProductListUInt8Q;
                 }
                 if (user->streams & RKStreamDisplaySh) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Sh;
+                    rayHeaderV1.productList |= RKProductListUInt8Sh;
                 }
                 if (user->streams & RKStreamDisplaySv) {
-                    rayHeaderV1.baseProductList |= RKBaseProductListUInt8Sv;
+                    rayHeaderV1.productList |= RKProductListUInt8Sv;
                 }
-                uint32_t displayList = rayHeaderV1.baseProductList & RKBaseProductListUInt8ZVWDPR;
+                uint32_t displayList = rayHeaderV1.productList & RKProductListUInt8ZVWDPR;
                 uint32_t displayCount = __builtin_popcount(displayList);
                 //RKLog("displayCount = %d / %x\n", productCount, productList);
 
@@ -1035,40 +1009,40 @@ int socketStreamHandler(RKOperator *O) {
                 rayHeaderV1.gateSizeMeters *= (float)user->rayDownSamplingRatio;
 
                 O->delimTx.type = RKNetworkPacketTypeRayDisplay;
-                O->delimTx.size = (uint32_t)(sizeof(RKRayHeaderV1) + displayCount * rayHeaderV1.gateCount * sizeof(uint8_t));
-                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeaderV1, sizeof(RKRayHeaderV1), NULL);
+                O->delimTx.size = (uint32_t)(sizeof(RKRayHeaderF1) + displayCount * rayHeaderV1.gateCount * sizeof(uint8_t));
+                RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeaderV1, sizeof(RKRayHeaderF1), NULL);
 
                 for (j = 0; j < displayCount; j++) {
-                    if (displayList & RKBaseProductListUInt8Z) {
-                        displayList ^= RKBaseProductListUInt8Z;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-                    } else if (displayList & RKBaseProductListUInt8V) {
-                        displayList ^= RKBaseProductListUInt8V;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
-                    } else if (displayList & RKBaseProductListUInt8W) {
-                        displayList ^= RKBaseProductListUInt8W;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
-                    } else if (displayList & RKBaseProductListUInt8D) {
-                        displayList ^= RKBaseProductListUInt8D;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
-                    } else if (displayList & RKBaseProductListUInt8P) {
-                        displayList ^= RKBaseProductListUInt8P;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
-                    } else if (displayList & RKBaseProductListUInt8R) {
-                        displayList ^= RKBaseProductListUInt8R;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexR);
-                    } else if (displayList & RKBaseProductListUInt8K) {
-                        displayList ^= RKBaseProductListUInt8K;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
-                    } else if (displayList & RKBaseProductListUInt8Q) {
-                        displayList ^= RKBaseProductListUInt8Q;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexQ);
-                    } else if (displayList & RKBaseProductListUInt8Sh) {
-                        displayList ^= RKBaseProductListUInt8Sh;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
-                    } else if (displayList & RKBaseProductListUInt8Sv) {
-                        displayList ^= RKBaseProductListUInt8Sv;
-                        u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
+                    if (displayList & RKProductListUInt8Z) {
+                        displayList ^= RKProductListUInt8Z;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                    } else if (displayList & RKProductListUInt8V) {
+                        displayList ^= RKProductListUInt8V;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+                    } else if (displayList & RKProductListUInt8W) {
+                        displayList ^= RKProductListUInt8W;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+                    } else if (displayList & RKProductListUInt8D) {
+                        displayList ^= RKProductListUInt8D;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+                    } else if (displayList & RKProductListUInt8P) {
+                        displayList ^= RKProductListUInt8P;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                    } else if (displayList & RKProductListUInt8R) {
+                        displayList ^= RKProductListUInt8R;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+                    } else if (displayList & RKProductListUInt8K) {
+                        displayList ^= RKProductListUInt8K;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                    } else if (displayList & RKProductListUInt8Q) {
+                        displayList ^= RKProductListUInt8Q;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexQ);
+                    } else if (displayList & RKProductListUInt8Sh) {
+                        displayList ^= RKProductListUInt8Sh;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSh);
+                    } else if (displayList & RKProductListUInt8Sv) {
+                        displayList ^= RKProductListUInt8Sv;
+                        u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSv);
                     } else {
                         u8Data = NULL;
                     }
@@ -1107,90 +1081,90 @@ int socketStreamHandler(RKOperator *O) {
                 if (engine->verbose > 1) {
                     RKLog("%s %s New sweep available   C%02d   S%lu.  <--  %x / %x\n",
                           engine->name, O->name,
-                          sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.baseProductList, sweepHeader.baseProductList);
+                          sweep->rays[0]->header.configIndex, sweep->header.config.i, sweep->header.productList, sweepHeader.productList);
                 }
 
                 // Store a copy of the original list of available products
-                uint32_t productList = sweepHeader.baseProductList;
+                uint32_t productList = sweepHeader.productList;
 
                 // Mutate sweep so that header indicates the sweep to be transmitted
                 i = 0;
                 user->scratch[0] = '\0';
-                sweepHeader.baseProductList = RKBaseProductListNone;
-                if ((user->streams & RKStreamSweepZ) && (productList & RKBaseProductListFloatZ)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatZ;
+                sweepHeader.productList = RKProductListNone;
+                if ((user->streams & RKStreamSweepZ) && (productList & RKProductListFloatZ)) {
+                    sweepHeader.productList |= RKProductListFloatZ;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " Z,");
                     }
                 }
-                if ((user->streams & RKStreamSweepV) && (productList & RKBaseProductListFloatV)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatV;
+                if ((user->streams & RKStreamSweepV) && (productList & RKProductListFloatV)) {
+                    sweepHeader.productList |= RKProductListFloatV;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " V,");
                     }
                 }
-                if ((user->streams & RKStreamSweepW) && (productList & RKBaseProductListFloatW)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatW;
+                if ((user->streams & RKStreamSweepW) && (productList & RKProductListFloatW)) {
+                    sweepHeader.productList |= RKProductListFloatW;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " W,");
                     }
                 }
-                if ((user->streams & RKStreamSweepD) && (productList & RKBaseProductListFloatD)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatD;
+                if ((user->streams & RKStreamSweepD) && (productList & RKProductListFloatD)) {
+                    sweepHeader.productList |= RKProductListFloatD;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " D,");
                     }
                 }
-                if ((user->streams & RKStreamSweepP) && (productList & RKBaseProductListFloatP)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatP;
+                if ((user->streams & RKStreamSweepP) && (productList & RKProductListFloatP)) {
+                    sweepHeader.productList |= RKProductListFloatP;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " P,");
                     }
                 }
-                if ((user->streams & RKStreamSweepR) && (productList & RKBaseProductListFloatR)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatR;
+                if ((user->streams & RKStreamSweepR) && (productList & RKProductListFloatR)) {
+                    sweepHeader.productList |= RKProductListFloatR;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " R,");
                     }
                 }
-                if ((user->streams & RKStreamSweepK) && (productList & RKBaseProductListFloatK)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatK;
+                if ((user->streams & RKStreamSweepK) && (productList & RKProductListFloatK)) {
+                    sweepHeader.productList |= RKProductListFloatK;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " K,");
                     }
                 }
-                if ((user->streams & RKStreamSweepQ) && (productList & RKBaseProductListFloatQ)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatQ;
+                if ((user->streams & RKStreamSweepQ) && (productList & RKProductListFloatQ)) {
+                    sweepHeader.productList |= RKProductListFloatQ;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " Q,");
                     }
                 }
-                if ((user->streams & RKStreamSweepSh) && (productList & RKBaseProductListFloatSh)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatSh;
+                if ((user->streams & RKStreamSweepSh) && (productList & RKProductListFloatSh)) {
+                    sweepHeader.productList |= RKProductListFloatSh;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
                     } else {
                         i += sprintf(user->scratch + i, " Sh,");
                     }
                 }
-                if ((user->streams & RKStreamSweepSv) && (productList & RKBaseProductListFloatSv)) {
-                    sweepHeader.baseProductList |= RKBaseProductListFloatSv;
+                if ((user->streams & RKStreamSweepSv) && (productList & RKProductListFloatSv)) {
+                    sweepHeader.productList |= RKProductListFloatSv;
                     if (rkGlobalParameters.showColor) {
                         i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
                     } else {
@@ -1202,7 +1176,7 @@ int socketStreamHandler(RKOperator *O) {
                     user->scratch[i - 1] = '\0';
                 }
 
-                const uint32_t baseProductCount = __builtin_popcount(sweepHeader.baseProductList);
+                const uint32_t baseProductCount = __builtin_popcount(sweepHeader.productList);
 
                 if (baseProductCount) {
                     size = 0;
@@ -1218,43 +1192,43 @@ int socketStreamHandler(RKOperator *O) {
                     for (k = 0; k < sweepHeader.rayCount; k++) {
                         ray = sweep->rays[k];
                         memcpy(&rayHeader, &ray->header, sizeof(RKRayHeader));
-                        rayHeader.baseProductList = sweepHeader.baseProductList;
+                        rayHeader.productList = sweepHeader.productList;
                         size += RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), &rayHeader, sizeof(RKRayHeader), NULL);
-                        productList = sweepHeader.baseProductList;
+                        productList = sweepHeader.productList;
                         if (engine->verbose > 1 && (k < 3 || k == sweepHeader.rayCount - 1)) {
                             RKLog(">%s %s k = %d   moments = %s   (%x)\n", engine->name, O->name, k, user->scratch + 1, productList);
                         }
                         for (j = 0; j < baseProductCount; j++) {
-                            if (productList & RKBaseProductListFloatZ) {
-                                productList ^= RKBaseProductListFloatZ;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
-                            } else if (productList & RKBaseProductListFloatV) {
-                                productList ^= RKBaseProductListFloatV;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexV);
-                            } else if (productList & RKBaseProductListFloatW) {
-                                productList ^= RKBaseProductListFloatW;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexW);
-                            } else if (productList & RKBaseProductListFloatD) {
-                                productList ^= RKBaseProductListFloatD;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexD);
-                            } else if (productList & RKBaseProductListFloatP) {
-                                productList ^= RKBaseProductListFloatP;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexP);
-                            } else if (productList & RKBaseProductListFloatR) {
-                                productList ^= RKBaseProductListFloatR;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexR);
-                            } else if (productList & RKBaseProductListFloatK) {
-                                productList ^= RKBaseProductListFloatK;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexK);
-                            } else if (productList & RKBaseProductListFloatSh) {
-                                productList ^= RKBaseProductListFloatSh;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSh);
-                            } else if (productList & RKBaseProductListFloatSv) {
-                                productList ^= RKBaseProductListFloatSv;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexSv);
-                            } else if (productList & RKBaseProductListFloatQ) {
-                                productList ^= RKBaseProductListFloatQ;
-                                f32Data = RKGetFloatDataFromRay(ray, RKBaseProductIndexQ);
+                            if (productList & RKProductListFloatZ) {
+                                productList ^= RKProductListFloatZ;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+                            } else if (productList & RKProductListFloatV) {
+                                productList ^= RKProductListFloatV;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexV);
+                            } else if (productList & RKProductListFloatW) {
+                                productList ^= RKProductListFloatW;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexW);
+                            } else if (productList & RKProductListFloatD) {
+                                productList ^= RKProductListFloatD;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexD);
+                            } else if (productList & RKProductListFloatP) {
+                                productList ^= RKProductListFloatP;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexP);
+                            } else if (productList & RKProductListFloatR) {
+                                productList ^= RKProductListFloatR;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexR);
+                            } else if (productList & RKProductListFloatK) {
+                                productList ^= RKProductListFloatK;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexK);
+                            } else if (productList & RKProductListFloatSh) {
+                                productList ^= RKProductListFloatSh;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSh);
+                            } else if (productList & RKProductListFloatSv) {
+                                productList ^= RKProductListFloatSv;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexSv);
+                            } else if (productList & RKProductListFloatQ) {
+                                productList ^= RKProductListFloatQ;
+                                f32Data = RKGetFloatDataFromRay(ray, RKProductIndexQ);
                             } else {
                                 f32Data = NULL;
                             }

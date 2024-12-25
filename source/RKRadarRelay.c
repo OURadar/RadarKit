@@ -160,36 +160,36 @@ static int RKRadarRelayRead(RKClient *client) {
             ray = RKGetRayFromBuffer(engine->rayBuffer, *engine->rayIndex);
             memcpy(&ray->header, client->userPayload, sizeof(RKRayHeader));
 
-            productList = ray->header.baseProductList;
+            productList = ray->header.productList;
             productCount = __builtin_popcount(productList);
             for (j = 0; j < productCount; j++) {
-                if (productList & RKBaseProductListUInt8Z) {
-                    productList ^= RKBaseProductListUInt8Z;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-                } else if (productList & RKBaseProductListUInt8V) {
-                    productList ^= RKBaseProductListUInt8V;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexV);
-                } else if (productList & RKBaseProductListUInt8W) {
-                    productList ^= RKBaseProductListUInt8W;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexW);
-                } else if (productList & RKBaseProductListUInt8D) {
-                    productList ^= RKBaseProductListUInt8D;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexD);
-                } else if (productList & RKBaseProductListUInt8P) {
-                    productList ^= RKBaseProductListUInt8P;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexP);
-                } else if (productList & RKBaseProductListUInt8R) {
-                    productList ^= RKBaseProductListUInt8R;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexR);
-                } else if (productList & RKBaseProductListUInt8K) {
-                    productList ^= RKBaseProductListUInt8K;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexK);
-                } else if (productList & RKBaseProductListUInt8Sh) {
-                    productList ^= RKBaseProductListUInt8Sh;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSh);
-                } else if (productList & RKBaseProductListUInt8Sv) {
-                    productList ^= RKBaseProductListUInt8Sv;
-                    u8Data = RKGetUInt8DataFromRay(ray, RKBaseProductIndexSv);
+                if (productList & RKProductListUInt8Z) {
+                    productList ^= RKProductListUInt8Z;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                } else if (productList & RKProductListUInt8V) {
+                    productList ^= RKProductListUInt8V;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexV);
+                } else if (productList & RKProductListUInt8W) {
+                    productList ^= RKProductListUInt8W;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexW);
+                } else if (productList & RKProductListUInt8D) {
+                    productList ^= RKProductListUInt8D;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexD);
+                } else if (productList & RKProductListUInt8P) {
+                    productList ^= RKProductListUInt8P;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexP);
+                } else if (productList & RKProductListUInt8R) {
+                    productList ^= RKProductListUInt8R;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexR);
+                } else if (productList & RKProductListUInt8K) {
+                    productList ^= RKProductListUInt8K;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexK);
+                } else if (productList & RKProductListUInt8Sh) {
+                    productList ^= RKProductListUInt8Sh;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSh);
+                } else if (productList & RKProductListUInt8Sv) {
+                    productList ^= RKProductListUInt8Sv;
+                    u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexSv);
                 } else {
                     u8Data = NULL;
                 }

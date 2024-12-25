@@ -91,72 +91,129 @@ static float updateSpline(RKSpline *spline, const float value, const float targe
     return result;
 }
 
+static float _array_delta(const RKVec *x, const float *y, const int count) {
+    float e = 0.0f;
+    float *a = (float *)x;
+    float *b = (float *)y;
+    for (int i = 0; i < count; i++) {
+        if (isfinite(*a) && isfinite(*b)) {
+            e += fabsf(*a++ - *b++);
+        }
+    }
+    e /= count;
+    return e;
+}
+
+static void *pushLoop(void *in) {
+    RKCommandQueue *queue = (RKCommandQueue *)in;
+    const char name[] = "<head>";
+    RKCommand command;
+    RKLog("%s Started.   queue @ %p\n", name, queue);
+    for (int k = 0; k < 10; k++) {
+        sprintf(command, "t %d", k);
+        RKCommandQueuePush(queue, &command);
+        RKLog("%s Command '%s' pushed.\n", name, command);
+        usleep(200000);
+    }
+    RKLog("%s retiring ...\n", name);
+    return NULL;
+}
+
+static void *popLoop(void *in) {
+    RKCommandQueue *queue = (RKCommandQueue *)in;
+    const char name[] = "<tail>";
+    RKLog("%s Started.   queue @ %p\n", name, queue);
+    do {
+        RKCommand *command = RKCommandQueuePop(queue);
+        if (command) {
+            RKLog("%s Command '%s' popped.\n", name, command);
+        } else {
+            usleep(10000);
+        }
+    } while (queue->toc < 10);
+    RKLog("%s retiring ...\n", name);
+    return NULL;
+}
+
 #pragma mark - Test Wrapper and Help Text
 
 char *RKTestByNumberDescription(const int indent) {
     static char text[4096];
     char helpText[] =
-    " 0 - Show types\n"
-    " 1 - Show colors\n"
-    " 2 - Pretty strings\n"
-    " 3 - Basic math tests\n"
-    " 4 - Parse comma delimited values\n"
-    " 5 - Parse values in a JSON string\n"
-    " 6 - File manager - RKFileManagerInit()\n"
-    " 7 - Read the preference file - RKPreferenceInit()\n"
-    " 8 - Count files using RKCountFilesInPath()\n"
-    " 9 - File monitor module - RKFileMonitor()\n"
-    "10 - Internet monitor module - RKHostMonitorInit()\n"
-    "11 - Initialize a simple radar system - RKRadarInit()\n"
-    "12 - Convert a temperature reading to status\n"
-    "13 - Get a country name from a position\n"
-    "14 - Generating text for buffer overview\n"
-    "15 - Generating text for health overview\n"
-    "16 - Read a .nc file using RKSweepRead(); -T15 FILENAME\n"
-    "17 - Read a .nc file using RKProductRead(); -T16 FILENAME\n"
-    "18 - Read .nc files using RKProductCollectionInitWithFilename(); -T17 FILENAME\n"
-    "19 - Reading a .rkc file; -T20 FILENAME\n"
-    "20 - Write a .nc file using RKProductFileWriterNC()\n"
-    "21 - Write a .nc file from converting a plain file. RKTestProductFromPlain()\n"
-    "22 - RKTestReviseLogicalValues()\n"
-    "23 - RKPreparePath unit test\n"
-    "24 - RKWebSocket unit test\n"
-    "25 - Read a binary file to an array of 100 RKComplex numbers; -T24 FILENAME\n"
-    "26 - Connect to RadarHub - RKReporterInit()\n"
-    "27 - Illustrate a simple RKPulseEngine() -T26 MODE (0 = no wait, 1 = process, 2 = consume)\n"
-    "28 - Illustrate a simple RKMomentEngine() -T27 MODE (0 = show, 1 = archive)\n"
     "\n"
-    "30 - SIMD quick test\n"
-    "31 - SIMD test with numbers shown\n"
-    "32 - Show window types\n"
-    "33 - Hilbert transform\n"
-    "34 - Optimize FFT performance and generate an fft-wisdom file\n"
-    "35 - Show ring filter coefficients\n"
-    "36 - RKCommandQueue unit test\n"
-    "37 - Show ramp types\n"
-    "38 - Test half-single-double conversion\n"
+    UNDERLINE("100 series - basic") "\n"
+    "101 - Show types\n"
+    "102 - Show colors\n"
+    "103 - Pretty strings\n"
+    "104 - Basic math tests\n"
+    "105 - Parse comma delimited values\n"
+    "106 - Parse values in a JSON string\n"
+    "107 - Convert a temperature reading to status\n"
+    "108 - Get a country name from a position\n"
+    "109 - Generating text for buffer overview\n"
+    "110 - Generating text for health overview\n"
+    "111 - Revise boolean values\n"
+    "112 - Time conversion\n"
     "\n"
-    "40 - Make a frequency hopping sequence\n"
-    "41 - Make a TFM waveform\n"
-    "42 - Generate a waveform file\n"
-    "43 - Test waveform down-sampling\n"
-    "44 - Test showing built-in waveform properties\n"
-    "45 - Test showing waveform properties; -T45 WAVEFORM_FILE\n"
+    UNDERLINE("200 series - file handling functions") "\n"
+    "201 - Count files using RKCountFilesInPath(); -T201 PATH\n"
+    "202 - Prepare parent folder structure using RKPreparePath()\n"
+    "203 - Read a binary file to an array of 100 RKComplex numbers; -T203 FILENAME\n"
+    "204 - Read preference file - RKPreferenceInit()\n"
+    "205 - Read raw IQ file; -T205 FILENAME\n"
+    "206 - Read sweep data using RKSweepRead(); -T206 FILENAME\n"
+    "207 - Read sweep data RKProductRead(); -T207 FILENAME\n"
+    "208 - Read sweep data using RKProductCollectionInitWithFilename(); -T208 FILENAME\n"
+    "209 - Write sweep data using RKProductFileWriterNC()\n"
+    "210 - Write product data from a plain file into an RKSweep object\n"
+    "211 - Write product data from a plain file into a set of RKProductCollection\n"
+    "212 - Write CF/radial data from a set of WDSS-II files into RKProductCollection; rkutil -T212 FILENAME\n"
+    "213 - Write compressed CF/radial data from a set of WDSS-II files into RKProductCollection; rkutil -T213 FILENAME\n"
     "\n"
-    "50 - Pulse compression using simple cases\n"
-    "51 - Compute one pulse using built-in pulse compression\n"
-    "52 - Compute one ray using the Pulse Pair method\n"
-    "53 - Compute one ray using the Pulse Pair Hop method\n"
-    "54 - Compute one ray using the Multi-Lag method with L = 2\n"
-    "55 - Compute one ray using the Multt-Lag method with L = 3\n"
-    "56 - Compute one ray using the Multi-Lag method with L = 4\n"
-    "57 - Compute one ray using the Spectral Moment method\n"
+    UNDERLINE("300 series - state machines") "\n"
+    "301 - File manager module - RKFileManagerInit()\n"
+    "302 - File monitor module - RKFileMonitor()\n"
+    "303 - Internet monitor module - RKHostMonitorInit()\n"
+    "304 - Initialize a simple radar system - RKRadarInit()\n"
+    "305 - RKWebSocket unit test\n"
+    "306 - Connect to RadarHub - RKReporterInit()\n"
+    "307 - Illustrate a simple RKPulseEngine() -T306 MODE (0 = no wait, 1 = process, 2 = consume)\n"
+    "308 - Illustrate a simple RKMomentEngine() -T307 MODE (0 = show, 1 = archive)\n"
+    "309 - Illustrate a command queue-dequeue mechanism\n"
     "\n"
-    "60 - Measure the speed of SIMD calculations\n"
-    "61 - Measure the speed of pulse compression math\n"
-    "62 - Measure the speed of RKPulseEngine() -T62 CORES (default = 4)\n"
-    "63 - Measure the speed of various moment methods\n"
-    "64 - Measure the speed of cached write\n";
+    UNDERLINE("400 seris - DSP functions") "\n"
+    "401 - SIMD quick test\n"
+    "402 - SIMD test with numbers shown\n"
+    "403 - Show window types\n"
+    "404 - Hilbert transform\n"
+    "405 - Optimize FFT performance and generate an fft-wisdom file\n"
+    "406 - Show ring filter coefficients\n"
+    "407 - Show ramp types\n"
+    "408 - Make a frequency hopping sequence\n"
+    "409 - Make a TFM waveform\n"
+    "410 - Generate a waveform file\n"
+    "411 - Test waveform down-sampling\n"
+    "412 - Test showing built-in waveform properties\n"
+    "413 - Test showing waveform properties; -T414 WAVEFORM_FILE\n"
+    "\n"
+    UNDERLINE("500 series - Numerical tests") "\n"
+    "501 - Test half-single-double conversion\n"
+    "502 - Pulse compression using simple cases\n"
+    "503 - Compute moments of one pulse using built-in pulse compression\n"
+    "504 - Compute moments of one ray using the Pulse Pair method\n"
+    "505 - Compute moments of one ray using the Pulse Pair Hop method\n"
+    "506 - Compute moments of one ray using the Multi-Lag method with L = 2\n"
+    "507 - Compute moments of one ray using the Multt-Lag method with L = 3\n"
+    "508 - Compute moments of one ray using the Multi-Lag method with L = 4\n"
+    "509 - Compute moments of one ray using the Spectral Moment method\n"
+    "510 - Compute spectra of one ray using the Spectral Moment method\n"
+    "\n"
+    UNDERLINE("600 series - Performance tests") "\n"
+    "601 - Measure the speed of SIMD calculations\n"
+    "602 - Measure the speed of pulse compression math\n"
+    "603 - Measure the speed of RKPulseEngine() -T603 CORES (default = 4)\n"
+    "604 - Measure the speed of various moment methods\n"
+    "605 - Measure the speed of cached write\n";
     RKIndentCopy(text, helpText, indent);
     if (strlen(text) > 3000) {
         fprintf(stderr, "Warning. Approaching limit. (%zu)\n", strlen(text));
@@ -168,238 +225,207 @@ void RKTestByNumber(const int number, const void *arg) {
     int n;
     RKSetWantScreenOutput(true);
     switch (number) {
-        case 0:
-            RKShowTypeSizes();
-            printf("\n");
-            RKNetworkShowPacketTypeNumbers();
+        case 101:
+            RKTestShowTypes();
             break;
-        case 1:
+        case 102:
             RKTestTerminalColors();
             break;
-        case 2:
+        case 103:
             RKTestPrettyStrings();
             break;
-        case 3:
+        case 104:
             RKTestBasicMath();
             break;
-        case 4:
+        case 105:
             RKTestParseCommaDelimitedValues();
             break;
-        case 5:
+        case 106:
             RKTestParseJSONString();
             break;
-        case 6:
-            RKTestFileManager();
-            break;
-        case 7:
-            RKTestPreferenceReading();
-            break;
-        case 8:
-            RKTestCountFiles();
-            break;
-        case 9:
-            RKTestFileMonitor();
-            break;
-        case 10:
-            RKTestHostMonitor();
-            break;
-        case 11:
-            RKTestInitializingRadar();
-            break;
-        case 12:
+        case 107:
             RKTestTemperatureToStatus();
             break;
-        case 13:
+        case 108:
             RKTestGetCountry();
             break;
-        case 14:
-            RKTestBufferOverviewText((char *)arg);
+        case 109:
+            RKTestBufferOverviewText((const char *)arg);
             break;
-        case 15:
-            RKTestHealthOverviewText((char *)arg);
+        case 110:
+            RKTestHealthOverviewText((const char *)arg);
             break;
-
-        case 16:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKTestSweepRead((char *)arg);
-            break;
-        case 17:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKTestProductRead((char *)arg);
-            break;
-        case 18:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKProductCollectionInitWithFilename((char *)arg);
-            break;
-        case 19:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKTestReadIQ((char *)arg);
-            break;
-        case 20:
-            RKTestProductWrite();
-            break;
-        case 21:
-            RKTestSweepFromPlain();
-            break;
-        case 22:
+        case 111:
             RKTestReviseLogicalValues();
             break;
-        case 23:
+        case 112:
+            RKTestTimeConversion();
+            break;
+
+        case 201:
+            RKTestCountFiles((const char *)arg);
+            break;
+        case 202:
             RKTestPreparePath();
             break;
-        case 24:
+        case 203:
+            RKTestReadBareRKComplex((const char *)arg);
+            break;
+        case 204:
+            RKTestPreferenceReading();
+            break;
+        case 205:
+            RKTestIQRead((const char *)arg);
+            break;
+        case 206:
+            RKTestSweepRead((const char *)arg);
+            break;
+        case 207:
+            RKTestProductRead((const char *)arg);
+            break;
+        case 208:
+            RKTestProductCollectionRead((const char *)arg);
+            break;
+        case 209:
+            RKTestProductWrite();
+            break;
+        case 210:
+            RKTestProductWriteFromPlainToSweep();
+            break;
+        case 211:
+            RKTestProductWriteFromPlainToProduct();
+            break;
+        case 212:
+            RKTestProductWriteFromWDSS2ToProduct((const char *)arg, 0);
+            break;
+        case 213:
+            RKTestProductWriteFromWDSS2ToProduct((const char *)arg, 1);
+            break;
+
+        case 301:
+            RKTestFileManager();
+            break;
+        case 302:
+            RKTestFileMonitor();
+            break;
+        case 303:
+            RKTestHostMonitor();
+            break;
+        case 304:
+            RKTestInitializingRadar();
+            break;
+        case 305:
             RKTestWebSocket();
             break;
-        case 25:
-            RKTestReadBareRKComplex((char *)arg);
-            break;
-        case 26:
+        case 306:
             RKTestRadarHub();
             break;
-        case 27:
-            if (arg) {
-                n = atoi(arg);
-            } else {
-                n = 2;
-            }
-            RKLog("RKTestSimplePulseEngine with n = %d  %s\n", n,
-                n == 1 ? "RKPulseStatusProcessed" : (
-                n == 2 ? "RKPulseStatusConsumed" : "No Wait"));
-            RKTestSimplePulseEngine(n == 1 ? RKPulseStatusProcessed : (
-                                    n == 2 ? RKPulseStatusConsumed : RKPulseStatusNull));
+        case 307:
+            n = arg == NULL ? 2 : atoi((const char *)arg);
+            RKTestSimplePulseEngine(n);
             break;
-        case 28:
-            if (arg) {
-                n = atoi(arg);
-            } else {
-                n = 0;
-            }
-            RKLog("RKTestSimpleMomentEngine with n = %d  %s\n", n, n == 1 ? "archive" : "show");
+        case 308:
+            n = arg == NULL ? 0 : atoi((const char *)arg);
             RKTestSimpleMomentEngine(n);
             break;
-        case 30:
-            RKTestSIMD(RKTestSIMDFlagNull, 0);
-            break;
-        case 31:
-            RKTestSIMD(RKTestSIMDFlagShowNumbers, 0);
-            break;
-        case 32:
-            if (arg) {
-                n = atoi(arg);
-            } else {
-                n = 6;
-            }
-            RKTestWindow(n);
-            break;
-        case 33:
-            RKTestHilbertTransform();
-            break;
-        case 34:
-            if (arg == NULL) {
-                const int offt = (int)ceilf(log2f((float)RKMaximumGateCount));
-                RKTestWriteFFTWisdom(offt);
-                exit(EXIT_FAILURE);
-            }
-            RKTestWriteFFTWisdom(atoi((char *)arg));
-            break;
-        case 35:
-            RKTestRingFilterShowCoefficients();
-            break;
-        case 36:
+        case 309:
             RKTestCommandQueue();
             break;
-        case 37:
+
+        case 401:
+            RKTestSIMD(RKTestSIMDFlagNull, 0);
+            break;
+        case 402:
+            RKTestSIMD(RKTestSIMDFlagShowNumbers, 0);
+            break;
+        case 403:
+            n = arg == NULL ? 6 : atoi((const char *)arg);
+            RKTestWindow(n);
+            break;
+        case 404:
+            RKTestHilbertTransform();
+            break;
+        case 405:
+            n = arg == NULL ? (int)ceilf(log2f((float)RKMaximumGateCount)) : atoi((const char *)arg);
+            RKTestWriteFFTWisdom(n);
+            break;
+        case 406:
+            RKTestRingFilterShowCoefficients();
+            break;
+        case 407:
             RKTestRamp();
             break;
-        case 38:
+        case 408:
             RKTestHalfSingleDoubleConversion();
             break;
-        case 40:
+        case 409:
             RKTestMakeHops();
             break;
-        case 41:
+        case 410:
             RKTestWaveformTFM();
             break;
-        case 42:
+        case 411:
             RKTestWaveformWrite();
             break;
-        case 43:
+        case 412:
             RKTestWaveformDownsampling();
             break;
-        case 44:
+        case 413:
             RKTestWaveformShowProperties();
             break;
-        case 45:
-            if (arg == NULL) {
-                RKLog("No filename given.\n");
-                exit(EXIT_FAILURE);
-            }
-            RKTestWaveformShowUserWaveformProperties((char *)arg);
+        case 414:
+            RKTestWaveformShowUserWaveformProperties((const char *)arg);
             break;
-        case 50:
+        case 501:
+            RKTestHalfSingleDoubleConversion();
+            break;
+        case 502:
             RKTestPulseCompression(RKTestFlagVerbose | RKTestFlagShowResults);
             break;
-        case 51:
+        case 503:
             RKTestOnePulse();
             break;
-        case 52:
+        case 504:
             RKTestOneRay(RKPulsePair, 0);
             break;
-        case 53:
+        case 505:
             RKTestOneRay(RKPulsePairHop, 0);
             break;
-        case 54:
+        case 506:
             RKTestOneRay(RKMultiLag, 2);
             break;
-        case 55:
+        case 507:
             RKTestOneRay(RKMultiLag, 3);
             break;
-        case 56:
+        case 508:
             RKTestOneRay(RKMultiLag, 4);
             break;
-        case 57:
+        case 509:
             RKTestOneRay(RKSpectralMoment, 0);
             break;
-        case 58:
+        case 510:
             RKTestOneRaySpectra(RKSpectralMoment, 0);
             break;
-        case 60:
-            RKTestSIMD(RKTestSIMDFlagPerformanceTestAll, arg == NULL ? 0 : atoi((char *)arg));
+        case 601:
+            n = arg == NULL ? 0 : atoi((const char *)arg);
+            RKTestSIMD(RKTestSIMDFlagPerformanceTestAll, n);
             break;
-        case 61:
-            if (arg == NULL) {
-                RKTestPulseCompressionSpeed(13);
-                exit(EXIT_SUCCESS);
-            }
-            RKTestPulseCompressionSpeed(atoi((char *)arg));
+        case 602:
+            n = arg == NULL ? 13 : atoi((const char *)arg);
+            RKTestPulseCompressionSpeed(n);
             break;
-        case 62:
-            if (arg == NULL) {
-                RKTestPulseEngineSpeed(4);
-                exit(EXIT_SUCCESS);
-            }
-            RKTestPulseEngineSpeed(atoi((char *)arg));
+        case 603:
+            n = arg == NULL ? 4 : atoi((const char *)arg);
+            RKTestPulseEngineSpeed(n);
             break;
-        case 63:
+        case 604:
             RKTestMomentProcessorSpeed();
             break;
-        case 64:
+        case 605:
             RKTestCacheWrite();
             break;
         case 99:
-            RKTestExperiment();
+            RKTestExperiment((const char *)arg);
             break;
         default:
             RKLog("Test %d is invalid.\n", number);
@@ -408,6 +434,12 @@ void RKTestByNumber(const int number, const void *arg) {
 }
 
 #pragma region Basic Tests
+
+void RKTestShowTypes(void) {
+    RKShowTypeSizes();
+    printf("\n");
+    RKNetworkShowPacketTypeNumbers();
+}
 
 void RKTestTerminalColors(void) {
     SHOW_FUNCTION_NAME
@@ -431,18 +463,18 @@ void RKTestTerminalColors(void) {
 void RKTestPrettyStrings(void) {
     SHOW_FUNCTION_NAME
     int k;
-    RKFloat f;
+    double f;
     printf("\n");
     for (k = 1020; k < (1 << 30); k += k ^ 2) {
         printf("k = %11d -> %s\n", k, RKIntegerToCommaStyleString(k));
     }
-    f = +INFINITY;  printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = -INFINITY;  printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = NAN;        printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 1000.0f;    printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 20000.0f;   printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 400000.0f;  printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
-    f = 1234567.8f; printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = +INFINITY;   printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = -INFINITY;   printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = NAN;         printf("f = %11.2f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 1000.0;      printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 20000.0;     printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 400000.0;    printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
+    f = 1234567.892; printf("f = %11.3f -> %s\n", f, RKFloatToCommaStyleString(f));
     //
     printf("\n");
     char *c;
@@ -464,19 +496,25 @@ void RKTestPrettyStrings(void) {
     printf("\n");
     //
     printf("RKTimevalToString():\n");
-    struct timeval tv = {
-        .tv_sec = 1704934863,
-        .tv_usec = 190103
-    };
-    int formats[] = {
+    const int formats[] = {
         1086, 1083, 1082, 1081, 1080,
-        866, 863, 862, 861, 860,
+        866, 863, 862, 861, 860, 800,
         86, 83, 82, 80,
         66, 63, 62, 60
     };
+    const struct timeval tv = {
+        .tv_sec = 1704934863,
+        .tv_usec = 190103
+    };
     for (int k = 0; k < sizeof(formats) / sizeof(int); k++) {
         int format = formats[k];
-        printf("Format %4d: %s\n", format, RKTimevalToString(tv, format));
+        printf("Format %4d: %s\n", format, RKTimevalToString(tv, format, true));
+    }
+    printf("RKTimeDoubleToString():\n");
+    const double timeDouble = 1704934863.190103;
+    for (int k = 0; k < sizeof(formats) / sizeof(int); k++) {
+        int format = formats[k];
+        printf("Format %4d: %s\n", format, RKTimeDoubleToString(timeDouble, format, true));
     }
     printf("\n");
     //
@@ -974,155 +1012,6 @@ void RKTestParseJSONString(void) {
     free(key);
 }
 
-void RKTestFileManager(void) {
-    SHOW_FUNCTION_NAME
-    int e, j, k, s;
-    RKName filename;
-    struct timeval tm;
-    gettimeofday(&tm, NULL);
-    time_t startTime = tm.tv_sec;
-    float es[] = {2.0f, 4.0f, 6.0f, 8.0f};
-    const int ne = sizeof(es) / sizeof(float);
-    char ss[][2] = {"Z", "V", "D", "R"};
-    const int ns = sizeof(ss) / sizeof(RKName);
-    FILE *fid;
-    size_t filesize = 1024 * 1024;
-    char *payload = (char *)malloc(filesize);
-    if (payload == NULL) {
-        fprintf(stderr, "Unable to allocate payload.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    const char dataPath[] = "data";
-    RKFileManager *fileManager = RKFileManagerInit();
-    RKFileManagerSetPathToMonitor(fileManager, dataPath);
-    RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
-    RKFileManagerSetVerbose(fileManager, 3);
-
-    RKLog("Warning. All data in moment folder will be erased!\n");
-    printf("Press Enter to continue ... 'n' to keep moment files, or Ctrl-C to terminate.\n");
-
-    j = getchar();
-
-    //printf("j = %d = %c\n", j, j);
-    if (j != 'n' && j != 'N') {
-        if (system("rm -rf data/moment") == -1) {
-            RKLog("Error. Failed during system().\n");
-        }
-    }
-
-    RKFileManagerStart(fileManager);
-
-    e = 0;
-    for (j = 0; j < 50; j++) {
-        startTime += 3000;
-        k = sprintf(filename, "%s/%s/", dataPath, RKDataFolderMoment);
-        k += strftime(filename + k, 9, "%Y%m%d", gmtime(&startTime));
-        k += sprintf(filename + k, "/RK-");
-        k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-        k += sprintf(filename + k, "-E%.1f", es[e]);
-
-        for (s = 0; s < ns; s++) {
-            sprintf(filename + k, "-%s.nc", ss[s]);
-
-            RKPreparePath(filename);
-
-            fid = fopen(filename, "w");
-            if (fid == NULL) {
-                fprintf(stderr, "Unable to create file.\n");
-                exit(EXIT_FAILURE);
-            }
-            fwrite(payload, filesize, 1, fid);
-            fclose(fid);
-
-            RKFileManagerAddFile(fileManager, filename, RKFileTypeMoment);
-        }
-        e = RKNextModuloS(e, ne);
-        usleep(500000);
-    }
-
-    RKFileManagerFree(fileManager);
-}
-
-void RKTestPreferenceReading(void) {
-    SHOW_FUNCTION_NAME
-    int k;
-    RKName name;
-    double numbers[4];
-    RKControl control;
-    RKWaveformCalibration cali;
-    RKPreference *preference = RKPreferenceInit();;
-    RKPreferenceObject *object = NULL;
-    object = RKPreferenceFindKeyword(preference, "PedzyHost");
-    if (object) {
-        printf("pedzy host = %s\n", object->valueString);
-    }
-    object = RKPreferenceFindKeyword(preference, "TweetaHost");
-    if (object) {
-        printf("tweeta host = %s\n", object->valueString);
-    }
-    RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
-    RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
-    k = 0;
-    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
-        k++;
-    }
-    RKLog(">Preference.Shortcut count = %d\n", k);
-    k = 0;
-    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
-        k++;
-    }
-    RKLog(">Preference.WaveformCal count = %d\n", k);
-    RKPreferenceFree(preference);
-}
-
-void RKTestCountFiles(void) {
-    SHOW_FUNCTION_NAME
-    const char *folder = "data";
-    long count = RKCountFilesInPath(folder);
-    printf("%ld files in %s\n", count, folder);
-}
-
-void RKTestFileMonitor(void) {
-    SHOW_FUNCTION_NAME
-    const char *file = "pref.conf";
-    RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback, NULL);
-    RKLog("Touching file %s ...\n", file);
-    char command[strlen(file) + 10];
-    sprintf(command, "touch %s", file);
-    int k = system(command);
-    if (k) {
-        RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
-    }
-    sleep(2);
-    RKFileMonitorFree(mon);
-}
-
-void RKTestHostMonitor(void) {
-    SHOW_FUNCTION_NAME
-    RKHostMonitor *o = RKHostMonitorInit();
-    if (o == NULL) {
-        fprintf(stderr, "Unable to allocate a Host Monitor.\n");
-        return;
-    }
-    RKHostMonitorSetVerbose(o, 2);
-    RKHostMonitorAddHost(o, "www.amazon.com");
-    RKHostMonitorStart(o);
-    sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
-    RKHostMonitorFree(o);
-}
-
-void RKTestInitializingRadar(void) {
-    SHOW_FUNCTION_NAME
-    RKRadar *aRadar = RKInitLean();
-    RKShowOffsets(aRadar, NULL);
-    RKFree(aRadar);
-}
-
 void RKTestTemperatureToStatus(void) {
     SHOW_FUNCTION_NAME
     int k;
@@ -1267,6 +1156,16 @@ void RKTestHealthOverviewText(const char *options) {
     free(destiny);
 }
 
+void RKTestCommandQueue(void) {
+    pthread_t tidPush, tidPop;
+    RKCommandQueue *queue = RKCommandQueueInit(8, true);
+    pthread_create(&tidPush, NULL, pushLoop, queue);
+    pthread_create(&tidPop, NULL, popLoop, queue);
+    pthread_join(tidPush, NULL);
+    pthread_join(tidPop, NULL);
+    RKCommandQueueFree(queue);
+}
+
 void RKTestReviseLogicalValues(void) {
     SHOW_FUNCTION_NAME
     char string[] = "{"
@@ -1280,18 +1179,128 @@ void RKTestReviseLogicalValues(void) {
     printf("  -> %s\n", string);
 }
 
-void RKTestReadIQ(const char *filename) {
+void RKTestTimeConversion(void) {
     SHOW_FUNCTION_NAME
+    struct tm tm;
+    struct timeval tv0, tv1;
+    struct timezone tz;
+    char *timeString;
+
+    memset(&tm, 0, sizeof(struct tm));
+    gettimeofday(&tv0, &tz);
+    printf("gettimeofday() -> %ld.%06u\n", tv0.tv_sec, (unsigned int)tv0.tv_usec);
+
+    timeString = RKTimevalToString(tv0, 1180, false);
+    printf("timeString = %s\n", timeString);
+
+    tv1 = RKTimeStringInISOFormatToTimeval(timeString);
+    printf("timeString = %s (round-trip conversion from ISO string)\n", RKTimevalToString(tv1, 1180, true));
+
+    printf("timeString = %s (auto timezone   .tz_minuteswest = %d   tz.tz_dsttime = %d)\n",
+        RKTimevalToString(tv0, 1180, tz.tz_minuteswest == 0), tz.tz_minuteswest, tz.tz_dsttime);
+
+    tv0.tv_sec += tz.tz_minuteswest * 60;
+    printf("timeString = %s (timezone adjusted)\n", RKTimevalToString(tv0, 1180, true));
+    printf("timeString = %s\n", RKTimevalToString(tv0, 1083, true));
+}
+
+#pragma region File Handling
+
+void RKTestCountFiles(const char *arg) {
+    SHOW_FUNCTION_NAME
+    const char *folder = arg == NULL ? "data" : arg;
+    long count = RKCountFilesInPath(folder);
+    printf("%ld files in %s\n", count, folder);
+}
+
+void RKTestPreparePath(void) {
+    SHOW_FUNCTION_NAME
+    int k;
+    time_t tt;
+    char daystr[32], timestr[32];
+    char filename[1024];
+    time(&tt);
+    for (k = 0; k < 30; k++) {
+        strftime(daystr, 31, "%Y%m%d", localtime(&tt));
+        strftime(timestr, 31, "%H%M%S", localtime(&tt));
+        sprintf(filename, "data/iq/%s/PX-%s-%s-E1.0-Z.nc", daystr, daystr, timestr);
+        printf("tt = %lu  -->  %s %s -->  %s\n", tt, daystr, timestr, filename);
+        RKPreparePath(filename);
+        tt += 86400;
+    }
+}
+
+void RKTestReadBareRKComplex(const char *filename) {
+    SHOW_FUNCTION_NAME
+    int k;
+    FILE *fid = fopen(filename, "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file %s\n", filename);
+        return;
+    }
+    RKComplex *buffer = (RKComplex *)malloc(100 * sizeof(RKComplex));
+    size_t r = fread(buffer, sizeof(RKComplex), 100, fid);
+    RKLog("Read %d RKComplex elements\n", r);
+    RKComplex *x = buffer;
+    for (k = 0; k < r; k++) {
+        printf("%3d: %7.4f%+7.4f\n", k, x->i, x->q);
+        x++;
+    }
+    free(buffer);
+}
+
+void RKTestPreferenceReading(void) {
+    SHOW_FUNCTION_NAME
+    int k;
+    RKName name;
+    double numbers[4];
+    RKControl control;
+    RKWaveformCalibration cali;
+    RKPreference *preference = RKPreferenceInit();;
+    RKPreferenceObject *object = NULL;
+    object = RKPreferenceFindKeyword(preference, "PedzyHost");
+    if (object) {
+        printf("pedzy host = %s\n", object->valueString);
+    }
+    object = RKPreferenceFindKeyword(preference, "TweetaHost");
+    if (object) {
+        printf("tweeta host = %s\n", object->valueString);
+    }
+    RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
+    RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
+    k = 0;
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
+        k++;
+    }
+    RKLog(">Preference.Shortcut count = %d\n", k);
+    k = 0;
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
+        k++;
+    }
+    RKLog(">Preference.WaveformCal count = %d\n", k);
+    RKPreferenceFree(preference);
+}
+
+void RKTestIQRead(const char *filename) {
+    SHOW_FUNCTION_NAME
+    if (filename == NULL) {
+        RKLog("RKTestIQRead() No filename given.\n");
+        exit(EXIT_FAILURE);
+    }
+
     int k, r;
     size_t tr;
     time_t startTime;
-    size_t readsize, bytes;
+    size_t bytes;
     char timestr[32];
     long filesize = 0;
     uint32_t u32;
     RKBuffer pulseBuffer;
 
-    RKLog("Opening file %s ...\n", filename);
     FILE *fid = fopen(filename, "r");
     if (fid == NULL) {
         fprintf(stderr, "Error opening file %s\n", filename);
@@ -1301,72 +1310,13 @@ void RKTestReadIQ(const char *filename) {
         RKLog("Error. Unable to tell the file size.\n");
     } else {
         filesize = ftell(fid);
-        RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
     }
+    RKLog("Opening file %s ... %s B\n", filename, RKUIntegerToCommaStyleString(filesize));
     rewind(fid);
 
-    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    RKConfig *config = &fileHeader->config;
-    RKWaveform *waveform = NULL;
+    RKFileHeader *fileHeader = RKFileHeaderInitFromFid(fid);
 
-    readsize = fread(fileHeader, sizeof(RKFileHeader), 1, fid);
-    if (readsize < 0) {
-        RKLog("Error. Unable to read RKFileHeader.   fread() returned %d\n", readsize);
-        return;
-    }
-    if (fileHeader->version <= 4) {
-        RKLog("Error. Sorry but I wasn't programmed to read this. Ask my father.\n");
-        return;
-    } else if (fileHeader->version == 5) {
-        rewind(fid);
-        RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
-        if (fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid) == 0) {
-            RKLog("Error. Failed reading file header.\n");
-            fclose(fid);
-            return;
-        }
-        fileHeader->dataType = fileHeaderV1->dataType;
-        fileHeader->desc = fileHeaderV1->desc;
-        memcpy(&fileHeader->config, &fileHeaderV1->config, sizeof(RKConfigV1));
-        fileHeader->config.waveform = NULL;
-        fileHeader->config.waveformDecimate = NULL;
-        free(fileHeaderV1);
-    } else {
-        waveform = RKWaveformReadFromReference(fid);
-        fileHeader->config.waveform = waveform;
-        fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
-        RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
-    }
-    RKLog(">fileHeader.preface = '%s'   version = %d\n", fileHeader->preface, fileHeader->version);
-    RKLog(">fileHeader.dataType = '%s'\n",
-           fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-           (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
-    RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
-    RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
-    RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
-    RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
-    RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-    RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
-    RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
-          1.0e3f * config->prt[0],
-          RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
-    RKLog(">config.pw = %.2f us\n", 1.0e-6 * config->pw[0]);
-    RKLog(">config.pulseGateCount = %s --> %s\n",
-          RKIntegerToCommaStyleString(config->pulseGateCount),
-          RKIntegerToCommaStyleString(config->pulseGateCount / fileHeader->desc.pulseToRayRatio));
-    RKLog(">config.pulseGateSize = %.3f m --> %.3f m\n",
-          config->pulseGateSize,
-          config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-    RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
-    RKLog(">config.systemZCal = %.2f, %.2f ADU^2\n", config->systemZCal[0], config->systemZCal[1]);
-    RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
-    RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
-    RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
-    RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
-    RKLog(">config.waveformName = '%s'\n", config->waveformName);
-    if (waveform) {
-        RKWaveformSummary(waveform);
-    }
+    RKFileHeaderSummary(fileHeader);
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKMemoryAlignSize)) * RKMemoryAlignSize;
@@ -1424,45 +1374,596 @@ void RKTestReadIQ(const char *filename) {
     }
 
     fclose(fid);
-    if (waveform) {
-        RKWaveformFree(waveform);
-    }
-    free(fileHeader);
+    RKFileHeaderFree(fileHeader);
 }
 
-void RKTestPreparePath(void) {
+void RKTestSweepRead(const char *file) {
     SHOW_FUNCTION_NAME
-    int k;
-    time_t tt;
-    char daystr[32], timestr[32];
-    char filename[1024];
-    time(&tt);
-    for (k = 0; k < 30; k++) {
-        strftime(daystr, 31, "%Y%m%d", localtime(&tt));
-        strftime(timestr, 31, "%H%M%S", localtime(&tt));
-        sprintf(filename, "data/iq/%s/PX-%s-%s-E1.0-Z.nc", daystr, daystr, timestr);
-        printf("tt = %lu  -->  %s %s -->  %s\n", tt, daystr, timestr, filename);
-        RKPreparePath(filename);
-        tt += 86400;
+    RKSweep *sweep = RKSweepFileRead(file);
+    if (sweep) {
+        RKSweepFree(sweep);
     }
 }
 
-static void RKTestWebSocketHandleOpen(RKWebSocket *w) {
+void RKTestProductRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    if (file == NULL) {
+        RKLog("No filename given.\n");
+        exit(EXIT_FAILURE);
+    }
+    RKLog("Reading product from %s\n", file);
+    RKLog("Nothing yet... need some work.\n");
+    // RKProduct *product = RKProductFileReaderNC(file, true);
+    // if (product) {
+    //     RKProductFree(product);
+    // }
+}
+
+void RKTestProductCollectionRead(const char *file) {
+    SHOW_FUNCTION_NAME
+    if (file == NULL) {
+        RKLog("No filename given.\n");
+        exit(EXIT_FAILURE);
+    }
+    struct timeval tic, toc;
+    gettimeofday(&tic, NULL);
+    RKProductCollection *collection = RKProductCollectionInitWithFilename(file);
+    if (collection) {
+        RKProductCollectionFree(collection);
+    }
+    gettimeofday(&toc, NULL);
+    RKLog("Elapsed time = %f seconds\n", RKTimevalDiff(toc, tic));
+}
+
+void RKTestProductWrite(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    float *v;
+    RKProduct *product, *products;
+    RKProductBufferAlloc(&products, 6, 360, 500);
+
+    product = &products[0];
+    product->desc.type = RKProductTypePPI;
+    sprintf(product->desc.name, "Reflectivity");
+    sprintf(product->desc.unit, "dBZ");
+    sprintf(product->desc.colormap, "Reflectivity");
+    sprintf(product->header.radarName, "DemoRadar");
+    product->header.latitude = 35.23682;
+    product->header.longitude = -97.46381;
+    product->header.altitude = 350.0;
+    product->header.heading = 0.0f;
+    product->header.radarHeight = 4.2f;
+    product->header.wavelength = 0.0314f;
+    product->header.sweepElevation = 2.4f;
+    product->header.gateSizeMeters = 7500.0f;
+    product->header.prt[0] = 1.0e-3f;
+    product->header.isPPI = true;
+    product->header.startTime = 1231006505;
+    product->header.endTime = 1231006505 + 10;
+    product->header.sweepIndex = 32;
+    product->header.volumeIndex = 409;
+    float az = 90.0f;
+    for (k = 0; k < product->header.rayCount; k++) {
+        product->startAzimuth[k] = az;
+        if (az >= 359.0f) {
+            az = az - 359.0f;
+        } else {
+            az += 1.0f;
+        }
+        product->endAzimuth[k] = az;
+        product->startElevation[k] = 2.4f;
+        product->endElevation[k] = 2.4f;
+    }
+    v = product->data;
+    for (k = 0; k < product->header.rayCount; k++) {
+        for (g = 0; g < product->header.gateCount; g++) {
+            *v++ = NAN;
+        }
+    }
+    RKProductFileWriterNC(product, "data/blank.nc");
+    v = product->data;
+    for (k = 0; k < product->header.rayCount; k++) {
+        for (g = 0; g < product->header.gateCount; g++) {
+            *v++ = (float)(k % 15) * 5.0f - 5.0f;
+        }
+    }
+    RKProductFileWriterNC(product, "data/rainbow.nc");
+    // Just copy a bunch of numbers from Z to V, W, D, P, R
+    memcpy(products[1].data, products[0].data, product->header.rayCount * product->header.gateCount * sizeof(float));
+    products[1].desc.index = RKProductIndexV;
+    products[1].desc.cfScale = 0.01f;
+    memcpy(products[2].data, products[0].data, product->header.rayCount * product->header.gateCount * sizeof(float));
+    products[2].desc.index = RKProductIndexW;
+    products[2].desc.cfScale = 0.01f;
+    memcpy(products[3].data, products[0].data, product->header.rayCount * product->header.gateCount * sizeof(float));
+    products[3].desc.index = RKProductIndexD;
+    products[3].desc.cfScale = 0.01f;
+    memcpy(products[4].data, products[0].data, product->header.rayCount * product->header.gateCount * sizeof(float));
+    products[4].desc.index = RKProductIndexP;
+    products[4].desc.cfScale = 0.01f;
+    memcpy(products[5].data, products[0].data, product->header.rayCount * product->header.gateCount * sizeof(float));
+    products[5].desc.index = RKProductIndexR;
+    products[5].desc.cfScale = 0.001f;
+
+    RKProductCollection collection = {6, products};
+    RKProductCollectionFileWriterCF(&collection, "data/rainbow-cf.nc", RKWriterOptionDeflateFields);
+
+    RKProductBufferFree(products, 6);
+}
+
+void RKTestProductWriteFromPlainToSweep(void) {
+    SHOW_FUNCTION_NAME
+    int j, p;
+    const float de = 0.5f, oe = 1.5f;
+    char filename[128] = "blob/plain-sweep.raw";
+    char command[256];
+
+    if (!RKFilenameExists(filename)) {
+        RKLog("Downloading test file ...\n");
+        sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
+        j = system(command);
+        if (j) {
+            RKLog("Error. Unable to download the test file.\n");
+            return;
+        }
+    }
+    FILE *fid = fopen(filename, "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file.\n");
+        return;
+    }
+    float *data = (float *)malloc(6 * 64 * 4096 * sizeof(float));
+    size_t count = fread(data, sizeof(float), 6 * 64 * 4096, fid);
+    fclose(fid);
+
+    uint32_t rayCount = 64;
+    uint32_t gateCount = count / 6 / rayCount;
+    uint32_t capacity = (uint32_t)ceilf((float)gateCount / RKMemoryAlignSize) * RKMemoryAlignSize;
+
+    RKLog("Read %lu floats  -> 6 x %u x %u\n", count, rayCount, gateCount);
+
+    RKRay *ray;
+    RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
+    if (sweep == NULL) {
+        RKLog("Error. Unable to allocate memory.\n");
+        free(data);
+        return;
+    }
+    memset(sweep, 0, sizeof(RKSweep));
+    RKRayBufferAlloc(&sweep->rayBuffer, capacity, rayCount);
+    for (j = 0; j < rayCount; j++) {
+        sweep->rays[j] = RKGetRayFromBuffer(sweep->rayBuffer, j);
+    }
+
+    // Hard code some radar attributes
+    sweep->header.desc.longitude = -97.4373016;
+    sweep->header.desc.latitude = 35.1812820;
+    sweep->header.desc.wavelength = 0.10f;
+    sweep->header.config.sweepAzimuth = 69.0f;
+    sweep->header.config.sweepElevation = 0.0f;
+    sweep->header.productList= RKProductListFloatZVWDPR;
+    sweep->header.startTime = 1696390566.0;
+    sweep->header.config.prt[0] = 1.0e-3f;
+    sweep->header.rayCount = rayCount;
+    sweep->header.gateCount = gateCount;
+    sweep->header.gateSizeMeters = 19.2f;
+
+    float *src, *dst;
+    RKProductIndex productIndices[] = {
+        RKProductIndexZ,
+        RKProductIndexV,
+        RKProductIndexW,
+        RKProductIndexD,
+        RKProductIndexP,
+        RKProductIndexR
+    };
+
+    for (j = 0; j < rayCount; j++) {
+        ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
+        ray->header.sweepAzimuth = 69.0f;
+        ray->header.sweepElevation = 0.0f;
+        ray->header.startElevation = (float)j * de + oe;
+        ray->header.endElevation = ray->header.startElevation + de;
+        ray->header.startAzimuth = 0.0f;
+        ray->header.endAzimuth = 0.0f;
+        ray->header.gateCount = gateCount;
+        ray->header.gateSizeMeters = 19.2f;
+        ray->header.productList = RKProductListFloatZVWDPR;
+        ray->header.s = RKRayStatusReady;
+
+        ray->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
+        if (j == 0) {
+            ray->header.marker |= RKMarkerSweepBegin;
+        } else if (j == rayCount - 1) {
+            ray->header.marker |= RKMarkerSweepEnd;
+        }
+
+        for (p = 0; p < 6; p++) {
+            src = data + p * rayCount * gateCount + j * gateCount;
+            dst = RKGetFloatDataFromRay(ray, productIndices[p]);
+            memcpy(dst, src, gateCount * sizeof(float));
+        }
+    }
+
+    RKRay *S = sweep->rays[0];
+    RKRay *E = sweep->rays[sweep->header.rayCount - 1];
+    RKLog("C%02d concluded   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%u x %s, %.1f km)\n",
+            S->header.configIndex,
+            sweep->header.config.sweepElevation,
+            S->header.startElevation , E->header.endElevation,
+            S->header.startAzimuth   , E->header.endAzimuth,
+            S->header.marker & 0xFF  , E->header.marker & 0xFF,
+            sweep->header.rayCount,
+            RKIntegerToCommaStyleString(sweep->header.gateCount),
+            1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
+
+    printf("sweep->header.startTime = %.6f\n", sweep->header.startTime);
+
+    RKProduct *products;
+    RKProductBufferAlloc(&products, 6, rayCount, gateCount);
+
+    const struct timeval t = {sweep->header.startTime, 0};
+    char *datestring = RKTimevalToString(t, 860, true);
+
+    for (j = 0; j < 6; j++) {
+        RKProduct *product = &products[j];
+        switch (j)
+        {
+            case 0:
+                strcpy(product->desc.name, "Reflectivity");
+                strcpy(product->desc.unit, "dBZ");
+                strcpy(product->desc.symbol, "Z");
+                strcpy(product->desc.colormap, "Reflectivity");
+                break;
+            case 1:
+                strcpy(product->desc.name, "Radial_Velocity");
+                strcpy(product->desc.symbol, "V");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Velocity");
+                break;
+            case 2:
+                strcpy(product->desc.name, "Width");
+                strcpy(product->desc.symbol, "W");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Width");
+                break;
+            case 3:
+                strcpy(product->desc.name, "Differential_Reflectivity");
+                strcpy(product->desc.unit, "dB");
+                strcpy(product->desc.symbol, "D");
+                strcpy(product->desc.colormap, "Differential_Reflectivity");
+                break;
+            case 4:
+                strcpy(product->desc.name, "PhiDP");
+                strcpy(product->desc.unit, "Degrees");
+                strcpy(product->desc.symbol, "P");
+                strcpy(product->desc.colormap, "PhiDP");
+                break;
+            case 5:
+                strcpy(product->desc.name, "RhoHV");
+                strcpy(product->desc.unit, "Unitless");
+                strcpy(product->desc.symbol, "R");
+                strcpy(product->desc.colormap, "RhoHV");
+                break;
+        }
+        RKProductInitFromSweep(product, sweep);
+        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
+        printf("Output: %s\n", filename);
+        RKProductFileWriterNC(product, filename);
+    }
+
+    RKProductBufferFree(products, 6);
+
+    free(sweep);
+    free(data);
+}
+
+void RKTestProductWriteFromPlainToProduct(void) {
+    SHOW_FUNCTION_NAME
+    int j, p;
+    const float de = 0.5f, oe = 1.5f;
+    char filename[128] = "blob/plain-sweep.raw";
+    char command[256];
+
+    if (!RKFilenameExists(filename)) {
+        RKLog("Downloading test file ...\n");
+        sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
+        j = system(command);
+        if (j) {
+            RKLog("Error. Unable to download the test file.\n");
+            return;
+        }
+    }
+    FILE *fid = fopen(filename, "rb");
+    if (fid == NULL) {
+        RKLog("Error. Unable to open file.\n");
+        return;
+    }
+    float *data = (float *)malloc(6 * 64 * 4096 * sizeof(float));
+    size_t count = fread(data, sizeof(float), 6 * 64 * 4096, fid);
+    fclose(fid);
+
+    uint32_t rayCount = 64;
+    uint32_t gateCount = count / 6 / rayCount;
+
+    RKLog("Read %lu floats  -> 6 x %u x %u\n", count, rayCount, gateCount);
+
+    RKProductCollection *collection = RKProductCollectionInit(6, rayCount, gateCount);
+
+    time_t startTime = 1696390566;
+    const struct timeval t = {startTime, 0};
+    char *datestring = RKTimevalToString(t, 860, true);
+
+    for (p = 0; p < 6; p++) {
+        float *src = data + p * rayCount * gateCount;
+        RKProduct *product = &collection->products[p];
+        switch (p)
+        {
+            case 0:
+                strcpy(product->desc.name, "Reflectivity");
+                strcpy(product->desc.unit, "dBZ");
+                strcpy(product->desc.symbol, "Z");
+                strcpy(product->desc.colormap, "Reflectivity");
+                product->desc.index = RKProductIndexZ;
+                break;
+            case 1:
+                strcpy(product->desc.name, "Radial_Velocity");
+                strcpy(product->desc.symbol, "V");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Velocity");
+                product->desc.index = RKProductIndexV;
+                break;
+            case 2:
+                strcpy(product->desc.name, "Width");
+                strcpy(product->desc.symbol, "W");
+                strcpy(product->desc.unit, "MetersPerSecond");
+                strcpy(product->desc.colormap, "Width");
+                product->desc.index = RKProductIndexW;
+                break;
+            case 3:
+                strcpy(product->desc.name, "Differential_Reflectivity");
+                strcpy(product->desc.unit, "dB");
+                strcpy(product->desc.symbol, "D");
+                strcpy(product->desc.colormap, "Differential_Reflectivity");
+                product->desc.index = RKProductIndexD;
+                break;
+            case 4:
+                strcpy(product->desc.name, "PhiDP");
+                strcpy(product->desc.unit, "Degrees");
+                strcpy(product->desc.symbol, "P");
+                strcpy(product->desc.colormap, "PhiDP");
+                product->desc.index = RKProductIndexP;
+                break;
+            case 5:
+                strcpy(product->desc.name, "RhoHV");
+                strcpy(product->desc.unit, "Unitless");
+                strcpy(product->desc.symbol, "R");
+                strcpy(product->desc.colormap, "RhoHV");
+                product->desc.index = RKProductIndexR;
+                break;
+        }
+
+        strcpy(product->header.radarName, "Radar");
+        product->header.latitude = 35.1812820;
+        product->header.longitude = -97.4373016;
+        product->header.heading = 0.0f;
+        product->header.wavelength = 0.10f;
+        product->header.sweepElevation = 0.0f;
+        product->header.sweepAzimuth = 88.0f;
+        product->header.startTime = 1696390566;
+        product->header.endTime = product->header.startTime + 2;
+        product->header.isPPI = false;
+        product->header.isRHI = true;
+        product->header.rayCount = rayCount;
+        product->header.gateCount = gateCount;
+        product->header.gateSizeMeters = 19.2f;
+
+        product->header.pw[0] = 25e-6f;
+        product->header.prt[0] = 0.5e-3f;
+        product->header.noise[0] = 1.0e-6f;
+        product->header.noise[1] = 1.0e-6f;
+        product->header.systemZCal[0] = 20.0f;
+        product->header.systemZCal[1] = 20.0f;
+        product->header.systemDCal = 0.0f;
+        product->header.systemPCal = 0.0f;
+        product->header.SNRThreshold = -3.0f;
+        product->header.SQIThreshold = 0.01f;
+        strcpy(product->header.waveformName, "t25");
+        strcpy(product->header.vcpDefinition, "1");
+
+        for (j = 0; j < rayCount; j++) {
+            product->startAzimuth[j] = 0.0f;
+            product->endAzimuth[j] = 0.0f;
+            product->startElevation[j] = (float)j * de + oe;
+            product->endElevation[j] = product->startElevation[j] + de;
+        }
+        memcpy(product->data, src, rayCount * gateCount * sizeof(float));
+
+        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
+        RKPreparePath(filename);
+        printf("filename = '%s'\n", filename);
+        RKProductFileWriterNC(product, filename);
+    }
+
+    sprintf(filename, "data/RK-%s-A%.1f.nc", datestring, collection->products[0].header.sweepAzimuth);
+    RKPreparePath(filename);
+    printf("filename = '%s'\n", filename);
+    RKProductCollectionFileWriterCF(collection, filename, RKWriterOptionNone);
+
+    RKProductCollectionFree(collection);
+}
+
+void RKTestProductWriteFromWDSS2ToProduct(const char *source, const int mode) {
+    SHOW_FUNCTION_NAME
+    RKLog("source = '%s'\n", source);
+    RKProductCollection *collection = RKProductCollectionInitWithFilename(source);
+    if (collection == NULL) {
+        RKLog("Error. Unable to read the source file.\n");
+        return;
+    }
+
+    RKProduct *product = &collection->products[0];
+
+    product->header.sweepIndex = 42;
+    product->header.volumeIndex = 69;
+    product->header.startTime += 0.000123;
+    if (product->header.endTime == 0) {
+        product->header.endTime = product->header.startTime + 20.0;
+    }
+    product->header.altitude = (double)product->header.radarHeight;
+    for (int k = 0; k < product->header.rayCount; k++) {
+        product->startTime[k] = product->header.startTime + k / 360.0 * 20.0;
+    }
+    sprintf(product->header.momentMethod, "multilag_3");
+
+    // printf("pulseWidth = %f us\n", 1.0e6 * product->header.pw[0]);
+    // printf("momentMethod = %s\n", product->header.momentMethod);
+
+    // Extend collection to add another product (todo ...)
+    // RKProductCollection *newCollecion =
+
+    // RKProductCollectionStandardizeForCFRadial(collection);
+
+    char filename[256];
+    strcpy(filename, source);
+    if (mode == 0) {
+        strcpy(strstr(filename, "-Z.nc"), ".nc");
+        RKProductCollectionFileWriterCF(collection, filename, 0);
+    } else if (mode == 1) {
+        strcpy(strstr(filename, "-Z.nc"), ".cnc");
+        // RKProductCollectionFileWriterCF(collection, filename, RKWriterOptionPackPosition);
+        RKProductCollectionFileWriterCF(collection, filename, RKWriterOptionDeflateFields);
+    }
+    RKProductCollectionFree(collection);
+    RKLog("Output filename = '%s'\n", filename);
+}
+
+#pragma endregion
+
+#pragma region State Machines
+
+void RKTestFileManager(void) {
+    SHOW_FUNCTION_NAME
+    int e, j, k, s;
+    RKName filename;
+    struct timeval tm;
+    gettimeofday(&tm, NULL);
+    time_t startTime = tm.tv_sec;
+    float es[] = {2.0f, 4.0f, 6.0f, 8.0f};
+    const int ne = sizeof(es) / sizeof(float);
+    char ss[][2] = {"Z", "V", "D", "R"};
+    const int ns = sizeof(ss) / sizeof(RKName);
+    FILE *fid;
+    size_t filesize = 1024 * 1024;
+    char *payload = (char *)malloc(filesize);
+    if (payload == NULL) {
+        fprintf(stderr, "Unable to allocate payload.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    const char dataPath[] = "data";
+    RKFileManager *fileManager = RKFileManagerInit();
+    RKFileManagerSetPathToMonitor(fileManager, dataPath);
+    RKFileManagerSetDiskUsageLimit(fileManager, 200 * 1024 * 1024);
+    RKFileManagerSetVerbose(fileManager, 3);
+
+    RKLog("Warning. All data in moment folder will be erased!\n");
+    printf("Press Enter to continue ... 'n' to keep moment files, or Ctrl-C to terminate.\n");
+
+    j = getchar();
+
+    //printf("j = %d = %c\n", j, j);
+    if (j != 'n' && j != 'N') {
+        if (system("rm -rf data/moment") == -1) {
+            RKLog("Error. Failed during system().\n");
+        }
+    }
+
+    RKFileManagerStart(fileManager);
+
+    e = 0;
+    for (j = 0; j < 50; j++) {
+        startTime += 3000;
+        k = sprintf(filename, "%s/%s/", dataPath, RKDataFolderMoment);
+        k += strftime(filename + k, 9, "%Y%m%d", gmtime(&startTime));
+        k += sprintf(filename + k, "/RK-");
+        k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
+        k += sprintf(filename + k, "-E%.1f", es[e]);
+
+        for (s = 0; s < ns; s++) {
+            sprintf(filename + k, "-%s.nc", ss[s]);
+
+            RKPreparePath(filename);
+
+            fid = fopen(filename, "w");
+            if (fid == NULL) {
+                fprintf(stderr, "Unable to create file.\n");
+                exit(EXIT_FAILURE);
+            }
+            fwrite(payload, filesize, 1, fid);
+            fclose(fid);
+
+            RKFileManagerAddFile(fileManager, filename, RKFileTypeMoment);
+        }
+        e = RKNextModuloS(e, ne);
+        usleep(500000);
+    }
+
+    RKFileManagerFree(fileManager);
+}
+
+void RKTestFileMonitor(void) {
+    SHOW_FUNCTION_NAME
+    const char *file = "pref.conf";
+    RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback, NULL);
+    RKLog("Touching file %s ...\n", file);
+    char command[strlen(file) + 10];
+    sprintf(command, "touch %s", file);
+    int k = system(command);
+    if (k) {
+        RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
+    }
+    sleep(2);
+    RKFileMonitorFree(mon);
+}
+
+void RKTestHostMonitor(void) {
+    SHOW_FUNCTION_NAME
+    RKHostMonitor *o = RKHostMonitorInit();
+    if (o == NULL) {
+        fprintf(stderr, "Unable to allocate a Host Monitor.\n");
+        return;
+    }
+    RKHostMonitorSetVerbose(o, 2);
+    RKHostMonitorAddHost(o, "www.amazon.com");
+    RKHostMonitorStart(o);
+    sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
+    RKHostMonitorFree(o);
+}
+
+void RKTestInitializingRadar(void) {
+    SHOW_FUNCTION_NAME
+    RKRadar *aRadar = RKInitLean();
+    RKShowOffsets(aRadar, NULL);
+    RKFree(aRadar);
+}
+
+static void _webSocketHandleOpen(RKWebSocket *w) {
     char show[160];
     char message[80];
     // I know, magic packet here. First byte value = 1 means handshake in RadarHub
     int r = sprintf(message, "%c{\"radar\":\"radarkit\", \"command\":\"radarConnect\"}", 1);
     RKBinaryString(show, message, r);
-    RKLog("RKTestWebSocketHandleOpen() %s\n", show);
+    RKLog("_webSocketHandleOpen() %s\n", show);
     RKWebSocketSend(w, message, r);
 }
 
-static void RKTestWebSocketHandleMessage(RKWebSocket *w, void *payload, size_t size) {
-    RKLog("RKTestWebSocketHandleMessage() %s\n", (char *)payload);
+static void _webSocketHandleMessage(RKWebSocket *w, void *payload, size_t size) {
+    RKLog("_webSocketHandleMessage() %s\n", (char *)payload);
 }
 
-static void RKTestWebSocketHandleClose(RKWebSocket *w) {
-    RKLog("RKTestWebSocketHandleClose()\n");
+static void _webSocketHandleClose(RKWebSocket *w) {
+    RKLog("_webSocketHandleClose()\n");
 }
 
 void RKTestWebSocket(void) {
@@ -1470,9 +1971,9 @@ void RKTestWebSocket(void) {
     RKLog("Initializing WebSocket ...");
     RKWebSocket *w = RKWebSocketInit("radarhub.arrc.ou.edu:443", "/ws/radar/radarkit/");
     //RKWebSocket *w = RKWebSocketInit("localhost:8000", "/ws/radar/radarkit/");
-    RKWebSocketSetOpenHandler(w, &RKTestWebSocketHandleOpen);
-    RKWebSocketSetCloseHandler(w, &RKTestWebSocketHandleClose);
-    RKWebSocketSetMessageHandler(w, &RKTestWebSocketHandleMessage);
+    RKWebSocketSetOpenHandler(w, &_webSocketHandleOpen);
+    RKWebSocketSetCloseHandler(w, &_webSocketHandleClose);
+    RKWebSocketSetMessageHandler(w, &_webSocketHandleMessage);
     RKWebSocketSetVerbose(w, 2);
 
     RKLog("Starting WebSocket ...");
@@ -1495,25 +1996,6 @@ void RKTestWebSocket(void) {
     RKWebSocketFree(w);
 }
 
-void RKTestReadBareRKComplex(const char *filename) {
-    SHOW_FUNCTION_NAME
-    int k;
-    FILE *fid = fopen(filename, "rb");
-    if (fid == NULL) {
-        RKLog("Error. Unable to open file %s\n", filename);
-        return;
-    }
-    RKComplex *buffer = (RKComplex *)malloc(100 * sizeof(RKComplex));
-    size_t r = fread(buffer, sizeof(RKComplex), 100, fid);
-    RKLog("Read %d RKComplex elements\n", r);
-    RKComplex *x = buffer;
-    for (k = 0; k < r; k++) {
-        printf("%3d: %7.4f%+7.4f\n", k, x->i, x->q);
-        x++;
-    }
-    free(buffer);
-}
-
 void RKTestRadarHub(void) {
     SHOW_FUNCTION_NAME
     RKReporter *reporter = RKReporterInit();
@@ -1527,7 +2009,7 @@ void RKTestRadarHub(void) {
     RKReporterFree(reporter);
 }
 
-void *RKTestSimplePulseEngineRetriever(void *in) {
+static void *_simplePulseEngineRetriever(void *in) {
     RKPulseEngine *engine = (RKPulseEngine *)in;
     RKPulse *pulse;
 
@@ -1549,8 +2031,10 @@ void *RKTestSimplePulseEngineRetriever(void *in) {
     return NULL;
 }
 
-void RKTestSimplePulseEngine(const RKPulseStatus status) {
+void RKTestSimplePulseEngine(const int n) {
     SHOW_FUNCTION_NAME
+    RKPulseStatus status = (n == 1) ? RKPulseStatusProcessed :
+                           (n == 2) ? RKPulseStatusConsumed : RKPulseStatusNull;
     RKLog("RKPulseEngineGetVacantPulse() will wait for status = %s (%x)\n",
         status == RKPulseStatusConsumed ? "RKPulseStatusConsumed" : (
         status == RKPulseStatusProcessed ? "RKPulseStatusProcessed" : (
@@ -1566,8 +2050,8 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     uint32_t capacity = (uint32_t)ceilf((float)maxGateCount / multiple) * multiple;
 
     RKRadarDesc desc = {
-        .name = "Horus",
-        .initFlags = RKInitFlagAllocConfigBuffer           // Only for housekeeping, doesn't really matter here
+        .name = "BTC",
+        .initFlags = RKInitFlagAllocConfigBuffer           // Only for housekeeping, does not really matter here
                    | RKInitFlagAllocRawIQBuffer
                    | RKInitFlagAllocMomentBuffer,
         .configBufferDepth = 2,
@@ -1596,7 +2080,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKLog("Allocating FFT module ...");
     RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
 
-    // Get the very first config. For now, let's assume RKConfig doesn't change
+    // Get the very first config. For now, assume RKConfig does not change
     RKConfig *config = &configs[0];
     strcpy(config->vcpDefinition, "vcp1");
     strcpy(config->waveformName, waveform->name);
@@ -1626,7 +2110,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     // Launch a separate thread to retrieve processed pulses
     pthread_t tid = 0;
     if (status == RKPulseStatusConsumed) {
-        pthread_create(&tid, NULL, RKTestSimplePulseEngineRetriever, engine);
+        pthread_create(&tid, NULL, _simplePulseEngineRetriever, engine);
     }
 
     for (k = 0; k < 11; k++) {
@@ -1670,7 +2154,7 @@ void RKTestSimplePulseEngine(const RKPulseStatus status) {
     RKLog("done\n");
 }
 
-void *RKTestSimpleMomentEngineRayRetriever(void *in) {
+static void *_simpleMomentEngineRayRetriever(void *in) {
     RKMomentEngine *engine = (RKMomentEngine *)in;
 
     while (engine->state & RKEngineStateWantActive) {
@@ -1678,7 +2162,7 @@ void *RKTestSimpleMomentEngineRayRetriever(void *in) {
         if (ray == NULL) {
             continue;
         }
-        float *data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+        float *data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
         if (ray->header.pulseCount > 0) {
             RKLog("%s RR Ray E%4.1f-%4.1f  i%03u  [%u]  %.1f %.1f %.1f ... %.1f   %s%s%s%s\n", engine->name,
                 ray->header.startElevation,
@@ -1719,7 +2203,7 @@ void RKTestSimpleMomentEngine(const int mode) {
     // Radar description, should be the same as the pulse engine
     RKRadarDesc desc = {
         .name = "Horus",
-        .initFlags = RKInitFlagAllocConfigBuffer                               // Only for housekeeping, doesn't really matter here
+        .initFlags = RKInitFlagAllocConfigBuffer                               // Only for housekeeping, does not really matter here
                    | RKInitFlagAllocRawIQBuffer
                    | RKInitFlagAllocMomentBuffer,
         .configBufferDepth = 2,
@@ -1755,7 +2239,7 @@ void RKTestSimpleMomentEngine(const int mode) {
     RKLog("Allocating FFT module ...");
     RKFFTModule *fftModule = RKFFTModuleInit(capacity, 1);
 
-    // Get the very first config. For now, let's assume RKConfig doesn't change
+    // Get the very first config. For now, assume RKConfig does not change
     RKConfig *config = &configs[0];
     strcpy(config->vcpDefinition, "vcp1");
     strcpy(config->waveformName, waveform->name);
@@ -1797,7 +2281,7 @@ void RKTestSimpleMomentEngine(const int mode) {
 
     // Launch a separate thread to retrieve processed pulses
     pthread_t tid;
-    pthread_create(&tid, NULL, RKTestSimpleMomentEngineRayRetriever, momentEngine);
+    pthread_create(&tid, NULL, _simpleMomentEngineRayRetriever, momentEngine);
 
     RKIQZ x;
 
@@ -1862,20 +2346,9 @@ void RKTestSimpleMomentEngine(const int mode) {
     RKLog("done");
 }
 
-#pragma mark -
+#pragma endregion
 
-static float _array_delta(const RKVec *x, const float *y, const int count) {
-    float e = 0.0f;
-    float *a = (float *)x;
-    float *b = (float *)y;
-    for (int i = 0; i < count; i++) {
-        if (isfinite(*a) && isfinite(*b)) {
-            e += fabsf(*a++ - *b++);
-        }
-    }
-    e /= count;
-    return e;
-}
+#pragma region DSP Tests
 
 void RKTestSIMDBasic(void) {
     const float one = 1.0f;
@@ -2578,8 +3051,6 @@ void RKTestSIMD(const RKTestSIMDFlag flag, const int count) {
     RKTestSIMDComparison(flag, count);
 }
 
-#pragma mark -
-
 void RKTestWindow(const int n) {
     int k;
     double param;
@@ -2765,49 +3236,8 @@ void RKTestRamp(void) {
     free(ramp);
 }
 
-void RKTestHalfSingleDoubleConversion(void) {
-    SHOW_FUNCTION_NAME
-    RKWordFloat16 w16;
-    RKWordFloat32 w32;
-    RKWordFloat64 w64;
+#pragma endregion
 
-    printf("sizeof(RKWordFloat16) = %zu   sizeof(RKWordFloat32) = %zu   sizeof(RKWordFloat64) = %zu\n\n",
-        sizeof(RKWordFloat16), sizeof(RKWordFloat32), sizeof(RKWordFloat64));
-
-    const float f = -3.1415926535f;
-
-    w32.value = f;
-    printf("w32: "); RKShowWordFloat32(w32, f);
-
-    w64 = RKSingle2Double(w32);
-    printf("w64: "); RKShowWordFloat64(w64, f);
-
-    w64.value = (double)f;
-    printf("w64: "); RKShowWordFloat64(w64, f);
-
-    printf("\n");
-
-    // Half float of the following bytes should get -2.9551, 2.5469
-    const uint8_t bytes[] = {233, 193, 24, 65};
-
-    w16.bytes[0] = bytes[0];
-    w16.bytes[1] = bytes[1];
-    printf("w16: "); RKShowWordFloat16(w16, -2.9551f);
-
-    uint16_t *p16 = (uint16_t *)bytes;
-    w16.word = *p16;
-    printf("w16: "); RKShowWordFloat16(w16, -2.9551f);
-
-    w32 = RKHalf2Single(w16);
-    printf("w32: "); RKShowWordFloat32(w32, -2.9551f);
-
-    p16++;
-    w16.word = *p16;
-    w32 = RKHalf2Single(w16);
-    printf("w32: "); RKShowWordFloat32(w32, 2.5469f);
-}
-
-#pragma mark - Waveform Tests
 #pragma region Waveform Tests
 
 void RKTestMakeHops(void) {
@@ -2942,6 +3372,10 @@ void RKTestWaveformShowProperties(void) {
 
 void RKTestWaveformShowUserWaveformProperties(const char *filename) {
     SHOW_FUNCTION_NAME
+    if (filename == NULL) {
+        RKLog("RKTestWaveformShowUserWaveformProperties() No filename given.\n");
+        exit(EXIT_FAILURE);
+    }
     RKWaveform *waveform = RKWaveformInitFromFile(filename);
     RKWaveformSummary(waveform);
 
@@ -2967,8 +3401,49 @@ void RKTestWaveformShowUserWaveformProperties(const char *filename) {
 
 #pragma endregion
 
-#pragma mark - Radar Signal Processing
 #pragma region Radar Signal Processing
+
+void RKTestHalfSingleDoubleConversion(void) {
+    SHOW_FUNCTION_NAME
+    RKWordFloat16 w16;
+    RKWordFloat32 w32;
+    RKWordFloat64 w64;
+
+    printf("sizeof(RKWordFloat16) = %zu   sizeof(RKWordFloat32) = %zu   sizeof(RKWordFloat64) = %zu\n\n",
+        sizeof(RKWordFloat16), sizeof(RKWordFloat32), sizeof(RKWordFloat64));
+
+    const float f = -3.1415926535f;
+
+    w32.value = f;
+    printf("w32: "); RKShowWordFloat32(w32, f);
+
+    w64 = RKSingle2Double(w32);
+    printf("w64: "); RKShowWordFloat64(w64, f);
+
+    w64.value = (double)f;
+    printf("w64: "); RKShowWordFloat64(w64, f);
+
+    printf("\n");
+
+    // Half float of the following bytes should get -2.9551, 2.5469
+    const uint8_t bytes[] = {233, 193, 24, 65};
+
+    w16.bytes[0] = bytes[0];
+    w16.bytes[1] = bytes[1];
+    printf("w16: "); RKShowWordFloat16(w16, -2.9551f);
+
+    uint16_t *p16 = (uint16_t *)bytes;
+    w16.word = *p16;
+    printf("w16: "); RKShowWordFloat16(w16, -2.9551f);
+
+    w32 = RKHalf2Single(w16);
+    printf("w32: "); RKShowWordFloat32(w32, -2.9551f);
+
+    p16++;
+    w16.word = *p16;
+    w32 = RKHalf2Single(w16);
+    printf("w32: "); RKShowWordFloat32(w32, 2.5469f);
+}
 
 void RKTestPulseCompression(RKTestFlag flag) {
     SHOW_FUNCTION_NAME
@@ -3343,7 +3818,6 @@ void RKTestOneRaySpectra(int method(RKMomentScratch *, RKPulse **, const uint16_
 
 #pragma endregion
 
-#pragma mark - Performance Tests
 #pragma region Performance Tests
 
 void RKTestPulseCompressionSpeed(const int offt) {
@@ -3378,7 +3852,7 @@ void RKTestPulseCompressionSpeed(const int offt) {
     RKLog("Setting up DFT resources (3 / 3) ...\n");
     fftwf_plan planBackwardInPlace = fftwf_plan_dft_1d(nfft, out, out, FFTW_FORWARD, FFTW_MEASURE);
 
-    // Set some real values so that we don't have see NAN in the data / results, which could slow down FFTW
+    // Set some real values so that we do not have see NAN in the data / results, which could slow down FFTW
     for (k = 0; k < nfft; k++) {
         X[k].i = rand();
         X[k].q = 0;
@@ -3489,7 +3963,7 @@ void RKTestPulseEngineSpeed(const int cores) {
 
     RKRadarDesc desc = {
         .name = "Hope",
-        .initFlags = RKInitFlagAllocConfigBuffer                               // Only for housekeeping, doesn't really matter here
+        .initFlags = RKInitFlagAllocConfigBuffer                               // Only for housekeeping, does not really matter here
                    | RKInitFlagAllocRawIQBuffer
                    | RKInitFlagAllocMomentBuffer,
         .configBufferDepth = 2,
@@ -3731,24 +4205,32 @@ void RKTestMomentProcessorSpeed(void) {
 
 void RKTestCacheWrite(void) {
     RKRawDataRecorder *fileEngine = RKRawDataRecorderInit();
-    fileEngine->fd = open("._testwrite", O_CREAT | O_WRONLY, 0000644);
-    if (fileEngine->fd < 0) {
-        RKLog("Error. Unable to open file.\n");
-        exit(EXIT_FAILURE);
-    }
+    remove("._testwrite");
+    // fileEngine->fd = open("._testwrite", O_CREAT | O_WRONLY, 00644);
+    // if (fileEngine->fd < 0) {
+    //     RKLog("Error. Unable to open file. %s\n", strerror(errno));
+    //     exit(EXIT_FAILURE);
+    // }
+    RKRawDataRecorderNewFile(fileEngine, "._testwrite");
+    RKLog("File descriptor = %d\n", fileEngine->fd);
 
     #ifdef FUNDAMENTAL_CACHE_WRITE_TEST
 
+    char bytes[8] = {0, 1, 2, 3, 4, 5, 6, 7};
     RKRawDataRecorderSetCacheSize(fileEngine, 4);
     RKRawDataRecorderCacheWrite(fileEngine, bytes, 4);
     RKRawDataRecorderCacheWrite(fileEngine, &bytes[4], 2);
     RKRawDataRecorderCacheWrite(fileEngine, &bytes[6], 1);
     RKRawDataRecorderCacheFlush(fileEngine);
 
+    RKRawDataRecorderSetCacheSize(fileEngine, RKRawDataRecorderDefaultCacheSize);
+
     #endif
 
+    const int depth = 100;
+
     RKBuffer pulseBuffer;
-    RKPulseBufferAlloc(&pulseBuffer, 8192, 100);
+    RKPulseBufferAlloc(&pulseBuffer, 16384, depth);
 
     struct timeval time;
     double t0, t1;
@@ -3758,23 +4240,28 @@ void RKTestCacheWrite(void) {
 
     int j, k;
     uint32_t len = 0;
-    for (k = 1, j = 1; k < 50000; k++) {
-        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k % 100);
+    for (k = 1, j = 1; k < 50001; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k % depth);
         pulse->header.gateCount = 16000;
 
         len += RKRawDataRecorderCacheWrite(fileEngine, &pulse->header, sizeof(RKPulseHeader));
         len += RKRawDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 0), pulse->header.gateCount * sizeof(RKInt16C));
         len += RKRawDataRecorderCacheWrite(fileEngine, RKGetInt16CDataFromPulse(pulse, 1), pulse->header.gateCount * sizeof(RKInt16C));
+        RKRawDataRecorderIncreasePulseCount(fileEngine);
 
         if (k % 2000 == 0) {
             RKRawDataRecorderCacheFlush(fileEngine);
 
             gettimeofday(&time, NULL);
             t0 = (double)time.tv_sec + 1.0e-6 * (double)time.tv_usec;
-            printf("Speed = %.2f MBps (%d)\n", 1.0e-6 * len / (t0 - t1), len);
+            printf("Speed = %.2f MBps (%s)\n", 1.0e-6 * len / (t0 - t1), RKUIntegerToCommaStyleString(len));
+            fflush(stdout);
 
             if (j++ % 5 == 0) {
                 printf("\n");
+                fflush(stdout);
+                RKRawDataRecorderCloseFileQuiet(fileEngine);
+                RKRawDataRecorderNewFile(fileEngine, "._testwrite");
                 t1 = t0;
                 len = 0;
             }
@@ -3784,9 +4271,9 @@ void RKTestCacheWrite(void) {
     close(fileEngine->fd);
 
     // Remove the files that was just created.
-    j = system("rm -f ._testwrite");
+    j = remove("._testwrite");
     if (j) {
-        RKLog("Error. System call failed.   errno = %d\n", errno);
+        RKLog("Error. Failed to remove %s.   errno = %d\n", strerror(errno));
     }
 
     RKRawDataRecorderFree(fileEngine);
@@ -3794,7 +4281,6 @@ void RKTestCacheWrite(void) {
 
 #pragma endregion
 
-#pragma mark - Transceiver Emulator
 #pragma region Transceiver Emulator
 
 //
@@ -3806,12 +4292,13 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKRadar *radar = transceiver->radar;
 
     int j, k, s;
-    char *c, string[RKMaximumStringLength];
+    char *c;
     long fpos, fsize;
     struct timeval t0, t1;
+    uint64_t t = 0, dte = 1000, dto = 1000;
     bool even = true;
 
-    RKFileHeader *fileHeader = &transceiver->fileHeaderCache;
+    // RKFileHeader *fileHeader = &transceiver->fileHeaderCache;
     RKPulseHeader *pulseHeader = &transceiver->pulseHeaderCache;
     uint32_t gateCount;
 
@@ -3829,7 +4316,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     RKLog("%s Started.   mem = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(transceiver->memoryUsage));
 
     // Use a counter that mimics microsecond increments
-    //RKSetPulseTicsPerSeconds(radar, 1.0e6);
+    RKSetPulseTicsPerSeconds(radar, 1.0e6);
 
     transceiver->state |= RKEngineStateActive;
 
@@ -3878,12 +4365,13 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
     }
     closedir(did);
     const int count = k;
-    // Sort the list by name (should be in time numbers)
     qsort(filelist, count, RKMaximumPathLength, string_cmp_by_filename);
     for (k = 0; k < count; k++) {
-        RKLog(">%s %d. %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
+        RKLog(">%s %d. %s%s%s\n", transceiver->name, k,
+            rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+            filelist + k * RKMaximumPathLength,
+            rkGlobalParameters.showColor ? RKNoColor : "");
     }
-
     // Wait until the radar has been declared live. Otherwise the pulseIndex is never advanced properly.
     s = 0;
     transceiver->state |= RKEngineStateSleep0;
@@ -3894,16 +4382,10 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
         }
     }
     transceiver->state ^= RKEngineStateSleep0;
-
-    // RKAddConfig(radar, RKConfigKeyPRF, (uint32_t)roundf(1.0f / transceiver->prt), RKConfigKeyNull);
-
     gettimeofday(&t1, NULL);
-
     FILE *fid;
-
     k = 0;   // k file index from the filelist
     while (transceiver->state & RKEngineStateWantActive) {
-        RKLog("%s Opening filelist[%d] %s\n", transceiver->name, k, RKLastPartOfPath(filelist + k * RKMaximumPathLength));
         fid = fopen(filelist + k * RKMaximumPathLength, "rb");
         if (fid == NULL) {
             RKLog("%s Error. Unable to open file %d %s\n", transceiver->name, k, filelist + k * RKMaximumPathLength);
@@ -3915,33 +4397,28 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
             fsize = 0;
         } else {
             fsize = ftell(fid);
-            RKLog("%s File size = %s B\n", transceiver->name, RKUIntegerToCommaStyleString(fsize));
+            RKLog("%s Opening filelist[%d] %s%s%s (%s B)\n",
+                  transceiver->name, k,
+                  rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                  RKLastPartOfPath(filelist + k * RKMaximumPathLength),
+                  rkGlobalParameters.showColor ? RKNoColor : "",
+                  RKUIntegerToCommaStyleString(fsize));
         }
         j = 0;
         fpos = 0;
         rewind(fid);
-        if (fread(fileHeader, sizeof(RKFileHeader), 1, fid) == 0) {
-            RKLog("Error. Failed reading file header.\n");
-            break;
-        }
-        //RKLog("%s", transceiver->name);
+        RKFileHeader *fileHeader = RKFileHeaderInitFromFid(fid);
 
-        RKLog("%s Waveform %s", transceiver->name, fileHeader->config.waveform);
-        sprintf(string, "waveforms/%s.rkwav", fileHeader->config.waveformName);
-        if (!RKFilenameExists(string)) {
-            RKLog("%s Error. Waveform %s does not exist in my collection.\n", transceiver->name, string);
-            fclose(fid);
-            continue;
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("%s Waveform '%s%s%s'", transceiver->name,
+                rkGlobalParameters.showColor ? RKSalmonColor : "",
+                fileHeader->config.waveform,
+                rkGlobalParameters.showColor ? RKNoColor : "");
+            RKLog("%s SPRT = %d   fileHeader->config.prt = [%.6f, %.6f]\n", transceiver->name,
+                transceiver->sprt, fileHeader->config.prt[0], fileHeader->config.prt[1]);
         }
-        RKLog("%s Loading waveform %s ...\n", transceiver->name, string);
 
-        transceiver->waveformCache[0] = RKWaveformInitFromFile(string);
         transceiver->prt = fileHeader->config.prt[0];
-        RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
-              transceiver->name,
-              1.0e3 * transceiver->prt,
-              RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
-
         if (transceiver->prt <= 1.0e-4 || transceiver->prt > 0.1) {
             transceiver->prt = CLAMP(transceiver->prt, 1.0e-4, 0.1);
             RKLog("%s Info. Overriding PRT --> %.2f ms (PRF = %s Hz)\n",
@@ -3949,25 +4426,20 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                   1.0e3 * transceiver->prt,
                   RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
         }
-
-        RKAddConfig(radar,
-                    RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
-                    RKConfigKeySystemZCal, fileHeader->config.systemZCal[0], fileHeader->config.systemZCal[1],
-                    RKConfigKeySystemDCal, fileHeader->config.systemDCal,
-                    RKConfigKeySystemPCal, fileHeader->config.systemPCal,
-                    RKConfigKeySNRThreshold, fileHeader->config.SNRThreshold,
-                    RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
-                    RKConfigKeyTransitionGateCount, fileHeader->config.transitionGateCount,
-                    RKConfigKeyRingFilterGateCount, fileHeader->config.ringFilterGateCount,
-                    RKConfigKeyWaveform, transceiver->waveformCache[0],
-                    RKConfigKeyPRF, 1.0 / fileHeader->config.prt[0],
-                    RKConfigKeySweepElevation, fileHeader->config.sweepElevation,
-                    RKConfigKeySweepAzimuth, fileHeader->config.sweepAzimuth,
-                    RKConfigKeyNull);
-
-        transceiver->periodOdd = transceiver->periodEven = transceiver->prt;
+        dte = (uint64_t)round(1.0e6 * fileHeader->config.prt[0]);
+        dto = (uint64_t)round(1.0e6 * fileHeader->config.prt[1]);
+        transceiver->periodEven = fileHeader->config.prt[0];
+        transceiver->periodOdd = fileHeader->config.prt[1];
         transceiver->chunkSize = (transceiver->periodOdd + transceiver->periodEven) >= 0.02 ? 1 : MAX(1, (int)round(0.05 / transceiver->prt));
-        RKLog("%s Using chunkSize = %d\n", transceiver->name, transceiver->chunkSize);
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            RKLog("%s PRT = %.2f ms (PRF = %s Hz)\n",
+                transceiver->name,
+                1.0e3 * transceiver->prt,
+                RKIntegerToCommaStyleString(round(1.0 / transceiver->prt)));
+            RKLog("%s Using chunkSize = %d\n", transceiver->name, transceiver->chunkSize);
+            RKLog("%s radar->state & RKRadarStateLive = 0x%x", transceiver->name, radar->state & RKRadarStateLive);
+        }
+        double nap = transceiver->prt * transceiver->chunkSize;
 
         while (transceiver->state & RKEngineStateWantActive && fpos < fsize) {
             RKPulse *pulse = RKGetVacantPulse(radar);
@@ -3990,62 +4462,84 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
                 break;
             }
             fseek(fid, (pulseHeader->gateCount - gateCount) * sizeof(RKInt16C), SEEK_CUR);
-
-            pulse->header.gateSizeMeters = pulseHeader->gateSizeMeters;
+            // Copy the header
+            pulse->header.t = t;
             pulse->header.gateCount = gateCount;
+            pulse->header.gateSizeMeters = pulseHeader->gateSizeMeters;
             pulse->header.rawAzimuth = pulseHeader->rawAzimuth;
             pulse->header.rawElevation = pulseHeader->rawElevation;
+            pulse->header.positionIndex = pulseHeader->positionIndex;
             pulse->header.azimuthDegrees = pulseHeader->azimuthDegrees;
             pulse->header.elevationDegrees = pulseHeader->elevationDegrees;
             pulse->header.azimuthVelocityDegreesPerSecond = pulseHeader->azimuthVelocityDegreesPerSecond;
             pulse->header.elevationVelocityDegreesPerSecond = pulseHeader->elevationVelocityDegreesPerSecond;
-
-            //        RKConfigAdvanceEllipsis(engine->configBuffer, engine->configIndex, engine->radarDescription->configBufferDepth,
-            //                                RKConfigKeySweepElevation, (double)positionAfter->sweepElevationDegrees,
-            //                                RKConfigKeySweepAzimuth, (double)positionAfter->sweepAzimuthDegrees,
-            //                                RKConfigKeyPulseGateSize, pulse->header.gateSizeMeters,
-            //                                RKConfigKeyPulseGateCount, pulse->header.gateCount,
-            //                                RKConfigKeyPositionMarker, marker0,
-
             if (pulseHeader->marker & RKMarkerSweepBegin) {
-                RKLog("%s Sweep begin.\n", transceiver->name);
+                RKLog("%s %s°   %s°\n", transceiver->name,
+                    RKVariableInString("sweepElevation", &fileHeader->config.sweepElevation, RKValueTypeFloatWithTwoDecimals),
+                    RKVariableInString("sweepAzimuth", &fileHeader->config.sweepAzimuth, RKValueTypeFloatWithTwoDecimals));
+                RKConfig *currentConfig = RKGetLatestConfig(radar);
+                RKConfig *recordedConfig = &fileHeader->config;
+                if (fabsf(currentConfig->pw[0] - recordedConfig->pw[0]) > 1.0e-6f ||
+                    strcasecmp(currentConfig->waveform->name, recordedConfig->waveform->name)) {
+                    RKLog(">%s %s (%.1f us) <- '%s' (%.1f us)\n", transceiver->name,
+                        RKVariableInString("waveform.name", recordedConfig->waveform->name, RKValueTypeString),
+                        recordedConfig->pw[0] * 1.0e6f,
+                        currentConfig->waveform->name,
+                        currentConfig->pw[0] * 1.0e6f);
+                    RKSetWaveform(radar, recordedConfig->waveform);
+                }
                 RKAddConfig(radar,
+                            RKConfigKeySystemNoise, fileHeader->config.noise[0], fileHeader->config.noise[1],
+                            RKConfigKeySystemZCal, fileHeader->config.systemZCal[0], fileHeader->config.systemZCal[1],
+                            RKConfigKeySystemDCal, fileHeader->config.systemDCal,
+                            RKConfigKeySystemPCal, fileHeader->config.systemPCal,
+                            RKConfigKeySNRThreshold, fileHeader->config.SNRThreshold,
+                            RKConfigKeySQIThreshold, fileHeader->config.SQIThreshold,
+                            RKConfigKeyTransitionGateCount, fileHeader->config.transitionGateCount,
+                            RKConfigKeyRingFilterGateCount, fileHeader->config.ringFilterGateCount,
+                            RKConfigKeyPRF, 1.0 / fileHeader->config.prt[0],
+                            RKConfigKeySweepElevation, fileHeader->config.sweepElevation,
+                            RKConfigKeySweepAzimuth, fileHeader->config.sweepAzimuth,
                             RKConfigKeyPulseGateCount, pulseHeader->gateCount,
                             RKConfigKeyPulseGateSize, pulseHeader->gateSizeMeters,
                             RKConfigKeyNull);
             }
-
-            pulse->header.configIndex = radar->configIndex;
-
+            RKSetPulseHasData(radar, pulse);
             RKSetPulseReady(radar, pulse);
+            t = t + (even ? dte : dto);
 
 //            RKLog("%s pulse->header.s = %04x  marker = %04x gateCount = %d\n", transceiver->name, pulseHeader->marker, pulseHeader->s, gateCount);
 
             fpos = ftell(fid);
             even = !even;
-
             if (j++ == transceiver->chunkSize) {
                 gettimeofday(&t0, NULL);
-                j = (int)(1000000.0 * RKTimevalDiff(t0, t1)) / transceiver->chunkSize;
-                usleep(j);
-                t1 = t0;
+                usleep((useconds_t)(0.5 * 1000000.0 * MAX(0, nap - RKTimevalDiff(t0, t1))));
+                t += (uint64_t)round(1.0e6 * RKTimevalDiff(t1, t0));
+                gettimeofday(&t1, NULL);
                 j = 0;
             }
         }
 
-        fpos = ftell(fid);
-        RKLog("%s Pulse count = %s   fpos = %s   fsize = %s\n", transceiver->name,
-              RKUIntegerToCommaStyleString(j),
-              RKUIntegerToCommaStyleString(fpos),
-              RKUIntegerToCommaStyleString(fsize));
+        if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+            fpos = ftell(fid);
+            RKLog("%s Pulse count = %s   fpos = %s   fsize = %s\n", transceiver->name,
+                RKUIntegerToCommaStyleString(j),
+                RKUIntegerToCommaStyleString(fpos),
+                RKUIntegerToCommaStyleString(fsize));
+        }
+
         fclose(fid);
 
-        //periodTotal = 0.0;
+        RKFileHeaderFree(fileHeader);
 
-        //k = RKNextModuloS(k, count);
         k++;
         if (k == count) {
-            break;
+            k = 0;
+            s = 0;
+            do {
+                usleep(100000);
+            } while (transceiver->state & RKEngineStateWantActive && s++ < 8);
         }
     }
 
@@ -4058,7 +4552,7 @@ void *RKTestTransceiverPlaybackRunLoop(void *input) {
 
 //
 // The transceiver emulator only has minimal functionality to get things going
-// This isn't meant to fully simulate actual target returns
+// This is not meant to fully simulate actual target returns
 //
 void *RKTestTransceiverRunLoop(void *input) {
     RKTestTransceiver *transceiver = (RKTestTransceiver *)input;
@@ -5249,47 +5743,6 @@ int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
 
 #pragma mark - Others
 
-static void *pushLoop(void *in) {
-    RKCommandQueue *queue = (RKCommandQueue *)in;
-    const char name[] = "<head>";
-    RKCommand command;
-    RKLog("%s Started.   queue @ %p\n", name, queue);
-    for (int k = 0; k < 10; k++) {
-        sprintf(command, "t %d", k);
-        RKCommandQueuePush(queue, &command);
-        RKLog("%s Command '%s' pushed.\n", name, command);
-        usleep(200000);
-    }
-    RKLog("%s retiring ...\n", name);
-    return NULL;
-}
-
-static void *popLoop(void *in) {
-    RKCommandQueue *queue = (RKCommandQueue *)in;
-    const char name[] = "<tail>";
-    RKLog("%s Started.   queue @ %p\n", name, queue);
-    do {
-        RKCommand *command = RKCommandQueuePop(queue);
-        if (command) {
-            RKLog("%s Command '%s' popped.\n", name, command);
-        } else {
-            usleep(10000);
-        }
-    } while (queue->toc < 10);
-    RKLog("%s retiring ...\n", name);
-    return NULL;
-}
-
-void RKTestCommandQueue(void) {
-    pthread_t tidPush, tidPop;
-    RKCommandQueue *queue = RKCommandQueueInit(8, true);
-    pthread_create(&tidPush, NULL, pushLoop, queue);
-    pthread_create(&tidPop, NULL, popLoop, queue);
-    pthread_join(tidPush, NULL);
-    pthread_join(tidPop, NULL);
-    RKCommandQueueFree(queue);
-}
-
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
 
@@ -5336,359 +5789,17 @@ void RKTestMakePositionStatusString(void) {
     free(position);
 }
 
-void RKTestSweepFromPlain(void) {
-    SHOW_FUNCTION_NAME
-    int j, p;
-    RKRay *ray;
-    const float de = 0.5f, oe = 1.5f;
-
-    FILE *fid = fopen("blob/plain-sweep.raw", "rb");
-    if (fid == NULL) {
-        RKLog("Error. Unable to open file.\n");
-        return;
-    }
-    float *data = (float *)malloc(6 * 64 * 4096 * sizeof(float));
-    size_t count = fread(data, sizeof(float), 6 * 64 * 4096, fid);
-    fclose(fid);
-
-    uint32_t rayCount = 64;
-    uint32_t gateCount = count / 6 / rayCount;
-    uint32_t capacity = (uint32_t)ceilf((float)gateCount / RKMemoryAlignSize) * RKMemoryAlignSize;
-
-    RKLog("Read %lu floats  -> 6 x %u x %u\n", count, rayCount, gateCount);
-
-    RKSweep *sweep = (RKSweep *)malloc(sizeof(RKSweep));
-    if (sweep == NULL) {
-        RKLog("Error. Unable to allocate memory.\n");
-        free(data);
-        return;
-    }
-    memset(sweep, 0, sizeof(RKSweep));
-    RKRayBufferAlloc(&sweep->rayBuffer, capacity, rayCount);
-    for (j = 0; j < rayCount; j++) {
-        sweep->rays[j] = RKGetRayFromBuffer(sweep->rayBuffer, j);
-    }
-
-    // Hard code some radar attributes
-    sweep->header.desc.longitude = -97.4373016;
-    sweep->header.desc.latitude = 35.1812820;
-    sweep->header.desc.wavelength = 0.10f;
-    sweep->header.config.sweepAzimuth = 69.0f;
-    sweep->header.config.sweepElevation = 0.0f;
-    sweep->header.baseProductList= RKBaseProductListFloatZVWDPR;
-    sweep->header.startTime = 1696390566;
-    sweep->header.config.prt[0] = 1.0e-3f;
-    sweep->header.rayCount = rayCount;
-    sweep->header.gateCount = gateCount;
-    sweep->header.gateSizeMeters = 19.2f;
-
-    float *src, *dst;
-    RKBaseProductIndex productIndices[] = {
-        RKBaseProductIndexZ,
-        RKBaseProductIndexV,
-        RKBaseProductIndexW,
-        RKBaseProductIndexD,
-        RKBaseProductIndexP,
-        RKBaseProductIndexR
-    };
-
-    for (j = 0; j < rayCount; j++) {
-        ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
-        ray->header.sweepAzimuth = 69.0f;
-        ray->header.sweepElevation = 0.0f;
-        ray->header.startElevation = (float)j * de + oe;
-        ray->header.endElevation = ray->header.startElevation + de;
-        ray->header.startAzimuth = 0.0f;
-        ray->header.endAzimuth = 0.0f;
-        ray->header.gateCount = gateCount;
-        ray->header.gateSizeMeters = 19.2f;
-        ray->header.baseProductList = RKBaseProductListFloatZVWDPR;
-        ray->header.s = RKRayStatusReady;
-
-        ray->header.marker = RKMarkerScanTypeRHI | RKMarkerSweepMiddle;
-        if (j == 0) {
-            ray->header.marker |= RKMarkerSweepBegin;
-        } else if (j == rayCount - 1) {
-            ray->header.marker |= RKMarkerSweepEnd;
-        }
-
-        for (p = 0; p < 6; p++) {
-            src = data + p * rayCount * gateCount + j * gateCount;
-            dst = RKGetFloatDataFromRay(ray, productIndices[p]);
-            memcpy(dst, src, gateCount * sizeof(float));
-        }
-    }
-
-    RKRay *S = sweep->rays[0];
-    RKRay *E = sweep->rays[sweep->header.rayCount - 1];
-    RKLog("C%02d concluded   E%.2f/%.2f-%.2f   A%.2f-%.2f   M%02x-%02x   (%u x %s, %.1f km)\n",
-            S->header.configIndex,
-            sweep->header.config.sweepElevation,
-            S->header.startElevation , E->header.endElevation,
-            S->header.startAzimuth   , E->header.endAzimuth,
-            S->header.marker & 0xFF  , E->header.marker & 0xFF,
-            sweep->header.rayCount,
-            RKIntegerToCommaStyleString(sweep->header.gateCount),
-            1.0e-3f * S->header.gateCount * S->header.gateSizeMeters);
-
-    printf("sweep->header.startTime = %lu\n", sweep->header.startTime);
-
-    RKProduct *products;
-    RKProductBufferAlloc(&products, 6, rayCount, gateCount);
-
-    const struct timeval t = {sweep->header.startTime, 0};
-    char *datestring = RKTimevalToString(t, 860);
-
-    char filename[256];
-    for (j = 0; j < 6; j++) {
-        RKProduct *product = &products[j];
-        switch (j)
-        {
-            case 0:
-                strcpy(product->desc.name, "Reflectivity");
-                strcpy(product->desc.unit, "dBZ");
-                strcpy(product->desc.symbol, "Z");
-                strcpy(product->desc.colormap, "Reflectivity");
-                break;
-            case 1:
-                strcpy(product->desc.name, "Radial_Velocity");
-                strcpy(product->desc.symbol, "V");
-                strcpy(product->desc.unit, "MetersPerSecond");
-                strcpy(product->desc.colormap, "Velocity");
-                break;
-            case 2:
-                strcpy(product->desc.name, "Width");
-                strcpy(product->desc.symbol, "W");
-                strcpy(product->desc.unit, "MetersPerSecond");
-                strcpy(product->desc.colormap, "Width");
-                break;
-            case 3:
-                strcpy(product->desc.name, "Differential_Reflectivity");
-                strcpy(product->desc.unit, "dB");
-                strcpy(product->desc.symbol, "D");
-                strcpy(product->desc.colormap, "Differential_Reflectivity");
-                break;
-            case 4:
-                strcpy(product->desc.name, "PhiDP");
-                strcpy(product->desc.unit, "Degrees");
-                strcpy(product->desc.symbol, "P");
-                strcpy(product->desc.colormap, "PhiDP");
-                break;
-            case 5:
-                strcpy(product->desc.name, "RhoHV");
-                strcpy(product->desc.unit, "Unitless");
-                strcpy(product->desc.symbol, "R");
-                strcpy(product->desc.colormap, "RhoHV");
-                break;
-        }
-        RKProductInitFromSweep(product, sweep);
-        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
-        printf("Output: %s\n", filename);
-        RKProductFileWriterNC(product, filename);
-    }
-
-    RKProductBufferFree(products, 6);
-
-    free(sweep);
-    free(data);
-}
-
-#pragma region Sweep Files
-
-void RKTestSweepRead(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKSweep *sweep = RKSweepFileRead(file);
-    if (sweep) {
-        RKSweepFree(sweep);
-    }
-}
-
-void RKTestProductRead(const char *file) {
-    SHOW_FUNCTION_NAME
-    RKProduct *product = RKProductFileReaderNC(file, true);
-    if (product) {
-        RKProductFree(product);
-    }
-}
-
-void RKTestProductWrite(void) {
-    SHOW_FUNCTION_NAME
-    int g, k;
-    float *v;
-    RKProduct *product;
-    RKProductBufferAlloc(&product, 1, 360, 8);
-    product->desc.type = RKProductTypePPI;
-    sprintf(product->desc.name, "Reflectivity");
-    sprintf(product->desc.unit, "dBZ");
-    sprintf(product->desc.colormap, "Reflectivity");
-    sprintf(product->header.radarName, "RadarKit");
-    product->header.latitude = 35.23682;
-    product->header.longitude = -97.46381;
-    product->header.heading = 0.0f;
-    product->header.wavelength = 0.0314f;
-    product->header.sweepElevation = 2.4f;
-    product->header.rayCount = 360;
-    product->header.gateCount = 8;
-    product->header.gateSizeMeters = 7500.0f;
-    product->header.prt[0] = 1.0e-3f;
-    product->header.isPPI = true;
-    product->header.startTime = 201443696;
-    product->header.endTime = 201443696 + 10;
-    float az = 90.0f;
-    for (k = 0; k < 360; k++) {
-        product->startAzimuth[k] = az;
-        if (az >= 359.0f) {
-            az = az - 359.0f;
-        } else {
-            az += 1.0f;
-        }
-        product->endAzimuth[k] = az;
-        product->startElevation[k] = 2.4f;
-        product->endElevation[k] = 2.4f;
-    }
-    v = product->data;
-    for (k = 0; k < 360; k++) {
-        for (g = 0; g < 8; g++) {
-            *v++ = NAN;
-        }
-    }
-    RKProductFileWriterNC(product, "blank.nc");
-    v = product->data;
-    for (k = 0; k < 360; k++) {
-        for (g = 0; g < 8; g++) {
-            *v++ = (float)(k % 15) * 5.0f - 5.0f;
-        }
-    }
-    RKProductFileWriterNC(product, "rainbow.nc");
-    RKProductBufferFree(product, 1);
-}
-
-void RKTestProductFromPlain(void) {
-    SHOW_FUNCTION_NAME
-    int j, p;
-    const float de = 0.5f, oe = 1.5f;
-    char filename[128] = "blob/plain-sweep.raw";
-    char command[256];
-
-    if (!RKFilenameExists(filename)) {
-        RKLog("Downloading test file ...\n");
-        sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
-        j = system(command);
-        if (j) {
-            RKLog("Error. Unable to download the test file.\n");
-            return;
-        }
-    }
-    FILE *fid = fopen(filename, "rb");
-    if (fid == NULL) {
-        RKLog("Error. Unable to open file.\n");
-        return;
-    }
-    float *data = (float *)malloc(6 * 64 * 4096 * sizeof(float));
-    size_t count = fread(data, sizeof(float), 6 * 64 * 4096, fid);
-    fclose(fid);
-
-    uint32_t rayCount = 64;
-    uint32_t gateCount = count / 6 / rayCount;
-
-    RKLog("Read %lu floats  -> 6 x %u x %u\n", count, rayCount, gateCount);
-
-    RKProduct *product;
-    RKProductBufferAlloc(&product, 1, rayCount, gateCount);
-
-    time_t startTime = 1696390566;
-    const struct timeval t = {startTime, 0};
-    char *datestring = RKTimevalToString(t, 860);
-
-    for (p = 0; p < 6; p++) {
-        float *src = data + p * rayCount * gateCount;
-        switch (p)
-        {
-            case 0:
-                strcpy(product->desc.name, "Reflectivity");
-                strcpy(product->desc.unit, "dBZ");
-                strcpy(product->desc.symbol, "Z");
-                strcpy(product->desc.colormap, "Reflectivity");
-                break;
-            case 1:
-                strcpy(product->desc.name, "Radial_Velocity");
-                strcpy(product->desc.symbol, "V");
-                strcpy(product->desc.unit, "MetersPerSecond");
-                strcpy(product->desc.colormap, "Velocity");
-                break;
-            case 2:
-                strcpy(product->desc.name, "Width");
-                strcpy(product->desc.symbol, "W");
-                strcpy(product->desc.unit, "MetersPerSecond");
-                strcpy(product->desc.colormap, "Width");
-                break;
-            case 3:
-                strcpy(product->desc.name, "Differential_Reflectivity");
-                strcpy(product->desc.unit, "dB");
-                strcpy(product->desc.symbol, "D");
-                strcpy(product->desc.colormap, "Differential_Reflectivity");
-                break;
-            case 4:
-                strcpy(product->desc.name, "PhiDP");
-                strcpy(product->desc.unit, "Degrees");
-                strcpy(product->desc.symbol, "P");
-                strcpy(product->desc.colormap, "PhiDP");
-                break;
-            case 5:
-                strcpy(product->desc.name, "RhoHV");
-                strcpy(product->desc.unit, "Unitless");
-                strcpy(product->desc.symbol, "R");
-                strcpy(product->desc.colormap, "RhoHV");
-                break;
-        }
-
-        strcpy(product->header.radarName, "Radar");
-        product->header.latitude = 35.1812820;
-        product->header.longitude = -97.4373016;
-        product->header.heading = 0.0f;
-        product->header.wavelength = 0.10f;
-        product->header.sweepElevation = 0.0f;
-        product->header.sweepAzimuth = 88.0f;
-        product->header.startTime = 1696390566;
-        product->header.endTime = product->header.startTime + 2;
-        product->header.isPPI = false;
-        product->header.isRHI = true;
-        product->header.rayCount = rayCount;
-        product->header.gateCount = gateCount;
-        product->header.gateSizeMeters = 19.2f;
-
-        product->header.pw[0] = 25e-6f;
-        product->header.prt[0] = 0.5e-3f;
-        product->header.noise[0] = 1.0e-6f;
-        product->header.noise[1] = 1.0e-6f;
-        product->header.systemZCal[0] = 20.0f;
-        product->header.systemZCal[1] = 20.0f;
-        product->header.systemDCal = 0.0f;
-        product->header.systemPCal = 0.0f;
-        product->header.SNRThreshold = -3.0f;
-        product->header.SQIThreshold = 0.01f;
-        strcpy(product->header.waveformName, "t25");
-        strcpy(product->header.vcpDefinition, "1");
-
-        for (j = 0; j < rayCount; j++) {
-            product->startAzimuth[j] = 0.0f;
-            product->endAzimuth[j] = 0.0f;
-            product->startElevation[j] = (float)j * de + oe;
-            product->endElevation[j] = product->startElevation[j] + de;
-        }
-        memcpy(product->data, src, rayCount * gateCount * sizeof(float));
-
-        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
-        RKPreparePath(filename);
-        printf("filename = '%s'\n", filename);
-        RKProductFileWriterNC(product, filename);
-    }
-
-    RKProductBufferFree(product, 1);
-}
-
 #pragma mark -
 
-void RKTestExperiment(void) {
+void RKTestExperiment(const char *arg) {
     SHOW_FUNCTION_NAME
+    // printf("arg = '%s'\n", arg);
+    // RKProduct *products;
+    // RKProductBufferAlloc(&products, 2, 360, 1000);
+    // RKProductBufferExtend(&products, 2, 1);
+    // for (int k = 0; k < 3; k++) {
+    //     RKProduct *product = &products[k];
+    //     printf("product[%d] @ %p   %u x %u  %u\n",
+    //         k, product, product->header.rayCount, product->header.gateCount, product->capacity);
+    // }
 }
