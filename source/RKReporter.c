@@ -25,12 +25,13 @@ static void disconnectStreams(RKReporter *engine) {
     }
 }
 
-#pragma mark - Busy Loop
+#pragma region Busy Loop
 
 void *reporter(void *in) {
     RKReporter *engine = (RKReporter *)in;
     RKRadar *radar = engine->radar;
 
+    int d = 0;
     int h = 0;
     int p = 0;
     int r = 0;
@@ -46,6 +47,7 @@ void *reporter(void *in) {
 
     uint8_t *z;
 
+    RKConfig *config;
     RKHealth *health;
     RKPulse *pulse;
     RKRay *ray;
@@ -66,7 +68,7 @@ void *reporter(void *in) {
         if (engine->ws->connected) {
 
             // Health Status
-            #pragma mark Health Status
+            #pragma region Health Status
             if (engine->streams & RKStreamHealthInJSON) {
                 if (!(engine->streamsInProgress & RKStreamHealthInJSON)) {
                     engine->streamsInProgress |= RKStreamHealthInJSON;
@@ -103,7 +105,7 @@ void *reporter(void *in) {
             }
 
             // AScope Samples
-            #pragma mark AScope Samples
+            #pragma region AScope Samples
             if (engine->streams & RKStreamScopeStuff) {
                 if (!(engine->streamsInProgress & RKStreamScopeStuff)) {
                     engine->streamsInProgress |= RKStreamScopeStuff;
@@ -122,7 +124,9 @@ void *reporter(void *in) {
                         // Use payload 1 as target
                         payload = engine->payload[1];
                         // Put together the payload for RadarHub
-                        count = MIN(200, pulse->header.gateCount);
+                        //count = MIN(200, pulse->header.gateCount);
+                        config = &radar->configs[pulse->header.configIndex];
+                        count = config->waveform->depth + 50;
                         *(char *)payload = RKRadarHubTypeScope;
                         payload_size = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
                         xh = RKGetInt16CDataFromPulse(pulse, 0);
@@ -148,15 +152,19 @@ void *reporter(void *in) {
                         }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
-                    // The following line causes a horse raise issue. Don't want to use mutex for pulses
+                    // The following line causes a raise condition. Avoid mutex for pulses
                     // pulse->header.s |= RKPulseStatusStreamed;
                     p = RKNextModuloS(p, radar->desc.pulseBufferDepth);
                 }
             }
 
+            // payload = engine->payload[2];
+
+            // payload = engine->payload[3];
+
             // Product Display Data
-            #pragma mark Product Display
-            payload = engine->payload[2];
+            #pragma region Product Display
+            payload = engine->payload[4 + d];
             if (engine->streams & RKStreamDisplayAll) {
                 if ((engine->streamsInProgress & RKStreamDisplayAll) != (engine->streams & RKStreamDisplayAll)) {
                     engine->streamsInProgress |= (engine->streams & RKStreamDisplayAll);
@@ -172,19 +180,21 @@ void *reporter(void *in) {
                     if (r % engine->rayStride) {
                         usleep(1);
                     } else {
-                        // Use a ray pointer for convenience
-                        display = (RKRadarHubRay *)payload;
                         // Put together the ray for RadarHub
-                        count = MIN(200, ray->header.gateCount);
-                        // T, Es, Ee, As, Ae, _, Z0, Z1, Z2, ...
+                        display = (RKRadarHubRay *)payload;
+                        // T, C, Es, Ee, As, Ae, N, Z0, Z1, Z2, ...
                         display->header.type = RKRadarHubTypeRadialZ;
-                        display->header.startElevation = ray->header.startElevation;
-                        display->header.endElevation = ray->header.endElevation;
-                        display->header.startAzimuth = ray->header.startAzimuth;
-                        display->header.endAzimuth = ray->header.endAzimuth;
-                        payload_size = sizeof(RKRadarHubRayHeader) + count * sizeof(RKByte);
-                        z = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
-                        memcpy(display->data, z, count * sizeof(RKByte));
+                        display->header.counter = (uint8_t)((ray->header.i & 0x3F) | ((ray->header.configIndex & 0x03) << 6));
+                        display->header.startElevation = (int16_t)roundf(ray->header.startElevation * 32768.0f / 180.0f);
+                        display->header.endElevation = (int16_t)roundf(ray->header.endElevation * 32768.0f / 180.0f);
+                        display->header.startAzimuth = (uint16_t)(ray->header.startAzimuth * 32768.0f / 180.0f);
+                        display->header.endAzimuth = (uint16_t)(ray->header.endAzimuth * 32768.0f / 180.0f);
+                        display->header.rangeStart = 0;
+                        display->header.rangeDelta = ray->header.gateSizeMeters * 10;
+                        display->header.gateCount = MIN(512, ray->header.gateCount);
+                        payload_size = sizeof(RKRadarHubRayHeader) + display->header.gateCount * sizeof(RKByte);
+                        z = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
+                        memcpy(display->data, z, display->header.gateCount * sizeof(RKByte));
                         if (engine->verbose > 1) {
                             RKRadarHubPayloadString(message, payload, payload_size);
                             RKLog("%s R%04d %s (%zu)\n", engine->name, r, message, payload_size);
@@ -193,11 +203,9 @@ void *reporter(void *in) {
                     }
                     ray->header.s |= RKRayStatusStreamed;
                     r = RKNextModuloS(r, radar->desc.rayBufferDepth);
+                    d = RKNextModuloS(d, PAYLOAD_DEPTH);
                 }
             }
-
-            // Others
-            payload = engine->payload[3];
 
         } else {
 
@@ -228,7 +236,7 @@ void *reporter(void *in) {
 // pressed on the GUI
 //
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 void handleOpen(RKWebSocket *W) {
     RKReporter *engine = (RKReporter *)W->parent;
@@ -237,7 +245,7 @@ void handleOpen(RKWebSocket *W) {
 
     r = sprintf(engine->welcome,
         "%c{"
-            "\"command\":\"radarConnect\", "
+            "\"command\":\"radarGreet\", "
             "\"pathway\":\"%s\", "
             "\"name\":\"%s\""
         "}",
@@ -315,7 +323,7 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     }
 
     if (engine->verbose) {
-        RKLog("%s %s\n", engine->name, message);
+        RKLog("%s '%s'\n", engine->name, message);
     }
 
     int c = rand() % 3;
@@ -329,11 +337,22 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
           engine->message,
           rkGlobalParameters.showColor ? RKNoColor : "");
 
+    char mode = message[0];
+    char *args = message + 1;
+    while (*args == ' ' && *args != '\0') {
+        args++;
+    }
+    switch (mode) {
+        case 's':
+            RKLog("Switching streams to '%s' ...\n", args);
+        default:
+            break;
+    }
     // Repeat the incoming message with prefix 'A', 'Q', or 'N'
     RKWebSocketSend(W, engine->message, r);
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKReporter *RKReporterInitWithHost(const char *host) {
     RKReporter *engine = (RKReporter *)malloc(sizeof(RKReporter));
@@ -348,6 +367,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     engine->healthStride = 2;
     engine->pulseStride = 10;
     engine->rayStride = 1;
+    engine->verbose = 1;
     engine->memoryUsage = sizeof(RKReporter);
     if (strlen(host) == 0 || host == NULL) {
         // sprintf(engine->host, "http://localhost:8000");
@@ -357,6 +377,7 @@ RKReporter *RKReporterInitWithHost(const char *host) {
     }
     // Default streams
     engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
+    // engine->streams = RKStreamHealthInJSON;
     return engine;
 }
 
@@ -379,7 +400,7 @@ void RKReporterFree(RKReporter *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
@@ -400,11 +421,11 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
     RKWebSocketSetMessageHandler(engine->ws, &handleMessage);
-    RKWebSocketSetVerbose(engine->ws, engine->verbose - 1);
+    RKWebSocketSetVerbose(engine->ws, engine->verbose > 1 ? 2 : 0);
     RKWebSocketSetParent(engine->ws, engine);
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 void RKReporterStart(RKReporter *engine) {
     RKLog("%s Starting ...\n", engine->name);

@@ -15,7 +15,27 @@ variables:
 
 before_script:
   - export TERM=xterm-256color
-  - apt update && apt install -y bc libfftw3-dev libnetcdf-dev libssl-dev
+  - apt update && apt install -y bc libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
+
+make_ctypes:
+  tags:
+    - linux
+  stage: build
+  image: python
+  script:
+    - ls -al
+    - pip install -U pip && pip install ctypesgen
+    - git branch -D ${CI_COMMIT_BRANCH}
+    - git remote prune origin
+    - git checkout ${CI_COMMIT_BRANCH}
+    - git pull
+    - make ctypes
+    - ls -al python/src/radarkit/
+    - sha1sum python/src/radarkit/_ctypes_.py
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - python/src/radarkit/_ctypes_.py
 
 build_linux:
   tags:
@@ -23,16 +43,15 @@ build_linux:
   stage: build
   image: gcc
   script:
-    - git clone https://git.arrc.ou.edu/radar/radarkit.git
-    - cd radarkit
     - git checkout ${CI_COMMIT_BRANCH}
+    - git pull
     - make
   artifacts:
     expire_in: 1 week
     paths:
-      - radarkit/libradarkit.a
-      - radarkit/libradarkit.so
-      - radarkit/rkutil
+      - libradarkit.a
+      - libradarkit.so
+      - rkutil
 
 build_mac:
   tags:
@@ -40,9 +59,8 @@ build_mac:
   stage: build
   image: gcc
   script:
-    - git clone https://git.arrc.ou.edu/radar/radarkit.git
-    - cd radarkit
     - git checkout ${CI_COMMIT_BRANCH}
+    - git pull
     - make
 
 basic:
@@ -53,15 +71,14 @@ basic:
   needs:
     - build_linux
   script:
-    - cd radarkit
+    - ls -al
     - ee=0
-    - ./rkutil -T0; ee=$((ee+$?))
-    - ./rkutil -T1; ee=$((ee+$?))
-    - ./rkutil -T2; ee=$((ee+$?))
-    - ./rkutil -T3; ee=$((ee+$?))
-    - ./rkutil -T4; ee=$((ee+$?))
-    - ./rkutil -T5; ee=$((ee+$?))
-    - ./rkutil -T11; ee=$((ee+$?))
+    - ./rkutil -T101; ee=$((ee+$?))
+    - ./rkutil -T102; ee=$((ee+$?))
+    - ./rkutil -T103; ee=$((ee+$?))
+    - ./rkutil -T104; ee=$((ee+$?))
+    - ./rkutil -T105; ee=$((ee+$?))
+    - ./rkutil -T106; ee=$((ee+$?))
     - echo -n "" && [[ ${ee} == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
     - exit ${ee}
 
@@ -73,18 +90,15 @@ numeric:
   needs:
     - build_linux
   script:
-    - cd radarkit
+    - ls -al
     - ee=0
-    - ./rkutil -T30; ee=$((ee+$?))
-    - ./rkutil -T31; ee=$((ee+$?))
-    - ./rkutil -T38; ee=$((ee+$?))
-    - ./rkutil -T50; ee=$((ee+$?))
-    - ./rkutil -T51; ee=$((ee+$?))
-    - ./rkutil -T52; ee=$((ee+$?))
-    - ./rkutil -T53; ee=$((ee+$?))
-    - ./rkutil -T54; ee=$((ee+$?))
-    - ./rkutil -T55; ee=$((ee+$?))
-    - ./rkutil -T56; ee=$((ee+$?))
+    - ./rkutil -T501; ee=$((ee+$?))
+    - ./rkutil -T502; ee=$((ee+$?))
+    - ./rkutil -T503; ee=$((ee+$?))
+    - ./rkutil -T504; ee=$((ee+$?))
+    - ./rkutil -T505; ee=$((ee+$?))
+    - ./rkutil -T506; ee=$((ee+$?))
+    - ./rkutil -T507; ee=$((ee+$?))
     - echo -n "" && [[ ${ee} == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
     - exit ${ee}
 
@@ -96,15 +110,14 @@ performance:
   needs:
     - build_linux
   script:
-    - cd radarkit
+    - ls -al
     - ee=0
-    - ./rkutil -T60; ee=$((ee+$?))
-    - ./rkutil -T61; ee=$((ee+$?))
-    - ./rkutil -T62; ee=$((ee+$?))
-    - ./rkutil -T63; ee=$((ee+$?))
+    - ./rkutil -T601; ee=$((ee+$?))
+    - ./rkutil -T602; ee=$((ee+$?))
+    - ./rkutil -T603; ee=$((ee+$?))
+    - ./rkutil -T604; ee=$((ee+$?))
     - echo -n "" && [[ ${ee} == 0 ]] && echo ${PASS_STRING} || echo ${FAIL_STRING}
     - exit ${ee}
-
 # should_fail:
 #   tags:
 #     - linux

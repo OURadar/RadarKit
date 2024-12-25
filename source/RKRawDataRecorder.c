@@ -54,16 +54,15 @@ static void *pulseRecorder(void *in) {
     RKConfig *config;
     RKWaveform *waveform;
 
-    char filename[RKMaximumPathLength] = "";
-
     size_t len = 0;
     size_t pulseCount = 0;
     uint64_t cacheFlushCount = 0;
 
-    RKFileHeader *fileHeader = (void *)malloc(sizeof(RKFileHeader));
-    memset(fileHeader, 0, sizeof(RKFileHeader));
+    char *filename = engine->filename;
+
+    RKFileHeader *fileHeader = RKFileHeaderInit();
     sprintf(fileHeader->preface, "RadarKit/IQ");
-    fileHeader->version = RKRawDataVersion;
+    fileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
     memcpy(&fileHeader->desc, engine->radarDescription, sizeof(RKRadarDesc));
     fileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
     fileHeader->bytes[sizeof(RKFileHeader) - 2] = 'O';
@@ -139,44 +138,29 @@ static void *pulseRecorder(void *in) {
             // Close the current file
             if (engine->fd) {
                 len += RKRawDataRecorderCacheFlush(engine);
-                close(engine->fd);
-                engine->fd = 0;
-                RKLog("%s %sRecorded%s %s (%s pulses, %s %sB) w%d\n",
-                      engine->name,
-                      rkGlobalParameters.showColor ? RKGreenColor : "",
-                      rkGlobalParameters.showColor ? RKNoColor : "",
-                      filename,
-                      RKIntegerToCommaStyleString(n),
-                      RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * (len + engine->cacheWriteIndex)),
-                      len > 1000000000 ? "G" : "M",
-                      engine->fileWriteCount);
-                if (engine->fileWriteCount == 0) {
-                    remove(filename);
-                }
+                RKRawDataRecorderCloseFile(engine);
+                // RKLog("%s len = %s\n", engine->name, RKIntegerToCommaStyleString(len));
                 // Notify file manager of a new addition
                 if (engine->fileManager) {
                     RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeIQ);
                 }
             } else {
                 if (strlen(filename)) {
-                    RKLog("%s %sSkipped%s %s (%s pulses, %s %sB)\n",
+                    RKLog("%s %sSkipped%s %s (%s pulses, %s B)\n",
                           engine->name,
                           rkGlobalParameters.showColor ? RKLightOrangeColor : "",
                           rkGlobalParameters.showColor ? RKNoColor : "",
                           filename,
                           RKIntegerToCommaStyleString(n),
-                          RKFloatToCommaStyleString((len > 1000000000 ? 1.0e-9f : 1.0e-6f) * len),
-                          len > 1000000000 ? "G" : "M");
+                          RKFloatToCommaStyleString(len));
                 }
             }
 
-            // New file
-            time_t startTime = pulse->header.time.tv_sec;
-            i = snprintf(filename, RKMaximumPathLength - RKMaximumPrefixLength - 30, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
-            i += strftime(filename + i, 9, "%Y%m%d", gmtime(&startTime));
-            i += snprintf(filename + i, RKMaximumPrefixLength + 2, "/%s-", engine->radarDescription->filePrefix);
-            i += strftime(filename + i, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-            i += snprintf(filename + i, 5, ".%03d", (int)pulse->header.time.tv_usec / 1000);
+            // New file as .../[DATA_PATH]/20170119/PX-20170119-012345.123.rk[rc]
+            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
+            i += sprintf(filename + i, "%s/", RKTimevalToString(pulse->header.time, 800, true));
+            i += sprintf(filename + i, "%s-", engine->radarDescription->filePrefix);
+            i += sprintf(filename + i, "%s", RKTimevalToString(pulse->header.time, 863, true));
             if (engine->rawDataType == RKRawDataTypeFromTransceiver) {
                 sprintf(filename + i, ".rkr");
             } else {
@@ -185,18 +169,17 @@ static void *pulseRecorder(void *in) {
             fileHeader->dataType = engine->rawDataType;
 
             n = 0;
+            engine->filePulseCount = 0;
 
             if (engine->verbose > 1) {
-                RKLog("%s New I/Q %s ...\n", engine->name, filename);
+                RKLog("%s New I/Q %s ... pulse->header.i = %u  .c = %u\n", engine->name, filename, pulse->header.i, pulse->header.configIndex);
             }
             if (engine->record && config->i > 1003) {
                 RKPreparePath(filename);
                 // 4-KB raw data file header
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 fileHeader->config.waveform = NULL;
-                engine->fd = open(filename, O_CREAT | O_WRONLY, 0000644);
-                engine->fileWriteCount = 0;
-                engine->cacheWriteIndex = 0;
+                RKRawDataRecorderNewFile(engine, filename);
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
                 // 512-B wave header
                 strcpy(waveGlobalHeader->name, waveform->name);
@@ -269,6 +252,7 @@ static void *pulseRecorder(void *in) {
         // Going to wait mode soon
         engine->state ^= RKEngineStateWritingFile;
 
+        engine->filePulseCount++;
         engine->tic++;
 
         // Update pulseIndex for the next watch
@@ -417,13 +401,73 @@ char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine) {
     return engine->statusBuffer[RKPreviousModuloS(engine->statusBufferIndex, RKBufferSSlotCount)];
 }
 
+int RKRawDataRecorderNewFile(RKRawDataRecorder *engine, const char *filename) {
+    if (engine->fd) {
+        close(engine->fd);
+        engine->fd = 0;
+    }
+    if (strlen(filename) >= RKMaximumPathLength - 1) {
+        RKLog("%s Error. Filename is too long.\n", engine->name);
+        return RKResultFailedToOpenFile;
+    }
+    strncpy(engine->filename, filename, sizeof(engine->filename) - 1);
+    engine->fd = open(engine->filename, O_CREAT | O_WRONLY, 0000644);
+    if (engine->fd < 0) {
+        RKLog("%s Error. Failed to open file %s\n", engine->name, engine->filename);
+        return RKResultFailedToOpenFile;
+    }
+    engine->fileWriteSize = 0;
+    engine->filePulseCount = 0;
+    engine->fileWriteCount = 0;
+    engine->cacheWriteIndex = 0;
+    return RKResultSuccess;
+}
+
+int RKRawDataRecorderCloseFileVerbose(RKRawDataRecorder *engine, int verbose) {
+    if (engine->fd) {
+        close(engine->fd);
+        engine->fd = 0;
+    }
+    if (verbose) {
+        bool filenameTooLong = strlen(engine->filename) > 44;
+        RKLog("%s %sRecorded %s%s%s%s (%s pulses, %s B) w%d\n",
+                engine->name,
+                rkGlobalParameters.showColor ? RKGreenColor : "",
+                rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                filenameTooLong ? "..." : "",
+                filenameTooLong ? RKLastTwoPartsOfPath(engine->filename) : engine->filename,
+                rkGlobalParameters.showColor ? RKNoColor : "",
+                RKIntegerToCommaStyleString(engine->filePulseCount),
+                RKIntegerToCommaStyleString(engine->fileWriteSize),
+                engine->fileWriteCount);
+    }
+    if (engine->fileWriteCount == 0) {
+        remove(engine->filename);
+    }
+    return RKResultSuccess;
+}
+
+int RKRawDataRecorderCloseFileQuiet(RKRawDataRecorder *engine) {
+    return RKRawDataRecorderCloseFileVerbose(engine, 0);
+}
+
+int RKRawDataRecorderCloseFile(RKRawDataRecorder *engine) {
+    return RKRawDataRecorderCloseFileVerbose(engine, 1);
+}
+
+int RKRawDataRecorderIncreasePulseCount(RKRawDataRecorder *engine) {
+    engine->filePulseCount++;
+    return RKResultSuccess;
+}
+
 size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payload, const size_t size) {
     if (size == 0) {
         return 0;
     }
     size_t remainingSize = size;
     size_t lastChunkSize = 0;
-    size_t writtenSize = 0;
+    ssize_t writtenSize = 0;
+    ssize_t returnSize = 0;
     //
     // Method:
     //
@@ -435,21 +479,27 @@ size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payloa
         lastChunkSize = engine->cacheSize - engine->cacheWriteIndex;
         memcpy(engine->cache + engine->cacheWriteIndex, payload, lastChunkSize);
         remainingSize = size - lastChunkSize;
-        writtenSize = (uint32_t)write(engine->fd, engine->cache, engine->cacheSize);
-        engine->fileWriteCount++;
-        if (writtenSize != engine->cacheSize) {
-            RKLog("%s Error in write().   writtenSize = %s\n", RKIntegerToCommaStyleString((long)writtenSize));
+        returnSize = write(engine->fd, engine->cache, engine->cacheSize);
+        if (returnSize < 0) {
+            RKLog("%s Error in write().   writtenSize = %s / %s   errno = %s\n", engine->name,
+                RKIntegerToCommaStyleString((long long)writtenSize),
+                RKIntegerToCommaStyleString((long long)engine->cacheSize),
+                strerror(errno));
+            exit(EXIT_FAILURE);
         }
+        writtenSize = returnSize;
+        engine->fileWriteCount++;
         engine->cacheFlushCount++;
         engine->cacheWriteIndex = 0;
         if (remainingSize >= engine->cacheSize) {
-            writtenSize += (uint32_t)write(engine->fd, (char *)(payload + lastChunkSize), remainingSize);
+            writtenSize += write(engine->fd, (char *)(payload + lastChunkSize), remainingSize);
             engine->fileWriteCount++;
             return writtenSize;
         }
     }
     memcpy(engine->cache + engine->cacheWriteIndex, payload + lastChunkSize, remainingSize);
     engine->cacheWriteIndex += remainingSize;
+    engine->fileWriteSize += writtenSize;
     return writtenSize;
 }
 
@@ -457,7 +507,19 @@ size_t RKRawDataRecorderCacheFlush(RKRawDataRecorder *engine) {
     if (engine->cacheWriteIndex == 0) {
         return 0;
     }
-    size_t writtenSize = write(engine->fd, engine->cache, engine->cacheWriteIndex);
+    if (engine->fd <= 0) {
+        RKLog("%s Error. File descriptor is not open (%d).\n", engine->name, engine->fd);
+        return 0;
+    }
+    ssize_t writtenSize = write(engine->fd, engine->cache, engine->cacheWriteIndex);
+    if (writtenSize < 0) {
+        RKLog("%s Error in write().   writtenSize = %s / %s   errno = %s\n", engine->name,
+              RKIntegerToCommaStyleString((long long)writtenSize),
+              RKIntegerToCommaStyleString((long long)engine->cacheWriteIndex),
+              strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    engine->fileWriteSize += writtenSize;
     engine->cacheWriteIndex = 0;
     engine->fileWriteCount++;
     return writtenSize;

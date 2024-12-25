@@ -198,8 +198,8 @@ static void *systemInspectorRunLoop(void *in) {
                 }
                 k += snprintf(string + k, sizeof(string) - k, "%31s%s Hz   %s Hz   %s Hz",
                     "",
-                    RKVariableInString("positionRate", &positionRate, RKValueTypeDouble),
-                    RKVariableInString("pulseRate", &pulseRate, RKValueTypeDouble),
+                    RKVariableInString("positionRate", &positionRate, RKValueTypeDoubleWithOneDecimals),
+                    RKVariableInString("pulseRate", &pulseRate, RKValueTypeDoubleWithOneDecimals),
                     RKVariableInString("rayRate", &rayRate, RKValueTypeDouble));
                 RKLog("%s %s", engine->name, string);
                 shown = true;
@@ -209,7 +209,7 @@ static void *systemInspectorRunLoop(void *in) {
         }
 
         // Derive the acquisition rate of position, pulse and ray
-        // Note, each acquisition rate is computed with its own timeval since they come in bursts, we may get no update in an iteration
+        // Note: Each acquisition rate is computed with its own timeval since they come in bursts, we may get no updates in an iteration
         // Basic idea:
         //  - Get the index that is about 1 / N buffer depth behind the current index
         //  - Get the position / pulse / ray of that index
@@ -330,8 +330,8 @@ static void *systemInspectorRunLoop(void *in) {
                         "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
                         "\"Processors\":{\"Value\":true,\"Enum\":0}, "
                         "\"Measured PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
-                        "\"Noise\":[%.3f,%.3f], "
                         "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
+                        "\"Noise\":[%.3f,%.3f], "
                         "\"rayRate\":%.3f, "
                         "\"FFTPlanUsage\":%s"
                         "}",
@@ -342,8 +342,9 @@ static void *systemInspectorRunLoop(void *in) {
                         radar->rawDataRecorder->record ? "true" : "false", radar->rawDataRecorder->record ? RKStatusEnumNormal : RKStatusEnumStandby,
                         radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
                         RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - 1.0f / config->prt[0]) * config->prt[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                        RKIntegerToCommaStyleString((long)round(positionRate)),
                         config->noise[0], config->noise[1],
-                        RKIntegerToCommaStyleString((long)round(positionRate)), rayRate,
+                        rayRate,
                         FFTPlanUsage
                         );
                 RKSetHealthReady(radar, health);
@@ -467,7 +468,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     uint32_t goodPulseCapacity = (uint32_t)ceilf(((float)desc.pulseCapacity * sizeof(RKFloat) / RKMemoryAlignSize / desc.pulseToRayRatio))
                                * RKMemoryAlignSize * desc.pulseToRayRatio / sizeof(RKFloat);
     if (desc.pulseCapacity != goodPulseCapacity) {
-        RKLog("Error. Recommend setting pulseCapacity %s -> %s\n",
+        RKLog("Error. Requires setting pulseCapacity %s -> %s\n",
             RKIntegerToCommaStyleString(desc.pulseCapacity), RKIntegerToCommaStyleString(goodPulseCapacity));
         exit(EXIT_FAILURE);
     }
@@ -741,25 +742,12 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         }
         radar->memoryUsage += bytes;
         radar->desc.rayBufferSize = bytes;
-        RKLog("Level II buffer occupies %s B  (%s rays x %d moments of %s gates)\n",
+        RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
               RKUIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
               RKBaseProductCount,
               RKIntegerToCommaStyleString(k));
         radar->state |= RKRadarStateRayBufferAllocated;
-
-        // bytes = RKProductBufferAlloc(&radar->products, radar->desc.productBufferDepth, RKMaximumRaysPerSweep, 100);
-        // if (bytes == 0 || radar->products == NULL) {
-        //     RKLog("Error. Unable to allocate memory for products.\n");
-        //     exit(EXIT_FAILURE);
-        // }
-        // radar->memoryUsage += bytes;
-        // radar->desc.productBufferSize = bytes;
-        // RKLog("Level III buffer occupies %s B  (%s products x %s cells)\n",
-        //       RKUIntegerToCommaStyleString(radar->desc.productBufferSize),
-        //       RKIntegerToCommaStyleString(radar->desc.productBufferDepth),
-        //       RKIntegerToCommaStyleString(radar->products[0].capacity));
-        // radar->state |= RKRadarStateProductBufferAllocated;
     }
 
     // Waveform calibrations
@@ -812,6 +800,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // -------------------------------------------------- Engines --------------------------------------------------
 
+    RKName clockName;
+
     // File manager
     radar->fileManager = RKFileManagerInit();
     RKFileManagerSetEssentials(radar->fileManager, &radar->desc);
@@ -820,22 +810,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     radar->state |= RKRadarStateFileManagerInitialized;
 
     // Pulse position combiner marries pulse and position data
-    RKName tmpName;
     if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
-        // Clocks
-        if (radar->desc.pulseSmoothFactor > 0) {
-            radar->pulseClock = RKClockInitWithSize(radar->desc.pulseSmoothFactor + 1000, radar->desc.pulseSmoothFactor);
-        } else {
-            radar->pulseClock = RKClockInit();
-        }
-        if (radar->desc.pulseTicsPerSecond > 0) {
-            RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
-        }
-        sprintf(tmpName, "%s<   PulseClock  >%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-        RKClockSetName(radar->pulseClock, tmpName);
-        radar->memoryUsage += sizeof(RKClock);
-
+        // Position clock
         if (radar->desc.positionSmoothFactor > 0) {
             radar->positionClock = RKClockInitWithSize(radar->desc.positionSmoothFactor + 1000, radar->desc.positionSmoothFactor);
         } else {
@@ -844,9 +820,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.positionTicsPerSecond > 0) {
             RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
-        sprintf(tmpName, "%s< PositionClock >%s",
+        sprintf(clockName, "%s< PositionClock >%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
-        RKClockSetName(radar->positionClock, tmpName);
+        RKClockSetName(radar->positionClock, clockName);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
         RKLog("Position latency = %.3e s\n", radar->desc.positionLatency);
         radar->memoryUsage += sizeof(RKClock);
@@ -874,6 +850,21 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Signal processor performs pulse compression, calculates moment, etc.
     if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
+        // Pulse clock
+        if (radar->desc.pulseSmoothFactor > 0) {
+            radar->pulseClock = RKClockInitWithSize(radar->desc.pulseSmoothFactor + 1000, radar->desc.pulseSmoothFactor);
+        } else {
+            radar->pulseClock = RKClockInit();
+        }
+        if (radar->desc.pulseTicsPerSecond > 0) {
+            RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
+        }
+        sprintf(clockName, "%s<   PulseClock  >%s",
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "",
+                rkGlobalParameters.showColor ? RKNoColor : "");
+        RKClockSetName(radar->pulseClock, clockName);
+        radar->memoryUsage += sizeof(RKClock);
+
         // FFT module
         radar->fftModule = RKFFTModuleInit(radar->desc.pulseCapacity, radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0);
         radar->memoryUsage += sizeof(RKFFTModule);
@@ -1173,8 +1164,13 @@ int RKFree(RKRadar *radar) {
         free(radar->filter);
         radar->filter = NULL;
     }
+    // Make RKConfigAdvance() free up static memories
+    #if defined(__clang__) ||  __GNUC__ >= 12
     va_list ignore = {0};
     RKConfigAdvance(NULL, NULL, 0, ignore);
+    #else
+    RKConfigAdvance(NULL, NULL, 0, NULL);
+    #endif
     // Buffers
     RKLog("Freeing radar '%s' ...\n", radar->desc.name);
     if (radar->state & RKRadarStateStatusBufferAllocated) {
@@ -1777,14 +1773,18 @@ int RKGoLive(RKRadar *radar) {
     } else {
         RKRadarRelayStart(radar->radarRelay);
     }
-    RKRawDataRecorderStart(radar->rawDataRecorder);
+    if (!(radar->desc.initFlags & RKInitFlagStartRawDataRecorder)) {
+        RKRawDataRecorderStart(radar->rawDataRecorder);
+    } else {
+        RKLog("Info. Raw data recorder is not activated.\n");
+    }
     RKHealthLoggerStart(radar->healthLogger);
     RKSweepEngineStart(radar->sweepEngine);
 
     // Get the post-allocated memory
     radar->memoryUsage = RKGetRadarMemoryUsage(radar);
 
-    // Add a dummy config to get things started if there hasn't been one from the user
+    // Add a dummy config to get things started if there has not been one from the user
     if (radar->configIndex == 0) {
         RKAddConfig(radar,
                     RKConfigKeyPRF, 1000,
@@ -2734,7 +2734,7 @@ void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
 
 //
 // Add a configuration to change the operational setting.
-// This is an internally used function, shouldn't be used by
+// This is an internally used function, should not be used by
 // user program.
 // Input:
 //     RKConfigKey key - the key that describes what comes next
@@ -2747,7 +2747,7 @@ void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
 //     RKConfigAdd(radar, RKConfigKeyPRF, 1000, RKConfigNull) to set PRF
 //     RKConfigAdd(radar, RKConfigKeySystemNoise, 0.3, 0.2, RKConfigNull) to set noise
 //
-// Users normally don't have to deal with these
+// Users normally do not have to deal with these
 //
 void RKAddConfig(RKRadar *radar, ...) {
     va_list args;
@@ -2976,7 +2976,7 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
 
 //
 // Get a vacant slot to fill in ray data.
-// MomentEngine doesn't rely on this function.
+// MomentEngine does not rely on this function.
 // This function may be used for a relay to fill the buffer.
 // Input:
 //     RKRadar *radar - object of the radar

@@ -47,7 +47,7 @@ enum {
     RKRadarStatePositionBufferAllocated              = (1 << 6),   //
     RKRadarStateWaveformCalibrationsAllocated        = (1 << 7),   //
     RKRadarStateControlsAllocated                    = (1 << 8),   //
-    RKRadarStateProductBufferAllocated               = (1 << 9),   //
+    RKRadarStateRserverd0                            = (1 << 9),   //
     RKRadarStateRserverd1                            = (1 << 10),  //
     RKRadarStateRserverd2                            = (1 << 11),  //
     RKRadarStateRserverd3                            = (1 << 12),  //
@@ -320,12 +320,12 @@ void RKMeasureNoise(RKRadar *);                                                 
 void RKSetSNRThreshold(RKRadar *, const RKFloat);                                                  // Set the censoring SNR threshold
 
 // Status
-RKStatus *RKGetVacantStatus(RKRadar *);                                                            // Don't worry about this. This is managed by systemInspector
-void RKSetStatusReady(RKRadar *, RKStatus *);                                                      // Don't worry about this. This is managed by systemInspector
+RKStatus *RKGetVacantStatus(RKRadar *);                                                            // No worries. This is managed by systemInspector
+void RKSetStatusReady(RKRadar *, RKStatus *);                                                      // No worries. This is managed by systemInspector
 
 // Configs
-void RKAddConfig(RKRadar *, ...);                                                             // Inform RadarKit about certain slow-changing parameters, e.g., PRF, waveform, etc.
-RKConfig *RKGetLatestConfig(RKRadar *);                                                       // Get the latest configuration from the radar
+void RKAddConfig(RKRadar *, ...);                                                                  // Inform RadarKit about certain slow-changing parameters, e.g., PRF, waveform, etc.
+RKConfig *RKGetLatestConfig(RKRadar *);                                                            // Get the latest configuration from the radar
 
 // Healths
 RKHealthNode RKRequestHealthNode(RKRadar *);

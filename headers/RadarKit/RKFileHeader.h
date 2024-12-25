@@ -12,10 +12,11 @@
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKWaveform.h>
 
-RKFileHeader *RKFileHeaderAlloc(void);
+RKFileHeader *RKFileHeaderInit(void);
 void RKFileHeaderFree(RKFileHeader *);
 
-RKFileHeader *RKFileHeaderRead(FILE *);
+RKFileHeader *RKFileHeaderInitFromFid(FILE *);
+size_t RKFileHeaderWriteToFid(RKFileHeader *, FILE *);
 
 void RKFileHeaderSummary(RKFileHeader *);
 

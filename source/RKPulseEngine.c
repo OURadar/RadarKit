@@ -864,7 +864,7 @@ static void *pulseWatcherV1(void *_in) {
         }
         engine->state ^= RKEngineStateSleep1;
         engine->state |= RKEngineStateSleep2;
-        // Wait until the pulse has position so that this engine won't compete with the tagger to set the status.
+        // Wait until the pulse has position so that this engine would not compete with the tagger to set the status.
         s = 0;
         while (!(pulse->header.s & RKPulseStatusHasIQData) && engine->state & RKEngineStateWantActive) {
             usleep(50);
@@ -888,7 +888,7 @@ static void *pulseWatcherV1(void *_in) {
         if (skipCounter == 0 && engine->maxWorkerLag > 0.9f) {
             engine->almostFull++;
             skipCounter = engine->radarDescription->pulseBufferDepth / 10;
-            RKLog("%s Warning. Projected an overflow.   lead-min-max-lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
+            RKLog("%s Warning. Projected an overflow.   lead-min-max lag = %.2f / %.2f / %.2f   pulseIndex = %d vs k = %d\n",
                 engine->name, engine->lag, engine->minWorkerLag, engine->maxWorkerLag, *engine->pulseIndex, k);
             i = *engine->pulseIndex;
             do {

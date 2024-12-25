@@ -144,7 +144,9 @@ struct rk_position_steer_engine {
     // Program set variables
     RKScanObject           vcpHandle;
     RKScanAction           actions[RKPedestalActionBufferDepth];
-    int                    actionIndex;
+    uint32_t               actionIndex;
+    uint32_t               volumeIndex;
+    uint32_t               sweepIndex;
     char                   scanString[RKMaximumStringLength];
     char                   response[RKMaximumStringLength];
     char                   dump[RKMaximumStringLength];

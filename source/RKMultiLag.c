@@ -260,7 +260,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
     //RKShowArray(space->S[0], "Sh", space->gateCount, 1);
 
     // Mark the calculated products, exclude K here since it is not ready
-    space->calculatedProducts = RKBaseProductListFloatZVWDPR;
+    space->calculatedProducts = RKProductListFloatZVWDPR;
 
 	// Show and tell
 	if (space->verbose && gateCount <= 16 && pulseCount <= 32) {

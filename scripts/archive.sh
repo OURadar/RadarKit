@@ -24,8 +24,14 @@ if [ ${HAS_BLIB} -eq 1 ]; then
 	fi
 fi
 
-# Use the first file (usually the XXXXXX-Z.nc) as template for the archive filename
-afile="${1%%-[ZVWDPR].nc}.txz"
+# Use the first file as template for the archive filename
+if [[ "${1}" == *-Z.nc ]]; then
+    afile="${1%%-Z.nc}.txz"
+elif [[ "${1}" == *.nc ]]; then
+    afile="${1%%.nc}.txz"
+else
+    afile="${1}.txz"
+fi
 folder=${1%/*}
 cd $folder
 

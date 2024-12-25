@@ -91,7 +91,7 @@ void *RKServerRoutine(void *in) {
         timeout.tv_sec = 0; timeout.tv_usec = 100000;
         ii = select(M->sd + 1, &rfd, NULL, NULL, &timeout);
         if (ii > 0 && FD_ISSET(M->sd, &rfd)) {
-            // Accept a connection, this part shouldn't be blocked. Reuse sa since we no longer need it
+            // Accept a connection, this part should not be blocked. Reuse sa since we no longer need it
             if ((sid = accept(M->sd, (struct sockaddr *)&sa, &sa_len)) == -1) {
                 RKLog("%s Error. Failed at accept().\n", M->name);
                 break;
@@ -116,7 +116,7 @@ void *RKServerRoutine(void *in) {
                 M->operators[O->iid] = O;
             }
         } else if (ii == 0) {
-            // This isn't really an error, just mean no one is connecting & timeout...
+            // Not really an error, just mean no one is connecting & timeout...
             usleep(1000);
         } else if (ii == -1) {
             RKLog("%s Error. Failed at select().\n", M->name);

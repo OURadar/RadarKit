@@ -10,7 +10,8 @@ core.*
 *.dSYM
 *.so
 *.pyc
-*.nc
+blob/*.nc
+blob/*.raw
 .vscode/launch.json
 .vscode/settings.json
 
@@ -34,4 +35,5 @@ simple-emulator
 radarkit-fft-wisdom
 pgen
 owav2wav
-
+xx.ipynb
+xx.py

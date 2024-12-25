@@ -10,6 +10,7 @@
 #define __RadarKit_RawDataRecorder__
 
 #include <RadarKit/RKFoundation.h>
+#include <RadarKit/RKFileHeader.h>
 #include <RadarKit/RKFileManager.h>
 
 #define RKRawDataRecorderDefaultMaximumRecorderDepth   100000
@@ -33,12 +34,15 @@ struct rk_data_recorder {
     RKFileManager                    *fileManager;
 
     // Program set variables
+    char                             filename[RKMaximumPathLength];
     int                              fd;
     FILE                             *fid;
     void                             *cache;
     size_t                           cacheWriteIndex;
     uint64_t                         cacheFlushCount;
     uint64_t                         fileWriteCount;
+    uint64_t                         fileWriteSize;
+    uint64_t                         filePulseCount;
     pthread_t                        tidPulseRecorder;
 
     // Status / health
@@ -66,6 +70,10 @@ int RKRawDataRecorderStart(RKRawDataRecorder *engine);
 int RKRawDataRecorderStop(RKRawDataRecorder *engine);
 char *RKRawDataRecorderStatusString(RKRawDataRecorder *engine);
 
+int RKRawDataRecorderNewFile(RKRawDataRecorder *engine, const char *);
+int RKRawDataRecorderCloseFile(RKRawDataRecorder *engine);
+int RKRawDataRecorderCloseFileQuiet(RKRawDataRecorder *engine);
+int RKRawDataRecorderIncreasePulseCount(RKRawDataRecorder *engine);
 size_t RKRawDataRecorderCacheWrite(RKRawDataRecorder *engine, const void *payload, const size_t size);
 size_t RKRawDataRecorderCacheFlush(RKRawDataRecorder *engine);
 

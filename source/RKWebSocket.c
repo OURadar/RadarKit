@@ -176,7 +176,7 @@ static void RKShowWebsocketFrameHeader(RKWebSocket *W) {
 }
 
 static int RKWebSocketConnect(RKWebSocket *W) {
-    int r;
+    int k, r;
     char *c;
     struct hostent *entry = gethostbyname(W->host);
     if (entry == NULL) {
@@ -196,7 +196,7 @@ static int RKWebSocketConnect(RKWebSocket *W) {
         return -1;
     }
 
-    if (W->verbose > 1) {
+    if (W->verbose) {
         RKLog("%s Connecting %s:%d %s...\n", W->name,
               W->ip, W->port,
               W->useSSL
@@ -248,14 +248,25 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     if (W->verbose > 2) {
         printf("%s", buf);
     }
-
-    RKSocketWrite(W, strlen(buf));
+    r = RKSocketWrite(W, strlen(buf));
+    if (r <= 0) {
+        fprintf(stderr, "Error during handshake  (r = %d).\n", r);
+        return -1;
+    }
+    buf[0] = '\0';
+    k = 0;
+    r = 0;
     do {
-        r = RKSocketRead(W, r, RKWebSocketFrameSize - r);
-    } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
-    if (r < 0) {
-        fprintf(stderr, "Error during handshake.\n");
-        fprintf(stderr, "%s", (char *)buf);
+        r += RKSocketRead(W, r, RKWebSocketFrameSize - r);
+        usleep(10000);
+    } while (k++ < 300 && W->wantActive && (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL));
+    if (r <= 0) {
+        if (W->verbose) {
+            RKLog("Info. Timed out during handshake  (r = %d).\n", r);
+            if (r > 0) {
+                RKLog("Info. r =\n%s", (char *)buf);
+            }
+        }
         return -1;
     }
     buf[r] = '\0';
@@ -563,6 +574,7 @@ void *transporter(void *in) {
         } while (W->wantActive && r < 10);
         if (W->verbose > 1) {
             printf("\033[1K\r");
+            fflush(stdout);
         }
     }
 

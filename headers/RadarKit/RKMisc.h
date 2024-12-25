@@ -206,7 +206,10 @@ char *RKIntegerToCommaStyleString(const long long);
 // Returns a string of hexadecimal representation
 char *RKIntegerToHexStyleString(const long long);
 
-// Returns a string of a double with thousands separator
+// Returns a string of a double with thousands separator and specified decimals
+char *RKFloatToCommaStyleStringAndDecimals(const double num, const int);
+
+// Returns a string of a double with thousands separator and 3 decimals
 char *RKFloatToCommaStyleString(const double);
 
 //
@@ -215,6 +218,12 @@ char *RKFloatToCommaStyleString(const double);
 
 // Returns a time string now
 char *RKNow(void);
+
+// Returns a timeval from an ISO8601 time string
+struct timeval RKTimeStringInISOFormatToTimeval(const char *);
+
+// Returns a double from an ISO8601 time string
+double RKTimeStringISOToTimeDouble(const char *);
 
 // Computes the time difference between to struct timeval
 double RKTimevalDiff(const struct timeval minuend, const struct timeval subtrahend);
@@ -226,7 +235,11 @@ double RKTimespecDiff(const struct timespec minuend, const struct timespec subtr
 void RKUTCTime(struct timespec *);
 
 // Returns a string of the supplied timeval
-char *RKTimevalToString(const struct timeval, int);
+// char *RKTimevalToString(const struct timeval, int);
+char *RKTimevalToString(const struct timeval time, const int format, const bool isUTC);
+
+// Returns a string of the supplied time in double
+char *RKTimeDoubleToString(const double, const int, const bool);
 
 //
 //
@@ -294,16 +307,17 @@ int RKMergeColumns(char *, const char *, const char *, const int);
 //
 //
 
-char *RKBinaryString(char *dst, void *src, const size_t count);
-void RKHeadTailBinaryString(char *dst, void *src, const size_t count);
+char *RKStringLower(char *string);
 char *RKBytesInHex(char *dst, void *src, const size_t count);
+char *RKBinaryString(char *dst, void *src, const size_t count);
 void RKHeadTailBytesInHex(char *dst, void *src, const size_t count);
+void RKHeadTailBinaryString(char *dst, void *src, const size_t count);
 void RKRadarHubPayloadString(char *dst, void *src, const size_t count);
 
 //
 //
 //
 
-char *RKStringLower(char *string);
+void RKSetArrayToFloat32(void *array, const float value, const size_t count);
 
 #endif /* rk_misc_h */

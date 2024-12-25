@@ -82,23 +82,23 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
         "RhoHV",
         "KDP"
     };
-    RKBaseProductList products[] = {
-        RKBaseProductListFloatZ,
-        RKBaseProductListFloatV,
-        RKBaseProductListFloatW,
-        RKBaseProductListFloatD,
-        RKBaseProductListFloatP,
-        RKBaseProductListFloatR,
-        RKBaseProductListFloatK
+    RKProductList products[] = {
+        RKProductListFloatZ,
+        RKProductListFloatV,
+        RKProductListFloatW,
+        RKProductListFloatD,
+        RKProductListFloatP,
+        RKProductListFloatR,
+        RKProductListFloatK
     };
-    RKBaseProductIndex productIndices[] = {
-        RKBaseProductIndexZ,
-        RKBaseProductIndexV,
-        RKBaseProductIndexW,
-        RKBaseProductIndexD,
-        RKBaseProductIndexP,
-        RKBaseProductIndexR,
-        RKBaseProductIndexK
+    RKProductIndex productIndices[] = {
+        RKProductIndexZ,
+        RKProductIndexV,
+        RKProductIndexW,
+        RKProductIndexD,
+        RKProductIndexP,
+        RKProductIndexR,
+        RKProductIndexK
     };
 
     // First part: go through all the symbols I know of, get the very first filename
@@ -365,24 +365,24 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
     sweep->header.rayCount = (uint32_t)rayCount;
     sweep->header.gateCount = (uint32_t)gateCount;
     sweep->header.gateSizeMeters = ray->header.gateSizeMeters;
-    sweep->header.baseProductList = productList;
+    sweep->header.productList = productList;
 
     for (j = 0; j < rayCount; j++) {
         ray = RKGetRayFromBuffer(sweep->rayBuffer, j);
         ray->header.i += sweep->header.rayCount;
         ray->header.s = RKRayStatusReady;
-        ray->header.baseProductList = productList;
+        ray->header.productList = productList;
     }
 
     /*
      RKLog("  -> %s%s%s%s%s%s%s\n",
-     productList & RKBaseProductListFloatZ ? "Z" : "",
-     productList & RKBaseProductListFloatV ? "V" : "",
-     productList & RKBaseProductListFloatW ? "W" : "",
-     productList & RKBaseProductListFloatD ? "D" : "",
-     productList & RKBaseProductListFloatP ? "P" : "",
-     productList & RKBaseProductListFloatR ? "R" : "",
-     productList & RKBaseProductListFloatK ? "K" : ""
+     productList & RKProductListFloatZ ? "Z" : "",
+     productList & RKProductListFloatV ? "V" : "",
+     productList & RKProductListFloatW ? "W" : "",
+     productList & RKProductListFloatD ? "D" : "",
+     productList & RKProductListFloatP ? "P" : "",
+     productList & RKProductListFloatR ? "R" : "",
+     productList & RKProductListFloatK ? "K" : ""
      );
      */
 

@@ -54,16 +54,12 @@ static void showHelp() {
            RKVersionString());
 }
 
-static void timeval2str(char *timestr, const struct timeval time) {
-    size_t bytes = strftime(timestr, 9, "%T", gmtime(&time.tv_sec));
-    snprintf(timestr + bytes, 6, ".%04d", MIN((int)time.tv_usec / 100, 9999)) < 0 ? abort() : (void)0;
-}
 
 void proc(UserParams *arg) {
 
     int i = 0, j = 0, k = 0, o = 0, p = 0;
     uint32_t u32 = 0;
-    char timestr[16];
+    char *timestr;
     bool m = false;
     bool more = true;
     int i0, i1 = -1;
@@ -77,9 +73,6 @@ void proc(UserParams *arg) {
     RKLog("Opening file %s ...", arg->filename);
 
     gettimeofday(&s, NULL);
-    RKFileHeader *fileHeader = (RKFileHeader *)malloc(sizeof(RKFileHeader));
-    RKWaveform *waveform = NULL;
-    RKConfig *config = &fileHeader->config;
 
     FILE *fid = fopen(arg->filename, "r");
     if (fid == NULL) {
@@ -93,74 +86,14 @@ void proc(UserParams *arg) {
         RKLog("File size = %s B\n", RKUIntegerToCommaStyleString(filesize));
     }
     rewind(fid);
-    r = (unsigned int)fread(fileHeader, sizeof(RKFileHeader), 1, fid);
-    if (r < 0) {
-        RKLog("Error. Failed reading file header.\n");
-        exit(EXIT_FAILURE);
-    }
 
-    if (fileHeader->version <= 4) {
-        RKLog("Error. Sorry but I am not programmed to read version %d. Ask my father.\n", fileHeader->version);
-        exit(EXIT_FAILURE);
-    } else if (fileHeader->version == 5) {
-        rewind(fid);
-        RKFileHeaderV1 *fileHeaderV1 = (RKFileHeaderV1 *)malloc(sizeof(RKFileHeaderV1));
-        r = (unsigned int)fread(fileHeaderV1, sizeof(RKFileHeaderV1), 1, fid);
-        if (r < 0) {
-            RKLog("Error. Failed reading file header.\n");
-            exit(EXIT_FAILURE);
-        }
-        if (arg->verbose > 1) {
-            RKLog("fileHeaderV1->dataType = %d (%s)\n",
-                  fileHeaderV1->dataType,
-                  fileHeaderV1->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-                  (fileHeaderV1->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
-        }
-        fileHeader->dataType = fileHeaderV1->dataType;
-        fileHeader->desc = fileHeaderV1->desc;
-        fileHeader->config.i = fileHeaderV1->config.i;
-        fileHeader->config.sweepElevation = fileHeaderV1->config.sweepElevation;
-        fileHeader->config.sweepAzimuth = fileHeaderV1->config.sweepAzimuth;
-        fileHeader->config.startMarker = fileHeaderV1->config.startMarker;
-        fileHeader->config.prt[0] = fileHeaderV1->config.prt[0];
-        fileHeader->config.prt[1] = fileHeaderV1->config.prt[1];
-        fileHeader->config.pw[0] = fileHeaderV1->config.pw[0];
-        fileHeader->config.pw[1] = fileHeaderV1->config.prt[1];
-        fileHeader->config.pulseGateCount = fileHeaderV1->config.pulseGateCount;
-        fileHeader->config.pulseGateSize = fileHeaderV1->config.pulseGateSize;
-        fileHeader->config.ringFilterGateCount = fileHeaderV1->config.pulseRingFilterGateCount;
-        fileHeader->config.waveformId[0] = fileHeaderV1->config.waveformId[0];
-        memcpy(fileHeader->config.noise, fileHeaderV1->config.noise, (6 + 22 * 2 + 22 + 22 + 2) * sizeof(RKFloat));
-        strcpy(fileHeader->config.waveformName, fileHeaderV1->config.waveform);
-        strcat(fileHeader->config.waveformName, "-syn");
-        // Initialize a waveformDecimate that matches the original config->filterAnchors
-        u32 = 0;
-        for (k = 0; k < fileHeaderV1->config.filterCount; k++) {
-            u32 += fileHeaderV1->config.filterAnchors[k].length;
-        }
-        // No raw (uncompressed) data prior to this built. Talk to Boonleng if you managed to, and needed to, process one
-        RKWaveform *waveform = RKWaveformInitWithCountAndDepth(1, u32);
-        strcpy(waveform->name, fileHeaderV1->config.waveform);
-        waveform->fs = 0.5f * 3.0e8 / (fileHeader->config.pulseGateSize * fileHeader->desc.pulseToRayRatio);
-        waveform->filterCounts[0] = fileHeaderV1->config.filterCount;
-        for (j = 0; j < waveform->filterCounts[0]; j++) {
-            memcpy(&waveform->filterAnchors[0][j], &fileHeaderV1->config.filterAnchors[j], sizeof(RKFilterAnchor));
-        }
-        // Fill one some dummy samples to get things going
-        RKWaveformOnes(waveform);
-        RKWaveformNormalizeNoiseGain(waveform);
-        fileHeader->config.waveform = waveform;
-        fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
-        free(fileHeaderV1);
-    } else {
-        waveform = RKWaveformReadFromReference(fid);
-        fileHeader->config.waveform = waveform;
-        fileHeader->config.waveformDecimate = RKWaveformCopy(waveform);
-        RKWaveformDecimate(fileHeader->config.waveformDecimate, fileHeader->desc.pulseToRayRatio);
-    }
+    RKFileHeader *fileHeader = RKFileHeaderInitFromFid(fid);
+    RKConfig *config = &fileHeader->config;
+    RKWaveform *waveform = config->waveform;
+
     if (arg->verbose && fileHeader->dataType == RKRawDataTypeNull) {
         RKLog("Info. fileHeader->preface = %s\n", fileHeader->preface);
-        RKLog("Info. fileHeader->version = %d\n", fileHeader->version);
+        RKLog("Info. fileHeader->format = %d\n", fileHeader->format);
         RKLog("Info. fileHeader->dataType = %d (%s)\n",
               fileHeader->dataType,
               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
@@ -200,7 +133,8 @@ void proc(UserParams *arg) {
     RKProduct *product;
     RKMomentScratch *space;
 
-    const RKBaseProductList momentList = RKBaseProductListFloatATSR;
+    // const RKProductList productList = RKProductListFloatATSR;
+    const RKProductList productList = RKProductListFloatZVWDPR;
 
     // Ray capacity always respects pulseCapcity / pulseToRayRatio and SIMDAlignSize
     const uint32_t rayCapacity = ((uint32_t)ceilf((float)fileHeader->desc.pulseCapacity / fileHeader->desc.pulseToRayRatio / (float)RKMemoryAlignSize)) * RKMemoryAlignSize;
@@ -255,51 +189,7 @@ void proc(UserParams *arg) {
     mem += bytes;
 
     if (arg->verbose) {
-        long fpos = ftell(fid);
-        if (arg->verbose > 1) {
-            RKLog("fpos = %s\n", RKIntegerToCommaStyleString(fpos));
-        }
-        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, p);
-        RKReadPulseFromFileReference(pulse, fileHeader, fid);
-        fseek(fid, fpos, SEEK_SET);
-        RKLog(">fileHeader.preface = '%s'   version = %d\n", fileHeader->preface, fileHeader->version);
-        RKLog(">fileHeader.dataType = '%s'\n",
-               fileHeader->dataType == RKRawDataTypeFromTransceiver ? "Raw" :
-               (fileHeader->dataType == RKRawDataTypeAfterMatchedFilter ? "Compressed" : "Unknown"));
-        RKLog(">desc.name = '%s'\n", fileHeader->desc.name);
-        RKLog(">desc.filePrefix = %s\n", fileHeader->desc.filePrefix);
-        RKLog(">desc.latitude, longitude = %.6f, %.6f\n", fileHeader->desc.latitude, fileHeader->desc.longitude);
-        RKLog(">desc.pulseCapacity = %s\n", RKIntegerToCommaStyleString(fileHeader->desc.pulseCapacity));
-        RKLog(">desc.pulseToRayRatio = %u\n", fileHeader->desc.pulseToRayRatio);
-        RKLog(">desc.wavelength = %.4f m\n", fileHeader->desc.wavelength);
-        RKLog(">config.sweepElevation = %.2f deg\n", config->sweepElevation);
-        RKLog(">config.prt = %.3f ms (PRF = %s Hz)\n",
-              1.0e3f * config->prt[0],
-              RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
-        RKLog(">config.pw = %.2f us (dr = %s m)\n",
-              1.0e6 * config->pw[0],
-              RKFloatToCommaStyleString(0.5 * 3.0e8 * config->pw[0]));
-        RKLog(">config.pulseGateCount = %s -- (/ %d) --> %s\n",
-              RKIntegerToCommaStyleString(config->pulseGateCount),
-              fileHeader->desc.pulseToRayRatio,
-              RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
-        RKLog(">config.pulseGateSize = %.3f m -- (x %d) --> %.3f m\n",
-              config->pulseGateSize,
-              fileHeader->desc.pulseToRayRatio,
-              config->pulseGateSize * fileHeader->desc.pulseToRayRatio);
-        RKLog(">config.noise = %.2f, %.2f ADU^2\n", config->noise[0], config->noise[1]);
-        RKLog(">config.systemZCal = %.2f, %.2f dB\n", config->systemZCal[0], config->systemZCal[1]);
-        RKLog(">config.systemDCal = %.2f dB\n", config->systemDCal);
-        RKLog(">config.systemPCal = %.2f deg\n", config->systemPCal);
-        RKLog(">config.SNRThreshold = %.2f dB\n", config->SNRThreshold);
-        RKLog(">config.SQIThreshold = %.2f\n", config->SQIThreshold);
-        RKLog(">config.waveformName = '%s'\n", config->waveformName);
-        if (fileHeader->version >= 5) {
-            RKWaveformSummary(config->waveform);
-        }
-        if (fileHeader->version >= 6) {
-            RKWaveformSummary(config->waveformDecimate);
-        }
+        RKFileHeaderSummary(fileHeader);
     }
 
     char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
@@ -444,7 +334,7 @@ void proc(UserParams *arg) {
 
         sprintf(outputFileHeader->preface, "RadarKit/IQ");
         outputFileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
-        outputFileHeader->version = RKRawDataVersion;
+        outputFileHeader->format = RKRawDataFormat;
         memcpy(&outputFileHeader->desc, &fileHeader->desc, sizeof(RKRadarDesc));
         memcpy(&outputFileHeader->config, &fileHeader->config, sizeof(RKConfig));
         outputFileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
@@ -491,7 +381,6 @@ void proc(UserParams *arg) {
                 RKLog("pulse[0].gateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.gateCount));
                 RKLog("pulse[0].downSampledGateCount = %s\n", RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
             }
-            timeval2str(timestr, pulse->header.time);
             if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
                 i0 = (int)floorf(pulse->header.azimuthDegrees);
             } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
@@ -578,6 +467,7 @@ void proc(UserParams *arg) {
                 if (du < 0) {
                     du += 1000000;
                 }
+                timestr = RKTimevalToString(pulse->header.time, 1084, true);
                 printf("P:%05d/%06ju/%05d %s(%06d)   C%d   E%5.2f, A%6.2f  %s x %.1fm %d/%d %02x %s%s%s\n",
                        k, (unsigned long)pulse->header.i, p, timestr, du,
                        pulse->header.configIndex,
@@ -615,14 +505,14 @@ void proc(UserParams *arg) {
                 }
 
                 // Get a ray from the buffer, set the ray headers
-                // RKRay *ray = RKGetRayFromBuffer(rayBuffer, r);
+                // NOTE: pulse->header.timeDouble still has the original time from RKClock, which has a different epoch
                 RKRay *ray = rays[r++];
                 ray->header.startTime       = S->header.time;
-                ray->header.startTimeDouble = S->header.timeDouble;
+                ray->header.startTimeDouble = (double)S->header.time.tv_sec + 1.0e-6 * (double)S->header.time.tv_usec;
                 ray->header.startAzimuth    = S->header.azimuthDegrees;
                 ray->header.startElevation  = S->header.elevationDegrees;
                 ray->header.endTime         = E->header.time;
-                ray->header.endTimeDouble   = E->header.timeDouble;
+                ray->header.endTimeDouble   = (double)E->header.time.tv_sec + 1.0e-6 * (double)E->header.time.tv_usec;
                 ray->header.endAzimuth      = E->header.azimuthDegrees;
                 ray->header.endElevation    = E->header.elevationDegrees;
                 ray->header.configIndex     = E->header.configIndex;
@@ -636,14 +526,15 @@ void proc(UserParams *arg) {
                 // Process using a selected method
                 space->gateCount = pulse->header.downSampledGateCount;
                 // RKPulsePairHop(space, pulses, p);
-                RKPulsePairATSR(space, pulses, p);
+                // RKPulsePairATSR(space, pulses, p);
+                RKPulsePair(space, pulses, p);
                 makeRayFromScratch(space, ray);
 
                 // Timestamp
-                timeval2str(timestr, ray->header.startTime);
+                timestr = RKTimevalToString(ray->header.startTime, 1084, true);
                 if (arg->verbose == 2) {
                     printf("P:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s\n",
-                           k, r, timestr,
+                           k, r-1, timestr,
                            config->sweepElevation, config->sweepAzimuth,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
@@ -657,9 +548,9 @@ void proc(UserParams *arg) {
                 } else if (arg->verbose > 2) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
-                    float *data = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+                    float *data = RKGetFloatDataFromRay(ray, RKProductIndexZ);
                     printf("p:%05d R%3d %s [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f, p%d)  G%s  M%05X  %s%s   %.1f, %.1f, %.1f, %.1f, %.1f   %.1f, %.1f, %.1f, %.1f, %.1f\n",
-                           k, r, timestr,
+                           k, r-1, timestr,
                            config->sweepElevation, config->sweepAzimuth,
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
                            (ray->header.marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
@@ -677,8 +568,6 @@ void proc(UserParams *arg) {
                     printf("E%4.1f[%4.1f] A%5.1f[%5.1f] ", ray->header.startElevation, ray->header.sweepElevation, ray->header.startAzimuth, ray->header.sweepAzimuth);
                     RKShowVecFloatLowPrecision(" Z = ", space->Z[0], 10);
                 }
-                // Collect the ray
-                // rays[r++] = ray;
             } else if (p > 1) {
                 RKPulse *S = pulses[0];
                 RKPulse *E = pulses[p - 1];
@@ -695,9 +584,9 @@ void proc(UserParams *arg) {
 
                 // Timestamp
                 if (arg->verbose > 1) {
-                    timeval2str(timestr, S->header.time);
+                    timestr = RKTimevalToString(S->header.time, 1084, true);
                     RKLog(">%05d r=%3d %s p=%d   [E%.2f, A%.2f]  %s%6.2f-%6.2f  (%4.2f)  G%s  M%05x\n",
-                           k, r, timestr, p,
+                           k, r-1, timestr, p,
                            config->sweepElevation, config->sweepAzimuth,
                            (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? "E" : "A",
                            (marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI ? S->header.elevationDegrees : S->header.azimuthDegrees,
@@ -772,11 +661,11 @@ void proc(UserParams *arg) {
         RKRay *E = rays[k + r - 1];
 
         // Consolidate some other information and check consistencies
-        RKBaseProductList overallMomentList = 0;
+        RKProductList overallMomentList = 0;
         uint8_t gateCountWarningCount = 0;
         uint8_t gateSizeWarningCount = 0;
         for (i = k + 1; i < k  + r - 1; i++) {
-            overallMomentList |= rays[i]->header.baseProductList;
+            overallMomentList |= rays[i]->header.productList;
             if (rays[i]->header.gateCount != S->header.gateCount) {
                 if (++gateCountWarningCount < 5) {
                     RKLog("Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
@@ -797,16 +686,16 @@ void proc(UserParams *arg) {
             }
         }
         if (arg->verbose > 1) {
-            RKLog("momentList = %016xh\n", overallMomentList);
+            RKLog("productList = %016xh\n", overallMomentList);
         }
 
         // Populate the contents
         sweep->header.rayCount = r;
         sweep->header.gateCount = S->header.gateCount;
         sweep->header.gateSizeMeters = S->header.gateSizeMeters;
-        sweep->header.startTime = (time_t)S->header.startTime.tv_sec;
-        sweep->header.endTime = (time_t)E->header.endTime.tv_sec;
-        sweep->header.baseProductList = overallMomentList;
+        sweep->header.startTime = S->header.startTimeDouble;
+        sweep->header.endTime = E->header.endTimeDouble;
+        sweep->header.productList = overallMomentList;
         sweep->header.isPPI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
         sweep->header.isRHI = (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI;
         sweep->header.external = true;
@@ -815,15 +704,15 @@ void proc(UserParams *arg) {
         memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
         // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
         k = sprintf(sweep->header.filename, "%s/", arg->directory);
-        k += strftime(sweep->header.filename + k, 10, "%Y%m%d/", gmtime(&sweep->header.startTime));
+        k += sprintf(sweep->header.filename + k, "%s/", RKTimeDoubleToString(sweep->header.startTime, 800, false));
         k += sprintf(sweep->header.filename + k, "%s-", fileHeader->desc.filePrefix);
-        k += strftime(sweep->header.filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&sweep->header.startTime));
+        k += sprintf(sweep->header.filename + k, "%s-", RKTimeDoubleToString(sweep->header.startTime, 860, false));
         if (sweep->header.isPPI) {
-            k += snprintf(sweep->header.filename + k, 7, "-E%.1f", sweep->header.config.sweepElevation);
+            k += snprintf(sweep->header.filename + k, 6, "E%.1f", sweep->header.config.sweepElevation);
         } else if (sweep->header.isRHI) {
-            k += snprintf(sweep->header.filename + k, 7, "-A%.1f", sweep->header.config.sweepAzimuth);
+            k += snprintf(sweep->header.filename + k, 6, "A%.1f", sweep->header.config.sweepAzimuth);
         } else {
-            k += snprintf(sweep->header.filename + k, 7, "-N%03d", sweep->header.rayCount);
+            k += snprintf(sweep->header.filename + k, 6, "N%03d", sweep->header.rayCount);
         }
         if (k > RKMaximumFolderPathLength + RKMaximumPrefixLength + 25 + RKMaximumFileExtensionLength) {
             RKLog("Error. Suggested filename %s is longer than expected.\n", sweep->header.filename);
@@ -834,7 +723,7 @@ void proc(UserParams *arg) {
         RKPreparePath(sweep->header.filename);
 
         // Initialize a list based on desired moment list. This variable will become all zeros after the next for-loop
-        RKBaseProductList list = sweep->header.baseProductList & momentList;
+        RKProductList list = sweep->header.productList & productList;
 
         // Base products
         int productCount = __builtin_popcount(list);

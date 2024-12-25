@@ -1,8 +1,16 @@
 import os
+import re
+import radar
 import tarfile
 import netCDF4
 import datetime
 import numpy as np
+
+re_3parts = re.compile(
+    r"(?P<name>.+)-"
+    + r"(?P<time>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-"
+    + r"(?P<scan>[EAN][0-9]+\.[0-9]+)"
+)
 
 
 class MeshCoordinate:
@@ -36,12 +44,12 @@ class Sweep:
         self.longitude = -97.0
         self.latitude = 32.0
         self.scanType = "UNK"
-        self.scanElevation = 0.0
-        self.scanAzimuth = 0.0
+        self.sweepElevation = 0.0
+        self.sweepAzimuth = 0.0
         self.prf = 1
         self.waveform = "u"
         self.gatewidth = 1.0
-        self.elevation = 0.0
+        self.elevations = 0.0
         self.azimuths = 0.0
         self.products = {}
         self.archive = None
@@ -54,72 +62,43 @@ class Sweep:
             self.plain(input, **kwargs)
 
     def __repr__(self):
-        a = self.scanElevation if self.scanType.lower() == "ppi" else self.scanAzimuth if self.scanType.lower() == "rhi" else -999.0
+        a = (
+            self.sweepElevation
+            if self.scanType.lower() == "ppi"
+            else self.sweepAzimuth if self.scanType.lower() == "rhi" else -999.0
+        )
         return f"Sweep: {self.scanType} {a:.1f} - {list(self.products.keys())}"
 
     def __str__(self):
         return f"Sweep: {self.scanType} of {self.archive}"
 
     def read(self, input, verbose=0):
-        path, basename = os.path.split(input)
-        _, ext = os.path.splitext(basename)
-
-        def _handle_fid(fid, symbol="Z"):
-            if symbol == "Z":
-                with netCDF4.Dataset("memory", mode="r", memory=fid.read()) as nc:
-                    atts = nc.ncattrs()
-                    name = nc.getncattr("TypeName")
-                    self.time = datetime.datetime.fromtimestamp(nc.getncattr("Time"))
-                    self.longitude = nc.getncattr("Longitude")
-                    self.latitude = nc.getncattr("Latitude")
-                    self.scanElevation = nc.getncattr("Elevation")
-                    self.scanAzimuth = nc.getncattr("Azimuth")
-                    self.prf = float(round(nc.getncattr("PRF-value") * 0.1) * 10.0)
-                    self.waveform = nc.getncattr("Waveform") if "Waveform" in atts else ""
-                    self.gatewidth = float(nc.variables["GateWidth"][:][0])
-                    self.elevations = np.array(nc.variables["Elevation"][:], dtype=np.float32)
-                    self.azimuths = np.array(nc.variables["Azimuth"][:], dtype=np.float32)
-                    self.products.update({symbol: np.array(nc.variables[name][:], dtype=np.float32)})
-            else:
-                with netCDF4.Dataset("memory", mode="r", memory=fid.read()) as nc:
-                    name = nc.getncattr("TypeName")
-                    self.products.update({symbol: np.array(nc.variables[name][:], dtype=np.float32)})
-
-        parts = basename.split("-")
-        if parts[3].startswith("A"):
-            self.scanType = "RHI"
-        elif parts[3].startswith("E"):
-            self.scanType = "PPI"
-        else:
-            self.scanType = "UNK"
-
-        # Read from a tar archive
-        if ext in [".tar", ".tgz", ".xz"]:
-            self.archive = input
-            with tarfile.open(input) as tar:
-                for member in tar.getmembers():
-                    if not member.isfile():
-                        continue
-                    file, _ = os.path.splitext(os.path.basename(member.name))
-                    parts = file.split("-")
-                    symbol = parts[4]
-                    with tar.extractfile(member) as fid:
-                        _handle_fid(fid, symbol)
-        # Read from netCDF file
-        elif ext == ".nc":
-            symbols = ["Z", "V", "W", "D", "P", "R"]
-            for symbol in symbols:
-                parts[-1] = f"{symbol}.nc"
-                basename = "-".join(parts)
-                filename = os.path.join(path, basename)
-                if verbose:
-                    print(f"filename: {filename}")
-                with open(filename, mode="rb") as fid:
-                    _handle_fid(fid, symbol)
-        else:
-            print(f"Unknown file extension: {ext}")
+        data = radar.read(input, verbose=verbose)
+        if data is None:
             return None
-
+        self.archive = input
+        self.time = datetime.datetime.fromtimestamp(data["time"], tz=datetime.timezone.utc)
+        self.longitude = data["longitude"]
+        self.latitude = data["latitude"]
+        # Scan type from filename
+        parts = radar.re_3parts.match(os.path.basename(input))
+        if parts:
+            parts = parts.groupdict()
+            if parts["scan"][0] == "E":
+                self.scanType = "PPI"
+            elif parts["scan"][0] == "A":
+                self.scanType = "RHI"
+        self.sweepElevation = data["sweepElevation"]
+        self.sweepAzimuth = data["sweepAzimuth"]
+        self.prf = data["prf"]
+        self.waveform = data["waveform"]
+        self.gatewidth = data["gatewidth"]
+        self.elevations = data["elevations"]
+        self.azimuths = data["azimuths"]
+        self.products = data["products"]
+        mask = self.products["Z"] < -999.0
+        for key in self.products.keys():
+            self.products[key][mask] = np.nan
         # Generate coordinate arrays that are 1 element extra than each dimension
         if self.scanType.lower() == "rhi":
             de = self.elevations[-1] - self.elevations[-2]
@@ -128,10 +107,6 @@ class Sweep:
             da = self.azimuths[-1] - self.azimuths[-2]
             self.meshCoordinate.a = [*self.azimuths, self.azimuths[-1] + da]
         self.meshCoordinate.r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
-        symbols = ["Z", "V", "W", "D", "P", "R"]
-        mask = self.products["Z"] < -999.0
-        for key in symbols:
-            self.products[key][mask] = np.nan
 
     def plain(self, array, **kwargs):
         symbols = kwargs["symbols"] if "symbols" in kwargs else ["Z", "V", "W", "D", "P", "R"]

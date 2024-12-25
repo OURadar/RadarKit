@@ -274,7 +274,7 @@ void RKExit(int e) {
     RKIntegerToCommaStyleString((long long)0xFEEDFACECAFEBEEF);
     RKIntegerToHexStyleString((long long)0xFEEDFACECAFEBEEF);
     RKFloatToCommaStyleString((double)0xFEEDFACECAFEBEEF);
-    RKTimevalToString((struct timeval){0xFEEDFACE, 0}, 0);
+    RKTimevalToString((struct timeval){0xFEEDFACE, 0}, 0, false);
     pthread_mutex_destroy(&rkGlobalParameters.lock);
     RKLog(NULL, NULL);
     exit(e);
@@ -294,6 +294,14 @@ long RKFileTell(FILE *fid) {
 
 int RKFileSeek(FILE *fid, long offset) {
     return fseek(fid, offset, SEEK_SET);
+}
+
+size_t RKFileWrite(const void *ptr, size_t size, size_t count, FILE *fid) {
+    return fwrite(ptr, size, count, fid);
+}
+
+size_t RKFileRead(void *ptr, size_t size, size_t count, FILE *fid) {
+    return fread(ptr, size, count, fid);
 }
 
 size_t RKFileGetSize(FILE *fid) {
@@ -407,24 +415,128 @@ RKValueType RKGuessValueType(const char *source) {
 
 #pragma mark - Filename / String
 
+int RKIsFilenameStandard(const char *filename) {
+    // Check if filename is something like [prefix]-[datetime]-[scan]-[symbol]
+    char *basename = strrchr(filename, '/');
+    if (basename == NULL) {
+        basename = (char *)filename;
+    } else {
+        basename++;
+    }
+    // printf("basename = %s\n", basename);
+    char *b = strchr(basename, '-');
+    if (b == NULL) {
+        return RKResultFilenameHasNoPrefix;
+    }
+    b++;
+    // YYYYMMMDD - 2000 - 2099
+    if (*b != '2') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b != '0') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b != '0' && *b != '1' && *b != '2') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b < '0' || *b > '3') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    if (*b != '-') {
+        return RKResultFilenameHasBadDate;
+    }
+    b++;
+    // HHMMSS
+    if (*b != '0' && *b != '1' && *b != '2') {
+        return RKResultFilenameHasBadTime;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadTime;
+    }
+    b++;
+    if (*b < '0' || *b > '5') {
+        return RKResultFilenameHasBadTime;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadTime;
+    }
+    b++;
+    if (*b < '0' || *b > '5') {
+        return RKResultFilenameHasBadTime;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadTime;
+    }
+    b++;
+    if (*b != '-') {
+        return false;
+    }
+    b++;
+    // Scan: [A-Z][0-9].[0-9][0-9]
+    if (*b < 'A' && *b > 'Z') {
+        return RKResultFilenameHasBadScan;
+    }
+    b++;
+    if (*b < '0' || *b > '9') {
+        return RKResultFilenameHasBadScan;
+    }
+    b = strrchr(b, '-');
+    if (b == NULL) {
+        return RKResultFilenameHasNoProduct;
+    }
+    b++;
+    // Symbol: [A-Z]+
+    if (*b < 'A' && *b > 'Z') {
+        return RKResultFilenameHasNoProduct;
+    }
+    return true;
+}
+
 bool RKGetSymbolFromFilename(const char *filename, char *symbol) {
-    // Find the last '.'
+    // Find the basename
+    char *basename = strrchr(filename, '/');
+    if (basename == NULL) {
+        basename = (char *)filename;
+    } else {
+        basename++;
+    }
+    // Find the third '-'
     memset(symbol, 0, RKMaximumSymbolLength);
-    char *e = NULL;
-    e = strrchr(filename, '.');
-    if (e == NULL) {
-        e = (char *)filename + strlen(filename) - 1;
+    int c = 0;
+    char *b = strchr(basename, '-');
+    while (b != NULL && c++ < 3) {
+        b = strchr(b + 1, '-');
     }
-    #ifdef DEBUG_FINDSYMBOL
-    printf("- %s\n", e);
-    #endif
-    // Find the previous '-'
-    char *b = e;
-    while (b != filename && *b != '-') {
-        b--;
+    if (b == NULL) {
+        *symbol = '-';
+        return false;
     }
+    char *e = strchr(b + 1, '.');
     #ifdef DEBUG_FINDSYMBOL
-    printf("- %s\n", b);
+    printf("basename = %s   b = %s   e = %s\n", basename, b, e);
     #endif
     if (b == filename) {
         RKLog("RKGetSymbolFromFilename() Unable to find product symbol.\n");
@@ -468,16 +580,14 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
 
     // Figure out the path of the filename
     path = RKFolderOfFilename(filename);
-    //printf("path -> %s\n", path);
+    // printf("path -> %s\n", path);
     if ((dir = opendir(path)) == NULL) {
-        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         RKLog("RKListFilesWithSamePrefix() Unable to open directory %s\n", path);
         return 0;
     }
     // Use prefix to match the file pattern
     r = RKGetPrefixFromFilename(RKLastPartOfPath(filename), prefix);
     if (r == false) {
-        //fprintf(stderr, "RKListFilesWithSamePrefix() Unable to continue.\n");
         RKLog("RKListFilesWithSamePrefix() Not a standard filename. Early return.\n");
         return 0;
     }
@@ -490,7 +600,7 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
             continue;
         }
         if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
-            //printf("  -> %s/%s\n", path, ent->d_name);
+            // printf("  -> %s/%s\n", path, ent->d_name);
             if (strcmp(".", path)) {
                 sprintf(list[k++], "%s/%s", path, ent->d_name);
             } else {
@@ -499,9 +609,11 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
         }
     }
     closedir(dir);
+    bool found;
     int count = k;
+    int valid = 0;
     char desiredSymbol[7][RKMaximumSymbolLength], symbol[RKMaximumSymbolLength];
-    // Attempt to sort to Z, V, W, D, P, R, K, ...
+    // Attempt to sort to Z, V, W, D, P, R, ...
     k = 0;
     strcpy(desiredSymbol[k++], "Z");
     strcpy(desiredSymbol[k++], "V");
@@ -510,29 +622,25 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     strcpy(desiredSymbol[k++], "P");
     strcpy(desiredSymbol[k++], "R");
     strcpy(desiredSymbol[k++], "K");
-    for (k = 0; k < count; k++) {
-        RKGetSymbolFromFilename(list[k], symbol);
-        //printf("k = %d   symbol = %s\n", k, symbol);
-        if (!strcmp(symbol, desiredSymbol[k])) {
-            continue;
-        }
-        for (j = k + 1; j < count; j++) {
-            RKGetSymbolFromFilename(list[j], symbol);
-            //printf("  j = %d   symbol = %s / %s\n", j, symbol, desiredSymbol[k]);
-            if (!strcmp(desiredSymbol[k], symbol)) {
+    for (k = 0; k < 7; k++) {
+        for (j = k; j < count; j++) {
+            found = RKGetSymbolFromFilename(list[j], symbol);
+            // printf("  j = %d   symbol = %s / %s   %d\n", j, symbol, desiredSymbol[k], found);
+            if (found && !strcmp(desiredSymbol[k], symbol)) {
                 // Swap k & j
-                //printf("    Swap %d <-> %d\n", j, k);
+                // printf("    Swap %d <-> %d\n", j, k);
                 strcpy(prefix, list[k]);
                 strcpy(list[k], list[j]);
                 strcpy(list[j], prefix);
+                valid++;
                 break;
             }
         }
     }
-    //for (k = 0; k < count; k++) {
+    // for (k = 0; k < valid; k++) {
     //    printf("-> %s\n", list[k]);
-    //}
-    return count;
+    // }
+    return valid;
 }
 
 #pragma mark - Screen Output
@@ -622,7 +730,6 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKRayStatus)
     SHOW_SIZE(RKEngineState)
     SHOW_SIZE(RKStatusEnum)
-    SHOW_SIZE(RKBaseProductList)
     SHOW_SIZE(RKStream)
     SHOW_SIZE(RKByte)
     SHOW_SIZE(RKFloat)
@@ -631,17 +738,19 @@ void RKShowTypeSizes(void) {
     SHOW_SIZE(RKVec)
     SHOW_SIZE(RKRadarDesc)
     SHOW_SIZE(RKConfig)
+    SHOW_SIZE(RKConfigF5)
     SHOW_SIZE(RKHealth)
     SHOW_SIZE(RKNodalHealth)
     SHOW_SIZE(RKPosition)
     SHOW_SIZE(RKPulseHeader)
-    SHOW_SIZE(RKPulseHeaderV1)
+    SHOW_SIZE(RKPulseHeaderF1)
     SHOW_SIZE(RKPulseParameters)
     SHOW_SIZE_SIMD(pulse->headerBytes)
     SHOW_SIZE_SIMD(RKPulse)
     SHOW_SIZE(RKRayHeader)
-    SHOW_SIZE(RKRayHeaderV1)
+    SHOW_SIZE(RKRayHeaderF1)
     SHOW_SIZE_SIMD(ray->headerBytes)
+    SHOW_SIZE_SIMD(ray->data)
     SHOW_SIZE(RKSweep)
     SHOW_SIZE(sweep->header)
     SHOW_SIZE(RKPreferenceObject)
@@ -700,7 +809,7 @@ void RKShowTypeSizes(void) {
 
     // Some constants
     k = RKMomentIndexCount; printf("%s\n", RKVariableInString("RKMomentIndexCount", &k, RKValueTypeInt));
-    k = RKBaseProductIndexCount; printf("%s\n", RKVariableInString("RKBaseProductIndexCount", &k, RKValueTypeInt));
+    k = RKProductIndexCount; printf("%s\n", RKVariableInString("RKProductIndexCount", &k, RKValueTypeInt));
 
     // Restoring previous output stream
     rkGlobalParameters.stream = stream;
@@ -780,12 +889,12 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
 }
 
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
-    int j, k = 0, n = (int)strlen(letter);
+    int j, k = 0, n = MAX(1, (int)strlen(letter) - 8);
     char text[1024];
     char pad[n + 1];
     memset(pad, ' ', n);
     pad[n] = '\0';
-    k = sprintf(text, "             %s%s%s = [ %s ]\n",
+    k = sprintf(text, "      %s%8s%s = [ %s ]\n",
                 rkGlobalParameters.showColor ? RKYellowColor : "", letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
@@ -894,6 +1003,36 @@ char *RKStringFromValue(const void *value, RKValueType type) {
         case RKValueTypeDouble:
             c = RKFloatToCommaStyleString(d);
             break;
+        case RKValueTypeFloatWithOneDecimals:
+            d = f;
+        case RKValueTypeDoubleWithOneDecimals:
+            c = RKFloatToCommaStyleStringAndDecimals(d, 1);
+            break;
+        case RKValueTypeFloatWithTwoDecimals:
+            d = f;
+        case RKValueTypeDoubleWithTwoDecimals:
+            c = RKFloatToCommaStyleStringAndDecimals(d, 2);
+            break;
+        case RKValueTypeFloatWithThreeDecimals:
+            d = f;
+        case RKValueTypeDoubleWithThreeDecimals:
+            c = RKFloatToCommaStyleStringAndDecimals(d, 3);
+            break;
+        case RKValueTypeFloatWithFourDecimals:
+            d = f;
+        case RKValueTypeDoubleWithFourDecimals:
+            c = RKFloatToCommaStyleStringAndDecimals(d, 4);
+            break;
+        case RKValueTypeFloatWithFiveDecimals:
+            d = f;
+        case RKValueTypeDoubleWithFiveDecimals:
+            c = RKFloatToCommaStyleStringAndDecimals(d, 5);
+            break;
+        case RKValueTypeFloatWithSixDecimals:
+            d = f;
+        case RKValueTypeDoubleWithSixDecimals:
+            c = RKFloatToCommaStyleStringAndDecimals(d, 6);
+            break;
         case RKValueTYpeFloatDividedBy1k:
             d = f;
         case RKValueTYpeDoubleDividedBy1k:
@@ -950,13 +1089,13 @@ char *RKVariableInString(const char *name, const void *value, RKValueType type) 
 
     if (rkGlobalParameters.showColor) {
         if (type == RKValueTypeNull) {
-            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = " RKPinkColor "Null" RKNoColor, name);
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKMonokaiRed " = " RKPinkColor "Null" RKNoColor, name);
         } else if (type == RKValueTypeBool) {
-            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKMonokaiRed " = " RKPurpleColor "%s" RKNoColor, name, (b) ? "True" : "False");
         } else if (type == RKValueTypeString) {
-            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = '" RKSalmonColor "%s" RKNoColor "'", name, c);
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKMonokaiRed " = " RKNoColor "'" RKSalmonColor "%s" RKNoColor "'", name, c);
         } else {
-            snprintf(string, RKNameLength, RKOrangeColor "%s" RKNoColor " = " RKLimeColor "%s" RKNoColor, name, c);
+            snprintf(string, RKNameLength, RKOrangeColor "%s" RKMonokaiRed " = " RKLimeColor "%s" RKNoColor, name, c);
         }
     } else {
         if (type == RKValueTypeNull) {
@@ -1099,6 +1238,19 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
 
 #pragma mark - Buffer
 
+void *RKMalloc(const uint32_t capacity) {
+    void *mem = NULL;
+    size_t size = (capacity + RKMemoryAlignSize - 1) / RKMemoryAlignSize * RKMemoryAlignSize;
+    #ifdef _SHOW_MALLOC
+    RKLog("RKMalloc() size = %s B\n", RKUIntegerToCommaStyleString(size));
+    #endif
+    int r = posix_memalign(&mem, RKMemoryAlignSize, size);
+    if (r) {
+        RKLog("RKMalloc() Error. Unable to allocate memory");
+    }
+    return mem;
+}
+
 void RKZeroOutFloat(RKFloat *data, const uint32_t capacity) {
     memset(data, 0, capacity * sizeof(RKFloat));
 }
@@ -1222,7 +1374,7 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
     size_t readsize;
     uint32_t gateCount = 0;
     static RKPulseHeader *header = NULL;
-    static RKPulseHeaderV1 *headerV1 = NULL;
+    static RKPulseHeaderF1 *headerV1 = NULL;
 
     // Deallocate static memories if fid == NULL
     if (fid == NULL) {
@@ -1240,13 +1392,13 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
     const uint32_t capacity = pulse->header.capacity;
 
     // Read routine based on file version
-    switch (fileHeader->version) {
+    switch (fileHeader->format) {
         case 0:
         case 1:
         case 2:
         case 3:
         case 4:
-            RKLog("Warning. Version = %d not expected.\n", fileHeader->version);
+            RKLog("Warning. Format = %d not expected.\n", fileHeader->format);
             return RKResultNothingToRead;
             break;
         case 5:
@@ -1254,9 +1406,9 @@ int RKReadPulseFromFileReference(RKPulse *pulse, RKFileHeader *fileHeader, FILE 
         case 6:
             if (headerV1 == NULL) {
                 // RKLog("Allocating headerV1 ...\n");
-                headerV1 = (RKPulseHeaderV1 *)malloc(sizeof(RKPulseHeaderV1));
+                headerV1 = (RKPulseHeaderF1 *)malloc(sizeof(RKPulseHeaderF1));
             }
-            readsize = fread(headerV1, sizeof(RKPulseHeaderV1), 1, fid);
+            readsize = fread(headerV1, sizeof(RKPulseHeaderF1), 1, fid);
             pulse->header.i = headerV1->i;
             pulse->header.n = headerV1->n;
             pulse->header.t = headerV1->t;
@@ -1396,9 +1548,8 @@ void RKPulseDuplicateSplitComplex(RKPulse *pulse) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    uint8_t            idata[RKBaseProductCount][capacity];  (deprecating)
+//    uint8_t            idata[RKBaseProductCount][capacity];
 //    float              fdata[RKBaseProductCount][capacity];
-//    int16_t            sdata[RKMomentCount][capacity];       (deprecating)
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
     size_t alignment = RKMemoryAlignSize / sizeof(RKFloat);
@@ -1412,8 +1563,7 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t c
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    //size_t raySize = headerSize + RKBaseProductCount * capacity * (sizeof(uint8_t) + sizeof(float) + sizeof(int16_t));
-    size_t raySize = RKRayHeaderPaddedSize + capacity * (RKMomentCount * sizeof(int16_t) + RKBaseProductCount * (sizeof(uint8_t) + sizeof(float)));
+    size_t raySize = RKRayHeaderPaddedSize + capacity * RKBaseProductCount * (sizeof(uint8_t) + sizeof(float));
     if (raySize != (raySize / alignment) * alignment) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
@@ -1444,27 +1594,19 @@ void RKRayBufferFree(RKBuffer mem) {
 // Get a ray from a ray buffer
 RKRay *RKGetRayFromBuffer(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
-    size_t raySize = RKRayHeaderPaddedSize + ray->header.capacity * (RKMomentCount * sizeof(int16_t) + RKBaseProductCount * (sizeof(uint8_t) + sizeof(float)));
+    size_t raySize = RKRayHeaderPaddedSize + ray->header.capacity * RKBaseProductCount * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
-// Get the moment data in int16_t from a ray
-int16_t *RKGetInt16DataFromRay(RKRay *ray, const RKMomentIndex m) {
-    void *d = (void *)ray->data;
-    return (int16_t *)(d + m * ray->header.capacity * sizeof(int16_t));
-}
-
 // Get the product data in uint8_t from a ray
-uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKBaseProductIndex m) {
+uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
-    d += RKMomentCount * ray->header.capacity * sizeof(int16_t);
     return (uint8_t *)(d + m * ray->header.capacity * sizeof(uint8_t));
 }
 
 // Get the product data in float from a ray
-float *RKGetFloatDataFromRay(RKRay *ray, const RKBaseProductIndex m) {
+float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
-    d += RKMomentCount * ray->header.capacity * sizeof(int16_t);
     d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
@@ -1772,7 +1914,7 @@ char *RKStringOfStream(RKStream stream) {
     return string;
 }
 
-RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
+RKProductDesc RKGetNextProductDescriptionV5(RKProductList *list) {
     RKProductDesc desc;
     memset(&desc, 0, sizeof(RKProductDesc));
     if (list == NULL || *list == 0) {
@@ -1854,76 +1996,76 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         "PhiDP",
         "-"
     };
-    RKBaseProductList baseMoments[] = {
-        RKBaseProductListFloatZ,
-        RKBaseProductListFloatV,
-        RKBaseProductListFloatW,
-        RKBaseProductListFloatD,
-        RKBaseProductListFloatP,
-        RKBaseProductListFloatR,
-        RKBaseProductListFloatK,
-        RKBaseProductListFloatSh,
-        RKBaseProductListFloatSv,
-        RKBaseProductListFloatQ,
-        RKBaseProductListFloatLh,
-        RKBaseProductListFloatLv,
-        RKBaseProductListFloatRXh,
-        RKBaseProductListFloatRXv,
-        RKBaseProductListFloatPXh,
-        RKBaseProductListFloatPXv,
+    RKProductList baseMoments[] = {
+        RKProductListFloatZ,
+        RKProductListFloatV,
+        RKProductListFloatW,
+        RKProductListFloatD,
+        RKProductListFloatP,
+        RKProductListFloatR,
+        RKProductListFloatK,
+        RKProductListFloatSh,
+        RKProductListFloatSv,
+        RKProductListFloatQ,
+        RKProductListFloatLh,
+        RKProductListFloatLv,
+        RKProductListFloatRXh,
+        RKProductListFloatRXv,
+        RKProductListFloatPXh,
+        RKProductListFloatPXv,
         0xFFFF
     };
-    RKBaseProductIndex baseMomentIndices[] = {
-        RKBaseProductIndexZ,
-        RKBaseProductIndexV,
-        RKBaseProductIndexW,
-        RKBaseProductIndexD,
-        RKBaseProductIndexP,
-        RKBaseProductIndexR,
-        RKBaseProductIndexK,
-        RKBaseProductIndexSh,
-        RKBaseProductIndexSv,
-        RKBaseProductIndexQ,
-        RKBaseProductIndexLh,
-        RKBaseProductIndexLv,
-        RKBaseProductIndexRXh,
-        RKBaseProductIndexRXv,
-        RKBaseProductIndexPXh,
-        RKBaseProductIndexPXv,
+    RKProductIndex baseMomentIndices[] = {
+        RKProductIndexZ,
+        RKProductIndexV,
+        RKProductIndexW,
+        RKProductIndexD,
+        RKProductIndexP,
+        RKProductIndexR,
+        RKProductIndexK,
+        RKProductIndexSh,
+        RKProductIndexSv,
+        RKProductIndexQ,
+        RKProductIndexLh,
+        RKProductIndexLv,
+        RKProductIndexRXh,
+        RKProductIndexRXv,
+        RKProductIndexPXh,
+        RKProductIndexPXv,
         0
     };
     int k = -1;
-    if (*list & RKBaseProductListFloatZ) {
+    if (*list & RKProductListFloatZ) {
         k = 0;
-    } else if (*list & RKBaseProductListFloatV) {
+    } else if (*list & RKProductListFloatV) {
         k = 1;
-    } else if (*list & RKBaseProductListFloatW) {
+    } else if (*list & RKProductListFloatW) {
         k = 2;
-    } else if (*list & RKBaseProductListFloatD) {
+    } else if (*list & RKProductListFloatD) {
         k = 3;
-    } else if (*list & RKBaseProductListFloatP) {
+    } else if (*list & RKProductListFloatP) {
         k = 4;
-    } else if (*list & RKBaseProductListFloatR) {
+    } else if (*list & RKProductListFloatR) {
         k = 5;
-    } else if (*list & RKBaseProductListFloatK) {
+    } else if (*list & RKProductListFloatK) {
         k = 6;
-    } else if (*list & RKBaseProductListFloatSh) {
+    } else if (*list & RKProductListFloatSh) {
         k = 7;
-    } else if (*list & RKBaseProductListFloatSv) {
+    } else if (*list & RKProductListFloatSv) {
         k = 8;
-    } else if (*list & RKBaseProductListFloatQ) {
+    } else if (*list & RKProductListFloatQ) {
         k = 9;
-    } else if (*list & RKBaseProductListFloatLh) {
+    } else if (*list & RKProductListFloatLh) {
         k = 10;
-    } else if (*list & RKBaseProductListFloatLv) {
+    } else if (*list & RKProductListFloatLv) {
         k = 11;
-    } else if (*list & RKBaseProductListFloatRXh) {
+    } else if (*list & RKProductListFloatRXh) {
         k = 12;
-    } else if (*list & RKBaseProductListFloatRXv) {
+    } else if (*list & RKProductListFloatRXv) {
         k = 13;
-    } else if (*list & RKBaseProductListFloatPXh) {
+    } else if (*list & RKProductListFloatPXh) {
         k = 14;
-    } else if (*list & RKBaseProductListFloatPXv) {
+    } else if (*list & RKProductListFloatPXv) {
         k = 15;
     }
     if (k < 0) {
@@ -1937,7 +2079,7 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
     desc.index = baseMomentIndices[k];
     // Special treatment for RhoHV: A three count piece-wise function
     RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    if (desc.index == RKBaseProductIndexR) {
+    if (desc.index == RKProductIndexR) {
         desc.pieceCount = 3;
         desc.w[0] = 1000.0f;
         desc.b[0] = -824.0f;
@@ -1952,40 +2094,40 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         desc.maximumValue = 1.05f;
     } else {
         switch (desc.index) {
-            case RKBaseProductIndexZ:
+            case RKProductIndexZ:
                 RKZLHMAC
                 break;
-            case RKBaseProductIndexV:
+            case RKProductIndexV:
                 RKV2LHMAC
                 break;
-            case RKBaseProductIndexW:
+            case RKProductIndexW:
                 RKWLHMAC
                 break;
-            case RKBaseProductIndexD:
+            case RKProductIndexD:
                 RKDLHMAC
                 break;
-            case RKBaseProductIndexP:
+            case RKProductIndexP:
                 RKPLHMAC
                 break;
-            case RKBaseProductIndexK:
+            case RKProductIndexK:
                 RKKLHMAC
                 break;
-            case RKBaseProductIndexLh:
+            case RKProductIndexLh:
                 RKLLHMAC
                 break;
-            case RKBaseProductIndexLv:
+            case RKProductIndexLv:
                 RKLLHMAC
                 break;
-            case RKBaseProductIndexRXh:
+            case RKProductIndexRXh:
                 RKQLHMAC
                 break;
-            case RKBaseProductIndexRXv:
+            case RKProductIndexRXv:
                 RKQLHMAC
                 break;
-            case RKBaseProductIndexPXh:
+            case RKProductIndexPXh:
                 RKPLHMAC
                 break;
-            case RKBaseProductIndexPXv:
+            case RKProductIndexPXv:
                 RKPLHMAC
                 break;
             default:
@@ -1998,8 +2140,171 @@ RKProductDesc RKGetNextProductDescription(RKBaseProductList *list) {
         desc.b[0] = lhma[3];
         desc.l[0] = 0.0f;
     }
-    desc.baseProductList = baseMoments[k];
     *list ^= baseMoments[k];
+    return desc;
+}
+
+
+typedef struct rk_product_desc_table {
+    RKProductIndex index;
+    RKName symbol;
+    RKName name;
+    RKName standard;
+    RKName unit;
+    float cfScale;
+    float cfOffset;
+} RKProductDescTable;
+
+
+RKProductDesc RKGetNextProductDescription(RKProductList *list) {
+    RKProductDesc desc;
+    memset(&desc, 0, sizeof(RKProductDesc));
+    if (list == NULL || *list == 0) {
+        return desc;
+    }
+    const RKProductDescTable table[] = {
+        {RKProductIndexZ, "DBZ", "reflectivity", "equivalent_reflectivity_factor", "dBZ", 0.01f, 0.0f},
+        {RKProductIndexV, "VEL", "doppler_velocity", "radial_velocity_of_scatterers_away_from_instrument", "m/s", 0.01f, 0.0f},
+        {RKProductIndexW, "WIDTH", "spectrum_width", "doppler_spectrum_width", "m/s", 0.01f, 0.0f},
+        {RKProductIndexD, "ZDR", "differential_reflectivity", "log_differential_reflectivity_hv", "dB", 0.01f, 0.0f},
+        {RKProductIndexP, "PHIDP", "differential_phase", "differential_phase_hv", "degrees", 0.01f, 0.0f},
+        {RKProductIndexR, "RHOHV", "cross_correlation_ratio", "cross_correlation_ratio_hv", "unitless", 0.001f, 0.0f},
+        {RKProductIndexK, "KDP", "specific_differential_phase", "specific_differential_phase_hv", "degrees/km", 0.01f, 0.0f},
+        {RKProductIndexSh, "SH", "signal_power_h", "signal_power_h", "dBm", 0.01f, 0.0f},
+        {RKProductIndexSv, "SV", "signal_power_v", "signal_power_v", "dBm", 0.01f, 0.0f},
+        {RKProductIndexQ, "SQI", "signal_quality_index", "signal_quality_index", "unitless", 0.01f, 0.0f},
+        {RKProductIndexLh, "LDRH", "linear_depolarization_ratio_h", "linear_depolarization_ratio_h", "dB", 0.01f, 0.0f},
+        {RKProductIndexLv, "LDRV", "linear_depolarization_ratio_v", "linear_depolarization_ratio_v", "dB", 0.01f, 0.0f},
+        {RKProductIndexPXh, "PHIXH", "differential_phase_copolar_h_crosspolar_v", "differential_phase_copolar_h_crosspolar_v", "degrees", 0.01f, 0.0f},
+        {RKProductIndexPXv, "PHIXV", "differential_phase_copolar_v_crosspolar_h", "differential_phase_copolar_v_crosspolar_h", "degrees", 0.01f, 0.0f},
+        {RKProductIndexRXh, "RHOXH", "correlation_coefficient_copolar_h_crospolar_v", "correlation_coefficient_copolar_h_crospolar_v", "unitless", 0.001f, 0.0f},
+        {RKProductIndexRXv, "RHOXV", "correlation_coefficient_copolar_v_crospolar_h", "correlation_coefficient_copolar_v_crospolar_h", "unitless", 0.001f, 0.0f},
+        {0, "-", "-", "-", "-", 0.0f, 0.0f}
+    };
+    int k = -1;
+    if (*list & RKProductListFloatZ) {
+        *list ^= RKProductListFloatZ;
+        k = 0;
+    } else if (*list & RKProductListFloatV) {
+        *list ^= RKProductListFloatV;
+        k = 1;
+    } else if (*list & RKProductListFloatW) {
+        *list ^= RKProductListFloatW;
+        k = 2;
+    } else if (*list & RKProductListFloatD) {
+        *list ^= RKProductListFloatD;
+        k = 3;
+    } else if (*list & RKProductListFloatP) {
+        *list ^= RKProductListFloatP;
+        k = 4;
+    } else if (*list & RKProductListFloatR) {
+        *list ^= RKProductListFloatR;
+        k = 5;
+    } else if (*list & RKProductListFloatK) {
+        *list ^= RKProductListFloatK;
+        k = 6;
+    } else if (*list & RKProductListFloatSh) {
+        *list ^= RKProductListFloatSh;
+        k = 7;
+    } else if (*list & RKProductListFloatSv) {
+        *list ^= RKProductListFloatSv;
+        k = 8;
+    } else if (*list & RKProductListFloatQ) {
+        *list ^= RKProductListFloatQ;
+        k = 9;
+    } else if (*list & RKProductListFloatLh) {
+        *list ^= RKProductListFloatLh;
+        k = 10;
+    } else if (*list & RKProductListFloatLv) {
+        *list ^= RKProductListFloatLv;
+        k = 11;
+    } else if (*list & RKProductListFloatPXh) {
+        *list ^= RKProductListFloatPXh;
+        k = 12;
+    } else if (*list & RKProductListFloatPXv) {
+        *list ^= RKProductListFloatPXv;
+        k = 13;
+    } else if (*list & RKProductListFloatRXh) {
+        *list ^= RKProductListFloatRXh;
+        k = 14;
+    } else if (*list & RKProductListFloatRXv) {
+        *list ^= RKProductListFloatRXv;
+        k = 15;
+    }
+    if (k < 0) {
+        RKLog("Error. Unable to get description for k = %d\n", k);
+        return desc;
+    }
+    snprintf(desc.description, sizeof(desc.description), "%s", table[k].standard) < 0 ? abort() : (void)0;
+    snprintf(desc.name, sizeof(desc.name), "%s", table[k].name) < 0 ? abort() : (void)0;
+    snprintf(desc.unit, sizeof(desc.unit), "%s", table[k].unit) < 0 ? abort() : (void)0;
+    snprintf(desc.symbol, sizeof(desc.symbol), "%s", table[k].symbol) < 0 ? abort() : (void)0;
+    desc.index = table[k].index;
+    desc.cfScale = table[k].cfScale;
+    desc.cfOffset = table[k].cfOffset;
+    // Special treatment for RhoHV: A three count piece-wise function
+    RKFloat lhma[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    if (desc.index == RKProductIndexR) {
+        desc.pieceCount = 3;
+        desc.w[0] = 1000.0f;
+        desc.b[0] = -824.0f;
+        desc.l[0] = 0.93f;
+        desc.w[1] = 300.0f;
+        desc.b[1] = -173.0f;
+        desc.l[1] = 0.7f;
+        desc.w[2] = 52.8571f;
+        desc.b[2] = 0.0f;
+        desc.l[2] = 0.0f;
+        desc.mininimumValue = 0.0f;
+        desc.maximumValue = 1.05f;
+    } else {
+        switch (desc.index) {
+            case RKProductIndexZ:
+                RKZLHMAC
+                break;
+            case RKProductIndexV:
+                RKV2LHMAC
+                break;
+            case RKProductIndexW:
+                RKWLHMAC
+                break;
+            case RKProductIndexD:
+                RKDLHMAC
+                break;
+            case RKProductIndexP:
+                RKPLHMAC
+                break;
+            case RKProductIndexK:
+                RKKLHMAC
+                break;
+            case RKProductIndexLh:
+                RKLLHMAC
+                break;
+            case RKProductIndexLv:
+                RKLLHMAC
+                break;
+            case RKProductIndexPXh:
+                RKPLHMAC
+                break;
+            case RKProductIndexPXv:
+                RKPLHMAC
+                break;
+            case RKProductIndexRXh:
+                RKQLHMAC
+                break;
+            case RKProductIndexRXv:
+                RKQLHMAC
+                break;
+            default:
+                break;
+        }
+        desc.pieceCount = 1;
+        desc.mininimumValue = lhma[0];
+        desc.maximumValue = lhma[1];
+        desc.w[0] = lhma[2];
+        desc.b[0] = lhma[3];
+        desc.l[0] = 0.0f;
+    }
     return desc;
 }
 

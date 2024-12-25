@@ -152,7 +152,7 @@ int RKPulsePairHop(RKMomentScratch *space, RKPulse **pulses, const uint16_t coun
     //
     RKUpdateRadarProductsInScratchSpace(space, gateCount);
 
-    space->calculatedProducts = RKBaseProductListFloatZVWDPR;
+    space->calculatedProducts = RKProductListFloatZVWDPR;
 
     if (space->verbose && count < 50 && gateCount < 50) {
         char variable[RKNameLength];

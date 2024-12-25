@@ -2,7 +2,7 @@
 //  RKTypes.h
 //  RadarKit
 //
-//  These types are being phased out. Don't use them in new codes.
+//  These types are being phased out. Avoid them in new codes.
 //
 //  Created by Boonleng Cheong on 6/24/2022.
 //
@@ -40,44 +40,115 @@ enum {
 };
 
 //
-// A running configuration buffer (version 1, see below for updated version)
+// A running configuration buffer (version 1)
 //
-typedef struct rk_config_v1 {
+typedef struct rk_config_f1 {
     RKIdentifier         i;                                                    // Identity counter
     float                sweepElevation;                                       // Sweep elevation angle (degrees)
     float                sweepAzimuth;                                         // Sweep azimuth angle (degrees)
     RKMarker             startMarker;                                          // Marker of the latest start ray
     uint8_t              filterCount;                                          // Number of filters
-    RKFilterAnchor       filterAnchors[RKMaximumFilterCount];                  // Filter anchors at ray level
-    RKFloat              prt[RKMaximumFilterCount];                            // Pulse repetition time (s)
-    RKFloat              pw[RKMaximumFilterCount];                             // Pulse width (s)
+    RKFilterAnchor       filterAnchors[8];                                     // Filter anchors at ray level
+    RKFloat              prt[8];                                               // Pulse repetition time (s)
+    RKFloat              pw[8];                                                // Pulse width (s)
     uint32_t             pulseGateCount;                                       // Number of range gates
     RKFloat              pulseGateSize;                                        // Size of range gate (m)
     uint32_t             pulseRingFilterGateCount;                             // Number of range gates to apply ring filter
-    uint32_t             waveformId[RKMaximumFilterCount];                     // Transmit waveform
+    uint32_t             waveformId[8];                                        // Transmit waveform
     RKFloat              noise[2];                                             // Noise floor (ADU)
     RKFloat              systemZCal[2];                                        // System-wide Z calibration (dB)
     RKFloat              systemDCal;                                           // System-wide ZDR calibration (dB)
     RKFloat              systemPCal;                                           // System-wide phase calibration (rad)
-    RKFloat              ZCal[RKMaximumFilterCount][2];                        // Waveform Z calibration (dB)
-    RKFloat              DCal[RKMaximumFilterCount];                           // Waveform ZDR calibration (dB)
-    RKFloat              PCal[RKMaximumFilterCount];                           // Waveform phase calibration (rad)
+    RKFloat              ZCal[8][2];                                           // Waveform Z calibration (dB)
+    RKFloat              DCal[8];                                              // Waveform ZDR calibration (dB)
+    RKFloat              PCal[8];                                              // Waveform phase calibration (rad)
     RKFloat              SNRThreshold;                                         // Censor SNR (dB)
     RKFloat              SQIThreshold;                                         // Censor SQI
     RKName               waveform;                                             // Waveform name
-    char                 vcpDefinition[RKMaximumCommandLength];                // Volume coverage pattern
-} RKConfigV1;
+    char                 vcpDefinition[512];                                   // Volume coverage pattern
+} RKConfigF1;
+
+typedef union rk_config_f5 {
+    struct {
+        RKIdentifier         i;                                                // Identity counter
+        float                sweepElevation;                                   // Sweep elevation angle (degrees)
+        float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
+        RKMarker             startMarker;                                      // Marker of the latest start ray
+        RKFloat              prt[8];                                           // Pulse repetition time (s)
+        RKFloat              pw[8];                                            // Pulse width (s)
+        uint32_t             pulseGateCount;                                   // Number of range gates
+        RKFloat              pulseGateSize;                                    // Size of range gate (m)
+        uint32_t             transitionGateCount;                              // Transition gate count
+        uint32_t             ringFilterGateCount;                              // Number of range gates to apply ring filter
+        uint32_t             waveformId[8];                                    // Transmit waveform
+        RKFloat              noise[2];                                         // Noise floor (ADU)
+        RKFloat              systemZCal[2];                                    // System-wide Z calibration (dB)
+        RKFloat              systemDCal;                                       // System-wide ZDR calibration (dB)
+        RKFloat              systemPCal;                                       // System-wide phase calibration (rad)
+        RKFloat              ZCal[8][2];                                       // Waveform Z calibration (dB)
+        RKFloat              DCal[8];                                          // Waveform ZDR calibration (dB)
+        RKFloat              PCal[8];                                          // Waveform phase calibration (rad)
+        RKFloat              SNRThreshold;                                     // Censor SNR (dB)
+        RKFloat              SQIThreshold;                                     // Censor SQI
+        RKName               waveformName;                                     // Waveform name
+        RKWaveform           *waveform;                                        // Reference to the waveform storage
+        RKWaveform           *waveformDecimate;                                // Reference to the waveform storage in Level-II sampling rate
+        RKUserResource       userResource;                                     // User resource (not yet)
+        uint32_t             userIntegerParameters[8];                         // User integer parameters (not yet)
+        float                userFloatParameters[8];                           // User float parameters (not yet)
+        char                 vcpDefinition[512];                               // Volume coverage pattern
+    };
+    RKByte               bytes[1024];
+} RKConfigF5;
+
+typedef struct rk_radar_desc_f1_to_f5 {
+    RKInitFlag           initFlags;                                            // Initialization. See RKInitFlag enum.
+    uint32_t             pulseCapacity;                                        // Capacity of a pulse, i.e., maximum number of range gates
+    uint16_t             pulseToRayRatio;                                      // The down-sampling ratio of range gates from pulses to rays
+    uint16_t             doNotUse;                                             //
+    uint32_t             healthNodeCount;                                      // Number of user health node count
+    uint32_t             healthBufferDepth;                                    // Depth of the cosolidated health buffer
+    uint32_t             statusBufferDepth;                                    // Depth of the status buffer (RKStatus)
+    uint32_t             configBufferDepth;                                    // Depth of the operational configuration parameters
+    uint32_t             positionBufferDepth;                                  // Depth of the position readings
+    uint32_t             pulseBufferDepth;                                     // Depth of the pulse buffer
+    uint32_t             rayBufferDepth;                                       // Depth of the ray buffer
+    uint32_t             productBufferDepth;                                   // Depth of the product buffer
+    uint32_t             controlCapacity;                                      // Number of control buttons
+    uint32_t             waveformCalibrationCapacity;                          // Number of waveform specific calibrations
+    size_t               healthNodeBufferSize;                                 // Buffer size (B)
+    size_t               healthBufferSize;                                     // Buffer size (B)
+    size_t               statusBufferSize;                                     // Buffer size (B)
+    size_t               configBufferSize;                                     // Buffer size (B)
+    size_t               positionBufferSize;                                   // Buffer size (B)
+    size_t               pulseBufferSize;                                      // Buffer size (B)
+    size_t               rayBufferSize;                                        // Buffer size (B)
+    size_t               productBufferSize;                                    // Buffer size (B)
+    uint32_t             pulseSmoothFactor;                                    // Pulse rate (Hz)
+    uint32_t             pulseTicsPerSecond;                                   // Pulse tics per second (normally 10e6)
+    uint32_t             positionSmoothFactor;                                 // Position rate (Hz)
+    uint32_t             positionTicsPerSecond;                                // Position tics per second
+    double               positionLatency;                                      // Position latency (s)
+    double               latitude;                                             // Latitude (degrees)
+    double               longitude;                                            // Longitude (degrees)
+    float                heading;                                              // Radar heading
+    float                radarHeight;                                          // Radar height from ground (m)
+    float                wavelength;                                           // Radar wavelength (m)
+    RKName               name;                                                 // Radar name
+    char                 filePrefix[8];                                        // Prefix of output files
+    char                 dataPath[768];                                        // Root path for the data files
+} RKRadarDescF1;
 
 //
 // Ray header
 //
-typedef struct rk_ray_header_v1 {
+typedef struct rk_ray_header_f1 {
     uint32_t             capacity;                                             // Capacity
     RKRayStatus          s;                                                    // Ray status
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKBaseProductList    baseProductList;                                      // List of calculated moments
+    RKProductList        productList;                                      // List of calculated moments
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            // Gate count of the ray
@@ -97,27 +168,38 @@ typedef struct rk_ray_header_v1 {
     uint8_t              reserved1;                                            //
     uint8_t              reserved2;                                            //
     uint8_t              reserved3;                                            //
-} RKRayHeaderV1;
+} RKRayHeaderF1;
 
 //
 // File header of raw I/Q data
 //
-typedef union rk_file_header_v1 {
-    struct {                                                                   // Up to version (buildNo) 5
+typedef union rk_file_header_f5 {
+    struct {                                                                   // Up to format (buildNo) 5
         RKName               preface;                                          //
         uint32_t             buildNo;                                          //
         RKRadarDesc          desc;                                             //
-        RKConfigV1           config;                                           //
+        RKConfigF1           config;                                           //
         RKRawDataType        dataType;                                         //
     };                                                                         //
     RKByte               bytes[4096];                                          //
-} RKFileHeaderV1;
+} RKFileHeaderF5;
 
+typedef union rk_file_header_f6_f7 {
+    struct {
+        RKName               preface;                                          // 128 B
+        uint32_t             version;                                          //   4 B
+        RKRawDataType        dataType;                                         //   1 B
+        uint8_t              reserved[123];                                    // 123 B = 256 B
+        RKRadarDesc          desc;                                             //         1072 B
+        RKConfigF5           config;                                           //         1600 B
+    };                                                                         //
+    RKByte               bytes[4096];                                          //
+} RKFileHeaderF6;
 
 //
 // Pulse header
 //
-typedef struct rk_pulse_header_v1 {
+typedef struct rk_pulse_header_f1 {
     RKIdentifier        i;                                                     // Identity counter
     RKIdentifier        n;                                                     // Network counter, may be useful to indicate packet loss
     uint64_t            t;                                                     // A clean clock-related tic count
@@ -139,25 +221,25 @@ typedef struct rk_pulse_header_v1 {
     float               azimuthDegrees;                                        // Azimuth in degrees
     float               elevationVelocityDegreesPerSecond;                     // Velocity of elevation in degrees / second
     float               azimuthVelocityDegreesPerSecond;                       // Velocity of azimuth in degrees / second
-} RKPulseHeaderV1;
+} RKPulseHeaderF1;
 
 //
 // Pulse
 //
 // - RKPulse struct is padded to a SIMD alignment
 //
-typedef struct rk_pulse_v1 {
+typedef struct rk_pulse_f1 {
     union {
         struct {
-            RKPulseHeaderV1      header;                                       //
+            RKPulseHeaderF1      header;                                       //
             RKPulseParameters    parameters;                                   //
         };                                                                     //
         RKByte               headerBytes[RKPulseHeaderPaddedSize];             //
     };                                                                         //
     RKByte               data[0];                                              //
-} RKPulseV1;
+} RKPulseF1;
 
-typedef struct rk_waveform_v1 {
+typedef struct rk_waveform_f1 {
     RKName               name;                                                 // Waveform name in plain string
     RKWaveformType       type;                                                 // Various type of waveforms
     uint8_t              count;                                                // Number of groups
@@ -168,7 +250,7 @@ typedef struct rk_waveform_v1 {
     RKFilterAnchorGroup  filterAnchors[RKMaximumWaveformCount];                // Filter anchors of each sub-waveform for de-multiplexing
     RKComplex            *samples[RKMaximumWaveformCount];                     // Samples up to amplitude of 1.0 (for compression, non-distorted)
     RKInt16C             *iSamples[RKMaximumWaveformCount];                    // 16-bit full-scale equivalence of the waveforms (pre-distorted)
-} RKWaveformV1;
+} RKWaveformF1;
 
 #pragma pack(pop)
 

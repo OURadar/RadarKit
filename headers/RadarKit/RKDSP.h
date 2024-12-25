@@ -9,6 +9,7 @@
 #ifndef __RadarKit_DSP__
 #define __RadarKit_DSP__
 
+#include <fftw3.h>
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKSIMD.h>
 #include <RadarKit/RKWindow.h>

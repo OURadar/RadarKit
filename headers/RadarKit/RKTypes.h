@@ -33,7 +33,6 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <fftw3.h>
 
 #include <RadarKit/RKVersion.h>
 
@@ -57,7 +56,7 @@
 
 #pragma mark - Constants
 
-#define RKRawDataVersion                     7                                 //
+#define RKRawDataFormat                      8                                 // Format
 #define RKBufferSSlotCount                   10                                // Status
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   50                                // Health
@@ -69,7 +68,6 @@
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKMemoryAlignSize
 #define RKMemoryAlignSize                    64                                // SSE 16, AVX 32, AVX-512 64
-#define RKMomentCount                        26                                // 32 to be the absolute max since momentList enum is 32-bit
 #define RKBaseProductCount                   19                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
@@ -118,6 +116,7 @@
 #define RKOrangeColor                        "\033[38;5;208m"
 #define RKYellowColor                        "\033[38;5;226m"
 #define RKCreamColor                         "\033[38;5;229m"
+#define RKGoldColor                          "\033[38;5;178m"
 #define RKLimeColor                          "\033[38;5;118m"
 #define RKMintColor                          "\033[38;5;43m"
 #define RKGreenColor                         "\033[38;5;46m"
@@ -398,6 +397,7 @@ N(RKResultClientNotConnected) \
 N(RKResultFileManagerInconsistentFolder) \
 N(RKResultFailedToExpandWaveform) \
 N(RKResultFailedToOpenFileForWriting) \
+N(RKResultFailedToStandardizeProduct) \
 N(RKResultRadarNotLive) \
 N(RKResultRawDataTypeUndefined) \
 N(RKResultNothingToRead) \
@@ -405,6 +405,12 @@ N(RKResultProductDescriptionNotSet) \
 N(RKResultProductDimensionsNotSet) \
 N(RKResultProductStartTimeNotSet) \
 N(RKResultProductGateSizeNotSet) \
+N(RKResultFilenameHasNoPrefix) \
+N(RKResultFilenameHasBadDate) \
+N(RKResultFilenameHasBadTime) \
+N(RKResultFilenameHasBadScan) \
+N(RKResultFilenameHasNoProduct) \
+N(RKResultFailedToOpenFile) \
 N(RKResultNoRadar)
 
 #define N(x) x,
@@ -476,10 +482,22 @@ enum {
     RKValueTypeDouble,
     RKValueTypeString,
     RKValueTypeNumericString,
+    RKValueTypeFloatWithOneDecimals,
+    RKValueTypeFloatWithTwoDecimals,
+    RKValueTypeFloatWithThreeDecimals,
+    RKValueTypeFloatWithFourDecimals,
+    RKValueTypeFloatWithFiveDecimals,
+    RKValueTypeFloatWithSixDecimals,
     RKValueTYpeFloatMultipliedBy1k,
     RKValueTYpeFloatMultipliedBy1M,
     RKValueTYpeFloatDividedBy1k,
     RKValueTYpeFloatDividedBy1M,
+    RKValueTypeDoubleWithOneDecimals,
+    RKValueTypeDoubleWithTwoDecimals,
+    RKValueTypeDoubleWithThreeDecimals,
+    RKValueTypeDoubleWithFourDecimals,
+    RKValueTypeDoubleWithFiveDecimals,
+    RKValueTypeDoubleWithSixDecimals,
     RKValueTYpeDoubleMultipliedBy1k,
     RKValueTYpeDoubleMultipliedBy1M,
     RKValueTYpeDoubleDividedBy1k,
@@ -646,16 +664,17 @@ enum {
     RKInitFlagPulsePositionCombiner              = 0x00010000,                 // 1 << 16
     RKInitFlagPositionSteerEngine                = 0x00020000,                 // 1 << 17
     RKInitFlagSignalProcessor                    = 0x00040000,                 // 1 << 18
-    RKInitFlagStartPulseEngine                   = 0x00100000,                 // New in v5 (still experimenting)
-    RKInitFlagStartRingFilterEngine              = 0x00200000,                 // New in v5 (still experimenting)
-    RKInitFlagStartMomentEngine                  = 0x00400000,                 // New in v5 (still experimenting)
+    RKInitFlagStartPulseEngine                   = 0x00100000,                 // New in v5
+    RKInitFlagStartRingFilterEngine              = 0x00200000,                 // New in v5
+    RKInitFlagStartMomentEngine                  = 0x00400000,                 // New in v5
+    RKInitFlagStartRawDataRecorder               = 0x00800000,                 // New in v6
     RKInitFlagRelay                              = 0x00007703,                 // 37F00(All) - 800(Pos) - 100000(PPC) - 20000(DSP)
     RKInitFlagIQPlayback                         = 0x00047701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
     RKInitFlagAllocEverything                    = 0x00077F01,
     RKInitFlagAllocEverythingQuiet               = 0x00077F00,
 };
 
-// The old RKBaseMomentList is now RKBaseProductList; see below  -boonleng 6/30/2021
+// The old RKBaseMomentList is now RKProductList; see below  -boonleng 6/30/2021
 // Level 15 data type
 typedef uint32_t RKMomentList;
 enum {
@@ -729,77 +748,78 @@ enum {
 };
 
 // Used to be RKBaseMomentList; -boonleng 6/1/2021
-typedef uint32_t RKBaseProductList;
+// Deprecating ... 7/3/2024
+typedef uint32_t RKProductList;
 enum {
-    RKBaseProductListNone                        = 0,                          // None
-    RKBaseProductListUInt8Z                      = 1,                          // Display Z - Reflectivity dBZ
-    RKBaseProductListUInt8V                      = (1 << 1),                   // Display V - Velocity
-    RKBaseProductListUInt8W                      = (1 << 2),                   // Display W - Width
-    RKBaseProductListUInt8D                      = (1 << 3),                   // Display D - Differential Reflectivity
-    RKBaseProductListUInt8P                      = (1 << 4),                   // Display P - PhiDP
-    RKBaseProductListUInt8R                      = (1 << 5),                   // Display R - RhoHV
-    RKBaseProductListUInt8K                      = (1 << 6),                   // Display K - KDP
-    RKBaseProductListUInt8Sh                     = (1 << 7),                   // Display Sh - Signal from H channel
-    RKBaseProductListUInt8Sv                     = (1 << 8),                   // Display Sv - Signal from V channel
-    RKBaseProductListUInt8Q                      = (1 << 9),                   // Display SQI - Signal Quality Index
-    RKBaseProductListUInt8U6                     = (1 << 10),                  //
-    RKBaseProductListUInt8U5                     = (1 << 11),                  //
-    RKBaseProductListUInt8U4                     = (1 << 12),                  //
-    RKBaseProductListUInt8U3                     = (1 << 13),                  //
-    RKBaseProductListUInt8U2                     = (1 << 14),                  //
-    RKBaseProductListUInt8U1                     = (1 << 15),                  //
-    RKBaseProductListUInt8ZVWDPR                 = 0x0000003F,                 // Display All without K, Sh, Sv and Q
-    RKBaseProductListUInt8ZVWDPRK                = 0x0000007F,                 // Display All without Sh, Sv and Q
-    RKBaseProductListUInt8ZVWDPRKS               = 0x000001FF,                 // Display All without Sh, Sv and Q
-    RKBaseProductListUInt8ZVWDPRKSQ              = 0x000003FF,                 // Display All
-    RKBaseProductListUInt8All                    = 0x0000FFFF,                 // Display All (same as above)
-    RKBaseProductListFloatZ                      = (1 << 16),                  // Data of Z
-    RKBaseProductListFloatV                      = (1 << 17),                  // Data of V
-    RKBaseProductListFloatW                      = (1 << 18),                  // Data of W
-    RKBaseProductListFloatD                      = (1 << 19),                  // Data of D
-    RKBaseProductListFloatP                      = (1 << 20),                  // Data of P
-    RKBaseProductListFloatR                      = (1 << 21),                  // Data of R
-    RKBaseProductListFloatK                      = (1 << 22),                  // Data of K
-    RKBaseProductListFloatSh                     = (1 << 23),                  // Data of Sh
-    RKBaseProductListFloatSv                     = (1 << 24),                  // Data of Sv
-    RKBaseProductListFloatQ                      = (1 << 25),                  // Data of Q
-    RKBaseProductListFloatLh                     = (1 << 26),                  // Data of LDRh
-    RKBaseProductListFloatLv                     = (1 << 27),                  // Data of LDRv
-    RKBaseProductListFloatRXh                    = (1 << 28),                  // Data of Rhoxh
-    RKBaseProductListFloatRXv                    = (1 << 29),                  // Data of Rhoxv
-    RKBaseProductListFloatPXh                    = (1 << 30),                  // Data of Phixh
-    RKBaseProductListFloatPXv                    = (1 << 31),                  // Data of Phixv
-    RKBaseProductListFloatZVWDPR                 = 0x003F0000,                 // Base moment data without K, Sh, Sv and Q
-    RKBaseProductListFloatZVWDPRK                = 0x007F0000,                 // Base moment data without Sh, Sv and Q
-    RKBaseProductListFloatZVWDPRKS               = 0x01FF0000,                 // All data without Q
-    RKBaseProductListFloatZVWDPRKLRXPX           = 0xFC7F0000,                 // ATSR data without SQ
-    RKBaseProductListFloatATSR                   = 0xFDFF0000,                 // ATSR data without Q
-    RKBaseProductListFloatZVWDPRKSQ              = 0x03FF0000,                 // All data
-    RKBaseProductListFloatAll                    = 0xFFFF0000                  // All data (same as above)
+    RKProductListNone                        = 0,                          // None
+    RKProductListUInt8Z                      = 1,                          // Display Z - Reflectivity dBZ
+    RKProductListUInt8V                      = (1 << 1),                   // Display V - Velocity
+    RKProductListUInt8W                      = (1 << 2),                   // Display W - Width
+    RKProductListUInt8D                      = (1 << 3),                   // Display D - Differential Reflectivity
+    RKProductListUInt8P                      = (1 << 4),                   // Display P - PhiDP
+    RKProductListUInt8R                      = (1 << 5),                   // Display R - RhoHV
+    RKProductListUInt8K                      = (1 << 6),                   // Display K - KDP
+    RKProductListUInt8Sh                     = (1 << 7),                   // Display Sh - Signal from H channel
+    RKProductListUInt8Sv                     = (1 << 8),                   // Display Sv - Signal from V channel
+    RKProductListUInt8Q                      = (1 << 9),                   // Display SQI - Signal Quality Index
+    RKProductListUInt8U6                     = (1 << 10),                  //
+    RKProductListUInt8U5                     = (1 << 11),                  //
+    RKProductListUInt8U4                     = (1 << 12),                  //
+    RKProductListUInt8U3                     = (1 << 13),                  //
+    RKProductListUInt8U2                     = (1 << 14),                  //
+    RKProductListUInt8U1                     = (1 << 15),                  //
+    RKProductListUInt8ZVWDPR                 = 0x0000003F,                 // Display All without K, Sh, Sv and Q
+    RKProductListUInt8ZVWDPRK                = 0x0000007F,                 // Display All without Sh, Sv and Q
+    RKProductListUInt8ZVWDPRKS               = 0x000001FF,                 // Display All without Sh, Sv and Q
+    RKProductListUInt8ZVWDPRKSQ              = 0x000003FF,                 // Display All
+    RKProductListUInt8All                    = 0x0000FFFF,                 // Display All (same as above)
+    RKProductListFloatZ                      = (1 << 16),                  // Data of Z
+    RKProductListFloatV                      = (1 << 17),                  // Data of V
+    RKProductListFloatW                      = (1 << 18),                  // Data of W
+    RKProductListFloatD                      = (1 << 19),                  // Data of D
+    RKProductListFloatP                      = (1 << 20),                  // Data of P
+    RKProductListFloatR                      = (1 << 21),                  // Data of R
+    RKProductListFloatK                      = (1 << 22),                  // Data of K
+    RKProductListFloatSh                     = (1 << 23),                  // Data of Sh
+    RKProductListFloatSv                     = (1 << 24),                  // Data of Sv
+    RKProductListFloatQ                      = (1 << 25),                  // Data of Q
+    RKProductListFloatLh                     = (1 << 26),                  // Data of LDRh
+    RKProductListFloatLv                     = (1 << 27),                  // Data of LDRv
+    RKProductListFloatPXh                    = (1 << 28),                  // Data of Phixh
+    RKProductListFloatPXv                    = (1 << 29),                  // Data of Phixv
+    RKProductListFloatRXh                    = (1 << 30),                  // Data of Rhoxh
+    RKProductListFloatRXv                    = (1 << 31),                  // Data of Rhoxv
+    RKProductListFloatZVWDPR                 = 0x003F0000,                 // Base moment data without K, Sh, Sv and Q
+    RKProductListFloatZVWDPRK                = 0x007F0000,                 // Base moment data without Sh, Sv and Q
+    RKProductListFloatZVWDPRKS               = 0x01FF0000,                 // All data without Q
+    RKProductListFloatZVWDPRKLRXPX           = 0xFC7F0000,                 // ATSR data without SQ
+    RKProductListFloatATSR                   = 0xFDFF0000,                 // ATSR data without Q
+    RKProductListFloatZVWDPRKSQ              = 0x03FF0000,                 // All data
+    RKProductListFloatAll                    = 0xFFFF0000                  // All data (same as above)
 };
 
-typedef uint8_t RKBaseProductIndex;
+typedef uint8_t RKProductIndex;
 enum {
-    RKBaseProductIndexZ,
-    RKBaseProductIndexV,
-    RKBaseProductIndexW,
-    RKBaseProductIndexD,
-    RKBaseProductIndexP,
-    RKBaseProductIndexR,
-    RKBaseProductIndexK,
-    RKBaseProductIndexSh,
-    RKBaseProductIndexSv,
-    RKBaseProductIndexQ,
-    RKBaseProductIndexLh,
-    RKBaseProductIndexLv,
-    RKBaseProductIndexRXh,
-    RKBaseProductIndexRXv,
-    RKBaseProductIndexPXh,
-    RKBaseProductIndexPXv,
-    RKBaseProductIndexZv,                                                      //
-    RKBaseProductIndexVv,                                                      //
-    RKBaseProductIndexWv,                                                      //
-    RKBaseProductIndexCount
+    RKProductIndexZ,
+    RKProductIndexV,
+    RKProductIndexW,
+    RKProductIndexD,
+    RKProductIndexP,
+    RKProductIndexR,
+    RKProductIndexK,
+    RKProductIndexSh,
+    RKProductIndexSv,
+    RKProductIndexQ,
+    RKProductIndexLh,
+    RKProductIndexLv,
+    RKProductIndexPXh,
+    RKProductIndexPXv,
+    RKProductIndexRXh,
+    RKProductIndexRXv,
+    RKProductIndexZv,                                                      //
+    RKProductIndexVv,                                                      //
+    RKProductIndexWv,                                                      //
+    RKProductIndexCount
 };
 
 typedef uint8_t RKProductType;
@@ -813,6 +833,8 @@ enum {
 typedef uint32_t RKConfigKey;
 enum {
     RKConfigKeyNull,
+    RKConfigKeyVolumeIndex,
+    RKConfigKeySweepIndex,
     RKConfigKeySweepElevation,
     RKConfigKeySweepAzimuth,
     RKConfigKeyPositionMarker,
@@ -839,6 +861,7 @@ enum {
     RKConfigKeyUserIntegerParameters,
     RKConfigKeyUserFloatParameters,
     RKConfigKeyUserResource,
+    RKConfigKeyMomentMethod,
     RKConfigKeyCount
 };
 
@@ -1014,7 +1037,7 @@ enum {
     RKStreamSweepQ                               = (1ULL << 57),               //
     RKStreamSweepZVWDPRKS                        = 0x01FF000000000000ULL,      //
     RKStreamSweepAll                             = 0x03FF000000000000ULL,      //
-    RKStreamAlmostEverything                     = 0x03FF03FF03FFF000ULL,      // Don't use this.
+    RKStreamAlmostEverything                     = 0x03FF03FF03FFF000ULL,      // Avoid using this.
     RKStreamStatusTerminalChange                 = 0x0400000000000000ULL       // Change terminal size
 };
 
@@ -1142,15 +1165,40 @@ enum {
     RKRadarHubTypeRadialR                        = 21                          //
 };
 
+typedef uint32_t RKWriterOption;
+enum RKWriterOption {
+    RKWriterOptionNone                           = 0,                          //
+    RKWriterOptionPackPosition                   = 1,                          // Use packed position
+    RKWriterOptionDeflateFields                  = 1 << 1,                     // Use NetCDF deflate on field variables
+    RKWriterOptionStringVariables                = 1 << 2                      // Use NetCDF string on variables
+};
+
+typedef uint8_t RKMomentMethod;
+enum RKMomentMethod {
+    RKMomentMethodNone,                                                        // No method
+    RKMomentMethodPulsePair,                                                   // Pulse pair
+    RKMomentMethodPulsePairHop,                                                // Pulse pair frequency hopping
+    RKMomentMethodPulsePairATSR,                                               // Pulse pair for alternative transmit simultaneous receive
+    RKMomentMethodMultiLag2,                                                   // Multi-lag 2
+    RKMomentMethodMultiLag3,                                                   // Multi-lag 3
+    RKMomentMethodMultiLag4,                                                   // Multi-lag 4
+    RKMomentMethodSpectralMoment,                                              // Spectral moment
+    RKMomentMethodUserDefined                                                  // User defined
+};
+
 typedef union rk_radarhub_ray_header {
     struct {
         uint8_t                type;                                           // Redundant definition as the first byte of the WS frame is type
+        uint8_t                counter;                                        //
         int16_t                startElevation;                                 // Start of scan elevation
         int16_t                endElevation;                                   // End of scan elevation
-        int16_t                startAzimuth;                                   // Start of scan azimuth
-        int16_t                endAzimuth;                                     // End of scan azimuth
+        uint16_t               startAzimuth;                                   // Start of scan azimuth
+        uint16_t               endAzimuth;                                     // End of scan azimuth
+        uint16_t               rangeStart;                                     // Start of range
+        uint16_t               rangeDelta;                                     // Spacing of range
+        uint16_t               gateCount;                                      //
     };
-    RKByte                 bytes[10];                                          //
+    RKByte                 bytes[16];                                          //
 } RKRadarHubRayHeader;
 
 typedef union rk_radarhub_ray {
@@ -1254,6 +1302,8 @@ typedef struct rk_waveform_response {
 typedef union rk_config {
     struct {
         RKIdentifier         i;                                                // Identity counter
+        RKIdentifier         volumeIndex;                                      // Volume index
+        RKIdentifier         sweepIndex;                                       // Sweep index
         float                sweepElevation;                                   // Sweep elevation angle (degrees)
         float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
         RKMarker             startMarker;                                      // Marker of the latest start ray
@@ -1277,9 +1327,10 @@ typedef union rk_config {
         RKWaveform           *waveform;                                        // Reference to the waveform storage
         RKWaveform           *waveformDecimate;                                // Reference to the waveform storage in Level-II sampling rate
         RKUserResource       userResource;                                     // User resource (not yet)
+        RKMomentMethod       momentMethod;                                     // Moment method
         uint32_t             userIntegerParameters[RKUserParameterCount];      // User integer parameters (not yet)
         float                userFloatParameters[RKUserParameterCount];        // User float parameters (not yet)
-        char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
+        char                 vcpDefinition[480];                               // Volume coverage pattern
     };
     RKByte               bytes[1024];
 } RKConfig;
@@ -1287,7 +1338,7 @@ typedef union rk_config {
 //
 // Consolidated health buffer
 //
-typedef union rk_heath {
+typedef union rk_health {
     struct {
         RKIdentifier         i;                                                // Identity counter
         RKHealthFlag         flag;                                             // Health flag
@@ -1337,6 +1388,8 @@ typedef union rk_position {
         float                sweepAzimuthDegrees;                              // Set azimuth for current sweep
         struct timeval       time;                                             // Time in struct timeval
         double               timeDouble;                                       // Time in double;
+        uint32_t             volumeIndex;                                      // Volume index
+        uint32_t             sweepIndex;                                       // Sweep index
     };
     RKByte               bytes[128];
 } RKPosition;
@@ -1411,8 +1464,8 @@ typedef struct rk_ray_header {
     RKIdentifier         i;                                                    // Ray indentity
     RKIdentifier         n;                                                    // Ray network counter
     RKMarker             marker;                                               // Volume / sweep / radial marker
-    RKMomentList         baseMomentList;                                       // List of calculated moments
-    RKBaseProductList    baseProductList;                                      // 16-bit MSB for products + 16-bit LSB for display
+    RKMomentList         momentList;                                           // List of calculated moments
+    RKProductList        productList;                                          // 16-bit MSB for products + 16-bit LSB for display
     uint16_t             configIndex;                                          // Operating configuration index
     uint16_t             configSubIndex;                                       // Operating configuration sub-index
     uint16_t             gateCount;                                            // Gate count of the ray
@@ -1454,10 +1507,10 @@ typedef struct rk_sweep_header {
     RKIdentifier         i;                                                    // Identity counter = RKSweepEngine->sweepIndex
     uint32_t             rayCount;                                             // Number of rays
     uint32_t             gateCount;                                            // Number of range gates
-    time_t               startTime;                                            // Start time of the sweep
-    time_t               endTime;                                              // End time of the sweep
+    double               startTime;                                            // Start time of the sweep
+    double               endTime;                                              // End time of the sweep
     RKMomentList         momentList;                                           // List of calculated moments
-    RKBaseProductList    baseProductList;                                      // List of available products
+    RKProductList        productList;                                          // List of available products
     float                gateSizeMeters;                                       // Gate size in meters
     bool                 isPPI;                                                //
     bool                 isRHI;                                                //
@@ -1479,7 +1532,7 @@ typedef struct rk_sweep {
 typedef union rk_file_header {
     struct {
         RKName               preface;                                          // 128 B
-        uint32_t             version;                                          //   4 B
+        uint32_t             format;                                           //   4 B
         RKRawDataType        dataType;                                         //   1 B
         uint8_t              reserved[123];                                    // 123 B = 256 B
         RKRadarDesc          desc;                                             //         1072 B
@@ -1574,9 +1627,10 @@ typedef union rk_product_desc {                                                /
         uint32_t             key;                                              // A unique key to identify the product routine
         RKName               name;                                             // Name of the product
         RKName               unit;                                             // Unit of the product
-        RKName               colormap;                                         // Colormap of the product for the UI
+        RKName               description;                                      // Standard name of the product
+        RKName               colormap;                                         // Colormap of the product for the UI (deprecating)
         char                 symbol[8];                                        // Product symbol
-        RKBaseProductIndex   index;                                            // Base moment index
+        RKProductIndex       index;                                            // Base moment index
         RKProductType        type;                                             // RKProductType
         uint32_t             pieceCount;                                       // Count of piece-wise function that maps data to color index
         RKFloat              w[16];                                            // Data to color index weight (piece-wise function)
@@ -1584,7 +1638,8 @@ typedef union rk_product_desc {                                                /
         RKFloat              l[16];                                            // The lower bound of each piece
         RKFloat              mininimumValue;                                   // Minimum value
         RKFloat              maximumValue;                                     // Maximum value
-        RKBaseProductList    baseProductList;                                  // baseProductList of product
+        float                cfScale;                                          // Scale factor for CF-Radial
+        float                cfOffset;                                         // Offset factor for CF-Radial
     };
     RKByte bytes[1024];
 } RKProductDesc;
@@ -1594,16 +1649,19 @@ typedef union rk_product_header {
         RKName               radarName;                                        // Radar name
         double               latitude;                                         // Latitude (degrees)
         double               longitude;                                        // Longitude (degrees)
+        double               altitude;                                         // Altitude (m)
         float                heading;                                          // Radar heading
         float                radarHeight;                                      // Radar height from ground (m)
         float                wavelength;                                       // Radar wavelength (m)
         float                sweepElevation;                                   // Sweep elevation angle (degrees)
         float                sweepAzimuth;                                     // Sweep azimuth angle (degrees)
+        uint32_t             volumeIndex;                                      // Volume index
+        uint32_t             sweepIndex;                                       // Sweep index
         uint32_t             rayCount;                                         // Number of rays
         uint32_t             gateCount;                                        // Number of range gates
         float                gateSizeMeters;                                   // Gate size in meters
-        time_t               startTime;                                        // Start time of the sweep
-        time_t               endTime;                                          // End time of the sweep
+        double               startTime;                                        // Start time of the sweep
+        double               endTime;                                          // End time of the sweep
         bool                 isPPI;                                            // PPI indicator
         bool                 isRHI;                                            // RHI indicator
         RKFloat              prt[RKMaximumFilterCount];                        // Pulse repetition time (s)
@@ -1618,6 +1676,7 @@ typedef union rk_product_header {
         RKFloat              SNRThreshold;                                     // Censor SNR (dB)
         RKFloat              SQIThreshold;                                     // Censor SQI
         RKName               waveformName;                                     // Waveform name
+        RKName               momentMethod;                                     // Moment method
         char                 vcpDefinition[RKMaximumCommandLength];            // Volume coverage pattern
         char                 suggestedFilename[RKMaximumPathLength];           // RadarKit suggested fullpath filename
     };
@@ -1627,7 +1686,7 @@ typedef union rk_product_header {
 typedef struct rk_product {                                                    // A description of user product
     RKIdentifier         i;                                                    // Product counter to be synchronized with RKConfig->i
     RKProductId          pid;                                                  // Product identifier from RKProductRegister()
-    RKProductDesc        desc;                                                 // Description
+    RKProductDesc        desc;                                                 // Description (not really used)
     RKProductStatus      flag;                                                 // Various state
     RKProductHeader      header;                                               // Product header
     uint32_t             capacity;                                             // Number of RKFloat elements in blocks of array
@@ -1636,6 +1695,8 @@ typedef struct rk_product {                                                    /
     RKFloat              *endAzimuth;                                          // End azimuth of each ray
     RKFloat              *startElevation;                                      // Start elevation of each ray
     RKFloat              *endElevation;                                        // End elevation of each ray
+    double               *startTime;                                           // Start time of each ray
+    double               *endTime;                                             // End time of each ray
     RKFloat              *data;                                                // Flattened array of user product
 } RKProduct;
 

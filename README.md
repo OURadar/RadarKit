@@ -1,6 +1,5 @@
 [![Latest Release](https://git.arrc.ou.edu/radar/radarkit/-/badges/release.svg)](https://git.arrc.ou.edu/radar/radarkit/-/releases) [![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)](https://git.arrc.ou.edu/radar/radarkit/-/commits/master)
 
-
 # RadarKit
 
 First of all, many thanks for your interest in the framework! :smile: :thumbsup: :punch:
@@ -33,11 +32,18 @@ Follow these steps to get the project
    - [FFTW]
    - [NetCDF]
    - [OpenSSL]
+   - [libarchive]
 
    ##### Debian / Ubuntu
 
    ```shell
-   apt install libfftw3-dev libnetcdf-dev libssl-dev
+   apt install libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
+   ```
+
+   ##### CentOS
+
+   ```shell
+   yum install libfftw3-devel libnetcdf-devel libssl-devel libarchive-devel
    ```
 
    ##### macOS
@@ -45,7 +51,7 @@ Follow these steps to get the project
    I use [Homebrew] as my package manager for macOS. I highly recommend it.
 
    ```shell
-   brew install fftw netcdf openssl@1.1
+   brew install fftw netcdf openssl@1.1 libarchive
    ```
 
    ##### Special Notes About NetCDF Shared Library
@@ -96,9 +102,10 @@ Follow these steps to get the project
    sudo make install
    ```
 
-[fftw]: http://www.fftw.org
-[netcdf]: http://www.unidata.ucar.edu/software/netcdf
-[homebrew]: http://brew.sh
+[FFTW]: http://www.fftw.org
+[NetCDF]: http://www.unidata.ucar.edu/software/netcdf
+[libarchive]: https://libarchive.org
+[Homebrew]: http://brew.sh
 
 ## Basic Usage on Radar Host
 
@@ -123,202 +130,202 @@ Follow these steps to get the project
 
 3. Set up **digital transceiver** _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives I/Q data, actively request a vacant slot through `RKGetVacantPulse()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPulseHasData()`.
 
-   ```c
-   typedef struct user_transceiver_struct {
-       // Your variables
-       int x;
-       int y;
-       int z;
-       bool active;
+    ```c
+    typedef struct user_transceiver_struct {
+        // Your variables
+        int x;
+        int y;
+        int z;
+        bool active;
 
-       // Recommend keeping a reference to the supplied radar
-       RKRadar *radar;
+        // Recommend keeping a reference to the supplied radar
+        RKRadar *radar;
 
-       // For this example, we will keep the thread reference here
-       pthread tid;
-   } UserTransceiverStruct;
+        // For this example, we will keep the thread reference here
+        pthread tid;
+    } UserTransceiverStruct;
 
-   RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
-       // Allocate your own resources, define your structure somewhere else
-       UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
+    RKTransceiver transceiverInit(RKRadar *radar, void *userInput) {
+        // Allocate your own resources, define your structure somewhere else
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)malloc(sizeof(UserTransceiverStruct));
 
-       // Be sure to save a reference to the radar
-       resource->radar = radar;
-       resource->active = true;
+        // Be sure to save a reference to the radar
+        resource->radar = radar;
+        resource->active = true;
 
-       // Create your run loop as a separate thread so you can return immediately
-       pthread_create(&resource->tid, NULL, transceiverRunLoop, resource);
+        // Create your run loop as a separate thread so you can return immediately
+        pthread_create(&resource->tid, NULL, transceiverRunLoop, resource);
 
-       return (RKTransceiver)resource;
+        return (RKTransceiver)resource;
    }
 
-   int transceiverExec(RKTransceiver yourTransceiver, const char *command, char *feedback) {
-       // Type cast the first input as your transceiver
-       UserTransceiverStruct *resource = (UserTransceiverStruct *)yourTransceiver;
+    int transceiverExec(RKTransceiver yourTransceiver, const char *command, char *feedback) {
+        // Type cast the first input as your transceiver
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)yourTransceiver;
 
-       // Now you can recover the radar reference you provided in init routine.
-       RKRadar *radar = resource->radar;
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
 
-       // Execute commands stored in const char *command
-       if (!strcmp(command, "disconnect")) {
-           // The exec function should response to 'disconnect' and stop the run loop
-           resource->active = false;
-           pthread_join(resource->tidRunLoop, NULL);
-           sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
-       } else if (!strcmp(command, "a") {
-           // Perform task "a"
-           print("Hello World.\n");
-           // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
-           sprintf(feedback, "ACK. Command executed." RKEOL);
-       } else {
-           // Return something even if you cannot do something
-           sprintf(feedback, "NAK. Command not understood." RKEOL);
-           return 1;
-       }
-       return 0;
+        // Execute commands stored in const char *command
+        if (!strcmp(command, "disconnect")) {
+            // The exec function should response to 'disconnect' and stop the run loop
+            resource->active = false;
+            pthread_join(resource->tidRunLoop, NULL);
+            sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
+        } else if (!strcmp(command, "a") {
+            // Perform task "a"
+            print("Hello World.\n");
+            // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
+            sprintf(feedback, "ACK. Command executed." RKEOL);
+        } else {
+            // Return something even if you cannot do something
+            sprintf(feedback, "NAK. Command not understood." RKEOL);
+            return 1;
+        }
+        return 0;
    }
 
-   int transceiverFree(RKTransceiver yourTransceiver) {
-       // Free up resources
-       free(yourTransceiver);
-       return RKResultSuccess;
-   }
+    int transceiverFree(RKTransceiver yourTransceiver) {
+        // Free up resources
+        free(yourTransceiver);
+        return RKResultSuccess;
+    }
 
-   void *transceiverRunLoop(void *in) {
-       // Type cast the input to something you defined earlier
-       UserTransceiverStruct *resource = (UserTransceiverStruct *)in;
+    void *transceiverRunLoop(void *in) {
+        // Type cast the input to something you defined earlier
+        UserTransceiverStruct *resource = (UserTransceiverStruct *)in;
 
-       // Now you can recover the radar reference you provided in init routine.
-       RKRadar *radar = resource->radar;
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
 
-       // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
-       uint64_t tic = 0;
+        // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
+        uint64_t tic = 0;
 
-       // Here is the busy run loop
-       while (radar->state & RKRadarStateLive) {
-           RKPulse *pulse = RKGetVacantPulse(radar);
-           pulse->header.t = tic++;                 // Required. Some kind of clean reference directly proportional to time
-           pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
-           pulse->header.gateCount = 500;           // Required.
-           pulse->header.gateSizeMeters = 30.0f;    // Required.
+        // Here is the busy run loop
+        while (radar->state & RKRadarStateLive) {
+            RKPulse *pulse = RKGetVacantPulse(radar);
+            pulse->header.t = tic++;                 // Required. Some kind of clean reference directly proportional to time
+            pulse->header.gateCount = 1000;          // Required. The number of range gates. Must be < gateCapacity (RKRadarDesc)
+            pulse->header.gateCount = 500;           // Required.
+            pulse->header.gateSizeMeters = 30.0f;    // Required.
 
-           // Go through both polarizations
-           for (int p = 0; p < 2; p++) {
-               // Get a data pointer to the 16-bit data
-               RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
-               // Go through all range gates and fill in the samples
-               for (int g = 0; g < 1000; g++) {
-                   // Copy the I/Q samples from hardware interface
-                   X->i = 0;
-                   X->q = 1;
-                   X++;
-               }
-           }
-           RKSetPulseHasData(radar, pulse);
-       }
-       return 0;
-   }
-   ```
+            // Go through both polarizations
+            for (int p = 0; p < 2; p++) {
+                // Get a data pointer to the 16-bit data
+                RKInt16C *X = RKGetInt16CDataFromPulse(pulse, p);
+                // Go through all range gates and fill in the samples
+                for (int g = 0; g < 1000; g++) {
+                    // Copy the I/Q samples from hardware interface
+                    X->i = 0;
+                    X->q = 1;
+                    X++;
+                }
+            }
+            RKSetPulseHasData(radar, pulse);
+        }
+        return 0;
+    }
+    ```
 
 4. Set up **pedestal** _init_, _exec_ and _free_ routines. The _init_ routine must launch a separate run-loop so that the _init_ routine returns a user-defined pointer (of a struct) immediately. The run-loop routine receives position data, actively request a vacant slot through `RKGetVacantPosition()`, fills in the slot with proper data and then declare the pulse to have data using `RKSetPositionReady()`.
 
-   ```c
-   typedef struct user_pedestal_struct {
-       // Your variables
-       int x;
-       int y;
-       int z;
-       bool active;
+    ```c
+    typedef struct user_pedestal_struct {
+        // Your variables
+        int x;
+        int y;
+        int z;
+        bool active;
 
-       // Recommend keeping a reference to the supplied radar
-       RKRadar *radar;
+        // Recommend keeping a reference to the supplied radar
+        RKRadar *radar;
 
-       // For this example, we will keep the thread reference here
-       pthread tid;
-   } UserPedestalStruct;
+        // For this example, we will keep the thread reference here
+        pthread tid;
+    } UserPedestalStruct;
 
-   RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
-       // Allocate your own resources, define your structure somewhere else
-       UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
+    RKPedestal pedestalInit(RKRadar *radar, void *userInput) {
+        // Allocate your own resources, define your structure somewhere else
+        UserPedestalStruct *resource = (UserPedestalStruct *)malloc(sizeof(UserPedestalStruct));
 
-       // Be sure to save a reference to the radar
-       resource->radar = radar;
-       resource->active = true;
+        // Be sure to save a reference to the radar
+        resource->radar = radar;
+        resource->active = true;
 
-       // Create your run loop as a separate thread so you can return immediately
-       pthread_create(&resource->tid, NULL, pedestalRunLoop, resource);
+        // Create your run loop as a separate thread so you can return immediately
+        pthread_create(&resource->tid, NULL, pedestalRunLoop, resource);
 
-       return (RKPedestal)resource;
-   }
+        return (RKPedestal)resource;
+    }
 
-   int pedestalExec(RKPedestal yourPedestal, const char *command, char *feedback) {
-       // Type cast the first input as your pedestal
-       UserPedestalStruct *resource = (UserPedestalStruct *)yourPedestal;
+    int pedestalExec(RKPedestal yourPedestal, const char *command, char *feedback) {
+        // Type cast the first input as your pedestal
+        UserPedestalStruct *resource = (UserPedestalStruct *)yourPedestal;
 
-       // Now you can recover the radar reference you provided in init routine.
-       RKRadar *radar = resource->radar;
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
 
-       // Execute commands stored in const char *command
-       if (!strcmp(command, "disconnect")) {
-           // The exec function should response to 'disconnect' and stop the run loop
-           resource->active = false;
-           pthread_join(resource->tidRunLoop, NULL);
-           sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
-       } else if (!strcmp(command, "a") {
-           // Perform task "a"
-           print("Hello World.\n");
-           // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
-           sprintf(feedback, "ACK. Command executed." RKEOL);
-       } else {
-           // Return something even if you cannot do something
-           sprintf(feedback, "NAK. Command not understood." RKEOL);
-           return 2;
-       }
-       return 0;
-   }
+        // Execute commands stored in const char *command
+        if (!strcmp(command, "disconnect")) {
+            // The exec function should response to 'disconnect' and stop the run loop
+            resource->active = false;
+            pthread_join(resource->tidRunLoop, NULL);
+            sprintf(feedback, "ACK. Pedestal stopped." RKEOL);
+        } else if (!strcmp(command, "a") {
+            // Perform task "a"
+            print("Hello World.\n");
+            // Provide text feedback to char *feedback; Starts with "ACK" for acknowledge. Ends with RKEOL.
+            sprintf(feedback, "ACK. Command executed." RKEOL);
+        } else {
+            // Return something even if you cannot do something
+            sprintf(feedback, "NAK. Command not understood." RKEOL);
+            return 2;
+        }
+        return 0;
+    }
 
-   int pedestalFree(RKPedestal yourPedestal) {
-       // Free up resources
-       free(yourPedestal);
-       return 0;
-   }
+    int pedestalFree(RKPedestal yourPedestal) {
+        // Free up resources
+        free(yourPedestal);
+        return 0;
+    }
 
-   int pedestalRunLoop(void *in) {
-       // Type cast the input to something you defined earlier
-       UserPedestalStruct *resource = (UserPedestalStruct *)in;
+    int pedestalRunLoop(void *in) {
+        // Type cast the input to something you defined earlier
+        UserPedestalStruct *resource = (UserPedestalStruct *)in;
 
-       // Now you can recover the radar reference you provided in init routine.
-       RKRadar *radar = resource->radar;
+        // Now you can recover the radar reference you provided in init routine.
+        RKRadar *radar = resource->radar;
 
-       // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
-       uint64_t tic = 0;
+        // Some internal variables. It would be best if this is a clean reference from an FPGA or something similar
+        uint64_t tic = 0;
 
-       // Here is the busy run loop
-       while (resource->active) {
-           RKPosition *position = RKGetVacantPosition(radar);
+        // Here is the busy run loop
+        while (resource->active) {
+            RKPosition *position = RKGetVacantPosition(radar);
 
-           // Copy the position from hardware interface
-           position->t = tic++;                                  // Required. A clean reference that is directional proportional to sampling time
-           position->azimuthDegrees = 1.0;                       // Required.
-           position->elevationDegrees = 0.5;                     // Required.
-           position->azimuthVelocityDegreesPerSecond = 25.0f;    // Optional.
-           position->elevationVelocityDegreesPerSecond = 0.0f;   // Optional.
-           position->flag = RKPositionFlagScanActive
-                          | RKPositionFlagAzimuthEnabled
-                          | RKPositionFlagElevationEnabled;      // Required.
-           RKSetPositionReady(radar, position);
-       }
-       return 0;
-   }
-   ```
+            // Copy the position from hardware interface
+            position->t = tic++;                                  // Required. A clean reference that is directional proportional to sampling time
+            position->azimuthDegrees = 1.0;                       // Required.
+            position->elevationDegrees = 0.5;                     // Required.
+            position->azimuthVelocityDegreesPerSecond = 25.0f;    // Optional.
+            position->elevationVelocityDegreesPerSecond = 0.0f;   // Optional.
+            position->flag = RKPositionFlagScanActive
+                            | RKPositionFlagAzimuthEnabled
+                            | RKPositionFlagElevationEnabled;      // Required.
+            RKSetPositionReady(radar, position);
+        }
+        return 0;
+    }
+    ```
 
 5. (Optional) Set up _health relay_ initialization and run-loop routines just like the previous two examples.
 
 6. Build the program and link to the RadarKit framework. Note that the required packages should be applied too.
 
-   ```shell
-   gcc -o program program.c -lradarkit -lfftw3f -lnetcdf
-   ```
+    ```shell
+    gcc -o program program.c -lradarkit -lfftw3f -lnetcdf
+    ```
 
 This example is extremely simple. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
@@ -339,9 +346,9 @@ Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKR
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
 [tweeto]: https://git.arrc.ou.edu/cheo4524/tweeto.git
-[iradar]: https://arrc.ou.edu/tools
-[openssl]: https://www.openssl.org
-[radarhub]: https://git.arrc.ou.edu/radar/RadarHub.git
+[iRadar]: https://arrc.ou.edu/tools
+[OpenSSL]: https://www.openssl.org
+[RadarHub]: https://git.arrc.ou.edu/radar/RadarHub.git
 
 # Radar Struct
 
@@ -454,8 +461,8 @@ void RKMeasureNoise(RKRadar *);                                                 
 void RKSetSNRThreshold(RKRadar *, const RKFloat);                                                  // Set the censoring SNR threshold
 
 // Status
-RKStatus *RKGetVacantStatus(RKRadar *);                                                            // Don't worry about this. This is managed by systemInspector
-void RKSetStatusReady(RKRadar *, RKStatus *);                                                      // Don't worry about this. This is managed by systemInspector
+RKStatus *RKGetVacantStatus(RKRadar *);                                                            // Do not worry about this. This is managed by systemInspector
+void RKSetStatusReady(RKRadar *, RKStatus *);                                                      // Do not worry about this. This is managed by systemInspector
 
 // Configs
 void RKAddConfig(RKRadar *radar, ...);                                                             // Inform RadarKit about certain slow-changing parameters, e.g., PRF, waveform, etc.

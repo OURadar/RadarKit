@@ -6,10 +6,8 @@
 //  Copyright © 2017-2021 Boonleng Cheong. All rights reserved.
 //
 
-#include <RadarKit/RKClock.h>
 
-#pragma mark -
-#pragma mark Life Cycle
+#include <RadarKit/RKClock.h>
 
 RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
     if (size < stride) {
@@ -132,7 +130,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     double x, dx, du, y;
     struct timeval t;
     bool recent = true;
-    
+
     // Get the time
     gettimeofday(&t, NULL);
     if (timeval) {
@@ -241,7 +239,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     clock->count++;
 
 #ifdef DEBUG_CLOCK
-    
+
     printf("%s k = %d/%lu  j = %d   u = %.1f -> %.1f -> %.1f   x = %.2f -> %.1f -> %.3f   dxdu = %.3f / %.3f -> %.3f   y = %.3f   t = %.3f s %s %d %d\n",
            clock->name, k, (unsigned long)clock->count, j,
            u, clock->sum_u0, clock->u0,

@@ -1,6 +1,6 @@
-tqdm
-numpy
-wheel
 blib-py
 netCDF4
-ctypesgen
+numpy
+radar-data
+tqdm
+wheel

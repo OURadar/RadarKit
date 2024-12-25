@@ -11,6 +11,7 @@
 
 #include <RadarKit/RKRadar.h>
 #include <RadarKit/RKReporter.h>
+#include <RadarKit/RKFileHeader.h>
 
 #define RKTestWaveformCacheCount 2
 
@@ -112,42 +113,56 @@ void RKTestByNumber(const int, const void *);
 
 // Basic Tests
 
+void RKTestShowTypes(void);
 void RKTestTerminalColors(void);
 void RKTestPrettyStrings(void);
 void RKTestBasicMath(void);
 void RKTestParseCommaDelimitedValues(void);
 void RKTestParseJSONString(void);
-void RKTestFileManager(void);
-void RKTestPreferenceReading(void);
-void RKTestCountFiles(void);
-void RKTestFileMonitor(void);
-void RKTestHostMonitor(void);
-void RKTestInitializingRadar(void);
 void RKTestTemperatureToStatus(void);
 void RKTestGetCountry(void);
 void RKTestBufferOverviewText(const char *);
 void RKTestHealthOverviewText(const char *);
 void RKTestReviseLogicalValues(void);
-void RKTestReadIQ(const char *);
+void RKTestTimeConversion(void);
+
+// File handling
+
+void RKTestCountFiles(const char *);
 void RKTestPreparePath(void);
-void RKTestWebSocket(void);
 void RKTestReadBareRKComplex(const char *);
+void RKTestPreferenceReading(void);
+void RKTestIQRead(const char *);
+void RKTestSweepRead(const char *);
+void RKTestProductRead(const char *);
+void RKTestProductCollectionRead(const char *);
+void RKTestProductWrite(void);
+void RKTestProductWriteFromPlainToSweep(void);
+void RKTestProductWriteFromPlainToProduct(void);
+void RKTestProductWriteFromWDSS2ToProduct(const char *, const int);
+
+// State machines
+
+void RKTestFileManager(void);
+void RKTestFileMonitor(void);
+void RKTestHostMonitor(void);
+void RKTestInitializingRadar(void);
+void RKTestWebSocket(void);
 void RKTestRadarHub(void);
-void RKTestSimplePulseEngine(const RKPulseStatus);
+void RKTestSimplePulseEngine(const int);
 void RKTestSimpleMomentEngine(const int);
 
 // DSP Tests
 
+void RKTestSIMDBasic(void);
+void RKTestSIMDComplex(void);
+void RKTestSIMDComparison(const RKTestSIMDFlag, const int);
 void RKTestSIMD(const RKTestSIMDFlag, const int);
 void RKTestWindow(const int);
 void RKTestHilbertTransform(void);
 void RKTestWriteFFTWisdom(const int);
 void RKTestRingFilterShowCoefficients(void);
 void RKTestRamp(void);
-void RKTestHalfSingleDoubleConversion(void);
-
-// Waveform Tests
-
 void RKTestMakeHops(void);
 void RKTestWaveformTFM(void);
 void RKTestWaveformWrite(void);
@@ -155,8 +170,9 @@ void RKTestWaveformDownsampling(void);
 void RKTestWaveformShowProperties(void);
 void RKTestWaveformShowUserWaveformProperties(const char *filename);
 
-// Radar Signal Processing
+// Numerical Tests
 
+void RKTestHalfSingleDoubleConversion(void);
 void RKTestPulseCompression(RKTestFlag);
 void RKTestOnePulse(void);
 void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), const int);
@@ -187,18 +203,14 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *, void *);
 int RKTestHealthRelayExec(RKHealthRelay, const char *, char *);
 int RKTestHealthRelayFree(RKHealthRelay);
 
-// Sweep Files
+//
 
-void RKTestSweepRead(const char *);
-void RKTestProductRead(const char *);
-void RKTestProductWrite(void);
-void RKTestSweepFromPlain(void);
-void RKTestProductFromPlain(void);
+void RKTestProductWriteFromPlainToProduct(void);
 
 //
 
 void RKTestCommandQueue(void);
 void RKTestSingleCommand(void);
-void RKTestExperiment(void);
+void RKTestExperiment(const char *);
 
 #endif /* defined(__RadarKit_RKFile__) */

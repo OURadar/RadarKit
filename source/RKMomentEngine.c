@@ -151,11 +151,11 @@ int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
 
 static void zeroOutRay(RKRay *ray) {
     //memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
-    RKFloat *f = RKGetFloatDataFromRay(ray, RKBaseProductIndexZ);
+    RKFloat *f = RKGetFloatDataFromRay(ray, RKProductIndexZ);
     for (int k = 0; k < RKBaseProductCount * ray->header.capacity; k++) {
         *f++ = NAN;
     }
-    uint8_t *u = RKGetUInt8DataFromRay(ray, RKBaseProductIndexZ);
+    uint8_t *u = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
     memset(u, 0, RKBaseProductCount * sizeof(uint8_t));
 }
 
@@ -359,12 +359,13 @@ static void *momentEngineCore(void *in) {
         ray->header.i = tag;
 
         // Set the ray headers
+        // NOTE: pulse->header.timeDouble still has the original time from RKClock, which has a different epoch
         ray->header.startTime       = S->header.time;
-        ray->header.startTimeDouble = S->header.timeDouble;
+        ray->header.startTimeDouble = (double)S->header.time.tv_sec + 1.0e-6 * (double)S->header.time.tv_usec;
         ray->header.startAzimuth    = S->header.azimuthDegrees;
         ray->header.startElevation  = S->header.elevationDegrees;
         ray->header.endTime         = E->header.time;
-        ray->header.endTimeDouble   = E->header.timeDouble;
+        ray->header.endTimeDouble   = (double)E->header.time.tv_sec + 1.0e-6 * (double)E->header.time.tv_usec;
         ray->header.endAzimuth      = E->header.azimuthDegrees;
         ray->header.endElevation    = E->header.elevationDegrees;
         ray->header.configIndex     = E->header.configIndex;

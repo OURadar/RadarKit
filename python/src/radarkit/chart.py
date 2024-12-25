@@ -432,11 +432,11 @@ class Chart:
         }
         self.title = self.fig.text(0.5, y, text, **title_props)
 
-    def set_xlim(self, lo, hi):
+    def set_xlim(self, lo, hi=None):
         for ax in self.ax:
             ax.set_xlim(lo, hi)
 
-    def set_ylim(self, lo, hi):
+    def set_ylim(self, lo, hi=None):
         for ax in self.ax:
             ax.set_ylim(lo, hi)
 
@@ -484,6 +484,8 @@ class ChartRHI(Chart):
             self.set_ylim(0, ymax)
 
     def set_data(self, sweep: sweep.Sweep, ymax=None):
+        if sweep.scanType != "RHI":
+            raise ValueError("Sweep is not an RHI scan.")
         if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e:
             return self._update_data_only(sweep, ymax)
 
@@ -496,7 +498,7 @@ class ChartRHI(Chart):
         if self.overlay is None:
             # Find out the meaningful range of the plot
             mask = np.logical_and(sweep.products["Z"] > -20, sweep.products["Z"] < 80)
-            h_max = np.ceil(np.max(yy[1:, 1:][mask]) + 3) if ymax is None else ymax
+            h_max = np.ceil(np.max(yy[1:, 1:][mask]) + 3.5) if ymax is None else ymax
             extent = (0, 0, sweep.meshCoordinate.r[-1], max(sweep.meshCoordinate.e))
 
             self.overlay = overlay.PolarGrid(extent=extent, ymax=h_max, s=self.s)
@@ -544,13 +546,15 @@ class ChartPPI(Chart):
         return self.fig.__repr__()
 
     def set_data(self, sweep: sweep.Sweep, rmax=None):
+        if sweep.scanType != "PPI":
+            raise ValueError("Sweep is not a PPI scan.")
         if self.r is sweep.meshCoordinate.r and self.a is sweep.meshCoordinate.a:
             return self._update_data_only(sweep)
 
-        e_rad = np.radians(sweep.scanElevation)
+        e_rad = np.radians(sweep.sweepElevation)
         a_rad = np.radians(sweep.meshCoordinate.a)
-        xx = np.outer(np.cos(e_rad) * np.cos(a_rad), sweep.meshCoordinate.r)
-        yy = np.outer(np.cos(e_rad) * np.sin(a_rad), sweep.meshCoordinate.r)
+        xx = np.outer(np.cos(e_rad) * np.sin(a_rad), sweep.meshCoordinate.r)
+        yy = np.outer(np.cos(e_rad) * np.cos(a_rad), sweep.meshCoordinate.r)
 
         self._update_coordinate_data(xx, yy, sweep)
 

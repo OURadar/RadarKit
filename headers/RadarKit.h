@@ -140,7 +140,7 @@ extern "C" {
 //         - Added various screen output functions for binary payloads
 //
 //  3.1    - 6/28/2022
-//         - RKCommandCenter adopted RKRayHeaderV1 for legacy compatibility
+//         - RKCommandCenter adopted RKRayHeaderF1 for legacy compatibility
 //
 //  3.0    - 6/20/2022
 //         - Added RKWebSocket for communication to RadarHub
