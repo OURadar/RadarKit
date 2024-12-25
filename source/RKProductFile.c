@@ -849,7 +849,10 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         nc_inq_varname(ncid, varid, varName);
         // printf("varId %d: %s (%d x %d) ==? (%d x %d)\n", varid, varName, inqDimIds[0], inqDimIds[1], dimIds[0], dimIds[1]);
         if (inqDimIds[0] == dimIds[0] && inqDimIds[1] == dimIds[1] && count < RKMaximumProductCount) {
-            snprintf(symbols[count++], RKMaximumSymbolLength - 1, "%s", varName);
+            if (strlen(varName) > RKMaximumSymbolLength - 1) {
+                varName[RKMaximumSymbolLength - 1] = '\0';
+            }
+            memcpy(symbols[count++], varName, strlen(varName) + 1);
         }
     }
 
