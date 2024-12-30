@@ -484,7 +484,7 @@ class ChartRHI(Chart):
             self.set_ylim(0, ymax)
 
     def set_data(self, sweep: sweep.Sweep, ymax=None):
-        if sweep.scanType != "RHI":
+        if sweep.scanType != "rhi":
             raise ValueError("Sweep is not an RHI scan.")
         if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e:
             return self._update_data_only(sweep, ymax)
@@ -546,7 +546,7 @@ class ChartPPI(Chart):
         return self.fig.__repr__()
 
     def set_data(self, sweep: sweep.Sweep, rmax=None):
-        if sweep.scanType != "PPI":
+        if sweep.scanType != "ppi":
             raise ValueError("Sweep is not a PPI scan.")
         if self.r is sweep.meshCoordinate.r and self.a is sweep.meshCoordinate.a:
             return self._update_data_only(sweep)
@@ -566,7 +566,9 @@ class ChartPPI(Chart):
             density = self.ax[0].bbox.width / max_range / 2
 
             # Get the map overlay
-            self.overlay = overlay.Overlay(origin=origin, extent=extent, density=density, rmax=1.2 * max_range, s=self.s)
+            self.overlay = overlay.Overlay(
+                origin=origin, extent=extent, density=density, rmax=1.2 * max_range, s=self.s
+            )
             self.overlay.load()
             if self.orientation == "vertical":
                 exclude = (0.5 * max_range, -max_range * aspect, 1.1 * max_range, 0)

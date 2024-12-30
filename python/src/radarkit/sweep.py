@@ -1,10 +1,10 @@
 import os
 import re
 import radar
-import tarfile
-import netCDF4
 import datetime
 import numpy as np
+
+from ._ctypes_ import RKProductCollectionInitWithFilename
 
 re_3parts = re.compile(
     r"(?P<name>.+)-"
@@ -22,7 +22,126 @@ class MeshCoordinate:
         return f"MeshCoordinate: {len(self.e)} x {len(self.a)} x {len(self.r)}"
 
 
+symbolMapping = {"DBZ": "Z", "VEL": "V", "WIDTH": "W", "ZDR": "D", "PHIDP": "P", "RHOHV": "R"}
+
+
 class Sweep:
+    archive = None
+    time = None
+    longitude = -97.0
+    latitude = 32.0
+    scanType = "unk"
+    sweepElevation = 0.0
+    sweepAzimuth = 0.0
+    prf = 1
+    waveform = "u"
+    gatewidth = 1.0
+    elevations = 0.0
+    azimuths = 0.0
+    products = {}
+    meshCoordinate = MeshCoordinate()
+
+    def __init__(self, source=None, **kwargs):
+        """
+        Sweep class to handle radar data
+
+        Parameters
+        ----------
+        input : str or np.ndarray
+            If str, it is the path to a file or a tar archive containing radar data.
+            Currently support RadarKit format only.
+
+            If np.ndarray, it is a 3D array of radar data with shape (6, n, m) where
+            n is the number of elevation or azimuth angles and m is the number of range gates.
+
+        Returns
+        -------
+        A Sweep object
+        """
+        if source is None:
+            return
+        if isinstance(source, np.ndarray) and len(source.shape) == 3 and source.shape[0] == 6:
+            self.plain(source, **kwargs)
+        elif isinstance(source, str) and os.path.exists(source):
+            collection = RKProductCollectionInitWithFilename(source).contents
+            product = collection.products[0]
+            self.archive = source
+            self.time = datetime.datetime.fromtimestamp(product.header.startTime, tz=datetime.timezone.utc)
+            self.longitude = product.header.longitude
+            self.latitude = product.header.latitude
+            self.scanType = "ppi" if product.header.isPPI else "rhi" if product.header.isRHI else "unk"
+            self.sweepElevation = product.header.sweepElevation
+            self.sweepAzimuth = product.header.sweepAzimuth
+            self.prf = 1.0 / product.header.prt[0]
+            self.waveform = str(product.header.waveformName)
+            self.gatewidth = product.header.gateSizeMeters
+            self.elevations = np.ctypeslib.as_array(product.startElevation, (product.header.rayCount,))
+            self.azimuths = np.ctypeslib.as_array(product.startAzimuth, (product.header.rayCount,))
+            self.products = {}
+            for k in range(collection.count):
+                product = collection.products[k]
+                symbol = str(product.desc.symbol.decode("utf-8"))
+                symbol = symbolMapping.get(symbol, symbol)
+                values = np.ctypeslib.as_array(product.data, (product.header.rayCount, product.header.gateCount))
+                self.products.update({symbol: values})
+        # Generate coordinate arrays that are 1 element extra than each dimension
+        if self.scanType == "rhi":
+            de = self.elevations[-1] - self.elevations[-2]
+            self.meshCoordinate.e = [*self.elevations, self.elevations[-1] + de]
+        elif self.scanType == "ppi":
+            da = self.azimuths[-1] - self.azimuths[-2]
+            self.meshCoordinate.a = [*self.azimuths, self.azimuths[-1] + da]
+        self.meshCoordinate.r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
+
+    def __repr__(self):
+        a = (
+            self.sweepElevation
+            if self.scanType.lower() == "ppi"
+            else self.sweepAzimuth if self.scanType.lower() == "rhi" else -999.0
+        )
+        return f"Sweep: {self.scanType} {a:.1f} - {list(self.products.keys())}"
+
+    def plain(self, array, **kwargs):
+        symbols = kwargs.get("symbols", ["Z", "V", "W", "D", "P", "R"])
+        for i, symbol in enumerate(symbols):
+            self.products.update({symbol: array[i, :, :]})
+        shape = self.products["Z"].shape
+        if "scanType" in kwargs or "type" in kwargs:
+            self.scanType = kwargs["scanType"] if "scanType" in kwargs else kwargs["type"]
+        else:
+            if self.products["Z"].shape[0] < 90:
+                self.scanType = "rhi"
+            else:
+                self.scanType = "ppi"
+        if "gatewidth" in kwargs:
+            self.gatewidth = kwargs["gatewidth"]
+        if "e" in kwargs:
+            self.meshCoordinate.e = kwargs["e"]
+        if "a" in kwargs:
+            self.meshCoordinate.a = kwargs["a"]
+        if "r" in kwargs:
+            self.meshCoordinate.r = kwargs["r"]
+        if self.scanType.lower() == "rhi":
+            if len(self.meshCoordinate.e) != shape[0] + 1:
+                self.meshCoordinate.e = np.arange(shape[0] + 1, dtype=float)
+                if "de" in kwargs:
+                    self.meshCoordinate.e *= kwargs["de"]
+            if len(self.meshCoordinate.r) != shape[1] + 1:
+                self.meshCoordinate.r = np.arange(shape[1] + 1, dtype=float) * 1.0e-3 * self.gatewidth
+                if "dr" in kwargs:
+                    self.meshCoordinate.r *= kwargs["dr"]
+        elif self.scanType.lower() == "ppi":
+            if len(self.meshCoordinate.a) != shape[0] + 1:
+                self.meshCoordinate.a = np.arange(shape[0] + 1)
+                if "da" in kwargs:
+                    self.meshCoordinate.a *= kwargs["da"]
+            if len(self.meshCoordinate.r) != shape[1] + 1:
+                self.meshCoordinate.r = np.arange(shape[1] + 1) * 1.0e-3 * self.gatewidth
+                if "dr" in kwargs:
+                    self.meshCoordinate.r *= kwargs["dr"]
+
+
+class SweepV1:
     def __init__(self, input=None, verbose=0, **kwargs):
         """
         Sweep class to handle radar data

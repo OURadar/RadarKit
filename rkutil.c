@@ -1041,7 +1041,8 @@ int main(int argc, const char **argv) {
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
-        RKExecuteCommand(myRadar, "v pp 2,4,6,8,10,12 15 -36", NULL);
+        // RKExecuteCommand(myRadar, "v pp 2,4,6,8,10,12 15 -36", NULL);
+        RKExecuteCommand(myRadar, "v rr 0,20 245 18", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
