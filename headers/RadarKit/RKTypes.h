@@ -590,7 +590,7 @@ enum {
 // -> RKPulseStatusRingFiltered / RKPulseStatusRingSkipped  (main thread consolidates)
 // -> RKPulseStatusRingProcessed                            (main thread)
 // -> RKPulseStatusHasPosition
-// -> RKPulseStatusReadyForMoments
+// -> RKPulseStatusCompleteForMoments
 //
 typedef uint32_t RKPulseStatus;
 enum {

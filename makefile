@@ -161,6 +161,8 @@ ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
 	headers/RadarKit/RKPulsePairATSR.h \
 	headers/RadarKit/RKSpectralMoment.h \
 	headers/RadarKit/RKWaveform.h \
+	headers/RadarKit/RKProduct.h \
+	headers/RadarKit/RKProductFile.h \
 	headers/RadarKit/RKTest.h
 	@echo $(EFLAG) "\033[38;5;228m$(CTYPES_OUT_PATH)/_ctypes_.py\033[m"
 	sha1sum $(CTYPES_OUT_PATH)/_ctypes_.py

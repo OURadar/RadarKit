@@ -785,6 +785,7 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     int varid;
     int dimIds[2];
     char varName[NC_MAX_NAME + 1];
+    char tmpString[64];
     size_t rayCount = 0;
     size_t gateCount = 0;
     float fv;
@@ -808,27 +809,10 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     uint16_t *u16Array = (uint16_t *)RKMalloc(rayCount * gateCount * sizeof(unsigned short));
     double *f64Array = (double *)malloc(MAX(rayCount, gateCount) * sizeof(double));
     float *f32Array = (float *)RKMalloc(rayCount * gateCount * sizeof(float));
-    if (i16Array == NULL || f32Array == NULL) {
+    if (i16Array == NULL || u16Array == NULL || f64Array == NULL || f32Array == NULL) {
         RKLog("Error. Unable to allocate short/float buffer.");
         exit(EXIT_FAILURE);
     }
-
-    // Global attributes
-    double latitude;
-    if ((r = nc_inq_varid(ncid, "latitude", &varid)) == NC_NOERR) {
-        nc_get_var_double(ncid, varid, &latitude);
-    } else {
-        RKLog("Warning. No latitude.   r = %d\n", r);
-    }
-    double longitude;
-    if ((r = nc_inq_varid(ncid, "longitude", &varid)) == NC_NOERR) {
-        nc_get_var_double(ncid, varid, &longitude);
-    } else {
-        RKLog("Warning. No longitude.   r = %d\n", r);
-    }
-    RKLog("%s %s   %s\n", myname,
-        RKVariableInString("longitude", &longitude, RKValueTypeDoubleWithSixDecimals),
-        RKVariableInString("latitude", &latitude, RKValueTypeDoubleWithSixDecimals));
 
     // List all product variables in the NetCDF file, collect symbols with the same 2D dimensions
     int nd;
@@ -866,12 +850,28 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
 
     // Get the first product to keep global parameters
     RKProduct *product = collection->products;
-    memset(&product->desc, 0, sizeof(RKProductDesc));
-    memset(&product->header, 0, sizeof(RKProductHeader));
     product->header.gateCount = gateCount;
     product->header.rayCount = rayCount;
 
-    char tmpString[64];
+    // Global attributes
+    if ((r = nc_inq_varid(ncid, "latitude", &varid)) == NC_NOERR) {
+        nc_get_var_double(ncid, varid, &product->header.latitude);
+    } else {
+        RKLog("Warning. No latitude.   r = %d\n", r);
+    }
+    if ((r = nc_inq_varid(ncid, "longitude", &varid)) == NC_NOERR) {
+        nc_get_var_double(ncid, varid, &product->header.longitude);
+    } else {
+        RKLog("Warning. No longitude.   r = %d\n", r);
+    }
+    if ((r = nc_inq_varid(ncid, "altitude", &varid)) == NC_NOERR) {
+        nc_get_var_double(ncid, varid, &product->header.altitude);
+    } else {
+        RKLog("Warning. No altitude.   r = %d\n", r);
+    }
+    RKLog("%s %s   %s\n", myname,
+        RKVariableInString("longitude", &product->header.longitude, RKValueTypeDoubleWithSixDecimals),
+        RKVariableInString("latitude", &product->header.longitude, RKValueTypeDoubleWithSixDecimals));
     if (getGlobalTextAttribute(tmpString, "time_coverage_start", ncid) == NC_NOERR) {
         product->header.startTime = RKTimeStringISOToTimeDouble(tmpString);;
     } else {
@@ -885,32 +885,52 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     }
     RKLog("time_coverage_end: %s -> %s UTC\n", tmpString, RKTimeDoubleToString(product->header.endTime, 860, true));
     getGlobalTextAttribute(product->header.radarName, "instrument_name", ncid);
-    int sweepModeVid;
+    if (nc_inq_varid(ncid, "volume_number", &varid) == NC_NOERR) {
+        nc_get_var_int(ncid, varid, &r);
+        product->header.volumeIndex = (uint32_t)r;
+    } else {
+        RKLog("Warning. No volume_number found.\n");
+    }
     memset(tmpString, 0, sizeof(tmpString));
-    nc_inq_varid(ncid, "sweep_mode", &sweepModeVid);
-    nc_get_var_text(ncid, sweepModeVid, tmpString);
-    RKLog("sweep_mode: %s\n", tmpString);
+    if (nc_inq_varid(ncid, "sweep_mode", &varid) == NC_NOERR) {
+        nc_get_var_text(ncid, varid, tmpString);
+        RKLog("sweep_mode: %s\n", tmpString);
+    } else {
+        RKLog("Warning. No sweep_mode found.\n");
+    }
+    fv = 0.0f;
     if (nc_inq_varid(ncid, "fixed_angle", &varid) == NC_NOERR) {
         nc_get_var_float(ncid, varid, &fv);
     } else {
         RKLog("Warning. No fixed_angle found.\n");
     }
-    if (!strcmp(tmpString, "azimuth_surveillance")) {
+    printf("scan:%s   fixed_angle: %.2f\n", tmpString, fv);
+    if (!strncmp(tmpString, "azimuth_surveillance", 20)) {
         product->header.isPPI = true;
         product->header.sweepElevation = fv;
     } else if (!strcmp(tmpString, "rhi")) {
         product->header.isPPI = true;
         product->header.sweepAzimuth = fv;
     }
+    if (nc_inq_varid(ncid, "pulse_width", &varid) == NC_NOERR) {
+        nc_get_var_float(ncid, varid, f32Array);
+        product->header.pw[0] = (RKFloat)f32Array[0];
+    } else {
+        RKLog("Warning. No pulse_width found.\n");
+    }
+    if (nc_inq_varid(ncid, "prt", &varid) == NC_NOERR) {
+        nc_get_var_float(ncid, varid, f32Array);
+        product->header.prt[0] = (RKFloat)f32Array[0];
+    } else {
+        RKLog("Warning. No prt found.\n");
+    }
+    RKLog("PW: %.2f us   PRT: %.3f ms (PRF = %.1f Hz) \n",
+        1.0e6 * product->header.pw[0], 1.0e3 * product->header.prt[0], 1.0 / product->header.prt[0]);
     int rkGid;
     r = nc_inq_grp_ncid(ncid, "radarkit_parameters", &rkGid);
     if (r == NC_NOERR) {
         nc_get_att_text(rkGid, NC_GLOBAL, "waveform", product->header.waveformName);
         nc_get_att_text(rkGid, NC_GLOBAL, "moment_method", product->header.momentMethod);
-        if (nc_inq_varid(rkGid, "prf", &varid) == NC_NOERR) {
-            nc_get_var_float(rkGid, varid, &fv);
-            product->header.prt[0] = 1.0f / fv;
-        }
         if (nc_inq_varid(rkGid, "snr_threshold", &varid) == NC_NOERR) {
             nc_get_var_float(rkGid, varid, &product->header.SNRThreshold);
         } else {
@@ -991,7 +1011,6 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
             nc_get_var_float(ncid, varid, product->startElevation);
         }
     }
-    // float *rr = (float *)malloc(gateCount * sizeof(float));
     if (nc_inq_varid(ncid, "range", &varid) == NC_NOERR) {
         if (nc_get_att_float(ncid, varid, "scale_factor", &scale) == NC_NOERR) {
             nc_get_var_ushort(ncid, varid, u16Array);
@@ -1007,9 +1026,7 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         }
         product->header.gateSizeMeters = f32Array[1] - f32Array[0];
     }
-    // free(rr);
     // Product data
-    // char *symbols[RKMaximumSymbolLength] = {"DBZ", "VEL", "WIDTH", "ZDR", "PHIDP", "RHOHV"};
     for (int k = 0; k < collection->count; k++) {
         RKProduct *product = &collection->products[k];
         r = nc_inq_varid(ncid, symbols[k], &varid);
@@ -1020,7 +1037,6 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         if (k > 0) {
             memcpy(&product->header, &collection->products[0].header, sizeof(RKProductHeader));
         }
-        memcpy(&product->desc, &collection->products[0].desc, sizeof(RKProductDesc));
         strcpy(product->desc.symbol, symbols[k]);
         nc_get_att_text(ncid, varid, "long_name", product->desc.name);
         nc_get_att_text(ncid, varid, "units", product->desc.unit);
@@ -1043,6 +1059,13 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         printf("\n");
     }
     #endif
+    // Derive some other parameters that are not in the file
+    int k = 0;
+    for (; k < rayCount - 1; k++) {
+        product->endTime[k] = product->startTime[k + 1];
+    }
+    product->endTime[k] = 2 * product->endTime[k] - product->endTime[k - 1];
+    // Clean up
     free(i16Array);
     free(u16Array);
     free(f32Array);
@@ -1549,10 +1572,6 @@ int RKProductCollectionFileWriterCF(RKProductCollection *collection, const char 
     }
     put_global_text_att(radarkitGid, "waveform", product->header.waveformName);
     put_global_text_att(radarkitGid, "moment_method", product->header.momentMethod);
-    int prfVid;
-    nc_def_var(radarkitGid, "prf", NC_FLOAT, 0, NULL, &prfVid);
-    put_variable_text_att(radarkitGid, prfVid, "long_name", "pulse_repetition_frequency");
-    put_variable_text_att(radarkitGid, prfVid, "units", "Hz");
     int snrThresholdVid;
     nc_def_var(radarkitGid, "snr_threshold", NC_FLOAT, 0, NULL, &snrThresholdVid);
     put_variable_text_att(radarkitGid, snrThresholdVid, "long_name", "signal_to_noise_threshold");
@@ -1670,8 +1689,8 @@ int RKProductCollectionFileWriterCF(RKProductCollection *collection, const char 
     nc_put_var_float(ncid, dCalVid, &product->header.systemDCal);
     nc_put_var_float(ncid, pCalVid, &product->header.systemPCal);
     // Variables in RadarKit parameters group
-    f = 1.0f / product->header.prt[0];
-    nc_put_var_float(radarkitGid, prfVid, &f);
+    // f = 1.0f / product->header.prt[0];
+    // nc_put_var_float(radarkitGid, prfVid, &f);
     nc_put_var_float(radarkitGid, snrThresholdVid, &product->header.SNRThreshold);
     nc_put_var_float(radarkitGid, sqiThresholdVid, &product->header.SQIThreshold);
     nc_put_var_float(radarkitGid, noiseHVid, &product->header.noise[0]);

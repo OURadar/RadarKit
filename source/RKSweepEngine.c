@@ -1193,7 +1193,7 @@ RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) 
     if (sweep->header.isPPI) {
         k += snprintf(sweep->header.filename + k, 6, "E%.1f", sweep->header.config.sweepElevation);
     } else if (sweep->header.isRHI) {
-        k += snprintf(sweep->header.filename + k, 6, "A%.1f", sweep->header.config.sweepAzimuth);
+        k += snprintf(sweep->header.filename + k, 7, "A%.1f", sweep->header.config.sweepAzimuth);
     } else {
         k += snprintf(sweep->header.filename + k, 6, "N%03d", sweep->header.rayCount);
     }
