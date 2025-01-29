@@ -158,9 +158,9 @@ static void *pulseRecorder(void *in) {
 
             // New file as .../[DATA_PATH]/20170119/PX-20170119-012345.123.rk[rc]
             i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
-            i += sprintf(filename + i, "%s/", RKTimevalToString(pulse->header.time, 800, true));
+            i += sprintf(filename + i, "%s/", RKTimevalToString(pulse->header.time, 800, false));
             i += sprintf(filename + i, "%s-", engine->radarDescription->filePrefix);
-            i += sprintf(filename + i, "%s", RKTimevalToString(pulse->header.time, 863, true));
+            i += sprintf(filename + i, "%s", RKTimevalToString(pulse->header.time, 863, false));
             if (engine->rawDataType == RKRawDataTypeFromTransceiver) {
                 sprintf(filename + i, ".rkr");
             } else {

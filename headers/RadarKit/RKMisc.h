@@ -65,12 +65,12 @@ sprintf(x, "%s()", __FUNCTION__);
 
 #define SHOW_FUNCTION_NAME \
 int _fn_len = strlen(__FUNCTION__); \
-char _fn_str[RKNameLength]; \
+char _fn_str[1024]; \
 memset(_fn_str, '=', _fn_len); \
 sprintf(_fn_str + _fn_len, "\n%s\n", __FUNCTION__); \
 memset(_fn_str + 2 * _fn_len + 2, '=', _fn_len); \
 _fn_str[3 * _fn_len + 2] = '\0'; \
-printf("%s\n", _fn_str);
+printf("\033[38;5;82m%s\033[0m\n", _fn_str);
 
 #define SHOW_SIZE(x) \
 printf(RKDeepPinkColor "sizeof" RKNoColor "(" RKSkyBlueColor #x RKNoColor ") = " RKLimeColor "%s" RKNoColor "\n", \

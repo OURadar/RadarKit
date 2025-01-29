@@ -96,7 +96,7 @@ RKProduct *RKSweepEngineGetVacantProduct(RKSweepEngine *, RKSweep *, RKProductId
 int RKSweepEngineSetProductComplete(RKSweepEngine *, RKSweep *, RKProduct *);
 void RKSweepEngineWaitWhileBusy(RKSweepEngine *);
 
-RKSweep *RKSweepCollect(RKSweepEngine *, const uint8_t);
+RKSweep *RKSweepInitFromScratchSpace(RKSweepEngine *, const uint8_t);
 int RKSweepFree(RKSweep *);
 
 #endif /* RKSweep_h */

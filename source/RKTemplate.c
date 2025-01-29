@@ -8,12 +8,17 @@
 
 #include <RadarKit/RKTemplate.h>
 
-#pragma mark - Helper Functions
+#pragma region Local Functions
+#pragma endregion
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
+#pragma endregion
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
+#pragma endregion
 
-#pragma mark - Properties
+#pragma region Properties
+#pragma endregion
 
-#pragma mark - Interactions
+#pragma region Interactions
+#pragma endregion

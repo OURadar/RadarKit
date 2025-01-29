@@ -301,33 +301,27 @@ class Chart:
             if symbol[0] == "Z":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("rsz")
-                vmin = -32
-                vmax = 96
+                vmin, vmax = -32, 96
             elif symbol[0] == "V":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("v")
-                vmin = -64
-                vmax = 64
+                vmin, vmax = -64, 64
             elif symbol[0] == "W":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("w")
-                vmin = 0
-                vmax = 12.8
+                vmin, vmax = 0, 12.8
             elif symbol == "D":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("rsd")
-                vmin = -10
-                vmax = 15.5
+                vmin, vmax = -10, 15.5
             elif symbol == "P":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("p")
-                vmin = -np.pi
-                vmax = np.pi
+                vmin, vmax = -180, 180
             elif symbol == "R":
                 value = rho2ind(sweep.products[symbol])
                 cmap = blib.matplotlibColormap("rsr")
-                vmin = 0
-                vmax = 256
+                vmin, vmax = 0, 256
             else:
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("rsz")
@@ -384,7 +378,8 @@ class Chart:
                 setup_ticks(k, ticks, ticks, 0, 10)
             elif symbol == "P":
                 ticks = np.arange(-120, 121, 60)
-                setup_ticks(k, np.radians(ticks), ticks, -np.pi, np.pi)
+                # setup_ticks(k, np.radians(ticks), ticks, -np.pi, np.pi)
+                setup_ticks(k, ticks, ticks, -180, 180)
             elif symbol == "D":
                 ticks = np.arange(-4, 5, 2)
                 setup_ticks(k, ticks, ticks, -6, 6)

@@ -16,7 +16,7 @@ typedef struct user_params {
     RKRadarDesc              desc;
     RKName                   pedzyHost;
     RKName                   tweetaHost;
-    RKName                   radarhubHost;
+    RKName                   radarHubHost;
     RKName                   userDevices[RKHealthNodeCount];
     RKName                   relayHost;
     RKName                   ringFilter;
@@ -111,10 +111,6 @@ static void showHelp(void) {
            "\n"
            "  -h (--help)\n"
            "         Shows this help text.\n"
-           "\n"
-           "  -r (--relay) " UNDERLINE("host") " [symbols]\n"
-           "         Runs as a relay and connect to remote " UNDERLINE("host") "\n"
-           "         If [symbols] are supplied, they will be requested initially.\n"
            "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
@@ -335,7 +331,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",            user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHost",        user->radarhubHost,         RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHost",        user->radarHubHost,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -426,7 +422,6 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"dir"               , required_argument, NULL, 'D'},
         {"host"              , required_argument, NULL, 'H'},
         {"port"              , required_argument, NULL, 'P'},
-        {"relay"             , required_argument, NULL, 'L'},
         {"system"            , required_argument, NULL, 'S'},
         {"test"              , required_argument, NULL, 'T'},
         {"engine-verbose"    , required_argument, NULL, 'V'},
@@ -517,7 +512,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
             case 'H':
-                strncpy(user->radarhubHost, optarg, sizeof(user->radarhubHost) - 1);
+                strncpy(user->radarHubHost, optarg, sizeof(user->radarHubHost) - 1);
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':
@@ -591,62 +586,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'r':
-                user->simulate = false;
-                user->desc.initFlags = RKInitFlagRelay;
-                if (argc > optind && argv[optind][0] != '-') {
-                    // The next argument is not an option, interpret as streams
-                    if (argv[optind][0] == 's') {
-                        // Convert product to sweep: Z V W D P R K --> Y U X C O Q J
-                        strcpy(user->streams, &argv[optind][1]);
-                        c = user->streams;
-                        while (c < user->streams + strlen(user->streams)) {
-                            switch (*c) {
-                                case 'z':
-                                case 'Z':
-                                    *c = 'Y';
-                                    break;
-                                case 'v':
-                                case 'V':
-                                    *c = 'U';
-                                    break;
-                                case 'w':
-                                case 'W':
-                                    *c = 'X';
-                                    break;
-                                case 'd':
-                                case 'D':
-                                    *c = 'C';
-                                    break;
-                                case 'p':
-                                case 'P':
-                                    *c = 'O';
-                                    break;
-                                case 'r':
-                                case 'R':
-                                    *c = 'Q';
-                                    break;
-                                case 'k':
-                                case 'K':
-                                    *c = 'J';
-                                    break;
-                                default:
-                                    break;
-                            }
-                            c++;
-                        }
-                        if (user->verbose) {
-                            RKLog("Stream %s --> %s\n", argv[optind], user->streams);
-                        }
-                    } else {
-                        strcpy(user->streams, argv[optind]);
-                        if (user->verbose) {
-                            RKLog("Stream %s\n", user->streams);
-                        }
-                    }
-                    optind++;
-                }
-                strncpy(user->relayHost, optarg, sizeof(user->relayHost));
-                user->relayHost[sizeof(user->relayHost) - 1] = '\0';
+                strncpy(user->radarHubHost, optarg, sizeof(user->radarHubHost));
+                user->radarHubHost[sizeof(user->radarHubHost) - 1] = '\0';
                 break;
             case 's':
                 if (strlen(user->relayHost)) {
@@ -933,7 +874,7 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->radarhubHost);
+    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->radarHubHost);
     if (reporter == NULL) {
         RKLog("Error. Unable to initiate reporter\n");
     } else {
@@ -1042,7 +983,7 @@ int main(int argc, const char **argv) {
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
         // RKExecuteCommand(myRadar, "v pp 2,4,6,8,10,12 15 -36", NULL);
-        RKExecuteCommand(myRadar, "v rr 0,20 245 18", NULL);
+        RKExecuteCommand(myRadar, "v rr 0,20 15 18", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 

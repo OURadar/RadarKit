@@ -100,7 +100,7 @@ static void *sweepManagerV1(void *in) {
     engine->tic++;
 
     // Collect rays that belong to a sweep to a scratch space
-    RKSweep *sweep = RKSweepCollect(engine, index);
+    RKSweep *sweep = RKSweepInitFromScratchSpace(engine, index);
     if (sweep == NULL) {
         if (engine->verbose > 1) {
             RKLog("%s Empty sweep   scratchSpaceIndex = %d\n", index);
@@ -216,18 +216,6 @@ static void *sweepManagerV1(void *in) {
             filelistLength += snprintf(filelist + filelistLength, RKMaximumListLength - filelistLength, " %s", filename);
         }
 
-        // Convert data in radians to degrees if necessary
-        // if (engine->convertToDegrees && !strcasecmp(product->desc.unit, "radians")) {
-        //      const RKFloat radiansToDegrees = 180.0f / M_PI;
-        //      RKLog("%s Converting '%s' to degrees ...", engine->name, product->desc.name);
-        //      RKFloat *x =  product->data;
-        //      for (j = 0; j < product->header.rayCount * product->header.gateCount; j++) {
-        //          *x = *x * radiansToDegrees;
-        //          x++;
-        //      }
-        //      sprintf(product->desc.unit, "Degrees");
-        //  }
-
         // Call a product writer only if the engine is set to record and the is a valid product recorder
         if (record && engine->productRecorder) {
             if (engine->verbose > 1) {
@@ -329,7 +317,7 @@ static void *sweepManager(void *in) {
     engine->tic++;
 
     // Collect rays that belong to a sweep to a scratch space
-    RKSweep *sweep = RKSweepCollect(engine, index);
+    RKSweep *sweep = RKSweepInitFromScratchSpace(engine, index);
     if (sweep == NULL) {
         if (engine->verbose > 1) {
             RKLog("%s Empty sweep   scratchSpaceIndex = %d\n", index);
@@ -391,7 +379,21 @@ static void *sweepManager(void *in) {
                 RKLog("Error. Unable to get a product slot   p = %d   pid = %d.\n", p, engine->productIds[p]);
                 continue;
             }
+            if (engine->verbose > 1) {
+                RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name, product->desc.symbol);
+                RKLog(">%s %s   %s\n",
+                        engine->name,
+                        RKVariableInString("unit", product->desc.unit, RKValueTypeString),
+                        RKVariableInString("colormap", product->desc.colormap, RKValueTypeString));
+                RKLog(">%s %s   %s\n",
+                        engine->name,
+                        RKVariableInString("rayCount", &product->header.rayCount, RKValueTypeUInt32),
+                        RKVariableInString("gateCount", &product->header.gateCount, RKValueTypeUInt32));
+            }
             RKProductInitFromSweep(product, sweep);
+            if (engine->verbose > 1) {
+                RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
+            }
             RKSweepEngineSetProductComplete(engine, sweep, product);
             productMemoryUsage += product->totalBufferSize;
         }
@@ -423,22 +425,6 @@ static void *sweepManager(void *in) {
     char filename[RKMaximumPathLength];
 
     sprintf(filename, "%s.%s", sweep->header.filename, engine->productFileExtension);
-
-    if (engine->verbose > 1) {
-        for (p = 0; p < productCount; p++) {
-            RKProduct *product = &engine->productBuffer[p];
-            RKLog(">%s Gathering product %s (%s) ...\n", engine->name, product->desc.name, product->desc.symbol);
-            RKLog(">%s %s   %s\n",
-                    engine->name,
-                    RKVariableInString("unit", product->desc.unit, RKValueTypeString),
-                    RKVariableInString("colormap", product->desc.colormap, RKValueTypeString));
-            RKLog(">%s %s   %s\n",
-                    engine->name,
-                    RKVariableInString("rayCount", &product->header.rayCount, RKValueTypeUInt32),
-                    RKVariableInString("gateCount", &product->header.gateCount, RKValueTypeUInt32));
-            // RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
-        }
-    }
 
     // Go through the products once for some final touches
     bool filenameTooLong = strlen(filename) > 48;
@@ -1049,7 +1035,7 @@ void RKSweepEngineWaitWhileBusy(RKSweepEngine *engine) {
 
 #pragma mark - RKSweep
 
-RKSweep *RKSweepCollect(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) {
+RKSweep *RKSweepInitFromScratchSpace(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) {
     MAKE_FUNCTION_NAME(name)
     int k;
     RKSweep *sweep = NULL;

@@ -20,7 +20,7 @@ before_script:
 
 make_ctypes:
   tags:
-    - linux
+    - linux, x86_64
   stage: build
   image: python
   script:
@@ -35,7 +35,7 @@ make_ctypes:
     paths:
       - python/src/radarkit/_ctypes_.py
 
-build_linux:
+build_linux_x86:
   tags:
     - linux, x86_64
   stage: build
@@ -49,9 +49,9 @@ build_linux:
       - libradarkit.so
       - rkutil
 
-build_mac:
+build_linux_arm:
   tags:
-    - macos, arm64
+    - linux, arm64
   stage: build
   image: gcc
   script:
@@ -59,11 +59,11 @@ build_mac:
 
 basic:
   tags:
-    - linux
+    - linux, x86_64
   stage: test
   image: gcc
   needs:
-    - build_linux
+    - build_linux_x86
   script:
     - ls -hal --group-directories-first --color
     - ee=0
@@ -78,11 +78,11 @@ basic:
 
 numeric:
   tags:
-    - linux
+    - linux, x86_64
   stage: test
   image: gcc
   needs:
-    - build_linux
+    - build_linux_x86
   script:
     - ls -hal --group-directories-first --color
     - ee=0
@@ -98,11 +98,11 @@ numeric:
 
 performance:
   tags:
-    - linux
+    - linux, x86_64
   stage: test
   image: gcc
   needs:
-    - build_linux
+    - build_linux_x86
   script:
     - ls -hal --group-directories-first --color
     - ee=0

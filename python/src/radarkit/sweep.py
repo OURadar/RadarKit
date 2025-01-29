@@ -9,8 +9,12 @@ from ._ctypes_ import RKProductCollectionInitWithFilename
 re_3parts = re.compile(
     r"(?P<name>.+)-"
     + r"(?P<time>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-"
-    + r"(?P<scan>[EAN][0-9]+\.[0-9]+)"
+    + r"(?P<scan>[EAN][0-9]+\.[0-9])"
 )
+
+
+def wrapDegrees(angle):
+    return (angle + 180.0) % 360.0 - 180.0
 
 
 class MeshCoordinate:
@@ -63,35 +67,7 @@ class Sweep:
         if isinstance(source, np.ndarray) and len(source.shape) == 3 and source.shape[0] == 6:
             self.plain(source, **kwargs)
         elif isinstance(source, str) and os.path.exists(source):
-            collection = RKProductCollectionInitWithFilename(source).contents
-            product = collection.products[0]
-            self.archive = source
-            self.time = datetime.datetime.fromtimestamp(product.header.startTime, tz=datetime.timezone.utc)
-            self.longitude = product.header.longitude
-            self.latitude = product.header.latitude
-            self.scanType = "ppi" if product.header.isPPI else "rhi" if product.header.isRHI else "unk"
-            self.sweepElevation = product.header.sweepElevation
-            self.sweepAzimuth = product.header.sweepAzimuth
-            self.prf = 1.0 / product.header.prt[0]
-            self.waveform = str(product.header.waveformName)
-            self.gatewidth = product.header.gateSizeMeters
-            self.elevations = np.ctypeslib.as_array(product.startElevation, (product.header.rayCount,))
-            self.azimuths = np.ctypeslib.as_array(product.startAzimuth, (product.header.rayCount,))
-            self.products = {}
-            for k in range(collection.count):
-                product = collection.products[k]
-                symbol = str(product.desc.symbol.decode("utf-8"))
-                symbol = symbolMapping.get(symbol, symbol)
-                values = np.ctypeslib.as_array(product.data, (product.header.rayCount, product.header.gateCount))
-                self.products.update({symbol: values})
-        # Generate coordinate arrays that are 1 element extra than each dimension
-        if self.scanType == "rhi":
-            de = self.elevations[-1] - self.elevations[-2]
-            self.meshCoordinate.e = [*self.elevations, self.elevations[-1] + de]
-        elif self.scanType == "ppi":
-            da = self.azimuths[-1] - self.azimuths[-2]
-            self.meshCoordinate.a = [*self.azimuths, self.azimuths[-1] + da]
-        self.meshCoordinate.r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
+            self.file(source)
 
     def __repr__(self):
         a = (
@@ -101,44 +77,84 @@ class Sweep:
         )
         return f"Sweep: {self.scanType} {a:.1f} - {list(self.products.keys())}"
 
+    def file(self, filename):
+        collection = RKProductCollectionInitWithFilename(filename).contents
+        product = collection.products[0]
+        self.archive = filename
+        self.time = datetime.datetime.fromtimestamp(product.header.startTime, tz=datetime.timezone.utc)
+        self.longitude = product.header.longitude
+        self.latitude = product.header.latitude
+        self.scanType = "ppi" if product.header.isPPI else "rhi" if product.header.isRHI else "unk"
+        self.sweepElevation = product.header.sweepElevation
+        self.sweepAzimuth = product.header.sweepAzimuth
+        self.prf = 1.0 / product.header.prt[0]
+        self.waveform = str(product.header.waveformName)
+        self.gatewidth = product.header.gateSizeMeters
+        self.elevations = np.ctypeslib.as_array(product.startElevation, (product.header.rayCount,))
+        self.azimuths = np.ctypeslib.as_array(product.startAzimuth, (product.header.rayCount,))
+        self.products = {}
+        for k in range(collection.count):
+            product = collection.products[k]
+            symbol = str(product.desc.symbol.decode("utf-8"))
+            symbol = symbolMapping.get(symbol, symbol)
+            values = np.ctypeslib.as_array(product.data, (product.header.rayCount, product.header.gateCount))
+            self.products.update({symbol: values})
+        # Generate coordinate arrays that are 1 element extra than each dimension
+        if self.scanType == "rhi":
+            de = self.elevations[-1] - self.elevations[-2]
+            self.meshCoordinate.e = [*self.elevations, self.elevations[-1] + de]
+        elif self.scanType == "ppi":
+            da = self.azimuths[-1] - self.azimuths[-2]
+            self.meshCoordinate.a = [*self.azimuths, self.azimuths[-1] + da]
+        self.meshCoordinate.r = np.arange(self.products["Z"].shape[1] + 1) * 1.0e-3 * self.gatewidth
+
     def plain(self, array, **kwargs):
         symbols = kwargs.get("symbols", ["Z", "V", "W", "D", "P", "R"])
         for i, symbol in enumerate(symbols):
             self.products.update({symbol: array[i, :, :]})
         shape = self.products["Z"].shape
-        if "scanType" in kwargs or "type" in kwargs:
-            self.scanType = kwargs["scanType"] if "scanType" in kwargs else kwargs["type"]
-        else:
+        self.scanType = kwargs["scanType"] if "scanType" in kwargs else kwargs.get("type", "unk")
+        if self.scanType == "unk":
             if self.products["Z"].shape[0] < 90:
                 self.scanType = "rhi"
             else:
                 self.scanType = "ppi"
+        if "time" in kwargs:
+            self.time = kwargs["time"]
+            if isinstance(self.time, float):
+                self.time = datetime.datetime.fromtimestamp(self.time, tz=datetime.timezone.utc)
+        if "latitude" in kwargs:
+            self.latitude = kwargs["latitude"]
+        if "longitude" in kwargs:
+            self.longitude = kwargs["longitude"]
         if "gatewidth" in kwargs:
             self.gatewidth = kwargs["gatewidth"]
+        elif "dr" in kwargs:
+            self.gatewidth = kwargs["dr"]
         if "e" in kwargs:
             self.meshCoordinate.e = kwargs["e"]
+            if len(self.meshCoordinate.e) == array.shape[1]:
+                de = self.meshCoordinate.e[-1] - self.meshCoordinate.e[-2]
+                self.meshCoordinate.e = np.append(self.meshCoordinate.e, self.meshCoordinate.e[-1] + de)
+        elif len(self.meshCoordinate.e) != shape[1] + 1:
+            self.meshCoordinate.e = np.arange(shape[1] + 1, dtype=float) * kwargs.get("de", 1.0)
         if "a" in kwargs:
             self.meshCoordinate.a = kwargs["a"]
+            if len(self.meshCoordinate.a) == array.shape[1]:
+                da = self.meshCoordinate.a[-1] - self.meshCoordinate.a[-2]
+                self.meshCoordinate.a = np.append(self.meshCoordinate.a, wrapDegrees(self.meshCoordinate.a[-1] + da))
+        elif len(self.meshCoordinate.a) != shape[1] + 1:
+            self.meshCoordinate.a = wrapDegrees(np.arange(shape[1] + 1, dtype=float) * kwargs.get("da", 1.0))
         if "r" in kwargs:
-            self.meshCoordinate.r = kwargs["r"]
-        if self.scanType.lower() == "rhi":
-            if len(self.meshCoordinate.e) != shape[0] + 1:
-                self.meshCoordinate.e = np.arange(shape[0] + 1, dtype=float)
-                if "de" in kwargs:
-                    self.meshCoordinate.e *= kwargs["de"]
-            if len(self.meshCoordinate.r) != shape[1] + 1:
-                self.meshCoordinate.r = np.arange(shape[1] + 1, dtype=float) * 1.0e-3 * self.gatewidth
-                if "dr" in kwargs:
-                    self.meshCoordinate.r *= kwargs["dr"]
-        elif self.scanType.lower() == "ppi":
-            if len(self.meshCoordinate.a) != shape[0] + 1:
-                self.meshCoordinate.a = np.arange(shape[0] + 1)
-                if "da" in kwargs:
-                    self.meshCoordinate.a *= kwargs["da"]
-            if len(self.meshCoordinate.r) != shape[1] + 1:
-                self.meshCoordinate.r = np.arange(shape[1] + 1) * 1.0e-3 * self.gatewidth
-                if "dr" in kwargs:
-                    self.meshCoordinate.r *= kwargs["dr"]
+            self.meshCoordinate.r = 1.0e-3 * kwargs["r"]
+            if len(self.meshCoordinate.r) == array.shape[2]:
+                dr = self.meshCoordinate.r[-1] - self.meshCoordinate.r[-2]
+                self.meshCoordinate.r = np.append(self.meshCoordinate.r, self.meshCoordinate.r[-1] + dr)
+        elif len(self.meshCoordinate.r) != shape[2] + 1:
+            self.meshCoordinate.r = np.arange(shape[2] + 1, dtype=float) * 1.0e-3 * self.gatewidth
+        self.elevations = self.meshCoordinate.e[:-1]
+        self.azimuths = self.meshCoordinate.a[:-1]
+        self.range = self.meshCoordinate.r[:-1]
 
 
 class SweepV1:

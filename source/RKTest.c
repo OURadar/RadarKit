@@ -162,13 +162,13 @@ char *RKTestByNumberDescription(const int indent) {
     "204 - Read preference file - RKPreferenceInit()\n"
     "205 - Read raw IQ file; -T205 FILENAME\n"
     "206 - Read sweep data using RKSweepRead(); -T206 FILENAME\n"
-    "207 - Read sweep data RKProductRead(); -T207 FILENAME\n"
+    "207 - Read sweep data using RKProductRead(); -T207 FILENAME\n"
     "208 - Read sweep data using RKProductCollectionInitWithFilename(); -T208 FILENAME\n"
-    "209 - Write sweep data using RKProductFileWriterNC()\n"
-    "210 - Write product data from a plain file into an RKSweep object\n"
-    "211 - Write product data from a plain file into a set of RKProductCollection\n"
-    "212 - Write CF/radial data from a set of WDSS-II files into RKProductCollection; rkutil -T212 FILENAME\n"
-    "213 - Write compressed CF/radial data from a set of WDSS-II files into RKProductCollection; rkutil -T213 FILENAME\n"
+    "209 - Write sweep data as WDSS-II format using RKProductFileWriterNC()\n"
+    "210 - Write product data from a plain file through an RKSweep object\n"
+    "211 - Write product data from a plain file through an RKProductCollection\n"
+    "212 - Write regular CF-Radial data (.nc) from a set of WDSS-II files; rkutil -T212 FILENAME\n"
+    "213 - Write compressed CF-Radial data (.cnc) from a set of WDSS-II files; rkutil -T213 FILENAME\n"
     "\n"
     UNDERLINE("300 series - state machines") "\n"
     "301 - File manager module - RKFileManagerInit()\n"
@@ -1408,9 +1408,16 @@ void RKTestProductCollectionRead(const char *file) {
     struct timeval tic, toc;
     gettimeofday(&tic, NULL);
     RKProductCollection *collection = RKProductCollectionInitWithFilename(file);
-    if (collection) {
-        RKProductCollectionFree(collection);
+    if (collection == NULL) {
+        RKLog("No products found in %s\n", file);
+        return;
     }
+    for (int k = 0; k < collection->count; k++) {
+        RKProduct *product = &collection->products[k];
+        RKLog("%d: %s (%s)\n", k, product->desc.name, product->desc.unit);
+        RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
+    }
+    RKProductCollectionFree(collection);
     gettimeofday(&toc, NULL);
     RKLog("Elapsed time = %f seconds\n", RKTimevalDiff(toc, tic));
 }

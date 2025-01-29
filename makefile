@@ -119,19 +119,19 @@ endif
 all: showinfo $(STATIC_LIB) $(SHARED_LIB) $(PROGS) $(EXAMPLES)
 
 showinfo:
-	@echo $(EFLAG) "\
-	KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[m\n\
-	NETCDF_VER = \033[38;5;15m$(NETCDF_VER)\033[m\n\
-	KERNEL = \033[38;5;15m$(KERNEL)\033[m\n\
-	MACHINE = \033[38;5;87m$(MACHINE)\033[m\n\
-	VERSION = \033[38;5;46m$(VERSION)\033[m\n\
-	GIT_BRANCH = \033[38;5;226m$(GIT_BRANCH)\033[m\n\
-	PREFIX = \033[38;5;214m$(PREFIX)\033[m\n\
-	EFLAG = \033[38;5;208m$(EFLAG)\033[m\n\
-	CPUS = \033[38;5;203m$(CPUS)\033[m\n\
-	OBJS = \033[38;5;213m$(OBJS)\033[m\n\
-	CFLAGS = \033[38;5;141m$(CFLAGS)\033[m\n\
-	EXAMPLES = \033[38;5;45m$(EXAMPLES)\033[m\n\
+	@echo $(EFLAG) "\033[0m\
+	KERNEL_VER = \033[38;5;43m$(KERNEL_VER)\033[0m\n\
+	NETCDF_VER = \033[38;5;87m$(NETCDF_VER)\033[0m\n\
+	KERNEL = \033[38;5;15m$(KERNEL)\033[0m\n\
+	MACHINE = \033[38;5;87m$(MACHINE)\033[0m\n\
+	VERSION = \033[38;5;46m$(VERSION)\033[0m\n\
+	GIT_BRANCH = \033[38;5;226m$(GIT_BRANCH)\033[0m\n\
+	PREFIX = \033[38;5;214m$(PREFIX)\033[0m\n\
+	EFLAG = \033[38;5;208m$(EFLAG)\033[0m\n\
+	CPUS = \033[38;5;203m$(CPUS)\033[0m\n\
+	OBJS = \033[38;5;213m$(OBJS)\033[0m\n\
+	CFLAGS = \033[38;5;141m$(CFLAGS)\033[0m\n\
+	EXAMPLES = \033[38;5;45m$(EXAMPLES)\033[0m\n\
 	"
 
 # IMPORTANT: KEEP THOSE SPACES BEFORE THE SLASHES
@@ -164,7 +164,7 @@ ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
 	headers/RadarKit/RKProduct.h \
 	headers/RadarKit/RKProductFile.h \
 	headers/RadarKit/RKTest.h
-	@echo $(EFLAG) "\033[38;5;228m$(CTYPES_OUT_PATH)/_ctypes_.py\033[m"
+	@echo $(EFLAG) "\033[38;5;228m$(CTYPES_OUT_PATH)/_ctypes_.py\033[0m"
 	sha1sum $(CTYPES_OUT_PATH)/_ctypes_.py
 
 MAKEFLAGS += --jobs=$(CPUS)
@@ -173,23 +173,23 @@ $(EXAMPLE_OUT_PATH) $(OBJS_OUT_PATH) $(CTYPES_OUT_PATH):
 	mkdir -p $@
 
 $(OBJS_OUT_PATH)/%.o: $(OBJS_SRC_PATH)/%.c | $(OBJS_OUT_PATH)
-	@echo $(EFLAG) "\033[38;5;213m$@\033[m $^"
+	@echo $(EFLAG) "\033[38;5;213m$@\033[0m $^"
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
 $(STATIC_LIB): $(OBJS)
-	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;118m$@\033[0m"
 	ar rvcs $@ $(OBJS)
 
 $(SHARED_LIB): $(OBJS)
-	@echo $(EFLAG) "\033[38;5;118m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;118m$@\033[0m"
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS)
 
 $(EXAMPLE_OUT_PATH)/%: $(EXAMPLE_SRC_PATH)/%.c $(STATIC_LIB) | $(EXAMPLE_OUT_PATH)
-	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;45m$@\033[0m"
 	$(CC) $(CFLAGS) -o $@ $< $(STATIC_LIB) $(LDFLAGS)
 
 $(PROGS): %: %.c $(STATIC_LIB)
-	@echo $(EFLAG) "\033[38;5;45m$@\033[m"
+	@echo $(EFLAG) "\033[38;5;45m$@\033[0m"
 	$(CC) $(CFLAGS) -o $@ $< $(STATIC_LIB) $(LDFLAGS)
 
 clean:

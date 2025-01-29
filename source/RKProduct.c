@@ -206,7 +206,10 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
             y += product->header.gateCount;
         }
     }
-
+    // RKSweep is always in radians but the RKProduct should be in degrees for CF-Radials
+    if (product->desc.index == RKProductIndexP) {
+        RKSIMD_iscl(product->data, 180.0f / M_PI, product->header.gateCount * product->header.rayCount);
+    }
     return RKResultSuccess;
 }
 

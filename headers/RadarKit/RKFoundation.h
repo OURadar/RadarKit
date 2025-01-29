@@ -95,8 +95,6 @@ typedef struct RKGlobalParameterStruct {
 extern RKGlobalParameters rkGlobalParameters;
 extern const char * const rkResultStrings[];
 
-#pragma mark - Common Functions
-
 // Basic
 RKComplex RKComplexAdd(const RKComplex, const RKComplex);
 RKComplex RKComplexSubtract(const RKComplex, const RKComplex);
