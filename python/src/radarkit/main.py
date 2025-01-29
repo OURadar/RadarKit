@@ -132,10 +132,14 @@ class Workspace(ctypes.Structure):
             desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
             desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
             desc.initFlags = (
-                RKInitFlagAllocConfigBuffer | RKInitFlagAllocRawIQBuffer | RKInitFlagAllocMomentBuffer | RKInitFlagVerbose
+                RKInitFlagAllocConfigBuffer
+                | RKInitFlagAllocRawIQBuffer
+                | RKInitFlagAllocMomentBuffer
+                | RKInitFlagVerbose
             )
             if self.header.dataType == RKRawDataTypeFromTransceiver:
                 desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
+                # desc.initFlags |= RKInitFlagStartPulseEngine
                 if self.verbose:
                     print("Will start pulseEngine and ringFilterEngine ...")
             elif self.verbose:
@@ -146,8 +150,12 @@ class Workspace(ctypes.Structure):
 
         if self.desc.pulseCapacity != self.header.desc.pulseCapacity:
             raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
-        if ((self.desc.initFlags & RKInitFlagStartPulseEngine) and (self.header.dataType == RKRawDataTypeAfterMatchedFilter)) or (
-            not (self.desc.initFlags & RKInitFlagStartPulseEngine) and (self.header.dataType == RKRawDataTypeFromTransceiver)
+        if (
+            (self.desc.initFlags & RKInitFlagStartPulseEngine)
+            and (self.header.dataType == RKRawDataTypeAfterMatchedFilter)
+        ) or (
+            not (self.desc.initFlags & RKInitFlagStartPulseEngine)
+            and (self.header.dataType == RKRawDataTypeFromTransceiver)
         ):
             raise RKEngineError("dataType mismatch. Please use a new workspace.")
 
@@ -191,7 +199,9 @@ class Workspace(ctypes.Structure):
 
         self.ringMachine = RKPulseRingFilterEngineInit()
         RKPulseRingFilterEngineSetVerbose(self.ringMachine, verbose)
-        RKPulseRingFilterEngineSetEssentials(self.ringMachine, descPtr, self.configs, configIndexPtr, self.pulses, pulseIndexPtr)
+        RKPulseRingFilterEngineSetEssentials(
+            self.ringMachine, descPtr, self.configs, configIndexPtr, self.pulses, pulseIndexPtr
+        )
         RKPulseRingFilterEngineSetCoreCount(self.ringMachine, 2)
         if desc.initFlags & RKInitFlagStartRingFilterEngine:
             RKPulseRingFilterEngineStart(self.ringMachine)
@@ -216,12 +226,16 @@ class Workspace(ctypes.Structure):
 
         self.sweepMachine = RKSweepEngineInit()
         RKSweepEngineSetVerbose(self.sweepMachine, verbose)
-        RKSweepEngineSetEssentials(self.sweepMachine, descPtr, None, self.configs, configIndexPtr, self.rays, rayIndexPtr)
+        RKSweepEngineSetEssentials(
+            self.sweepMachine, descPtr, None, self.configs, configIndexPtr, self.rays, rayIndexPtr
+        )
         RKSweepEngineSetRecord(self.sweepMachine, True)
         RKSweepEngineStart(self.sweepMachine)
 
         self.recorder = RKRawDataRecorderInit()
-        RKRawDataRecorderSetEssentials(self.recorder, descPtr, None, self.configs, configIndexPtr, self.pulses, pulseIndexPtr)
+        RKRawDataRecorderSetEssentials(
+            self.recorder, descPtr, None, self.configs, configIndexPtr, self.pulses, pulseIndexPtr
+        )
         RKRawDataRecorderSetRawDataType(self.recorder, RKRawDataTypeAfterMatchedFilter)
         RKRawDataRecorderSetVerbose(self.recorder, verbose)
 
@@ -344,10 +358,14 @@ class Workspace(ctypes.Structure):
         if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
             pulse.contents.header.s |= RKPulseStatusCompleteForMoments
             gateCount = pulse.contents.header.downSampledGateCount
-            pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex))
+            pulseCount = (self.filesize - pos) // (
+                ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex)
+            )
         else:
             gateCount = pulse.contents.header.gateCount
-            pulseCount = (self.filesize - pos) // (ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C))
+            pulseCount = (self.filesize - pos) // (
+                ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C)
+            )
         # Read the first pulse, which should be the same as the one above but use get_done_pulse() for pulseEngine->doneIndex
         pulse = None
         while pulse is None:

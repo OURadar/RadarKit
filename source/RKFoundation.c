@@ -210,7 +210,10 @@ int RKLog(const char *whatever, ...) {
         i += vsprintf(msg + i, colored_whatever, args);
 
         if (rkGlobalParameters.showColor) {
-            sprintf(msg + i, RKNoColor);
+            if (msg[i - 1] == '\n') {
+                i--;
+            }
+            sprintf(msg + i, RKNoColor "\n");
         }
 
         free(colored_whatever);

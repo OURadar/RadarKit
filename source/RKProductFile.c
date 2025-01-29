@@ -397,29 +397,20 @@ int RKProductFileWriterNC(RKProduct *product, const char *filename) {
     return RKResultSuccess;
 }
 
-void RKProductDimensionsFromFile(const char *filename, uint32_t *rayCount, uint32_t *gateCount) {
+void RKProductDimensionsFromNcId(uint32_t *rayCount, uint32_t *gateCount, const int ncid) {
     int r;
-    int ncid, tmpId;
-
-    MAKE_FUNCTION_NAME(name);
-
-    // Early return if the file does not exist
-    if (!RKFilenameExists(filename)) {
-        RKLog("Error. File %s does not exist.\n", filename);
-        return;
-    }
-
-    // Read the first file
-    if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
-        RKLog("%s Error opening file %s (%s)\n", name, filename, nc_strerror(r));
-        return;
-    }
+    int tmpId;
 
     // Dimensions
     size_t localRayCount = 0;
     size_t localGateCount = 0;
     if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
         r = nc_inq_dimid(ncid, "azimuth", &tmpId);
+    }
+    if (r != NC_NOERR) {
+        if ((r = nc_inq_dimid(ncid, "Elevation", &tmpId)) != NC_NOERR) {
+            r = nc_inq_dimid(ncid, "elevation", &tmpId);
+        }
     }
     if (r != NC_NOERR) {
         if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
@@ -433,8 +424,9 @@ void RKProductDimensionsFromFile(const char *filename, uint32_t *rayCount, uint3
         RKLog("Warning. Early return (rayCount)\n");
         return;
     }
-    if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
-    r = nc_inq_dimid(ncid, "gate", &tmpId);
+    if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR) {
+        r = nc_inq_dimid(ncid, "gate", &tmpId);
+    }
     if (r == NC_NOERR) {
         nc_inq_dimlen(ncid, tmpId, &localGateCount);
     } else {
@@ -448,6 +440,25 @@ void RKProductDimensionsFromFile(const char *filename, uint32_t *rayCount, uint3
     }
     *gateCount = (uint32_t)localGateCount;
     *rayCount = (uint32_t)localRayCount;
+}
+
+void RKProductDimensionsFromFile(const char *filename, uint32_t *rayCount, uint32_t *gateCount) {
+    MAKE_FUNCTION_NAME(name);
+
+    int r;
+    int ncid;
+
+    // Early return if the file does not exist
+    if (!RKFilenameExists(filename)) {
+        RKLog("Error. File %s does not exist.\n", filename);
+        return;
+    }
+    // Read the first file
+    if ((r = nc_open(filename, NC_NOWRITE, &ncid)) > 0) {
+        RKLog("%s Error opening file %s (%s)\n", name, filename, nc_strerror(r));
+        return;
+    }
+    RKProductDimensionsFromNcId(rayCount, gateCount, ncid);
     nc_close(ncid);
 }
 
@@ -513,8 +524,8 @@ static RKProductCollection *read_ncid_as_wds(const int ncid) {
     MAKE_FUNCTION_NAME(myname);
     int r;
     int tmpId;
-    size_t rayCount = 0;
-    size_t gateCount = 0;
+    uint32_t rayCount = 0;
+    uint32_t gateCount = 0;
     RKName stringValue;
     size_t size;
 
@@ -531,36 +542,15 @@ static RKProductCollection *read_ncid_as_wds(const int ncid) {
     }
     filename[size] = '\0';
 
-    // Dimensions (for double check later)
-    if ((r = nc_inq_dimid(ncid, "Azimuth", &tmpId)) != NC_NOERR) {
-        r = nc_inq_dimid(ncid, "azimuth", &tmpId);
-    }
-    if (r != NC_NOERR) {
-        if ((r = nc_inq_dimid(ncid, "Beam", &tmpId)) != NC_NOERR) {
-            r = nc_inq_dimid(ncid, "beam", &tmpId);
-        }
-    }
-    if (r == NC_NOERR) {
-        nc_inq_dimlen(ncid, tmpId, &rayCount);
-    } else {
-        RKLog("Warning. Early return (rayCount)\n");
-        return NULL;
-    }
-    if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
-    r = nc_inq_dimid(ncid, "gate", &tmpId);
-    if (r == NC_NOERR) {
-        nc_inq_dimlen(ncid, tmpId, &gateCount);
-    } else {
-        RKLog("Warning. Early return (gateCount)\n");
-        return NULL;
-    }
+    // Dimensions
+    RKProductDimensionsFromNcId(&rayCount, &gateCount, ncid);
     if (gateCount > RKMaximumGateCount) {
         RKLog("Info. gateCount = %d capped to %d\n", gateCount, RKMaximumGateCount);
         gateCount = RKMaximumGateCount;
     }
 
     // WDS is always a collection of one product. Will gather them and make a new collection later.
-    RKProductCollection *collection = RKProductCollectionInit(1, (uint32_t)rayCount, (uint32_t)gateCount);
+    RKProductCollection *collection = RKProductCollectionInit(1, rayCount, gateCount);
     RKProduct *product = &collection->products[0];
 
     RKGetSymbolFromFilename(filename, product->desc.symbol);
@@ -807,7 +797,7 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     // Data arrays
     int16_t *i16Array = (int16_t *)RKMalloc(rayCount * gateCount * sizeof(short));
     uint16_t *u16Array = (uint16_t *)RKMalloc(rayCount * gateCount * sizeof(unsigned short));
-    double *f64Array = (double *)malloc(MAX(rayCount, gateCount) * sizeof(double));
+    double *f64Array = (double *)RKMalloc(MAX(rayCount, gateCount) * sizeof(double));
     float *f32Array = (float *)RKMalloc(rayCount * gateCount * sizeof(float));
     if (i16Array == NULL || u16Array == NULL || f64Array == NULL || f32Array == NULL) {
         RKLog("Error. Unable to allocate short/float buffer.");
@@ -904,7 +894,7 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     } else {
         RKLog("Warning. No fixed_angle found.\n");
     }
-    printf("scan:%s   fixed_angle: %.2f\n", tmpString, fv);
+    // printf("scan:%s   fixed_angle: %.2f\n", tmpString, fv);
     if (!strncmp(tmpString, "azimuth_surveillance", 20)) {
         product->header.isPPI = true;
         product->header.sweepElevation = fv;
@@ -1343,11 +1333,6 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *filename) {
     } else {
         RKLog("Error. Unsupported file extension: %s\n", ext);
     }
-    for (int k = 0; k < collection->count; k++) {
-        RKProduct *product = &collection->products[k];
-        RKLog("%d: %s (%s)\n", k, product->desc.name, product->desc.unit);
-        RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
-    }
     return collection;
 }
 
@@ -1716,12 +1701,38 @@ int RKProductCollectionStandardizeForWDSSII(RKProductCollection *collection) {
 }
 
 int RKProductCollectionStandardizeForCFRadial(RKProductCollection *collection) {
+    int p, s;
+    char summary[1024];
+    bool anyConverted = false;
+    bool allConverted = true;
+    // Go through the products to see if it already is converted
+    bool converted;
+    converted = !strcmp(collection->products[RKProductIndexZ].desc.symbol, "DBZ");
+    anyConverted |= converted;
+    allConverted &= converted;
+    converted = !strcmp(collection->products[RKProductIndexV].desc.symbol, "VEL");
+    anyConverted |= converted;
+    allConverted &= converted;
+    converted = !strcmp(collection->products[RKProductIndexW].desc.symbol, "WIDTH");
+    anyConverted |= converted;
+    allConverted &= converted;
+    converted = !strcmp(collection->products[RKProductIndexD].desc.symbol, "ZDR");
+    anyConverted |= converted;
+    allConverted &= converted;
+    converted = !strcmp(collection->products[RKProductIndexP].desc.symbol, "PHIDP");
+    anyConverted |= converted;
+    allConverted &= converted;
+    converted = !strcmp(collection->products[RKProductIndexR].desc.symbol, "RHOHV");
+    anyConverted |= converted;
+    allConverted &= converted;
+    RKLog("RKProductCollectionStandardizeForCFRadial()   %s   %s\n",
+        RKVariableInString("anyConverted", &anyConverted, RKValueTypeBool),
+        RKVariableInString("allConverted", &allConverted, RKValueTypeBool));
+    // Gather the products
     RKProduct *product = collection->products;
     const uint32_t rayCount = product->header.rayCount;
     const uint32_t gateCount = product->header.gateCount;
-    char summary[1024];
-    int s;
-    for (int p = 0; p < collection->count; p++) {
+    for (p = 0; p < collection->count; p++) {
         s = sprintf(summary, "Standardizing %s%s%s (%s%s%s) -> ",
             rkGlobalParameters.showColor ? RKYellowColor : "",
             product->desc.symbol,

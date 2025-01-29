@@ -1137,8 +1137,8 @@ RKMomentEngine *RKMomentEngineInit(void) {
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->noiseEstimator = RKNoiseFromConfig;
-    engine->momentProcessor = RKPulsePairHop;
-    // engine->momentProcessor = RKMultiLag;
+    // engine->momentProcessor = RKPulsePairHop;
+    engine->momentProcessor = RKMultiLag;
     engine->userLagChoice = 3;
     engine->calibrator = RKCalibratorSimple;
     engine->processorLagCount = RKMaximumLagCount;

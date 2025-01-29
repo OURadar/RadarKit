@@ -1560,1459 +1560,1459 @@ RKFilterAnchor = union_rk_filter_anchor# RKTypes.h: 321
 
 RKFilterAnchorGroup = RKFilterAnchor * int(8)# RKTypes.h: 323
 
-enum_anon_77 = c_int# RKTypes.h: 417
+enum_anon_77 = c_int# RKTypes.h: 419
 
-RKResultSuccess = 0# RKTypes.h: 417
+RKResultSuccess = 0# RKTypes.h: 419
 
-RKResultTooBig = (RKResultSuccess + 1)# RKTypes.h: 417
+RKResultTooBig = (RKResultSuccess + 1)# RKTypes.h: 419
 
-RKResultTimeout = (RKResultTooBig + 1)# RKTypes.h: 417
+RKResultTimeout = (RKResultTooBig + 1)# RKTypes.h: 419
 
-RKResultNullInput = (RKResultTimeout + 1)# RKTypes.h: 417
+RKResultNullInput = (RKResultTimeout + 1)# RKTypes.h: 419
 
-RKResultEngineNotWired = (RKResultNullInput + 1)# RKTypes.h: 417
+RKResultEngineNotWired = (RKResultNullInput + 1)# RKTypes.h: 419
 
-RKResultEngineNotActive = (RKResultEngineNotWired + 1)# RKTypes.h: 417
+RKResultEngineNotActive = (RKResultEngineNotWired + 1)# RKTypes.h: 419
 
-RKResultIncompleteSend = (RKResultEngineNotActive + 1)# RKTypes.h: 417
+RKResultIncompleteSend = (RKResultEngineNotActive + 1)# RKTypes.h: 419
 
-RKResultIncompleteReceive = (RKResultIncompleteSend + 1)# RKTypes.h: 417
+RKResultIncompleteReceive = (RKResultIncompleteSend + 1)# RKTypes.h: 419
 
-RKResultIncompleteTransceiver = (RKResultIncompleteReceive + 1)# RKTypes.h: 417
+RKResultIncompleteTransceiver = (RKResultIncompleteReceive + 1)# RKTypes.h: 419
 
-RKResultIncompletePedestal = (RKResultIncompleteTransceiver + 1)# RKTypes.h: 417
+RKResultIncompletePedestal = (RKResultIncompleteTransceiver + 1)# RKTypes.h: 419
 
-RKResultIncompleteHealthRelay = (RKResultIncompletePedestal + 1)# RKTypes.h: 417
+RKResultIncompleteHealthRelay = (RKResultIncompletePedestal + 1)# RKTypes.h: 419
 
-RKResultIncompleteControl = (RKResultIncompleteHealthRelay + 1)# RKTypes.h: 417
+RKResultIncompleteControl = (RKResultIncompleteHealthRelay + 1)# RKTypes.h: 419
 
-RKResultIncompleteWaveformCalibration = (RKResultIncompleteControl + 1)# RKTypes.h: 417
+RKResultIncompleteWaveformCalibration = (RKResultIncompleteControl + 1)# RKTypes.h: 419
 
-RKResultIncompleteProductDescription = (RKResultIncompleteWaveformCalibration + 1)# RKTypes.h: 417
+RKResultIncompleteProductDescription = (RKResultIncompleteWaveformCalibration + 1)# RKTypes.h: 419
 
-RKResultIncompleteScanDescription = (RKResultIncompleteProductDescription + 1)# RKTypes.h: 417
+RKResultIncompleteScanDescription = (RKResultIncompleteProductDescription + 1)# RKTypes.h: 419
 
-RKResultErrorCreatingOperatorRoutine = (RKResultIncompleteScanDescription + 1)# RKTypes.h: 417
+RKResultErrorCreatingOperatorRoutine = (RKResultIncompleteScanDescription + 1)# RKTypes.h: 419
 
-RKResultErrorCreatingOperatorCommandRoutine = (RKResultErrorCreatingOperatorRoutine + 1)# RKTypes.h: 417
+RKResultErrorCreatingOperatorCommandRoutine = (RKResultErrorCreatingOperatorRoutine + 1)# RKTypes.h: 419
 
-RKResultErrorCreatingClientRoutine = (RKResultErrorCreatingOperatorCommandRoutine + 1)# RKTypes.h: 417
+RKResultErrorCreatingClientRoutine = (RKResultErrorCreatingOperatorCommandRoutine + 1)# RKTypes.h: 419
 
-RKResultSDToFDError = (RKResultErrorCreatingClientRoutine + 1)# RKTypes.h: 417
+RKResultSDToFDError = (RKResultErrorCreatingClientRoutine + 1)# RKTypes.h: 419
 
-RKResultNoPulseBuffer = (RKResultSDToFDError + 1)# RKTypes.h: 417
+RKResultNoPulseBuffer = (RKResultSDToFDError + 1)# RKTypes.h: 419
 
-RKResultNoRayBuffer = (RKResultNoPulseBuffer + 1)# RKTypes.h: 417
+RKResultNoRayBuffer = (RKResultNoPulseBuffer + 1)# RKTypes.h: 419
 
-RKResultNoPulseCompressionEngine = (RKResultNoRayBuffer + 1)# RKTypes.h: 417
+RKResultNoPulseCompressionEngine = (RKResultNoRayBuffer + 1)# RKTypes.h: 419
 
-RKResultNoPulseRingEngine = (RKResultNoPulseCompressionEngine + 1)# RKTypes.h: 417
+RKResultNoPulseRingEngine = (RKResultNoPulseCompressionEngine + 1)# RKTypes.h: 419
 
-RKResultNoMomentEngine = (RKResultNoPulseRingEngine + 1)# RKTypes.h: 417
+RKResultNoMomentEngine = (RKResultNoPulseRingEngine + 1)# RKTypes.h: 419
 
-RKResultFailedToStartCompressionCore = (RKResultNoMomentEngine + 1)# RKTypes.h: 417
+RKResultFailedToStartCompressionCore = (RKResultNoMomentEngine + 1)# RKTypes.h: 419
 
-RKResultFailedToStartRingCore = (RKResultFailedToStartCompressionCore + 1)# RKTypes.h: 417
+RKResultFailedToStartRingCore = (RKResultFailedToStartCompressionCore + 1)# RKTypes.h: 419
 
-RKResultFailedToStartPulseWatcher = (RKResultFailedToStartRingCore + 1)# RKTypes.h: 417
+RKResultFailedToStartPulseWatcher = (RKResultFailedToStartRingCore + 1)# RKTypes.h: 419
 
-RKResultFailedToStartRingPulseWatcher = (RKResultFailedToStartPulseWatcher + 1)# RKTypes.h: 417
+RKResultFailedToStartRingPulseWatcher = (RKResultFailedToStartPulseWatcher + 1)# RKTypes.h: 419
 
-RKResultFailedToInitiateSemaphore = (RKResultFailedToStartRingPulseWatcher + 1)# RKTypes.h: 417
+RKResultFailedToInitiateSemaphore = (RKResultFailedToStartRingPulseWatcher + 1)# RKTypes.h: 419
 
-RKResultFailedToRetrieveSemaphore = (RKResultFailedToInitiateSemaphore + 1)# RKTypes.h: 417
+RKResultFailedToRetrieveSemaphore = (RKResultFailedToInitiateSemaphore + 1)# RKTypes.h: 419
 
-RKResultFailedToAllocateFFTSpace = (RKResultFailedToRetrieveSemaphore + 1)# RKTypes.h: 417
+RKResultFailedToAllocateFFTSpace = (RKResultFailedToRetrieveSemaphore + 1)# RKTypes.h: 419
 
-RKResultFailedToAllocateFilter = (RKResultFailedToAllocateFFTSpace + 1)# RKTypes.h: 417
+RKResultFailedToAllocateFilter = (RKResultFailedToAllocateFFTSpace + 1)# RKTypes.h: 419
 
-RKResultFailedToAllocateDutyCycleBuffer = (RKResultFailedToAllocateFilter + 1)# RKTypes.h: 417
+RKResultFailedToAllocateDutyCycleBuffer = (RKResultFailedToAllocateFilter + 1)# RKTypes.h: 419
 
-RKResultFailedToAllocateScratchSpace = (RKResultFailedToAllocateDutyCycleBuffer + 1)# RKTypes.h: 417
+RKResultFailedToAllocateScratchSpace = (RKResultFailedToAllocateDutyCycleBuffer + 1)# RKTypes.h: 419
 
-RKResultFailedToSetWaveform = (RKResultFailedToAllocateScratchSpace + 1)# RKTypes.h: 417
+RKResultFailedToSetWaveform = (RKResultFailedToAllocateScratchSpace + 1)# RKTypes.h: 419
 
-RKResultFailedToSetFilter = (RKResultFailedToSetWaveform + 1)# RKTypes.h: 417
+RKResultFailedToSetFilter = (RKResultFailedToSetWaveform + 1)# RKTypes.h: 419
 
-RKResultEngineDeactivatedMultipleTimes = (RKResultFailedToSetFilter + 1)# RKTypes.h: 417
+RKResultEngineDeactivatedMultipleTimes = (RKResultFailedToSetFilter + 1)# RKTypes.h: 419
 
-RKResultFailedToStartMomentCore = (RKResultEngineDeactivatedMultipleTimes + 1)# RKTypes.h: 417
+RKResultFailedToStartMomentCore = (RKResultEngineDeactivatedMultipleTimes + 1)# RKTypes.h: 419
 
-RKResultFailedToStartPulseGatherer = (RKResultFailedToStartMomentCore + 1)# RKTypes.h: 417
+RKResultFailedToStartPulseGatherer = (RKResultFailedToStartMomentCore + 1)# RKTypes.h: 419
 
-RKResultUnableToChangeCoreCounts = (RKResultFailedToStartPulseGatherer + 1)# RKTypes.h: 417
+RKResultUnableToChangeCoreCounts = (RKResultFailedToStartPulseGatherer + 1)# RKTypes.h: 419
 
-RKResultFailedToStartPedestalWorker = (RKResultUnableToChangeCoreCounts + 1)# RKTypes.h: 417
+RKResultFailedToStartPedestalWorker = (RKResultUnableToChangeCoreCounts + 1)# RKTypes.h: 419
 
-RKResultFailedToGetVacantPosition = (RKResultFailedToStartPedestalWorker + 1)# RKTypes.h: 417
+RKResultFailedToGetVacantPosition = (RKResultFailedToStartPedestalWorker + 1)# RKTypes.h: 419
 
-RKResultFailedToGetVacantHealth = (RKResultFailedToGetVacantPosition + 1)# RKTypes.h: 417
+RKResultFailedToGetVacantHealth = (RKResultFailedToGetVacantPosition + 1)# RKTypes.h: 419
 
-RKResultFailedToStartRayGatherer = (RKResultFailedToGetVacantHealth + 1)# RKTypes.h: 417
+RKResultFailedToStartRayGatherer = (RKResultFailedToGetVacantHealth + 1)# RKTypes.h: 419
 
-RKResultFailedToStartHealthWorker = (RKResultFailedToStartRayGatherer + 1)# RKTypes.h: 417
+RKResultFailedToStartHealthWorker = (RKResultFailedToStartRayGatherer + 1)# RKTypes.h: 419
 
-RKResultFailedToStartPulseRecorder = (RKResultFailedToStartHealthWorker + 1)# RKTypes.h: 417
+RKResultFailedToStartPulseRecorder = (RKResultFailedToStartHealthWorker + 1)# RKTypes.h: 419
 
-RKResultFailedToStartPedestalMonitor = (RKResultFailedToStartPulseRecorder + 1)# RKTypes.h: 417
+RKResultFailedToStartPedestalMonitor = (RKResultFailedToStartPulseRecorder + 1)# RKTypes.h: 419
 
-RKResultFailedToStartpedestalVcpEngine = (RKResultFailedToStartPedestalMonitor + 1)# RKTypes.h: 417
+RKResultFailedToStartpedestalVcpEngine = (RKResultFailedToStartPedestalMonitor + 1)# RKTypes.h: 419
 
-RKResultFailedToStartFileManager = (RKResultFailedToStartpedestalVcpEngine + 1)# RKTypes.h: 417
+RKResultFailedToStartFileManager = (RKResultFailedToStartpedestalVcpEngine + 1)# RKTypes.h: 419
 
-RKResultFailedToStartFileRemover = (RKResultFailedToStartFileManager + 1)# RKTypes.h: 417
+RKResultFailedToStartFileRemover = (RKResultFailedToStartFileManager + 1)# RKTypes.h: 419
 
-RKResultFailedToStartTransceiver = (RKResultFailedToStartFileRemover + 1)# RKTypes.h: 417
+RKResultFailedToStartTransceiver = (RKResultFailedToStartFileRemover + 1)# RKTypes.h: 419
 
-RKResultFailedToStartPedestal = (RKResultFailedToStartTransceiver + 1)# RKTypes.h: 417
+RKResultFailedToStartPedestal = (RKResultFailedToStartTransceiver + 1)# RKTypes.h: 419
 
-RKResultFailedToStartHealthRelay = (RKResultFailedToStartPedestal + 1)# RKTypes.h: 417
+RKResultFailedToStartHealthRelay = (RKResultFailedToStartPedestal + 1)# RKTypes.h: 419
 
-RKResultPreferenceFileNotFound = (RKResultFailedToStartHealthRelay + 1)# RKTypes.h: 417
+RKResultPreferenceFileNotFound = (RKResultFailedToStartHealthRelay + 1)# RKTypes.h: 419
 
-RKResultPreferenceKeywordNotFound = (RKResultPreferenceFileNotFound + 1)# RKTypes.h: 417
+RKResultPreferenceKeywordNotFound = (RKResultPreferenceFileNotFound + 1)# RKTypes.h: 419
 
-RKResultFailedToMeasureNoise = (RKResultPreferenceKeywordNotFound + 1)# RKTypes.h: 417
+RKResultFailedToMeasureNoise = (RKResultPreferenceKeywordNotFound + 1)# RKTypes.h: 419
 
-RKResultFailedToEstimateNoise = (RKResultFailedToMeasureNoise + 1)# RKTypes.h: 417
+RKResultFailedToEstimateNoise = (RKResultFailedToMeasureNoise + 1)# RKTypes.h: 419
 
-RKResultFailedToCreateFileRemover = (RKResultFailedToEstimateNoise + 1)# RKTypes.h: 417
+RKResultFailedToCreateFileRemover = (RKResultFailedToEstimateNoise + 1)# RKTypes.h: 419
 
-RKResultFileManagerBufferNotResuable = (RKResultFailedToCreateFileRemover + 1)# RKTypes.h: 417
+RKResultFileManagerBufferNotResuable = (RKResultFailedToCreateFileRemover + 1)# RKTypes.h: 419
 
-RKResultInvalidMomentParameters = (RKResultFileManagerBufferNotResuable + 1)# RKTypes.h: 417
+RKResultInvalidMomentParameters = (RKResultFileManagerBufferNotResuable + 1)# RKTypes.h: 419
 
-RKResultFailedToCreateUnitWorker = (RKResultInvalidMomentParameters + 1)# RKTypes.h: 417
+RKResultFailedToCreateUnitWorker = (RKResultInvalidMomentParameters + 1)# RKTypes.h: 419
 
-RKResultFailedToStartHostWatcher = (RKResultFailedToCreateUnitWorker + 1)# RKTypes.h: 417
+RKResultFailedToStartHostWatcher = (RKResultFailedToCreateUnitWorker + 1)# RKTypes.h: 419
 
-RKResultFailedToStartHostPinger = (RKResultFailedToStartHostWatcher + 1)# RKTypes.h: 417
+RKResultFailedToStartHostPinger = (RKResultFailedToStartHostWatcher + 1)# RKTypes.h: 419
 
-RKResultFailedToExecuteCommand = (RKResultFailedToStartHostPinger + 1)# RKTypes.h: 417
+RKResultFailedToExecuteCommand = (RKResultFailedToStartHostPinger + 1)# RKTypes.h: 419
 
-RKResultFailedToSetVCP = (RKResultFailedToExecuteCommand + 1)# RKTypes.h: 417
+RKResultFailedToSetVCP = (RKResultFailedToExecuteCommand + 1)# RKTypes.h: 419
 
-RKResultFailedToAddHost = (RKResultFailedToSetVCP + 1)# RKTypes.h: 417
+RKResultFailedToAddHost = (RKResultFailedToSetVCP + 1)# RKTypes.h: 419
 
-RKResultFailedToFindProductId = (RKResultFailedToAddHost + 1)# RKTypes.h: 417
+RKResultFailedToFindProductId = (RKResultFailedToAddHost + 1)# RKTypes.h: 419
 
-RKResultFailedToOpenFileForProduct = (RKResultFailedToFindProductId + 1)# RKTypes.h: 417
+RKResultFailedToOpenFileForProduct = (RKResultFailedToFindProductId + 1)# RKTypes.h: 419
 
-RKResultClientNotConnected = (RKResultFailedToOpenFileForProduct + 1)# RKTypes.h: 417
+RKResultClientNotConnected = (RKResultFailedToOpenFileForProduct + 1)# RKTypes.h: 419
 
-RKResultFileManagerInconsistentFolder = (RKResultClientNotConnected + 1)# RKTypes.h: 417
+RKResultFileManagerInconsistentFolder = (RKResultClientNotConnected + 1)# RKTypes.h: 419
 
-RKResultFailedToExpandWaveform = (RKResultFileManagerInconsistentFolder + 1)# RKTypes.h: 417
+RKResultFailedToExpandWaveform = (RKResultFileManagerInconsistentFolder + 1)# RKTypes.h: 419
 
-RKResultFailedToOpenFileForWriting = (RKResultFailedToExpandWaveform + 1)# RKTypes.h: 417
+RKResultFailedToOpenFileForWriting = (RKResultFailedToExpandWaveform + 1)# RKTypes.h: 419
 
-RKResultFailedToStandardizeProduct = (RKResultFailedToOpenFileForWriting + 1)# RKTypes.h: 417
+RKResultFailedToStandardizeProduct = (RKResultFailedToOpenFileForWriting + 1)# RKTypes.h: 419
 
-RKResultRadarNotLive = (RKResultFailedToStandardizeProduct + 1)# RKTypes.h: 417
+RKResultRadarNotLive = (RKResultFailedToStandardizeProduct + 1)# RKTypes.h: 419
 
-RKResultRawDataTypeUndefined = (RKResultRadarNotLive + 1)# RKTypes.h: 417
+RKResultRawDataTypeUndefined = (RKResultRadarNotLive + 1)# RKTypes.h: 419
 
-RKResultNothingToRead = (RKResultRawDataTypeUndefined + 1)# RKTypes.h: 417
+RKResultNothingToRead = (RKResultRawDataTypeUndefined + 1)# RKTypes.h: 419
 
-RKResultProductDescriptionNotSet = (RKResultNothingToRead + 1)# RKTypes.h: 417
+RKResultProductDescriptionNotSet = (RKResultNothingToRead + 1)# RKTypes.h: 419
 
-RKResultProductDimensionsNotSet = (RKResultProductDescriptionNotSet + 1)# RKTypes.h: 417
+RKResultProductDimensionsNotSet = (RKResultProductDescriptionNotSet + 1)# RKTypes.h: 419
 
-RKResultProductStartTimeNotSet = (RKResultProductDimensionsNotSet + 1)# RKTypes.h: 417
+RKResultProductStartTimeNotSet = (RKResultProductDimensionsNotSet + 1)# RKTypes.h: 419
 
-RKResultProductGateSizeNotSet = (RKResultProductStartTimeNotSet + 1)# RKTypes.h: 417
+RKResultProductGateSizeNotSet = (RKResultProductStartTimeNotSet + 1)# RKTypes.h: 419
 
-RKResultFilenameHasNoPrefix = (RKResultProductGateSizeNotSet + 1)# RKTypes.h: 417
+RKResultFilenameHasNoPrefix = (RKResultProductGateSizeNotSet + 1)# RKTypes.h: 419
 
-RKResultFilenameHasBadDate = (RKResultFilenameHasNoPrefix + 1)# RKTypes.h: 417
+RKResultFilenameHasBadDate = (RKResultFilenameHasNoPrefix + 1)# RKTypes.h: 419
 
-RKResultFilenameHasBadTime = (RKResultFilenameHasBadDate + 1)# RKTypes.h: 417
+RKResultFilenameHasBadTime = (RKResultFilenameHasBadDate + 1)# RKTypes.h: 419
 
-RKResultFilenameHasBadScan = (RKResultFilenameHasBadTime + 1)# RKTypes.h: 417
+RKResultFilenameHasBadScan = (RKResultFilenameHasBadTime + 1)# RKTypes.h: 419
 
-RKResultFilenameHasNoProduct = (RKResultFilenameHasBadScan + 1)# RKTypes.h: 417
+RKResultFilenameHasNoProduct = (RKResultFilenameHasBadScan + 1)# RKTypes.h: 419
 
-RKResultFailedToOpenFile = (RKResultFilenameHasNoProduct + 1)# RKTypes.h: 417
+RKResultFailedToOpenFile = (RKResultFilenameHasNoProduct + 1)# RKTypes.h: 419
 
-RKResultNoRadar = (RKResultFailedToOpenFile + 1)# RKTypes.h: 417
+RKResultNoRadar = (RKResultFailedToOpenFile + 1)# RKTypes.h: 419
 
-RKResultCount = (RKResultNoRadar + 1)# RKTypes.h: 417
+RKResultCount = (RKResultNoRadar + 1)# RKTypes.h: 419
 
-enum_RKEngineColor = c_int# RKTypes.h: 423
+enum_RKEngineColor = c_int# RKTypes.h: 425
 
-RKEngineColorCommandCenter = 14# RKTypes.h: 423
+RKEngineColorCommandCenter = 14# RKTypes.h: 425
 
-RKEngineColorRadarHubReporter = 10# RKTypes.h: 423
+RKEngineColorRadarHubReporter = 10# RKTypes.h: 425
 
-RKEngineColorPulseCompressionEngine = 7# RKTypes.h: 423
+RKEngineColorPulseCompressionEngine = 7# RKTypes.h: 425
 
-RKEngineColorPulseRingFilterEngine = 3# RKTypes.h: 423
+RKEngineColorPulseRingFilterEngine = 3# RKTypes.h: 425
 
-RKEngineColorPositionEngine = 4# RKTypes.h: 423
+RKEngineColorPositionEngine = 4# RKTypes.h: 425
 
-RKEngineColorSteerEngine = 3# RKTypes.h: 423
+RKEngineColorSteerEngine = 3# RKTypes.h: 425
 
-RKEngineColorMomentEngine = 15# RKTypes.h: 423
+RKEngineColorMomentEngine = 15# RKTypes.h: 425
 
-RKEngineColorHealthEngine = 1# RKTypes.h: 423
+RKEngineColorHealthEngine = 1# RKTypes.h: 425
 
-RKEngineColorDataRecorder = 12# RKTypes.h: 423
+RKEngineColorDataRecorder = 12# RKTypes.h: 425
 
-RKEngineColorSweepEngine = 18# RKTypes.h: 423
+RKEngineColorSweepEngine = 18# RKTypes.h: 425
 
-RKEngineColorHealthLogger = 5# RKTypes.h: 423
+RKEngineColorHealthLogger = 5# RKTypes.h: 425
 
-RKEngineColorFileManager = 2# RKTypes.h: 423
+RKEngineColorFileManager = 2# RKTypes.h: 425
 
-RKEngineColorTransceiver = 17# RKTypes.h: 423
+RKEngineColorTransceiver = 17# RKTypes.h: 425
 
-RKEngineColorPedestalRelayPedzy = 15# RKTypes.h: 423
+RKEngineColorPedestalRelayPedzy = 15# RKTypes.h: 425
 
-RKEngineColorHealthRelayTweeta = 0# RKTypes.h: 423
+RKEngineColorHealthRelayTweeta = 0# RKTypes.h: 425
 
-RKEngineColorHealthRelayNaveen = 11# RKTypes.h: 423
+RKEngineColorHealthRelayNaveen = 11# RKTypes.h: 425
 
-RKEngineColorRadarRelay = 17# RKTypes.h: 423
+RKEngineColorRadarRelay = 17# RKTypes.h: 425
 
-RKEngineColorHostMonitor = 16# RKTypes.h: 423
+RKEngineColorHostMonitor = 16# RKTypes.h: 425
 
-RKEngineColorClock = 19# RKTypes.h: 423
+RKEngineColorClock = 19# RKTypes.h: 425
 
-RKEngineColorMisc = 20# RKTypes.h: 423
+RKEngineColorMisc = 20# RKTypes.h: 425
 
-RKEngineColorEngineMonitor = 19# RKTypes.h: 423
+RKEngineColorEngineMonitor = 19# RKTypes.h: 425
 
-RKEngineColorConfig = 6# RKTypes.h: 423
+RKEngineColorConfig = 6# RKTypes.h: 425
 
-RKEngineColorFFTModule = 19# RKTypes.h: 423
+RKEngineColorFFTModule = 19# RKTypes.h: 425
 
-RKEngineColorWebSocket = 8# RKTypes.h: 423
+RKEngineColorWebSocket = 8# RKTypes.h: 425
 
-RKValueType = uint32_t# RKTypes.h: 450
+RKValueType = uint32_t# RKTypes.h: 452
 
-enum_anon_78 = c_int# RKTypes.h: 451
+enum_anon_78 = c_int# RKTypes.h: 453
 
-RKValueTypeNull = 0# RKTypes.h: 451
+RKValueTypeNull = 0# RKTypes.h: 453
 
-RKValueTypeBool = (RKValueTypeNull + 1)# RKTypes.h: 451
+RKValueTypeBool = (RKValueTypeNull + 1)# RKTypes.h: 453
 
-RKValueTypeInt = (RKValueTypeBool + 1)# RKTypes.h: 451
+RKValueTypeInt = (RKValueTypeBool + 1)# RKTypes.h: 453
 
-RKValueTypeLong = (RKValueTypeInt + 1)# RKTypes.h: 451
+RKValueTypeLong = (RKValueTypeInt + 1)# RKTypes.h: 453
 
-RKValueTypeInt8 = (RKValueTypeLong + 1)# RKTypes.h: 451
+RKValueTypeInt8 = (RKValueTypeLong + 1)# RKTypes.h: 453
 
-RKValueTypeInt16 = (RKValueTypeInt8 + 1)# RKTypes.h: 451
+RKValueTypeInt16 = (RKValueTypeInt8 + 1)# RKTypes.h: 453
 
-RKValueTypeInt32 = (RKValueTypeInt16 + 1)# RKTypes.h: 451
+RKValueTypeInt32 = (RKValueTypeInt16 + 1)# RKTypes.h: 453
 
-RKValueTypeInt64 = (RKValueTypeInt32 + 1)# RKTypes.h: 451
+RKValueTypeInt64 = (RKValueTypeInt32 + 1)# RKTypes.h: 453
 
-RKValueTypeSSize = (RKValueTypeInt64 + 1)# RKTypes.h: 451
+RKValueTypeSSize = (RKValueTypeInt64 + 1)# RKTypes.h: 453
 
-RKValueTypeUInt = (RKValueTypeSSize + 1)# RKTypes.h: 451
+RKValueTypeUInt = (RKValueTypeSSize + 1)# RKTypes.h: 453
 
-RKValueTypeULong = (RKValueTypeUInt + 1)# RKTypes.h: 451
+RKValueTypeULong = (RKValueTypeUInt + 1)# RKTypes.h: 453
 
-RKValueTypeUInt8 = (RKValueTypeULong + 1)# RKTypes.h: 451
+RKValueTypeUInt8 = (RKValueTypeULong + 1)# RKTypes.h: 453
 
-RKValueTypeUInt16 = (RKValueTypeUInt8 + 1)# RKTypes.h: 451
+RKValueTypeUInt16 = (RKValueTypeUInt8 + 1)# RKTypes.h: 453
 
-RKValueTypeUInt32 = (RKValueTypeUInt16 + 1)# RKTypes.h: 451
+RKValueTypeUInt32 = (RKValueTypeUInt16 + 1)# RKTypes.h: 453
 
-RKValueTypeUInt64 = (RKValueTypeUInt32 + 1)# RKTypes.h: 451
+RKValueTypeUInt64 = (RKValueTypeUInt32 + 1)# RKTypes.h: 453
 
-RKValueTypeIntInHex = (RKValueTypeUInt64 + 1)# RKTypes.h: 451
+RKValueTypeIntInHex = (RKValueTypeUInt64 + 1)# RKTypes.h: 453
 
-RKValueTypeLongInHex = (RKValueTypeIntInHex + 1)# RKTypes.h: 451
+RKValueTypeLongInHex = (RKValueTypeIntInHex + 1)# RKTypes.h: 453
 
-RKValueTypeInt8InHex = (RKValueTypeLongInHex + 1)# RKTypes.h: 451
+RKValueTypeInt8InHex = (RKValueTypeLongInHex + 1)# RKTypes.h: 453
 
-RKValueTypeInt16InHex = (RKValueTypeInt8InHex + 1)# RKTypes.h: 451
+RKValueTypeInt16InHex = (RKValueTypeInt8InHex + 1)# RKTypes.h: 453
 
-RKValueTypeInt32InHex = (RKValueTypeInt16InHex + 1)# RKTypes.h: 451
+RKValueTypeInt32InHex = (RKValueTypeInt16InHex + 1)# RKTypes.h: 453
 
-RKValueTypeInt64InHex = (RKValueTypeInt32InHex + 1)# RKTypes.h: 451
+RKValueTypeInt64InHex = (RKValueTypeInt32InHex + 1)# RKTypes.h: 453
 
-RKValueTypeSSizeInHex = (RKValueTypeInt64InHex + 1)# RKTypes.h: 451
+RKValueTypeSSizeInHex = (RKValueTypeInt64InHex + 1)# RKTypes.h: 453
 
-RKValueTypeUIntInHex = (RKValueTypeSSizeInHex + 1)# RKTypes.h: 451
+RKValueTypeUIntInHex = (RKValueTypeSSizeInHex + 1)# RKTypes.h: 453
 
-RKValueTypeULongInHex = (RKValueTypeUIntInHex + 1)# RKTypes.h: 451
+RKValueTypeULongInHex = (RKValueTypeUIntInHex + 1)# RKTypes.h: 453
 
-RKValueTypeUInt8InHex = (RKValueTypeULongInHex + 1)# RKTypes.h: 451
+RKValueTypeUInt8InHex = (RKValueTypeULongInHex + 1)# RKTypes.h: 453
 
-RKValueTypeUInt16InHex = (RKValueTypeUInt8InHex + 1)# RKTypes.h: 451
+RKValueTypeUInt16InHex = (RKValueTypeUInt8InHex + 1)# RKTypes.h: 453
 
-RKValueTypeUInt32InHex = (RKValueTypeUInt16InHex + 1)# RKTypes.h: 451
+RKValueTypeUInt32InHex = (RKValueTypeUInt16InHex + 1)# RKTypes.h: 453
 
-RKValueTypeUInt64InHex = (RKValueTypeUInt32InHex + 1)# RKTypes.h: 451
+RKValueTypeUInt64InHex = (RKValueTypeUInt32InHex + 1)# RKTypes.h: 453
 
-RKValueTypeSize = (RKValueTypeUInt64InHex + 1)# RKTypes.h: 451
+RKValueTypeSize = (RKValueTypeUInt64InHex + 1)# RKTypes.h: 453
 
-RKValueTypeFloat = (RKValueTypeSize + 1)# RKTypes.h: 451
+RKValueTypeFloat = (RKValueTypeSize + 1)# RKTypes.h: 453
 
-RKValueTypeDouble = (RKValueTypeFloat + 1)# RKTypes.h: 451
+RKValueTypeDouble = (RKValueTypeFloat + 1)# RKTypes.h: 453
 
-RKValueTypeString = (RKValueTypeDouble + 1)# RKTypes.h: 451
+RKValueTypeString = (RKValueTypeDouble + 1)# RKTypes.h: 453
 
-RKValueTypeNumericString = (RKValueTypeString + 1)# RKTypes.h: 451
+RKValueTypeNumericString = (RKValueTypeString + 1)# RKTypes.h: 453
 
-RKValueTypeFloatWithOneDecimals = (RKValueTypeNumericString + 1)# RKTypes.h: 451
+RKValueTypeFloatWithOneDecimals = (RKValueTypeNumericString + 1)# RKTypes.h: 453
 
-RKValueTypeFloatWithTwoDecimals = (RKValueTypeFloatWithOneDecimals + 1)# RKTypes.h: 451
+RKValueTypeFloatWithTwoDecimals = (RKValueTypeFloatWithOneDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeFloatWithThreeDecimals = (RKValueTypeFloatWithTwoDecimals + 1)# RKTypes.h: 451
+RKValueTypeFloatWithThreeDecimals = (RKValueTypeFloatWithTwoDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeFloatWithFourDecimals = (RKValueTypeFloatWithThreeDecimals + 1)# RKTypes.h: 451
+RKValueTypeFloatWithFourDecimals = (RKValueTypeFloatWithThreeDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeFloatWithFiveDecimals = (RKValueTypeFloatWithFourDecimals + 1)# RKTypes.h: 451
+RKValueTypeFloatWithFiveDecimals = (RKValueTypeFloatWithFourDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeFloatWithSixDecimals = (RKValueTypeFloatWithFiveDecimals + 1)# RKTypes.h: 451
+RKValueTypeFloatWithSixDecimals = (RKValueTypeFloatWithFiveDecimals + 1)# RKTypes.h: 453
 
-RKValueTYpeFloatMultipliedBy1k = (RKValueTypeFloatWithSixDecimals + 1)# RKTypes.h: 451
+RKValueTYpeFloatMultipliedBy1k = (RKValueTypeFloatWithSixDecimals + 1)# RKTypes.h: 453
 
-RKValueTYpeFloatMultipliedBy1M = (RKValueTYpeFloatMultipliedBy1k + 1)# RKTypes.h: 451
+RKValueTYpeFloatMultipliedBy1M = (RKValueTYpeFloatMultipliedBy1k + 1)# RKTypes.h: 453
 
-RKValueTYpeFloatDividedBy1k = (RKValueTYpeFloatMultipliedBy1M + 1)# RKTypes.h: 451
+RKValueTYpeFloatDividedBy1k = (RKValueTYpeFloatMultipliedBy1M + 1)# RKTypes.h: 453
 
-RKValueTYpeFloatDividedBy1M = (RKValueTYpeFloatDividedBy1k + 1)# RKTypes.h: 451
+RKValueTYpeFloatDividedBy1M = (RKValueTYpeFloatDividedBy1k + 1)# RKTypes.h: 453
 
-RKValueTypeDoubleWithOneDecimals = (RKValueTYpeFloatDividedBy1M + 1)# RKTypes.h: 451
+RKValueTypeDoubleWithOneDecimals = (RKValueTYpeFloatDividedBy1M + 1)# RKTypes.h: 453
 
-RKValueTypeDoubleWithTwoDecimals = (RKValueTypeDoubleWithOneDecimals + 1)# RKTypes.h: 451
+RKValueTypeDoubleWithTwoDecimals = (RKValueTypeDoubleWithOneDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeDoubleWithThreeDecimals = (RKValueTypeDoubleWithTwoDecimals + 1)# RKTypes.h: 451
+RKValueTypeDoubleWithThreeDecimals = (RKValueTypeDoubleWithTwoDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeDoubleWithFourDecimals = (RKValueTypeDoubleWithThreeDecimals + 1)# RKTypes.h: 451
+RKValueTypeDoubleWithFourDecimals = (RKValueTypeDoubleWithThreeDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeDoubleWithFiveDecimals = (RKValueTypeDoubleWithFourDecimals + 1)# RKTypes.h: 451
+RKValueTypeDoubleWithFiveDecimals = (RKValueTypeDoubleWithFourDecimals + 1)# RKTypes.h: 453
 
-RKValueTypeDoubleWithSixDecimals = (RKValueTypeDoubleWithFiveDecimals + 1)# RKTypes.h: 451
+RKValueTypeDoubleWithSixDecimals = (RKValueTypeDoubleWithFiveDecimals + 1)# RKTypes.h: 453
 
-RKValueTYpeDoubleMultipliedBy1k = (RKValueTypeDoubleWithSixDecimals + 1)# RKTypes.h: 451
+RKValueTYpeDoubleMultipliedBy1k = (RKValueTypeDoubleWithSixDecimals + 1)# RKTypes.h: 453
 
-RKValueTYpeDoubleMultipliedBy1M = (RKValueTYpeDoubleMultipliedBy1k + 1)# RKTypes.h: 451
+RKValueTYpeDoubleMultipliedBy1M = (RKValueTYpeDoubleMultipliedBy1k + 1)# RKTypes.h: 453
 
-RKValueTYpeDoubleDividedBy1k = (RKValueTYpeDoubleMultipliedBy1M + 1)# RKTypes.h: 451
+RKValueTYpeDoubleDividedBy1k = (RKValueTYpeDoubleMultipliedBy1M + 1)# RKTypes.h: 453
 
-RKValueTYpeDoubleDividedBy1M = (RKValueTYpeDoubleDividedBy1k + 1)# RKTypes.h: 451
+RKValueTYpeDoubleDividedBy1M = (RKValueTYpeDoubleDividedBy1k + 1)# RKTypes.h: 453
 
-RKValueTypeProductId = RKValueTypeInt8# RKTypes.h: 451
+RKValueTypeProductId = RKValueTypeInt8# RKTypes.h: 453
 
-RKValueTypeIdentifier = RKValueTypeUInt64# RKTypes.h: 451
+RKValueTypeIdentifier = RKValueTypeUInt64# RKTypes.h: 453
 
-RKValueTypeDictionary = (RKValueTypeIdentifier + 1)# RKTypes.h: 451
+RKValueTypeDictionary = (RKValueTypeIdentifier + 1)# RKTypes.h: 453
 
-RKValueTypeArray = (RKValueTypeDictionary + 1)# RKTypes.h: 451
+RKValueTypeArray = (RKValueTypeDictionary + 1)# RKTypes.h: 453
 
-RKValueTypeVariable = (RKValueTypeArray + 1)# RKTypes.h: 451
+RKValueTypeVariable = (RKValueTypeArray + 1)# RKTypes.h: 453
 
-RKPositionFlag = uint32_t# RKTypes.h: 512
+RKPositionFlag = uint32_t# RKTypes.h: 514
 
-enum_anon_79 = c_int# RKTypes.h: 513
+enum_anon_79 = c_int# RKTypes.h: 515
 
-RKPositionFlagVacant = 0# RKTypes.h: 513
+RKPositionFlagVacant = 0# RKTypes.h: 515
 
-RKPositionFlagAzimuthEnabled = 1# RKTypes.h: 513
+RKPositionFlagAzimuthEnabled = 1# RKTypes.h: 515
 
-RKPositionFlagAzimuthSafety = (1 << 1)# RKTypes.h: 513
+RKPositionFlagAzimuthSafety = (1 << 1)# RKTypes.h: 515
 
-RKPositionFlagAzimuthError = (1 << 2)# RKTypes.h: 513
+RKPositionFlagAzimuthError = (1 << 2)# RKTypes.h: 515
 
-RKPositionFlagAzimuthSweep = (1 << 8)# RKTypes.h: 513
+RKPositionFlagAzimuthSweep = (1 << 8)# RKTypes.h: 515
 
-RKPositionFlagAzimuthPoint = (1 << 9)# RKTypes.h: 513
+RKPositionFlagAzimuthPoint = (1 << 9)# RKTypes.h: 515
 
-RKPositionFlagAzimuthComplete = (1 << 10)# RKTypes.h: 513
+RKPositionFlagAzimuthComplete = (1 << 10)# RKTypes.h: 515
 
-RKPositionFlagElevationEnabled = (1 << 16)# RKTypes.h: 513
+RKPositionFlagElevationEnabled = (1 << 16)# RKTypes.h: 515
 
-RKPositionFlagElevationSafety = (1 << 17)# RKTypes.h: 513
+RKPositionFlagElevationSafety = (1 << 17)# RKTypes.h: 515
 
-RKPositionFlagElevationError = (1 << 18)# RKTypes.h: 513
+RKPositionFlagElevationError = (1 << 18)# RKTypes.h: 515
 
-RKPositionFlagElevationSweep = (1 << 24)# RKTypes.h: 513
+RKPositionFlagElevationSweep = (1 << 24)# RKTypes.h: 515
 
-RKPositionFlagElevationPoint = (1 << 25)# RKTypes.h: 513
+RKPositionFlagElevationPoint = (1 << 25)# RKTypes.h: 515
 
-RKPositionFlagElevationComplete = (1 << 26)# RKTypes.h: 513
+RKPositionFlagElevationComplete = (1 << 26)# RKTypes.h: 515
 
-RKPositionFlagHardwareMask = 0x0FFFFFFF# RKTypes.h: 513
+RKPositionFlagHardwareMask = 0x0FFFFFFF# RKTypes.h: 515
 
-RKPositionFlagScanActive = (1 << 28)# RKTypes.h: 513
+RKPositionFlagScanActive = (1 << 28)# RKTypes.h: 515
 
-RKPositionFlagVCPActive = (1 << 29)# RKTypes.h: 513
+RKPositionFlagVCPActive = (1 << 29)# RKTypes.h: 515
 
-RKPositionFlagUsed = (1 << 30)# RKTypes.h: 513
+RKPositionFlagUsed = (1 << 30)# RKTypes.h: 515
 
-RKPositionFlagReady = (1 << 31)# RKTypes.h: 513
+RKPositionFlagReady = (1 << 31)# RKTypes.h: 515
 
-RKPositionFlagAzimuthModeMask = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint)# RKTypes.h: 513
+RKPositionFlagAzimuthModeMask = (RKPositionFlagAzimuthSweep | RKPositionFlagAzimuthPoint)# RKTypes.h: 515
 
-RKPositionFlagElevationModeMask = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint)# RKTypes.h: 513
+RKPositionFlagElevationModeMask = (RKPositionFlagElevationSweep | RKPositionFlagElevationPoint)# RKTypes.h: 515
 
-RKPositionFlagScanModeMask = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)# RKTypes.h: 513
+RKPositionFlagScanModeMask = (RKPositionFlagAzimuthModeMask | RKPositionFlagElevationModeMask)# RKTypes.h: 515
 
-RKSignalLocale = uint8_t# RKTypes.h: 537
+RKSignalLocale = uint8_t# RKTypes.h: 539
 
-enum_anon_80 = c_int# RKTypes.h: 538
+enum_anon_80 = c_int# RKTypes.h: 540
 
-RKSignalLocaleNormal = 0# RKTypes.h: 538
+RKSignalLocaleNormal = 0# RKTypes.h: 540
 
-RKSignalLocaleFirstNyquist = (RKSignalLocaleNormal + 1)# RKTypes.h: 538
+RKSignalLocaleFirstNyquist = (RKSignalLocaleNormal + 1)# RKTypes.h: 540
 
-RKHeadingType = uint32_t# RKTypes.h: 543
+RKHeadingType = uint32_t# RKTypes.h: 545
 
-enum_anon_81 = c_int# RKTypes.h: 544
+enum_anon_81 = c_int# RKTypes.h: 546
 
-RKHeadingTypeNormal = 0# RKTypes.h: 544
+RKHeadingTypeNormal = 0# RKTypes.h: 546
 
-RKHeadingTypeAdd90 = (RKHeadingTypeNormal + 1)# RKTypes.h: 544
+RKHeadingTypeAdd90 = (RKHeadingTypeNormal + 1)# RKTypes.h: 546
 
-RKHeadingTypeAdd180 = (RKHeadingTypeAdd90 + 1)# RKTypes.h: 544
+RKHeadingTypeAdd180 = (RKHeadingTypeAdd90 + 1)# RKTypes.h: 546
 
-RKHeadingTypeAdd270 = (RKHeadingTypeAdd180 + 1)# RKTypes.h: 544
+RKHeadingTypeAdd270 = (RKHeadingTypeAdd180 + 1)# RKTypes.h: 546
 
-RKStatusFlag = uint32_t# RKTypes.h: 551
+RKStatusFlag = uint32_t# RKTypes.h: 553
 
-enum_anon_82 = c_int# RKTypes.h: 552
+enum_anon_82 = c_int# RKTypes.h: 554
 
-RKStatusFlagVacant = 0# RKTypes.h: 552
+RKStatusFlagVacant = 0# RKTypes.h: 554
 
-RKStatusFlagReady = 1# RKTypes.h: 552
+RKStatusFlagReady = 1# RKTypes.h: 554
 
-RKHealthFlag = uint32_t# RKTypes.h: 557
+RKHealthFlag = uint32_t# RKTypes.h: 559
 
-enum_anon_83 = c_int# RKTypes.h: 558
+enum_anon_83 = c_int# RKTypes.h: 560
 
-RKHealthFlagVacant = 0# RKTypes.h: 558
+RKHealthFlagVacant = 0# RKTypes.h: 560
 
-RKHealthFlagReady = 1# RKTypes.h: 558
+RKHealthFlagReady = 1# RKTypes.h: 560
 
-RKHealthFlagUsed = (1 << 1)# RKTypes.h: 558
+RKHealthFlagUsed = (1 << 1)# RKTypes.h: 560
 
-RKMarker = uint32_t# RKTypes.h: 564
+RKMarker = uint32_t# RKTypes.h: 566
 
-enum_anon_84 = c_int# RKTypes.h: 565
+enum_anon_84 = c_int# RKTypes.h: 567
 
-RKMarkerNull = 0# RKTypes.h: 565
+RKMarkerNull = 0# RKTypes.h: 567
 
-RKMarkerSweepMiddle = 1# RKTypes.h: 565
+RKMarkerSweepMiddle = 1# RKTypes.h: 567
 
-RKMarkerSweepBegin = (1 << 1)# RKTypes.h: 565
+RKMarkerSweepBegin = (1 << 1)# RKTypes.h: 567
 
-RKMarkerSweepEnd = (1 << 2)# RKTypes.h: 565
+RKMarkerSweepEnd = (1 << 2)# RKTypes.h: 567
 
-RKMarkerVolumeBegin = (1 << 3)# RKTypes.h: 565
+RKMarkerVolumeBegin = (1 << 3)# RKTypes.h: 567
 
-RKMarkerVolumeEnd = (1 << 4)# RKTypes.h: 565
+RKMarkerVolumeEnd = (1 << 4)# RKTypes.h: 567
 
-RKMarkerScanTypeMask = 0x60# RKTypes.h: 565
+RKMarkerScanTypeMask = 0x60# RKTypes.h: 567
 
-RKMarkerScanTypeUnknown = (0 << 5)# RKTypes.h: 565
+RKMarkerScanTypeUnknown = (0 << 5)# RKTypes.h: 567
 
-RKMarkerScanTypePPI = (1 << 5)# RKTypes.h: 565
+RKMarkerScanTypePPI = (1 << 5)# RKTypes.h: 567
 
-RKMarkerScanTypeRHI = (2 << 5)# RKTypes.h: 565
+RKMarkerScanTypeRHI = (2 << 5)# RKTypes.h: 567
 
-RKMarkerScanTytpePoint = (3 << 5)# RKTypes.h: 565
+RKMarkerScanTytpePoint = (3 << 5)# RKTypes.h: 567
 
-RKMarkerMemoryManagement = (1 << 7)# RKTypes.h: 565
+RKMarkerMemoryManagement = (1 << 7)# RKTypes.h: 567
 
-RKPulseStatus = uint32_t# RKTypes.h: 595
+RKPulseStatus = uint32_t# RKTypes.h: 597
 
-enum_anon_85 = c_int# RKTypes.h: 596
+enum_anon_85 = c_int# RKTypes.h: 598
 
-RKPulseStatusNull = 0# RKTypes.h: 596
+RKPulseStatusNull = 0# RKTypes.h: 598
 
-RKPulseStatusVacant = 0# RKTypes.h: 596
+RKPulseStatusVacant = 0# RKTypes.h: 598
 
-RKPulseStatusHasIQData = 1# RKTypes.h: 596
+RKPulseStatusHasIQData = 1# RKTypes.h: 598
 
-RKPulseStatusHasPosition = (1 << 1)# RKTypes.h: 596
+RKPulseStatusHasPosition = (1 << 1)# RKTypes.h: 598
 
-RKPulseStatusInspected = (1 << 2)# RKTypes.h: 596
+RKPulseStatusInspected = (1 << 2)# RKTypes.h: 598
 
-RKPulseStatusCompressed = (1 << 3)# RKTypes.h: 596
+RKPulseStatusCompressed = (1 << 3)# RKTypes.h: 598
 
-RKPulseStatusSkipped = (1 << 4)# RKTypes.h: 596
+RKPulseStatusSkipped = (1 << 4)# RKTypes.h: 598
 
-RKPulseStatusDownSampled = (1 << 5)# RKTypes.h: 596
+RKPulseStatusDownSampled = (1 << 5)# RKTypes.h: 598
 
-RKPulseStatusProcessed = (1 << 6)# RKTypes.h: 596
+RKPulseStatusProcessed = (1 << 6)# RKTypes.h: 598
 
-RKPulseStatusRingInspected = (1 << 7)# RKTypes.h: 596
+RKPulseStatusRingInspected = (1 << 7)# RKTypes.h: 598
 
-RKPulseStatusRingFiltered = (1 << 8)# RKTypes.h: 596
+RKPulseStatusRingFiltered = (1 << 8)# RKTypes.h: 598
 
-RKPulseStatusRingSkipped = (1 << 9)# RKTypes.h: 596
+RKPulseStatusRingSkipped = (1 << 9)# RKTypes.h: 598
 
-RKPulseStatusRingProcessed = (1 << 10)# RKTypes.h: 596
+RKPulseStatusRingProcessed = (1 << 10)# RKTypes.h: 598
 
-RKPulseStatusReadyForMomentEngine = (((RKPulseStatusRingProcessed | RKPulseStatusProcessed) | RKPulseStatusHasPosition) | RKPulseStatusHasIQData)# RKTypes.h: 596
+RKPulseStatusReadyForMomentEngine = (((RKPulseStatusRingProcessed | RKPulseStatusProcessed) | RKPulseStatusHasPosition) | RKPulseStatusHasIQData)# RKTypes.h: 598
 
-RKPulseStatusCompleteForMoments = ((RKPulseStatusReadyForMomentEngine | RKPulseStatusDownSampled) | RKPulseStatusCompressed)# RKTypes.h: 596
+RKPulseStatusCompleteForMoments = ((RKPulseStatusReadyForMomentEngine | RKPulseStatusDownSampled) | RKPulseStatusCompressed)# RKTypes.h: 598
 
-RKPulseStatusUsedForMoments = (1 << 11)# RKTypes.h: 596
+RKPulseStatusUsedForMoments = (1 << 11)# RKTypes.h: 598
 
-RKPulseStatusProcessMask = (((((((((RKPulseStatusInspected | RKPulseStatusCompressed) | RKPulseStatusSkipped) | RKPulseStatusDownSampled) | RKPulseStatusProcessed) | RKPulseStatusRingInspected) | RKPulseStatusRingFiltered) | RKPulseStatusRingSkipped) | RKPulseStatusRingProcessed) | RKPulseStatusUsedForMoments)# RKTypes.h: 596
+RKPulseStatusProcessMask = (((((((((RKPulseStatusInspected | RKPulseStatusCompressed) | RKPulseStatusSkipped) | RKPulseStatusDownSampled) | RKPulseStatusProcessed) | RKPulseStatusRingInspected) | RKPulseStatusRingFiltered) | RKPulseStatusRingSkipped) | RKPulseStatusRingProcessed) | RKPulseStatusUsedForMoments)# RKTypes.h: 598
 
-RKPulseStatusRecorded = (1 << 12)# RKTypes.h: 596
+RKPulseStatusRecorded = (1 << 12)# RKTypes.h: 598
 
-RKPulseStatusStreamed = (1 << 13)# RKTypes.h: 596
+RKPulseStatusStreamed = (1 << 13)# RKTypes.h: 598
 
-RKPulseStatusConsumed = (1 << 14)# RKTypes.h: 596
+RKPulseStatusConsumed = (1 << 14)# RKTypes.h: 598
 
-RKRayStatus = uint32_t# RKTypes.h: 633
+RKRayStatus = uint32_t# RKTypes.h: 635
 
-enum_anon_86 = c_int# RKTypes.h: 634
+enum_anon_86 = c_int# RKTypes.h: 636
 
-RKRayStatusVacant = 0# RKTypes.h: 634
+RKRayStatusVacant = 0# RKTypes.h: 636
 
-RKRayStatusProcessing = 1# RKTypes.h: 634
+RKRayStatusProcessing = 1# RKTypes.h: 636
 
-RKRayStatusProcessed = (1 << 1)# RKTypes.h: 634
+RKRayStatusProcessed = (1 << 1)# RKTypes.h: 636
 
-RKRayStatusSkipped = (1 << 2)# RKTypes.h: 634
+RKRayStatusSkipped = (1 << 2)# RKTypes.h: 636
 
-RKRayStatusReady = (1 << 3)# RKTypes.h: 634
+RKRayStatusReady = (1 << 3)# RKTypes.h: 636
 
-RKRayStatusStreamed = (1 << 4)# RKTypes.h: 634
+RKRayStatusStreamed = (1 << 4)# RKTypes.h: 636
 
-RKRayStatusConsumed = (1 << 5)# RKTypes.h: 634
+RKRayStatusConsumed = (1 << 5)# RKTypes.h: 636
 
-RKRayStatusOverviewed = (1 << 6)# RKTypes.h: 634
+RKRayStatusOverviewed = (1 << 6)# RKTypes.h: 636
 
-RKInitFlag = uint32_t# RKTypes.h: 645
+RKInitFlag = uint32_t# RKTypes.h: 647
 
-enum_anon_87 = c_int# RKTypes.h: 646
+enum_anon_87 = c_int# RKTypes.h: 648
 
-RKInitFlagNone = 0# RKTypes.h: 646
+RKInitFlagNone = 0# RKTypes.h: 648
 
-RKInitFlagVerbose = 0x00000001# RKTypes.h: 646
+RKInitFlagVerbose = 0x00000001# RKTypes.h: 648
 
-RKInitFlagVeryVerbose = 0x00000002# RKTypes.h: 646
+RKInitFlagVeryVerbose = 0x00000002# RKTypes.h: 648
 
-RKInitFlagVeryVeryVerbose = 0x00000004# RKTypes.h: 646
+RKInitFlagVeryVeryVerbose = 0x00000004# RKTypes.h: 648
 
-RKInitFlagShowClockOffset = 0x00000008# RKTypes.h: 646
+RKInitFlagShowClockOffset = 0x00000008# RKTypes.h: 648
 
-RKInitFlagManuallyAssignCPU = 0x00000010# RKTypes.h: 646
+RKInitFlagManuallyAssignCPU = 0x00000010# RKTypes.h: 648
 
-RKInitFlagIgnoreGPS = 0x00000020# RKTypes.h: 646
+RKInitFlagIgnoreGPS = 0x00000020# RKTypes.h: 648
 
-RKInitFlagIgnoreHeading = 0x00000040# RKTypes.h: 646
+RKInitFlagIgnoreHeading = 0x00000040# RKTypes.h: 648
 
-RKInitFlagReserved4 = 0x00000080# RKTypes.h: 646
+RKInitFlagReserved4 = 0x00000080# RKTypes.h: 648
 
-RKInitFlagAllocStatusBuffer = 0x00000100# RKTypes.h: 646
+RKInitFlagAllocStatusBuffer = 0x00000100# RKTypes.h: 648
 
-RKInitFlagAllocConfigBuffer = 0x00000200# RKTypes.h: 646
+RKInitFlagAllocConfigBuffer = 0x00000200# RKTypes.h: 648
 
-RKInitFlagAllocRawIQBuffer = 0x00000400# RKTypes.h: 646
+RKInitFlagAllocRawIQBuffer = 0x00000400# RKTypes.h: 648
 
-RKInitFlagAllocPositionBuffer = 0x00000800# RKTypes.h: 646
+RKInitFlagAllocPositionBuffer = 0x00000800# RKTypes.h: 648
 
-RKInitFlagAllocMomentBuffer = 0x00001000# RKTypes.h: 646
+RKInitFlagAllocMomentBuffer = 0x00001000# RKTypes.h: 648
 
-RKInitFlagAllocHealthBuffer = 0x00002000# RKTypes.h: 646
+RKInitFlagAllocHealthBuffer = 0x00002000# RKTypes.h: 648
 
-RKInitFlagAllocHealthNodes = 0x00004000# RKTypes.h: 646
+RKInitFlagAllocHealthNodes = 0x00004000# RKTypes.h: 648
 
-RKInitFlagReserved1 = 0x00008000# RKTypes.h: 646
+RKInitFlagReserved1 = 0x00008000# RKTypes.h: 648
 
-RKInitFlagPulsePositionCombiner = 0x00010000# RKTypes.h: 646
+RKInitFlagPulsePositionCombiner = 0x00010000# RKTypes.h: 648
 
-RKInitFlagPositionSteerEngine = 0x00020000# RKTypes.h: 646
+RKInitFlagPositionSteerEngine = 0x00020000# RKTypes.h: 648
 
-RKInitFlagSignalProcessor = 0x00040000# RKTypes.h: 646
+RKInitFlagSignalProcessor = 0x00040000# RKTypes.h: 648
 
-RKInitFlagStartPulseEngine = 0x00100000# RKTypes.h: 646
+RKInitFlagStartPulseEngine = 0x00100000# RKTypes.h: 648
 
-RKInitFlagStartRingFilterEngine = 0x00200000# RKTypes.h: 646
+RKInitFlagStartRingFilterEngine = 0x00200000# RKTypes.h: 648
 
-RKInitFlagStartMomentEngine = 0x00400000# RKTypes.h: 646
+RKInitFlagStartMomentEngine = 0x00400000# RKTypes.h: 648
 
-RKInitFlagStartRawDataRecorder = 0x00800000# RKTypes.h: 646
+RKInitFlagStartRawDataRecorder = 0x00800000# RKTypes.h: 648
 
-RKInitFlagRelay = 0x00007703# RKTypes.h: 646
+RKInitFlagRelay = 0x00007703# RKTypes.h: 648
 
-RKInitFlagIQPlayback = 0x00047701# RKTypes.h: 646
+RKInitFlagIQPlayback = 0x00047701# RKTypes.h: 648
 
-RKInitFlagAllocEverything = 0x00077F01# RKTypes.h: 646
+RKInitFlagAllocEverything = 0x00077F01# RKTypes.h: 648
 
-RKInitFlagAllocEverythingQuiet = 0x00077F00# RKTypes.h: 646
+RKInitFlagAllocEverythingQuiet = 0x00077F00# RKTypes.h: 648
 
-RKMomentList = uint32_t# RKTypes.h: 679
+RKMomentList = uint32_t# RKTypes.h: 681
 
-enum_anon_88 = c_int# RKTypes.h: 680
+enum_anon_88 = c_int# RKTypes.h: 682
 
-RKMomentListNull = 0# RKTypes.h: 680
+RKMomentListNull = 0# RKTypes.h: 682
 
-RKMomentListHm = 1# RKTypes.h: 680
+RKMomentListHm = 1# RKTypes.h: 682
 
-RKMomentListHmi = 1# RKTypes.h: 680
+RKMomentListHmi = 1# RKTypes.h: 682
 
-RKMomentListHmq = (1 << 1)# RKTypes.h: 680
+RKMomentListHmq = (1 << 1)# RKTypes.h: 682
 
-RKMomentListHR0 = (1 << 2)# RKTypes.h: 680
+RKMomentListHR0 = (1 << 2)# RKTypes.h: 682
 
-RKMomentListHR1 = (1 << 3)# RKTypes.h: 680
+RKMomentListHR1 = (1 << 3)# RKTypes.h: 682
 
-RKMomentListHR1i = (1 << 3)# RKTypes.h: 680
+RKMomentListHR1i = (1 << 3)# RKTypes.h: 682
 
-RKMomentListHR1q = (1 << 4)# RKTypes.h: 680
+RKMomentListHR1q = (1 << 4)# RKTypes.h: 682
 
-RKMomentListHR2 = (1 << 5)# RKTypes.h: 680
+RKMomentListHR2 = (1 << 5)# RKTypes.h: 682
 
-RKMomentListHR3 = (1 << 6)# RKTypes.h: 680
+RKMomentListHR3 = (1 << 6)# RKTypes.h: 682
 
-RKMomentListHR4 = (1 << 7)# RKTypes.h: 680
+RKMomentListHR4 = (1 << 7)# RKTypes.h: 682
 
-RKMomentListVm = (1 << 8)# RKTypes.h: 680
+RKMomentListVm = (1 << 8)# RKTypes.h: 682
 
-RKMomentListVmi = (1 << 8)# RKTypes.h: 680
+RKMomentListVmi = (1 << 8)# RKTypes.h: 682
 
-RKMomentListVmq = (1 << 9)# RKTypes.h: 680
+RKMomentListVmq = (1 << 9)# RKTypes.h: 682
 
-RKMomentListVR0 = (1 << 10)# RKTypes.h: 680
+RKMomentListVR0 = (1 << 10)# RKTypes.h: 682
 
-RKMomentListVR1 = (1 << 11)# RKTypes.h: 680
+RKMomentListVR1 = (1 << 11)# RKTypes.h: 682
 
-RKMomentListVR1i = (1 << 11)# RKTypes.h: 680
+RKMomentListVR1i = (1 << 11)# RKTypes.h: 682
 
-RKMomentListVR1q = (1 << 12)# RKTypes.h: 680
+RKMomentListVR1q = (1 << 12)# RKTypes.h: 682
 
-RKMomentListVR2 = (1 << 13)# RKTypes.h: 680
+RKMomentListVR2 = (1 << 13)# RKTypes.h: 682
 
-RKMomentListVR3 = (1 << 14)# RKTypes.h: 680
+RKMomentListVR3 = (1 << 14)# RKTypes.h: 682
 
-RKMomentListVR4 = (1 << 15)# RKTypes.h: 680
+RKMomentListVR4 = (1 << 15)# RKTypes.h: 682
 
-RKMomentListC0 = (1 << 16)# RKTypes.h: 680
+RKMomentListC0 = (1 << 16)# RKTypes.h: 682
 
-RKMomentListC0i = (1 << 16)# RKTypes.h: 680
+RKMomentListC0i = (1 << 16)# RKTypes.h: 682
 
-RKMomentListC0q = (1 << 17)# RKTypes.h: 680
+RKMomentListC0q = (1 << 17)# RKTypes.h: 682
 
-RKMomentListCn1 = (1 << 18)# RKTypes.h: 680
+RKMomentListCn1 = (1 << 18)# RKTypes.h: 682
 
-RKMomentListCp1 = (1 << 19)# RKTypes.h: 680
+RKMomentListCp1 = (1 << 19)# RKTypes.h: 682
 
-RKMomentListCn2 = (1 << 20)# RKTypes.h: 680
+RKMomentListCn2 = (1 << 20)# RKTypes.h: 682
 
-RKMomentListCp2 = (1 << 21)# RKTypes.h: 680
+RKMomentListCp2 = (1 << 21)# RKTypes.h: 682
 
-RKMomentListCn3 = (1 << 22)# RKTypes.h: 680
+RKMomentListCn3 = (1 << 22)# RKTypes.h: 682
 
-RKMomentListCp3 = (1 << 23)# RKTypes.h: 680
+RKMomentListCp3 = (1 << 23)# RKTypes.h: 682
 
-RKMomentListCn4 = (1 << 24)# RKTypes.h: 680
+RKMomentListCn4 = (1 << 24)# RKTypes.h: 682
 
-RKMomentListCp4 = (1 << 25)# RKTypes.h: 680
+RKMomentListCp4 = (1 << 25)# RKTypes.h: 682
 
-RKMomentListCa0 = (1 << 26)# RKTypes.h: 680
+RKMomentListCa0 = (1 << 26)# RKTypes.h: 682
 
-RKMomentListCb0 = (1 << 27)# RKTypes.h: 680
+RKMomentListCb0 = (1 << 27)# RKTypes.h: 682
 
-RKMomentListChcvx0 = (1 << 28)# RKTypes.h: 680
+RKMomentListChcvx0 = (1 << 28)# RKTypes.h: 682
 
-RKMomentListCvchx0 = (1 << 29)# RKTypes.h: 680
+RKMomentListCvchx0 = (1 << 29)# RKTypes.h: 682
 
-RKMomentIndex = uint8_t# RKTypes.h: 719
+RKMomentIndex = uint8_t# RKTypes.h: 721
 
-enum_anon_89 = c_int# RKTypes.h: 720
+enum_anon_89 = c_int# RKTypes.h: 722
 
-RKMomentIndexHmi = 0# RKTypes.h: 720
+RKMomentIndexHmi = 0# RKTypes.h: 722
 
-RKMomentIndexHmq = (RKMomentIndexHmi + 1)# RKTypes.h: 720
+RKMomentIndexHmq = (RKMomentIndexHmi + 1)# RKTypes.h: 722
 
-RKMomentIndexHR0 = (RKMomentIndexHmq + 1)# RKTypes.h: 720
+RKMomentIndexHR0 = (RKMomentIndexHmq + 1)# RKTypes.h: 722
 
-RKMomentIndexHR1i = (RKMomentIndexHR0 + 1)# RKTypes.h: 720
+RKMomentIndexHR1i = (RKMomentIndexHR0 + 1)# RKTypes.h: 722
 
-RKMomentIndexHR1q = (RKMomentIndexHR1i + 1)# RKTypes.h: 720
+RKMomentIndexHR1q = (RKMomentIndexHR1i + 1)# RKTypes.h: 722
 
-RKMomentIndexHR2 = (RKMomentIndexHR1q + 1)# RKTypes.h: 720
+RKMomentIndexHR2 = (RKMomentIndexHR1q + 1)# RKTypes.h: 722
 
-RKMomentIndexHR3 = (RKMomentIndexHR2 + 1)# RKTypes.h: 720
+RKMomentIndexHR3 = (RKMomentIndexHR2 + 1)# RKTypes.h: 722
 
-RKMomentIndexHR4 = (RKMomentIndexHR3 + 1)# RKTypes.h: 720
+RKMomentIndexHR4 = (RKMomentIndexHR3 + 1)# RKTypes.h: 722
 
-RKMomentIndexVmi = (RKMomentIndexHR4 + 1)# RKTypes.h: 720
+RKMomentIndexVmi = (RKMomentIndexHR4 + 1)# RKTypes.h: 722
 
-RKMomentIndexVmq = (RKMomentIndexVmi + 1)# RKTypes.h: 720
+RKMomentIndexVmq = (RKMomentIndexVmi + 1)# RKTypes.h: 722
 
-RKMomentIndexVR0 = (RKMomentIndexVmq + 1)# RKTypes.h: 720
+RKMomentIndexVR0 = (RKMomentIndexVmq + 1)# RKTypes.h: 722
 
-RKMomentIndexVR1i = (RKMomentIndexVR0 + 1)# RKTypes.h: 720
+RKMomentIndexVR1i = (RKMomentIndexVR0 + 1)# RKTypes.h: 722
 
-RKMomentIndexVR1q = (RKMomentIndexVR1i + 1)# RKTypes.h: 720
+RKMomentIndexVR1q = (RKMomentIndexVR1i + 1)# RKTypes.h: 722
 
-RKMomentIndexVR2 = (RKMomentIndexVR1q + 1)# RKTypes.h: 720
+RKMomentIndexVR2 = (RKMomentIndexVR1q + 1)# RKTypes.h: 722
 
-RKMomentIndexVR3 = (RKMomentIndexVR2 + 1)# RKTypes.h: 720
+RKMomentIndexVR3 = (RKMomentIndexVR2 + 1)# RKTypes.h: 722
 
-RKMomentIndexVR4 = (RKMomentIndexVR3 + 1)# RKTypes.h: 720
+RKMomentIndexVR4 = (RKMomentIndexVR3 + 1)# RKTypes.h: 722
 
-RKmomentIndexC0i = (RKMomentIndexVR4 + 1)# RKTypes.h: 720
+RKmomentIndexC0i = (RKMomentIndexVR4 + 1)# RKTypes.h: 722
 
-RKmomentIndexC0q = (RKmomentIndexC0i + 1)# RKTypes.h: 720
+RKmomentIndexC0q = (RKmomentIndexC0i + 1)# RKTypes.h: 722
 
-RKmomentIndexCn1 = (RKmomentIndexC0q + 1)# RKTypes.h: 720
+RKmomentIndexCn1 = (RKmomentIndexC0q + 1)# RKTypes.h: 722
 
-RKmomentIndexCp1 = (RKmomentIndexCn1 + 1)# RKTypes.h: 720
+RKmomentIndexCp1 = (RKmomentIndexCn1 + 1)# RKTypes.h: 722
 
-RKmomentIndexCn2 = (RKmomentIndexCp1 + 1)# RKTypes.h: 720
+RKmomentIndexCn2 = (RKmomentIndexCp1 + 1)# RKTypes.h: 722
 
-RKmomentIndexCp2 = (RKmomentIndexCn2 + 1)# RKTypes.h: 720
+RKmomentIndexCp2 = (RKmomentIndexCn2 + 1)# RKTypes.h: 722
 
-RKmomentIndexCn3 = (RKmomentIndexCp2 + 1)# RKTypes.h: 720
+RKmomentIndexCn3 = (RKmomentIndexCp2 + 1)# RKTypes.h: 722
 
-RKmomentIndexCp3 = (RKmomentIndexCn3 + 1)# RKTypes.h: 720
+RKmomentIndexCp3 = (RKmomentIndexCn3 + 1)# RKTypes.h: 722
 
-RKmomentIndexCn4 = (RKmomentIndexCp3 + 1)# RKTypes.h: 720
+RKmomentIndexCn4 = (RKmomentIndexCp3 + 1)# RKTypes.h: 722
 
-RKmomentIndexCp4 = (RKmomentIndexCn4 + 1)# RKTypes.h: 720
+RKmomentIndexCp4 = (RKmomentIndexCn4 + 1)# RKTypes.h: 722
 
-RKMomentIndexCount = (RKmomentIndexCp4 + 1)# RKTypes.h: 720
+RKMomentIndexCount = (RKmomentIndexCp4 + 1)# RKTypes.h: 722
 
-RKProductList = uint32_t# RKTypes.h: 752
+RKProductList = uint32_t# RKTypes.h: 754
 
-enum_anon_90 = c_int# RKTypes.h: 753
+enum_anon_90 = c_int# RKTypes.h: 755
 
-RKProductListNone = 0# RKTypes.h: 753
+RKProductListNone = 0# RKTypes.h: 755
 
-RKProductListUInt8Z = 1# RKTypes.h: 753
+RKProductListUInt8Z = 1# RKTypes.h: 755
 
-RKProductListUInt8V = (1 << 1)# RKTypes.h: 753
+RKProductListUInt8V = (1 << 1)# RKTypes.h: 755
 
-RKProductListUInt8W = (1 << 2)# RKTypes.h: 753
+RKProductListUInt8W = (1 << 2)# RKTypes.h: 755
 
-RKProductListUInt8D = (1 << 3)# RKTypes.h: 753
+RKProductListUInt8D = (1 << 3)# RKTypes.h: 755
 
-RKProductListUInt8P = (1 << 4)# RKTypes.h: 753
+RKProductListUInt8P = (1 << 4)# RKTypes.h: 755
 
-RKProductListUInt8R = (1 << 5)# RKTypes.h: 753
+RKProductListUInt8R = (1 << 5)# RKTypes.h: 755
 
-RKProductListUInt8K = (1 << 6)# RKTypes.h: 753
+RKProductListUInt8K = (1 << 6)# RKTypes.h: 755
 
-RKProductListUInt8Sh = (1 << 7)# RKTypes.h: 753
+RKProductListUInt8Sh = (1 << 7)# RKTypes.h: 755
 
-RKProductListUInt8Sv = (1 << 8)# RKTypes.h: 753
+RKProductListUInt8Sv = (1 << 8)# RKTypes.h: 755
 
-RKProductListUInt8Q = (1 << 9)# RKTypes.h: 753
+RKProductListUInt8Q = (1 << 9)# RKTypes.h: 755
 
-RKProductListUInt8U6 = (1 << 10)# RKTypes.h: 753
+RKProductListUInt8U6 = (1 << 10)# RKTypes.h: 755
 
-RKProductListUInt8U5 = (1 << 11)# RKTypes.h: 753
+RKProductListUInt8U5 = (1 << 11)# RKTypes.h: 755
 
-RKProductListUInt8U4 = (1 << 12)# RKTypes.h: 753
+RKProductListUInt8U4 = (1 << 12)# RKTypes.h: 755
 
-RKProductListUInt8U3 = (1 << 13)# RKTypes.h: 753
+RKProductListUInt8U3 = (1 << 13)# RKTypes.h: 755
 
-RKProductListUInt8U2 = (1 << 14)# RKTypes.h: 753
+RKProductListUInt8U2 = (1 << 14)# RKTypes.h: 755
 
-RKProductListUInt8U1 = (1 << 15)# RKTypes.h: 753
+RKProductListUInt8U1 = (1 << 15)# RKTypes.h: 755
 
-RKProductListUInt8ZVWDPR = 0x0000003F# RKTypes.h: 753
+RKProductListUInt8ZVWDPR = 0x0000003F# RKTypes.h: 755
 
-RKProductListUInt8ZVWDPRK = 0x0000007F# RKTypes.h: 753
+RKProductListUInt8ZVWDPRK = 0x0000007F# RKTypes.h: 755
 
-RKProductListUInt8ZVWDPRKS = 0x000001FF# RKTypes.h: 753
+RKProductListUInt8ZVWDPRKS = 0x000001FF# RKTypes.h: 755
 
-RKProductListUInt8ZVWDPRKSQ = 0x000003FF# RKTypes.h: 753
+RKProductListUInt8ZVWDPRKSQ = 0x000003FF# RKTypes.h: 755
 
-RKProductListUInt8All = 0x0000FFFF# RKTypes.h: 753
+RKProductListUInt8All = 0x0000FFFF# RKTypes.h: 755
 
-RKProductListFloatZ = (1 << 16)# RKTypes.h: 753
+RKProductListFloatZ = (1 << 16)# RKTypes.h: 755
 
-RKProductListFloatV = (1 << 17)# RKTypes.h: 753
+RKProductListFloatV = (1 << 17)# RKTypes.h: 755
 
-RKProductListFloatW = (1 << 18)# RKTypes.h: 753
+RKProductListFloatW = (1 << 18)# RKTypes.h: 755
 
-RKProductListFloatD = (1 << 19)# RKTypes.h: 753
+RKProductListFloatD = (1 << 19)# RKTypes.h: 755
 
-RKProductListFloatP = (1 << 20)# RKTypes.h: 753
+RKProductListFloatP = (1 << 20)# RKTypes.h: 755
 
-RKProductListFloatR = (1 << 21)# RKTypes.h: 753
+RKProductListFloatR = (1 << 21)# RKTypes.h: 755
 
-RKProductListFloatK = (1 << 22)# RKTypes.h: 753
+RKProductListFloatK = (1 << 22)# RKTypes.h: 755
 
-RKProductListFloatSh = (1 << 23)# RKTypes.h: 753
+RKProductListFloatSh = (1 << 23)# RKTypes.h: 755
 
-RKProductListFloatSv = (1 << 24)# RKTypes.h: 753
+RKProductListFloatSv = (1 << 24)# RKTypes.h: 755
 
-RKProductListFloatQ = (1 << 25)# RKTypes.h: 753
+RKProductListFloatQ = (1 << 25)# RKTypes.h: 755
 
-RKProductListFloatLh = (1 << 26)# RKTypes.h: 753
+RKProductListFloatLh = (1 << 26)# RKTypes.h: 755
 
-RKProductListFloatLv = (1 << 27)# RKTypes.h: 753
+RKProductListFloatLv = (1 << 27)# RKTypes.h: 755
 
-RKProductListFloatPXh = (1 << 28)# RKTypes.h: 753
+RKProductListFloatPXh = (1 << 28)# RKTypes.h: 755
 
-RKProductListFloatPXv = (1 << 29)# RKTypes.h: 753
+RKProductListFloatPXv = (1 << 29)# RKTypes.h: 755
 
-RKProductListFloatRXh = (1 << 30)# RKTypes.h: 753
+RKProductListFloatRXh = (1 << 30)# RKTypes.h: 755
 
-RKProductListFloatRXv = (1 << 31)# RKTypes.h: 753
+RKProductListFloatRXv = (1 << 31)# RKTypes.h: 755
 
-RKProductListFloatZVWDPR = 0x003F0000# RKTypes.h: 753
+RKProductListFloatZVWDPR = 0x003F0000# RKTypes.h: 755
 
-RKProductListFloatZVWDPRK = 0x007F0000# RKTypes.h: 753
+RKProductListFloatZVWDPRK = 0x007F0000# RKTypes.h: 755
 
-RKProductListFloatZVWDPRKS = 0x01FF0000# RKTypes.h: 753
+RKProductListFloatZVWDPRKS = 0x01FF0000# RKTypes.h: 755
 
-RKProductListFloatZVWDPRKLRXPX = 0xFC7F0000# RKTypes.h: 753
+RKProductListFloatZVWDPRKLRXPX = 0xFC7F0000# RKTypes.h: 755
 
-RKProductListFloatATSR = 0xFDFF0000# RKTypes.h: 753
+RKProductListFloatATSR = 0xFDFF0000# RKTypes.h: 755
 
-RKProductListFloatZVWDPRKSQ = 0x03FF0000# RKTypes.h: 753
+RKProductListFloatZVWDPRKSQ = 0x03FF0000# RKTypes.h: 755
 
-RKProductListFloatAll = 0xFFFF0000# RKTypes.h: 753
+RKProductListFloatAll = 0xFFFF0000# RKTypes.h: 755
 
-RKProductIndex = uint8_t# RKTypes.h: 801
+RKProductIndex = uint8_t# RKTypes.h: 803
 
-enum_anon_91 = c_int# RKTypes.h: 802
+enum_anon_91 = c_int# RKTypes.h: 804
 
-RKProductIndexZ = 0# RKTypes.h: 802
+RKProductIndexZ = 0# RKTypes.h: 804
 
-RKProductIndexV = (RKProductIndexZ + 1)# RKTypes.h: 802
+RKProductIndexV = (RKProductIndexZ + 1)# RKTypes.h: 804
 
-RKProductIndexW = (RKProductIndexV + 1)# RKTypes.h: 802
+RKProductIndexW = (RKProductIndexV + 1)# RKTypes.h: 804
 
-RKProductIndexD = (RKProductIndexW + 1)# RKTypes.h: 802
+RKProductIndexD = (RKProductIndexW + 1)# RKTypes.h: 804
 
-RKProductIndexP = (RKProductIndexD + 1)# RKTypes.h: 802
+RKProductIndexP = (RKProductIndexD + 1)# RKTypes.h: 804
 
-RKProductIndexR = (RKProductIndexP + 1)# RKTypes.h: 802
+RKProductIndexR = (RKProductIndexP + 1)# RKTypes.h: 804
 
-RKProductIndexK = (RKProductIndexR + 1)# RKTypes.h: 802
+RKProductIndexK = (RKProductIndexR + 1)# RKTypes.h: 804
 
-RKProductIndexSh = (RKProductIndexK + 1)# RKTypes.h: 802
+RKProductIndexSh = (RKProductIndexK + 1)# RKTypes.h: 804
 
-RKProductIndexSv = (RKProductIndexSh + 1)# RKTypes.h: 802
+RKProductIndexSv = (RKProductIndexSh + 1)# RKTypes.h: 804
 
-RKProductIndexQ = (RKProductIndexSv + 1)# RKTypes.h: 802
+RKProductIndexQ = (RKProductIndexSv + 1)# RKTypes.h: 804
 
-RKProductIndexLh = (RKProductIndexQ + 1)# RKTypes.h: 802
+RKProductIndexLh = (RKProductIndexQ + 1)# RKTypes.h: 804
 
-RKProductIndexLv = (RKProductIndexLh + 1)# RKTypes.h: 802
+RKProductIndexLv = (RKProductIndexLh + 1)# RKTypes.h: 804
 
-RKProductIndexPXh = (RKProductIndexLv + 1)# RKTypes.h: 802
+RKProductIndexPXh = (RKProductIndexLv + 1)# RKTypes.h: 804
 
-RKProductIndexPXv = (RKProductIndexPXh + 1)# RKTypes.h: 802
+RKProductIndexPXv = (RKProductIndexPXh + 1)# RKTypes.h: 804
 
-RKProductIndexRXh = (RKProductIndexPXv + 1)# RKTypes.h: 802
+RKProductIndexRXh = (RKProductIndexPXv + 1)# RKTypes.h: 804
 
-RKProductIndexRXv = (RKProductIndexRXh + 1)# RKTypes.h: 802
+RKProductIndexRXv = (RKProductIndexRXh + 1)# RKTypes.h: 804
 
-RKProductIndexZv = (RKProductIndexRXv + 1)# RKTypes.h: 802
+RKProductIndexZv = (RKProductIndexRXv + 1)# RKTypes.h: 804
 
-RKProductIndexVv = (RKProductIndexZv + 1)# RKTypes.h: 802
+RKProductIndexVv = (RKProductIndexZv + 1)# RKTypes.h: 804
 
-RKProductIndexWv = (RKProductIndexVv + 1)# RKTypes.h: 802
+RKProductIndexWv = (RKProductIndexVv + 1)# RKTypes.h: 804
 
-RKProductIndexCount = (RKProductIndexWv + 1)# RKTypes.h: 802
+RKProductIndexCount = (RKProductIndexWv + 1)# RKTypes.h: 804
 
-RKProductType = uint8_t# RKTypes.h: 825
+RKProductType = uint8_t# RKTypes.h: 827
 
-enum_anon_92 = c_int# RKTypes.h: 826
+enum_anon_92 = c_int# RKTypes.h: 828
 
-RKProductTypeUnknown = 0# RKTypes.h: 826
+RKProductTypeUnknown = 0# RKTypes.h: 828
 
-RKProductTypeCellMatch = 1# RKTypes.h: 826
+RKProductTypeCellMatch = 1# RKTypes.h: 828
 
-RKProductTypePPI = (1 << 1)# RKTypes.h: 826
+RKProductTypePPI = (1 << 1)# RKTypes.h: 828
 
-RKProductTypeCAPPI = (1 << 2)# RKTypes.h: 826
+RKProductTypeCAPPI = (1 << 2)# RKTypes.h: 828
 
-RKConfigKey = uint32_t# RKTypes.h: 833
+RKConfigKey = uint32_t# RKTypes.h: 835
 
-enum_anon_93 = c_int# RKTypes.h: 834
+enum_anon_93 = c_int# RKTypes.h: 836
 
-RKConfigKeyNull = 0# RKTypes.h: 834
+RKConfigKeyNull = 0# RKTypes.h: 836
 
-RKConfigKeyVolumeIndex = (RKConfigKeyNull + 1)# RKTypes.h: 834
+RKConfigKeyVolumeIndex = (RKConfigKeyNull + 1)# RKTypes.h: 836
 
-RKConfigKeySweepIndex = (RKConfigKeyVolumeIndex + 1)# RKTypes.h: 834
+RKConfigKeySweepIndex = (RKConfigKeyVolumeIndex + 1)# RKTypes.h: 836
 
-RKConfigKeySweepElevation = (RKConfigKeySweepIndex + 1)# RKTypes.h: 834
+RKConfigKeySweepElevation = (RKConfigKeySweepIndex + 1)# RKTypes.h: 836
 
-RKConfigKeySweepAzimuth = (RKConfigKeySweepElevation + 1)# RKTypes.h: 834
+RKConfigKeySweepAzimuth = (RKConfigKeySweepElevation + 1)# RKTypes.h: 836
 
-RKConfigKeyPositionMarker = (RKConfigKeySweepAzimuth + 1)# RKTypes.h: 834
+RKConfigKeyPositionMarker = (RKConfigKeySweepAzimuth + 1)# RKTypes.h: 836
 
-RKConfigKeyPRT = (RKConfigKeyPositionMarker + 1)# RKTypes.h: 834
+RKConfigKeyPRT = (RKConfigKeyPositionMarker + 1)# RKTypes.h: 836
 
-RKConfigKeyPRF = (RKConfigKeyPRT + 1)# RKTypes.h: 834
+RKConfigKeyPRF = (RKConfigKeyPRT + 1)# RKTypes.h: 836
 
-RKConfigKeyDualPRF = (RKConfigKeyPRF + 1)# RKTypes.h: 834
+RKConfigKeyDualPRF = (RKConfigKeyPRF + 1)# RKTypes.h: 836
 
-RKConfigKeyPulseGateCount = (RKConfigKeyDualPRF + 1)# RKTypes.h: 834
+RKConfigKeyPulseGateCount = (RKConfigKeyDualPRF + 1)# RKTypes.h: 836
 
-RKConfigKeyPulseGateSize = (RKConfigKeyPulseGateCount + 1)# RKTypes.h: 834
+RKConfigKeyPulseGateSize = (RKConfigKeyPulseGateCount + 1)# RKTypes.h: 836
 
-RKConfigKeyPulseWidth = (RKConfigKeyPulseGateSize + 1)# RKTypes.h: 834
+RKConfigKeyPulseWidth = (RKConfigKeyPulseGateSize + 1)# RKTypes.h: 836
 
-RKConfigKeyWaveform = (RKConfigKeyPulseWidth + 1)# RKTypes.h: 834
+RKConfigKeyWaveform = (RKConfigKeyPulseWidth + 1)# RKTypes.h: 836
 
-RKConfigKeyWaveformDecimate = (RKConfigKeyWaveform + 1)# RKTypes.h: 834
+RKConfigKeyWaveformDecimate = (RKConfigKeyWaveform + 1)# RKTypes.h: 836
 
-RKConfigKeyWaveformId = (RKConfigKeyWaveformDecimate + 1)# RKTypes.h: 834
+RKConfigKeyWaveformId = (RKConfigKeyWaveformDecimate + 1)# RKTypes.h: 836
 
-RKConfigKeyWaveformName = (RKConfigKeyWaveformId + 1)# RKTypes.h: 834
+RKConfigKeyWaveformName = (RKConfigKeyWaveformId + 1)# RKTypes.h: 836
 
-RKConfigKeySystemNoise = (RKConfigKeyWaveformName + 1)# RKTypes.h: 834
+RKConfigKeySystemNoise = (RKConfigKeyWaveformName + 1)# RKTypes.h: 836
 
-RKConfigKeySystemZCal = (RKConfigKeySystemNoise + 1)# RKTypes.h: 834
+RKConfigKeySystemZCal = (RKConfigKeySystemNoise + 1)# RKTypes.h: 836
 
-RKConfigKeySystemDCal = (RKConfigKeySystemZCal + 1)# RKTypes.h: 834
+RKConfigKeySystemDCal = (RKConfigKeySystemZCal + 1)# RKTypes.h: 836
 
-RKConfigKeySystemPCal = (RKConfigKeySystemDCal + 1)# RKTypes.h: 834
+RKConfigKeySystemPCal = (RKConfigKeySystemDCal + 1)# RKTypes.h: 836
 
-RKConfigKeyWaveformCalibration = (RKConfigKeySystemPCal + 1)# RKTypes.h: 834
+RKConfigKeyWaveformCalibration = (RKConfigKeySystemPCal + 1)# RKTypes.h: 836
 
-RKConfigKeySNRThreshold = (RKConfigKeyWaveformCalibration + 1)# RKTypes.h: 834
+RKConfigKeySNRThreshold = (RKConfigKeyWaveformCalibration + 1)# RKTypes.h: 836
 
-RKConfigKeySQIThreshold = (RKConfigKeySNRThreshold + 1)# RKTypes.h: 834
+RKConfigKeySQIThreshold = (RKConfigKeySNRThreshold + 1)# RKTypes.h: 836
 
-RKConfigKeyVCPDefinition = (RKConfigKeySQIThreshold + 1)# RKTypes.h: 834
+RKConfigKeyVCPDefinition = (RKConfigKeySQIThreshold + 1)# RKTypes.h: 836
 
-RKConfigKeyRingFilterGateCount = (RKConfigKeyVCPDefinition + 1)# RKTypes.h: 834
+RKConfigKeyRingFilterGateCount = (RKConfigKeyVCPDefinition + 1)# RKTypes.h: 836
 
-RKConfigKeyTransitionGateCount = (RKConfigKeyRingFilterGateCount + 1)# RKTypes.h: 834
+RKConfigKeyTransitionGateCount = (RKConfigKeyRingFilterGateCount + 1)# RKTypes.h: 836
 
-RKConfigKeyUserIntegerParameters = (RKConfigKeyTransitionGateCount + 1)# RKTypes.h: 834
+RKConfigKeyUserIntegerParameters = (RKConfigKeyTransitionGateCount + 1)# RKTypes.h: 836
 
-RKConfigKeyUserFloatParameters = (RKConfigKeyUserIntegerParameters + 1)# RKTypes.h: 834
+RKConfigKeyUserFloatParameters = (RKConfigKeyUserIntegerParameters + 1)# RKTypes.h: 836
 
-RKConfigKeyUserResource = (RKConfigKeyUserFloatParameters + 1)# RKTypes.h: 834
+RKConfigKeyUserResource = (RKConfigKeyUserFloatParameters + 1)# RKTypes.h: 836
 
-RKConfigKeyMomentMethod = (RKConfigKeyUserResource + 1)# RKTypes.h: 834
+RKConfigKeyMomentMethod = (RKConfigKeyUserResource + 1)# RKTypes.h: 836
 
-RKConfigKeyCount = (RKConfigKeyMomentMethod + 1)# RKTypes.h: 834
+RKConfigKeyCount = (RKConfigKeyMomentMethod + 1)# RKTypes.h: 836
 
-RKHealthNode = uint8_t# RKTypes.h: 868
+RKHealthNode = uint8_t# RKTypes.h: 870
 
-enum_anon_94 = c_int# RKTypes.h: 869
+enum_anon_94 = c_int# RKTypes.h: 871
 
-RKHealthNodeRadarKit = 0# RKTypes.h: 869
+RKHealthNodeRadarKit = 0# RKTypes.h: 871
 
-RKHealthNodeTransceiver = (RKHealthNodeRadarKit + 1)# RKTypes.h: 869
+RKHealthNodeTransceiver = (RKHealthNodeRadarKit + 1)# RKTypes.h: 871
 
-RKHealthNodePedestal = (RKHealthNodeTransceiver + 1)# RKTypes.h: 869
+RKHealthNodePedestal = (RKHealthNodeTransceiver + 1)# RKTypes.h: 871
 
-RKHealthNodeTweeta = (RKHealthNodePedestal + 1)# RKTypes.h: 869
+RKHealthNodeTweeta = (RKHealthNodePedestal + 1)# RKTypes.h: 871
 
-RKHealthNodeUser1 = (RKHealthNodeTweeta + 1)# RKTypes.h: 869
+RKHealthNodeUser1 = (RKHealthNodeTweeta + 1)# RKTypes.h: 871
 
-RKHealthNodeUser2 = (RKHealthNodeUser1 + 1)# RKTypes.h: 869
+RKHealthNodeUser2 = (RKHealthNodeUser1 + 1)# RKTypes.h: 871
 
-RKHealthNodeUser3 = (RKHealthNodeUser2 + 1)# RKTypes.h: 869
+RKHealthNodeUser3 = (RKHealthNodeUser2 + 1)# RKTypes.h: 871
 
-RKHealthNodeUser4 = (RKHealthNodeUser3 + 1)# RKTypes.h: 869
+RKHealthNodeUser4 = (RKHealthNodeUser3 + 1)# RKTypes.h: 871
 
-RKHealthNodeUser5 = (RKHealthNodeUser4 + 1)# RKTypes.h: 869
+RKHealthNodeUser5 = (RKHealthNodeUser4 + 1)# RKTypes.h: 871
 
-RKHealthNodeUser6 = (RKHealthNodeUser5 + 1)# RKTypes.h: 869
+RKHealthNodeUser6 = (RKHealthNodeUser5 + 1)# RKTypes.h: 871
 
-RKHealthNodeUser7 = (RKHealthNodeUser6 + 1)# RKTypes.h: 869
+RKHealthNodeUser7 = (RKHealthNodeUser6 + 1)# RKTypes.h: 871
 
-RKHealthNodeUser8 = (RKHealthNodeUser7 + 1)# RKTypes.h: 869
+RKHealthNodeUser8 = (RKHealthNodeUser7 + 1)# RKTypes.h: 871
 
-RKHealthNodeCount = (RKHealthNodeUser8 + 1)# RKTypes.h: 869
+RKHealthNodeCount = (RKHealthNodeUser8 + 1)# RKTypes.h: 871
 
-RKHealthNodeInvalid = (RKHealthNode (ord_if_char((-1)))).value# RKTypes.h: 869
+RKHealthNodeInvalid = (RKHealthNode (ord_if_char((-1)))).value# RKTypes.h: 871
 
-RKScriptProperty = uint8_t# RKTypes.h: 886
+RKScriptProperty = uint8_t# RKTypes.h: 888
 
-enum_anon_95 = c_int# RKTypes.h: 887
+enum_anon_95 = c_int# RKTypes.h: 889
 
-RKScriptPropertyNull = 0# RKTypes.h: 887
+RKScriptPropertyNull = 0# RKTypes.h: 889
 
-RKScriptPropertyProduceZip = 1# RKTypes.h: 887
+RKScriptPropertyProduceZip = 1# RKTypes.h: 889
 
-RKScriptPropertyProduceTgz = (1 << 1)# RKTypes.h: 887
+RKScriptPropertyProduceTgz = (1 << 1)# RKTypes.h: 889
 
-RKScriptPropertyProduceTarXz = (1 << 2)# RKTypes.h: 887
+RKScriptPropertyProduceTarXz = (1 << 2)# RKTypes.h: 889
 
-RKScriptPropertyProduceTxz = (1 << 3)# RKTypes.h: 887
+RKScriptPropertyProduceTxz = (1 << 3)# RKTypes.h: 889
 
-RKScriptPropertyProduceArchive = (((RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz) | RKScriptPropertyProduceTarXz) | RKScriptPropertyProduceTxz)# RKTypes.h: 887
+RKScriptPropertyProduceArchive = (((RKScriptPropertyProduceZip | RKScriptPropertyProduceTgz) | RKScriptPropertyProduceTarXz) | RKScriptPropertyProduceTxz)# RKTypes.h: 889
 
-RKScriptPropertyRemoveNCFiles = (1 << 4)# RKTypes.h: 887
+RKScriptPropertyRemoveNCFiles = (1 << 4)# RKTypes.h: 889
 
-RKEngineState = uint32_t# RKTypes.h: 923
+RKEngineState = uint32_t# RKTypes.h: 925
 
-enum_anon_96 = c_int# RKTypes.h: 924
+enum_anon_96 = c_int# RKTypes.h: 926
 
-RKEngineStateNull = 0# RKTypes.h: 924
+RKEngineStateNull = 0# RKTypes.h: 926
 
-RKEngineStateSleep0 = 1# RKTypes.h: 924
+RKEngineStateSleep0 = 1# RKTypes.h: 926
 
-RKEngineStateSleep1 = (1 << 1)# RKTypes.h: 924
+RKEngineStateSleep1 = (1 << 1)# RKTypes.h: 926
 
-RKEngineStateSleep2 = (1 << 2)# RKTypes.h: 924
+RKEngineStateSleep2 = (1 << 2)# RKTypes.h: 926
 
-RKEngineStateSleep3 = (1 << 3)# RKTypes.h: 924
+RKEngineStateSleep3 = (1 << 3)# RKTypes.h: 926
 
-RKEngineStateSleepMask = 0x0000000F# RKTypes.h: 924
+RKEngineStateSleepMask = 0x0000000F# RKTypes.h: 926
 
-RKEngineStateWritingFile = (1 << 4)# RKTypes.h: 924
+RKEngineStateWritingFile = (1 << 4)# RKTypes.h: 926
 
-RKEngineStateMemoryChange = (1 << 5)# RKTypes.h: 924
+RKEngineStateMemoryChange = (1 << 5)# RKTypes.h: 926
 
-RKEngineStateSuspended = (1 << 6)# RKTypes.h: 924
+RKEngineStateSuspended = (1 << 6)# RKTypes.h: 926
 
-RKEngineStateBusyMask = 0x000000F0# RKTypes.h: 924
+RKEngineStateBusyMask = 0x000000F0# RKTypes.h: 926
 
-RKEngineStateReserved = (1 << 7)# RKTypes.h: 924
+RKEngineStateReserved = (1 << 7)# RKTypes.h: 926
 
-RKEngineStateAllocated = (1 << 8)# RKTypes.h: 924
+RKEngineStateAllocated = (1 << 8)# RKTypes.h: 926
 
-RKEngineStateProperlyWired = (1 << 9)# RKTypes.h: 924
+RKEngineStateProperlyWired = (1 << 9)# RKTypes.h: 926
 
-RKEngineStateActivating = (1 << 10)# RKTypes.h: 924
+RKEngineStateActivating = (1 << 10)# RKTypes.h: 926
 
-RKEngineStateDeactivating = (1 << 11)# RKTypes.h: 924
+RKEngineStateDeactivating = (1 << 11)# RKTypes.h: 926
 
-RKEngineStateActive = (1 << 13)# RKTypes.h: 924
+RKEngineStateActive = (1 << 13)# RKTypes.h: 926
 
-RKEngineStateWantActive = (1 << 15)# RKTypes.h: 924
+RKEngineStateWantActive = (1 << 15)# RKTypes.h: 926
 
-RKEngineStateMainMask = 0x0000FF00# RKTypes.h: 924
+RKEngineStateMainMask = 0x0000FF00# RKTypes.h: 926
 
-RKEngineStateChildAllocated = (1 << 16)# RKTypes.h: 924
+RKEngineStateChildAllocated = (1 << 16)# RKTypes.h: 926
 
-RKEngineStateChildProperlyWired = (1 << 17)# RKTypes.h: 924
+RKEngineStateChildProperlyWired = (1 << 17)# RKTypes.h: 926
 
-RKEngineStateChildActivating = (1 << 18)# RKTypes.h: 924
+RKEngineStateChildActivating = (1 << 18)# RKTypes.h: 926
 
-RKEngineStateChildDeactivating = (1 << 19)# RKTypes.h: 924
+RKEngineStateChildDeactivating = (1 << 19)# RKTypes.h: 926
 
-RKEngineStateChildActive = (1 << 20)# RKTypes.h: 924
+RKEngineStateChildActive = (1 << 20)# RKTypes.h: 926
 
-RKEngineStateChildMask = 0x001F0000# RKTypes.h: 924
+RKEngineStateChildMask = 0x001F0000# RKTypes.h: 926
 
-RKStatusEnum = uint32_t# RKTypes.h: 951
+RKStatusEnum = uint32_t# RKTypes.h: 953
 
-enum_anon_97 = c_int# RKTypes.h: 952
+enum_anon_97 = c_int# RKTypes.h: 954
 
-RKStatusEnumUnknown = (-3)# RKTypes.h: 952
+RKStatusEnumUnknown = (-3)# RKTypes.h: 954
 
-RKStatusEnumOld = (-3)# RKTypes.h: 952
+RKStatusEnumOld = (-3)# RKTypes.h: 954
 
-RKStatusEnumInvalid = (-2)# RKTypes.h: 952
+RKStatusEnumInvalid = (-2)# RKTypes.h: 954
 
-RKStatusEnumTooLow = (-2)# RKTypes.h: 952
+RKStatusEnumTooLow = (-2)# RKTypes.h: 954
 
-RKStatusEnumLow = (-1)# RKTypes.h: 952
+RKStatusEnumLow = (-1)# RKTypes.h: 954
 
-RKStatusEnumNormal = 0# RKTypes.h: 952
+RKStatusEnumNormal = 0# RKTypes.h: 954
 
-RKStatusEnumActive = 0# RKTypes.h: 952
+RKStatusEnumActive = 0# RKTypes.h: 954
 
-RKStatusEnumHigh = 1# RKTypes.h: 952
+RKStatusEnumHigh = 1# RKTypes.h: 954
 
-RKStatusEnumStandby = 1# RKTypes.h: 952
+RKStatusEnumStandby = 1# RKTypes.h: 954
 
-RKStatusEnumInactive = 1# RKTypes.h: 952
+RKStatusEnumInactive = 1# RKTypes.h: 954
 
-RKStatusEnumOutOfRange = 1# RKTypes.h: 952
+RKStatusEnumOutOfRange = 1# RKTypes.h: 954
 
-RKStatusEnumTooHigh = 2# RKTypes.h: 952
+RKStatusEnumTooHigh = 2# RKTypes.h: 954
 
-RKStatusEnumNotOperational = 2# RKTypes.h: 952
+RKStatusEnumNotOperational = 2# RKTypes.h: 954
 
-RKStatusEnumOff = 2# RKTypes.h: 952
+RKStatusEnumOff = 2# RKTypes.h: 954
 
-RKStatusEnumFault = 2# RKTypes.h: 952
+RKStatusEnumFault = 2# RKTypes.h: 954
 
-RKStatusEnumNotWired = 3# RKTypes.h: 952
+RKStatusEnumNotWired = 3# RKTypes.h: 954
 
-RKStatusEnumCritical = 4# RKTypes.h: 952
+RKStatusEnumCritical = 4# RKTypes.h: 954
 
-RKFileType = uint32_t# RKTypes.h: 972
+RKFileType = uint32_t# RKTypes.h: 974
 
-enum_anon_98 = c_int# RKTypes.h: 973
+enum_anon_98 = c_int# RKTypes.h: 975
 
-RKFileTypeIQ = 0# RKTypes.h: 973
+RKFileTypeIQ = 0# RKTypes.h: 975
 
-RKFileTypeMoment = (RKFileTypeIQ + 1)# RKTypes.h: 973
+RKFileTypeMoment = (RKFileTypeIQ + 1)# RKTypes.h: 975
 
-RKFileTypeHealth = (RKFileTypeMoment + 1)# RKTypes.h: 973
+RKFileTypeHealth = (RKFileTypeMoment + 1)# RKTypes.h: 975
 
-RKFileTypeLog = (RKFileTypeHealth + 1)# RKTypes.h: 973
+RKFileTypeLog = (RKFileTypeHealth + 1)# RKTypes.h: 975
 
-RKFileTypeCount = (RKFileTypeLog + 1)# RKTypes.h: 973
+RKFileTypeCount = (RKFileTypeLog + 1)# RKTypes.h: 975
 
-RKStream = uint64_t# RKTypes.h: 981
+RKStream = uint64_t# RKTypes.h: 983
 
-enum_anon_99 = c_int# RKTypes.h: 982
+enum_anon_99 = c_int# RKTypes.h: 984
 
-RKStreamNull = 0# RKTypes.h: 982
+RKStreamNull = 0# RKTypes.h: 984
 
-RKStreamStatusMask = 0x0F# RKTypes.h: 982
+RKStreamStatusMask = 0x0F# RKTypes.h: 984
 
-RKStreamStatusPositions = 1# RKTypes.h: 982
+RKStreamStatusPositions = 1# RKTypes.h: 984
 
-RKStreamStatusPulses = 2# RKTypes.h: 982
+RKStreamStatusPulses = 2# RKTypes.h: 984
 
-RKStreamStatusRays = 3# RKTypes.h: 982
+RKStreamStatusRays = 3# RKTypes.h: 984
 
-RKStreamStatusIngest = 4# RKTypes.h: 982
+RKStreamStatusIngest = 4# RKTypes.h: 984
 
-RKStreamStatusEngines = 5# RKTypes.h: 982
+RKStreamStatusEngines = 5# RKTypes.h: 984
 
-RKStreamStatusBuffers = 6# RKTypes.h: 982
+RKStreamStatusBuffers = 6# RKTypes.h: 984
 
-RKStreamASCIIArtZ = 7# RKTypes.h: 982
+RKStreamASCIIArtZ = 7# RKTypes.h: 984
 
-RKStreamASCIIArtHealth = 8# RKTypes.h: 982
+RKStreamASCIIArtHealth = 8# RKTypes.h: 984
 
-RKStreamASCIIArtVCP = 9# RKTypes.h: 982
+RKStreamASCIIArtVCP = 9# RKTypes.h: 984
 
-RKStreamStatusAll = 0xFF# RKTypes.h: 982
+RKStreamStatusAll = 0xFF# RKTypes.h: 984
 
-RKStreamHealthInJSON = (1 << 5)# RKTypes.h: 982
+RKStreamHealthInJSON = (1 << 5)# RKTypes.h: 984
 
-RKStreamStatusEngineBinary = (1 << 6)# RKTypes.h: 982
+RKStreamStatusEngineBinary = (1 << 6)# RKTypes.h: 984
 
-RKStreamStatusProcessorStatus = (1 << 7)# RKTypes.h: 982
+RKStreamStatusProcessorStatus = (1 << 7)# RKTypes.h: 984
 
-RKStreamDisplayIQ = (1 << 8)# RKTypes.h: 982
+RKStreamDisplayIQ = (1 << 8)# RKTypes.h: 984
 
-RKStreamDisplayIQFiltered = (1 << 9)# RKTypes.h: 982
+RKStreamDisplayIQFiltered = (1 << 9)# RKTypes.h: 984
 
-RKStreamProductIQ = (1 << 10)# RKTypes.h: 982
+RKStreamProductIQ = (1 << 10)# RKTypes.h: 984
 
-RKStreamProductIQFiltered = (1 << 11)# RKTypes.h: 982
+RKStreamProductIQFiltered = (1 << 11)# RKTypes.h: 984
 
-RKStreamControl = (1 << 15)# RKTypes.h: 982
+RKStreamControl = (1 << 15)# RKTypes.h: 984
 
-RKStreamScopeStuff = 0x0000000000000300# RKTypes.h: 982
+RKStreamScopeStuff = 0x0000000000000300# RKTypes.h: 984
 
-RKStreamDisplayZ = (1 << 16)# RKTypes.h: 982
+RKStreamDisplayZ = (1 << 16)# RKTypes.h: 984
 
-RKStreamDisplayV = (1 << 17)# RKTypes.h: 982
+RKStreamDisplayV = (1 << 17)# RKTypes.h: 984
 
-RKStreamDisplayW = (1 << 18)# RKTypes.h: 982
+RKStreamDisplayW = (1 << 18)# RKTypes.h: 984
 
-RKStreamDisplayD = (1 << 19)# RKTypes.h: 982
+RKStreamDisplayD = (1 << 19)# RKTypes.h: 984
 
-RKStreamDisplayP = (1 << 20)# RKTypes.h: 982
+RKStreamDisplayP = (1 << 20)# RKTypes.h: 984
 
-RKStreamDisplayR = (1 << 21)# RKTypes.h: 982
+RKStreamDisplayR = (1 << 21)# RKTypes.h: 984
 
-RKStreamDisplayK = (1 << 22)# RKTypes.h: 982
+RKStreamDisplayK = (1 << 22)# RKTypes.h: 984
 
-RKStreamDisplaySh = (1 << 23)# RKTypes.h: 982
+RKStreamDisplaySh = (1 << 23)# RKTypes.h: 984
 
-RKStreamDisplaySv = (1 << 24)# RKTypes.h: 982
+RKStreamDisplaySv = (1 << 24)# RKTypes.h: 984
 
-RKStreamDisplayQ = (1 << 25)# RKTypes.h: 982
+RKStreamDisplayQ = (1 << 25)# RKTypes.h: 984
 
-RKStreamDisplayZVWDPRKS = 0x0000000001FF0000# RKTypes.h: 982
+RKStreamDisplayZVWDPRKS = 0x0000000001FF0000# RKTypes.h: 984
 
-RKStreamDisplayAll = 0x0000000003FF0000# RKTypes.h: 982
+RKStreamDisplayAll = 0x0000000003FF0000# RKTypes.h: 984
 
-RKStreamProductZ = (1 << 32)# RKTypes.h: 982
+RKStreamProductZ = (1 << 32)# RKTypes.h: 984
 
-RKStreamProductV = (1 << 33)# RKTypes.h: 982
+RKStreamProductV = (1 << 33)# RKTypes.h: 984
 
-RKStreamProductW = (1 << 34)# RKTypes.h: 982
+RKStreamProductW = (1 << 34)# RKTypes.h: 984
 
-RKStreamProductD = (1 << 35)# RKTypes.h: 982
+RKStreamProductD = (1 << 35)# RKTypes.h: 984
 
-RKStreamProductP = (1 << 36)# RKTypes.h: 982
+RKStreamProductP = (1 << 36)# RKTypes.h: 984
 
-RKStreamProductR = (1 << 37)# RKTypes.h: 982
+RKStreamProductR = (1 << 37)# RKTypes.h: 984
 
-RKStreamProductK = (1 << 38)# RKTypes.h: 982
+RKStreamProductK = (1 << 38)# RKTypes.h: 984
 
-RKStreamProductSh = (1 << 39)# RKTypes.h: 982
+RKStreamProductSh = (1 << 39)# RKTypes.h: 984
 
-RKStreamProductSv = (1 << 40)# RKTypes.h: 982
+RKStreamProductSv = (1 << 40)# RKTypes.h: 984
 
-RKStreamProductQ = (1 << 41)# RKTypes.h: 982
+RKStreamProductQ = (1 << 41)# RKTypes.h: 984
 
-RKStreamProductZVWDPRKS = 0x000001FF00000000# RKTypes.h: 982
+RKStreamProductZVWDPRKS = 0x000001FF00000000# RKTypes.h: 984
 
-RKStreamProductAll = 0x000003FF00000000# RKTypes.h: 982
+RKStreamProductAll = 0x000003FF00000000# RKTypes.h: 984
 
-RKStreamSweepZ = (1 << 48)# RKTypes.h: 982
+RKStreamSweepZ = (1 << 48)# RKTypes.h: 984
 
-RKStreamSweepV = (1 << 49)# RKTypes.h: 982
+RKStreamSweepV = (1 << 49)# RKTypes.h: 984
 
-RKStreamSweepW = (1 << 50)# RKTypes.h: 982
+RKStreamSweepW = (1 << 50)# RKTypes.h: 984
 
-RKStreamSweepD = (1 << 51)# RKTypes.h: 982
+RKStreamSweepD = (1 << 51)# RKTypes.h: 984
 
-RKStreamSweepP = (1 << 52)# RKTypes.h: 982
+RKStreamSweepP = (1 << 52)# RKTypes.h: 984
 
-RKStreamSweepR = (1 << 53)# RKTypes.h: 982
+RKStreamSweepR = (1 << 53)# RKTypes.h: 984
 
-RKStreamSweepK = (1 << 54)# RKTypes.h: 982
+RKStreamSweepK = (1 << 54)# RKTypes.h: 984
 
-RKStreamSweepSh = (1 << 55)# RKTypes.h: 982
+RKStreamSweepSh = (1 << 55)# RKTypes.h: 984
 
-RKStreamSweepSv = (1 << 56)# RKTypes.h: 982
+RKStreamSweepSv = (1 << 56)# RKTypes.h: 984
 
-RKStreamSweepQ = (1 << 57)# RKTypes.h: 982
+RKStreamSweepQ = (1 << 57)# RKTypes.h: 984
 
-RKStreamSweepZVWDPRKS = 0x01FF000000000000# RKTypes.h: 982
+RKStreamSweepZVWDPRKS = 0x01FF000000000000# RKTypes.h: 984
 
-RKStreamSweepAll = 0x03FF000000000000# RKTypes.h: 982
+RKStreamSweepAll = 0x03FF000000000000# RKTypes.h: 984
 
-RKStreamAlmostEverything = 0x03FF03FF03FFF000# RKTypes.h: 982
+RKStreamAlmostEverything = 0x03FF03FF03FFF000# RKTypes.h: 984
 
-RKStreamStatusTerminalChange = 0x0400000000000000# RKTypes.h: 982
+RKStreamStatusTerminalChange = 0x0400000000000000# RKTypes.h: 984
 
-RKHostStatus = uint8_t# RKTypes.h: 1044
+RKHostStatus = uint8_t# RKTypes.h: 1046
 
-enum_anon_100 = c_int# RKTypes.h: 1045
+enum_anon_100 = c_int# RKTypes.h: 1047
 
-RKHostStatusUnknown = 0# RKTypes.h: 1045
+RKHostStatusUnknown = 0# RKTypes.h: 1047
 
-RKHostStatusUnreachable = (RKHostStatusUnknown + 1)# RKTypes.h: 1045
+RKHostStatusUnreachable = (RKHostStatusUnknown + 1)# RKTypes.h: 1047
 
-RKHostStatusPartiallyReachable = (RKHostStatusUnreachable + 1)# RKTypes.h: 1045
+RKHostStatusPartiallyReachable = (RKHostStatusUnreachable + 1)# RKTypes.h: 1047
 
-RKHostStatusReachableUnusual = (RKHostStatusPartiallyReachable + 1)# RKTypes.h: 1045
+RKHostStatusReachableUnusual = (RKHostStatusPartiallyReachable + 1)# RKTypes.h: 1047
 
-RKHostStatusReachable = (RKHostStatusReachableUnusual + 1)# RKTypes.h: 1045
+RKHostStatusReachable = (RKHostStatusReachableUnusual + 1)# RKTypes.h: 1047
 
-RKProductStatus = uint32_t# RKTypes.h: 1053
+RKProductStatus = uint32_t# RKTypes.h: 1055
 
-enum_anon_101 = c_int# RKTypes.h: 1054
+enum_anon_101 = c_int# RKTypes.h: 1056
 
-RKProductStatusVacant = 0# RKTypes.h: 1054
+RKProductStatusVacant = 0# RKTypes.h: 1056
 
-RKProductStatusActive = (1 << 0)# RKTypes.h: 1054
+RKProductStatusActive = (1 << 0)# RKTypes.h: 1056
 
-RKProductStatusBusy = (1 << 1)# RKTypes.h: 1054
+RKProductStatusBusy = (1 << 1)# RKTypes.h: 1056
 
-RKProductStatusSkipped = (1 << 2)# RKTypes.h: 1054
+RKProductStatusSkipped = (1 << 2)# RKTypes.h: 1056
 
-RKProductStatusSleep0 = (1 << 4)# RKTypes.h: 1054
+RKProductStatusSleep0 = (1 << 4)# RKTypes.h: 1056
 
-RKProductStatusSleep1 = (1 << 5)# RKTypes.h: 1054
+RKProductStatusSleep1 = (1 << 5)# RKTypes.h: 1056
 
-RKProductStatusSleep2 = (1 << 6)# RKTypes.h: 1054
+RKProductStatusSleep2 = (1 << 6)# RKTypes.h: 1056
 
-RKProductStatusSleep3 = (1 << 7)# RKTypes.h: 1054
+RKProductStatusSleep3 = (1 << 7)# RKTypes.h: 1056
 
-RKTextPreferences = uint32_t# RKTypes.h: 1065
+RKTextPreferences = uint32_t# RKTypes.h: 1067
 
-enum_anon_102 = c_int# RKTypes.h: 1066
+enum_anon_102 = c_int# RKTypes.h: 1068
 
-RKTextPreferencesNone = 0# RKTypes.h: 1066
+RKTextPreferencesNone = 0# RKTypes.h: 1068
 
-RKTextPreferencesShowColor = 1# RKTypes.h: 1066
+RKTextPreferencesShowColor = 1# RKTypes.h: 1068
 
-RKTextPreferencesDrawBackground = (1 << 1)# RKTypes.h: 1066
+RKTextPreferencesDrawBackground = (1 << 1)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSizeMask = (7 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSizeMask = (7 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSize80x25 = (0 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSize80x25 = (0 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSize80x40 = (1 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSize80x40 = (1 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSize80x50 = (2 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSize80x50 = (2 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSize120x40 = (3 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSize120x40 = (3 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSize120x50 = (4 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSize120x50 = (4 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesWindowSize120x80 = (5 << 2)# RKTypes.h: 1066
+RKTextPreferencesWindowSize120x80 = (5 << 2)# RKTypes.h: 1068
 
-RKTextPreferencesShowDebuggingMessage = (1 << 7)# RKTypes.h: 1066
+RKTextPreferencesShowDebuggingMessage = (1 << 7)# RKTypes.h: 1068
 
-RKWaveformType = uint32_t# RKTypes.h: 1080
+RKWaveformType = uint32_t# RKTypes.h: 1082
 
-enum_anon_103 = c_int# RKTypes.h: 1081
+enum_anon_103 = c_int# RKTypes.h: 1083
 
-RKWaveformTypeNone = 0# RKTypes.h: 1081
+RKWaveformTypeNone = 0# RKTypes.h: 1083
 
-RKWaveformTypeIsComplex = 1# RKTypes.h: 1081
+RKWaveformTypeIsComplex = 1# RKTypes.h: 1083
 
-RKWaveformTypeSingleTone = (1 << 1)# RKTypes.h: 1081
+RKWaveformTypeSingleTone = (1 << 1)# RKTypes.h: 1083
 
-RKWaveformTypeFrequencyHopping = (1 << 2)# RKTypes.h: 1081
+RKWaveformTypeFrequencyHopping = (1 << 2)# RKTypes.h: 1083
 
-RKWaveformTypeLinearFrequencyModulation = (1 << 3)# RKTypes.h: 1081
+RKWaveformTypeLinearFrequencyModulation = (1 << 3)# RKTypes.h: 1083
 
-RKWaveformTypeTimeFrequencyMultiplexing = (1 << 4)# RKTypes.h: 1081
+RKWaveformTypeTimeFrequencyMultiplexing = (1 << 4)# RKTypes.h: 1083
 
-RKWaveformTypeFromFile = (1 << 5)# RKTypes.h: 1081
+RKWaveformTypeFromFile = (1 << 5)# RKTypes.h: 1083
 
-RKWaveformTypeFlatAnchors = (1 << 6)# RKTypes.h: 1081
+RKWaveformTypeFlatAnchors = (1 << 6)# RKTypes.h: 1083
 
-RKWaveformTypeFrequencyHoppingChirp = (1 << 7)# RKTypes.h: 1081
+RKWaveformTypeFrequencyHoppingChirp = (1 << 7)# RKTypes.h: 1083
 
-RKEventType = uint32_t# RKTypes.h: 1093
+RKEventType = uint32_t# RKTypes.h: 1095
 
-enum_anon_104 = c_int# RKTypes.h: 1094
+enum_anon_104 = c_int# RKTypes.h: 1096
 
-RKEventTypeNull = 0# RKTypes.h: 1094
+RKEventTypeNull = 0# RKTypes.h: 1096
 
-RKEventTypeRaySweepBegin = (RKEventTypeNull + 1)# RKTypes.h: 1094
+RKEventTypeRaySweepBegin = (RKEventTypeNull + 1)# RKTypes.h: 1096
 
-RKEventTypeRaySweepEnd = (RKEventTypeRaySweepBegin + 1)# RKTypes.h: 1094
+RKEventTypeRaySweepEnd = (RKEventTypeRaySweepBegin + 1)# RKTypes.h: 1096
 
-RKFilterType = uint8_t# RKTypes.h: 1100
+RKFilterType = uint8_t# RKTypes.h: 1102
 
-enum_anon_105 = c_int# RKTypes.h: 1101
+enum_anon_105 = c_int# RKTypes.h: 1103
 
-RKFilterTypeNull = 0# RKTypes.h: 1101
+RKFilterTypeNull = 0# RKTypes.h: 1103
 
-RKFilterTypeElliptical1 = (RKFilterTypeNull + 1)# RKTypes.h: 1101
+RKFilterTypeElliptical1 = (RKFilterTypeNull + 1)# RKTypes.h: 1103
 
-RKFilterTypeElliptical2 = (RKFilterTypeElliptical1 + 1)# RKTypes.h: 1101
+RKFilterTypeElliptical2 = (RKFilterTypeElliptical1 + 1)# RKTypes.h: 1103
 
-RKFilterTypeElliptical3 = (RKFilterTypeElliptical2 + 1)# RKTypes.h: 1101
+RKFilterTypeElliptical3 = (RKFilterTypeElliptical2 + 1)# RKTypes.h: 1103
 
-RKFilterTypeElliptical4 = (RKFilterTypeElliptical3 + 1)# RKTypes.h: 1101
+RKFilterTypeElliptical4 = (RKFilterTypeElliptical3 + 1)# RKTypes.h: 1103
 
-RKFilterTypeImpulse = (RKFilterTypeElliptical4 + 1)# RKTypes.h: 1101
+RKFilterTypeImpulse = (RKFilterTypeElliptical4 + 1)# RKTypes.h: 1103
 
-RKFilterTypeCount = (RKFilterTypeImpulse + 1)# RKTypes.h: 1101
+RKFilterTypeCount = (RKFilterTypeImpulse + 1)# RKTypes.h: 1103
 
-RKFilterTypeUserDefined = (RKFilterTypeCount + 1)# RKTypes.h: 1101
+RKFilterTypeUserDefined = (RKFilterTypeCount + 1)# RKTypes.h: 1103
 
-RKFilterTypeTest1 = (RKFilterTypeUserDefined + 1)# RKTypes.h: 1101
+RKFilterTypeTest1 = (RKFilterTypeUserDefined + 1)# RKTypes.h: 1103
 
-RKPedestalInstructType = c_int# RKTypes.h: 1113
+RKPedestalInstructType = c_int# RKTypes.h: 1115
 
-enum_anon_106 = c_int# RKTypes.h: 1114
+enum_anon_106 = c_int# RKTypes.h: 1116
 
-RKPedestalInstructTypeNone = 0# RKTypes.h: 1114
+RKPedestalInstructTypeNone = 0# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeStandby = 1# RKTypes.h: 1114
+RKPedestalInstructTypeModeStandby = 1# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeEnable = 2# RKTypes.h: 1114
+RKPedestalInstructTypeModeEnable = 2# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeDisable = 3# RKTypes.h: 1114
+RKPedestalInstructTypeModeDisable = 3# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeSlew = 4# RKTypes.h: 1114
+RKPedestalInstructTypeModeSlew = 4# RKTypes.h: 1116
 
-RKPedestalInstructTypeModePoint = 5# RKTypes.h: 1114
+RKPedestalInstructTypeModePoint = 5# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeReset = 6# RKTypes.h: 1114
+RKPedestalInstructTypeModeReset = 6# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeTest = 7# RKTypes.h: 1114
+RKPedestalInstructTypeModeTest = 7# RKTypes.h: 1116
 
-RKPedestalInstructTypeModeMask = 0x0F# RKTypes.h: 1114
+RKPedestalInstructTypeModeMask = 0x0F# RKTypes.h: 1116
 
-RKPedestalInstructTypeAxisElevation = 0x10# RKTypes.h: 1114
+RKPedestalInstructTypeAxisElevation = 0x10# RKTypes.h: 1116
 
-RKPedestalInstructTypeAxisAzimuth = 0x20# RKTypes.h: 1114
+RKPedestalInstructTypeAxisAzimuth = 0x20# RKTypes.h: 1116
 
-RKPedestalInstructTypeAxisMask = 0x30# RKTypes.h: 1114
+RKPedestalInstructTypeAxisMask = 0x30# RKTypes.h: 1116
 
-RKRawDataType = uint8_t# RKTypes.h: 1129
+RKRawDataType = uint8_t# RKTypes.h: 1131
 
-enum_anon_107 = c_int# RKTypes.h: 1130
+enum_anon_107 = c_int# RKTypes.h: 1132
 
-RKRawDataTypeNull = 0# RKTypes.h: 1130
+RKRawDataTypeNull = 0# RKTypes.h: 1132
 
-RKRawDataTypeFromTransceiver = (RKRawDataTypeNull + 1)# RKTypes.h: 1130
+RKRawDataTypeFromTransceiver = (RKRawDataTypeNull + 1)# RKTypes.h: 1132
 
-RKRawDataTypeAfterMatchedFilter = (RKRawDataTypeFromTransceiver + 1)# RKTypes.h: 1130
+RKRawDataTypeAfterMatchedFilter = (RKRawDataTypeFromTransceiver + 1)# RKTypes.h: 1132
 
-RKCompressorOption = uint8_t# RKTypes.h: 1136
+RKCompressorOption = uint8_t# RKTypes.h: 1138
 
-enum_anon_108 = c_int# RKTypes.h: 1137
+enum_anon_108 = c_int# RKTypes.h: 1139
 
-RKCompressorOptionRKInt16C = 0# RKTypes.h: 1137
+RKCompressorOptionRKInt16C = 0# RKTypes.h: 1139
 
-RKCompressorOptionRKComplex = 1# RKTypes.h: 1137
+RKCompressorOptionRKComplex = 1# RKTypes.h: 1139
 
-RKCompressorOptionSingleChannel = (1 << 5)# RKTypes.h: 1137
+RKCompressorOptionSingleChannel = (1 << 5)# RKTypes.h: 1139
 
-RadarHubType = uint8_t# RKTypes.h: 1143
+RadarHubType = uint8_t# RKTypes.h: 1145
 
-enum_anon_109 = c_int# RKTypes.h: 1144
+enum_anon_109 = c_int# RKTypes.h: 1146
 
-RKRadarHubTypeHandshake = 1# RKTypes.h: 1144
+RKRadarHubTypeHandshake = 1# RKTypes.h: 1146
 
-RKRadarHubTypeControl = 2# RKTypes.h: 1144
+RKRadarHubTypeControl = 2# RKTypes.h: 1146
 
-RKRadarHubTypeHealth = 3# RKTypes.h: 1144
+RKRadarHubTypeHealth = 3# RKTypes.h: 1146
 
-RKRadarHubTypeReserve4 = 4# RKTypes.h: 1144
+RKRadarHubTypeReserve4 = 4# RKTypes.h: 1146
 
-RKRadarHubTypeScope = 5# RKTypes.h: 1144
+RKRadarHubTypeScope = 5# RKTypes.h: 1146
 
-RKRadarHubTypeResponse = 6# RKTypes.h: 1144
+RKRadarHubTypeResponse = 6# RKTypes.h: 1146
 
-RKRadarHubTypeReserved7 = 7# RKTypes.h: 1144
+RKRadarHubTypeReserved7 = 7# RKTypes.h: 1146
 
-RKRadarHubTypeReserved8 = 8# RKTypes.h: 1144
+RKRadarHubTypeReserved8 = 8# RKTypes.h: 1146
 
-RKRadarHubTypeReserved9 = 9# RKTypes.h: 1144
+RKRadarHubTypeReserved9 = 9# RKTypes.h: 1146
 
-RKRadarHubTypeReserved10 = 10# RKTypes.h: 1144
+RKRadarHubTypeReserved10 = 10# RKTypes.h: 1146
 
-RKRadarHubTypeReserved11 = 11# RKTypes.h: 1144
+RKRadarHubTypeReserved11 = 11# RKTypes.h: 1146
 
-RKRadarHubTypeReserved12 = 12# RKTypes.h: 1144
+RKRadarHubTypeReserved12 = 12# RKTypes.h: 1146
 
-RKRadarHubTypeReserved13 = 13# RKTypes.h: 1144
+RKRadarHubTypeReserved13 = 13# RKTypes.h: 1146
 
-RKRadarHubTypeReserved14 = 14# RKTypes.h: 1144
+RKRadarHubTypeReserved14 = 14# RKTypes.h: 1146
 
-RKRadarHubTypeReserved15 = 15# RKTypes.h: 1144
+RKRadarHubTypeReserved15 = 15# RKTypes.h: 1146
 
-RKRadarHubTypeRadialZ = 16# RKTypes.h: 1144
+RKRadarHubTypeRadialZ = 16# RKTypes.h: 1146
 
-RKRadarHubTypeRadialV = 17# RKTypes.h: 1144
+RKRadarHubTypeRadialV = 17# RKTypes.h: 1146
 
-RKRadarHubTypeRadialW = 18# RKTypes.h: 1144
+RKRadarHubTypeRadialW = 18# RKTypes.h: 1146
 
-RKRadarHubTypeRadialD = 19# RKTypes.h: 1144
+RKRadarHubTypeRadialD = 19# RKTypes.h: 1146
 
-RKRadarHubTypeRadialP = 20# RKTypes.h: 1144
+RKRadarHubTypeRadialP = 20# RKTypes.h: 1146
 
-RKRadarHubTypeRadialR = 21# RKTypes.h: 1144
+RKRadarHubTypeRadialR = 21# RKTypes.h: 1146
 
-RKWriterOption = uint32_t# RKTypes.h: 1168
+RKWriterOption = uint32_t# RKTypes.h: 1170
 
-enum_RKWriterOption = c_int# RKTypes.h: 1169
+enum_RKWriterOption = c_int# RKTypes.h: 1171
 
-RKWriterOptionNone = 0# RKTypes.h: 1169
+RKWriterOptionNone = 0# RKTypes.h: 1171
 
-RKWriterOptionPackPosition = 1# RKTypes.h: 1169
+RKWriterOptionPackPosition = 1# RKTypes.h: 1171
 
-RKWriterOptionDeflateFields = (1 << 1)# RKTypes.h: 1169
+RKWriterOptionDeflateFields = (1 << 1)# RKTypes.h: 1171
 
-RKWriterOptionStringVariables = (1 << 2)# RKTypes.h: 1169
+RKWriterOptionStringVariables = (1 << 2)# RKTypes.h: 1171
 
-RKMomentMethod = uint8_t# RKTypes.h: 1176
+RKMomentMethod = uint8_t# RKTypes.h: 1178
 
-enum_RKMomentMethod = c_int# RKTypes.h: 1177
+enum_RKMomentMethod = c_int# RKTypes.h: 1179
 
-RKMomentMethodNone = 0# RKTypes.h: 1177
+RKMomentMethodNone = 0# RKTypes.h: 1179
 
-RKMomentMethodPulsePair = (RKMomentMethodNone + 1)# RKTypes.h: 1177
+RKMomentMethodPulsePair = (RKMomentMethodNone + 1)# RKTypes.h: 1179
 
-RKMomentMethodPulsePairHop = (RKMomentMethodPulsePair + 1)# RKTypes.h: 1177
+RKMomentMethodPulsePairHop = (RKMomentMethodPulsePair + 1)# RKTypes.h: 1179
 
-RKMomentMethodPulsePairATSR = (RKMomentMethodPulsePairHop + 1)# RKTypes.h: 1177
+RKMomentMethodPulsePairATSR = (RKMomentMethodPulsePairHop + 1)# RKTypes.h: 1179
 
-RKMomentMethodMultiLag2 = (RKMomentMethodPulsePairATSR + 1)# RKTypes.h: 1177
+RKMomentMethodMultiLag2 = (RKMomentMethodPulsePairATSR + 1)# RKTypes.h: 1179
 
-RKMomentMethodMultiLag3 = (RKMomentMethodMultiLag2 + 1)# RKTypes.h: 1177
+RKMomentMethodMultiLag3 = (RKMomentMethodMultiLag2 + 1)# RKTypes.h: 1179
 
-RKMomentMethodMultiLag4 = (RKMomentMethodMultiLag3 + 1)# RKTypes.h: 1177
+RKMomentMethodMultiLag4 = (RKMomentMethodMultiLag3 + 1)# RKTypes.h: 1179
 
-RKMomentMethodSpectralMoment = (RKMomentMethodMultiLag4 + 1)# RKTypes.h: 1177
+RKMomentMethodSpectralMoment = (RKMomentMethodMultiLag4 + 1)# RKTypes.h: 1179
 
-RKMomentMethodUserDefined = (RKMomentMethodSpectralMoment + 1)# RKTypes.h: 1177
+RKMomentMethodUserDefined = (RKMomentMethodSpectralMoment + 1)# RKTypes.h: 1179
 
-# RKTypes.h: 1190
+# RKTypes.h: 1192
 class struct_anon_110(Structure):
     pass
 
@@ -3040,7 +3040,7 @@ struct_anon_110._fields_ = [
     ('gateCount', uint16_t),
 ]
 
-# RKTypes.h: 1202
+# RKTypes.h: 1204
 class union_rk_radarhub_ray_header(Union):
     pass
 
@@ -3057,9 +3057,9 @@ union_rk_radarhub_ray_header._fields_ = [
     ('bytes', RKByte * int(16)),
 ]
 
-RKRadarHubRayHeader = union_rk_radarhub_ray_header# RKTypes.h: 1202
+RKRadarHubRayHeader = union_rk_radarhub_ray_header# RKTypes.h: 1204
 
-# RKTypes.h: 1205
+# RKTypes.h: 1207
 class struct_anon_111(Structure):
     pass
 
@@ -3073,7 +3073,7 @@ struct_anon_111._fields_ = [
     ('data', RKByte * int(262144)),
 ]
 
-# RKTypes.h: 1210
+# RKTypes.h: 1212
 class union_rk_radarhub_ray(Union):
     pass
 
@@ -3090,7 +3090,7 @@ union_rk_radarhub_ray._fields_ = [
     ('bytes', POINTER(RKByte)),
 ]
 
-RKRadarHubRay = union_rk_radarhub_ray# RKTypes.h: 1210
+RKRadarHubRay = union_rk_radarhub_ray# RKTypes.h: 1212
 
 # RKTypes.h: 1255
 class struct_rk_radar_desc(Structure):
@@ -4927,79 +4927,79 @@ try:
 except:
     pass
 
-# RKFoundation.h: 101
+# RKFoundation.h: 99
 if _libs["radarkit"].has("RKComplexAdd", "cdecl"):
     RKComplexAdd = _libs["radarkit"].get("RKComplexAdd", "cdecl")
     RKComplexAdd.argtypes = [RKComplex, RKComplex]
     RKComplexAdd.restype = RKComplex
 
-# RKFoundation.h: 102
+# RKFoundation.h: 100
 if _libs["radarkit"].has("RKComplexSubtract", "cdecl"):
     RKComplexSubtract = _libs["radarkit"].get("RKComplexSubtract", "cdecl")
     RKComplexSubtract.argtypes = [RKComplex, RKComplex]
     RKComplexSubtract.restype = RKComplex
 
-# RKFoundation.h: 103
+# RKFoundation.h: 101
 if _libs["radarkit"].has("RKComplexMultiply", "cdecl"):
     RKComplexMultiply = _libs["radarkit"].get("RKComplexMultiply", "cdecl")
     RKComplexMultiply.argtypes = [RKComplex, RKComplex]
     RKComplexMultiply.restype = RKComplex
 
-# RKFoundation.h: 104
+# RKFoundation.h: 102
 if _libs["radarkit"].has("RKComplexConjugate", "cdecl"):
     RKComplexConjugate = _libs["radarkit"].get("RKComplexConjugate", "cdecl")
     RKComplexConjugate.argtypes = [RKComplex]
     RKComplexConjugate.restype = RKComplex
 
-# RKFoundation.h: 105
+# RKFoundation.h: 103
 if _libs["radarkit"].has("RKComplexAbsSquare", "cdecl"):
     RKComplexAbsSquare = _libs["radarkit"].get("RKComplexAbsSquare", "cdecl")
     RKComplexAbsSquare.argtypes = [RKComplex]
     RKComplexAbsSquare.restype = RKFloat
 
-# RKFoundation.h: 108
+# RKFoundation.h: 106
 if _libs["radarkit"].has("RKComplexArrayInConjugate", "cdecl"):
     RKComplexArrayInConjugate = _libs["radarkit"].get("RKComplexArrayInConjugate", "cdecl")
     RKComplexArrayInConjugate.argtypes = [POINTER(RKComplex), c_int]
     RKComplexArrayInConjugate.restype = None
 
-# RKFoundation.h: 109
+# RKFoundation.h: 107
 if _libs["radarkit"].has("RKComplexArrayInPlaceAdd", "cdecl"):
     RKComplexArrayInPlaceAdd = _libs["radarkit"].get("RKComplexArrayInPlaceAdd", "cdecl")
     RKComplexArrayInPlaceAdd.argtypes = [POINTER(RKComplex), POINTER(RKComplex), c_int]
     RKComplexArrayInPlaceAdd.restype = None
 
-# RKFoundation.h: 110
+# RKFoundation.h: 108
 if _libs["radarkit"].has("RKComplexArrayInPlaceSubtract", "cdecl"):
     RKComplexArrayInPlaceSubtract = _libs["radarkit"].get("RKComplexArrayInPlaceSubtract", "cdecl")
     RKComplexArrayInPlaceSubtract.argtypes = [POINTER(RKComplex), POINTER(RKComplex), c_int]
     RKComplexArrayInPlaceSubtract.restype = None
 
-# RKFoundation.h: 111
+# RKFoundation.h: 109
 if _libs["radarkit"].has("RKComplexArrayInPlaceMultiply", "cdecl"):
     RKComplexArrayInPlaceMultiply = _libs["radarkit"].get("RKComplexArrayInPlaceMultiply", "cdecl")
     RKComplexArrayInPlaceMultiply.argtypes = [POINTER(RKComplex), POINTER(RKComplex), c_int]
     RKComplexArrayInPlaceMultiply.restype = None
 
-# RKFoundation.h: 112
+# RKFoundation.h: 110
 if _libs["radarkit"].has("RKComplexArrayInPlaceConjugateMultiply", "cdecl"):
     RKComplexArrayInPlaceConjugateMultiply = _libs["radarkit"].get("RKComplexArrayInPlaceConjugateMultiply", "cdecl")
     RKComplexArrayInPlaceConjugateMultiply.argtypes = [POINTER(RKComplex), POINTER(RKComplex), c_int]
     RKComplexArrayInPlaceConjugateMultiply.restype = None
 
-# RKFoundation.h: 115
+# RKFoundation.h: 113
 if _libs["radarkit"].has("RKFloatArraySum", "cdecl"):
     RKFloatArraySum = _libs["radarkit"].get("RKFloatArraySum", "cdecl")
     RKFloatArraySum.argtypes = [POINTER(RKFloat), c_int]
     RKFloatArraySum.restype = RKFloat
 
-# RKFoundation.h: 116
+# RKFoundation.h: 114
 if _libs["radarkit"].has("RKComplexArraySum", "cdecl"):
     RKComplexArraySum = _libs["radarkit"].get("RKComplexArraySum", "cdecl")
     RKComplexArraySum.argtypes = [POINTER(RKComplex), c_int]
     RKComplexArraySum.restype = RKComplex
 
-# RKFoundation.h: 119
+# RKFoundation.h: 117
 if _libs["radarkit"].has("RKLog", "cdecl"):
     _func = _libs["radarkit"].get("RKLog", "cdecl")
     _restype = c_int
@@ -5007,115 +5007,115 @@ if _libs["radarkit"].has("RKLog", "cdecl"):
     _argtypes = [String]
     RKLog = _variadic_function(_func,_restype,_argtypes,_errcheck)
 
-# RKFoundation.h: 120
+# RKFoundation.h: 118
 if _libs["radarkit"].has("RKExit", "cdecl"):
     RKExit = _libs["radarkit"].get("RKExit", "cdecl")
     RKExit.argtypes = [c_int]
     RKExit.restype = None
 
-# RKFoundation.h: 123
+# RKFoundation.h: 121
 if _libs["radarkit"].has("RKFileOpen", "cdecl"):
     RKFileOpen = _libs["radarkit"].get("RKFileOpen", "cdecl")
     RKFileOpen.argtypes = [String, String]
     RKFileOpen.restype = POINTER(FILE)
 
-# RKFoundation.h: 124
+# RKFoundation.h: 122
 if _libs["radarkit"].has("RKFileClose", "cdecl"):
     RKFileClose = _libs["radarkit"].get("RKFileClose", "cdecl")
     RKFileClose.argtypes = [POINTER(FILE)]
     RKFileClose.restype = c_int
 
-# RKFoundation.h: 125
+# RKFoundation.h: 123
 if _libs["radarkit"].has("RKFileTell", "cdecl"):
     RKFileTell = _libs["radarkit"].get("RKFileTell", "cdecl")
     RKFileTell.argtypes = [POINTER(FILE)]
     RKFileTell.restype = c_long
 
-# RKFoundation.h: 126
+# RKFoundation.h: 124
 if _libs["radarkit"].has("RKFileGetSize", "cdecl"):
     RKFileGetSize = _libs["radarkit"].get("RKFileGetSize", "cdecl")
     RKFileGetSize.argtypes = [POINTER(FILE)]
     RKFileGetSize.restype = c_size_t
 
-# RKFoundation.h: 127
+# RKFoundation.h: 125
 if _libs["radarkit"].has("RKFileSeek", "cdecl"):
     RKFileSeek = _libs["radarkit"].get("RKFileSeek", "cdecl")
     RKFileSeek.argtypes = [POINTER(FILE), c_long]
     RKFileSeek.restype = c_int
 
-# RKFoundation.h: 128
+# RKFoundation.h: 126
 if _libs["radarkit"].has("RKFileWrite", "cdecl"):
     RKFileWrite = _libs["radarkit"].get("RKFileWrite", "cdecl")
     RKFileWrite.argtypes = [POINTER(None), c_size_t, c_size_t, POINTER(FILE)]
     RKFileWrite.restype = c_size_t
 
-# RKFoundation.h: 129
+# RKFoundation.h: 127
 if _libs["radarkit"].has("RKFileRead", "cdecl"):
     RKFileRead = _libs["radarkit"].get("RKFileRead", "cdecl")
     RKFileRead.argtypes = [POINTER(None), c_size_t, c_size_t, POINTER(FILE)]
     RKFileRead.restype = c_size_t
 
-# RKFoundation.h: 132
+# RKFoundation.h: 130
 if _libs["radarkit"].has("RKSetStatusColor", "cdecl"):
     RKSetStatusColor = _libs["radarkit"].get("RKSetStatusColor", "cdecl")
     RKSetStatusColor.argtypes = [c_bool]
     RKSetStatusColor.restype = None
 
-# RKFoundation.h: 133
+# RKFoundation.h: 131
 if _libs["radarkit"].has("RKSetWantColor", "cdecl"):
     RKSetWantColor = _libs["radarkit"].get("RKSetWantColor", "cdecl")
     RKSetWantColor.argtypes = [c_bool]
     RKSetWantColor.restype = None
 
-# RKFoundation.h: 134
+# RKFoundation.h: 132
 if _libs["radarkit"].has("RKSetWantScreenOutput", "cdecl"):
     RKSetWantScreenOutput = _libs["radarkit"].get("RKSetWantScreenOutput", "cdecl")
     RKSetWantScreenOutput.argtypes = [c_bool]
     RKSetWantScreenOutput.restype = None
 
-# RKFoundation.h: 135
+# RKFoundation.h: 133
 if _libs["radarkit"].has("RKGetWantScreenOutput", "cdecl"):
     RKGetWantScreenOutput = _libs["radarkit"].get("RKGetWantScreenOutput", "cdecl")
     RKGetWantScreenOutput.argtypes = []
     RKGetWantScreenOutput.restype = c_bool
 
-# RKFoundation.h: 136
+# RKFoundation.h: 134
 if _libs["radarkit"].has("RKSetUseDailyLog", "cdecl"):
     RKSetUseDailyLog = _libs["radarkit"].get("RKSetUseDailyLog", "cdecl")
     RKSetUseDailyLog.argtypes = [c_bool]
     RKSetUseDailyLog.restype = None
 
-# RKFoundation.h: 137
+# RKFoundation.h: 135
 if _libs["radarkit"].has("RKSetProgramName", "cdecl"):
     RKSetProgramName = _libs["radarkit"].get("RKSetProgramName", "cdecl")
     RKSetProgramName.argtypes = [String]
     RKSetProgramName.restype = c_int
 
-# RKFoundation.h: 138
+# RKFoundation.h: 136
 if _libs["radarkit"].has("RKSetRootFolder", "cdecl"):
     RKSetRootFolder = _libs["radarkit"].get("RKSetRootFolder", "cdecl")
     RKSetRootFolder.argtypes = [String]
     RKSetRootFolder.restype = c_int
 
-# RKFoundation.h: 139
+# RKFoundation.h: 137
 if _libs["radarkit"].has("RKSetRootDataFolder", "cdecl"):
     RKSetRootDataFolder = _libs["radarkit"].get("RKSetRootDataFolder", "cdecl")
     RKSetRootDataFolder.argtypes = [String]
     RKSetRootDataFolder.restype = c_int
 
-# RKFoundation.h: 140
+# RKFoundation.h: 138
 if _libs["radarkit"].has("RKSetLogfile", "cdecl"):
     RKSetLogfile = _libs["radarkit"].get("RKSetLogfile", "cdecl")
     RKSetLogfile.argtypes = [String]
     RKSetLogfile.restype = c_int
 
-# RKFoundation.h: 141
+# RKFoundation.h: 139
 if _libs["radarkit"].has("RKSetLogfileToDefault", "cdecl"):
     RKSetLogfileToDefault = _libs["radarkit"].get("RKSetLogfileToDefault", "cdecl")
     RKSetLogfileToDefault.argtypes = []
     RKSetLogfileToDefault.restype = c_int
 
-# RKFoundation.h: 143
+# RKFoundation.h: 141
 if _libs["radarkit"].has("RKVersionString", "cdecl"):
     RKVersionString = _libs["radarkit"].get("RKVersionString", "cdecl")
     RKVersionString.argtypes = []
@@ -5125,79 +5125,79 @@ if _libs["radarkit"].has("RKVersionString", "cdecl"):
         RKVersionString.restype = String
         RKVersionString.errcheck = ReturnString
 
-# RKFoundation.h: 144
+# RKFoundation.h: 142
 if _libs["radarkit"].has("RKGuessValueType", "cdecl"):
     RKGuessValueType = _libs["radarkit"].get("RKGuessValueType", "cdecl")
     RKGuessValueType.argtypes = [String]
     RKGuessValueType.restype = RKValueType
 
-# RKFoundation.h: 147
+# RKFoundation.h: 145
 if _libs["radarkit"].has("RKIsFilenameStandard", "cdecl"):
     RKIsFilenameStandard = _libs["radarkit"].get("RKIsFilenameStandard", "cdecl")
     RKIsFilenameStandard.argtypes = [String]
     RKIsFilenameStandard.restype = c_int
 
-# RKFoundation.h: 148
+# RKFoundation.h: 146
 if _libs["radarkit"].has("RKGetSymbolFromFilename", "cdecl"):
     RKGetSymbolFromFilename = _libs["radarkit"].get("RKGetSymbolFromFilename", "cdecl")
     RKGetSymbolFromFilename.argtypes = [String, String]
     RKGetSymbolFromFilename.restype = c_bool
 
-# RKFoundation.h: 149
+# RKFoundation.h: 147
 if _libs["radarkit"].has("RKGetPrefixFromFilename", "cdecl"):
     RKGetPrefixFromFilename = _libs["radarkit"].get("RKGetPrefixFromFilename", "cdecl")
     RKGetPrefixFromFilename.argtypes = [String, String]
     RKGetPrefixFromFilename.restype = c_bool
 
-# RKFoundation.h: 150
+# RKFoundation.h: 148
 if _libs["radarkit"].has("RKListFilesWithSamePrefix", "cdecl"):
     RKListFilesWithSamePrefix = _libs["radarkit"].get("RKListFilesWithSamePrefix", "cdecl")
     RKListFilesWithSamePrefix.argtypes = [String, POINTER(c_char * int(1024))]
     RKListFilesWithSamePrefix.restype = c_int
 
-# RKFoundation.h: 153
+# RKFoundation.h: 151
 if _libs["radarkit"].has("RKShowName", "cdecl"):
     RKShowName = _libs["radarkit"].get("RKShowName", "cdecl")
     RKShowName.argtypes = []
     RKShowName.restype = None
 
-# RKFoundation.h: 154
+# RKFoundation.h: 152
 if _libs["radarkit"].has("RKShowTypeSizes", "cdecl"):
     RKShowTypeSizes = _libs["radarkit"].get("RKShowTypeSizes", "cdecl")
     RKShowTypeSizes.argtypes = []
     RKShowTypeSizes.restype = None
 
-# RKFoundation.h: 155
+# RKFoundation.h: 153
 if _libs["radarkit"].has("RKShowVecFloatLowPrecision", "cdecl"):
     RKShowVecFloatLowPrecision = _libs["radarkit"].get("RKShowVecFloatLowPrecision", "cdecl")
     RKShowVecFloatLowPrecision.argtypes = [String, POINTER(c_float), c_int]
     RKShowVecFloatLowPrecision.restype = None
 
-# RKFoundation.h: 156
+# RKFoundation.h: 154
 if _libs["radarkit"].has("RKShowVecFloat", "cdecl"):
     RKShowVecFloat = _libs["radarkit"].get("RKShowVecFloat", "cdecl")
     RKShowVecFloat.argtypes = [String, POINTER(c_float), c_int]
     RKShowVecFloat.restype = None
 
-# RKFoundation.h: 157
+# RKFoundation.h: 155
 if _libs["radarkit"].has("RKShowVecIQZ", "cdecl"):
     RKShowVecIQZ = _libs["radarkit"].get("RKShowVecIQZ", "cdecl")
     RKShowVecIQZ.argtypes = [String, POINTER(RKIQZ), c_int]
     RKShowVecIQZ.restype = None
 
-# RKFoundation.h: 158
+# RKFoundation.h: 156
 if _libs["radarkit"].has("RKShowVecComplex", "cdecl"):
     RKShowVecComplex = _libs["radarkit"].get("RKShowVecComplex", "cdecl")
     RKShowVecComplex.argtypes = [String, POINTER(RKComplex), c_int]
     RKShowVecComplex.restype = None
 
-# RKFoundation.h: 159
+# RKFoundation.h: 157
 if _libs["radarkit"].has("RKShowArray", "cdecl"):
     RKShowArray = _libs["radarkit"].get("RKShowArray", "cdecl")
     RKShowArray.argtypes = [POINTER(RKFloat), String, c_int, c_int]
     RKShowArray.restype = None
 
-# RKFoundation.h: 160
+# RKFoundation.h: 158
 if _libs["radarkit"].has("RKStringFromValue", "cdecl"):
     RKStringFromValue = _libs["radarkit"].get("RKStringFromValue", "cdecl")
     RKStringFromValue.argtypes = [POINTER(None), RKValueType]
@@ -5207,7 +5207,7 @@ if _libs["radarkit"].has("RKStringFromValue", "cdecl"):
         RKStringFromValue.restype = String
         RKStringFromValue.errcheck = ReturnString
 
-# RKFoundation.h: 161
+# RKFoundation.h: 159
 if _libs["radarkit"].has("RKVariableInString", "cdecl"):
     RKVariableInString = _libs["radarkit"].get("RKVariableInString", "cdecl")
     RKVariableInString.argtypes = [String, POINTER(None), RKValueType]
@@ -5217,176 +5217,176 @@ if _libs["radarkit"].has("RKVariableInString", "cdecl"):
         RKVariableInString.restype = String
         RKVariableInString.errcheck = ReturnString
 
-# RKFoundation.h: 162
+# RKFoundation.h: 160
 if _libs["radarkit"].has("RKPrettyStringSizeEstimate", "cdecl"):
     RKPrettyStringSizeEstimate = _libs["radarkit"].get("RKPrettyStringSizeEstimate", "cdecl")
     RKPrettyStringSizeEstimate.argtypes = [String]
     RKPrettyStringSizeEstimate.restype = c_size_t
 
-# RKFoundation.h: 163
+# RKFoundation.h: 161
 if _libs["radarkit"].has("RKPrettyStringFromKeyValueString", "cdecl"):
     RKPrettyStringFromKeyValueString = _libs["radarkit"].get("RKPrettyStringFromKeyValueString", "cdecl")
     RKPrettyStringFromKeyValueString.argtypes = [String, String]
     RKPrettyStringFromKeyValueString.restype = c_size_t
 
-# RKFoundation.h: 166
+# RKFoundation.h: 164
 if _libs["radarkit"].has("RKMalloc", "cdecl"):
     RKMalloc = _libs["radarkit"].get("RKMalloc", "cdecl")
     RKMalloc.argtypes = [uint32_t]
     RKMalloc.restype = POINTER(c_ubyte)
     RKMalloc.errcheck = lambda v,*a : cast(v, c_void_p)
 
-# RKFoundation.h: 167
+# RKFoundation.h: 165
 if _libs["radarkit"].has("RKZeroOutFloat", "cdecl"):
     RKZeroOutFloat = _libs["radarkit"].get("RKZeroOutFloat", "cdecl")
     RKZeroOutFloat.argtypes = [POINTER(RKFloat), uint32_t]
     RKZeroOutFloat.restype = None
 
-# RKFoundation.h: 168
+# RKFoundation.h: 166
 if _libs["radarkit"].has("RKZeroOutIQZ", "cdecl"):
     RKZeroOutIQZ = _libs["radarkit"].get("RKZeroOutIQZ", "cdecl")
     RKZeroOutIQZ.argtypes = [POINTER(RKIQZ), uint32_t]
     RKZeroOutIQZ.restype = None
 
-# RKFoundation.h: 169
+# RKFoundation.h: 167
 if _libs["radarkit"].has("RKZeroTailFloat", "cdecl"):
     RKZeroTailFloat = _libs["radarkit"].get("RKZeroTailFloat", "cdecl")
     RKZeroTailFloat.argtypes = [POINTER(RKFloat), uint32_t, uint32_t]
     RKZeroTailFloat.restype = None
 
-# RKFoundation.h: 170
+# RKFoundation.h: 168
 if _libs["radarkit"].has("RKZeroTailIQZ", "cdecl"):
     RKZeroTailIQZ = _libs["radarkit"].get("RKZeroTailIQZ", "cdecl")
     RKZeroTailIQZ.argtypes = [POINTER(RKIQZ), uint32_t, uint32_t]
     RKZeroTailIQZ.restype = None
 
-# RKFoundation.h: 173
+# RKFoundation.h: 171
 if _libs["radarkit"].has("RKPulseBufferAlloc", "cdecl"):
     RKPulseBufferAlloc = _libs["radarkit"].get("RKPulseBufferAlloc", "cdecl")
     RKPulseBufferAlloc.argtypes = [POINTER(RKBuffer), uint32_t, uint32_t]
     RKPulseBufferAlloc.restype = c_size_t
 
-# RKFoundation.h: 174
+# RKFoundation.h: 172
 if _libs["radarkit"].has("RKPulseBufferFree", "cdecl"):
     RKPulseBufferFree = _libs["radarkit"].get("RKPulseBufferFree", "cdecl")
     RKPulseBufferFree.argtypes = [RKBuffer]
     RKPulseBufferFree.restype = None
 
-# RKFoundation.h: 175
+# RKFoundation.h: 173
 if _libs["radarkit"].has("RKGetPulseFromBuffer", "cdecl"):
     RKGetPulseFromBuffer = _libs["radarkit"].get("RKGetPulseFromBuffer", "cdecl")
     RKGetPulseFromBuffer.argtypes = [RKBuffer, uint32_t]
     RKGetPulseFromBuffer.restype = POINTER(RKPulse)
 
-# RKFoundation.h: 176
+# RKFoundation.h: 174
 if _libs["radarkit"].has("RKGetInt16CDataFromPulse", "cdecl"):
     RKGetInt16CDataFromPulse = _libs["radarkit"].get("RKGetInt16CDataFromPulse", "cdecl")
     RKGetInt16CDataFromPulse.argtypes = [POINTER(RKPulse), uint32_t]
     RKGetInt16CDataFromPulse.restype = POINTER(RKInt16C)
 
-# RKFoundation.h: 177
+# RKFoundation.h: 175
 if _libs["radarkit"].has("RKGetComplexDataFromPulse", "cdecl"):
     RKGetComplexDataFromPulse = _libs["radarkit"].get("RKGetComplexDataFromPulse", "cdecl")
     RKGetComplexDataFromPulse.argtypes = [POINTER(RKPulse), uint32_t]
     RKGetComplexDataFromPulse.restype = POINTER(RKComplex)
 
-# RKFoundation.h: 178
+# RKFoundation.h: 176
 if _libs["radarkit"].has("RKGetSplitComplexDataFromPulse", "cdecl"):
     RKGetSplitComplexDataFromPulse = _libs["radarkit"].get("RKGetSplitComplexDataFromPulse", "cdecl")
     RKGetSplitComplexDataFromPulse.argtypes = [POINTER(RKPulse), uint32_t]
     RKGetSplitComplexDataFromPulse.restype = RKIQZ
 
-# RKFoundation.h: 179
+# RKFoundation.h: 177
 if _libs["radarkit"].has("RKClearPulseBuffer", "cdecl"):
     RKClearPulseBuffer = _libs["radarkit"].get("RKClearPulseBuffer", "cdecl")
     RKClearPulseBuffer.argtypes = [RKBuffer, uint32_t]
     RKClearPulseBuffer.restype = c_int
 
-# RKFoundation.h: 180
+# RKFoundation.h: 178
 if _libs["radarkit"].has("RKReadPulseFromFileReference", "cdecl"):
     RKReadPulseFromFileReference = _libs["radarkit"].get("RKReadPulseFromFileReference", "cdecl")
     RKReadPulseFromFileReference.argtypes = [POINTER(RKPulse), POINTER(RKFileHeader), POINTER(FILE)]
     RKReadPulseFromFileReference.restype = c_int
 
-# RKFoundation.h: 181
+# RKFoundation.h: 179
 if _libs["radarkit"].has("RKGetVacantPulseFromBuffer", "cdecl"):
     RKGetVacantPulseFromBuffer = _libs["radarkit"].get("RKGetVacantPulseFromBuffer", "cdecl")
     RKGetVacantPulseFromBuffer.argtypes = [RKBuffer, POINTER(uint32_t), uint32_t]
     RKGetVacantPulseFromBuffer.restype = POINTER(RKPulse)
 
-# RKFoundation.h: 182
+# RKFoundation.h: 180
 if _libs["radarkit"].has("RKPulseBufferAllocCopyFromBuffer", "cdecl"):
     RKPulseBufferAllocCopyFromBuffer = _libs["radarkit"].get("RKPulseBufferAllocCopyFromBuffer", "cdecl")
     RKPulseBufferAllocCopyFromBuffer.argtypes = [RKBuffer, uint32_t, uint32_t, uint32_t]
     RKPulseBufferAllocCopyFromBuffer.restype = RKBuffer
 
-# RKFoundation.h: 183
+# RKFoundation.h: 181
 if _libs["radarkit"].has("RKPulseDuplicateSplitComplex", "cdecl"):
     RKPulseDuplicateSplitComplex = _libs["radarkit"].get("RKPulseDuplicateSplitComplex", "cdecl")
     RKPulseDuplicateSplitComplex.argtypes = [POINTER(RKPulse)]
     RKPulseDuplicateSplitComplex.restype = None
 
-# RKFoundation.h: 186
+# RKFoundation.h: 184
 if _libs["radarkit"].has("RKRayBufferAlloc", "cdecl"):
     RKRayBufferAlloc = _libs["radarkit"].get("RKRayBufferAlloc", "cdecl")
     RKRayBufferAlloc.argtypes = [POINTER(RKBuffer), uint32_t, uint32_t]
     RKRayBufferAlloc.restype = c_size_t
 
-# RKFoundation.h: 187
+# RKFoundation.h: 185
 if _libs["radarkit"].has("RKRayBufferFree", "cdecl"):
     RKRayBufferFree = _libs["radarkit"].get("RKRayBufferFree", "cdecl")
     RKRayBufferFree.argtypes = [RKBuffer]
     RKRayBufferFree.restype = None
 
-# RKFoundation.h: 188
+# RKFoundation.h: 186
 if _libs["radarkit"].has("RKGetRayFromBuffer", "cdecl"):
     RKGetRayFromBuffer = _libs["radarkit"].get("RKGetRayFromBuffer", "cdecl")
     RKGetRayFromBuffer.argtypes = [RKBuffer, uint32_t]
     RKGetRayFromBuffer.restype = POINTER(RKRay)
 
-# RKFoundation.h: 189
+# RKFoundation.h: 187
 if _libs["radarkit"].has("RKGetUInt8DataFromRay", "cdecl"):
     RKGetUInt8DataFromRay = _libs["radarkit"].get("RKGetUInt8DataFromRay", "cdecl")
     RKGetUInt8DataFromRay.argtypes = [POINTER(RKRay), RKProductIndex]
     RKGetUInt8DataFromRay.restype = POINTER(uint8_t)
 
-# RKFoundation.h: 190
+# RKFoundation.h: 188
 if _libs["radarkit"].has("RKGetFloatDataFromRay", "cdecl"):
     RKGetFloatDataFromRay = _libs["radarkit"].get("RKGetFloatDataFromRay", "cdecl")
     RKGetFloatDataFromRay.argtypes = [POINTER(RKRay), RKProductIndex]
     RKGetFloatDataFromRay.restype = POINTER(c_float)
 
-# RKFoundation.h: 191
+# RKFoundation.h: 189
 if _libs["radarkit"].has("RKClearRayBuffer", "cdecl"):
     RKClearRayBuffer = _libs["radarkit"].get("RKClearRayBuffer", "cdecl")
     RKClearRayBuffer.argtypes = [RKBuffer, uint32_t]
     RKClearRayBuffer.restype = c_int
 
-# RKFoundation.h: 192
+# RKFoundation.h: 190
 if _libs["radarkit"].has("RKGetVacantRayFromBuffer", "cdecl"):
     RKGetVacantRayFromBuffer = _libs["radarkit"].get("RKGetVacantRayFromBuffer", "cdecl")
     RKGetVacantRayFromBuffer.argtypes = [RKBuffer, POINTER(uint32_t), uint32_t]
     RKGetVacantRayFromBuffer.restype = POINTER(RKRay)
 
-# RKFoundation.h: 195
+# RKFoundation.h: 193
 if _libs["radarkit"].has("RKFileMonitorInit", "cdecl"):
     RKFileMonitorInit = _libs["radarkit"].get("RKFileMonitorInit", "cdecl")
     RKFileMonitorInit.argtypes = [String, CFUNCTYPE(UNCHECKED(None), POINTER(None)), POINTER(None)]
     RKFileMonitorInit.restype = POINTER(RKFileMonitor)
 
-# RKFoundation.h: 196
+# RKFoundation.h: 194
 if _libs["radarkit"].has("RKFileMonitorFree", "cdecl"):
     RKFileMonitorFree = _libs["radarkit"].get("RKFileMonitorFree", "cdecl")
     RKFileMonitorFree.argtypes = [POINTER(RKFileMonitor)]
     RKFileMonitorFree.restype = c_int
 
-# RKFoundation.h: 199
+# RKFoundation.h: 197
 if _libs["radarkit"].has("RKStreamFromString", "cdecl"):
     RKStreamFromString = _libs["radarkit"].get("RKStreamFromString", "cdecl")
     RKStreamFromString.argtypes = [String]
     RKStreamFromString.restype = RKStream
 
-# RKFoundation.h: 200
+# RKFoundation.h: 198
 if _libs["radarkit"].has("RKStringOfStream", "cdecl"):
     RKStringOfStream = _libs["radarkit"].get("RKStringOfStream", "cdecl")
     RKStringOfStream.argtypes = [RKStream]
@@ -5396,31 +5396,31 @@ if _libs["radarkit"].has("RKStringOfStream", "cdecl"):
         RKStringOfStream.restype = String
         RKStringOfStream.errcheck = ReturnString
 
-# RKFoundation.h: 201
+# RKFoundation.h: 199
 if _libs["radarkit"].has("RKStringFromStream", "cdecl"):
     RKStringFromStream = _libs["radarkit"].get("RKStringFromStream", "cdecl")
     RKStringFromStream.argtypes = [String, RKStream]
     RKStringFromStream.restype = c_int
 
-# RKFoundation.h: 203
+# RKFoundation.h: 201
 if _libs["radarkit"].has("RKGetNextProductDescription", "cdecl"):
     RKGetNextProductDescription = _libs["radarkit"].get("RKGetNextProductDescription", "cdecl")
     RKGetNextProductDescription.argtypes = [POINTER(RKProductList)]
     RKGetNextProductDescription.restype = RKProductDesc
 
-# RKFoundation.h: 206
+# RKFoundation.h: 204
 if _libs["radarkit"].has("RKParseCommaDelimitedValues", "cdecl"):
     RKParseCommaDelimitedValues = _libs["radarkit"].get("RKParseCommaDelimitedValues", "cdecl")
     RKParseCommaDelimitedValues.argtypes = [POINTER(None), RKValueType, c_size_t, String]
     RKParseCommaDelimitedValues.restype = c_size_t
 
-# RKFoundation.h: 207
+# RKFoundation.h: 205
 if _libs["radarkit"].has("RKParseNumericArray", "cdecl"):
     RKParseNumericArray = _libs["radarkit"].get("RKParseNumericArray", "cdecl")
     RKParseNumericArray.argtypes = [POINTER(None), RKValueType, c_size_t, String]
     RKParseNumericArray.restype = c_size_t
 
-# RKFoundation.h: 208
+# RKFoundation.h: 206
 if _libs["radarkit"].has("RKParseQuotedStrings", "cdecl"):
     _func = _libs["radarkit"].get("RKParseQuotedStrings", "cdecl")
     _restype = None
@@ -5428,97 +5428,97 @@ if _libs["radarkit"].has("RKParseQuotedStrings", "cdecl"):
     _argtypes = [String]
     RKParseQuotedStrings = _variadic_function(_func,_restype,_argtypes,_errcheck)
 
-# RKFoundation.h: 209
+# RKFoundation.h: 207
 if _libs["radarkit"].has("RKMakeJSONStringFromControls", "cdecl"):
     RKMakeJSONStringFromControls = _libs["radarkit"].get("RKMakeJSONStringFromControls", "cdecl")
     RKMakeJSONStringFromControls.argtypes = [String, POINTER(RKControl), uint32_t]
     RKMakeJSONStringFromControls.restype = None
 
-# RKFoundation.h: 210
+# RKFoundation.h: 208
 if _libs["radarkit"].has("RKValueToEnum", "cdecl"):
     RKValueToEnum = _libs["radarkit"].get("RKValueToEnum", "cdecl")
     RKValueToEnum.argtypes = [RKConst, RKConst, RKConst, RKConst, RKConst, RKConst, RKConst]
     RKValueToEnum.restype = RKStatusEnum
 
-# RKFoundation.h: 211
+# RKFoundation.h: 209
 if _libs["radarkit"].has("RKStatusFromTemperatureForCE", "cdecl"):
     RKStatusFromTemperatureForCE = _libs["radarkit"].get("RKStatusFromTemperatureForCE", "cdecl")
     RKStatusFromTemperatureForCE.argtypes = [RKConst]
     RKStatusFromTemperatureForCE.restype = RKStatusEnum
 
-# RKFoundation.h: 212
+# RKFoundation.h: 210
 if _libs["radarkit"].has("RKStatusFromTemperatureForIE", "cdecl"):
     RKStatusFromTemperatureForIE = _libs["radarkit"].get("RKStatusFromTemperatureForIE", "cdecl")
     RKStatusFromTemperatureForIE.argtypes = [RKConst]
     RKStatusFromTemperatureForIE.restype = RKStatusEnum
 
-# RKFoundation.h: 213
+# RKFoundation.h: 211
 if _libs["radarkit"].has("RKStatusFromTemperatureForComputers", "cdecl"):
     RKStatusFromTemperatureForComputers = _libs["radarkit"].get("RKStatusFromTemperatureForComputers", "cdecl")
     RKStatusFromTemperatureForComputers.argtypes = [RKConst]
     RKStatusFromTemperatureForComputers.restype = RKStatusEnum
 
-# RKFoundation.h: 214
+# RKFoundation.h: 212
 if _libs["radarkit"].has("RKFindCondition", "cdecl"):
     RKFindCondition = _libs["radarkit"].get("RKFindCondition", "cdecl")
     RKFindCondition.argtypes = [String, RKStatusEnum, c_bool, String, String]
     RKFindCondition.restype = c_bool
 
-# RKFoundation.h: 215
+# RKFoundation.h: 213
 if _libs["radarkit"].has("RKAnyCritical", "cdecl"):
     RKAnyCritical = _libs["radarkit"].get("RKAnyCritical", "cdecl")
     RKAnyCritical.argtypes = [String, c_bool, String, String]
     RKAnyCritical.restype = c_bool
 
-# RKFoundation.h: 216
+# RKFoundation.h: 214
 if _libs["radarkit"].has("RKParseProductDescription", "cdecl"):
     RKParseProductDescription = _libs["radarkit"].get("RKParseProductDescription", "cdecl")
     RKParseProductDescription.argtypes = [POINTER(RKProductDesc), String]
     RKParseProductDescription.restype = c_int
 
-# RKFoundation.h: 217
+# RKFoundation.h: 215
 if _libs["radarkit"].has("RKProductIdFromString", "cdecl"):
     RKProductIdFromString = _libs["radarkit"].get("RKProductIdFromString", "cdecl")
     RKProductIdFromString.argtypes = [String]
     RKProductIdFromString.restype = RKProductId
 
-# RKFoundation.h: 218
+# RKFoundation.h: 216
 if _libs["radarkit"].has("RKIdentifierFromString", "cdecl"):
     RKIdentifierFromString = _libs["radarkit"].get("RKIdentifierFromString", "cdecl")
     RKIdentifierFromString.argtypes = [String]
     RKIdentifierFromString.restype = RKIdentifier
 
-# RKFoundation.h: 221
+# RKFoundation.h: 219
 if _libs["radarkit"].has("RKSimpleEngineFree", "cdecl"):
     RKSimpleEngineFree = _libs["radarkit"].get("RKSimpleEngineFree", "cdecl")
     RKSimpleEngineFree.argtypes = [POINTER(RKSimpleEngine)]
     RKSimpleEngineFree.restype = c_int
 
-# RKFoundation.h: 224
+# RKFoundation.h: 222
 if _libs["radarkit"].has("RKCommandQueueInit", "cdecl"):
     RKCommandQueueInit = _libs["radarkit"].get("RKCommandQueueInit", "cdecl")
     RKCommandQueueInit.argtypes = [uint16_t, c_bool]
     RKCommandQueueInit.restype = POINTER(RKCommandQueue)
 
-# RKFoundation.h: 225
+# RKFoundation.h: 223
 if _libs["radarkit"].has("RKCommandQueuePop", "cdecl"):
     RKCommandQueuePop = _libs["radarkit"].get("RKCommandQueuePop", "cdecl")
     RKCommandQueuePop.argtypes = [POINTER(RKCommandQueue)]
     RKCommandQueuePop.restype = POINTER(RKCommand)
 
-# RKFoundation.h: 226
+# RKFoundation.h: 224
 if _libs["radarkit"].has("RKCommandQueuePush", "cdecl"):
     RKCommandQueuePush = _libs["radarkit"].get("RKCommandQueuePush", "cdecl")
     RKCommandQueuePush.argtypes = [POINTER(RKCommandQueue), POINTER(RKCommand)]
     RKCommandQueuePush.restype = c_int
 
-# RKFoundation.h: 227
+# RKFoundation.h: 225
 if _libs["radarkit"].has("RKCommandQueueFree", "cdecl"):
     RKCommandQueueFree = _libs["radarkit"].get("RKCommandQueueFree", "cdecl")
     RKCommandQueueFree.argtypes = [POINTER(RKCommandQueue)]
     RKCommandQueueFree.restype = c_int
 
-# RKFoundation.h: 230
+# RKFoundation.h: 228
 if _libs["radarkit"].has("RKPedestalActionString", "cdecl"):
     RKPedestalActionString = _libs["radarkit"].get("RKPedestalActionString", "cdecl")
     RKPedestalActionString.argtypes = [POINTER(RKScanAction)]
@@ -7407,10 +7407,10 @@ if _libs["radarkit"].has("RKSweepEngineWaitWhileBusy", "cdecl"):
     RKSweepEngineWaitWhileBusy.restype = None
 
 # RKSweepEngine.h: 99
-if _libs["radarkit"].has("RKSweepCollect", "cdecl"):
-    RKSweepCollect = _libs["radarkit"].get("RKSweepCollect", "cdecl")
-    RKSweepCollect.argtypes = [POINTER(RKSweepEngine), uint8_t]
-    RKSweepCollect.restype = POINTER(RKSweep)
+if _libs["radarkit"].has("RKSweepInitFromScratchSpace", "cdecl"):
+    RKSweepInitFromScratchSpace = _libs["radarkit"].get("RKSweepInitFromScratchSpace", "cdecl")
+    RKSweepInitFromScratchSpace.argtypes = [POINTER(RKSweepEngine), uint8_t]
+    RKSweepInitFromScratchSpace.restype = POINTER(RKSweep)
 
 # RKSweepEngine.h: 100
 if _libs["radarkit"].has("RKSweepFree", "cdecl"):
@@ -9081,617 +9081,617 @@ try:
 except:
     pass
 
-# RKTypes.h: 59
+# RKTypes.h: 61
 try:
     RKRawDataFormat = 8
 except:
     pass
 
-# RKTypes.h: 60
+# RKTypes.h: 62
 try:
     RKBufferSSlotCount = 10
 except:
     pass
 
-# RKTypes.h: 61
+# RKTypes.h: 63
 try:
     RKBufferCSlotCount = 10
 except:
     pass
 
-# RKTypes.h: 62
+# RKTypes.h: 64
 try:
     RKBufferHSlotCount = 50
 except:
     pass
 
-# RKTypes.h: 63
+# RKTypes.h: 65
 try:
     RKBufferPSlotCount = 1000
 except:
     pass
 
-# RKTypes.h: 64
+# RKTypes.h: 66
 try:
     RKBuffer0SlotCount = 20000
 except:
     pass
 
-# RKTypes.h: 65
+# RKTypes.h: 67
 try:
     RKBuffer2SlotCount = 3600
 except:
     pass
 
-# RKTypes.h: 66
+# RKTypes.h: 68
 try:
     RKBuffer3SlotCount = 100
 except:
     pass
 
-# RKTypes.h: 67
+# RKTypes.h: 69
 try:
     RKMaximumControlCount = 128
 except:
     pass
 
-# RKTypes.h: 68
+# RKTypes.h: 70
 try:
     RKMaximumWaveformCalibrationCount = 128
 except:
     pass
 
-# RKTypes.h: 69
+# RKTypes.h: 71
 try:
     RKMaximumGateCount = 262144
 except:
     pass
 
-# RKTypes.h: 70
+# RKTypes.h: 72
 try:
     RKMemoryAlignSize = 64
 except:
     pass
 
-# RKTypes.h: 71
+# RKTypes.h: 73
 try:
     RKBaseProductCount = 19
 except:
     pass
 
-# RKTypes.h: 72
+# RKTypes.h: 74
 try:
     RKMaximumLagCount = 5
 except:
     pass
 
-# RKTypes.h: 73
+# RKTypes.h: 75
 try:
     RKMaximumFilterCount = 8
 except:
     pass
 
-# RKTypes.h: 74
+# RKTypes.h: 76
 try:
     RKMaximumWaveformCount = 22
 except:
     pass
 
-# RKTypes.h: 75
+# RKTypes.h: 77
 try:
     RKWorkerDutyCycleBufferDepth = 1000
 except:
     pass
 
-# RKTypes.h: 76
+# RKTypes.h: 78
 try:
     RKMaximumPulsesPerRay = 2000
 except:
     pass
 
-# RKTypes.h: 77
+# RKTypes.h: 79
 try:
     RKMaximumRaysPerSweep = 1500
 except:
     pass
 
-# RKTypes.h: 78
+# RKTypes.h: 80
 try:
     RKMaximumPacketSize = ((16 * 1024) * 1024)
 except:
     pass
 
-# RKTypes.h: 79
+# RKTypes.h: 81
 try:
     RKNetworkTimeoutSeconds = 20
 except:
     pass
 
-# RKTypes.h: 80
+# RKTypes.h: 82
 try:
     RKNetworkReconnectSeconds = 3
 except:
     pass
 
-# RKTypes.h: 81
+# RKTypes.h: 83
 try:
     RKLagRedThreshold = 0.5
 except:
     pass
 
-# RKTypes.h: 82
+# RKTypes.h: 84
 try:
     RKLagOrangeThreshold = 0.7
 except:
     pass
 
-# RKTypes.h: 83
+# RKTypes.h: 85
 try:
     RKDutyCyleRedThreshold = 0.9
 except:
     pass
 
-# RKTypes.h: 84
+# RKTypes.h: 86
 try:
     RKDutyCyleOrangeThreshold = 0.8
 except:
     pass
 
-# RKTypes.h: 85
+# RKTypes.h: 87
 try:
     RKStatusBarWidth = 6
 except:
     pass
 
-# RKTypes.h: 86
+# RKTypes.h: 88
 try:
     RKPulseCountForNoiseMeasurement = 200
 except:
     pass
 
-# RKTypes.h: 87
+# RKTypes.h: 89
 try:
     RKProcessorStatusPulseCoreCount = 16
 except:
     pass
 
-# RKTypes.h: 88
+# RKTypes.h: 90
 try:
     RKProcessorStatusRingCoreCount = 16
 except:
     pass
 
-# RKTypes.h: 89
+# RKTypes.h: 91
 try:
     RKProcessorStatusRayCoreCount = 16
 except:
     pass
 
-# RKTypes.h: 90
+# RKTypes.h: 92
 try:
     RKHostMonitorPingInterval = 5
 except:
     pass
 
-# RKTypes.h: 91
+# RKTypes.h: 93
 try:
     RKMaximumProductCount = 64
 except:
     pass
 
-# RKTypes.h: 92
+# RKTypes.h: 94
 try:
     RKMaximumIIRFilterTaps = 8
 except:
     pass
 
-# RKTypes.h: 93
+# RKTypes.h: 95
 try:
     RKMaximumPrefixLength = 8
 except:
     pass
 
-# RKTypes.h: 94
+# RKTypes.h: 96
 try:
     RKMaximumSymbolLength = 8
 except:
     pass
 
-# RKTypes.h: 95
+# RKTypes.h: 97
 try:
     RKMaximumFileExtensionLength = 8
 except:
     pass
 
-# RKTypes.h: 96
+# RKTypes.h: 98
 try:
     RKUserParameterCount = 8
 except:
     pass
 
-# RKTypes.h: 97
+# RKTypes.h: 99
 try:
     RKMaximumScanCount = 256
 except:
     pass
 
-# RKTypes.h: 98
+# RKTypes.h: 100
 try:
     RKPedestalActionBufferDepth = 8
 except:
     pass
 
-# RKTypes.h: 99
+# RKTypes.h: 101
 try:
     RKDefaultScanSpeed = 18.0
 except:
     pass
 
-# RKTypes.h: 101
+# RKTypes.h: 103
 try:
     RKDefaultDataPath = 'data'
 except:
     pass
 
-# RKTypes.h: 102
+# RKTypes.h: 104
 try:
     RKDataFolderIQ = 'iq'
 except:
     pass
 
-# RKTypes.h: 103
+# RKTypes.h: 105
 try:
     RKDataFolderMoment = 'moment'
 except:
     pass
 
-# RKTypes.h: 104
+# RKTypes.h: 106
 try:
     RKDataFolderHealth = 'health'
 except:
     pass
 
-# RKTypes.h: 105
+# RKTypes.h: 107
 try:
     RKLogFolder = 'log'
 except:
     pass
 
-# RKTypes.h: 106
+# RKTypes.h: 108
 try:
     RKWaveformFolder = 'waveform'
 except:
     pass
 
-# RKTypes.h: 107
+# RKTypes.h: 109
 try:
     RKFFTWisdomFile = 'radarkit-fft-wisdom'
 except:
     pass
 
-# RKTypes.h: 109
+# RKTypes.h: 111
 try:
     RKNoColor = '\\033[0m'
 except:
     pass
 
-# RKTypes.h: 110
+# RKTypes.h: 112
 try:
     RKNoForegroundColor = '\\033[39m'
 except:
     pass
 
-# RKTypes.h: 111
+# RKTypes.h: 113
 try:
     RKNoBackgroundColor = '\\033[49m'
 except:
     pass
 
-# RKTypes.h: 112
+# RKTypes.h: 114
 try:
     RKBaseRedColor = '\\033[91m'
 except:
     pass
 
-# RKTypes.h: 113
+# RKTypes.h: 115
 try:
     RKBaseGreenColor = '\\033[92m'
 except:
     pass
 
-# RKTypes.h: 114
+# RKTypes.h: 116
 try:
     RKBaseYellowColor = '\\033[93m'
 except:
     pass
 
-# RKTypes.h: 115
+# RKTypes.h: 117
 try:
     RKRedColor = '\\033[38;5;196m'
 except:
     pass
 
-# RKTypes.h: 116
+# RKTypes.h: 118
 try:
     RKOrangeColor = '\\033[38;5;208m'
 except:
     pass
 
-# RKTypes.h: 117
+# RKTypes.h: 119
 try:
     RKYellowColor = '\\033[38;5;226m'
 except:
     pass
 
-# RKTypes.h: 118
+# RKTypes.h: 120
 try:
     RKCreamColor = '\\033[38;5;229m'
 except:
     pass
 
-# RKTypes.h: 119
+# RKTypes.h: 121
 try:
     RKGoldColor = '\\033[38;5;178m'
 except:
     pass
 
-# RKTypes.h: 120
+# RKTypes.h: 122
 try:
     RKLimeColor = '\\033[38;5;118m'
 except:
     pass
 
-# RKTypes.h: 121
+# RKTypes.h: 123
 try:
     RKMintColor = '\\033[38;5;43m'
 except:
     pass
 
-# RKTypes.h: 122
+# RKTypes.h: 124
 try:
     RKGreenColor = '\\033[38;5;46m'
 except:
     pass
 
-# RKTypes.h: 123
+# RKTypes.h: 125
 try:
     RKTealColor = '\\033[38;5;49m'
 except:
     pass
 
-# RKTypes.h: 124
+# RKTypes.h: 126
 try:
     RKIceBlueColor = '\\033[38;5;51m'
 except:
     pass
 
-# RKTypes.h: 125
+# RKTypes.h: 127
 try:
     RKSkyBlueColor = '\\033[38;5;45m'
 except:
     pass
 
-# RKTypes.h: 126
+# RKTypes.h: 128
 try:
     RKBlueColor = '\\033[38;5;27m'
 except:
     pass
 
-# RKTypes.h: 127
+# RKTypes.h: 129
 try:
     RKPurpleColor = '\\033[38;5;99m'
 except:
     pass
 
-# RKTypes.h: 128
+# RKTypes.h: 130
 try:
     RKIndigoColor = '\\033[38;5;201m'
 except:
     pass
 
-# RKTypes.h: 129
+# RKTypes.h: 131
 try:
     RKHotPinkColor = '\\033[38;5;199m'
 except:
     pass
 
-# RKTypes.h: 130
+# RKTypes.h: 132
 try:
     RKDeepPinkColor = '\\033[38;5;197m'
 except:
     pass
 
-# RKTypes.h: 131
+# RKTypes.h: 133
 try:
     RKPinkColor = '\\033[38;5;213m'
 except:
     pass
 
-# RKTypes.h: 132
+# RKTypes.h: 134
 try:
     RKSalmonColor = '\\033[38;5;210m'
 except:
     pass
 
-# RKTypes.h: 133
+# RKTypes.h: 135
 try:
     RKGrayColor = '\\033[38;5;245m'
 except:
     pass
 
-# RKTypes.h: 134
+# RKTypes.h: 136
 try:
     RKWhiteColor = '\\033[38;5;15m'
 except:
     pass
 
-# RKTypes.h: 135
+# RKTypes.h: 137
 try:
     RKMonokaiRed = '\\033[38;5;196m'
 except:
     pass
 
-# RKTypes.h: 136
+# RKTypes.h: 138
 try:
     RKMonokaiPink = '\\033[38;5;197m'
 except:
     pass
 
-# RKTypes.h: 137
+# RKTypes.h: 139
 try:
     RKMonokaiOrange = '\\033[38;5;208m'
 except:
     pass
 
-# RKTypes.h: 138
+# RKTypes.h: 140
 try:
     RKMonokaiYellow = '\\033[38;5;186m'
 except:
     pass
 
-# RKTypes.h: 139
+# RKTypes.h: 141
 try:
     RKMonokaiGreen = '\\033[38;5;154m'
 except:
     pass
 
-# RKTypes.h: 140
+# RKTypes.h: 142
 try:
     RKMonokaiBlue = '\\033[38;5;81m'
 except:
     pass
 
-# RKTypes.h: 141
+# RKTypes.h: 143
 try:
     RKMonokaiPurple = '\\033[38;5;141m'
 except:
     pass
 
-# RKTypes.h: 142
+# RKTypes.h: 144
 try:
     RKLightOrangeColor = '\\033[38;5;214m'
 except:
     pass
 
-# RKTypes.h: 143
+# RKTypes.h: 145
 try:
     RKWarningColor = '\\033[38;5;15;48;5;197m'
 except:
     pass
 
-# RKTypes.h: 144
+# RKTypes.h: 146
 try:
     RKPythonColor = '\\033[38;5;226;48;5;24m'
 except:
     pass
 
-# RKTypes.h: 145
+# RKTypes.h: 147
 try:
     RKRadarKitColor = '\\033[38;5;15;48;5;124m'
 except:
     pass
 
-# RKTypes.h: 146
+# RKTypes.h: 148
 try:
     RKMaximumStringLength = 4096
 except:
     pass
 
-# RKTypes.h: 147
+# RKTypes.h: 149
 try:
     RKMaximumPathLength = 1024
 except:
     pass
 
-# RKTypes.h: 148
+# RKTypes.h: 150
 try:
     RKMaximumFolderPathLength = 768
 except:
     pass
 
-# RKTypes.h: 149
+# RKTypes.h: 151
 try:
     RKMaximumCommandLength = 512
 except:
     pass
 
-# RKTypes.h: 150
+# RKTypes.h: 152
 try:
     RKStatusStringLength = 256
 except:
     pass
 
-# RKTypes.h: 151
+# RKTypes.h: 153
 try:
     RKPulseHeaderPaddedSize = 384
 except:
     pass
 
-# RKTypes.h: 152
+# RKTypes.h: 154
 try:
     RKRayHeaderPaddedSize = 128
 except:
     pass
 
-# RKTypes.h: 153
+# RKTypes.h: 155
 try:
     RKNameLength = 128
 except:
     pass
 
-# RKTypes.h: 154
+# RKTypes.h: 156
 try:
     RKShortNameLength = 20
 except:
     pass
 
-# RKTypes.h: 155
+# RKTypes.h: 157
 try:
     RKChildNameLength = 160
 except:
     pass
 
-# RKTypes.h: 157
+# RKTypes.h: 159
 def RKColorDutyCycle(x):
     return (x > RKDutyCyleRedThreshold) and RKBaseRedColor or (x > RKDutyCyleOrangeThreshold) and RKBaseYellowColor or RKBaseGreenColor
 
-# RKTypes.h: 158
+# RKTypes.h: 160
 def RKColorLag(x):
     return (x > RKLagRedThreshold) and RKBaseRedColor or (x > RKLagOrangeThreshold) and RKBaseYellowColor or RKBaseGreenColor
 
-# RKTypes.h: 160
+# RKTypes.h: 162
 def RKDigitWidth(v, n):
     return (c_int (ord_if_char((((floorf ((log10f ((fabsf (v)))))) + (v < 0)) + n and (n + 2) or 1)))).value
 
-# RKTypes.h: 162
+# RKTypes.h: 164
 def ITALIC(x):
     return (('\\033[3m' + x) + '\\033[23m')
 
-# RKTypes.h: 163
+# RKTypes.h: 165
 def UNDERLINE(x):
     return (('\\033[4m' + x) + '\\033[24m')
 
-# RKTypes.h: 164
+# RKTypes.h: 166
 def HIGHLIGHT(x):
     return (('\\033[38;5;82;48;5;238m' + x) + '\\033[m')
 
-# RKTypes.h: 165
+# RKTypes.h: 167
 def UNDERLINE_ITALIC(x):
     return (('\\033[3;4m' + x) + '\\033[23;24m')
 
-# RKTypes.h: 171
+# RKTypes.h: 173
 def RKMarkerScanTypeString(x):
     return ((x & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) and 'PPI' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) and 'RHI' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint) and 'SPT' or 'UNK'
 
-# RKTypes.h: 176
+# RKTypes.h: 178
 def RKMarkerScanTypeShortString(x):
     return ((x & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) and 'P' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) and 'R' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint) and 'S' or 'U'
 
-# RKTypes.h: 181
+# RKTypes.h: 183
 def RKPositionAzimuthFlagColor(x):
     return (x & RKPositionFlagAzimuthError) and RKRedColor or (x & RKPositionFlagAzimuthEnabled) and RKGreenColor or RKYellowColor
 
-# RKTypes.h: 185
+# RKTypes.h: 187
 def RKPositionElevationFlagColor(x):
     return (x & RKPositionFlagElevationError) and RKRedColor or (x & RKPositionFlagElevationEnabled) and RKGreenColor or RKYellowColor
 
@@ -9881,9 +9881,9 @@ rk_double_float_t = union_rk_double_float_t# RKTypes.h: 303
 
 rk_filter_anchor = union_rk_filter_anchor# RKTypes.h: 321
 
-rk_radarhub_ray_header = union_rk_radarhub_ray_header# RKTypes.h: 1202
+rk_radarhub_ray_header = union_rk_radarhub_ray_header# RKTypes.h: 1204
 
-rk_radarhub_ray = union_rk_radarhub_ray# RKTypes.h: 1210
+rk_radarhub_ray = union_rk_radarhub_ray# RKTypes.h: 1212
 
 rk_radar_desc = struct_rk_radar_desc# RKTypes.h: 1255
 

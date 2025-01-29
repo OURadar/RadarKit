@@ -217,7 +217,6 @@ int RKFree(RKRadar *radar);
 //
 // Hardware Hooks
 //
-#pragma mark - Hardware Hooks
 
 // Set the transceiver. Pass in function pointers: init, exec, and free
 int RKSetTransceiver(RKRadar *,
@@ -251,12 +250,9 @@ int RKSeUserDevice(RKRadar *,
 //
 // Properties
 //
-#pragma mark - Before-Live Properties
 
 // These can only be set before the radar goes live
 int RKSetProcessingCoreCounts(RKRadar *, const uint8_t, const uint8_t, const uint8_t);
-
-#pragma mark - Properties
 
 // Some states of the radar
 int RKSetVerbosity(RKRadar *, const int);
@@ -303,7 +299,6 @@ int RKSetPulseRingFilter(RKRadar *, RKIIRFilter *, const uint32_t);
 //
 // Interactions
 //
-#pragma mark - Interaction / State Change
 
 // State
 int RKGoLive(RKRadar *);                                                                           // Go live
@@ -364,8 +359,6 @@ void RKAddControl(RKRadar *, const RKControl *);                                
 void RKAddControlAsLabelAndCommand(RKRadar *, const char *label, const char *command);             // Add control through specifying a label and command string
 void RKClearControls(RKRadar *);                                                                   // Clear all controls
 void RKConcludeControls(RKRadar *);                                                                // Declare control setup complete
-
-#pragma mark - Developer Access
 
 // Absolute address value query
 void RKGetRegisterValue(RKRadar *, void *value, const unsigned long offset, size_t size);          // Does not work like the way I expected just yet

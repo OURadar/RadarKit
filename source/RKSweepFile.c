@@ -18,12 +18,14 @@ static void getGlobalTextAttribute(char *dst, const char *name, const int ncid) 
 }
 
 RKSweep *RKSweepFileRead(const char *inputFile) {
+    MAKE_FUNCTION_NAME(name)
+
     int j, k, r;
     int ncid, tmpId;
     float *fp, fv;
     int iv;
 
-    MAKE_FUNCTION_NAME(name)
+    RKLog("%s is being depracted.\n", name, inputFile);
 
     RKName typeName;
     RKName scanType;
@@ -129,8 +131,9 @@ RKSweep *RKSweepFileRead(const char *inputFile) {
                 RKLog("Warning. Early return (rayCount)\n");
                 return NULL;
             }
-            if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR)
+            if ((r = nc_inq_dimid(ncid, "Gate", &tmpId)) != NC_NOERR) {
                 r = nc_inq_dimid(ncid, "gate", &tmpId);
+            }
             if (r == NC_NOERR) {
                 nc_inq_dimlen(ncid, tmpId, &gateCount);
             } else {

@@ -54,7 +54,9 @@
 // RKMemoryAlignSize The minimum alignment size. AVX requires 256 bits = 32 bytes. AVX-512 is on the horizon now.
 //
 
-#pragma mark - Constants
+//
+// Macros
+//
 
 #define RKRawDataFormat                      8                                 // Format
 #define RKBufferSSlotCount                   10                                // Status
@@ -185,8 +187,6 @@
 #define RKPositionElevationFlagColor(x) \
 (x & RKPositionFlagElevationError ? RKRedColor : \
 (x & RKPositionFlagElevationEnabled ? RKGreenColor : RKYellowColor))
-
-#pragma mark - Fundamental Types
 
 typedef uint8_t       RKByte;                                                  //
 typedef float         RKFloat;                                                 // We can change this to double if we decided one day
@@ -322,7 +322,9 @@ typedef union rk_filter_anchor {
 
 typedef RKFilterAnchor RKFilterAnchorGroup[RKMaximumFilterCount];
 
-#pragma mark - Enums
+//
+// enums
+//
 
 #define RKResultNames \
 N(RKResultSuccess) \
@@ -1208,8 +1210,6 @@ typedef union rk_radarhub_ray {
     };
     RKByte                 *bytes;
 } RKRadarHubRay;
-
-#pragma mark - Structure Definitions
 
 //
 // A general description of a radar.
