@@ -539,10 +539,11 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         radar->desc.pulseCapacity = RKMaximumGateCount;
         RKLog("Info. Pulse capacity clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
     } else if (radar->desc.pulseCapacity == 0) {
-        radar->desc.pulseCapacity = 1;
+        radar->desc.pulseCapacity = radar->desc.pulseToRayRatio * RKMemoryAlignSize;
     }
+    // Starting version 6, RKRay can contain abitrary number of products (RKProductIndexCount), so we force gateCount to be a multiple of RKMemoryAlignSize
     uint32_t stride = radar->desc.pulseToRayRatio * RKMemoryAlignSize;
-    radar->desc.pulseCapacity = ((radar->desc.pulseCapacity * sizeof(RKFloat) + stride - 1) / stride) * stride / sizeof(RKFloat);
+    radar->desc.pulseCapacity = (((radar->desc.pulseCapacity + stride - 1) / stride) * stride);
     if (radar->desc.pulseCapacity != desc.pulseCapacity && radar->desc.initFlags & RKInitFlagVeryVerbose) {
         RKLog("Info. Pulse capacity changed from %s to %s (stride = %d RKFloats, %d B)\n",
               RKIntegerToCommaStyleString(desc.pulseCapacity),
@@ -734,7 +735,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Ray (moment) and product buffers
     if (radar->desc.initFlags & RKInitFlagAllocMomentBuffer) {
-        k = ((int)ceilf((float)(radar->desc.pulseCapacity / radar->desc.pulseToRayRatio) * sizeof(RKFloat) / (float)RKMemoryAlignSize)) * RKMemoryAlignSize / sizeof(RKFloat);
+        k= radar->desc.pulseCapacity / radar->desc.pulseToRayRatio;
         bytes = RKRayBufferAlloc(&radar->rays, k, radar->desc.rayBufferDepth);
         if (bytes == 0 || radar->rays == NULL) {
             RKLog("Error. Unable to allocate memory for rays.\n");
