@@ -407,7 +407,7 @@ static void *pulseEngineCore(void *_in) {
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
-            RKLog(">%s sem_wait()\n", coreName);
+            RKLog(">%s sem_wait()\n", me->name);
             #endif
             if (sem_wait(sem)) {
                 RKLog("%s Error. Failed in sem_wait(). errno = %d\n", me->name, errno);
@@ -439,7 +439,7 @@ static void *pulseEngineCore(void *_in) {
         }
 
         #ifdef DEBUG_IQ
-        RKLog(">%s i0 = %d  stat = %d\n", coreName, i0, input->header.s);
+        RKLog(">%s i0 = %d  stat = %d\n", me->name, i0, pulse->header.s);
         #endif
 
         // Filter group id

@@ -1551,13 +1551,12 @@ void RKPulseDuplicateSplitComplex(RKPulse *pulse) {
 // Each slot should have a structure as follows
 //
 //    RayHeader          header;
-//    uint8_t            idata[RKBaseProductCount][capacity];
-//    float              fdata[RKBaseProductCount][capacity];
+//    uint8_t            idata[RKProductIndexCount][capacity];
+//    float              fdata[RKProductIndexCount][capacity];
 //
 size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t count) {
-    size_t alignment = RKMemoryAlignSize / sizeof(RKFloat);
-    if (capacity != (capacity / alignment) * alignment) {
-        RKLog("Error. Ray capacity must be a multiple of %d!", alignment);
+    if (capacity != (capacity / RKMemoryAlignSize) * RKMemoryAlignSize) {
+        RKLog("Error. Ray capacity must be a multiple of %d!", RKMemoryAlignSize);
         return 0;
     }
     RKRay *ray;
@@ -1566,8 +1565,13 @@ size_t RKRayBufferAlloc(RKBuffer *mem, const uint32_t capacity, const uint32_t c
         RKLog("Error. The framework has not been compiled with proper structure size.");
         return 0;
     }
-    size_t raySize = RKRayHeaderPaddedSize + capacity * RKBaseProductCount * (sizeof(uint8_t) + sizeof(float));
-    if (raySize != (raySize / alignment) * alignment) {
+    size_t unitSize = RKRayHeaderPaddedSize + capacity * RKProductIndexCount * (sizeof(uint8_t));
+    if (unitSize != (unitSize / RKMemoryAlignSize) * RKMemoryAlignSize) {
+        RKLog("Error. The total unit8 size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(unitSize));
+        return 0;
+    }
+    size_t raySize = RKRayHeaderPaddedSize + capacity * RKProductIndexCount * (sizeof(uint8_t) + sizeof(float));
+    if (raySize != (raySize / RKMemoryAlignSize) * RKMemoryAlignSize) {
         RKLog("Error. The total ray size %s does not conform to SIMD alignment.", RKUIntegerToCommaStyleString(raySize));
         return 0;
     }
@@ -1597,7 +1601,7 @@ void RKRayBufferFree(RKBuffer mem) {
 // Get a ray from a ray buffer
 RKRay *RKGetRayFromBuffer(RKBuffer buffer, const uint32_t k) {
     RKRay *ray = (RKRay *)buffer;
-    size_t raySize = RKRayHeaderPaddedSize + ray->header.capacity * RKBaseProductCount * (sizeof(uint8_t) + sizeof(float));
+    size_t raySize = RKRayHeaderPaddedSize + ray->header.capacity * RKProductIndexCount * (sizeof(uint8_t) + sizeof(float));
     return (RKRay *)((void *)ray + k * raySize);
 }
 
@@ -1610,7 +1614,7 @@ uint8_t *RKGetUInt8DataFromRay(RKRay *ray, const RKProductIndex m) {
 // Get the product data in float from a ray
 float *RKGetFloatDataFromRay(RKRay *ray, const RKProductIndex m) {
     void *d = (void *)ray->data;
-    d += RKBaseProductCount * ray->header.capacity * sizeof(uint8_t);
+    d += RKProductIndexCount * ray->header.capacity * sizeof(uint8_t);
     return (float *)(d + m * ray->header.capacity * sizeof(float));
 }
 
@@ -1620,7 +1624,7 @@ int RKClearRayBuffer(RKBuffer buffer, const uint32_t count) {
         ray->header.s = RKRayStatusVacant;
         ray->header.i = -(uint64_t)count + k;
         ray->header.gateCount = 0;
-        memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
+        memset(ray->data, 0, RKProductIndexCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     }
     return RKResultSuccess;
 }

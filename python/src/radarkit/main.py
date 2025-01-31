@@ -124,6 +124,9 @@ class Workspace(ctypes.Structure):
                 f"{self.name} dataType = {self.header.dataType} out of [{RKRawDataTypeNull} {RKRawDataTypeFromTransceiver} {RKRawDataTypeAfterMatchedFilter}]"
             )
 
+        multiple = RKMemoryAlignSize * self.header.desc.pulseToRayRatio
+        newPulseCapacity = (self.header.desc.pulseCapacity + multiple - 1) // multiple * multiple
+
         # Store as self.desc using the first header.desc and override some attributes. Only the first encounter matters.
         if self.desc is None or self.allocated is False:
             desc = self.header.desc
@@ -131,6 +134,7 @@ class Workspace(ctypes.Structure):
             desc.configBufferDepth = 3
             desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
             desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
+            desc.pulseCapacity = newPulseCapacity
             desc.initFlags = (
                 RKInitFlagAllocConfigBuffer
                 | RKInitFlagAllocRawIQBuffer
@@ -148,8 +152,6 @@ class Workspace(ctypes.Structure):
             self.desc = desc
             self.alloc(cores=cores)
 
-        if self.desc.pulseCapacity != self.header.desc.pulseCapacity:
-            raise RKEngineError("pulseCapacity mismatch. Please use a new workspace.")
         if (
             (self.desc.initFlags & RKInitFlagStartPulseEngine)
             and (self.header.dataType == RKRawDataTypeAfterMatchedFilter)
