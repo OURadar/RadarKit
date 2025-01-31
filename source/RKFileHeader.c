@@ -165,12 +165,13 @@ RKFileHeader *RKFileHeaderInitFromFid(FILE *fid) {
             RKLog("Warning. PW is near zero. Setting it to 1/fs = %.4f us\n", 1.0e6f * waveform->depth / waveform->fs);
             fileHeader->config.pw[0] = waveform->depth / waveform->fs;
         }
+        // Q: Where exactly did this come from? -boonleng 1/31/2025
         // If signals span about -1.0 to +1.0, ZCal ~ 22.5, for -30,000 to +30,000, ZCal ~ -66
-        fileHeader->config.systemZCal[0] = -56.0f;
-        fileHeader->config.systemZCal[1] = -56.0f;
+        // fileHeader->config.systemZCal[0] = -56.0f;
+        // fileHeader->config.systemZCal[1] = -56.0f;
         long fp = ftell(fid);
         r += sizeof(RKWaveFileGlobalHeader);
-        for ( k = 0; k < waveform->count; k++) {
+        for (k = 0; k < waveform->count; k++) {
             r += waveform->filterCounts[k] * sizeof(RKFilterAnchor);
         }
         r += waveform->depth * (sizeof(RKComplex) + sizeof(RKInt16C));

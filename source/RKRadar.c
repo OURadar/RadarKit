@@ -746,7 +746,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         RKLog("Level II buffer occupies %s B  (%s rays x %d products of %s gates)\n",
               RKUIntegerToCommaStyleString(bytes),
               RKIntegerToCommaStyleString(radar->desc.rayBufferDepth),
-              RKBaseProductCount,
+              RKProductIndexCount,
               RKIntegerToCommaStyleString(k));
         radar->state |= RKRadarStateRayBufferAllocated;
     }

@@ -918,7 +918,7 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         1.0e6 * product->header.pw[0], 1.0e3 * product->header.prt[0], 1.0 / product->header.prt[0]);
     int rkGid;
     r = nc_inq_grp_ncid(ncid, "radarkit_parameters", &rkGid);
-    if (r == NC_NOERR) {
+    if (r == NC_NOERR && rkGid > 65536) {
         nc_get_att_text(rkGid, NC_GLOBAL, "waveform", product->header.waveformName);
         nc_get_att_text(rkGid, NC_GLOBAL, "moment_method", product->header.momentMethod);
         if (nc_inq_varid(rkGid, "snr_threshold", &varid) == NC_NOERR) {
@@ -961,6 +961,8 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         } else {
             RKLog("Warning. No system_p_cal found.\n");
         }
+    } else {
+        RKLog("Warning. No 'radarkit_parameters' group found.\n");
     }
 
     // Time, azimuth, elevation, etc.

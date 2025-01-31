@@ -70,7 +70,6 @@
 #define RKMaximumWaveformCalibrationCount    128                               // Waveform calibration
 #define RKMaximumGateCount                   262144                            // Must be a multiple of RKMemoryAlignSize
 #define RKMemoryAlignSize                    64                                // SSE 16, AVX 32, AVX-512 64
-#define RKBaseProductCount                   19                                // 16 to be the absolute max since productList enum is 32-bit (product + display)
 #define RKMaximumLagCount                    5                                 // Number lags of ACF / CCF lag = +/-4 and 0. This should not be changed
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaximumWaveformCount               22                                // Maximum waveform group count

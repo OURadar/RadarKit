@@ -150,13 +150,12 @@ int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride) {
 }
 
 static void zeroOutRay(RKRay *ray) {
-    //memset(ray->data, 0, RKBaseProductCount * ray->header.capacity * (sizeof(uint8_t) + sizeof(float)));
     RKFloat *f = RKGetFloatDataFromRay(ray, RKProductIndexZ);
-    for (int k = 0; k < RKBaseProductCount * ray->header.capacity; k++) {
+    for (int k = 0; k < RKProductIndexCount * ray->header.capacity; k++) {
         *f++ = NAN;
     }
     uint8_t *u = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-    memset(u, 0, RKBaseProductCount * sizeof(uint8_t));
+    memset(u, 0, RKProductIndexCount * sizeof(uint8_t));
 }
 
 int RKNoiseFromConfig(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
