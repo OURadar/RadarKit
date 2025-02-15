@@ -62,7 +62,7 @@ def shade(shape, xy=(0.5, 0.5), rgba=[0, 0, 0, 0.5], direction="southeast"):
 
 class Chart:
     size = (1280, 720)
-    seed = 611
+    seed = 111
     dpi = 72
     s = 1.0
     frameon = True
@@ -78,7 +78,7 @@ class Chart:
     titlefont = blib.getFontOfWeight(weight=700)
     symbols = ["Z", "V", "W", "D", "P", "R"]
 
-    def __init__(self, n=6, **kwargs):
+    def __init__(self, n=1, **kwargs):
         """
         Create a new chart.
 
@@ -283,13 +283,23 @@ class Chart:
             st.set(size=self.captionsize, path_effects=self.path_effects)
         return ax, cb, st
 
-    def _update_data_only(self, sweep: sweep.Sweep):
+    def _update_data_only(self, sweep: sweep.Sweep, xmax=None, ymax=None):
         assert self.symbols == list(sweep.products.keys()), "Mismatch in symbols."
-        for m, symbol in zip(self.ms, self.symbols):
+        for m, symbol in zip(self.ms, self.symbols[: len(self.ax)]):
             if symbol == "R":
                 m.set_array(rho2ind(sweep.products[symbol]).ravel())
                 continue
             m.set_array(sweep.products[symbol].ravel())
+        if sweep.scanType == "rhi":
+            if xmax is not None:
+                self.set_xlim(0, xmax)
+            if ymax is not None:
+                self.set_ylim(0, ymax)
+        else:
+            if xmax is not None:
+                self.set_xlim(-xmax, xmax)
+            if ymax is not None:
+                self.set_ylim(-ymax, ymax)
 
     def _update_coordinate_data(self, xx, yy, sweep: sweep.Sweep):
         if self.overlay:
@@ -297,7 +307,7 @@ class Chart:
                 m.remove()
         # Update self.symbols
         self.symbols = list(sweep.products.keys())
-        for k, symbol in enumerate(self.symbols):
+        for k, symbol in enumerate(self.symbols[: len(self.ax)]):
             if symbol[0] == "Z":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("rsz")
@@ -337,7 +347,7 @@ class Chart:
         for m, a, c in zip(self.ms, self.ax, self.cb):
             plt.colorbar(m, ax=a, cax=c, orientation=self.orientation)
         # Colorbar labels
-        for k, symbol in enumerate(self.symbols):
+        for k, symbol in enumerate(self.symbols[: len(self.ax)]):
             if symbol[0] == "Z":
                 self.st[k].set_text(f"{symbol} - Reflectivity (dBZ)")
             elif symbol[0] == "V":
@@ -366,7 +376,7 @@ class Chart:
                 self.cb[k].set_xticks(ticks, labels=ticklabels, **tick_props)
                 self.cb[k].set_xlim(lo, hi)
 
-        for k, symbol in enumerate(self.symbols):
+        for k, symbol in enumerate(self.symbols[: len(self.ax)]):
             if symbol[0] == "Z":
                 ticks = np.arange(-20, 61, 20)
                 setup_ticks(k, ticks, ticks, -10, 75)
@@ -427,6 +437,52 @@ class Chart:
         }
         self.title = self.fig.text(0.5, y, text, **title_props)
 
+    def set_data(self, sweep: sweep.Sweep, xmax=None, ymax=None, rmax=None):
+        if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e:
+            return self._update_data_only(sweep, ymax)
+        if sweep.scanType == "rhi":
+            e_rad = np.radians(sweep.meshCoordinate.e)
+            xx = np.outer(np.cos(e_rad), sweep.meshCoordinate.r)
+            yy = np.outer(np.sin(e_rad), sweep.meshCoordinate.r)
+            self._update_coordinate_data(xx, yy, sweep)
+
+            if self.overlay is None:
+                # Find out the meaningful range of the plot
+                mask = np.logical_and(sweep.products["Z"] > -20, sweep.products["Z"] < 80)
+                h_max = np.ceil(np.max(yy[1:, 1:][mask]) + 3.5) if ymax is None else ymax
+                extent = (0, 0, sweep.meshCoordinate.r[-1], max(sweep.meshCoordinate.e))
+                self.overlay = overlay.PolarGrid(extent=extent, ymax=h_max, s=self.s)
+                self.overlay.load()
+        elif sweep.scanType == "ppi":
+            e_rad = np.radians(sweep.sweepElevation)
+            a_rad = np.radians(sweep.meshCoordinate.a)
+            xx = np.outer(np.cos(e_rad) * np.sin(a_rad), sweep.meshCoordinate.r)
+            yy = np.outer(np.cos(e_rad) * np.cos(a_rad), sweep.meshCoordinate.r)
+            self._update_coordinate_data(xx, yy, sweep)
+
+            if self.overlay is None:
+                origin = (sweep.longitude, sweep.latitude)
+                aspect = self.ax[0].bbox.height / self.ax[0].bbox.width
+                max_range = sweep.meshCoordinate.r[-1] if rmax is None else rmax
+                extent = (-max_range, -max_range * aspect, max_range, max_range * aspect)
+                density = self.ax[0].bbox.width / max_range / 2
+                self.overlay = overlay.Overlay(
+                    origin=origin, extent=extent, density=density, rmax=1.2 * max_range, s=self.s
+                )
+                self.overlay.load()
+                if self.orientation == "vertical":
+                    exclude = (0.5 * max_range, -max_range * aspect, 1.1 * max_range, 0)
+                    self.overlay.exclude(exclude)
+        else:
+            raise ValueError("Unknown scan type.")
+
+        for ax in self.ax:
+            self.overlay.draw(ax)
+        self._setup_colorbars()
+        if sweep.time is None:
+            return
+        self.update_title(sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC"))
+
     def set_xlim(self, lo, hi=None):
         for ax in self.ax:
             ax.set_xlim(lo, hi)
@@ -463,7 +519,7 @@ class ChartRHI(Chart):
         -------
         A new RHI chart.
         """
-        super().__init__(**kwargs)
+        super().__init__(n=6, **kwargs)
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
@@ -473,40 +529,6 @@ class ChartRHI(Chart):
         if sweep:
             self.set_data(sweep)
 
-    def _update_data_only(self, sweep: sweep.Sweep, ymax=None):
-        super()._update_data_only(sweep)
-        if ymax is not None:
-            self.set_ylim(0, ymax)
-
-    def set_data(self, sweep: sweep.Sweep, ymax=None):
-        if sweep.scanType != "rhi":
-            raise ValueError("Sweep is not an RHI scan.")
-        if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e:
-            return self._update_data_only(sweep, ymax)
-
-        e_rad = np.radians(sweep.meshCoordinate.e)
-        xx = np.outer(np.cos(e_rad), sweep.meshCoordinate.r)
-        yy = np.outer(np.sin(e_rad), sweep.meshCoordinate.r)
-
-        self._update_coordinate_data(xx, yy, sweep)
-
-        if self.overlay is None:
-            # Find out the meaningful range of the plot
-            mask = np.logical_and(sweep.products["Z"] > -20, sweep.products["Z"] < 80)
-            h_max = np.ceil(np.max(yy[1:, 1:][mask]) + 3.5) if ymax is None else ymax
-            extent = (0, 0, sweep.meshCoordinate.r[-1], max(sweep.meshCoordinate.e))
-
-            self.overlay = overlay.PolarGrid(extent=extent, ymax=h_max, s=self.s)
-            self.overlay.load()
-
-            for ax in self.ax:
-                self.overlay.draw(ax)
-
-            super()._setup_colorbars()
-
-        if sweep.time is None:
-            return
-        self.update_title(sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC"))
 
 
 class ChartPPI(Chart):
@@ -527,7 +549,7 @@ class ChartPPI(Chart):
         """
         if "orientation" not in kwargs:
             kwargs["orientation"] = "vertical"
-        super().__init__(**kwargs)
+        super().__init__(n=6, **kwargs)
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
@@ -536,45 +558,6 @@ class ChartPPI(Chart):
 
         if sweep:
             self.set_data(sweep)
-
-    def __repr__(self):
-        return self.fig.__repr__()
-
-    def set_data(self, sweep: sweep.Sweep, rmax=None):
-        if sweep.scanType != "ppi":
-            raise ValueError("Sweep is not a PPI scan.")
-        if self.r is sweep.meshCoordinate.r and self.a is sweep.meshCoordinate.a:
-            return self._update_data_only(sweep)
-
-        e_rad = np.radians(sweep.sweepElevation)
-        a_rad = np.radians(sweep.meshCoordinate.a)
-        xx = np.outer(np.cos(e_rad) * np.sin(a_rad), sweep.meshCoordinate.r)
-        yy = np.outer(np.cos(e_rad) * np.cos(a_rad), sweep.meshCoordinate.r)
-
-        self._update_coordinate_data(xx, yy, sweep)
-
-        if self.overlay is None:
-            origin = (sweep.longitude, sweep.latitude)
-            aspect = self.ax[0].bbox.height / self.ax[0].bbox.width
-            max_range = sweep.meshCoordinate.r[-1] if rmax is None else rmax
-            extent = (-max_range, -max_range * aspect, max_range, max_range * aspect)
-            density = self.ax[0].bbox.width / max_range / 2
-
-            # Get the map overlay
-            self.overlay = overlay.Overlay(
-                origin=origin, extent=extent, density=density, rmax=1.2 * max_range, s=self.s
-            )
-            self.overlay.load()
-            if self.orientation == "vertical":
-                exclude = (0.5 * max_range, -max_range * aspect, 1.1 * max_range, 0)
-                self.overlay.exclude(exclude)
-            for ax in self.ax:
-                self.overlay.draw(ax)
-            super()._setup_colorbars()
-
-        if sweep.time is None:
-            return
-        self.update_title(sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC"))
 
     def set(self, **kwargs):
         if "rmax" in kwargs:
@@ -597,3 +580,30 @@ class ChartRHITall(ChartRHI):
 class ChartRHIWide(ChartRHI):
     seed = 611
     size = (3840, 250)
+
+
+class ChartSinglePPI(Chart):
+    seed = 111
+
+    def __init__(self, sweep: sweep.Sweep = None, **kwargs):
+        """
+        Create a new Single PPI chart.
+
+        Parameters
+        ----------
+        sweep : sweep.Sweep
+            The sweep to be displayed.
+
+        Returns
+        -------
+        A new PPI chart.
+        """
+        super().__init__(sweep=sweep, n=1, **kwargs)
+
+        with plt.rc_context(self.figprops):
+            self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
+            for i in range(1):
+                self.ax[i], self.cb[i], self.st[i] = self._add_axes(self.seed + i)
+
+        if sweep:
+            self.set_data(sweep)
