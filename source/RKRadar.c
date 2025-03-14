@@ -3713,5 +3713,43 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
 }
 
 int RKArcherOverview(char *text, const char *json, const RKTextPreferences flag) {
-    return 0;
+    return RKResultSuccess;
+}
+
+int RKFileOverview(const char *filename, const int level) {
+    RKSetWantScreenOutput(true);
+    // File types:
+    // IQ data: .rkc, .rkr
+    // Radar product: .nc, .txz, .tgz, .tar.gz, .tar.xz
+    const char *ext = RKFileExtension(filename);
+    RKLog("File overview for %s%s%s   %s%s%s\n",
+        RKMonokaiYellow, filename, RKNoColor,
+        RKMonokaiOrange, ext, RKNoColor);
+    if (ext == NULL) {
+        RKLog("Error. Unable to determine the file extension.\n");
+        return RKResultFailedToOpenFile;
+    }
+    if (!strcasecmp(ext, ".nc") ||
+        !strcasecmp(ext, ".txz") ||
+        !strcasecmp(ext, ".tgz") ||
+        !strcasecmp(ext, ".tar.xz") ||
+        !strcasecmp(ext, ".tar.gz")) {
+        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename, 0);
+        if (collection == NULL) {
+            RKLog("Error. Unable to open the product file.\n");
+            return RKResultFailedToOpenFile;
+        }
+        RKProductCollectionSummary(collection);
+        RKProductCollectionFree(collection);
+    } else if (!strcasecmp(ext, ".rkc") || !strcasecmp(ext, ".rkr")) {
+        FILE *fid = fopen(filename, "r");
+        RKFileHeader *fileHeader = RKFileHeaderInitFromFid(fid);
+        RKFileHeaderSummary(fileHeader);
+        RKFileHeaderFree(fileHeader);
+        fclose(fid);
+    } else {
+        RKLog("Error. Unknown file type.\n");
+        return RKResultFailedToOpenFile;
+    }
+    return RKResultSuccess;
 }

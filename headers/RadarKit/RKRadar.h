@@ -370,4 +370,7 @@ int RKBufferOverview(char *, RKRadar *, const RKTextPreferences);               
 int RKHealthOverview(char *, const char *, const RKTextPreferences);
 int RKArcherOverview(char *, const char *, const RKTextPreferences);
 
+// File I/O
+int RKFileOverview(const char *, const int);                                                       //
+
 #endif /* defined(__RadarKit_RKRadar__) */

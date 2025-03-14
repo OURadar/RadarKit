@@ -18,7 +18,7 @@ int main(int argc, const char **argv) {
     gettimeofday(&s, NULL);
     for (int i = 0; i < 500; i++) {
         printf("Trial #%04d   Filename = %s\n", i, filename);
-        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename);
+        RKProductCollection *collection = RKProductCollectionInitWithFilename(filename, 0);
         k += collection->count;
         RKProductCollectionFree(collection);
     }

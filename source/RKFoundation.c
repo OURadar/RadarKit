@@ -96,8 +96,8 @@ int RKLog(const char *whatever, ...) {
     }
     int i = 0;
     size_t len;
-    struct timeval utc;
     va_list args;
+    struct timeval utc;
     struct tm tm;
 
     // Local memory
@@ -105,38 +105,43 @@ int RKLog(const char *whatever, ...) {
     static char *filename = NULL;
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-    if (msg == NULL) {
-        msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
-    }
-    if (filename == NULL) {
-        filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
-    }
+    pthread_mutex_lock(&lock);
+
     if (msg == NULL || filename == NULL) {
-        fprintf(stderr, "Error in RKLog().\n");
-        free(filename);
-        free(msg);
-        return -1;
+        msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
+        filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
+        if (msg == NULL || filename == NULL) {
+            fprintf(stderr, "Error allocating memory in RKLog().\n");
+            if (filename) {
+                free(filename);
+                filename = NULL;
+            }
+            if (msg) {
+                free(msg);
+                msg = NULL;
+            }
+            pthread_mutex_unlock(&lock);
+            return -1;
+        }
     }
 
+    // A special case to deallocate the memory
     if (whatever == NULL) {
         va_start(args, whatever);
         if (va_arg(args, void *) == NULL) {
             #if defined(DEBUG_MUTEX_DESTROY)
             fprintf(stderr, "Deallocating RKLog's internal stuff ...\n");
             #endif
-            if (msg) {
-                free(msg);
-            }
-            if (filename) {
-                free(filename);
-            }
-            pthread_mutex_destroy(&lock);
+            free(msg);
+            msg = NULL;
+            free(filename);
+            filename = NULL;
         }
         va_end(args);
+        pthread_mutex_unlock(&lock);
+        pthread_mutex_destroy(&lock);
         return 0;
     }
-
-    pthread_mutex_lock(&lock);
 
     // Get the time
     gettimeofday(&utc, NULL);

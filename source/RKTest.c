@@ -1407,11 +1407,14 @@ void RKTestProductCollectionRead(const char *file) {
     }
     struct timeval tic, toc;
     gettimeofday(&tic, NULL);
-    RKProductCollection *collection = RKProductCollectionInitWithFilename(file);
+    RKProductCollection *collection = RKProductCollectionInitWithFilename(file, 1);
     if (collection == NULL) {
         RKLog("No products found in %s\n", file);
         return;
     }
+    RKProduct *product = collection->products;
+    RKLog("PW: %.2f us   PRT: %.3f ms (PRF = %.1f Hz) \n",
+        1.0e6 * product->header.pw[0], 1.0e3 * product->header.prt[0], 1.0 / product->header.prt[0]);
     for (int k = 0; k < collection->count; k++) {
         RKProduct *product = &collection->products[k];
         RKLog("%d: %s (%s)\n", k, product->desc.name, product->desc.unit);
@@ -1803,7 +1806,7 @@ void RKTestProductWriteFromPlainToProduct(void) {
 void RKTestProductWriteFromWDSS2ToProduct(const char *source, const int mode) {
     SHOW_FUNCTION_NAME
     RKLog("source = '%s'\n", source);
-    RKProductCollection *collection = RKProductCollectionInitWithFilename(source);
+    RKProductCollection *collection = RKProductCollectionInitWithFilename(source, 1);
     if (collection == NULL) {
         RKLog("Error. Unable to read the source file.\n");
         return;

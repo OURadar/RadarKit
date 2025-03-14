@@ -112,6 +112,9 @@ static void showHelp(void) {
            "  -h (--help)\n"
            "         Shows this help text.\n"
            "\n"
+           "  -o (--overview)\n"
+           "         Opens a file and provide an overview.\n"
+           "\n"
            "  -p (--pedzy-host)\n"
            "         Sets the host of pedzy pedestal controller.\n"
            "\n"
@@ -436,6 +439,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"help"              , no_argument      , NULL, 'h'},
         {"interpulse-period" , required_argument, NULL, 'i'},
         {"record"            , no_argument      , NULL, 'n'},
+        {"overview"          , required_argument, NULL, 'o'},
         {"pedzy-host"        , required_argument, NULL, 'p'},
         {"radarhub-host"     , required_argument, NULL, 'r'},
         {"simulate"          , optional_argument, NULL, 's'},
@@ -580,6 +584,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 break;
             case 'n':
                 user->recordLevel = 0;
+                break;
+            case 'o':
+                RKFileOverview(optarg, user->verbose);
+                exit(EXIT_SUCCESS);
                 break;
             case 'p':
                 strncpy(user->pedzyHost, optarg, sizeof(user->pedzyHost));
