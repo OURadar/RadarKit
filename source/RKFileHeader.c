@@ -201,8 +201,8 @@ void RKFileHeaderSummary(RKFileHeader *fileHeader) {
             1.0e3f * config->prt[0],
             RKIntegerToCommaStyleString((int)roundf(1.0f / config->prt[0])));
     RKLog(">config.pw = %.2f us (dr = %s m)\n",
-            1.0e6 * config->pw[0],
-            RKFloatToCommaStyleString(0.5 * 3.0e8 * config->pw[0]));
+            1.0e6f * config->pw[0],
+            RKFloatToCommaStyleString(0.5f * 3.0e8f * config->pw[0]));
     RKLog(">config.pulseGateCount = %s -- (/ %d) --> %s\n",
             RKIntegerToCommaStyleString(config->pulseGateCount),
             fileHeader->desc.pulseToRayRatio,

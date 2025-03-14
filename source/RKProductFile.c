@@ -833,11 +833,6 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     // Data collection
     RKProductCollection *collection = RKProductCollectionInit(count, (uint32_t)rayCount, (uint32_t)gateCount);
 
-    RKLog("%s %s   %s   %s\n", myname,
-        RKVariableInString("rayCount", &rayCount, RKValueTypeSize),
-        RKVariableInString("gateCount", &gateCount, RKValueTypeSize),
-        RKVariableInString("collection->count", &collection->count, RKValueTypeUInt32));
-
     // Get the first product to keep global parameters
     RKProduct *product = collection->products;
     product->header.gateCount = gateCount;
@@ -859,21 +854,29 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     } else {
         RKLog("Warning. No altitude.   r = %d\n", r);
     }
+    #if defined(DEBUG_PRODUCT_READER)
+    RKLog("%s %s   %s   %s\n", myname,
+        RKVariableInString("rayCount", &rayCount, RKValueTypeSize),
+        RKVariableInString("gateCount", &gateCount, RKValueTypeSize),
+        RKVariableInString("collection->count", &collection->count, RKValueTypeUInt32));
     RKLog("%s %s   %s\n", myname,
         RKVariableInString("longitude", &product->header.longitude, RKValueTypeDoubleWithSixDecimals),
         RKVariableInString("latitude", &product->header.longitude, RKValueTypeDoubleWithSixDecimals));
+    #endif
     if (getGlobalTextAttribute(tmpString, "time_coverage_start", ncid) == NC_NOERR) {
         product->header.startTime = RKTimeStringISOToTimeDouble(tmpString);;
     } else {
         RKLog("%s Error. No time_coverage_start attribute found.\n", myname);
     }
-    RKLog("time_coverage_start: %s -> %s UTC\n", tmpString, RKTimeDoubleToString(product->header.startTime, 860, true));
     if (getGlobalTextAttribute(tmpString, "time_coverage_end", ncid) == NC_NOERR) {
         product->header.endTime = RKTimeStringISOToTimeDouble(tmpString);;
     } else {
         RKLog("%s Error. No time_coverage_end attribute found.\n", myname);
     }
+    #if defined(DEBUG_PRODUCT_READER)
+    RKLog("time_coverage_start: %s -> %s UTC\n", tmpString, RKTimeDoubleToString(product->header.startTime, 860, true));
     RKLog("time_coverage_end: %s -> %s UTC\n", tmpString, RKTimeDoubleToString(product->header.endTime, 860, true));
+    #endif
     getGlobalTextAttribute(product->header.radarName, "instrument_name", ncid);
     if (nc_inq_varid(ncid, "volume_number", &varid) == NC_NOERR) {
         nc_get_var_int(ncid, varid, &r);
@@ -884,7 +887,6 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     memset(tmpString, 0, sizeof(tmpString));
     if (nc_inq_varid(ncid, "sweep_mode", &varid) == NC_NOERR) {
         nc_get_var_text(ncid, varid, tmpString);
-        RKLog("sweep_mode: %s\n", tmpString);
     } else {
         RKLog("Warning. No sweep_mode found.\n");
     }
@@ -914,8 +916,6 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
     } else {
         RKLog("Warning. No prt found.\n");
     }
-    RKLog("PW: %.2f us   PRT: %.3f ms (PRF = %.1f Hz) \n",
-        1.0e6 * product->header.pw[0], 1.0e3 * product->header.prt[0], 1.0 / product->header.prt[0]);
     int rkGid;
     r = nc_inq_grp_ncid(ncid, "radarkit_parameters", &rkGid);
     if (r == NC_NOERR && rkGid > 65536) {
@@ -1042,9 +1042,12 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
             i16_masked_to_rkfloat_scale(product->data, i16Array, product->desc.cfScale, rayCount * gateCount);
             sprintf(scaleOffsetDesc, "f = s * %.4f", product->desc.cfScale);
         }
-        RKLog("| %-5s | %32s | %9s | %20s |\n", product->desc.symbol, product->desc.name, product->desc.unit, scaleOffsetDesc);
     }
     #if defined(DEBUG_PRODUCT_READER)
+    for (int k = 0; k < 6; k++) {
+        RKProduct *product = &collection->products[k];
+        RKLog("| %-5s | %32s | %9s | %20s |\n", product->desc.symbol, product->desc.name, product->desc.unit, scaleOffsetDesc);
+    }
     for (int k = 0; k < 6; k++) {
         RKProduct *product = &collection->products[k];
         RKShowArray(product->data, product->desc.symbol, gateCount, rayCount);
@@ -1067,7 +1070,7 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
 }
 
 static RKProductCollection *read_ncid_as_cf2(const int ncid) {
-    RKLog("Error. Reading CF2 is not availble until version 6.1.\n");
+    RKLog("Error. Reading CF2 is not availble until version 6.2.\n");
     return NULL;
 }
 
@@ -1193,13 +1196,6 @@ static RKProductCollection *read_nc(const char *filename) {
     } else {
         collection = singles[0];
     }
-    // RKProductCollectionStandardizeForCFRadial(collection);
-    // for (int k = 0; k < collection->count; k++) {
-    //     RKProduct *product = &collection->products[k];
-    //     RKLog("%d: %s (%s)\n", k, product->desc.name, product->desc.unit);
-    //     RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
-    // }
-    // RKProductCollectionFileWriterCF(collection, "/Users/boonleng/Downloads/data/test.nc", RKWriterOptionNone);
     return collection;
 }
 
@@ -1254,7 +1250,7 @@ static RKProductCollection *read_tar(const char *filename) {
             }
             capacity = buffer_size;
         }
-        RKLog("%s %s (%s B)\n", myname, filename, RKIntegerToCommaStyleString(buffer_size));
+        // RKLog("%s %s (%s B)\n", myname, filename, RKIntegerToCommaStyleString(buffer_size));
         r = archive_read_data(a, buffer, buffer_size);
         if (r < 0) {
             RKLog("%s Error. %s\n", myname, archive_error_string(a));
@@ -1299,9 +1295,10 @@ static RKProductCollection *read_tar(const char *filename) {
 
 #endif
 
-RKProductCollection *RKProductCollectionInitWithFilename(const char *filename) {
+RKProductCollection *RKProductCollectionInitWithFilename(const char *filename, const int verbose) {
     MAKE_FUNCTION_NAME(myname);
-    RKLog("%s %s\n", myname, filename);
+    if (verbose)
+        RKLog("%s %s\n", myname, filename);
     if (filename == NULL) {
         RKLog("%s No filename given.\n", myname);
         exit(EXIT_FAILURE);
@@ -1320,14 +1317,18 @@ RKProductCollection *RKProductCollectionInitWithFilename(const char *filename) {
     #endif
     RKProductCollection *collection = NULL;
     if (!strcasecmp(ext, ".nc")) {
-        RKLog("Reading %s ...\n", filename);
+        if (verbose) {
+            RKLog("Reading %s ...\n", filename);
+        }
         collection = read_nc(filename);
     } else if (!strcasecmp(ext, ".txz") ||
                !strcasecmp(ext, ".tgz") ||
                !strcasecmp(ext, ".tar.xz") ||
                !strcasecmp(ext, ".tar.gz")) {
         #if defined(_HAS_NETCDF_MEM_H)
-        RKLog("Reading %s using read_tar() ...\n", filename);
+        if (verbose) {
+            RKLog("Reading %s using read_tar() ...\n", filename);
+        }
         collection = read_tar(filename);
         #else
         RKLog("Error. In-memory tar file reader is not supported.\n");
@@ -1869,4 +1870,29 @@ int RKProductCollectionStandardizeForCFRadial(RKProductCollection *collection) {
         product++;
     }
     return RKResultSuccess;
+}
+
+void RKProductCollectionSummary(RKProductCollection *collection) {
+    RKProduct *product = &collection->products[0];
+    RKLog(">header.latitude, longitude = %.6f, %.6f\n", product->header.latitude, product->header.longitude);
+    RKLog(">header.wavelength = %.2f m\n", product->header.wavelength);
+    RKLog(">header.sweepElevation = %.2f deg\n", product->header.sweepElevation);
+    RKLog(">header.sweepAzimuth = %.2f deg\n", product->header.sweepAzimuth);
+    RKLog(">header.prt = %.3f m (PRF = %s Hz)\n",
+        1.0e3f * product->header.prt[0],
+        RKIntegerToCommaStyleString((int)roundf(1.0f / product->header.prt[0])));
+    RKLog(">header.pw = %.2f us\n", 1.0e6f * product->header.pw[0]);
+    RKLog(">header.noise = %.2f, %.2f ADU^2\n", product->header.noise[0], product->header.noise[1]);
+    RKLog(">header.systemZCal = %.2f, %.2f dB\n", product->header.systemZCal[0], product->header.systemZCal[1]);
+    RKLog(">header.systemDCal = %.2f dB\n", product->header.systemDCal);
+    RKLog(">header.systemPCal = %.2f deg\n", product->header.systemPCal);
+    RKLog(">header.SNRThreshold = %.2f dB\n", product->header.SNRThreshold);
+    RKLog(">header.SQIThreshold = %.2f\n", product->header.SQIThreshold);
+    RKLog(">header.waveformName = '%s'\n", product->header.waveformName);
+    for (int k = 0; k < collection->count; k++) {
+        RKProduct *product = &collection->products[k];
+        RKLog(">proudct[%d].desc.symbol = %s%s%s (%s)\n",
+            k, RKYellowColor, product->desc.symbol, RKNoColor,
+            product->desc.name);
+    }
 }

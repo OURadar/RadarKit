@@ -1530,8 +1530,8 @@ typedef struct rk_sweep {
 
 typedef union rk_file_header {
     struct {
-        RKName               preface;                                          // 128 B
-        uint32_t             format;                                           //   4 B
+        RKName               preface;                                          // 128 B           : just a string of the instrument
+        uint32_t             format;                                           //   4 B           : int as buildNo / version / format number
         RKRawDataType        dataType;                                         //   1 B
         uint8_t              reserved[123];                                    // 123 B = 256 B
         RKRadarDesc          desc;                                             //         1072 B

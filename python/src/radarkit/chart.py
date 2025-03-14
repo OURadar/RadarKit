@@ -60,6 +60,16 @@ def shade(shape, xy=(0.5, 0.5), rgba=[0, 0, 0, 0.5], direction="southeast"):
     return m
 
 
+def ribbon():
+    z = blib.colormap.fleximap(
+        20,
+        [0.0, 0.50, 0.51, 1.0],
+        [[0.33, 0.60, 0.69, 0.70], [0.12, 0.39, 0.48, 0.70], [0.00, 0.27, 0.36, 0.70], [0.00, 0.27, 0.36, 0.70]],
+    )
+    z = z.reshape((20, 1, 4))
+    return z
+
+
 class Chart:
     size = (1280, 720)
     seed = 111
@@ -69,21 +79,23 @@ class Chart:
     titlecolor = None
     orientation = "horizontal"
     fig = None
-    r = None
+    # elevation, azimuth, range
     e = None
     a = None
+    r = None
     title = None
     overlay = None
-    labelfont = blib.getFontOfWeight(weight=500)
+    axis_is_set = False
+    labelfont = blib.getFontOfWeight(weight=600)
     titlefont = blib.getFontOfWeight(weight=700)
-    symbols = ["Z", "V", "W", "D", "P", "R"]
+    symbols = []
 
     def __init__(self, n=1, **kwargs):
         """
         Create a new chart.
 
-        Parameters
-        ----------
+        Optional Parameters
+        -------------------
         size: (float, float), default: (1280, 720)
             The size of the chart in pixels.
 
@@ -119,7 +131,7 @@ class Chart:
         self.p = 10 * self.s
         self.labelsize = 12 * self.s
         self.titlesize = 28 * self.s
-        self.captionsize = 14 * self.s
+        self.captionsize = 16 * self.s
         self.ax = [None] * n
         self.cb = [None] * n
         self.st = [None] * n
@@ -192,7 +204,42 @@ class Chart:
         y = (y * h) + (y + 1) * self.m / height
         return [x, y, w, h]
 
-    def _draw_box(self, q, xoff=0, yoff=0, c="#f7931a", b="#4d4d4d"):
+    def _draw_line(self, q, c="#f7931a"):
+        """
+        Draw a line on the chart.
+
+        Parameters
+        ----------
+        q : (float, float, float, float)
+            (origin_x, origin_y, width, height)
+            The position of the line.
+        c : str, color default: "#f7931a"
+        """
+        x0 = q[0]
+        y0 = q[1]
+        x1 = q[0] + q[2]
+        y1 = q[1] + q[3]
+        x = [x0, x1]
+        y = [y0, y1]
+        line = matplotlib.lines.Line2D(x, y, color=c, linewidth=self.s)
+        self.fig.add_artist(line)
+
+    def _draw_box(self, q, xoff=0, yoff=0, c=None, b="#4d4d4d"):
+        """
+        Draw a box on the chart.
+
+        Parameters
+        ----------
+        q : (float, float, float, float)
+            (origin_x, origin_y, width, height)
+            The position of the box.
+        xoff : float, default: 0
+            The x offset of the box.
+        yoff : float, default: 0
+            The y offset of the box.
+        c : str, color, default: None
+        b : str, background color, default: "#4d4d4d"
+        """
         width, height = self.size
         x0 = q[0]
         x1 = x0 + 10 / width
@@ -203,20 +250,21 @@ class Chart:
         y0 += yoff / height
         x = [x1, x2, x2, x0, x0, x1]
         y = [y0, y0, y1, y1, y0, y0]
-        line = matplotlib.lines.Line2D(x, y, color=c, linewidth=self.s, solid_joinstyle="miter")
-        rect = matplotlib.patches.Rectangle((q[0], q[1]), q[2], q[3], color=b, zorder=-1)
-        self.fig.add_artist(line)
-        self.fig.add_artist(rect)
+        if c is not None:
+            line = matplotlib.lines.Line2D(x, y, color=c, linewidth=self.s, solid_joinstyle="miter")
+            self.fig.add_artist(line)
+        if b is not None:
+            rect = matplotlib.patches.Rectangle(q[0:2], q[2], q[3], color=b, zorder=-1)
+            self.fig.add_artist(rect)
 
     def _add_axes(self, num):
         width, height = self.size
         q = self._get_pos(num)
-        ax = self.fig.add_axes(q, frameon=False, snap=True)
-        ax.set(xticks=[], yticks=[])
+        ax = self.fig.add_axes(q, frameon=False, snap=True, xticks=[], yticks=[])
         if self.frameon:
             self._draw_box(q, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"])
         else:
-            self._draw_box(q)
+            self._draw_box(q, c="#f7931a")
         t = 10 * self.s
         p = self.p
         shade_color = matplotlib.colors.to_rgb(matplotlib.rcParams["axes.facecolor"])
@@ -283,31 +331,36 @@ class Chart:
             st.set(size=self.captionsize, path_effects=self.path_effects)
         return ax, cb, st
 
-    def _update_data_only(self, sweep: sweep.Sweep, xmax=None, ymax=None):
-        assert self.symbols == list(sweep.products.keys()), "Mismatch in symbols."
+    def _update_data_only(self, sweep: sweep.Sweep, **kwargs):
+        if "symbol" in kwargs:
+            symbols = list([kwargs["symbol"]])
+        else:
+            symbols = kwargs.get("symbols", sweep.products.keys())
+        self.symbols = list(symbols)
         for m, symbol in zip(self.ms, self.symbols[: len(self.ax)]):
             if symbol == "R":
                 m.set_array(rho2ind(sweep.products[symbol]).ravel())
                 continue
             m.set_array(sweep.products[symbol].ravel())
-        if sweep.scanType == "rhi":
-            if xmax is not None:
-                self.set_xlim(0, xmax)
-            if ymax is not None:
-                self.set_ylim(0, ymax)
-        else:
-            if xmax is not None:
-                self.set_xlim(-xmax, xmax)
-            if ymax is not None:
-                self.set_ylim(-ymax, ymax)
 
-    def _update_coordinate_data(self, xx, yy, sweep: sweep.Sweep):
-        if self.overlay:
-            for m in self.mesh:
+    def _update_coordinate_data(self, xx, yy, sweep: sweep.Sweep, **kwargs):
+        if self.overlay and all([m is not None for m in self.ms]):
+            for m in self.ms:
+                if m is None:
+                    continue
                 m.remove()
+            self.ms = [None] * len(self.ax)
         # Update self.symbols
-        self.symbols = list(sweep.products.keys())
-        for k, symbol in enumerate(self.symbols[: len(self.ax)]):
+        if "symbol" in kwargs:
+            symbols = list([kwargs["symbol"]])
+        else:
+            symbols = kwargs.get("symbols", sweep.products.keys())
+        self.symbols = list(symbols)
+        props = {
+            "shading": "flat",
+            "zorder": 1,
+        }
+        for k, (ax, symbol) in enumerate(zip(self.ax, self.symbols)):
             if symbol[0] == "Z":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("rsz")
@@ -337,7 +390,32 @@ class Chart:
                 cmap = blib.matplotlibColormap("rsz")
                 vmin = np.min(value.flatten())
                 vmax = np.max(value.flatten())
-            self.ms[k] = self.ax[k].pcolormesh(xx, yy, value, shading="flat", cmap=cmap, vmin=vmin, vmax=vmax)
+            self.ms[k] = ax.pcolormesh(xx, yy, value, cmap=cmap, vmin=vmin, vmax=vmax, **props)
+
+        if sweep.scanType == "rhi":
+            if "xmax" in kwargs:
+                self.set_xlim(0, kwargs["xmax"])
+            if "ymax" in kwargs:
+                self.set_ylim(0, kwargs["ymax"])
+        else:
+            if "xmax" in kwargs:
+                xmax = kwargs["xmax"]
+                self.set_xlim(-xmax, xmax)
+            if "ymax" in kwargs:
+                ymax = kwargs["ymax"]
+                self.set_ylim(-ymax, ymax)
+            if "xmax" not in kwargs and "ymax" not in kwargs and self.axis_is_set is False:
+                rmax = kwargs.get("rmax", np.hypot(np.max(np.abs(xx)), np.max(np.abs(yy))))
+                xoff = kwargs.get("xoff", 0.0)
+                yoff = kwargs.get("yoff", 0.0)
+                aspect = self.ax[0].bbox.width / self.ax[0].bbox.height
+                if aspect > 1:
+                    self.set_xlim(-rmax * aspect + xoff, rmax * aspect + xoff)
+                    self.set_ylim(-rmax + yoff, rmax + yoff)
+                else:
+                    self.set_xlim(-rmax + xoff, rmax + xoff)
+                    self.set_ylim(-rmax / aspect + yoff, rmax / aspect + yoff)
+                self.axis_is_set = True
         self.r = sweep.meshCoordinate.r
         self.a = sweep.meshCoordinate.a
         self.e = sweep.meshCoordinate.e
@@ -345,7 +423,7 @@ class Chart:
     def _setup_colorbars(self):
         # Colorbars
         for m, a, c in zip(self.ms, self.ax, self.cb):
-            plt.colorbar(m, ax=a, cax=c, orientation=self.orientation)
+            plt.colorbar(m, cax=c, ax=a, orientation=self.orientation)
         # Colorbar labels
         for k, symbol in enumerate(self.symbols[: len(self.ax)]):
             if symbol[0] == "Z":
@@ -437,51 +515,67 @@ class Chart:
         }
         self.title = self.fig.text(0.5, y, text, **title_props)
 
-    def set_data(self, sweep: sweep.Sweep, xmax=None, ymax=None, rmax=None):
-        if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e:
-            return self._update_data_only(sweep, ymax)
+    def set_data(self, sweep: sweep.Sweep, **kwargs):
+        """
+        Set the data for the chart.
+
+        Optional Parameters
+        -------------------
+        title: str
+        rmax: float
+        xoff: float
+        yoff: float
+        """
+        if self.r is sweep.meshCoordinate.r and self.e is sweep.meshCoordinate.e and "symbol" not in kwargs:
+            return self._update_data_only(sweep, **kwargs)
+
         if sweep.scanType == "rhi":
+
             e_rad = np.radians(sweep.meshCoordinate.e)
-            xx = np.outer(np.cos(e_rad), sweep.meshCoordinate.r)
-            yy = np.outer(np.sin(e_rad), sweep.meshCoordinate.r)
-            self._update_coordinate_data(xx, yy, sweep)
+            xx = np.outer(np.cos(e_rad), 1.0e-3 * sweep.meshCoordinate.r)
+            yy = np.outer(np.sin(e_rad), 1.0e-3 * sweep.meshCoordinate.r)
+            self._update_coordinate_data(xx, yy, sweep, **kwargs)
 
             if self.overlay is None:
                 # Find out the meaningful range of the plot
                 mask = np.logical_and(sweep.products["Z"] > -20, sweep.products["Z"] < 80)
-                h_max = np.ceil(np.max(yy[1:, 1:][mask]) + 3.5) if ymax is None else ymax
-                extent = (0, 0, sweep.meshCoordinate.r[-1], max(sweep.meshCoordinate.e))
+                h_max = kwargs.get("ymax", np.ceil(np.max(yy[1:, 1:][mask]) + 3.5))
+                extent = (0, 0, 1.0e-3 * sweep.meshCoordinate.r[-1], max(sweep.meshCoordinate.e))
                 self.overlay = overlay.PolarGrid(extent=extent, ymax=h_max, s=self.s)
                 self.overlay.load()
+                for ax in self.ax:
+                    self.overlay.draw(ax)
+
         elif sweep.scanType == "ppi":
+
             e_rad = np.radians(sweep.sweepElevation)
             a_rad = np.radians(sweep.meshCoordinate.a)
-            xx = np.outer(np.cos(e_rad) * np.sin(a_rad), sweep.meshCoordinate.r)
-            yy = np.outer(np.cos(e_rad) * np.cos(a_rad), sweep.meshCoordinate.r)
-            self._update_coordinate_data(xx, yy, sweep)
+            xx = np.outer(np.cos(e_rad) * np.sin(a_rad), 1.0e-3 * sweep.meshCoordinate.r)
+            yy = np.outer(np.cos(e_rad) * np.cos(a_rad), 1.0e-3 * sweep.meshCoordinate.r)
+            self._update_coordinate_data(xx, yy, sweep, **kwargs)
 
             if self.overlay is None:
                 origin = (sweep.longitude, sweep.latitude)
-                aspect = self.ax[0].bbox.height / self.ax[0].bbox.width
-                max_range = sweep.meshCoordinate.r[-1] if rmax is None else rmax
-                extent = (-max_range, -max_range * aspect, max_range, max_range * aspect)
-                density = self.ax[0].bbox.width / max_range / 2
-                self.overlay = overlay.Overlay(
-                    origin=origin, extent=extent, density=density, rmax=1.2 * max_range, s=self.s
-                )
+                xlim, ylim = self.ax[0].get_xlim(), self.ax[0].get_ylim()
+                extent = (xlim[0], ylim[0], xlim[1], ylim[1])
+                density = self.ax[0].bbox.width / (xlim[1] - xlim[0])
+                self.overlay = overlay.Overlay(origin=origin, extent=extent, density=density, **kwargs)
                 self.overlay.load()
                 if self.orientation == "vertical":
-                    exclude = (0.5 * max_range, -max_range * aspect, 1.1 * max_range, 0)
+                    exclude = (0.75 * xlim[1] + 0.25 * xlim[0], xlim[1], ylim[0], 0.25 * ylim[0] + 0.75 * ylim[1])
                     self.overlay.exclude(exclude)
+                for ax in self.ax:
+                    self.overlay.draw(ax)
         else:
+
             raise ValueError("Unknown scan type.")
 
-        for ax in self.ax:
-            self.overlay.draw(ax)
         self._setup_colorbars()
         if sweep.time is None:
             return
-        self.update_title(sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC"))
+        self.update_title(kwargs.get("title", sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC")))
+        if "colorbar_title" in kwargs:
+            self.st[0].set_text(kwargs["colorbar_title"])
 
     def set_xlim(self, lo, hi=None):
         for ax in self.ax:
@@ -527,8 +621,7 @@ class ChartRHI(Chart):
                 self.ax[i], self.cb[i], self.st[i] = self._add_axes(self.seed + i)
 
         if sweep:
-            self.set_data(sweep)
-
+            self.set_data(sweep, **kwargs)
 
 
 class ChartPPI(Chart):
@@ -557,14 +650,18 @@ class ChartPPI(Chart):
                 self.ax[i], self.cb[i], self.st[i] = self._add_axes(self.seed + i)
 
         if sweep:
-            self.set_data(sweep)
+            self.set_data(sweep, **kwargs)
 
     def set(self, **kwargs):
         if "rmax" in kwargs:
-            aspect = self.ax[0].bbox.height / self.ax[0].bbox.width
-            max_range = kwargs["rmax"]
-            for ax in self.ax:
-                ax.set(xlim=(-max_range, max_range), ylim=(-max_range * aspect, max_range * aspect))
+            aspect = self.ax[0].bbox.width / self.ax[0].bbox.height
+            rmax = kwargs["rmax"]
+            if aspect < 1:
+                for ax in self.ax:
+                    ax.set(xlim=(-rmax, rmax), ylim=(-rmax * aspect, rmax * aspect))
+            else:
+                for ax in self.ax:
+                    ax.set(xlim=(-rmax * aspect, rmax * aspect), ylim=(-rmax, rmax))
 
     def set_rmax(self, rmax):
         self.set(rmax=rmax)
@@ -583,7 +680,10 @@ class ChartRHIWide(ChartRHI):
 
 
 class ChartSinglePPI(Chart):
+    size = (1920, 1080)
     seed = 111
+    s = 1.25
+    frameon = False
 
     def __init__(self, sweep: sweep.Sweep = None, **kwargs):
         """
@@ -598,12 +698,67 @@ class ChartSinglePPI(Chart):
         -------
         A new PPI chart.
         """
-        super().__init__(sweep=sweep, n=1, **kwargs)
+        super().__init__(n=1, **kwargs)
+
+        # Overrides
+        self.titlesize = 36 * self.s
+        self.path_effects = [
+            matplotlib.patheffects.Stroke(linewidth=self.s, foreground=matplotlib.rcParams["axes.facecolor"]),
+            matplotlib.patheffects.Normal(),
+        ]
+
+        def get_colorbar_rect():
+            ch = round(16.0 * self.s)  # Colorbar height
+            pw = round(25.0 * self.s)  # Colorbar padding width
+            ph = round(12.0 * self.s)  # Colorbar padding height
+            cw = round(512 * self.s)  # Colorbar width
+            # Reserve 100 pts for the big symbol
+            while cw > self.size[0] - self.s * 100:
+                cw -= 128 if self.size[0] < 640 else 256
+            rect = [
+                (self.size[0] - cw - pw) / self.size[0],
+                (self.size[1] - ch - ph - self.captionsize) / self.size[1],
+                cw / self.size[0],
+                ch / self.size[1],
+            ]
+            return rect
 
         with plt.rc_context(self.figprops):
             self.fig = plt.figure(figsize=self.figsize, dpi=self.dpi, frameon=False)
-            for i in range(1):
-                self.ax[i], self.cb[i], self.st[i] = self._add_axes(self.seed + i)
+            self.ax[0] = self.fig.add_axes([0, 0, 1, 1], frameon=False, snap=True, xticks=[], yticks=[])
+            self._draw_box([0, 0, 1, 1], b="black")
+
+            # Axis for background shade
+            h = 70 * self.s / self.size[1]
+            bx = self.fig.add_axes([0, 1.0 - h, 1, h], frameon=False, snap=True, xticks=[], yticks=[])
+            bx.imshow(ribbon(), aspect="auto")
+            self._draw_line([0, 1.0 - h + 1.5 / self.size[1], 1, 0], c=[1, 1, 1, 0.5])
+
+            # Colorbar
+            cq = get_colorbar_rect()
+            self.cb[0] = self.fig.add_axes(cq, frameon=True, snap=True, xticks=[], yticks=[])
+            self._draw_box(cq, xoff=-1, c=matplotlib.rcParams["text.color"], b=matplotlib.rcParams["axes.facecolor"])
+            colorbar_title_props = {
+                "fontproperties": self.labelfont,
+                "fontsize": self.captionsize,
+                "pad": 5,
+                "verticalalignment": "bottom",
+                "path_effects": self.path_effects,
+            }
+            self.st[0] = self.cb[0].set_title(f"{1}", **colorbar_title_props)
+
+            # Title
+            title_props = {
+                "fontproperties": self.titlefont,
+                "fontsize": self.titlesize,
+                "color": self.titlecolor,
+                "horizontalalignment": "left",
+                "verticalalignment": "top",
+                "path_effects": self.path_effects,
+            }
+            x = 25.0 * self.s / self.size[0]
+            y = 1.0 - 0.58 * (h - self.titlesize / self.size[1])
+            self.title = self.fig.text(x, y, "", **title_props)
 
         if sweep:
-            self.set_data(sweep)
+            self.set_data(sweep, **kwargs)

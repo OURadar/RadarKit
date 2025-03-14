@@ -5,13 +5,8 @@ import matplotlib
 import matplotlib.patheffects
 import numpy as np
 
-# import importlib
-# prefix = os.path.join(os.path.dirname(importlib.util.find_spec("radarkit").origin), "maps")
 prefix = os.path.join(os.path.split(__file__)[0], "maps")
-
 r_earth = 6378.0
-deg2rad = np.pi / 180.0
-rad2deg = 1.0 / deg2rad
 pop_big = 50000
 pop_med = 95000  # Norman is 95694
 
@@ -74,7 +69,7 @@ def makeRotationZ(phi):
 
 
 def makeRotationForCoord(lon=-97.46381, lat=35.23682):
-    return np.matmul(makeRotationY(-lon * deg2rad), makeRotationX(lat * deg2rad))
+    return np.matmul(makeRotationY(np.radians(-lon)), makeRotationX(np.radians(lat)))
 
 
 def project(coords, rotation=makeRotationForCoord()):
@@ -139,12 +134,9 @@ def get(poly, origin=(-97.46381, 35.23682), extent=(-160, -90, 160, 90), density
         subset = []
         for c in coords:
             pos = project(np.radians(c), rotation)
-            # outside = np.logical_or(np.logical_or(p[:, 0] < x_min, p[:, 0] > x_max), np.logical_or(p[:, 1] < y_min, p[:, 1] > y_max))
-            # if np.all(outside):
-            #     continue
-            # subset.append(p)
             inside = np.logical_and(
-                np.logical_and(pos[:, 0] > x_min, pos[:, 0] < x_max), np.logical_and(pos[:, 1] > y_min, pos[:, 1] < y_max)
+                np.logical_and(pos[:, 0] > x_min, pos[:, 0] < x_max),
+                np.logical_and(pos[:, 1] > y_min, pos[:, 1] < y_max),
             )
             if np.any(inside):
                 subset.append(pos[:, :2])
@@ -186,13 +178,16 @@ class Grid:
         "horizontalalignment": "center",
         "verticalalignment": "center",
         "path_effects": path_effects,
+        "zorder": 200,
     }
     s = 1
     size1 = 12
     size2 = 14
     size3 = 16
+    gridwidth = 1.0
+    linewidth = 1.5
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         c = matplotlib.rcParams["text.color"]
         if c in matplotlib.colors.CSS4_COLORS:
             rgba = matplotlib.colors.to_rgba(matplotlib.colors.CSS4_COLORS[c])
@@ -207,29 +202,6 @@ class Grid:
             colors = MapColor("dark")
         else:
             colors = MapColor("light")
-
-
-"""
-    extent in (xmin, ymin, xmax, ymax)
-"""
-
-
-class Overlay(Grid):
-    density = 4.0
-    rmax = 70.0
-    labels = None
-    county = None
-    highway = None
-    rings = None
-
-    def __init__(self, origin=(-97.46381, 35.23682), extent=(-160, -90, 160, 90), **kwargs):
-        super().__init__()
-        self.origin = origin
-        self.extent = extent
-        if "density" in kwargs:
-            self.density = kwargs["density"]
-        if "rmax" in kwargs:
-            self.rmax = kwargs["rmax"]
         if "s" in kwargs:
             self.s = kwargs["s"]
             self.size1 = 12 * self.s
@@ -240,9 +212,27 @@ class Overlay(Grid):
                 matplotlib.patheffects.Stroke(linewidth=2.5 * self.s, foreground=(*c, 0.6)),
                 matplotlib.patheffects.Normal(),
             ]
+        self.gridwidth = kwargs.get("gridwidth", max(1.0, self.s))
+        self.linewidth = kwargs.get("linewidth", max(1.0, 1.5 * self.s))
 
-        # TODO: Calculate "about" from extent and density
-        self.radii = radii(max_range=self.rmax, about=7)
+
+"""
+    extent in (xmin, ymin, xmax, ymax)
+"""
+
+
+class Overlay(Grid):
+    labels = None
+    county = None
+    highway = None
+    rings = None
+
+    def __init__(self, origin=(-97.46381, 35.23682), extent=(-160, -90, 160, 90), **kwargs):
+        super().__init__(**kwargs)
+        self.origin = origin
+        self.extent = extent
+        self.density = kwargs.get("density", 4.0)
+        self.radii = kwargs.get("radii", radii(max_range=np.hypot(extent[2], extent[3]), about=7))
 
     def _pop2size(self, pop):
         return self.size3 if pop > pop_big else self.size2 if pop > pop_med else self.size1
@@ -272,15 +262,15 @@ class Overlay(Grid):
             self.labels.remove(label)
 
     def draw(self, ax):
-        ax.set(xlim=self.extent[::2], ylim=self.extent[1::2], xticks=[], yticks=[])
-        linewidth = 1.5 * self.s
-        gridwidth = max(1.0, 0.8 * self.s)
         for p in self.county:
-            ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.county, linewidth=linewidth))
+            x, y = p[:, 0], p[:, 1]
+            ax.add_line(matplotlib.lines.Line2D(x, y, color=colors.county, linewidth=self.linewidth, zorder=100))
         for p in self.highway:
-            ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.highway, linewidth=linewidth))
+            x, y = p[:, 0], p[:, 1]
+            ax.add_line(matplotlib.lines.Line2D(x, y, color=colors.highway, linewidth=self.linewidth, zorder=100))
         for p in self.rings:
-            ax.add_line(matplotlib.lines.Line2D(p[:, 0], p[:, 1], color=colors.ring, linewidth=gridwidth))
+            x, y = p[:, 0], p[:, 1]
+            ax.add_line(matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=self.gridwidth, zorder=100))
         occupied = []
         for x, y, c, label, pop in self.labels:
             size = self._pop2size(pop)
@@ -304,23 +294,14 @@ class Overlay(Grid):
 
 
 class PolarGrid(Grid):
-    extent = (0, 0, 60, 40)
-    ymax = 20
     grids = []
     labels = []
 
     def __init__(self, **kwargs):
-        super().__init__()
-        if "extent" in kwargs:
-            self.extent = kwargs["extent"]
-        if "s" in kwargs:
-            self.s = kwargs["s"]
-            self.size1 = 12 * self.s
-            self.size2 = 14 * self.s
-            self.size3 = 16 * self.s
-        if "ymax" in kwargs:
-            self.ymax = kwargs["ymax"]
-        self.radii = radii(max_range=self.extent[2], about=5)
+        super().__init__(**kwargs)
+        self.extent = kwargs.get("extent", (0, 0, 60, 40))
+        self.ymax = kwargs.get("ymax", 20)
+        self.radii = kwargs.get("radii", radii(max_range=self.extent[2], about=5))
 
     def load(self):
         e_max = 90 if self.extent[3] < 90 else 180
@@ -344,27 +325,16 @@ class PolarGrid(Grid):
             self.grids.append((x, y))
         # Labels
         self.labels = []
-        # phi = np.radians(40)
-        # cc = np.cos(phi)
-        # ss = np.sin(phi)
-        # for r in self.radii[1:]:
-        #     x = r * cc
-        #     y = r * ss
-        #     if y > 0.85 * self.ymax:
-        #         break
-        #     self.labels.append((x, y, f"{r:.0f} km"))
         points = [[40.0, 10.0], [20.0, 20.0]]
         for pos in points:
             phi, r = np.radians(pos[0]), pos[1]
-            x = r * np.cos(phi)
-            y = r * np.sin(phi)
+            x, y = r * np.cos(phi), r * np.sin(phi)
             self.labels.append((x, y, f"{r:.0f} km"))
 
     def draw(self, ax):
         ax.set(xlim=[0, self.extent[2]], ylim=[0, self.ymax], xticks=[], yticks=[])
-        gridwidth = max(1.0, 0.8 * self.s)
         for x, y in self.grids:
-            line = matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=gridwidth)
+            line = matplotlib.lines.Line2D(x, y, color=colors.ring, linewidth=self.gridwidth)
             ax.add_artist(line)
         for x, y, label in self.labels:
             text = matplotlib.text.Text(x, y, label, color=colors.ring, fontsize=self.size1, **self.label_props)

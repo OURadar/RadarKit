@@ -38,10 +38,12 @@ RKProductCollection *RKProductCollectionInit(const int count, const uint32_t ray
 RKProductCollection *RKProductCollectionInitFromSingles(RKProductCollection *singles[], const uint32_t count);
 void RKProductCollectionFree(RKProductCollection *);
 
-RKProductCollection *RKProductCollectionInitWithFilename(const char *);
+RKProductCollection *RKProductCollectionInitWithFilename(const char *, const int verbose);
 
 // int RKProductCollectionStandardizeForWDSSII(RKProductCollection *);
 int RKProductCollectionStandardizeForCFRadial(RKProductCollection *);
 int RKProductCollectionFileWriterCF(RKProductCollection *, const char *, const RKWriterOption);
+
+void RKProductCollectionSummary(RKProductCollection *);
 
 #endif
