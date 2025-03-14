@@ -387,9 +387,9 @@ class Chart:
                 vmin, vmax = 0, 256
             else:
                 value = sweep.products[symbol]
-                cmap = blib.matplotlibColormap("rsz")
-                vmin = np.min(value.flatten())
-                vmax = np.max(value.flatten())
+                cmap = kwargs.get("cmap", blib.matplotlibColormap("zmapx"))
+                vmin = kwargs.get("vmin", np.min(value.flatten()))
+                vmax = kwargs.get("vmax", np.max(value.flatten()))
             self.ms[k] = ax.pcolormesh(xx, yy, value, cmap=cmap, vmin=vmin, vmax=vmax, **props)
 
         if sweep.scanType == "rhi":
