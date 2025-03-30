@@ -361,7 +361,12 @@ class Chart:
             "zorder": 1,
         }
         for k, (ax, symbol) in enumerate(zip(self.ax, self.symbols)):
-            if symbol[0] == "Z":
+            if "map" in kwargs:
+                value = kwargs["map"](sweep.products[symbol])
+                cmap = kwargs.get("cmap", blib.matplotlibColormap("zmapx"))
+                vmin = kwargs.get("vmin", np.min(value.flatten()))
+                vmax = kwargs.get("vmax", np.max(value.flatten()))
+            elif symbol[0] == "Z":
                 value = sweep.products[symbol]
                 cmap = blib.matplotlibColormap("rsz")
                 vmin, vmax = -32, 96
@@ -385,6 +390,10 @@ class Chart:
                 value = rho2ind(sweep.products[symbol])
                 cmap = blib.matplotlibColormap("rsr")
                 vmin, vmax = 0, 256
+            elif symbol == "RR":
+                value = np.log10(sweep.products[symbol])
+                cmap = blib.matplotlibColormap("rr")
+                vmin, vmax = -1, 2
             else:
                 value = sweep.products[symbol]
                 cmap = kwargs.get("cmap", blib.matplotlibColormap("zmapx"))
@@ -420,7 +429,7 @@ class Chart:
         self.a = sweep.meshCoordinate.a
         self.e = sweep.meshCoordinate.e
 
-    def _setup_colorbars(self):
+    def _setup_colorbars(self, **kwargs):
         # Colorbars
         for m, a, c in zip(self.ms, self.ax, self.cb):
             plt.colorbar(m, cax=c, ax=a, orientation=self.orientation)
@@ -438,6 +447,8 @@ class Chart:
                 self.st[k].set_text("D - Differential Reflectivity (dB)")
             elif symbol == "R":
                 self.st[k].set_text("R - Correlation Coefficient")
+            elif symbol == "RR":
+                self.st[k].set_text("RR - Rain Rate (mm/hr)")
 
         # Colorbar ticks
         tick_props = {
@@ -455,7 +466,11 @@ class Chart:
                 self.cb[k].set_xlim(lo, hi)
 
         for k, symbol in enumerate(self.symbols[: len(self.ax)]):
-            if symbol[0] == "Z":
+            if "map" in kwargs:
+                ticks = kwargs.get("ticks", np.linspace(kwargs["vmin"], kwargs["vmax"], 5))
+                setup_ticks(k, kwargs["map"](ticks), ticks, kwargs["vmin"], kwargs["vmax"])
+                continue
+            elif symbol[0] == "Z":
                 ticks = np.arange(-20, 61, 20)
                 setup_ticks(k, ticks, ticks, -10, 75)
             elif symbol[0] == "V":
@@ -466,7 +481,6 @@ class Chart:
                 setup_ticks(k, ticks, ticks, 0, 10)
             elif symbol == "P":
                 ticks = np.arange(-120, 121, 60)
-                # setup_ticks(k, np.radians(ticks), ticks, -np.pi, np.pi)
                 setup_ticks(k, ticks, ticks, -180, 180)
             elif symbol == "D":
                 ticks = np.arange(-4, 5, 2)
@@ -474,6 +488,9 @@ class Chart:
             elif symbol == "R":
                 ticks = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02])
                 setup_ticks(k, rho2ind(ticks), ticks, 0, 180)
+            elif symbol == "RR":
+                ticks = np.array([0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50])
+                setup_ticks(k, np.log10(ticks), ticks, -1, 2)
 
     def update_title(self, text):
         if self.title is None:
@@ -570,7 +587,7 @@ class Chart:
 
             raise ValueError("Unknown scan type.")
 
-        self._setup_colorbars()
+        self._setup_colorbars(**kwargs)
         if sweep.time is None:
             return
         self.update_title(kwargs.get("title", sweep.time.strftime(r"%Y/%m/%d %H:%M:%S UTC")))
