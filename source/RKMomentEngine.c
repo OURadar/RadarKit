@@ -733,7 +733,6 @@ static void *pulseGatherer(void *_in) {
                 i1 = i0;
             }
             if (i1 != i0 || count == RKMaximumPulsesPerRay || pulse->header.marker & RKMarkerSweepEnd) {
-                i1 = i0;
                 if (engine->excludeBoundaryPulses) {
                     // Sweep engine looks for i0 change and share that pulse. Remove for non-sharing mode.
                     if (count > 1) {
@@ -770,19 +769,26 @@ static void *pulseGatherer(void *_in) {
                     c = RKNextModuloS(c, engine->coreCount);
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
-                    engine->momentSource[j].origin = k;
+                    if (i0 != i1) {
+                        engine->momentSource[j].origin = k;
+                    } else if (pulse->header.marker & RKMarkerSweepEnd)  {
+                        engine->momentSource[j].origin = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+                    }
                     ray = RKGetRayFromBuffer(engine->rayBuffer, j);
                     ray->header.s = RKRayStatusVacant;
                     count = 0;
                 } else {
                     // Just started, i0 could refer to any azimuth bin
-                    if (engine->verbose > 1) {
+                    if (engine->verbose > 2) {
                         RKLog("%s count = %d   i1 = %d   i0 = %d\n", engine->name, count, i1, i0);
                     }
                 }
+                i1 = i0;
             }
             // Keep counting up
-            count++;
+            if (!(pulse->header.marker & RKMarkerSweepEnd)) {
+                count++;
+            }
         }
 
         // Check finished rays
