@@ -572,7 +572,8 @@ static void *momentEngineCore(void *in) {
 static void *pulseGatherer(void *_in) {
     RKMomentEngine *engine = (RKMomentEngine *)_in;
 
-    int c, i, j, k, s;
+    int c, s;
+    uint32_t i, j, k;
     struct timeval t0, t1;
 
     sem_t *sem[engine->coreCount];
@@ -854,7 +855,8 @@ static void *pulseGatherer(void *_in) {
 static void *pulseGathererV1(void *_in) {
     RKMomentEngine *engine = (RKMomentEngine *)_in;
 
-    int c, i, j, k, s;
+    int c, s;
+    uint32_t i, j, k;
     struct timeval t0, t1;
 
     sem_t *sem[engine->coreCount];
@@ -1293,7 +1295,13 @@ int RKMomentEngineStart(RKMomentEngine *engine) {
         engine->coreCount = 4;
     }
     if (engine->workers != NULL) {
-        RKLog("Error. RKMomentEngine->workers should be NULL here.\n");
+        RKLog("%s Error. RKMomentEngine->workers should be NULL here.\n", engine->name);
+        return RKResultInconsistency;
+    }
+    // Each core updates a specific status buffer, be sure RKBuffer0SlotCount > coreCount
+    if (engine->coreCount > RKBufferSSlotCount) {
+        RKLog("%s Error. I sense a bug. Ask my father.\n", engine->name);
+        return RKResultInconsistency;
     }
     engine->workers = (RKMomentWorker *)malloc(engine->coreCount * sizeof(RKMomentWorker));
     engine->memoryUsage += engine->coreCount * sizeof(RKMomentWorker);

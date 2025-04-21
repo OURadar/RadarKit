@@ -59,9 +59,9 @@
 //
 
 #define RKRawDataFormat                      8                                 // Format
-#define RKBufferSSlotCount                   10                                // Status
 #define RKBufferCSlotCount                   10                                // Config
 #define RKBufferHSlotCount                   50                                // Health
+#define RKBufferSSlotCount                   64                                // Status
 #define RKBufferPSlotCount                   1000                              // Positions
 #define RKBuffer0SlotCount                   20000                             // Pulse - Level I- - Raw I/Q
 #define RKBuffer2SlotCount                   3600                              // Ray - Level II - Moment data
@@ -330,6 +330,7 @@ N(RKResultSuccess) \
 N(RKResultTooBig) \
 N(RKResultTimeout) \
 N(RKResultNullInput) \
+N(RKResultInconsistency) \
 N(RKResultEngineNotWired) \
 N(RKResultEngineNotActive) \
 N(RKResultIncompleteSend) \
