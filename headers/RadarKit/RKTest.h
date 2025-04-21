@@ -205,10 +205,6 @@ int RKTestHealthRelayFree(RKHealthRelay);
 
 //
 
-void RKTestProductWriteFromPlainToProduct(void);
-
-//
-
 void RKTestCommandQueue(void);
 void RKTestSingleCommand(void);
 void RKTestExperiment(const char *);

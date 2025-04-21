@@ -1167,7 +1167,7 @@ enum {
 };
 
 typedef uint32_t RKWriterOption;
-enum RKWriterOption {
+enum {
     RKWriterOptionNone                           = 0,                          //
     RKWriterOptionPackPosition                   = 1,                          // Use packed position
     RKWriterOptionDeflateFields                  = 1 << 1,                     // Use NetCDF deflate on field variables
@@ -1175,7 +1175,7 @@ enum RKWriterOption {
 };
 
 typedef uint8_t RKMomentMethod;
-enum RKMomentMethod {
+enum {
     RKMomentMethodNone,                                                        // No method
     RKMomentMethodPulsePair,                                                   // Pulse pair
     RKMomentMethodPulsePairHop,                                                // Pulse pair frequency hopping
