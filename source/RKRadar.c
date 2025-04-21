@@ -370,7 +370,7 @@ static void *systemInspectorRunLoop(void *in) {
                 if (radar->momentEngine->momentSource[i].origin >= radar->desc.pulseBufferDepth ||
                     radar->momentEngine->momentSource[i].length > radar->desc.pulseBufferDepth ||
                     radar->momentEngine->momentSource[i].modulo > radar->desc.pulseBufferDepth) {
-                    printf("Overflow: --> momentSource[%d] = %d / %d / %d (%d)\n", i,
+                    printf("Overflow: --> momentSource[%d] = %u / %u / %u (%u)\n", i,
                            radar->momentEngine->momentSource[i].origin, radar->momentEngine->momentSource[i].length, radar->momentEngine->momentSource[i].modulo, radar->desc.pulseBufferDepth);
                 }
             }
