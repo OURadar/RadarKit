@@ -488,13 +488,15 @@ static void *momentEngineCore(void *in) {
             }
             ray->header.s |= RKRayStatusSkipped;
         }
+        // Mark all pulses as used for moments whether processed or not
         path.length--;
         k = 0;
         do {
             pulse = pulses[k++];
+            // Mark the pulse as used for moments
             pulse->header.s |= RKPulseStatusUsedForMoments;
             if (k == 0) {
-                RKLog("pulseIndex %u   .s = %x\n", pulse->header.i, pulse->header.s);
+                RKLog("pulseIndex %llu   .s = %x\n", pulse->header.i, pulse->header.s);
             }
         } while (k <= path.length);
 
@@ -728,7 +730,10 @@ static void *pulseGatherer(void *_in) {
                 }
             }
             i0 = pulse->header.positionIndex;
-            if (pulse->header.marker & RKMarkerSweepBegin) {
+            // Transition pulses (between sweeps) are not processed but marked as used for moments
+            if ((pulse->header.marker & RKMarkerSweepStateMask) == RKMarkerNull) {
+                pulse->header.s |= RKPulseStatusUsedForMoments;
+            } else if (pulse->header.marker & RKMarkerSweepBegin) {
                 engine->momentSource[j].origin = k;
                 count = 0;
                 i1 = i0;

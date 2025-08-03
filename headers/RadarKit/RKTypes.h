@@ -569,6 +569,7 @@ enum {
     RKMarkerSweepMiddle                          = 1,                          //
     RKMarkerSweepBegin                           = (1 << 1),                   //  0000 0010
     RKMarkerSweepEnd                             = (1 << 2),                   //  0000 0100
+    RKMarkerSweepStateMask                       = 0x07,                       //  0000 0111
     RKMarkerVolumeBegin                          = (1 << 3),                   //  0000 1000
     RKMarkerVolumeEnd                            = (1 << 4),                   //  0001 0000
     RKMarkerScanTypeMask                         = 0x60,                       //  0110 0000

@@ -142,6 +142,7 @@ static void showHelp(void) {
            "          0 - Clock of position\n"
            "          1 - Clock of transceiver\n"
            "          a - Position engine\n"
+           "          d - Data recorder\n"
            "          m - Moment engine\n"
            "          p - Pulse engine\n"
            "          r - Ring filter engine\n"
@@ -979,20 +980,20 @@ int main(int argc, const char **argv) {
         // Simulation mode
         RKLog("Setting a waveform ...\n");
         //RKExecuteCommand(myRadar, "t w x", NULL);
-        //RKExecuteCommand(myRadar, "t w s01", NULL);
+        // RKExecuteCommand(myRadar, "t w s01", NULL);
         //RKExecuteCommand(myRadar, "t w ofm", NULL);
         //RKExecuteCommand(myRadar, "t w q02", NULL);
-        //RKExecuteCommand(myRadar, "t w q10", NULL);
+        RKExecuteCommand(myRadar, "t w q10", NULL);
         //RKExecuteCommand(myRadar, "t w h040502.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2007.5", NULL);
         //RKExecuteCommand(myRadar, "t w h2005", NULL);
-        RKExecuteCommand(myRadar, "t w h20032.5", NULL);
+        // RKExecuteCommand(myRadar, "t w h20032.5", NULL);
         //RKExecuteCommand(myRadar, "t w h0507", NULL);
         //RKSetWaveformToImpulse(myRadar);
 
         RKLog("Starting a new PPI ... PRF = %s Hz\n", RKIntegerToCommaStyleString(systemPreferences->prf));
         RKExecuteCommand(myRadar, "v pp 2,4,6,8,10,12 15 -36", NULL);
-        // RKExecuteCommand(myRadar, "v rr 0,20 15 18", NULL);
+        // RKExecuteCommand(myRadar, "v rr 0,40 15 18", NULL);
 
         RKFileMonitor *preferenceFileMonitor = RKFileMonitorInit(PREFERENCE_FILE, handlePreferenceFileUpdate, systemPreferences);
 
