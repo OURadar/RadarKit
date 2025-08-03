@@ -108,7 +108,7 @@ static void *pulseRecorder(void *in) {
             usleep(10000);
             if (++s % 100 == 0 && engine->verbose > 1) {
                 RKLog("%s sleep 2/%.1f s   k = %d   pulseIndex = %d   header.s = 0x%02x\n",
-                      engine->name, (float)s * 0.01f, k , *engine->pulseIndex, pulse->header.s);
+                      engine->name, (float)s * 0.01f, k, *engine->pulseIndex, pulse->header.s);
             }
         }
         engine->state ^= RKEngineStateSleep2;
@@ -237,7 +237,7 @@ static void *pulseRecorder(void *in) {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i);
                 if (pulse->header.s != RKPulseStatusVacant) {
-                    pulse->header.s |= RKPulseStatusRecorded;
+                    pulse->header.s |= RKPulseStatusInspected | RKPulseStatusRecorded;
                 }
             }
         }

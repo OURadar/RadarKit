@@ -1368,6 +1368,9 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
             case 'b':
                 RKSteerEngineSetVerbose(radar->steerEngine, verbose);
                 break;
+            case 'd':
+                RKRawDataRecorderSetVerbose(radar->rawDataRecorder, verbose);
+                break;
             case 'm':
                 RKMomentEngineSetVerbose(radar->momentEngine, verbose);
                 break;
