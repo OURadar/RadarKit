@@ -3176,7 +3176,7 @@ void RKTestWaveformLoading(const int argc, const void ** argv) {
     }
     RKLog("Using waveform folder '%s'\n", path);
 
-    char wavefile[256];
+    char wavefile[1024];
     char defaultWaveforms[2][64] = {"owm95s", "o95"};
     const int count = argc == 0 ? 2 : argc;
 
