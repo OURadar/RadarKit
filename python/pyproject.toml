@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools", "wheel", "numpy", "tqdm", "blib-py", "radar-data"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "radarkit"
+dynamic = ["version", "dependencies"]
+authors = [
+    {name = "Boonleng Cheong", email = "boonleng@ou.edu"},
+]
+description = "RadarKit Python Package"
+readme = "README.md"
+requires-python = ">=3.8"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["radar", "chart"]
+
+[project.urls]
+Repository = "https://github.com/ouradar/radarkit"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "radarkit.__version__"}
+dependencies = {file = "requirements.txt"}

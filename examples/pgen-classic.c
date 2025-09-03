@@ -668,20 +668,20 @@ void proc(UserParams *arg) {
             overallMomentList |= rays[i]->header.productList;
             if (rays[i]->header.gateCount != S->header.gateCount) {
                 if (++gateCountWarningCount < 5) {
-                    RKLog("Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
+                    RKLog("Info. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
                           RKIntegerToCommaStyleString(i), RKIntegerToCommaStyleString(rays[i]->header.gateCount),
                           RKIntegerToCommaStyleString(S->header.gateCount));
                 } else if (gateCountWarningCount == 5) {
-                    RKLog("Warning. Inconsistent gateCount more than 5 rays / sweep.\n");
+                    RKLog("Info. Inconsistent gateCount more than 5 rays / sweep.\n");
                 }
             }
             if (rays[i]->header.gateSizeMeters != S->header.gateSizeMeters) {
                 if (++gateSizeWarningCount < 5) {
-                    RKLog("Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
+                    RKLog("Info. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
                           RKIntegerToCommaStyleString(i), RKFloatToCommaStyleString(rays[i]->header.gateSizeMeters),
                           RKFloatToCommaStyleString(S->header.gateSizeMeters));
                 } else if (gateSizeWarningCount == 5) {
-                    RKLog("Warning. Inconsistent gateSize more than 5 rays / sweep.\n");
+                    RKLog("Info. Inconsistent gateSize more than 5 rays / sweep.\n");
                 }
             }
         }

@@ -645,12 +645,16 @@ void RKWaveformDecimate(RKWaveform *waveform, const int stride) {
             s += x[i].i * x[i].i + x[i].q * x[i].q;
         }
         float fractionalDepth = (float)waveform->depth / stride;
-        RKLog("Info. Non-integer downsampling: %s / %d = %s --> %s   gainAdjust = %.6f --> %.6f *\n",
-            RKIntegerToCommaStyleString(waveform->depth),
-            stride,
-            RKFloatToCommaStyleString(fractionalDepth),
-            RKIntegerToCommaStyleString(downSampledDepth),
-            gainAdjust, sqrtf(1.0f / s));
+        float normalizedGainValue = sqrt(1.0f / s);
+        float ratio = gainAdjust / normalizedGainValue;
+        if (ratio < 0.99f || ratio > 1.01f) {
+            RKLog("Info. Non-integer downsampling: %s / %d = %s --> %s   gainAdjust = %.6f --> %.6f *\n",
+                RKIntegerToCommaStyleString(waveform->depth),
+                stride,
+                RKFloatToCommaStyleString(fractionalDepth),
+                RKIntegerToCommaStyleString(downSampledDepth),
+                gainAdjust, sqrtf(1.0f / s));
+        }
         gainAdjust = sqrt(1.0f / s);
     }
     waveform->fs /= stride;

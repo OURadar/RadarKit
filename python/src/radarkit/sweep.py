@@ -21,9 +21,16 @@ class MeshCoordinate:
     e = [0]
     a = [0]
     r = [0]
+    x = [0]
+    y = [0]
+    z = [0]
+    kind = "polar"
 
     def __repr__(self):
-        return f"MeshCoordinate: {len(self.e)} x {len(self.a)} x {len(self.r)}"
+        if self.kind == "cartesian":
+            return f"MeshCoordinate({len(self.z)} x {len(self.y)} x {len(self.x)})"
+        elif self.kind == "polar":
+            return f"MeshCoordinate({len(self.e)} x {len(self.a)} x {len(self.r)})"
 
 
 symbolMapping = {"DBZ": "Z", "VEL": "V", "WIDTH": "W", "ZDR": "D", "PHIDP": "P", "RHOHV": "R"}
@@ -124,13 +131,12 @@ class Sweep:
         self.products = {}
         for i, symbol in enumerate(symbols):
             self.products.update({symbol: array[i, :, :]})
-        shape = array.shape[1:]
         self.scanType = kwargs["scanType"] if "scanType" in kwargs else kwargs.get("type", "unk")
         self.archive = kwargs.get("archive", None)
         self._get_prefix()
         if "time" in kwargs:
             self.time = kwargs["time"]
-            if isinstance(self.time, float):
+            if isinstance(self.time, float) or isinstance(self.time, int):
                 self.time = datetime.datetime.fromtimestamp(self.time, tz=datetime.timezone.utc)
         if "latitude" in kwargs:
             self.latitude = kwargs["latitude"]
@@ -145,22 +151,42 @@ class Sweep:
             if len(self.meshCoordinate.e) == array.shape[1]:
                 de = self.meshCoordinate.e[-1] - self.meshCoordinate.e[-2]
                 self.meshCoordinate.e = np.append(self.meshCoordinate.e, self.meshCoordinate.e[-1] + de)
-        elif len(self.meshCoordinate.e) != shape[1] + 1:
-            self.meshCoordinate.e = np.arange(shape[1] + 1, dtype=float) * kwargs.get("de", 1.0)
         if "a" in kwargs:
             self.meshCoordinate.a = kwargs["a"]
             if len(self.meshCoordinate.a) == array.shape[1]:
                 da = self.meshCoordinate.a[-1] - self.meshCoordinate.a[-2]
                 self.meshCoordinate.a = np.append(self.meshCoordinate.a, wrapDegrees(self.meshCoordinate.a[-1] + da))
-        elif len(self.meshCoordinate.a) != shape[1] + 1:
-            self.meshCoordinate.a = wrapDegrees(np.arange(shape[1] + 1, dtype=float) * kwargs.get("da", 1.0))
         if "r" in kwargs:
             self.meshCoordinate.r = kwargs["r"]
             if len(self.meshCoordinate.r) == array.shape[2]:
                 dr = self.meshCoordinate.r[-1] - self.meshCoordinate.r[-2]
                 self.meshCoordinate.r = np.append(self.meshCoordinate.r, self.meshCoordinate.r[-1] + dr)
-        elif len(self.meshCoordinate.r) != shape[2] + 1:
-            self.meshCoordinate.r = np.arange(shape[2] + 1, dtype=float) * self.gatewidth
+        if "x" in kwargs:
+            self.meshCoordinate.kind = "cartesian"
+            self.meshCoordinate.x = kwargs["x"]
+            if len(self.meshCoordinate.x) == array.shape[2]:
+                dx = self.meshCoordinate.x[-1] - self.meshCoordinate.x[-2]
+                self.meshCoordinate.x = np.append(self.meshCoordinate.x, self.meshCoordinate.x[-1] + dx)
+        if "y" in kwargs:
+            self.meshCoordinate.kind = "cartesian"
+            self.meshCoordinate.y = kwargs["y"]
+            if len(self.meshCoordinate.y) == array.shape[1]:
+                dy = self.meshCoordinate.y[-1] - self.meshCoordinate.y[-2]
+                self.meshCoordinate.y = np.append(self.meshCoordinate.y, self.meshCoordinate.y[-1] + dy)
+        # Fix the meshCoordinate arrays to have one extra element in each dimension
+        if self.meshCoordinate.kind == "polar":
+            if len(self.meshCoordinate.e) != array.shape[1] + 1:
+                self.meshCoordinate.e = np.arange(array.shape[1] + 1, dtype=float) * kwargs.get("de", 1.0)
+            if len(self.meshCoordinate.a) != array.shape[1] + 1:
+                self.meshCoordinate.a = wrapDegrees(np.arange(array.shape[1] + 1, dtype=float) * kwargs.get("da", 1.0))
+            if len(self.meshCoordinate.r) != array.shape[2] + 1:
+                self.meshCoordinate.r = np.arange(array.shape[2] + 1, dtype=float) * self.gatewidth
+        elif self.meshCoordinate.kind == "cartesian":
+            if len(self.meshCoordinate.x) != array.shape[2] + 1:
+                self.meshCoordinate.x = np.arange(array.shape[2] + 1, dtype=float) * kwargs.get("dx", 1.0)
+            if len(self.meshCoordinate.y) != array.shape[1] + 1:
+                self.meshCoordinate.y = np.arange(array.shape[1] + 1, dtype=float) * kwargs.get("dy", 1.0)
+        # TODO: Think about z
         self.elevations = self.meshCoordinate.e[:-1]
         self.azimuths = self.meshCoordinate.a[:-1]
         self.range = self.meshCoordinate.r[:-1]

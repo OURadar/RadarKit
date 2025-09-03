@@ -37,10 +37,10 @@ static RKResult convert(const char *name, int verbose) {
     if (fid == NULL) {
         RKLog("Error. Unable to open file.\n");
     }
-    
+
     RKWaveFileGlobalHeaderV1 *fileHeader = (RKWaveFileGlobalHeaderV1 *)malloc(sizeof(RKWaveFileGlobalHeaderV1));
     RKWaveFileGroupHeaderV1 *groupHeader = (RKWaveFileGroupHeaderV1 *)malloc(sizeof(RKWaveFileGroupHeaderV1));
-    
+
     r = fread(fileHeader, sizeof(RKWaveFileGlobalHeaderV1), 1, fid);
     if (r < 0) {
         RKLog("Error. Failed reading global header.\n");
@@ -55,7 +55,6 @@ static RKResult convert(const char *name, int verbose) {
     waveform->fc = fileHeader->fc;
     waveform->fs = fileHeader->fs;
     waveform->count = 1;
-    //strncpy(waveform->name, fileHeader->name, RKNameLength);
     snprintf(waveform->name, RKNameLength, "%s", fileHeader->name) < 0 ? abort() : (void)0;
 
     for (k = 0; k < fileHeader->count; k++) {
@@ -110,7 +109,7 @@ static RKResult convert(const char *name, int verbose) {
     if (verbose) {
         RKWaveformSummary(waveform);
     }
-    
+
     sprintf(filename, "waveforms/%s.rkwav", name);
     RKLog("Generating %s...\n", filename);
     RKWaveformWriteFile(waveform, filename);
@@ -154,12 +153,12 @@ int main(int argc, const char * argv[]) {
     }
 
     int verbose = 1;
-    
+
     convert("ofm", verbose);
 
     printf("\n\n");
 
     convert("ofmd", verbose);
-    
+
     return EXIT_SUCCESS;
 }

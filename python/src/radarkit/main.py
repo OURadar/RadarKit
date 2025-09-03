@@ -132,7 +132,7 @@ class Workspace(ctypes.Structure):
             desc = self.header.desc
             desc.dataPath = b"data"
             desc.configBufferDepth = 3
-            desc.pulseBufferDepth = RKMaximumPulsesPerRay + 50
+            desc.pulseBufferDepth = 10 * RKMaximumPulsesPerRay + 50
             desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
             desc.pulseCapacity = newPulseCapacity
             desc.initFlags = (
@@ -335,7 +335,7 @@ class Workspace(ctypes.Structure):
         RKPulseEngineUnsetCompressor(self.pulseMachine)
         RKMomentEngineUnsetCalibrator(self.momentMachine)
 
-    def read(self, count=None):
+    def read(self, count=None, filter=None):
         if self.fid is None:
             raise RKEngineError("No file is open.")
         if not self.allocated:
@@ -394,6 +394,8 @@ class Workspace(ctypes.Structure):
         az[0] = pulse.contents.header.azimuthDegrees
         ciq[0, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
 
+        targetScratchSpaceIndex = self.sweepMachine.contents.lastRecordedScratchSpaceIndex
+
         with tqdm.tqdm(total=pulseCount, ncols=90, bar_format="{l_bar}{bar}|{elapsed}<{remaining}") as pbar:
             ic = 0
             for ip in range(1, pulseCount):
@@ -415,6 +417,11 @@ class Workspace(ctypes.Structure):
                     ip -= 1
                     break
                 pulse.contents.header.configIndex = self.configIndex.value
+                # Insert pre-filter here
+                if filter is not None:
+                    d16 = read_RKInt16C_from_pulse(pulse, pulse.contents.header.gateCount)
+                    place_RKInt16C_to_pulse(pulse, filter(d16))
+
                 pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
                 if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
                     pulse.contents.header.s |= RKPulseStatusCompleteForMoments
@@ -450,6 +457,11 @@ class Workspace(ctypes.Structure):
         RKPulseEngineWaitWhileBusy(self.pulseMachine)
         RKMomentEngineWaitWhileBusy(self.momentMachine)
 
+        s = 0
+        while self.sweepMachine.contents.lastRecordedScratchSpaceIndex == targetScratchSpaceIndex and s < 50:
+            time.sleep(0.1)
+            s += 1
+
         return {"riq": riq, "ciq": ciq, "el": el, "az": az}
 
     def get_current_config(self):
@@ -459,7 +471,7 @@ class Workspace(ctypes.Structure):
         pulse = RKPulseEngineGetProcessedPulse(self.pulseMachine, False)
         return pulse if pulse else None
 
-    def get_moment(self, offset=None, variable_list=["Z", "V", "W", "D", "R", "P"]):
+    def get_moment(self, offset=None, variable_list=["S", "Z", "V", "W", "D", "R", "P"]):
         if offset is None:
             if self.verbose:
                 print(
@@ -476,6 +488,9 @@ class Workspace(ctypes.Structure):
         self.variables = {}
         gateCount = scratch.rays[0].contents.header.gateCount
         scanTime = scratch.rays[0].contents.header.startTime.tv_sec
+        elevations = np.array([scratch.rays[k].contents.header.startElevation for k in range(scratch.rayCount)])
+        azimuths = np.array([scratch.rays[k].contents.header.startAzimuth for k in range(scratch.rayCount)])
+        ranges = np.arange(scratch.rays[0].contents.header.gateCount) * scratch.rays[0].contents.header.gateSizeMeters
         for varname in variable_list:
             buf = []
             for k in range(scratch.rayCount):
@@ -488,6 +503,12 @@ class Workspace(ctypes.Structure):
                     buf.append(data)
             self.variables.update({varname: np.asarray(buf)})
         self.variables.update({"time": scanTime})
+        self.variables.update({"elevations": elevations})
+        self.variables.update({"azimuths": azimuths})
+        self.variables.update({"ranges": ranges})
+        # self.variables.update({"elevations": np.asarray([ray.contents.header.startElevation for ray in scratch.rays])})
+        if "P" in self.variables:
+            self.variables["P"] = np.degrees(self.variables["P"])
         return self.variables
 
     def flush(self):
@@ -577,18 +598,23 @@ def read_RKComplex_from_pulse(pulse, count):
 
 def place_RKComplex_array(dst, src):
     np.conj(src, out=src)
-    ctypes.memmove(
-        ctypes.cast(dst, ctypes.POINTER(ctypes.c_float)),
-        src.flatten().ctypes.data,
-        src.nbytes,
-    )
+    ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_float)), src.flatten().ctypes.data, src.nbytes)
 
 
-def place_RKInt16C_array(dst, src):
-    bufiq = np.zeros((src.size * 2), dtype=np.int16)
-    bufiq[::2] = src.real.astype(np.int16)
-    bufiq[1::2] = -src.imag.astype(np.int16)
-    ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), bufiq.ctypes.data, bufiq.nbytes)
+def place_RKInt16C_array_v1(dst, src):
+    buf = np.zeros((src.size * 2), dtype=np.int16)
+    buf[::2] = src.real.astype(np.int16)
+    buf[1::2] = -src.imag.astype(np.int16)
+    ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), buf.ctypes.data, buf.nbytes)
+
+
+def place_RKInt16C_to_pulse(pulse, src):
+    buf = np.zeros((src.shape[1] * 2), dtype=np.int16)
+    for p in range(2):
+        dst = RKGetInt16CDataFromPulse(pulse, p)
+        buf[::2] = src.real[p, :].astype(np.int16)
+        buf[1::2] = -src.imag[p, :].astype(np.int16)
+        ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), buf.ctypes.data, buf.nbytes)
 
 
 def read_RKComplex_from_waveform(waveform, index=0):

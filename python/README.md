@@ -16,7 +16,8 @@ sweep = radarkit.sweep.Sweep(FILE)
 rhi = radarkit.chart.ChartRHI()
 rhi.set_data(sweep)
 ```
-![RH∏I](blob/rhi.png)
+
+![RHI](https://github.com/OURadar/RadarKit/blob/master/python/blob/rhi.png?raw=true)
 
 
 ## PPI Example
@@ -29,4 +30,5 @@ sweep = radarkit.sweep.Sweep(FILE)
 ppi = radarkit.chart.ChartPPI((1920, 1080), titlecolor="skyblue")
 ppi.set_data(sweep)
 ```
-![PPI](blob/ppi.png)
+
+![PPI](https://github.com/OURadar/RadarKit/blob/master/python/blob/ppi.png?raw=true)

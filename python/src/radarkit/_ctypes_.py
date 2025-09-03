@@ -1136,43 +1136,43 @@ if _libs["radarkit"].has("__errno_location", "cdecl"):
     __errno_location.argtypes = []
     __errno_location.restype = POINTER(c_int)
 
-RKByte = uint8_t# RKTypes.h: 191
+RKByte = uint8_t# RKTypes.h: 190
 
-RKFloat = c_float# RKTypes.h: 192
+RKFloat = c_float# RKTypes.h: 191
 
-RKResult = c_ptrdiff_t# RKTypes.h: 193
+RKResult = c_ptrdiff_t# RKTypes.h: 192
 
-RKBuffer = POINTER(uint8_t)# RKTypes.h: 194
+RKBuffer = POINTER(uint8_t)# RKTypes.h: 193
 
-RKTransceiver = POINTER(None)# RKTypes.h: 195
+RKTransceiver = POINTER(None)# RKTypes.h: 194
 
-RKPedestal = POINTER(None)# RKTypes.h: 196
+RKPedestal = POINTER(None)# RKTypes.h: 195
 
-RKHealthRelay = POINTER(None)# RKTypes.h: 197
+RKHealthRelay = POINTER(None)# RKTypes.h: 196
 
-RKMasterController = POINTER(None)# RKTypes.h: 198
+RKMasterController = POINTER(None)# RKTypes.h: 197
 
-RKUserResource = POINTER(None)# RKTypes.h: 199
+RKUserResource = POINTER(None)# RKTypes.h: 198
 
-RKUserModule = POINTER(None)# RKTypes.h: 200
+RKUserModule = POINTER(None)# RKTypes.h: 199
 
-RKCompressor = POINTER(None)# RKTypes.h: 201
+RKCompressor = POINTER(None)# RKTypes.h: 200
 
-RKName = c_char * int(128)# RKTypes.h: 202
+RKName = c_char * int(128)# RKTypes.h: 201
 
-RKChildName = c_char * int(160)# RKTypes.h: 203
+RKChildName = c_char * int(160)# RKTypes.h: 202
 
-RKShortName = c_char * int(20)# RKTypes.h: 204
+RKShortName = c_char * int(20)# RKTypes.h: 203
 
-RKCommand = c_char * int(512)# RKTypes.h: 205
+RKCommand = c_char * int(512)# RKTypes.h: 204
 
-RKProductId = uint8_t# RKTypes.h: 206
+RKProductId = uint8_t# RKTypes.h: 205
 
-RKIdentifier = uint64_t# RKTypes.h: 207
+RKIdentifier = uint64_t# RKTypes.h: 206
 
-RKConst = c_float# RKTypes.h: 208
+RKConst = c_float# RKTypes.h: 207
 
-# RKTypes.h: 222
+# RKTypes.h: 221
 class struct_rk_int16c(Structure):
     pass
 
@@ -1186,9 +1186,9 @@ struct_rk_int16c._fields_ = [
     ('q', c_int16),
 ]
 
-RKInt16C = struct_rk_int16c# RKTypes.h: 222
+RKInt16C = struct_rk_int16c# RKTypes.h: 221
 
-# RKTypes.h: 230
+# RKTypes.h: 229
 class struct_rk_complex(Structure):
     pass
 
@@ -1202,9 +1202,9 @@ struct_rk_complex._fields_ = [
     ('q', RKFloat),
 ]
 
-RKComplex = struct_rk_complex# RKTypes.h: 230
+RKComplex = struct_rk_complex# RKTypes.h: 229
 
-# RKTypes.h: 238
+# RKTypes.h: 237
 class struct_rk_iqz(Structure):
     pass
 
@@ -1218,9 +1218,9 @@ struct_rk_iqz._fields_ = [
     ('q', POINTER(RKFloat)),
 ]
 
-RKIQZ = struct_rk_iqz# RKTypes.h: 238
+RKIQZ = struct_rk_iqz# RKTypes.h: 237
 
-# RKTypes.h: 248
+# RKTypes.h: 247
 class struct_rk_modulo_path(Structure):
     pass
 
@@ -1238,9 +1238,9 @@ struct_rk_modulo_path._fields_ = [
     ('planIndex', uint32_t),
 ]
 
-RKModuloPath = struct_rk_modulo_path# RKTypes.h: 248
+RKModuloPath = struct_rk_modulo_path# RKTypes.h: 247
 
-# RKTypes.h: 254
+# RKTypes.h: 253
 class struct_anon_65(Structure):
     pass
 
@@ -1252,7 +1252,7 @@ struct_anon_65._fields_ = [
     ('byte', RKByte * int(4)),
 ]
 
-# RKTypes.h: 255
+# RKTypes.h: 254
 class struct_anon_66(Structure):
     pass
 
@@ -1270,7 +1270,7 @@ struct_anon_66._fields_ = [
     ('u8_4', uint8_t),
 ]
 
-# RKTypes.h: 256
+# RKTypes.h: 255
 class struct_anon_67(Structure):
     pass
 
@@ -1288,7 +1288,7 @@ struct_anon_67._fields_ = [
     ('i8_4', c_int8),
 ]
 
-# RKTypes.h: 257
+# RKTypes.h: 256
 class struct_anon_68(Structure):
     pass
 
@@ -1302,7 +1302,7 @@ struct_anon_68._fields_ = [
     ('u16_2', uint16_t),
 ]
 
-# RKTypes.h: 258
+# RKTypes.h: 257
 class struct_anon_69(Structure):
     pass
 
@@ -1316,7 +1316,7 @@ struct_anon_69._fields_ = [
     ('i16_2', c_int16),
 ]
 
-# RKTypes.h: 259
+# RKTypes.h: 258
 class struct_anon_70(Structure):
     pass
 
@@ -1328,7 +1328,7 @@ struct_anon_70._fields_ = [
     ('u32', uint32_t),
 ]
 
-# RKTypes.h: 260
+# RKTypes.h: 259
 class struct_anon_71(Structure):
     pass
 
@@ -1340,7 +1340,7 @@ struct_anon_71._fields_ = [
     ('i32', c_int32),
 ]
 
-# RKTypes.h: 261
+# RKTypes.h: 260
 class struct_anon_72(Structure):
     pass
 
@@ -1352,7 +1352,7 @@ struct_anon_72._fields_ = [
     ('f', c_float),
 ]
 
-# RKTypes.h: 262
+# RKTypes.h: 261
 class union_rk_four_byte(Union):
     pass
 
@@ -1388,9 +1388,9 @@ union_rk_four_byte._fields_ = [
     ('unnamed_8', struct_anon_72),
 ]
 
-RKFourByte = union_rk_four_byte# RKTypes.h: 262
+RKFourByte = union_rk_four_byte# RKTypes.h: 261
 
-# RKTypes.h: 268
+# RKTypes.h: 267
 class struct_anon_73(Structure):
     pass
 
@@ -1406,7 +1406,7 @@ struct_anon_73._fields_ = [
     ('s', uint8_t, 1),
 ]
 
-# RKTypes.h: 275
+# RKTypes.h: 274
 class union_rk_half_float_t(Union):
     pass
 
@@ -1425,9 +1425,9 @@ union_rk_half_float_t._fields_ = [
     ('word', uint16_t),
 ]
 
-RKWordFloat16 = union_rk_half_float_t# RKTypes.h: 275
+RKWordFloat16 = union_rk_half_float_t# RKTypes.h: 274
 
-# RKTypes.h: 281
+# RKTypes.h: 280
 class struct_anon_74(Structure):
     pass
 
@@ -1443,7 +1443,7 @@ struct_anon_74._fields_ = [
     ('s', uint8_t, 1),
 ]
 
-# RKTypes.h: 289
+# RKTypes.h: 288
 class union_rk_single_float_t(Union):
     pass
 
@@ -1464,9 +1464,9 @@ union_rk_single_float_t._fields_ = [
     ('value', c_float),
 ]
 
-RKWordFloat32 = union_rk_single_float_t# RKTypes.h: 289
+RKWordFloat32 = union_rk_single_float_t# RKTypes.h: 288
 
-# RKTypes.h: 295
+# RKTypes.h: 294
 class struct_anon_75(Structure):
     pass
 
@@ -1482,7 +1482,7 @@ struct_anon_75._fields_ = [
     ('s', uint8_t, 1),
 ]
 
-# RKTypes.h: 303
+# RKTypes.h: 302
 class union_rk_double_float_t(Union):
     pass
 
@@ -1503,9 +1503,9 @@ union_rk_double_float_t._fields_ = [
     ('value', c_double),
 ]
 
-RKWordFloat64 = union_rk_double_float_t# RKTypes.h: 303
+RKWordFloat64 = union_rk_double_float_t# RKTypes.h: 302
 
-# RKTypes.h: 306
+# RKTypes.h: 305
 class struct_anon_76(Structure):
     pass
 
@@ -1539,7 +1539,7 @@ struct_anon_76._fields_ = [
     ('upperBoundFrequency', c_float),
 ]
 
-# RKTypes.h: 321
+# RKTypes.h: 320
 class union_rk_filter_anchor(Union):
     pass
 
@@ -1556,9 +1556,9 @@ union_rk_filter_anchor._fields_ = [
     ('bytes', c_char * int(64)),
 ]
 
-RKFilterAnchor = union_rk_filter_anchor# RKTypes.h: 321
+RKFilterAnchor = union_rk_filter_anchor# RKTypes.h: 320
 
-RKFilterAnchorGroup = RKFilterAnchor * int(8)# RKTypes.h: 323
+RKFilterAnchorGroup = RKFilterAnchor * int(8)# RKTypes.h: 322
 
 enum_anon_77 = c_int# RKTypes.h: 419
 
@@ -1570,7 +1570,9 @@ RKResultTimeout = (RKResultTooBig + 1)# RKTypes.h: 419
 
 RKResultNullInput = (RKResultTimeout + 1)# RKTypes.h: 419
 
-RKResultEngineNotWired = (RKResultNullInput + 1)# RKTypes.h: 419
+RKResultInconsistency = (RKResultNullInput + 1)# RKTypes.h: 419
+
+RKResultEngineNotWired = (RKResultInconsistency + 1)# RKTypes.h: 419
 
 RKResultEngineNotActive = (RKResultEngineNotWired + 1)# RKTypes.h: 419
 
@@ -2980,7 +2982,7 @@ RKRadarHubTypeRadialR = 21# RKTypes.h: 1146
 
 RKWriterOption = uint32_t# RKTypes.h: 1170
 
-enum_RKWriterOption = c_int# RKTypes.h: 1171
+enum_anon_110 = c_int# RKTypes.h: 1171
 
 RKWriterOptionNone = 0# RKTypes.h: 1171
 
@@ -2992,7 +2994,7 @@ RKWriterOptionStringVariables = (1 << 2)# RKTypes.h: 1171
 
 RKMomentMethod = uint8_t# RKTypes.h: 1178
 
-enum_RKMomentMethod = c_int# RKTypes.h: 1179
+enum_anon_111 = c_int# RKTypes.h: 1179
 
 RKMomentMethodNone = 0# RKTypes.h: 1179
 
@@ -3013,11 +3015,11 @@ RKMomentMethodSpectralMoment = (RKMomentMethodMultiLag4 + 1)# RKTypes.h: 1179
 RKMomentMethodUserDefined = (RKMomentMethodSpectralMoment + 1)# RKTypes.h: 1179
 
 # RKTypes.h: 1192
-class struct_anon_110(Structure):
+class struct_anon_112(Structure):
     pass
 
-struct_anon_110._pack_ = 1
-struct_anon_110.__slots__ = [
+struct_anon_112._pack_ = 1
+struct_anon_112.__slots__ = [
     'type',
     'counter',
     'startElevation',
@@ -3028,7 +3030,7 @@ struct_anon_110.__slots__ = [
     'rangeDelta',
     'gateCount',
 ]
-struct_anon_110._fields_ = [
+struct_anon_112._fields_ = [
     ('type', uint8_t),
     ('counter', uint8_t),
     ('startElevation', c_int16),
@@ -3053,22 +3055,22 @@ union_rk_radarhub_ray_header._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_radarhub_ray_header._fields_ = [
-    ('unnamed_1', struct_anon_110),
+    ('unnamed_1', struct_anon_112),
     ('bytes', RKByte * int(16)),
 ]
 
 RKRadarHubRayHeader = union_rk_radarhub_ray_header# RKTypes.h: 1204
 
 # RKTypes.h: 1207
-class struct_anon_111(Structure):
+class struct_anon_113(Structure):
     pass
 
-struct_anon_111._pack_ = 1
-struct_anon_111.__slots__ = [
+struct_anon_113._pack_ = 1
+struct_anon_113.__slots__ = [
     'header',
     'data',
 ]
-struct_anon_111._fields_ = [
+struct_anon_113._fields_ = [
     ('header', RKRadarHubRayHeader),
     ('data', RKByte * int(262144)),
 ]
@@ -3086,7 +3088,7 @@ union_rk_radarhub_ray._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_radarhub_ray._fields_ = [
-    ('unnamed_1', struct_anon_111),
+    ('unnamed_1', struct_anon_113),
     ('bytes', POINTER(RKByte)),
 ]
 
@@ -3207,11 +3209,11 @@ struct_rk_waveform._fields_ = [
 RKWaveform = struct_rk_waveform# RKTypes.h: 1268
 
 # RKTypes.h: 1271
-class struct_anon_112(Structure):
+class struct_anon_114(Structure):
     pass
 
-struct_anon_112._pack_ = 1
-struct_anon_112.__slots__ = [
+struct_anon_114._pack_ = 1
+struct_anon_114.__slots__ = [
     'count',
     'depth',
     'type',
@@ -3220,7 +3222,7 @@ struct_anon_112.__slots__ = [
     'fs',
     'filterCounts',
 ]
-struct_anon_112._fields_ = [
+struct_anon_114._fields_ = [
     ('count', uint8_t),
     ('depth', uint32_t),
     ('type', RKWaveformType),
@@ -3243,7 +3245,7 @@ union_rk_wave_file_header._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_wave_file_header._fields_ = [
-    ('unnamed_1', struct_anon_112),
+    ('unnamed_1', struct_anon_114),
     ('bytes', c_char * int(512)),
 ]
 
@@ -3294,11 +3296,11 @@ struct_rk_waveform_response._fields_ = [
 RKWaveformResponse = struct_rk_waveform_response# RKTypes.h: 1297
 
 # RKTypes.h: 1303
-class struct_anon_113(Structure):
+class struct_anon_115(Structure):
     pass
 
-struct_anon_113._pack_ = 1
-struct_anon_113.__slots__ = [
+struct_anon_115._pack_ = 1
+struct_anon_115.__slots__ = [
     'i',
     'volumeIndex',
     'sweepIndex',
@@ -3330,7 +3332,7 @@ struct_anon_113.__slots__ = [
     'userFloatParameters',
     'vcpDefinition',
 ]
-struct_anon_113._fields_ = [
+struct_anon_115._fields_ = [
     ('i', RKIdentifier),
     ('volumeIndex', RKIdentifier),
     ('sweepIndex', RKIdentifier),
@@ -3376,25 +3378,25 @@ union_rk_config._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_config._fields_ = [
-    ('unnamed_1', struct_anon_113),
+    ('unnamed_1', struct_anon_115),
     ('bytes', RKByte * int(1024)),
 ]
 
 RKConfig = union_rk_config# RKTypes.h: 1336
 
 # RKTypes.h: 1342
-class struct_anon_114(Structure):
+class struct_anon_116(Structure):
     pass
 
-struct_anon_114._pack_ = 1
-struct_anon_114.__slots__ = [
+struct_anon_116._pack_ = 1
+struct_anon_116.__slots__ = [
     'i',
     'flag',
     'time',
     'timeDouble',
     'string',
 ]
-struct_anon_114._fields_ = [
+struct_anon_116._fields_ = [
     ('i', RKIdentifier),
     ('flag', RKHealthFlag),
     ('time', struct_timeval),
@@ -3415,7 +3417,7 @@ union_rk_health._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_health._fields_ = [
-    ('unnamed_1', struct_anon_114),
+    ('unnamed_1', struct_anon_116),
     ('bytes', POINTER(RKByte)),
 ]
 
@@ -3440,11 +3442,11 @@ struct_rk_nodal_health._fields_ = [
 RKNodalHealth = struct_rk_nodal_health# RKTypes.h: 1359
 
 # RKTypes.h: 1365
-class struct_anon_115(Structure):
+class struct_anon_117(Structure):
     pass
 
-struct_anon_115._pack_ = 1
-struct_anon_115.__slots__ = [
+struct_anon_117._pack_ = 1
+struct_anon_117.__slots__ = [
     'i',
     'tic',
     'rawElevation',
@@ -3473,7 +3475,7 @@ struct_anon_115.__slots__ = [
     'volumeIndex',
     'sweepIndex',
 ]
-struct_anon_115._fields_ = [
+struct_anon_117._fields_ = [
     ('i', RKIdentifier),
     ('tic', uint64_t),
     ('rawElevation', RKFourByte),
@@ -3516,7 +3518,7 @@ union_rk_position._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_position._fields_ = [
-    ('unnamed_1', struct_anon_115),
+    ('unnamed_1', struct_anon_117),
     ('bytes', RKByte * int(128)),
 ]
 
@@ -3543,11 +3545,11 @@ struct_rk_scan_action._fields_ = [
 RKScanAction = struct_rk_scan_action# RKTypes.h: 1402
 
 # RKTypes.h: 1405
-class struct_anon_116(Structure):
+class struct_anon_118(Structure):
     pass
 
-struct_anon_116._pack_ = 1
-struct_anon_116.__slots__ = [
+struct_anon_118._pack_ = 1
+struct_anon_118.__slots__ = [
     'i',
     'n',
     't',
@@ -3571,7 +3573,7 @@ struct_anon_116.__slots__ = [
     'azimuthVelocityDegreesPerSecond',
     'compressorDataType',
 ]
-struct_anon_116._fields_ = [
+struct_anon_118._fields_ = [
     ('i', RKIdentifier),
     ('n', RKIdentifier),
     ('t', uint64_t),
@@ -3609,7 +3611,7 @@ union_rk_pulse_header._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_pulse_header._fields_ = [
-    ('unnamed_1', struct_anon_116),
+    ('unnamed_1', struct_anon_118),
     ('bytes', RKByte * int(192)),
 ]
 
@@ -3636,33 +3638,33 @@ struct_rk_pulse_parameters._fields_ = [
 RKPulseParameters = struct_rk_pulse_parameters# RKTypes.h: 1440
 
 # RKTypes.h: 1449
-class struct_anon_117(Structure):
+class struct_anon_119(Structure):
     pass
 
-struct_anon_117._pack_ = 1
-struct_anon_117.__slots__ = [
+struct_anon_119._pack_ = 1
+struct_anon_119.__slots__ = [
     'header',
     'parameters',
 ]
-struct_anon_117._fields_ = [
+struct_anon_119._fields_ = [
     ('header', RKPulseHeader),
     ('parameters', RKPulseParameters),
 ]
 
 # RKTypes.h: 1448
-class union_anon_118(Union):
+class union_anon_120(Union):
     pass
 
-union_anon_118._pack_ = 1
-union_anon_118.__slots__ = [
+union_anon_120._pack_ = 1
+union_anon_120.__slots__ = [
     'unnamed_1',
     'headerBytes',
 ]
-union_anon_118._anonymous_ = [
+union_anon_120._anonymous_ = [
     'unnamed_1',
 ]
-union_anon_118._fields_ = [
-    ('unnamed_1', struct_anon_117),
+union_anon_120._fields_ = [
+    ('unnamed_1', struct_anon_119),
     ('headerBytes', RKByte * int(384)),
 ]
 
@@ -3679,7 +3681,7 @@ struct_rk_pulse._anonymous_ = [
     'unnamed_1',
 ]
 struct_rk_pulse._fields_ = [
-    ('unnamed_1', union_anon_118),
+    ('unnamed_1', union_anon_120),
     ('data', RKByte * int(0)),
 ]
 
@@ -3750,15 +3752,15 @@ struct_rk_ray_header._fields_ = [
 RKRayHeader = struct_rk_ray_header# RKTypes.h: 1488
 
 # RKTypes.h: 1496
-class union_anon_119(Union):
+class union_anon_121(Union):
     pass
 
-union_anon_119._pack_ = 1
-union_anon_119.__slots__ = [
+union_anon_121._pack_ = 1
+union_anon_121.__slots__ = [
     'header',
     'headerBytes',
 ]
-union_anon_119._fields_ = [
+union_anon_121._fields_ = [
     ('header', RKRayHeader),
     ('headerBytes', RKByte * int(128)),
 ]
@@ -3776,7 +3778,7 @@ struct_rk_ray._anonymous_ = [
     'unnamed_1',
 ]
 struct_rk_ray._fields_ = [
-    ('unnamed_1', union_anon_119),
+    ('unnamed_1', union_anon_121),
     ('data', RKByte * int(0)),
 ]
 
@@ -3841,11 +3843,11 @@ struct_rk_sweep._fields_ = [
 RKSweep = struct_rk_sweep# RKTypes.h: 1530
 
 # RKTypes.h: 1533
-class struct_anon_120(Structure):
+class struct_anon_122(Structure):
     pass
 
-struct_anon_120._pack_ = 1
-struct_anon_120.__slots__ = [
+struct_anon_122._pack_ = 1
+struct_anon_122.__slots__ = [
     'preface',
     'format',
     'dataType',
@@ -3853,7 +3855,7 @@ struct_anon_120.__slots__ = [
     'desc',
     'config',
 ]
-struct_anon_120._fields_ = [
+struct_anon_122._fields_ = [
     ('preface', RKName),
     ('format', uint32_t),
     ('dataType', RKRawDataType),
@@ -3875,7 +3877,7 @@ union_rk_file_header._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_file_header._fields_ = [
-    ('unnamed_1', struct_anon_120),
+    ('unnamed_1', struct_anon_122),
     ('bytes', RKByte * int(4096)),
 ]
 
@@ -4028,11 +4030,11 @@ struct_rk_file_monitor._fields_ = [
 RKFileMonitor = struct_rk_file_monitor# RKTypes.h: 1619
 
 # RKTypes.h: 1626
-class struct_anon_121(Structure):
+class struct_anon_123(Structure):
     pass
 
-struct_anon_121._pack_ = 1
-struct_anon_121.__slots__ = [
+struct_anon_123._pack_ = 1
+struct_anon_123.__slots__ = [
     'key',
     'name',
     'unit',
@@ -4050,7 +4052,7 @@ struct_anon_121.__slots__ = [
     'cfScale',
     'cfOffset',
 ]
-struct_anon_121._fields_ = [
+struct_anon_123._fields_ = [
     ('key', uint32_t),
     ('name', RKName),
     ('unit', RKName),
@@ -4082,18 +4084,18 @@ union_rk_product_desc._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_product_desc._fields_ = [
-    ('unnamed_1', struct_anon_121),
+    ('unnamed_1', struct_anon_123),
     ('bytes', RKByte * int(1024)),
 ]
 
 RKProductDesc = union_rk_product_desc# RKTypes.h: 1645
 
 # RKTypes.h: 1648
-class struct_anon_122(Structure):
+class struct_anon_124(Structure):
     pass
 
-struct_anon_122._pack_ = 1
-struct_anon_122.__slots__ = [
+struct_anon_124._pack_ = 1
+struct_anon_124.__slots__ = [
     'radarName',
     'latitude',
     'longitude',
@@ -4128,7 +4130,7 @@ struct_anon_122.__slots__ = [
     'vcpDefinition',
     'suggestedFilename',
 ]
-struct_anon_122._fields_ = [
+struct_anon_124._fields_ = [
     ('radarName', RKName),
     ('latitude', c_double),
     ('longitude', c_double),
@@ -4177,7 +4179,7 @@ union_rk_product_header._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_product_header._fields_ = [
-    ('unnamed_1', struct_anon_122),
+    ('unnamed_1', struct_anon_124),
     ('bytes', RKByte * int(2048)),
 ]
 
@@ -5770,7 +5772,7 @@ if _libs["radarkit"].has("RKShowWordFloat64", "cdecl"):
 
 RKCellMask = c_int8# headers/RadarKit/RKScratch.h: 15
 
-enum_anon_167 = c_int# headers/RadarKit/RKScratch.h: 16
+enum_anon_169 = c_int# headers/RadarKit/RKScratch.h: 16
 
 RKCellMaskNull = 0# headers/RadarKit/RKScratch.h: 16
 
@@ -6112,8 +6114,8 @@ struct_rk_pulse_engine._fields_ = [
     ('tidPulseWatcher', pthread_t),
     ('mutex', pthread_mutex_t),
     ('doneStatus', RKPulseStatus),
-    ('statusBuffer', (c_char * int(256)) * int(10)),
-    ('pulseStatusBuffer', (c_char * int(256)) * int(10)),
+    ('statusBuffer', (c_char * int(256)) * int(64)),
+    ('pulseStatusBuffer', (c_char * int(256)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('pulseStatusBufferIndex', uint32_t),
     ('state', RKEngineState),
@@ -6661,7 +6663,7 @@ struct_rk_data_recorder._fields_ = [
     ('fileWriteSize', uint64_t),
     ('filePulseCount', uint64_t),
     ('tidPulseRecorder', pthread_t),
-    ('statusBuffer', (c_char * int(256)) * int(10)),
+    ('statusBuffer', (c_char * int(256)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -6930,8 +6932,8 @@ struct_rk_moment_engine._fields_ = [
     ('userLagChoice', uint8_t),
     ('business', uint32_t),
     ('processedPulseIndex', uint32_t),
-    ('statusBuffer', (c_char * int(256)) * int(10)),
-    ('rayStatusBuffer', (c_char * int(256)) * int(10)),
+    ('statusBuffer', (c_char * int(256)) * int(64)),
+    ('rayStatusBuffer', (c_char * int(256)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('rayStatusBufferIndex', uint32_t),
     ('state', RKEngineState),
@@ -7172,7 +7174,7 @@ if _libs["radarkit"].has("RKProductCollectionFree", "cdecl"):
 # headers/RadarKit/RKProductFile.h: 41
 if _libs["radarkit"].has("RKProductCollectionInitWithFilename", "cdecl"):
     RKProductCollectionInitWithFilename = _libs["radarkit"].get("RKProductCollectionInitWithFilename", "cdecl")
-    RKProductCollectionInitWithFilename.argtypes = [String]
+    RKProductCollectionInitWithFilename.argtypes = [String, c_int]
     RKProductCollectionInitWithFilename.restype = POINTER(RKProductCollection)
 
 # headers/RadarKit/RKProductFile.h: 44
@@ -7186,6 +7188,12 @@ if _libs["radarkit"].has("RKProductCollectionFileWriterCF", "cdecl"):
     RKProductCollectionFileWriterCF = _libs["radarkit"].get("RKProductCollectionFileWriterCF", "cdecl")
     RKProductCollectionFileWriterCF.argtypes = [POINTER(RKProductCollection), String, RKWriterOption]
     RKProductCollectionFileWriterCF.restype = c_int
+
+# headers/RadarKit/RKProductFile.h: 47
+if _libs["radarkit"].has("RKProductCollectionSummary", "cdecl"):
+    RKProductCollectionSummary = _libs["radarkit"].get("RKProductCollectionSummary", "cdecl")
+    RKProductCollectionSummary.argtypes = [POINTER(RKProductCollection)]
+    RKProductCollectionSummary.restype = None
 
 # RKSweepEngine.h: 27
 class struct_rk_sweep_scratch(Structure):
@@ -7278,7 +7286,7 @@ struct_rk_sweep_engine._fields_ = [
     ('productIds', RKProductId * int(RKProductIndexCount)),
     ('business', uint32_t),
     ('processedRayIndex', uint32_t),
-    ('statusBuffer', (c_char * int(256)) * int(10)),
+    ('statusBuffer', (c_char * int(256)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -7511,7 +7519,7 @@ struct_rk_pulse_ring_filter_engine._fields_ = [
     ('workerTaskDone', POINTER(c_bool)),
     ('tidPulseWatcher', pthread_t),
     ('mutex', pthread_mutex_t),
-    ('statusBuffer', (c_char * int(4096)) * int(10)),
+    ('statusBuffer', (c_char * int(4096)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -7615,17 +7623,17 @@ RKNetworkSocketType = c_int# headers/RadarKit/RKNetwork.h: 21
 RKNetworkMessageFormat = c_int# headers/RadarKit/RKNetwork.h: 27
 
 # headers/RadarKit/RKNetwork.h: 57
-class struct_anon_172(Structure):
+class struct_anon_174(Structure):
     pass
 
-struct_anon_172._pack_ = 1
-struct_anon_172.__slots__ = [
+struct_anon_174._pack_ = 1
+struct_anon_174.__slots__ = [
     'type',
     'subtype',
     'size',
     'decodedSize',
 ]
-struct_anon_172._fields_ = [
+struct_anon_174._fields_ = [
     ('type', uint16_t),
     ('subtype', uint16_t),
     ('size', uint32_t),
@@ -7645,7 +7653,7 @@ union_rk_net_delimiter._anonymous_ = [
     'unnamed_1',
 ]
 union_rk_net_delimiter._fields_ = [
-    ('unnamed_1', struct_anon_172),
+    ('unnamed_1', struct_anon_174),
     ('bytes', RKByte * int(16)),
 ]
 
@@ -7823,7 +7831,7 @@ struct_rk_health_engine._fields_ = [
     ('verbose', uint8_t),
     ('fid', POINTER(FILE)),
     ('tidHealthConsolidator', pthread_t),
-    ('statusBuffer', (c_char * int(4096)) * int(10)),
+    ('statusBuffer', (c_char * int(4096)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -7884,8 +7892,8 @@ struct_rk_position_engine._fields_ = [
     ('threadId', pthread_t),
     ('startTime', c_double),
     ('processedPulseIndex', uint32_t),
-    ('statusBuffer', (c_char * int(256)) * int(10)),
-    ('positionStringBuffer', (c_char * int(256)) * int(10)),
+    ('statusBuffer', (c_char * int(256)) * int(64)),
+    ('positionStringBuffer', (c_char * int(256)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -8019,7 +8027,7 @@ struct_rk_position_steer_engine._fields_ = [
     ('dump', c_char * int(4096)),
     ('threadId', pthread_t),
     ('memoryUsage', c_size_t),
-    ('statusBuffer', (c_char * int(256)) * int(10)),
+    ('statusBuffer', (c_char * int(256)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -8062,7 +8070,7 @@ struct_rk_health_logger._fields_ = [
     ('fileManager', POINTER(RKFileManager)),
     ('fid', POINTER(FILE)),
     ('tidBackground', pthread_t),
-    ('statusBuffer', (c_char * int(4096)) * int(10)),
+    ('statusBuffer', (c_char * int(4096)) * int(64)),
     ('statusBufferIndex', uint32_t),
     ('state', RKEngineState),
     ('tic', uint64_t),
@@ -8135,8 +8143,8 @@ struct_rk_radar_relay._fields_ = [
     ('sweepRayIndex', uint32_t),
     ('sweepTic', struct_timeval),
     ('sweepToc', struct_timeval),
-    ('pulseStatusBuffer', (c_char * int(4096)) * int(10)),
-    ('rayStatusBuffer', (c_char * int(4096)) * int(10)),
+    ('pulseStatusBuffer', (c_char * int(4096)) * int(64)),
+    ('rayStatusBuffer', (c_char * int(4096)) * int(64)),
     ('pulseStatusBufferIndex', uint32_t),
     ('rayStatusBufferIndex', uint32_t),
     ('state', RKEngineState),
@@ -8392,7 +8400,7 @@ struct_rk_radar._fields_ = [
 
 RKTestFlag = uint8_t# RKTest.h: 18
 
-enum_anon_204 = c_int# RKTest.h: 19
+enum_anon_206 = c_int# RKTest.h: 19
 
 RKTestFlagNone = 0# RKTest.h: 19
 
@@ -8402,7 +8410,7 @@ RKTestFlagShowResults = (1 << 1)# RKTest.h: 19
 
 RKTestSIMDFlag = uint8_t# RKTest.h: 25
 
-enum_anon_205 = c_int# RKTest.h: 26
+enum_anon_207 = c_int# RKTest.h: 26
 
 RKTestSIMDFlagNull = 0# RKTest.h: 26
 
@@ -8416,7 +8424,7 @@ RKTestSIMDFlagPerformanceTestAll = (RKTestSIMDFlagPerformanceTestArithmetic | RK
 
 RKAxisAction = uint8_t# RKTest.h: 34
 
-enum_anon_206 = c_int# RKTest.h: 35
+enum_anon_208 = c_int# RKTest.h: 35
 
 RKAxisActionStop = 0# RKTest.h: 35
 
@@ -8972,24 +8980,18 @@ if _libs["radarkit"].has("RKTestHealthRelayFree", "cdecl"):
     RKTestHealthRelayFree.restype = c_int
 
 # RKTest.h: 208
-if _libs["radarkit"].has("RKTestProductWriteFromPlainToProduct", "cdecl"):
-    RKTestProductWriteFromPlainToProduct = _libs["radarkit"].get("RKTestProductWriteFromPlainToProduct", "cdecl")
-    RKTestProductWriteFromPlainToProduct.argtypes = []
-    RKTestProductWriteFromPlainToProduct.restype = None
-
-# RKTest.h: 212
 if _libs["radarkit"].has("RKTestCommandQueue", "cdecl"):
     RKTestCommandQueue = _libs["radarkit"].get("RKTestCommandQueue", "cdecl")
     RKTestCommandQueue.argtypes = []
     RKTestCommandQueue.restype = None
 
-# RKTest.h: 213
+# RKTest.h: 209
 if _libs["radarkit"].has("RKTestSingleCommand", "cdecl"):
     RKTestSingleCommand = _libs["radarkit"].get("RKTestSingleCommand", "cdecl")
     RKTestSingleCommand.argtypes = []
     RKTestSingleCommand.restype = None
 
-# RKTest.h: 214
+# RKTest.h: 210
 if _libs["radarkit"].has("RKTestExperiment", "cdecl"):
     RKTestExperiment = _libs["radarkit"].get("RKTestExperiment", "cdecl")
     RKTestExperiment.argtypes = [String]
@@ -9089,19 +9091,19 @@ except:
 
 # RKTypes.h: 62
 try:
-    RKBufferSSlotCount = 10
+    RKBufferCSlotCount = 10
 except:
     pass
 
 # RKTypes.h: 63
 try:
-    RKBufferCSlotCount = 10
+    RKBufferHSlotCount = 50
 except:
     pass
 
 # RKTypes.h: 64
 try:
-    RKBufferHSlotCount = 50
+    RKBufferSSlotCount = 64
 except:
     pass
 
@@ -9155,543 +9157,537 @@ except:
 
 # RKTypes.h: 73
 try:
-    RKBaseProductCount = 19
+    RKMaximumLagCount = 5
 except:
     pass
 
 # RKTypes.h: 74
 try:
-    RKMaximumLagCount = 5
+    RKMaximumFilterCount = 8
 except:
     pass
 
 # RKTypes.h: 75
 try:
-    RKMaximumFilterCount = 8
+    RKMaximumWaveformCount = 22
 except:
     pass
 
 # RKTypes.h: 76
 try:
-    RKMaximumWaveformCount = 22
+    RKWorkerDutyCycleBufferDepth = 1000
 except:
     pass
 
 # RKTypes.h: 77
 try:
-    RKWorkerDutyCycleBufferDepth = 1000
+    RKMaximumPulsesPerRay = 2000
 except:
     pass
 
 # RKTypes.h: 78
 try:
-    RKMaximumPulsesPerRay = 2000
+    RKMaximumRaysPerSweep = 1500
 except:
     pass
 
 # RKTypes.h: 79
 try:
-    RKMaximumRaysPerSweep = 1500
+    RKMaximumPacketSize = ((16 * 1024) * 1024)
 except:
     pass
 
 # RKTypes.h: 80
 try:
-    RKMaximumPacketSize = ((16 * 1024) * 1024)
+    RKNetworkTimeoutSeconds = 20
 except:
     pass
 
 # RKTypes.h: 81
 try:
-    RKNetworkTimeoutSeconds = 20
+    RKNetworkReconnectSeconds = 3
 except:
     pass
 
 # RKTypes.h: 82
 try:
-    RKNetworkReconnectSeconds = 3
+    RKLagRedThreshold = 0.5
 except:
     pass
 
 # RKTypes.h: 83
 try:
-    RKLagRedThreshold = 0.5
+    RKLagOrangeThreshold = 0.7
 except:
     pass
 
 # RKTypes.h: 84
 try:
-    RKLagOrangeThreshold = 0.7
+    RKDutyCyleRedThreshold = 0.9
 except:
     pass
 
 # RKTypes.h: 85
 try:
-    RKDutyCyleRedThreshold = 0.9
+    RKDutyCyleOrangeThreshold = 0.8
 except:
     pass
 
 # RKTypes.h: 86
 try:
-    RKDutyCyleOrangeThreshold = 0.8
+    RKStatusBarWidth = 6
 except:
     pass
 
 # RKTypes.h: 87
 try:
-    RKStatusBarWidth = 6
+    RKPulseCountForNoiseMeasurement = 200
 except:
     pass
 
 # RKTypes.h: 88
 try:
-    RKPulseCountForNoiseMeasurement = 200
+    RKProcessorStatusPulseCoreCount = 16
 except:
     pass
 
 # RKTypes.h: 89
 try:
-    RKProcessorStatusPulseCoreCount = 16
+    RKProcessorStatusRingCoreCount = 16
 except:
     pass
 
 # RKTypes.h: 90
 try:
-    RKProcessorStatusRingCoreCount = 16
+    RKProcessorStatusRayCoreCount = 16
 except:
     pass
 
 # RKTypes.h: 91
 try:
-    RKProcessorStatusRayCoreCount = 16
+    RKHostMonitorPingInterval = 5
 except:
     pass
 
 # RKTypes.h: 92
 try:
-    RKHostMonitorPingInterval = 5
+    RKMaximumProductCount = 64
 except:
     pass
 
 # RKTypes.h: 93
 try:
-    RKMaximumProductCount = 64
+    RKMaximumIIRFilterTaps = 8
 except:
     pass
 
 # RKTypes.h: 94
 try:
-    RKMaximumIIRFilterTaps = 8
+    RKMaximumPrefixLength = 8
 except:
     pass
 
 # RKTypes.h: 95
 try:
-    RKMaximumPrefixLength = 8
+    RKMaximumSymbolLength = 8
 except:
     pass
 
 # RKTypes.h: 96
 try:
-    RKMaximumSymbolLength = 8
+    RKMaximumFileExtensionLength = 8
 except:
     pass
 
 # RKTypes.h: 97
 try:
-    RKMaximumFileExtensionLength = 8
+    RKUserParameterCount = 8
 except:
     pass
 
 # RKTypes.h: 98
 try:
-    RKUserParameterCount = 8
+    RKMaximumScanCount = 256
 except:
     pass
 
 # RKTypes.h: 99
 try:
-    RKMaximumScanCount = 256
+    RKPedestalActionBufferDepth = 8
 except:
     pass
 
 # RKTypes.h: 100
 try:
-    RKPedestalActionBufferDepth = 8
-except:
-    pass
-
-# RKTypes.h: 101
-try:
     RKDefaultScanSpeed = 18.0
 except:
     pass
 
-# RKTypes.h: 103
+# RKTypes.h: 102
 try:
     RKDefaultDataPath = 'data'
 except:
     pass
 
-# RKTypes.h: 104
+# RKTypes.h: 103
 try:
     RKDataFolderIQ = 'iq'
 except:
     pass
 
-# RKTypes.h: 105
+# RKTypes.h: 104
 try:
     RKDataFolderMoment = 'moment'
 except:
     pass
 
-# RKTypes.h: 106
+# RKTypes.h: 105
 try:
     RKDataFolderHealth = 'health'
 except:
     pass
 
-# RKTypes.h: 107
+# RKTypes.h: 106
 try:
     RKLogFolder = 'log'
 except:
     pass
 
-# RKTypes.h: 108
+# RKTypes.h: 107
 try:
     RKWaveformFolder = 'waveform'
 except:
     pass
 
-# RKTypes.h: 109
+# RKTypes.h: 108
 try:
     RKFFTWisdomFile = 'radarkit-fft-wisdom'
 except:
     pass
 
-# RKTypes.h: 111
+# RKTypes.h: 110
 try:
     RKNoColor = '\\033[0m'
 except:
     pass
 
-# RKTypes.h: 112
+# RKTypes.h: 111
 try:
     RKNoForegroundColor = '\\033[39m'
 except:
     pass
 
-# RKTypes.h: 113
+# RKTypes.h: 112
 try:
     RKNoBackgroundColor = '\\033[49m'
 except:
     pass
 
-# RKTypes.h: 114
+# RKTypes.h: 113
 try:
     RKBaseRedColor = '\\033[91m'
 except:
     pass
 
-# RKTypes.h: 115
+# RKTypes.h: 114
 try:
     RKBaseGreenColor = '\\033[92m'
 except:
     pass
 
-# RKTypes.h: 116
+# RKTypes.h: 115
 try:
     RKBaseYellowColor = '\\033[93m'
 except:
     pass
 
-# RKTypes.h: 117
+# RKTypes.h: 116
 try:
     RKRedColor = '\\033[38;5;196m'
 except:
     pass
 
-# RKTypes.h: 118
+# RKTypes.h: 117
 try:
     RKOrangeColor = '\\033[38;5;208m'
 except:
     pass
 
-# RKTypes.h: 119
+# RKTypes.h: 118
 try:
     RKYellowColor = '\\033[38;5;226m'
 except:
     pass
 
-# RKTypes.h: 120
+# RKTypes.h: 119
 try:
     RKCreamColor = '\\033[38;5;229m'
 except:
     pass
 
-# RKTypes.h: 121
+# RKTypes.h: 120
 try:
     RKGoldColor = '\\033[38;5;178m'
 except:
     pass
 
-# RKTypes.h: 122
+# RKTypes.h: 121
 try:
     RKLimeColor = '\\033[38;5;118m'
 except:
     pass
 
-# RKTypes.h: 123
+# RKTypes.h: 122
 try:
     RKMintColor = '\\033[38;5;43m'
 except:
     pass
 
-# RKTypes.h: 124
+# RKTypes.h: 123
 try:
     RKGreenColor = '\\033[38;5;46m'
 except:
     pass
 
-# RKTypes.h: 125
+# RKTypes.h: 124
 try:
     RKTealColor = '\\033[38;5;49m'
 except:
     pass
 
-# RKTypes.h: 126
+# RKTypes.h: 125
 try:
     RKIceBlueColor = '\\033[38;5;51m'
 except:
     pass
 
-# RKTypes.h: 127
+# RKTypes.h: 126
 try:
     RKSkyBlueColor = '\\033[38;5;45m'
 except:
     pass
 
-# RKTypes.h: 128
+# RKTypes.h: 127
 try:
     RKBlueColor = '\\033[38;5;27m'
 except:
     pass
 
-# RKTypes.h: 129
+# RKTypes.h: 128
 try:
     RKPurpleColor = '\\033[38;5;99m'
 except:
     pass
 
-# RKTypes.h: 130
+# RKTypes.h: 129
 try:
     RKIndigoColor = '\\033[38;5;201m'
 except:
     pass
 
-# RKTypes.h: 131
+# RKTypes.h: 130
 try:
     RKHotPinkColor = '\\033[38;5;199m'
 except:
     pass
 
-# RKTypes.h: 132
+# RKTypes.h: 131
 try:
     RKDeepPinkColor = '\\033[38;5;197m'
 except:
     pass
 
-# RKTypes.h: 133
+# RKTypes.h: 132
 try:
     RKPinkColor = '\\033[38;5;213m'
 except:
     pass
 
-# RKTypes.h: 134
+# RKTypes.h: 133
 try:
     RKSalmonColor = '\\033[38;5;210m'
 except:
     pass
 
-# RKTypes.h: 135
+# RKTypes.h: 134
 try:
     RKGrayColor = '\\033[38;5;245m'
 except:
     pass
 
-# RKTypes.h: 136
+# RKTypes.h: 135
 try:
     RKWhiteColor = '\\033[38;5;15m'
 except:
     pass
 
-# RKTypes.h: 137
+# RKTypes.h: 136
 try:
     RKMonokaiRed = '\\033[38;5;196m'
 except:
     pass
 
-# RKTypes.h: 138
+# RKTypes.h: 137
 try:
     RKMonokaiPink = '\\033[38;5;197m'
 except:
     pass
 
-# RKTypes.h: 139
+# RKTypes.h: 138
 try:
     RKMonokaiOrange = '\\033[38;5;208m'
 except:
     pass
 
-# RKTypes.h: 140
+# RKTypes.h: 139
 try:
     RKMonokaiYellow = '\\033[38;5;186m'
 except:
     pass
 
-# RKTypes.h: 141
+# RKTypes.h: 140
 try:
     RKMonokaiGreen = '\\033[38;5;154m'
 except:
     pass
 
-# RKTypes.h: 142
+# RKTypes.h: 141
 try:
     RKMonokaiBlue = '\\033[38;5;81m'
 except:
     pass
 
-# RKTypes.h: 143
+# RKTypes.h: 142
 try:
     RKMonokaiPurple = '\\033[38;5;141m'
 except:
     pass
 
-# RKTypes.h: 144
+# RKTypes.h: 143
 try:
     RKLightOrangeColor = '\\033[38;5;214m'
 except:
     pass
 
-# RKTypes.h: 145
+# RKTypes.h: 144
 try:
     RKWarningColor = '\\033[38;5;15;48;5;197m'
 except:
     pass
 
-# RKTypes.h: 146
+# RKTypes.h: 145
 try:
     RKPythonColor = '\\033[38;5;226;48;5;24m'
 except:
     pass
 
-# RKTypes.h: 147
+# RKTypes.h: 146
 try:
     RKRadarKitColor = '\\033[38;5;15;48;5;124m'
 except:
     pass
 
-# RKTypes.h: 148
+# RKTypes.h: 147
 try:
     RKMaximumStringLength = 4096
 except:
     pass
 
-# RKTypes.h: 149
+# RKTypes.h: 148
 try:
     RKMaximumPathLength = 1024
 except:
     pass
 
-# RKTypes.h: 150
+# RKTypes.h: 149
 try:
     RKMaximumFolderPathLength = 768
 except:
     pass
 
-# RKTypes.h: 151
+# RKTypes.h: 150
 try:
     RKMaximumCommandLength = 512
 except:
     pass
 
-# RKTypes.h: 152
+# RKTypes.h: 151
 try:
     RKStatusStringLength = 256
 except:
     pass
 
-# RKTypes.h: 153
+# RKTypes.h: 152
 try:
     RKPulseHeaderPaddedSize = 384
 except:
     pass
 
-# RKTypes.h: 154
+# RKTypes.h: 153
 try:
     RKRayHeaderPaddedSize = 128
 except:
     pass
 
-# RKTypes.h: 155
+# RKTypes.h: 154
 try:
     RKNameLength = 128
 except:
     pass
 
-# RKTypes.h: 156
+# RKTypes.h: 155
 try:
     RKShortNameLength = 20
 except:
     pass
 
-# RKTypes.h: 157
+# RKTypes.h: 156
 try:
     RKChildNameLength = 160
 except:
     pass
 
-# RKTypes.h: 159
+# RKTypes.h: 158
 def RKColorDutyCycle(x):
     return (x > RKDutyCyleRedThreshold) and RKBaseRedColor or (x > RKDutyCyleOrangeThreshold) and RKBaseYellowColor or RKBaseGreenColor
 
-# RKTypes.h: 160
+# RKTypes.h: 159
 def RKColorLag(x):
     return (x > RKLagRedThreshold) and RKBaseRedColor or (x > RKLagOrangeThreshold) and RKBaseYellowColor or RKBaseGreenColor
 
-# RKTypes.h: 162
+# RKTypes.h: 161
 def RKDigitWidth(v, n):
     return (c_int (ord_if_char((((floorf ((log10f ((fabsf (v)))))) + (v < 0)) + n and (n + 2) or 1)))).value
 
-# RKTypes.h: 164
+# RKTypes.h: 163
 def ITALIC(x):
     return (('\\033[3m' + x) + '\\033[23m')
 
-# RKTypes.h: 165
+# RKTypes.h: 164
 def UNDERLINE(x):
     return (('\\033[4m' + x) + '\\033[24m')
 
-# RKTypes.h: 166
+# RKTypes.h: 165
 def HIGHLIGHT(x):
     return (('\\033[38;5;82;48;5;238m' + x) + '\\033[m')
 
-# RKTypes.h: 167
+# RKTypes.h: 166
 def UNDERLINE_ITALIC(x):
     return (('\\033[3;4m' + x) + '\\033[23;24m')
 
-# RKTypes.h: 173
+# RKTypes.h: 172
 def RKMarkerScanTypeString(x):
     return ((x & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) and 'PPI' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) and 'RHI' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint) and 'SPT' or 'UNK'
 
-# RKTypes.h: 178
+# RKTypes.h: 177
 def RKMarkerScanTypeShortString(x):
     return ((x & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) and 'P' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) and 'R' or ((x & RKMarkerScanTypeMask) == RKMarkerScanTytpePoint) and 'S' or 'U'
 
-# RKTypes.h: 183
+# RKTypes.h: 182
 def RKPositionAzimuthFlagColor(x):
     return (x & RKPositionFlagAzimuthError) and RKRedColor or (x & RKPositionFlagAzimuthEnabled) and RKGreenColor or RKYellowColor
 
-# RKTypes.h: 187
+# RKTypes.h: 186
 def RKPositionElevationFlagColor(x):
     return (x & RKPositionFlagElevationError) and RKRedColor or (x & RKPositionFlagElevationEnabled) and RKGreenColor or RKYellowColor
 
@@ -9863,23 +9859,23 @@ try:
 except:
     pass
 
-rk_int16c = struct_rk_int16c# RKTypes.h: 222
+rk_int16c = struct_rk_int16c# RKTypes.h: 221
 
-rk_complex = struct_rk_complex# RKTypes.h: 230
+rk_complex = struct_rk_complex# RKTypes.h: 229
 
-rk_iqz = struct_rk_iqz# RKTypes.h: 238
+rk_iqz = struct_rk_iqz# RKTypes.h: 237
 
-rk_modulo_path = struct_rk_modulo_path# RKTypes.h: 248
+rk_modulo_path = struct_rk_modulo_path# RKTypes.h: 247
 
-rk_four_byte = union_rk_four_byte# RKTypes.h: 262
+rk_four_byte = union_rk_four_byte# RKTypes.h: 261
 
-rk_half_float_t = union_rk_half_float_t# RKTypes.h: 275
+rk_half_float_t = union_rk_half_float_t# RKTypes.h: 274
 
-rk_single_float_t = union_rk_single_float_t# RKTypes.h: 289
+rk_single_float_t = union_rk_single_float_t# RKTypes.h: 288
 
-rk_double_float_t = union_rk_double_float_t# RKTypes.h: 303
+rk_double_float_t = union_rk_double_float_t# RKTypes.h: 302
 
-rk_filter_anchor = union_rk_filter_anchor# RKTypes.h: 321
+rk_filter_anchor = union_rk_filter_anchor# RKTypes.h: 320
 
 rk_radarhub_ray_header = union_rk_radarhub_ray_header# RKTypes.h: 1204
 
