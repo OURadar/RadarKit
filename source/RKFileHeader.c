@@ -32,8 +32,7 @@ RKFileHeader *RKFileHeaderInitFromFid(FILE *fid) {
     fseek(fid, 0, SEEK_END);
     long fsize = ftell(fid);
     if (fsize < sizeof(RKFileHeader)) {
-        RKLog("Error. File size = %s B is too small to be a valid RadarKit file.\n", RKIntegerToCommaStyleString(fsize));
-        exit(EXIT_FAILURE);
+        return NULL;
     }
     rewind(fid);
 
@@ -175,8 +174,8 @@ RKFileHeader *RKFileHeaderInitFromFid(FILE *fid) {
             r += waveform->filterCounts[k] * sizeof(RKFilterAnchor);
         }
         r += waveform->depth * (sizeof(RKComplex) + sizeof(RKInt16C));
-        if (fp != r) {
-            RKLog("Error. I detected a bug.  fp = %s != %s\n", RKIntegerToCommaStyleString(fp), RKIntegerToCommaStyleString(r));
+        if (fp < r && fileHeader->config.waveformName[0] != 'h') {
+            RKLog("Error. I detected a bug.  fp = %s < %s\n", RKIntegerToCommaStyleString(fp), RKIntegerToCommaStyleString(r));
         }
     }
     return fileHeader;

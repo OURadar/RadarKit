@@ -16,8 +16,9 @@ RKGlobalParameters rkGlobalParameters = {
     .dailyLog = false,
     .showColor = true,
     .statusColor = true,
+    .showMinorInfo = false,
     .lock = PTHREAD_MUTEX_INITIALIZER,
-    .stream = NULL
+    .stream = NULL,
 };
 
 #define N(x) #x,

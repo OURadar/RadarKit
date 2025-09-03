@@ -169,6 +169,7 @@ char *RKTestByNumberDescription(const int indent) {
     "211 - Write product data from a plain file through an RKProductCollection\n"
     "212 - Write regular CF-Radial data (.nc) from a set of WDSS-II files; rkutil -T212 FILENAME\n"
     "213 - Write compressed CF-Radial data (.cnc) from a set of WDSS-II files; rkutil -T213 FILENAME\n"
+    "214 - Show a list of files in a directory; -T214 PATH\n"
     "\n"
     UNDERLINE("300 series - state machines") "\n"
     "301 - File manager module - RKFileManagerInit()\n"
@@ -177,11 +178,11 @@ char *RKTestByNumberDescription(const int indent) {
     "304 - Initialize a simple radar system - RKRadarInit()\n"
     "305 - RKWebSocket unit test\n"
     "306 - Connect to RadarHub - RKReporterInit()\n"
-    "307 - Illustrate a simple RKPulseEngine() -T306 MODE (0 = no wait, 1 = process, 2 = consume)\n"
-    "308 - Illustrate a simple RKMomentEngine() -T307 MODE (0 = show, 1 = archive)\n"
+    "307 - Illustrate a simple RKPulseEngine() -T307 MODE (0 = no wait, 1 = process, 2 = consume)\n"
+    "308 - Illustrate a simple RKMomentEngine() -T308 MODE (0 = show, 1 = archive)\n"
     "309 - Illustrate a command queue-dequeue mechanism\n"
     "\n"
-    UNDERLINE("400 seris - DSP functions") "\n"
+    UNDERLINE("400 series - DSP functions") "\n"
     "401 - SIMD quick test\n"
     "402 - SIMD test with numbers shown\n"
     "403 - Show window types\n"
@@ -221,8 +222,10 @@ char *RKTestByNumberDescription(const int indent) {
     return text;
 }
 
-void RKTestByNumber(const int number, const void *arg) {
+void RKTestByNumber(const int number, const int argc, const void **args) {
     int n;
+    const char *option = argc == 0 ? NULL : (const char *)args[0];
+    printf("RKTestByNumber: %d / %d / %s\n", number, argc, option);
     RKSetWantScreenOutput(true);
     switch (number) {
         case 101:
@@ -250,10 +253,10 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestGetCountry();
             break;
         case 109:
-            RKTestBufferOverviewText((const char *)arg);
+            RKTestBufferOverviewText(option);
             break;
         case 110:
-            RKTestHealthOverviewText((const char *)arg);
+            RKTestHealthOverviewText(option);
             break;
         case 111:
             RKTestReviseLogicalValues();
@@ -263,28 +266,28 @@ void RKTestByNumber(const int number, const void *arg) {
             break;
 
         case 201:
-            RKTestCountFiles((const char *)arg);
+            RKTestCountFiles(option);
             break;
         case 202:
             RKTestPreparePath();
             break;
         case 203:
-            RKTestReadBareRKComplex((const char *)arg);
+            RKTestReadBareRKComplex(option);
             break;
         case 204:
             RKTestPreferenceReading();
             break;
         case 205:
-            RKTestIQRead((const char *)arg);
+            RKTestIQRead(option);
             break;
         case 206:
-            RKTestSweepRead((const char *)arg);
+            RKTestSweepRead(option);
             break;
         case 207:
-            RKTestProductRead((const char *)arg);
+            RKTestProductRead(option);
             break;
         case 208:
-            RKTestProductCollectionRead((const char *)arg);
+            RKTestProductCollectionRead(option);
             break;
         case 209:
             RKTestProductWrite();
@@ -296,10 +299,13 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestProductWriteFromPlainToProduct();
             break;
         case 212:
-            RKTestProductWriteFromWDSS2ToProduct((const char *)arg, 0);
+            RKTestProductWriteFromWDSS2ToProduct(option, 0);
             break;
         case 213:
-            RKTestProductWriteFromWDSS2ToProduct((const char *)arg, 1);
+            RKTestProductWriteFromWDSS2ToProduct(option, 1);
+            break;
+        case 214:
+            RKTestListFiles(option);
             break;
 
         case 301:
@@ -321,15 +327,18 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestRadarHub();
             break;
         case 307:
-            n = arg == NULL ? 2 : atoi((const char *)arg);
+            n = argc == 0 ? 2 : atoi(option);
             RKTestSimplePulseEngine(n);
             break;
         case 308:
-            n = arg == NULL ? 0 : atoi((const char *)arg);
+            n = argc == 0 ? 0 : atoi(option);
             RKTestSimpleMomentEngine(n);
             break;
         case 309:
             RKTestCommandQueue();
+            break;
+        case 310:
+            RKTestWaveformLoading(argc, args);
             break;
 
         case 401:
@@ -339,14 +348,15 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestSIMD(RKTestSIMDFlagShowNumbers, 0);
             break;
         case 403:
-            n = arg == NULL ? 6 : atoi((const char *)arg);
+            n = argc == 0 ? 6 : atoi(option);
             RKTestWindow(n);
             break;
         case 404:
             RKTestHilbertTransform();
             break;
         case 405:
-            n = arg == NULL ? (int)ceilf(log2f((float)RKMaximumGateCount)) : atoi((const char *)arg);
+            //n = args == NULL ? (int)ceilf(log2f((float)RKMaximumGateCount)) : atoi((const char *)args[0]);
+            n = argc == 0? (int)ceilf(log2f((float)RKMaximumGateCount)) : atoi(option);
             RKTestWriteFFTWisdom(n);
             break;
         case 406:
@@ -374,7 +384,7 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestWaveformShowProperties();
             break;
         case 414:
-            RKTestWaveformShowUserWaveformProperties((const char *)arg);
+            RKTestWaveformShowUserWaveformProperties(option);
             break;
         case 501:
             RKTestHalfSingleDoubleConversion();
@@ -407,15 +417,15 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestOneRaySpectra(RKSpectralMoment, 0);
             break;
         case 601:
-            n = arg == NULL ? 0 : atoi((const char *)arg);
+            n = argc == 0 ? 0 : atoi(option);
             RKTestSIMD(RKTestSIMDFlagPerformanceTestAll, n);
             break;
         case 602:
-            n = arg == NULL ? 13 : atoi((const char *)arg);
+            n = argc == 0 ? 13 : atoi(option);
             RKTestPulseCompressionSpeed(n);
             break;
         case 603:
-            n = arg == NULL ? 4 : atoi((const char *)arg);
+            n = argc == 0 ? 4 : atoi(option);
             RKTestPulseEngineSpeed(n);
             break;
         case 604:
@@ -425,7 +435,7 @@ void RKTestByNumber(const int number, const void *arg) {
             RKTestCacheWrite();
             break;
         case 99:
-            RKTestExperiment((const char *)arg);
+            RKTestExperiment(argc, args);
             break;
         default:
             RKLog("Test %d is invalid.\n", number);
@@ -1848,6 +1858,108 @@ void RKTestProductWriteFromWDSS2ToProduct(const char *source, const int mode) {
     RKLog("Output filename = '%s'\n", filename);
 }
 
+// Compare two filenames
+static int string_cmp_lexical(const void *a, const void *b) {
+    return strcmp((char *)a, (char *)b);
+}
+
+void RKTestListFiles(const char *path) {
+    SHOW_FUNCTION_NAME
+    RKName *files = (RKName *)malloc(1024 * sizeof(RKName));
+    if (files == NULL) {
+        RKLog("Error. Unable to allocate memory for file names.\n");
+        return;
+    }
+    DIR *did;
+    if (path == NULL) {
+        did = opendir(".");
+    } else {
+        did = opendir(path);
+    }
+    if (did == NULL) {
+        RKLog("Error. Unable to open directory %s\n", path);
+        return;
+    }
+    char parent[RKNameLength];
+    if (path == NULL) {
+        strcpy(parent, ".");
+    } else {
+        strncpy(parent, path, RKNameLength - 1);
+        parent[RKNameLength - 1] = '\0';
+        if (parent[strlen(parent) - 1] != '/') {
+            strcat(parent, "/");
+        }
+    }
+    int j = 0;
+    struct dirent *entry;
+    while ((entry = readdir(did)) != NULL) {
+        if (entry->d_name[0] == '.') {
+            continue;
+        }
+        if (parent[0] != '.') {
+            sprintf(files[j++], "%s%s", parent, entry->d_name);
+        } else {
+            sprintf(files[j++], "%s", entry->d_name);
+        }
+        if (j >= 1024) {
+            RKLog("Warning. Too many files in the directory, only first 1024 will be shown.\n");
+            break;
+        }
+    }
+    closedir(did);
+    qsort(files, j, sizeof(RKName), string_cmp_lexical);
+
+    printf("Found %d files:\n", j);
+    char info[RKNameLength];
+    for (int k = 0; k < j; k++) {
+        char *ext = strrchr(files[k], '.');
+        if (!strcmp(ext, ".rkr") || !strcmp(ext, ".rkc")) {
+            FILE *fid = fopen(files[k], "r");
+            if (fid == NULL) {
+                fprintf(stderr, "Error opening file %s\n", files[k]);
+                continue;
+            }
+            fseek(fid, 0L, SEEK_END);
+            long fsize = ftell(fid);
+            if (fsize < sizeof(RKFileHeader)) {
+                sprintf(info, "(file size %s B)", RKIntegerToCommaStyleString(fsize));
+            } else {
+                rewind(fid);
+                RKFileHeader *header = RKFileHeaderInitFromFid(fid);
+                const RKConfig *config = &header->config;
+                const bool isPPI = (config->startMarker & RKMarkerScanTypePPI) != 0;
+                const bool isRHI = (config->startMarker & RKMarkerScanTypeRHI) != 0;
+                const long size = fsize - ftell(fid);
+                uint32_t pulseCount;
+                if (header->dataType == RKRawDataTypeFromTransceiver) {
+                    pulseCount = size / (config->pulseGateCount * sizeof(RKInt16C));
+                } else if (header->dataType == RKRawDataTypeAfterMatchedFilter) {
+                    pulseCount = size / (config->pulseGateCount / header->desc.pulseToRayRatio * sizeof(RKComplex));
+                } else {
+                    pulseCount = 0;
+                }
+                sprintf(info, "%s%s%s   %s %6.2f°   %s   %s pulses",
+                    rkGlobalParameters.showColor ? RKDeepPinkColor : "",
+                    RKMarkerScanTypeString(config->startMarker),
+                    rkGlobalParameters.showColor ? RKNoColor : "",
+                    isPPI ? "EL" : (isRHI? "AZ" : "--"),
+                    isPPI ? config->sweepElevation : (isRHI ? config->sweepAzimuth : 0.0f),
+                    RKVariableInString("waveform", config->waveformName, RKValueTypeString),
+                    RKIntegerToCommaStyleString(pulseCount));
+                RKFileHeaderFree(header);
+            }
+            fclose(fid);
+        } else if (!strcmp(ext, ".nc")) {
+            sprintf(info, "To be implemented ...");
+        } else {
+            info[0] = '\0';
+        }
+        printf("%s   %s\n", files[k], info);
+    }
+
+    free(files);
+}
+
 #pragma endregion
 
 #pragma region State Machines
@@ -3036,6 +3148,82 @@ void RKTestSIMDComparison(const RKTestSIMDFlag flag, const int count) {
     free(cs);
     free(cd);
     free(cc);
+}
+
+void RKTestWaveformLoading(const int argc, const void ** argv) {
+    SHOW_FUNCTION_NAME
+    RKSetUseDailyLog(true);
+    // Try a bunch of folders until one exists
+    char defaultHome[] = "/root/trx";
+    char *home = getenv("HOME");
+    if (home == NULL || home[0] == '\0') {
+        home = (char *)defaultHome;
+    }
+    char *path = NULL;
+    char paths[3][256];
+    sprintf(paths[0], "%s/waveforms", home);
+    sprintf(paths[1], "%s/data/waveforms", home);
+    sprintf(paths[2], "%s/Downloads/waveforms", home);
+    for (int i = 0; i < 3; i++) {
+        if (RKFilenameExists((const char *)paths[i])) {
+            path = (char *)paths[i];
+            break;
+        }
+    }
+    if (path == NULL) {
+        printf("No waveform folder found\n");
+        exit(EXIT_FAILURE);
+    }
+    RKLog("Using waveform folder '%s'\n", path);
+
+    char wavefile[256];
+    char defaultWaveforms[2][64] = {"owm95s", "o95"};
+    const int count = argc == 0 ? 2 : argc;
+
+    // Check if all waveforms exist
+    bool allExists = true;
+    for (int i = 0; i < count; i++) {
+        sprintf(wavefile, "%s/%s.rkwav", path, argc == 0 ? defaultWaveforms[i] : (const char *)argv[i]);
+        if (!RKFilenameExists(wavefile)) {
+            RKLog("Error. Waveform '%s' not found\n", wavefile);
+            allExists = false;
+            break;
+        }
+    }
+    if (!allExists) {
+        exit(EXIT_FAILURE);
+    }
+
+    RKWaveform *waveform;
+    RKConfig *config;
+    RKRadar *radar = RKInitLean();
+
+    RKWaveFileGlobalHeader *waveGlobalHeader = (void *)malloc(sizeof(RKWaveFileGlobalHeader));
+    memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
+
+    for (int i = 0; i < count; i++) {
+        sprintf(wavefile, "%s/%s.rkwav", path, argc == 0 ? defaultWaveforms[i] : (const char *)argv[i]);
+        RKLog("Loading waveform file '%s' ...\n", wavefile);
+
+        waveform = RKWaveformInitFromFile(wavefile);
+        if (waveform == NULL) {
+            RKLog("Error. Failed to load waveform file '%s'\n", wavefile);
+            continue;
+        }
+        RKWaveformDecimate(waveform, 32);
+        RKWaveformSummary(waveform);
+        RKSetWaveform(radar, waveform);
+        RKWaveformFree(waveform);
+
+        config = RKGetLatestConfig(radar);
+        RKLog("Info. config->waveform.name = '%s'\n", config->waveform->name);
+
+        strcpy(waveGlobalHeader->name, config->waveform->name);
+        RKLog("Info. waveGlobalHeader->name = '%s'\n", waveGlobalHeader->name);
+    }
+
+    free(waveGlobalHeader);
+    RKFree(radar);
 }
 
 void RKTestSIMD(const RKTestSIMDFlag flag, const int count) {
@@ -5801,15 +5989,7 @@ void RKTestMakePositionStatusString(void) {
 
 #pragma mark -
 
-void RKTestExperiment(const char *arg) {
+void RKTestExperiment(const int argc, const void **argv) {
     SHOW_FUNCTION_NAME
-    // printf("arg = '%s'\n", arg);
-    // RKProduct *products;
-    // RKProductBufferAlloc(&products, 2, 360, 1000);
-    // RKProductBufferExtend(&products, 2, 1);
-    // for (int k = 0; k < 3; k++) {
-    //     RKProduct *product = &products[k];
-    //     printf("product[%d] @ %p   %u x %u  %u\n",
-    //         k, product, product->header.rayCount, product->header.gateCount, product->capacity);
-    // }
+    RKSetUseDailyLog(true);
 }

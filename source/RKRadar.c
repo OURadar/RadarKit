@@ -1166,8 +1166,11 @@ int RKFree(RKRadar *radar) {
         radar->filter = NULL;
     }
     // Make RKConfigAdvance() free up static memories
-    #if defined(__clang__) ||  __GNUC__ >= 12 || __STDC_VERSION__ >= 201112L
+    #if defined(__clang__)
     va_list ignore = {0};
+    RKConfigAdvance(NULL, NULL, 0, ignore);
+    #elif __GNUC__ >= 12 || __STDC_VERSION__ >= 201112L
+    va_list ignore = {{0}};
     RKConfigAdvance(NULL, NULL, 0, ignore);
     #else
     RKConfigAdvance(NULL, NULL, 0, NULL);
@@ -2676,12 +2679,16 @@ void RKMeasureNoise(RKRadar *radar) {
     for (k = 0; k < radar->pulseEngine->filterCounts[0]; k++) {
         origin += radar->pulseEngine->filterAnchors[0][k].length;
     }
-    // Add another tail (fill pulse width)
-    if (k > 0) {
-        origin += 2 * radar->pulseEngine->filterAnchors[0][k - 1].length;
+    // Add another tail (~5 us) to avoid the transient effects
+    RKConfig *config = RKGetLatestConfig(radar);
+    if (config->waveform == NULL || config->waveform->fs == 1.0e-6) {
+        // For 5-MHz fs, 5 us is 25 samples
+        origin += 25;
+    } else {
+        // Otherwise, get it from the decimated waveform
+        const int usLength = (int)(1.0e-6 * config->waveformDecimate->fs);
+        origin += 5 * usLength;
     }
-    // Account for down-sampling stride in PulseCompressionEngine
-    origin /= MAX(1, radar->desc.pulseToRayRatio);
     for (k = 0; k < RKPulseCountForNoiseMeasurement; k++) {
         index = RKPreviousModuloS(index, radar->desc.pulseBufferDepth);
         pulse = RKGetPulseFromBuffer(radar->pulses, index);

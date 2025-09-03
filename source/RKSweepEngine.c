@@ -687,37 +687,6 @@ static void *rayGatherer(void *in) {
             if (engine->verbose > 1) {
                 RKLog("%s Info. RKMarkerSweepBegin   is = %d   j = %d\n", engine->name, is, j);
             }
-            // if (is != j) {
-            //     // Gather the rays to release
-            //     n = 0;
-            //     do {
-            //         ray = RKGetRayFromBuffer(engine->rayBuffer, is);
-            //         ray->header.n = is;
-            //         rays[n++] = ray;
-            //         is = RKNextModuloS(is, engine->radarDescription->rayBufferDepth);
-            //     } while (is != j && n < MIN(RKMaximumRaysPerSweep, engine->radarDescription->rayBufferDepth) - 1);
-            //     engine->scratchSpaces[engine->scratchSpaceIndex].rayCount = n;
-
-            //     // If the rayReleaser is still going, wait for it to finish, launch a new one, wait for engine->rayAnchorsIndex is grabbed through engine->tic
-            //     if (tidRayReleaser) {
-            //         pthread_join(tidRayReleaser, NULL);
-            //     }
-            //     tic = engine->tic;
-            //     if (pthread_create(&tidRayReleaser, NULL, rayReleaser, engine)) {
-            //         RKLog("%s Error. Unable to launch a ray releaser.\n", engine->name);
-            //     }
-            //     do {
-            //         usleep(50000);
-            //     } while (tic == engine->tic && engine->state & RKEngineStateWantActive);
-
-            //     // Ready for next collection while the sweepManager is busy
-            //     engine->scratchSpaceIndex = RKNextModuloS(engine->scratchSpaceIndex, RKSweepScratchSpaceDepth);
-            //     if (engine->verbose > 1) {
-            //         RKLog("%s RKMarkerSweepBegin   scratchSpaceIndex -> %d.\n", engine->name, engine->scratchSpaceIndex);
-            //     }
-            //     rays = engine->scratchSpaces[engine->scratchSpaceIndex].rays;
-            // }
-
             while (is != j) {
                 RKRay *ray = RKGetRayFromBuffer(engine->rayBuffer, is);
                 if (!(ray->header.marker & RKMarkerSweepEnd)) {
@@ -772,6 +741,7 @@ RKSweepEngine *RKSweepEngineInit(void) {
     engine->productList = RKProductListFloatZVWDPRKLRXPX;
     engine->productRecorder = RKProductFileWriterNC;
     engine->productCollectionRecorder = RKProductCollectionFileWriterCF;
+    engine->lastRecordedScratchSpaceIndex = (uint8_t)-1;
     size_t bytes = RKProductBufferAlloc(&engine->productBuffer, engine->productBufferDepth, RKMaximumRaysPerSweep, 2000);
     if (engine->productBuffer == NULL) {
         RKLog("Error. Unable to allocate a product buffer for sweep engine.\n");
@@ -1072,20 +1042,20 @@ RKSweep *RKSweepInitFromScratchSpace(RKSweepEngine *engine, const uint8_t scratc
         overallBaseProductList |= rays[k]->header.productList;
         if (rays[k]->header.gateCount != S->header.gateCount) {
             if (++gateCountWarningCount < 5) {
-                RKLog("%s Warning. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
+                RKLog("%s Info. Inconsistent gateCount. ray[%s] has %s vs S has %s\n",
                       engine->name, RKIntegerToCommaStyleString(k), RKIntegerToCommaStyleString(rays[k]->header.gateCount),
                       RKIntegerToCommaStyleString(S->header.gateCount));
             } else if (gateCountWarningCount == 5) {
-                RKLog("%s Warning. Inconsistent gateCount more than 5 rays / sweep.\n", engine->name);
+                RKLog("%s Info. Inconsistent gateCount more than 5 rays / sweep.\n", engine->name);
             }
         }
         if (rays[k]->header.gateSizeMeters != S->header.gateSizeMeters) {
             if (++gateSizeWarningCount < 5) {
-                RKLog("%s Warning. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
+                RKLog("%s Info. Inconsistent gateSizeMeters. ray[%s] has %s vs S has %s\n",
                       engine->name, RKIntegerToCommaStyleString(k), RKFloatToCommaStyleString(rays[k]->header.gateSizeMeters),
                       RKFloatToCommaStyleString(S->header.gateSizeMeters));
             } else if (gateSizeWarningCount == 5) {
-                RKLog("%s Warning. Inconsistent gateSize more than 5 rays / sweep.\n", engine->name);
+                RKLog("%s Info. Inconsistent gateSize more than 5 rays / sweep.\n", engine->name);
             }
         }
     }

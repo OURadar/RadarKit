@@ -531,7 +531,10 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
             case 'T':
                 // A bunch of different tests
                 k = atoi(optarg);
-                RKTestByNumber(k, argc == optind ? NULL : argv[optind]);
+                if (user->verbose) {
+                    printf("argc = %d   optind = %d   optarg = %s -> %d\n", argc, optind, optarg, k);
+                }
+                RKTestByNumber(k, argc - optind, argc == optind ? NULL : (const void **)&argv[optind]);
                 RKExit(EXIT_SUCCESS);
                 break;
             case 'V':

@@ -709,10 +709,12 @@ static void *pulseGatherer(void *_in) {
             } while (!(ray->header.s & RKRayStatusReady) && engine->state & RKEngineStateWantActive);
         } else if (skipCounter > 0) {
             // Skip processing if we are in skipping mode
-            if (--skipCounter == 0 && engine->verbose) {
-                RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
+            if (--skipCounter == 0) {
                 for (i = 0; i < engine->coreCount; i++) {
                     engine->workers[i].lag = 0.0f;
+                }
+                if (engine->verbose) {
+                    RKLog(">%s Info. Skipped a chunk.   pulseIndex = %d vs %d\n", engine->name, *engine->pulseIndex, k);
                 }
             }
         } else {

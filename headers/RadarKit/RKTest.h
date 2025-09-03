@@ -109,7 +109,7 @@ typedef struct rk_test_health_relay {
 // Test functions
 
 char *RKTestByNumberDescription(const int);
-void RKTestByNumber(const int, const void *);
+void RKTestByNumber(const int, const int, const void **);
 
 // Basic Tests
 
@@ -140,6 +140,7 @@ void RKTestProductWrite(void);
 void RKTestProductWriteFromPlainToSweep(void);
 void RKTestProductWriteFromPlainToProduct(void);
 void RKTestProductWriteFromWDSS2ToProduct(const char *, const int);
+void RKTestListFiles(const char *);
 
 // State machines
 
@@ -151,6 +152,7 @@ void RKTestWebSocket(void);
 void RKTestRadarHub(void);
 void RKTestSimplePulseEngine(const int);
 void RKTestSimpleMomentEngine(const int);
+void RKTestWaveformLoading(const int, const void **);
 
 // DSP Tests
 
@@ -207,6 +209,6 @@ int RKTestHealthRelayFree(RKHealthRelay);
 
 void RKTestCommandQueue(void);
 void RKTestSingleCommand(void);
-void RKTestExperiment(const char *);
+void RKTestExperiment(const int, const void **);
 
 #endif /* defined(__RadarKit_RKFile__) */

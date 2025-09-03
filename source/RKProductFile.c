@@ -1443,9 +1443,11 @@ int RKProductCollectionFileWriterCF(RKProductCollection *collection, const char 
     put_variable_text_att(ncid, timeCoverageEndVid, "comments", "ray times are relative to start time in secs");
     int latitudeVid;
     nc_def_var(ncid, "latitude", NC_DOUBLE, 0, NULL, &latitudeVid);
+    put_variable_text_att(ncid, latitudeVid, "standard_name", "latitude");
     put_variable_text_att(ncid, latitudeVid, "units", "degrees_north");
     int longitudeVid;
     nc_def_var(ncid, "longitude", NC_DOUBLE, 0, NULL, &longitudeVid);
+    put_variable_text_att(ncid, longitudeVid, "standard_name", "longitude");
     put_variable_text_att(ncid, longitudeVid, "units", "degrees_east");
     int altitudeVid;
     nc_def_var(ncid, "altitude", NC_DOUBLE, 0, NULL, &altitudeVid);
