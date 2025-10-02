@@ -520,8 +520,9 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     if (radar->desc.pulseBufferDepth > RKBuffer0SlotCount) {
         radar->desc.pulseBufferDepth = RKBuffer0SlotCount;
         RKLog("Info. Pulse buffer clamped to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
-    } else if (radar->desc.pulseBufferDepth == 0) {
-        radar->desc.pulseBufferDepth = 2000;
+    } else if (radar->desc.pulseBufferDepth < 3 * RKMaximumPulsesPerRay) {
+        radar->desc.pulseBufferDepth = 3 * RKMaximumPulsesPerRay;
+        RKLog("Info. Pulse buffer increased to %s\n", RKIntegerToCommaStyleString(radar->desc.pulseBufferDepth));
     }
     if (radar->desc.rayBufferDepth > RKBuffer2SlotCount) {
         radar->desc.rayBufferDepth = RKBuffer2SlotCount;

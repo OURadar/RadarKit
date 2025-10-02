@@ -74,7 +74,7 @@
 #define RKMaximumFilterCount                 8                                 // Maximum filter count within each group. Check RKPulseParameters
 #define RKMaximumWaveformCount               22                                // Maximum waveform group count
 #define RKWorkerDutyCycleBufferDepth         1000                              //
-#define RKMaximumPulsesPerRay                2000                              //
+#define RKMaximumPulsesPerRay                1000                              //
 #define RKMaximumRaysPerSweep                1500                              // 1440 is 0.25-deg. This should be plenty
 #define RKMaximumPacketSize                  16 * 1024 * 1024                  // Maximum network packet size
 #define RKNetworkTimeoutSeconds              20                                //

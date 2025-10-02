@@ -195,10 +195,10 @@ void *reporter(void *in) {
                         payload_size = sizeof(RKRadarHubRayHeader) + display->header.gateCount * sizeof(RKByte);
                         z = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                         memcpy(display->data, z, display->header.gateCount * sizeof(RKByte));
-                        // if (engine->verbose > 1) {
+                        if (engine->verbose > 1) {
                             RKRadarHubPayloadString(message, payload, payload_size);
                             RKLog("%s R%04d %s (%zu)\n", engine->name, r, message, payload_size);
-                        // }
+                        }
                         RKWebSocketSend(engine->ws, payload, payload_size);
                     }
                     ray->header.s |= RKRayStatusStreamed;
