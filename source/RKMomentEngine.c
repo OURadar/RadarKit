@@ -777,10 +777,10 @@ static void *pulseGatherer(void *_in) {
                     c = RKNextModuloS(c, engine->coreCount);
                     j = RKNextModuloS(j, engine->radarDescription->rayBufferDepth);
                     // New origin for the next ray
-                    if (i0 != i1) {
-                        engine->momentSource[j].origin = k;
-                    } else if (pulse->header.marker & RKMarkerSweepEnd)  {
+                    if (pulse->header.marker & RKMarkerSweepEnd)  {
                         engine->momentSource[j].origin = RKNextModuloS(k, engine->radarDescription->pulseBufferDepth);
+                    } else {
+                        engine->momentSource[j].origin = k;
                     }
                     ray = RKGetRayFromBuffer(engine->rayBuffer, j);
                     ray->header.s = RKRayStatusVacant;
