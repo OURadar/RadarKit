@@ -685,7 +685,6 @@ void RKShowBanner(const char *title, const char *color) {
         sprintf(message + k, RKNoColor);
     }
 
-    printf("\r");
     printf("%s\n", padding);
     printf("%s\n", message);
     printf("%s\n", padding);
