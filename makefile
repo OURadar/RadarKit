@@ -7,6 +7,12 @@ CPUS := $(shell (nproc --all || sysctl -n hw.ncpu) 2>/dev/null || echo 1)
 VERSION := $(shell (grep __RKVersion__ headers/RadarKit/RKVersion.h | grep -oE '\".*\"' | sed 's/"//g'))
 
 CFLAGS = -O2
+CFLAGS += -std=c11
+CFLAGS += -Wall
+CFLAGS += -Woverlength-strings
+CFLAGS += -Wno-unknown-pragmas
+CFLAGS += -fPIC
+
 ifneq ($(GIT_BRANCH), master)
 	CFLAGS += -g
 	# CFLAGS += -DBETA_BRANCH
@@ -26,11 +32,14 @@ ifneq ($(GIT_BRANCH), master)
 	# CFLAGS += -DDEBUG_NAVEEN
 endif
 
-CFLAGS += -std=c11
-CFLAGS += -Wall
-CFLAGS += -Woverlength-strings
-CFLAGS += -Wno-unknown-pragmas
-CFLAGS += -fPIC
+ifeq ($(MARCH),)
+	MARCH := native
+endif
+CFLAGS += -march=$(MARCH)
+
+ifeq ($(MACHINE), x86_64)
+	CFLAGS += -mfpmath=sse
+endif
 
 ifeq ($(PREFIX), )
 	ifeq ($(MACHINE), arm64)
@@ -40,16 +49,16 @@ ifeq ($(PREFIX), )
 	endif
 endif
 
-ifeq ($(MACHINE), x86_64)
-	CFLAGS += -march=native
-	CFLAGS += -mfpmath=sse
-endif
-
 CFLAGS += -Iheaders -Iheaders/RadarKit
+CFLAGS += -I/usr/include
 CFLAGS += -I${PREFIX}/include
+CFLAGS += -I${PREFIX}/opt/openssl@1.1/include
+CFLAGS += -I${PREFIX}/opt/libarchive/include
 
 LDFLAGS = -L/usr/lib
 LDFLAGS += -L${PREFIX}/lib
+LDFLAGS += -L${PREFIX}/opt/openssl@1.1/lib
+LDFLAGS += -L${PREFIX}/opt/libarchive/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
 OBJS += RKFoundation.o RKMisc.o RKDSP.o RKSIMD.o RKClock.o RKWindow.o RKRamp.o
@@ -93,9 +102,6 @@ ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -fms-extensions -Wno-microsoft
-	CFLAGS += -I${PREFIX}/opt/openssl@1.1/include
-	CFLAGS += -I${PREFIX}/opt/libarchive/include
-	LDFLAGS += -L${PREFIX}/opt/openssl@1.1/lib
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)

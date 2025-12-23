@@ -187,6 +187,13 @@
 (x & RKPositionFlagElevationError ? RKRedColor : \
 (x & RKPositionFlagElevationEnabled ? RKGreenColor : RKYellowColor))
 
+#define RKMomentProcessorString(x) \
+(x == RKPulsePair ? "RKPulsePair" : \
+(x == RKPulsePairHop ? "RKPulsePairHop" : \
+(x == RKPulsePairATSR ? "RKPulsePairATSR" : \
+(x == RKMultiLag ? "RKMultiLag" : \
+(x == RKSpectralMoment ? "RKSpectralMoment" : "UnknownMomentMethod")))))
+
 typedef uint8_t       RKByte;                                                  //
 typedef float         RKFloat;                                                 // We can change this to double if we decided one day
 typedef ssize_t       RKResult;                                                // Generic return from functions, 0 for no errors and !0 for others.

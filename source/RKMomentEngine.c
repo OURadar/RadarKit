@@ -451,6 +451,15 @@ static void *momentEngineCore(void *in) {
         path.length++;
         // printf("k = %d   is = %u   ie = %u\n", k, is, ie);
 
+        #if defined(_DEBUG_MOMENT_ENGINE)
+        const int pulses_per_ray = 64;
+        const int problematic_ray_index = 500;
+        const int problematic_range_index = 384;
+        const bool show_details = ray->header.i == problematic_ray_index;
+        RKFloat *src = NULL;
+        uint8_t *u8 = NULL;
+        #endif
+
         // Duplicate a linear array for processor if we are to process; otherwise, just skip this group
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f && pulses[0]->header.s & RKPulseStatusCompressed) {
             // Initialize the scratch space
@@ -467,17 +476,169 @@ static void *momentEngineCore(void *in) {
             k = engine->momentProcessor(space, pulses, path.length);
             // RKLog("%s Processed %d samples\n", me->name, k);
             if (k != path.length) {
-                RKLog("%s %s processed %d samples, which is unexpected (%d)\n", me->name,
-                    engine->momentProcessor == &RKPulsePair ? "RKPulsePair" : (
-                    engine->momentProcessor == &RKPulsePairHop ? "RKPulsePairHop" : (
-                    engine->momentProcessor == &RKPulsePairATSR ? "RKPulsePairATSR" : (
-                    engine->momentProcessor == &RKMultiLag ? "RKMultiLag" : (
-                    engine->momentProcessor == &RKSpectralMoment ? "RKSpectralMoment" : "UnknownMomentMethod")))),
+                RKLog("%s %s processed %d samples, which is unexpected (%d)\n",
+                    me->name,
+                    RKMomentProcessorString(engine->momentProcessor),
                     k, path.length);
             }
+
+            #if defined(_DEBUG_MOMENT_ENGINE)
+            if (show_details) {
+                pthread_mutex_lock(&engine->mutex);
+                RKLog("%s Ray %u: prt = %.6f ms   gateSize = %.2f m   gateCount = %u   samplingAdj = %.2f dB\n",
+                    me->name,
+                    ray->header.i,
+                    config->prt[0] * 1.0e3f,
+                    ray->header.gateSizeMeters,
+                    ray->header.gateCount,
+                    space->samplingAdjustment);
+                k = 0;
+                do {
+                    pulse = pulses[k];
+                    RKComplex *src = RKGetComplexDataFromPulse(pulse, 1);
+                    RKLog(">%s %4llu / %3llu V: (%7.4f %7.4f) (%7.4f %7.4f) : (%7.4f %7.4f) (%7.4f %7.4f) (%7.4f %7.4f) (%7.4f %7.4f) (%7.4f %7.4f)\n",
+                        me->name,
+                        pulse->header.i / pulses_per_ray,
+                        pulse->header.i % pulses_per_ray,
+                        (double)src[problematic_range_index - 2].i, (double)src[problematic_range_index - 2].q,
+                        (double)src[problematic_range_index - 1].i, (double)src[problematic_range_index - 1].q,
+                        (double)src[problematic_range_index    ].i, (double)src[problematic_range_index    ].q,
+                        (double)src[problematic_range_index + 1].i, (double)src[problematic_range_index + 1].q,
+                        (double)src[problematic_range_index + 2].i, (double)src[problematic_range_index + 2].q,
+                        (double)src[problematic_range_index + 3].i, (double)src[problematic_range_index + 3].q,
+                        (double)src[problematic_range_index + 4].i, (double)src[problematic_range_index + 4].q
+                    );
+                    src = RKGetComplexDataFromPulse(pulse, 0);
+                    RKLog(">%s            H: (%7.4f %7.4f) (%7.4f %7.4f) : (%7.4f %7.4f) (%7.4f %7.4f) (%7.4f %7.4f) (%7.4f %7.4f) (%7.4f %7.4f)\n",
+                        me->name,
+                        (double)src[problematic_range_index - 2].i, (double)src[problematic_range_index - 2].q,
+                        (double)src[problematic_range_index - 1].i, (double)src[problematic_range_index - 1].q,
+                        (double)src[problematic_range_index    ].i, (double)src[problematic_range_index    ].q,
+                        (double)src[problematic_range_index + 1].i, (double)src[problematic_range_index + 1].q,
+                        (double)src[problematic_range_index + 2].i, (double)src[problematic_range_index + 2].q,
+                        (double)src[problematic_range_index + 3].i, (double)src[problematic_range_index + 3].q,
+                        (double)src[problematic_range_index + 4].i, (double)src[problematic_range_index + 4].q
+                    );
+                    k++;
+                } while (k < path.length);
+                RKLog("%s RadarKit Ray %u / %u    space->noise[0] = %.4e   config->noise[0] = %.4e   %s (%u):\n",
+                    me->name, ray->header.i, path.length, space->noise[0], space->config->noise[0],
+                    RKMomentProcessorString(engine->momentProcessor),
+                    engine->userLagChoice
+                    );
+                src = space->aR[0][0];
+                RKLog("%s RadarKit space->aR[0][0]    [ %8.2e %8.2e : %8.2e %8.2e %8.2e %8.2e %8.2e ]\n",
+                    me->name,
+                    src[problematic_range_index - 2],
+                    src[problematic_range_index - 1],
+                    src[problematic_range_index    ],
+                    src[problematic_range_index + 1],
+                    src[problematic_range_index + 2],
+                    src[problematic_range_index + 3],
+                    src[problematic_range_index + 4]
+                    );
+                src = space->S[0];
+                RKLog("%s RadarKit space->S[0]        [ %8.2e %8.2e : %8.2e %8.2e %8.2e %8.2e %8.2e ]\n",
+                    me->name,
+                    src[problematic_range_index - 2],
+                    src[problematic_range_index - 1],
+                    src[problematic_range_index    ],
+                    src[problematic_range_index + 1],
+                    src[problematic_range_index + 2],
+                    src[problematic_range_index + 3],
+                    src[problematic_range_index + 4]
+                    );
+                src = space->SNR[0];
+                RKLog("%s RadarKit space->SNR[0]      [ %8.2e %8.2e : %8.2e %8.2e %8.2e %8.2e %8.2e ]\n",
+                    me->name,
+                    src[problematic_range_index - 2],
+                    src[problematic_range_index - 1],
+                    src[problematic_range_index    ],
+                    src[problematic_range_index + 1],
+                    src[problematic_range_index + 2],
+                    src[problematic_range_index + 3],
+                    src[problematic_range_index + 4]
+                    );
+                RKLog("%s RadarKit space->SNR[0] (dB) [ %8.2f %8.2f : %8.2f %8.2f %8.2f %8.2f %8.2f ]  (%.4f)\n",
+                    me->name,
+                    10.0f * log10f(src[problematic_range_index - 2]),
+                    10.0f * log10f(src[problematic_range_index - 1]),
+                    10.0f * log10f(src[problematic_range_index    ]),
+                    10.0f * log10f(src[problematic_range_index + 1]),
+                    10.0f * log10f(src[problematic_range_index + 2]),
+                    10.0f * log10f(src[problematic_range_index + 3]),
+                    10.0f * log10f(src[problematic_range_index + 4]),
+                    space->config->SNRThreshold
+                    );
+                src = space->Q[0];
+                RKLog("%s RadarKit space->Q[0]        [ %8.4f %8.4f : %8.4f %8.4f %8.4f %8.4f %8.4f ]  (%.4f)\n",
+                    me->name,
+                    src[problematic_range_index - 2],
+                    src[problematic_range_index - 1],
+                    src[problematic_range_index    ],
+                    src[problematic_range_index + 1],
+                    src[problematic_range_index + 2],
+                    src[problematic_range_index + 3],
+                    src[problematic_range_index + 4],
+                    space->config->SQIThreshold
+                    );
+                src = space->S2Z[0];
+                RKLog("%s RadarKit space->S2Z[0]      [ %8.2f %8.2f : %8.2f %8.2f %8.2f %8.2f %8.2f ]\n",
+                    me->name,
+                    src[problematic_range_index - 2],
+                    src[problematic_range_index - 1],
+                    src[problematic_range_index    ],
+                    src[problematic_range_index + 1],
+                    src[problematic_range_index + 2],
+                    src[problematic_range_index + 3],
+                    src[problematic_range_index + 4]
+                    );
+                u8 = space->mask;
+                RKLog("%s RadarKit space->mask @ -1   [ %8u %8u : %8u %8u %8u %8u %8u ]\n",
+                    me->name,
+                    u8[problematic_range_index - 2],
+                    u8[problematic_range_index - 1],
+                    u8[problematic_range_index    ],
+                    u8[problematic_range_index + 1],
+                    u8[problematic_range_index + 2],
+                    u8[problematic_range_index + 3],
+                    u8[problematic_range_index + 4]
+                    );
+            }
+            #endif
+
             // Fill in the ray with SNR and SQI censoring, 16-bit and 8-bit data
             makeRayFromScratch(space, ray);
             ray->header.s |= RKRayStatusProcessed;
+
+            #if defined(_DEBUG_MOMENT_ENGINE)
+            if (show_details) {
+                u8 = space->mask;
+                RKLog("%s RadarKit space->mask @ 0    [ %8u %8u : %8u %8u %8u %8u %8u ]\n",
+                    me->name,
+                    u8[problematic_range_index - 2],
+                    u8[problematic_range_index - 1],
+                    u8[problematic_range_index    ],
+                    u8[problematic_range_index + 1],
+                    u8[problematic_range_index + 2],
+                    u8[problematic_range_index + 3],
+                    u8[problematic_range_index + 4]
+                    );
+                src = RKGetFloatDataFromRay(ray, RKProductIndexZ);
+                RKLog("%s RadarKit moment->Z:         [ %8.2f %8.2f : %8.2f %8.2f %8.2f %8.2f %8.2f ]\n",
+                    me->name,
+                    src[problematic_range_index - 2],
+                    src[problematic_range_index - 1],
+                    src[problematic_range_index    ],
+                    src[problematic_range_index + 1],
+                    src[problematic_range_index + 2],
+                    src[problematic_range_index + 3],
+                    src[problematic_range_index + 4]
+                    );
+                pthread_mutex_unlock(&engine->mutex);
+            }
+            #endif
+
         } else {
             // Zero out the ray
             zeroOutRay(ray);
@@ -488,6 +649,7 @@ static void *momentEngineCore(void *in) {
             }
             ray->header.s |= RKRayStatusSkipped;
         }
+
         // Mark all pulses as used for moments whether processed or not
         path.length--;
         k = 0;
