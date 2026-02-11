@@ -105,7 +105,6 @@ class Workspace(ctypes.Structure):
     def __init__(self):
         super().__init__()
         self.name = f"\033{RKPythonColor[4:]}<  Python Core  >\033[m"
-        self.verbose = 0
         self.fid = None
         self.desc = None
         self.header = None
@@ -114,7 +113,17 @@ class Workspace(ctypes.Structure):
         RKSetProgramName(b"RadarKit")
         RKLog(f"{self.name} Initializing ...")
 
-    def open(self, filename, cores=4):
+    def open(self, filename, **kwargs):
+        """
+        kwargs:
+            path: str, default "data"
+                The data path
+            cores: int, default 4
+                The number of cores to use for pulse processing.
+            verbose: int, default 0
+                The verbosity level.
+        """
+        self.verbose = kwargs.get("verbose", 0)
         self.fid = RKFileOpen(filename, "r")
         self.header = RKFileHeaderInitFromFid(self.fid).contents
         self.filesize = RKFileGetSize(self.fid)
@@ -130,7 +139,7 @@ class Workspace(ctypes.Structure):
         # Store as self.desc using the first header.desc and override some attributes. Only the first encounter matters.
         if self.desc is None or self.allocated is False:
             desc = self.header.desc
-            desc.dataPath = b"data"
+            desc.dataPath = kwargs.get("path", "data").encode("utf-8")
             desc.configBufferDepth = 3
             desc.pulseBufferDepth = 10 * RKMaximumPulsesPerRay + 50
             desc.rayBufferDepth = RKMaximumRaysPerSweep + 50
@@ -142,15 +151,20 @@ class Workspace(ctypes.Structure):
                 | RKInitFlagVerbose
             )
             if self.header.dataType == RKRawDataTypeFromTransceiver:
-                desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
-                # desc.initFlags |= RKInitFlagStartPulseEngine
-                if self.verbose:
-                    print("Will start pulseEngine and ringFilterEngine ...")
+                useRingFilterEngine = kwargs.get("ring", False)
+                if useRingFilterEngine:
+                    desc.initFlags |= RKInitFlagStartPulseEngine | RKInitFlagStartRingFilterEngine
+                    if self.verbose:
+                        print("PulseEngine: Y   RingFilterEngine: Y")
+                else:
+                    desc.initFlags |= RKInitFlagStartPulseEngine
+                    if self.verbose:
+                        print("PulseEngine: Y   RingFilterEngine: N")
             elif self.verbose:
-                print("Will not start pulseEngine and ringFilterEngine ...")
+                print("PulseEngine: N   RingFilterEngine: N")
             self.configIndex = pyRKuint32(desc.configBufferDepth - 1)
             self.desc = desc
-            self.alloc(cores=cores)
+            self.alloc(cores=kwargs.get("cores", 4))
 
         if (
             (self.desc.initFlags & RKInitFlagStartPulseEngine)
@@ -407,7 +421,12 @@ class Workspace(ctypes.Structure):
                     if z % 100 == 0:
                         s = z * 0.01
                         m = self.pulseMachine.contents.maxWorkerLag
-                        self.print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f} \n")
+                        self.print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f}\n")
+                    pulse = self.get_done_pulse()
+                    while pulse is not None:
+                        ic += 1
+                        ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
+                        pulse = self.get_done_pulse()
                     z = z + 1
 
                 r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
@@ -422,24 +441,30 @@ class Workspace(ctypes.Structure):
                     d16 = read_RKInt16C_from_pulse(pulse, pulse.contents.header.gateCount)
                     place_RKInt16C_to_pulse(pulse, filter(d16))
 
-                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
-                if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
-                    pulse.contents.header.s |= RKPulseStatusCompleteForMoments
-
                 el[ip] = pulse.contents.header.elevationDegrees
                 az[ip] = pulse.contents.header.azimuthDegrees
                 if self.header.dataType == RKRawDataTypeFromTransceiver:
                     riq[ip, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
+
+                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
+                if not (self.desc.initFlags & RKInitFlagStartRingFilterEngine):
+                    pulse.contents.header.s |= RKPulseStatusRingProcessed
+                if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
+                    pulse.contents.header.s |= RKPulseStatusCompleteForMoments
+
                 pulse = self.get_done_pulse()
                 while pulse is not None:
                     ic += 1
                     ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                     pulse = self.get_done_pulse()
 
+                # Yield to other threads to process the pulses
+                time.sleep(1.0e-6)
+
                 pbar.update(1.0)
             pbar.close()
 
-        if self.verbose:
+        if self.verbose > 1:
             print(f"E1: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
         s = 0
         while ic < ip and s < 30:
@@ -450,7 +475,7 @@ class Workspace(ctypes.Structure):
                 continue
             ic += 1
             ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
-        if self.verbose or s >= 30 or ic < ip:
+        if self.verbose > 1 or s >= 30 or ic < ip:
             print(f"E0: ip = {ip:,d}   ic = {ic:,d}   pulseCount = {pulseCount:,d}")
 
         RKFileSeek(self.fid, pos)
@@ -522,9 +547,7 @@ def open(filename, **kwargs):
         workspace = Workspace()
     else:
         workspace = workspaces[-1]
-    if "verbose" in kwargs:
-        workspace.verbose = kwargs["verbose"]
-    workspace.open(filename)
+    workspace.open(filename, **kwargs)
     if len(workspaces) > 3:
         print(f"Warning. Multiple workspaces ({len(workspaces)}) detected.")
     return workspace

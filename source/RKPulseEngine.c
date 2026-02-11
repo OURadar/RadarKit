@@ -404,6 +404,8 @@ static void *pulseEngineCore(void *_in) {
     uint64_t tic = me->tic;
     uint16_t configIndex = -1;
 
+    bool skipRingFilter = !(engine->radarDescription->initFlags & RKInitFlagStartRingFilterEngine);
+
     while (engine->state & RKEngineStateWantActive) {
         if (engine->useSemaphore) {
             #ifdef DEBUG_IQ
@@ -531,6 +533,9 @@ static void *pulseEngineCore(void *_in) {
         me->lag = RKModuloLag(*engine->pulseIndex, i0, engine->radarDescription->pulseBufferDepth) / (float)engine->radarDescription->pulseBufferDepth;
 
         pulse->header.s |= RKPulseStatusProcessed;
+        if (skipRingFilter) {
+            pulse->header.s |= RKPulseStatusRingSkipped | RKPulseStatusRingProcessed;
+        }
 
         // Done processing, get the time
         gettimeofday(&t0, NULL);

@@ -3764,3 +3764,11 @@ int RKFileOverview(const char *filename, const int level) {
     }
     return RKResultSuccess;
 }
+
+void RKGenerateDFTWisdom(const int offt) {
+    RKSetWantScreenOutput(true);
+    RKLog("Generating DFT wisdom for size %s...\n", RKIntegerToCommaStyleString(1 << offt));
+    RKFFTModule *module = RKFFTModuleInit(1 << offt, 2);
+    RKFFTModuleFree(module);
+    RKLog("Done.\n");
+}

@@ -17,6 +17,7 @@
 #include <RadarKit/RKSpectralMoment.h>
 #include <RadarKit/RKCalibrator.h>
 #include <RadarKit/RKPulsePairATSR.h>
+#include <RadarKit/RKGmap.h>
 
 #define RKMomentDFTPlanCount    16
 
@@ -57,6 +58,7 @@ struct rk_moment_engine {
     uint8_t                          coreOrigin;
     bool                             useOldCodes;
     bool                             useSemaphore;
+    bool                             useGmap;
     bool                             excludeBoundaryPulses;
     int                              (*noiseEstimator)(RKMomentScratch *, RKPulse **, const uint16_t);
     int                              (*momentProcessor)(RKMomentScratch *, RKPulse **, const uint16_t);

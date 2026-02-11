@@ -22,9 +22,9 @@ size_t RKSIMD_size(void) {
 }
 
 void RKSIMD_show_info(void) {
-    printf(UNDERLINE("SIMD Info:"));
+    printf(UNDERLINE("SIMD Info:\n"));
     if (!rkGlobalParameters.showColor) {
-        printf("\n----------\n");
+        printf("----------\n");
     }
     const size_t s = sizeof(RKVec);
     const size_t w = s * 8;

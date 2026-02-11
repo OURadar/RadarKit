@@ -106,6 +106,10 @@ static void showHelp(void) {
            "         along with a staggered ratio determined by " UNDERLINE("mode") " where\n"
            "         is either 2 for (2:3), 3 for (3:4) and 4 for (4:5).\n"
            "\n"
+           "  -F (--optimize-dft) " UNDERLINE("[N]") "\n"
+           "         Generates DFT wisdom for FFT size of 2 ^ " UNDERLINE("N") ".\n"
+           "         If " UNDERLINE("N") " is not specified, the default is 14 (16,384 points).\n"
+           "\n"
            "  -g (--gate) " UNDERLINE("value") "\n"
            "         Sets the number range gate capacity to " UNDERLINE("value") ".\n"
            "         If not specified, the default gate capacity is 8,000 bins.\n"
@@ -148,12 +152,15 @@ static void showHelp(void) {
            "          r - Ring filter engine\n"
            "          s - Sweep engine\n"
            "          w - RadarHub WebSocket Reporter\n"
-           "\n"
-           "  -T (--test) " UNDERLINE("value") "\n"
+           "\n",
+           name);
+    printf("  -T (--test) " UNDERLINE("value") "\n"
            "         Tests a specific component of the RadarKit framework.\n"
-           "%s"
            "\n"
-           "EXAMPLES:\n"
+           "%s"
+           "\n",
+           RKTestByNumberDescription(9));
+    printf("EXAMPLES:\n"
            "    Here are some examples of typical configurations.\n"
            "\n"
            "    -vs1  (no space after s)\n"
@@ -173,13 +180,17 @@ static void showHelp(void) {
            "    -v -s1 -L -f2000\n"
            "         Same as level-1 system but with PRF = 2,000 Hz.\n"
            "\n"
+           "    -F15\n"
+           "         Generates DFT wisdom for FFT size of 2 ^ 15 (32,768 points).\n"
+           "\n"
+           "    --optimize-dft=15\n"
+           "         Same as above.\n"
+           "\n"
            "    -T601\n"
            "         Runs the unit test to measure SIMD performance.\n"
            "\n\n"
            "%s / RadarKit " __RKVersion__ " / " __VERSION__
            "\n\n",
-           name,
-           RKTestByNumberDescription(9),
            name);
 }
 
@@ -425,6 +436,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
         {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"clock"             , no_argument      , NULL, 'C'},
         {"dir"               , required_argument, NULL, 'D'},
+        {"optimize-dft"      , optional_argument, NULL, 'F'},
         {"host"              , required_argument, NULL, 'H'},
         {"port"              , required_argument, NULL, 'P'},
         {"system"            , required_argument, NULL, 'S'},
@@ -517,6 +529,15 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 strncpy(user->playbackFolder, RKPathStringByExpandingTilde(optarg), sizeof(user->playbackFolder) - 1);
                 RKLog("==> %s ==> %s\n", optarg, user->playbackFolder);
                 break;
+            case 'F':
+                if (optarg) {
+                    k = (int)atoi(optarg);
+                } else {
+                    k = 14;
+                }
+                printf("optarg = %p   argc = %d / %d   k = %d\n", optarg, optind, argc, k);
+                RKGenerateDFTWisdom(k);
+                RKExit(EXIT_SUCCESS);
             case 'H':
                 strncpy(user->radarHubHost, optarg, sizeof(user->radarHubHost) - 1);
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';

@@ -472,9 +472,10 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
 
 RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     int k;
+    const unsigned int flag = verbose > 1 ? FFTW_MEASURE : FFTW_ESTIMATE;
     RKFFTModule *module = (RKFFTModule *)malloc(sizeof(RKFFTModule));
     if (module == NULL) {
-        fprintf(stderr, "Error. Unable to allocate RKFFTModule.\n");
+        RKLog("Error. Unable to allocate RKFFTModule.\n");
         exit(EXIT_FAILURE);
     }
     memset(module, 0, sizeof(RKFFTModule));
@@ -497,7 +498,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     sprintf(module->wisdomFile, "%s/%s", rkGlobalParameters.rootDataFolder, RKFFTWisdomFile);
     RKPreparePath(module->wisdomFile);
     if (RKFilenameExists(module->wisdomFile)) {
-        RKLog("%s Loading DFT wisdom %s ...\n", module->name, module->wisdomFile);
+        RKLog("%s Loading FFT wisdom %s ...\n", module->name, module->wisdomFile);
         fftwf_import_wisdom_from_filename(module->wisdomFile);
         strcpy(wisdom, fftwf_export_wisdom_to_string());
     } else {
@@ -512,21 +513,17 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     POSIX_MEMALIGN_CHECK(posix_memalign((void **)&out, RKMemoryAlignSize, internalCapacity * sizeof(fftwf_complex)))
 
     // Create FFT plans
-    if (module->verbose) {
-        RKLog("%s Allocating FFT resources with capacity %s (%d) ...\n",
-            module->name, RKIntegerToCommaStyleString(internalCapacity), planCount);
-    }
+    RKLog("%s Allocating FFT resources with capacity %s (%d) ...\n",
+        module->name, RKIntegerToCommaStyleString(internalCapacity), planCount);
     for (k = 0; k < planCount; k++) {
         module->plans[k].size = 1 << k;
-        if (module->verbose) {
-            RKLog(">%s Setting up plan[%d] @ nfft = %s   useCount = %s\n", module->name, k,
-                RKIntegerToCommaStyleString(module->plans[k].size),
-                RKIntegerToCommaStyleString(module->plans[k].count));
-        }
-        module->plans[k].forwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, in, in, FFTW_FORWARD, FFTW_MEASURE);
-        module->plans[k].forwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, in, out, FFTW_FORWARD, FFTW_MEASURE);
-        module->plans[k].backwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, out, out, FFTW_BACKWARD, FFTW_MEASURE);
-        module->plans[k].backwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, out, in, FFTW_BACKWARD, FFTW_MEASURE);
+        RKLog(">%s Setting up plan[%d] @ nfft = %s   useCount = %s\n", module->name, k,
+            RKIntegerToCommaStyleString(module->plans[k].size),
+            RKIntegerToCommaStyleString(module->plans[k].count));
+        module->plans[k].forwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, in, in, FFTW_FORWARD, flag);
+        module->plans[k].forwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, in, out, FFTW_FORWARD, flag);
+        module->plans[k].backwardInPlace = fftwf_plan_dft_1d(module->plans[k].size, out, out, FFTW_BACKWARD, flag);
+        module->plans[k].backwardOutPlace = fftwf_plan_dft_1d(module->plans[k].size, out, in, FFTW_BACKWARD, flag);
         module->count++;
     }
     if (!module->exportWisdom) {
@@ -535,7 +532,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         }
     }
     if (module->exportWisdom) {
-        RKLog("%s Saving DFT wisdom %s ...\n", module->name, module->wisdomFile);
+        RKLog("%s Saving FFT wisdom %s ...\n", module->name, module->wisdomFile);
         fftwf_export_wisdom_to_filename(module->wisdomFile);
         module->exportWisdom = false;
     }
@@ -548,26 +545,20 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
 void RKFFTModuleFree(RKFFTModule *module) {
     int k;
     if (module->count == 0) {
-        fprintf(stderr, "FFT module has no plans.\n");
+        RKLog("Warning. FFT module has no plans.\n");
         return;
     }
     // Export wisdom
     if (module->exportWisdom) {
-        if (module->verbose) {
-            RKLog("%s Saving DFT wisdom ...\n", module->name);
-        }
+        RKLog("%s Saving FFT wisdom %s ...\n", module->name, module->wisdomFile);
         fftwf_export_wisdom_to_filename(module->wisdomFile);
     }
-    // Destroy DFT plans
-    if (module->verbose) {
-        RKLog("%s De-allocating FFT resources ...\n", module->name);
-    }
+    // Destroy FFT plans
+    RKLog("%s De-allocating FFT resources ...\n", module->name);
     for (k = module->count - 1; k >= 0; k--) {
-        if (module->verbose) {
-            RKLog(">%s Destroying plan[%d] @ nfft = %s   useCount = %s\n", module->name, k,
-                  RKIntegerToCommaStyleString(module->plans[k].size),
-                  RKIntegerToCommaStyleString(module->plans[k].count));
-        }
+        RKLog(">%s Destroying plan[%d] @ nfft = %s   useCount = %s\n", module->name, k,
+                RKIntegerToCommaStyleString(module->plans[k].size),
+                RKIntegerToCommaStyleString(module->plans[k].count));
         fftwf_destroy_plan(module->plans[k].forwardInPlace);
         fftwf_destroy_plan(module->plans[k].forwardOutPlace);
         fftwf_destroy_plan(module->plans[k].backwardInPlace);
