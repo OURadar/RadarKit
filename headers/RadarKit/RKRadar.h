@@ -373,4 +373,7 @@ int RKArcherOverview(char *, const char *, const RKTextPreferences);
 // File I/O
 int RKFileOverview(const char *, const int);                                                       //
 
+// Other Utilities
+void RKGenerateDFTWisdom(const int);
+
 #endif /* defined(__RadarKit_RKRadar__) */

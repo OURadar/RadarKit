@@ -72,7 +72,7 @@ Workspace *WorkspaceInit(RKRadarDesc *desc, UserParams *arg) {
 
     size_t mem = sizeof(Workspace);
 
-    mod->fftModule = RKFFTModuleInit(desc->pulseCapacity, verbose);
+    mod->fftModule = RKFFTModuleInit(desc->pulseCapacity, 2);
 
     desc->configBufferSize = RKConfigBufferAlloc(&mod->configs, desc->configBufferDepth);
     desc->pulseBufferSize = RKPulseBufferAlloc(&mod->pulses, desc->pulseCapacity, desc->pulseBufferDepth);

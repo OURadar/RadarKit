@@ -1,0 +1,12 @@
+{
+  "name": "RadarKit Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "source=${env:HOME}/Downloads/data,target=/data,type=bind"
+  ]
+}

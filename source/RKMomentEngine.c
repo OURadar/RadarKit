@@ -467,10 +467,22 @@ static void *momentEngineCore(void *in) {
             // Call the noise estimator
             // RKLog("%s noiseEstimator on.\n", me->name);
             k = engine->noiseEstimator(space, pulses, path.length);
+
+            // Clutter power estimate and clutter mitigation decision here?
+
+
             // RKLog("%s noiseEstimator off.\n", me->name);
             if (k != RKResultSuccess) {
                 RKNoiseFromConfig(space, pulses, path.length);
             }
+
+            // ============================================== GMAP goes here! ==============================================
+            // RKLog("engine->useGmap set to %d\n", engine->useGmap);
+            if (engine->useGmap) {
+                RKGmapRun(space, pulses, path.length);
+            }
+            // =============================================================================================================
+
             // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
             // Call the moment processor
             k = engine->momentProcessor(space, pulses, path.length);
@@ -1312,6 +1324,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
+    engine->useGmap = false; // TODO: Does Boonleng want this on by default?
     engine->noiseEstimator = RKNoiseFromConfig;
     // engine->momentProcessor = RKPulsePairHop;
     engine->momentProcessor = RKMultiLag;

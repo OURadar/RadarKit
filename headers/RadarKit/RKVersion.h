@@ -9,7 +9,7 @@
 #ifdef BETA_BRANCH
 #define _RKVersionBranch_ "c"
 #else
-#define _RKVersionBranch_ ""
+#define _RKVersionBranch_ ".dev0"
 #endif
 
-#define __RKVersion__ "6.2.4" _RKVersionBranch_
+#define __RKVersion__ "6.3" _RKVersionBranch_
