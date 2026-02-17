@@ -12,7 +12,7 @@
 //
 // Hann window
 //
-void hann(double *w, const int n) {
+static void hann(double *w, const int n) {
     int i, j;
     bool odd = n % 2;
     unsigned int m = (n + 1) / 2;
@@ -41,7 +41,7 @@ void hann(double *w, const int n) {
 //
 // Hamming window
 //
-void hamming(double *w, const int n) {
+static void hamming(double *w, const int n) {
     int i, j;
     bool odd = n % 2;
     unsigned int m = (n + 1) / 2;
@@ -67,9 +67,121 @@ void hamming(double *w, const int n) {
 }
 
 //
+// Blackman window
+//
+static void blackman(double *w, const int n) {
+    int i, j;
+    bool odd = n % 2;
+    unsigned int m = (n + 1) / 2;
+    double twid = 2.0 * M_PI / ((double)n - 1.0);
+
+    if (n == 0) {
+        return;
+    }
+
+    for (i = 0; i < m; i++) {
+        w[i] = 0.42 - 0.5 * cos(twid * ((double)i)) + 0.08 * cos(2.0 * twid * ((double)i));
+    }
+    if (odd) {
+        j = m - 1;
+    } else {
+        j = m;
+    }
+    while (j > 0) {
+        j--;
+        w[i++] = w[j];
+    }
+    return;
+}
+
+//
+// Blackman-Harris window
+//
+static void blackmanHarris(double *w, const int n) {
+    int i, j;
+    bool odd = n % 2;
+    unsigned int m = (n + 1) / 2;
+    double twid = 2.0 * M_PI / ((double)n - 1.0);
+
+    if (n == 0) {
+        return;
+    }
+
+    for (i = 0; i < m; i++) {
+        w[i] = 0.35875 - 0.48829 * cos(twid * ((double)i)) + 0.14128 * cos(2.0 * twid * ((double)i)) - 0.01168 * cos(3.0 * twid * ((double)i));
+    }
+    if (odd) {
+        j = m - 1;
+    } else {
+        j = m;
+    }
+    while (j > 0) {
+        j--;
+        w[i++] = w[j];
+    }
+    return;
+}
+
+//
+// Nuttall window
+//
+static void nuttall(double *w, const int n) {
+    int i, j;
+    bool odd = n % 2;
+    unsigned int m = (n + 1) / 2;
+    double twid = 2.0 * M_PI / ((double)n - 1.0);
+
+    if (n == 0) {
+        return;
+    }
+
+    for (i = 0; i < m; i++) {
+        w[i] = 0.355768 - 0.487396 * cos(twid * ((double)i)) + 0.144232 * cos(2.0 * twid * ((double)i)) - 0.012604 * cos(3.0 * twid * ((double)i));
+    }
+    if (odd) {
+        j = m - 1;
+    } else {
+        j = m;
+    }
+    while (j > 0) {
+        j--;
+        w[i++] = w[j];
+    }
+    return;
+}
+
+//
+// Flattop window
+//
+static void flattop(double *w, const int n) {
+    int i, j;
+    bool odd = n % 2;
+    unsigned int m = (n + 1) / 2;
+    double twid = 2.0 * M_PI / ((double)n - 1.0);
+
+    if (n == 0) {
+        return;
+    }
+
+    for (i = 0; i < m; i++) {
+        w[i] = 0.21550795224343777 - 0.4159303478298349 * cos(twid * ((double)i)) + 0.2780052583940347 * cos(2.0 * twid * ((double)i)) - 0.08361708547045386 * cos(3.0 * twid * ((double)i)) + 0.006939356062238697 * cos(4.0 * twid * ((double)i));
+    }
+    if (odd) {
+        j = m - 1;
+    } else {
+        j = m;
+    }
+    while (j > 0) {
+        j--;
+        w[i++] = w[j];
+    }
+    return;
+}
+
+//
 // Kaiser window
 //
-void kaiser(double *w, const int n, const double beta) {
+static void kaiser(double *w, const int n, const double beta) {
     int i, j;
     bool odd = n % 2;
     unsigned int m = (n + 1) / 2;
@@ -130,7 +242,7 @@ void kaiser(double *w, const int n, const double beta) {
 // gamma to 1.0 when gamma > 0.0
 // 1.0 to abs(gamma) when gamma < 0.0
 //
-void trapezoid(double *w, const int n, const double gamma) {
+static void trapezoid(double *w, const int n, const double gamma) {
     int i;
     double slope = (gamma < 0.0 ? (fabs(gamma) - 1.0) : (1.0 - gamma)) / (n - 1);
     double offset = gamma < 0.0 ? 1.0 : gamma;
@@ -139,7 +251,7 @@ void trapezoid(double *w, const int n, const double gamma) {
     }
 }
 
-void tukey(double *w, const int n, const double r) {
+static void tukey(double *w, const int n, const double r) {
     int i, nl, nh;
     double p, t, dt;
     if (r <= 0.0) {
@@ -201,6 +313,22 @@ void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...) {
 
         case RKWindowTypeHamming:
             hamming(window, length);
+            break;
+
+        case RKWindowTypeBlackman:
+            blackman(window, length);
+            break;
+
+        case RKWindowTypeBlackmanHarris:
+            blackmanHarris(window, length);
+            break;
+
+        case RKWindowTypeNuttall:
+            nuttall(window, length);
+            break;
+
+        case RKWindowTypeFlattop:
+            flattop(window, length);
             break;
 
         case RKWindowTypeKaiser:

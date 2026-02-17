@@ -16,6 +16,10 @@ enum {
     RKWindowTypeBoxCar,
     RKWindowTypeHann,
     RKWindowTypeHamming,
+    RKWindowTypeBlackman,
+    RKWindowTypeBlackmanHarris,
+    RKWindowTypeNuttall,
+    RKWindowTypeFlattop,
     RKWindowTypeKaiser,
     RKWindowTypeTukey,
     RKWindowTypeTrapezoid
