@@ -464,26 +464,19 @@ static void *momentEngineCore(void *in) {
         if (path.length > 3 && deltaAzimuth < 3.0f && deltaElevation < 3.0f && pulses[0]->header.s & RKPulseStatusCompressed) {
             // Initialize the scratch space
             prepareScratch(space);
+
             // Call the noise estimator
             // RKLog("%s noiseEstimator on.\n", me->name);
             k = engine->noiseEstimator(space, pulses, path.length);
-
-            // Clutter power estimate and clutter mitigation decision here?
-
-
-            // RKLog("%s noiseEstimator off.\n", me->name);
             if (k != RKResultSuccess) {
                 RKNoiseFromConfig(space, pulses, path.length);
             }
+            // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
 
-            // ============================================== GMAP goes here! ==============================================
-            // RKLog("engine->useGmap set to %d\n", engine->useGmap);
             if (engine->useGmap) {
                 RKGmapRun(space, pulses, path.length);
             }
-            // =============================================================================================================
 
-            // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
             // Call the moment processor
             k = engine->momentProcessor(space, pulses, path.length);
             // RKLog("%s Processed %d samples\n", me->name, k);

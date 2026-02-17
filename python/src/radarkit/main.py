@@ -412,19 +412,24 @@ class Workspace(ctypes.Structure):
 
         with tqdm.tqdm(total=pulseCount, ncols=90, bar_format="{l_bar}{bar}|{elapsed}<{remaining}") as pbar:
             ic = 0
+            bz = 1
             for ip in range(1, pulseCount):
                 pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
 
                 z = 1
-                while self.pulseMachine.contents.maxWorkerLag > 0.7:
+                while self.pulseMachine.contents.maxWorkerLag > 0.7 or bz > 0.7 * self.desc.pulseBufferDepth:
                     time.sleep(0.01)
+                    s = z * 0.01
+                    m = self.pulseMachine.contents.maxWorkerLag
+                    # self.print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f}\n")
                     if z % 100 == 0:
                         s = z * 0.01
                         m = self.pulseMachine.contents.maxWorkerLag
-                        self.print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f}\n")
+                        print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f}\n")
                     pulse = self.get_done_pulse()
                     while pulse is not None:
                         ic += 1
+                        bz -= 1
                         ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                         pulse = self.get_done_pulse()
                     z = z + 1
@@ -452,14 +457,17 @@ class Workspace(ctypes.Structure):
                 if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
                     pulse.contents.header.s |= RKPulseStatusCompleteForMoments
 
+                bz += 1
+
                 pulse = self.get_done_pulse()
                 while pulse is not None:
                     ic += 1
+                    bz -= 1
                     ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
                     pulse = self.get_done_pulse()
 
-                # Yield to other threads to process the pulses
-                time.sleep(1.0e-6)
+                # Yield to other threads to process the pulses. RKPulseEngineUpdateMinMaxWorkerLag() could take up to 50us
+                time.sleep(50.0e-6)
 
                 pbar.update(1.0)
             pbar.close()
