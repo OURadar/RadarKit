@@ -206,7 +206,9 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
         scaleS = x / (gateCount - downSampledPulseWidthSampleCount - 1);
         // scaleS = RKSIMD_sum(space->aR[p][0], gateCount) / gateCount;
-        // RKLog("< NoiseEngine > n=%d, scaleS %f\n",gateCount - sizeof(RKVec) / sizeof(float),scaleS);
+        RKLog("< NoiseEngine > gateCount = %d   downSampledPulseWidthSampleCount = %d\n", gateCount, downSampledPulseWidthSampleCount);
+        RKLog("< NoiseEngine > dem = %d\n", gateCount - downSampledPulseWidthSampleCount - 1);
+        RKLog("< NoiseEngine > n = %d   scaleS %f\n", gateCount - sizeof(RKVec) / sizeof(float), scaleS);
         // RKSIMD_sum is not right looks like memory leak here and lead to catastrophic fail in noise estimator.
 
         noiseGateCount = 0;
@@ -214,6 +216,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
             space->S[p][noiseGateCount++] = space->aR[p][0][k] / scaleS;                           // iq_power
         }
         j = noiseGateCount;
+        RKLog("< NoiseEngine > T0   noiseGateCount = %d\n", noiseGateCount);
         noiseGateCount = 0;
         for (k = 2; k < j - 2; k++) {
             if ((space->S[p][k] < TCN[M] * space->S[p][k - 2]) &&
@@ -221,6 +224,7 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
                 space->S[p][noiseGateCount++] = space->S[p][k];                                    // P_noise
             }
         }
+        RKLog("< NoiseEngine > T1   noiseGateCount = %d   K = %d\n", noiseGateCount, K);
 
         for (k = 0; k < noiseGateCount; k++) {
             space->Z[p][k] = log10f(space->S[p][k]);                                               // log_P
@@ -228,12 +232,13 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
         if (noiseGateCount < K) {
             // this not suppose triggered but can avoid segmentation fault
+            RKLog("< NoiseEngine > noiseGateCount %d is smaller than K %d, failed to estimate noise.\n", noiseGateCount, K);
             failed = true;
             break;
         }
         // RKLog("< NoiseEngine > I guess crash here.\n");
         for (k = 0; k < noiseGateCount - K; k++) {
-            // RKLog("< NoiseEngine > downSampledPulseWidthSampleCount = %d, noiseGateCount = %d\n",downSampledPulseWidthSampleCount,noiseGateCount);
+            // RKLog("< NoiseEngine > downSampledPulseWidthSampleCount = %d, noiseGateCount = %d\n", downSampledPulseWidthSampleCount, noiseGateCount);
             // RKLog("< NoiseEngine > k = %d, K = %d\n",k,K);
             varInLog = varf(&space->Z[p][k], K);                                                   // Var_dB
             // RKLog("< NoiseEngine > varInLog, %.3f.\n",varInLog);
@@ -386,9 +391,11 @@ int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t
         }
     }
     if (failed) {
-        // RKLog("< NoiseEngine > Info. ray/channel-F.\n");
-        space->noise[0] = space->config->noise[0];
-        space->noise[1] = space->config->noise[1];
+        RKLog("< NoiseEngine > Info. ray/channel-F.\n");
+        if (space->config != NULL) {
+            space->noise[0] = space->config->noise[0];
+            space->noise[1] = space->config->noise[1];
+        }
         return RKResultFailedToEstimateNoise;
     } else {
         // RKLog("< NoiseEngine > Info. ray/channel-S.\n");

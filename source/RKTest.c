@@ -197,6 +197,7 @@ char *RKTestByNumberDescription(const int indent) {
     "413 - Test showing built-in waveform properties\n"
     "414 - Test showing user-defined waveform properties; -T414 WAVEFORM_FILE\n"
     "415 - Test GMAP algorithm\n"
+    "416 - Test noise estimator\n"
     "\n"
     UNDERLINE("500 series - Numerical tests") "\n"
     "501 - Test half-single-double conversion\n"
@@ -390,6 +391,10 @@ void RKTestByNumber(const int number, const int argc, const void **args) {
         case 415:
             RKTestGMAP();
             break;
+        case 416:
+            RKTestNoiseEstimator();
+            break;
+
         case 501:
             RKTestHalfSingleDoubleConversion();
             break;
@@ -1884,7 +1889,7 @@ void RKTestGMAP(void) {
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKPulse *pulses[pulseCount];
 
-    // Ready made arrays from matlab
+    // Ready made arrays from MATLAB
     static const float VAL_REAL_P0[] = {
         15.5810,  12.4257,   9.9393,  12.7739,  12.9182,  11.0566,  14.3235,  12.1150,
          8.9662,  13.1453,  15.2864,  11.1427,   6.2095,   8.3350,  11.7218,  10.4426,
@@ -1967,7 +1972,7 @@ void RKTestGMAP(void) {
         -0.0447, -0.1443, -0.1200, -0.2073, -0.1798, -0.2310, -0.2112, -0.2080
     };
 
-    // put data into pulses
+    // Put data into pulses
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
@@ -2017,6 +2022,84 @@ void RKTestGMAP(void) {
     RKMomentScratchFree(space);
     RKFFTModuleFree(fftModule);
     RKPulseBufferFree(pulseBuffer);
+}
+
+void RKTestNoiseEstimator(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    RKConfig *configs;
+    RKBuffer pulseBuffer;
+    RKFFTModule *fftModule;
+    RKMomentScratch *space;
+
+    const int gateCount = 8;
+    const int pulseCount = 64;
+    const int pulseCapacity = 64;
+
+    RKLog("Allocating buffers ...\n");
+    RKConfigBufferAlloc(&configs, 1);
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    RKMomentScratchAlloc(&space, pulseCapacity, 1, "NoiseEstimate");
+    fftModule = RKFFTModuleInit(pulseCapacity, 1);
+    space->config = &configs[0];
+    space->fftModule = fftModule;
+    space->gateCount = gateCount;
+    space->gateSizeMeters = 30.0f;
+    space->velocityFactor = 25.0f / M_PI;
+
+    RKPulse *pulses[pulseCount];
+
+    static const float VAL_REAL_P0[] = {
+        15.5810,  12.4257,   9.9393,  12.7739,  12.9182,  11.0566,  14.3235,  12.1150,
+         8.9662,  13.1453,  15.2864,  11.1427,   6.2095,   8.3350,  11.7218,  10.4426,
+         8.4249,   9.1248,  12.8151,  12.6261,   9.1220,  10.3710,  12.7484,   9.5243,
+        10.3136,  11.2986,   9.3995,  12.8159,  15.1507,  10.6379,   7.0665,   8.2196,
+        12.3824,  13.1078,   9.0973,   6.7943,   7.5652,  13.2790,   9.5289,   5.6203,
+         8.5775,   8.3951,   2.9664,   0.5175,   6.3837,   7.1259,   2.5341,   1.0219,
+        -1.3120,  -1.9066,  -2.6180,  -1.6302,  -1.0882,  -2.7433,  -1.0896,  -0.2102,
+        -3.4617,  -4.0623,  -5.3956,  -1.1765,   2.1187,   4.1649,   6.7060,   6.0583
+    };
+
+    static const float VAL_IMAG_P0[] = {
+       -10.2767, -13.4302, -10.7491,  -9.8259, -12.3556, -10.7563, -11.8538, -15.1111,
+       -12.6683, -10.5345, -15.5029, -18.6795, -15.5618, -11.0683, -13.1165, -14.8278,
+       -13.3994, -10.1060,  -9.6413, -12.6937, -10.7865,  -6.3481,  -7.1894,  -7.0322,
+        -2.6821,  -1.9671,   2.0350,   5.6939,   3.5697,   3.2541,   7.8963,  14.5504,
+        17.0721,  14.5231,  15.2767,  19.0860,  24.9706,  25.0420,  20.5153,  24.7348,
+        26.1304,  22.8835,  21.6807,  25.8180,  27.0270,  20.3638,  16.7356,  15.3232,
+        13.8331,  13.2439,  11.8629,  11.1300,   6.3452,   4.2828,   3.4463,  -2.0343,
+        -4.4845,  -5.4836,  -4.5969,  -2.2361,  -5.6209,  -6.4892,  -8.9808, -10.9419
+    };
+
+    // Put data into pulses
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
+        pulse->header.t = k;
+        pulse->header.gateCount = gateCount;
+        pulse->header.downSampledGateCount = gateCount;
+        pulse->header.pulseWidthSampleCount = 1;
+        RKComplex *Y = RKGetComplexDataFromPulse(pulse, 0);
+        for (g = 0; g < gateCount; g++) {
+            Y[g].i = VAL_REAL_P0[k];
+            Y[g].q = VAL_IMAG_P0[k];
+        }
+        pulses[k] = pulse;
+    }
+
+    // Setup other variables
+    space->noise[0] = 0.1f;
+    space->noise[1] = 0.1f;
+
+    RKRayNoiseEstimator(space, pulses, pulseCount);
+
+    printf("Estimated noise = %f + %fi\n", space->noise[0], space->noise[1]);
+
+    RKLog("Deallocating buffers ...\n");
+
+    RKMomentScratchFree(space);
+    RKFFTModuleFree(fftModule);
+    RKPulseBufferFree(pulseBuffer);
+    RKConfigBufferFree(configs);
 }
 
 // Compare two filenames
