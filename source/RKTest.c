@@ -2029,75 +2029,84 @@ void RKTestNoiseEstimator(void) {
     int g, k;
     RKConfig *configs;
     RKBuffer pulseBuffer;
-    RKFFTModule *fftModule;
     RKMomentScratch *space;
 
-    const int gateCount = 8;
-    const int pulseCount = 64;
-    const int pulseCapacity = 64;
+    static const float POW[] = {
+        0.7437f, 0.5892f, 0.9550f, 0.8199f, 0.9111f, 0.9888f, 1.1308f, 0.7592f,
+        1.0921f, 1.4008f, 0.9836f, 1.1795f, 0.9161f, 0.9631f, 0.7317f, 0.9017f,
+        1.1642f, 1.0315f, 0.7821f, 0.9771f, 0.7819f, 0.7686f, 0.9810f, 1.0263f,
+        1.5079f, 0.9067f, 1.4988f, 1.3770f, 0.7587f, 0.8821f, 1.1724f, 0.9621f,
+        1.4333f, 1.1158f, 0.7924f, 1.2843f, 1.2716f, 0.8633f, 0.6607f, 0.7914f,
+        1.1309f, 1.2749f, 0.6982f, 1.9566f, 1.2151f, 1.0005f, 0.9167f, 0.8114f,
+        0.9714f, 0.5682f, 0.7637f, 1.3276f, 0.5841f, 1.1764f, 0.7116f, 0.5129f,
+        0.8599f, 1.2401f, 1.3779f, 1.0090f, 1.0918f, 1.2655f, 1.1343f, 0.7296f,
+    };
+    static const float RES[] = {
+        1.0045176f, 1.0045176f
+    };
+    const int gateCount = sizeof(POW) / sizeof(float);
+
+    const int pulseCount = 32;
+    const int pulseCapacity = gateCount;
+    const float scale = (float)sqrtf(0.5f);
 
     RKLog("Allocating buffers ...\n");
     RKConfigBufferAlloc(&configs, 1);
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKMomentScratchAlloc(&space, pulseCapacity, 1, "NoiseEstimate");
-    fftModule = RKFFTModuleInit(pulseCapacity, 1);
     space->config = &configs[0];
-    space->fftModule = fftModule;
     space->gateCount = gateCount;
-    space->gateSizeMeters = 30.0f;
+    space->gateSizeMeters = 250.0f;
     space->velocityFactor = 25.0f / M_PI;
 
     RKPulse *pulses[pulseCount];
 
-    static const float VAL_REAL_P0[] = {
-        15.5810,  12.4257,   9.9393,  12.7739,  12.9182,  11.0566,  14.3235,  12.1150,
-         8.9662,  13.1453,  15.2864,  11.1427,   6.2095,   8.3350,  11.7218,  10.4426,
-         8.4249,   9.1248,  12.8151,  12.6261,   9.1220,  10.3710,  12.7484,   9.5243,
-        10.3136,  11.2986,   9.3995,  12.8159,  15.1507,  10.6379,   7.0665,   8.2196,
-        12.3824,  13.1078,   9.0973,   6.7943,   7.5652,  13.2790,   9.5289,   5.6203,
-         8.5775,   8.3951,   2.9664,   0.5175,   6.3837,   7.1259,   2.5341,   1.0219,
-        -1.3120,  -1.9066,  -2.6180,  -1.6302,  -1.0882,  -2.7433,  -1.0896,  -0.2102,
-        -3.4617,  -4.0623,  -5.3956,  -1.1765,   2.1187,   4.1649,   6.7060,   6.0583
-    };
-
-    static const float VAL_IMAG_P0[] = {
-       -10.2767, -13.4302, -10.7491,  -9.8259, -12.3556, -10.7563, -11.8538, -15.1111,
-       -12.6683, -10.5345, -15.5029, -18.6795, -15.5618, -11.0683, -13.1165, -14.8278,
-       -13.3994, -10.1060,  -9.6413, -12.6937, -10.7865,  -6.3481,  -7.1894,  -7.0322,
-        -2.6821,  -1.9671,   2.0350,   5.6939,   3.5697,   3.2541,   7.8963,  14.5504,
-        17.0721,  14.5231,  15.2767,  19.0860,  24.9706,  25.0420,  20.5153,  24.7348,
-        26.1304,  22.8835,  21.6807,  25.8180,  27.0270,  20.3638,  16.7356,  15.3232,
-        13.8331,  13.2439,  11.8629,  11.1300,   6.3452,   4.2828,   3.4463,  -2.0343,
-        -4.4845,  -5.4836,  -4.5969,  -2.2361,  -5.6209,  -6.4892,  -8.9808, -10.9419
-    };
-
-    // Put data into pulses
+    // Simulate as DC signal with power POW
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
         pulse->header.gateCount = gateCount;
         pulse->header.downSampledGateCount = gateCount;
         pulse->header.pulseWidthSampleCount = 1;
-        RKComplex *Y = RKGetComplexDataFromPulse(pulse, 0);
+        RKIQZ x = RKGetSplitComplexDataFromPulse(pulse, 0);
+        RKIQZ y = RKGetSplitComplexDataFromPulse(pulse, 1);
         for (g = 0; g < gateCount; g++) {
-            Y[g].i = VAL_REAL_P0[k];
-            Y[g].q = VAL_IMAG_P0[k];
+            x.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            x.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            y.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            y.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            // if (k == 0) {
+            //     printf("%d: %f, %f   %f\n", g, x.i[g], x.q[g], x.i[g] * x.i[g] + x.q[g] * x.q[g]);
+            // }
         }
         pulses[k] = pulse;
     }
 
     // Setup other variables
-    space->noise[0] = 0.1f;
-    space->noise[1] = 0.1f;
+    space->noise[0] = 1.0045f;
+    space->noise[1] = 1.0045f;
 
-    RKRayNoiseEstimator(space, pulses, pulseCount);
+    int fail = RKRayNoiseEstimator(space, pulses, pulseCount);
 
-    printf("Estimated noise = %f + %fi\n", space->noise[0], space->noise[1]);
+    RKLog("Estimated noise = %f, %f\n", space->noise[0], space->noise[1]);
+
+    if (fail) {
+        RKLog("Error. Noise estimation failed.\n");
+    } else {
+        float delta0 = fabsf(space->noise[0] - RES[0]);
+        float delta1 = fabsf(space->noise[1] - RES[1]);
+        RKLog("Output delta = %s%f%s, %s%f%s\n",
+            rkGlobalParameters.showColor ? RKMonokaiYellow : "", delta0, rkGlobalParameters.showColor ? RKNoColor : "",
+            rkGlobalParameters.showColor ? RKMonokaiYellow : "", delta1, rkGlobalParameters.showColor ? RKNoColor : "");
+        RKLog("Noise estimation %s\n",
+            (delta0 < 1.0e-3f && delta1 < 1.0e-3f) ?
+            (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
+            (rkGlobalParameters.showColor ? RKMonokaiRed "failed" RKNoColor : "failed"));
+    }
 
     RKLog("Deallocating buffers ...\n");
 
     RKMomentScratchFree(space);
-    RKFFTModuleFree(fftModule);
     RKPulseBufferFree(pulseBuffer);
     RKConfigBufferFree(configs);
 }
