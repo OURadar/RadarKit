@@ -259,29 +259,57 @@ void handleOpen(RKWebSocket *W) {
     }
     RKWebSocketSend(W, engine->welcome, r);
     //
+    // r = sprintf(engine->control,
+    //     "%c{"
+    //         "\"pathway\": \"%s\", "
+    //         "\"control\": ["
+    //             "{\"Label\":\"Go\", \"Command\":\"t y\"}, "
+    //             "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
+    //             "{\"Label\":\"Stop Pedestal\", \"Command\":\"p stop\"}, "
+    //             "{\"Label\":\"Park\", \"Command\":\"p point 0 90\"}, "
+    //             "{\"Label\":\"%d FPS\", \"Left\":\"d f-\", \"Right\":\"d f+\"}, "
+    //             "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
+    //             "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
+    //             "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
+    //             "{\"Label\":\"Measure Noise\", \"Command\":\"t n\"}, "
+    //             "{\"Label\":\"10us pulse\", \"Command\":\"t w s10\"}, "
+    //             "{\"Label\":\"20us LFM\", \"Command\":\"t w q0420\"}, "
+    //             "{\"Label\":\"50us pulse\", \"Command\":\"t w s50\"}, "
+    //             "{\"Label\":\"TFM + OFM\", \"Command\":\"t w ofm\"}, "
+    //             "{\"Label\":\"OFM\", \"Command\":\"t w ofmd\"}, "
+    //             "{\"Label\":\"1-tilt EL 3.0 deg @ 5 deg/s\", \"Command\":\"p ppi 3 5\"}, "
+    //             "{\"Label\":\"1-tilt EL 5.0 deg @ 20 deg/s\", \"Command\":\"p ppi 5 20\"}"
+    //         "]"
+    //     "}",
+    //     RKRadarHubTypeControl, engine->pathway, engine->fps);
     r = sprintf(engine->control,
         "%c{"
             "\"pathway\": \"%s\", "
             "\"control\": ["
-                "{\"Label\":\"Go\", \"Command\":\"t y\"}, "
-                "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
-                "{\"Label\":\"Stop Pedestal\", \"Command\":\"p stop\"}, "
-                "{\"Label\":\"Park\", \"Command\":\"p point 0 90\"}, "
-                "{\"Label\":\"%d FPS\", \"Left\":\"d f-\", \"Right\":\"d f+\"}, "
-                "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
-                "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
-                "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
-                "{\"Label\":\"Measure Noise\", \"Command\":\"t n\"}, "
-                "{\"Label\":\"10us pulse\", \"Command\":\"t w s10\"}, "
-                "{\"Label\":\"20us LFM\", \"Command\":\"t w q0420\"}, "
-                "{\"Label\":\"50us pulse\", \"Command\":\"t w s50\"}, "
-                "{\"Label\":\"TFM + OFM\", \"Command\":\"t w ofm\"}, "
-                "{\"Label\":\"OFM\", \"Command\":\"t w ofmd\"}, "
-                "{\"Label\":\"1-tilt EL 3.0 deg @ 5 deg/s\", \"Command\":\"p ppi 3 5\"}, "
-                "{\"Label\":\"1-tilt EL 5.0 deg @ 20 deg/s\", \"Command\":\"p ppi 5 20\"}"
+                "{\"section\": \"Main\", \"items\": ["
+                    "{\"Label\":\"Go\", \"Command\":\"t y\"}, "
+                    "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
+                    "{\"Label\":\"Stop Pedestal\", \"Command\":\"p stop\"}, "
+                    "{\"Label\":\"Park\", \"Command\":\"p point 0 90\"}, "
+                    "{\"Label\":\"%d FPS\", \"Left\":\"d f-\", \"Right\":\"d f+\"}"
+                "]}, "
+                "{\"section\": \"VCP\", \"items\": ["
+                    "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
+                    "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
+                    "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
+                    "{\"Label\":\"Measure Noise\", \"Command\":\"t n\"}, "
+                    "{\"Label\":\"10us pulse\", \"Command\":\"t w s10\"}, "
+                    "{\"Label\":\"20us LFM\", \"Command\":\"t w q0420\"}, "
+                    "{\"Label\":\"50us pulse\", \"Command\":\"t w s50\"}, "
+                    "{\"Label\":\"TFM + OFM\", \"Command\":\"t w ofm\"}, "
+                    "{\"Label\":\"OFM\", \"Command\":\"t w ofmd\"}, "
+                    "{\"Label\":\"1-tilt EL 3.0 deg @ 5 deg/s\", \"Command\":\"p ppi 3 5\"}, "
+                    "{\"Label\":\"1-tilt EL 5.0 deg @ 20 deg/s\", \"Command\":\"p ppi 5 20\"}"
+                "]}"
             "]"
         "}",
         RKRadarHubTypeControl, engine->pathway, engine->fps);
+    printf("%s control = %s\n", engine->name, engine->control);
     if (r < 0) {
         RKLog("%s Error. Unable to construct control JSON.\n", engine->name);
     }

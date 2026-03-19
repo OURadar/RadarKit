@@ -141,6 +141,7 @@ void RKTestProductWriteFromPlainToSweep(void);
 void RKTestProductWriteFromPlainToProduct(void);
 void RKTestProductWriteFromWDSS2ToProduct(const char *, const int);
 void RKTestGMAP(void);
+void RKTestNoiseEstimator(void);
 void RKTestListFiles(const char *);
 
 // State machines
