@@ -197,6 +197,7 @@ char *RKTestByNumberDescription(const int indent) {
     "413 - Test showing built-in waveform properties\n"
     "414 - Test showing user-defined waveform properties; -T414 WAVEFORM_FILE\n"
     "415 - Test GMAP algorithm\n"
+    "416 - Test noise estimator\n"
     "\n"
     UNDERLINE("500 series - Numerical tests") "\n"
     "501 - Test half-single-double conversion\n"
@@ -390,6 +391,10 @@ void RKTestByNumber(const int number, const int argc, const void **args) {
         case 415:
             RKTestGMAP();
             break;
+        case 416:
+            RKTestNoiseEstimator();
+            break;
+
         case 501:
             RKTestHalfSingleDoubleConversion();
             break;
@@ -1884,59 +1889,49 @@ void RKTestGMAP(void) {
     RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
     RKPulse *pulses[pulseCount];
 
-    // Ready made arrays from matlab
+    // Ready made arrays from MATLAB
     static const float VAL_REAL_P0[] = {
-        15.5810, 12.4257,  9.9393, 12.7739, 12.9182, 11.0566, 14.3235, 12.1150,
-        8.9662, 13.1453, 15.2864, 11.1427, 6.2095,  8.3350, 11.7218, 10.4426,
-        8.4249,  9.1248, 12.8151, 12.6261,  9.1220, 10.3710, 12.7484,  9.5243,
-        10.3136, 11.2986,  9.3995, 12.8159, 15.1507, 10.6379, 7.0665,  8.2196,
-        12.3824, 13.1078,  9.0973,  6.7943, 7.5652, 13.2790,  9.5289,  5.6203,
-        8.5775,  8.3951, 2.9664,  0.5175,  6.3837,  7.1259,  2.5341,  1.0219,
-        -1.3120, -1.9066, -2.6180, -1.6302, -1.0882, -2.7433, -1.0896, -0.2102,
-        -3.4617, -4.0623, -5.3956, -1.1765, 2.1187,  4.1649,  6.7060,  6.0583
+        15.5810,  12.4257,   9.9393,  12.7739,  12.9182,  11.0566,  14.3235,  12.1150,
+         8.9662,  13.1453,  15.2864,  11.1427,   6.2095,   8.3350,  11.7218,  10.4426,
+         8.4249,   9.1248,  12.8151,  12.6261,   9.1220,  10.3710,  12.7484,   9.5243,
+        10.3136,  11.2986,   9.3995,  12.8159,  15.1507,  10.6379,   7.0665,   8.2196,
+        12.3824,  13.1078,   9.0973,   6.7943,   7.5652,  13.2790,   9.5289,   5.6203,
+         8.5775,   8.3951,   2.9664,   0.5175,   6.3837,   7.1259,   2.5341,   1.0219,
+        -1.3120,  -1.9066,  -2.6180,  -1.6302,  -1.0882,  -2.7433,  -1.0896,  -0.2102,
+        -3.4617,  -4.0623,  -5.3956,  -1.1765,   2.1187,   4.1649,   6.7060,   6.0583
     };
 
     static const float VAL_IMAG_P0[] = {
-        -10.2767, -13.4302, -10.7491,  -9.8259, -12.3556, -10.7563,
-        -11.8538, -15.1111, -12.6683, -10.5345, -15.5029, -18.6795,
-        -15.5618, -11.0683, -13.1165, -14.8278, -13.3994, -10.1060,
-        -9.6413, -12.6937, -10.7865,  -6.3481,  -7.1894,  -7.0322,
-        -2.6821,  -1.9671,   2.0350,   5.6939,   3.5697,   3.2541,
-        7.8963,  14.5504,  17.0721,  14.5231,  15.2767,  19.0860,
-        24.9706,  25.0420,  20.5153,  24.7348,  26.1304,  22.8835,
-        21.6807,  25.8180,  27.0270,  20.3638,  16.7356,  15.3232,
-        13.8331,  13.2439,  11.8629,  11.1300,   6.3452,   4.2828,
-        3.4463,  -2.0343,  -4.4845,  -5.4836,  -4.5969,  -2.2361,
-        -5.6209,  -6.4892,  -8.9808, -10.9419
+       -10.2767, -13.4302, -10.7491,  -9.8259, -12.3556, -10.7563, -11.8538, -15.1111,
+       -12.6683, -10.5345, -15.5029, -18.6795, -15.5618, -11.0683, -13.1165, -14.8278,
+       -13.3994, -10.1060,  -9.6413, -12.6937, -10.7865,  -6.3481,  -7.1894,  -7.0322,
+        -2.6821,  -1.9671,   2.0350,   5.6939,   3.5697,   3.2541,   7.8963,  14.5504,
+        17.0721,  14.5231,  15.2767,  19.0860,  24.9706,  25.0420,  20.5153,  24.7348,
+        26.1304,  22.8835,  21.6807,  25.8180,  27.0270,  20.3638,  16.7356,  15.3232,
+        13.8331,  13.2439,  11.8629,  11.1300,   6.3452,   4.2828,   3.4463,  -2.0343,
+        -4.4845,  -5.4836,  -4.5969,  -2.2361,  -5.6209,  -6.4892,  -8.9808, -10.9419
     };
 
     static const float VAL_REAL_P1[] = {
-        8.1430,  4.4122,  2.5274,  5.9487,  6.3921,  6.0189,
-        9.9133,  8.1750,  5.5625, 10.0777, 12.8926,  9.5438,
-        5.9020, 10.1345, 13.6810, 11.8749, 10.2549, 13.5187,
-        17.4933, 17.0723, 13.9232, 14.7102, 18.5650, 15.9676,
-        16.7304, 18.0504, 15.6156, 18.4782, 20.9120, 16.6448,
-        12.7794, 13.6821, 17.3581, 18.3063, 14.7140, 11.7237,
-        12.5294, 17.8131, 14.7424, 10.0849, 14.8600, 13.7629,
-        8.0022,  6.5388, 11.1228, 12.9383,  8.7122,  7.9694,
-        5.1670,  4.7176,  3.8305,  5.6072,  6.3071,  4.1450,
-        5.2831,  6.6208,  3.8395,  3.5608,  1.7407,  5.1852,
-        7.6246,  9.1390, 11.8388, 10.5990
+         8.1430,   4.4122,   2.5274,   5.9487,   6.3921,   6.0189,   9.9133,   8.1750,
+         5.5625,  10.0777,  12.8926,   9.5438,   5.9020,  10.1345,  13.6810,  11.8749,
+        10.2549,  13.5187,  17.4933,  17.0723,  13.9232,  14.7102,  18.5650,  15.9676,
+        16.7304,  18.0504,  15.6156,  18.4782,  20.9120,  16.6448,  12.7794,  13.6821,
+        17.3581,  18.3063,  14.7140,  11.7237,  12.5294,  17.8131,  14.7424,  10.0849,
+        14.8600,  13.7629,   8.0022,   6.5388,  11.1228,  12.9383,   8.7122,   7.9694,
+         5.1670,   4.7176,   3.8305,   5.6072,   6.3071,   4.1450,   5.2831,   6.6208,
+         3.8395,   3.5608,   1.7407,   5.1852,   7.6246,   9.1390,  11.8388,  10.5990
     };
 
-
     static const float VAL_IMAG_P1[] = {
-        -0.5341,  -5.4818,  -2.9950,  -2.7696,  -6.4237,  -6.8807,
-        -8.5830, -13.9270, -11.8691, -10.6923, -16.7791, -21.8509,
-        -19.3572, -15.7579, -19.7868, -21.9962, -20.5468, -18.2764,
-        -19.7972, -24.7201, -24.4974, -19.9415, -21.1716, -21.9327,
-        -18.1219, -18.2619, -15.4124, -12.3050, -13.7220, -15.1865,
-        -9.3969,  -3.8213,  -1.3393,  -2.4347,  -1.1598,   2.8642,
-        9.8365,  10.5350,   6.9514,  12.4432,  14.8554,  11.8238,
-        12.3820,  18.3578,  21.5822,  15.8279,  13.6201,  12.7293,
-        12.1735,  12.4103,  11.4416,  11.0949,   7.7768,   6.1013,
-        5.4543,   1.0681,  -1.5247,  -2.2879,  -1.2080,   0.5958,
-        -2.4607,  -3.3097,  -5.7495,  -7.0592
+        -0.5341,  -5.4818,  -2.9950,  -2.7696,  -6.4237,  -6.8807,  -8.5830, -13.9270,
+       -11.8691, -10.6923, -16.7791, -21.8509, -19.3572, -15.7579, -19.7868, -21.9962,
+       -20.5468, -18.2764, -19.7972, -24.7201, -24.4974, -19.9415, -21.1716, -21.9327,
+       -18.1219, -18.2619, -15.4124, -12.3050, -13.7220, -15.1865,  -9.3969,  -3.8213,
+        -1.3393,  -2.4347,  -1.1598,   2.8642,   9.8365,  10.5350,   6.9514,  12.4432,
+        14.8554,  11.8238,  12.3820,  18.3578,  21.5822,  15.8279,  13.6201,  12.7293,
+        12.1735,  12.4103,  11.4416,  11.0949,   7.7768,   6.1013,   5.4543,   1.0681,
+        -1.5247,  -2.2879,  -1.2080,   0.5958,  -2.4607,  -3.3097,  -5.7495,  -7.0592
     };
 
     static const float RES_P0[] = {
@@ -1977,7 +1972,7 @@ void RKTestGMAP(void) {
         -0.0447, -0.1443, -0.1200, -0.2073, -0.1798, -0.2310, -0.2112, -0.2080
     };
 
-    // put data into pulses
+    // Put data into pulses
     for (k = 0; k < pulseCount; k++) {
         RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
         pulse->header.t = k;
@@ -2027,6 +2022,93 @@ void RKTestGMAP(void) {
     RKMomentScratchFree(space);
     RKFFTModuleFree(fftModule);
     RKPulseBufferFree(pulseBuffer);
+}
+
+void RKTestNoiseEstimator(void) {
+    SHOW_FUNCTION_NAME
+    int g, k;
+    RKConfig *configs;
+    RKBuffer pulseBuffer;
+    RKMomentScratch *space;
+
+    static const float POW[] = {
+        0.7437f, 0.5892f, 0.9550f, 0.8199f, 0.9111f, 0.9888f, 1.1308f, 0.7592f,
+        1.0921f, 1.4008f, 0.9836f, 1.1795f, 0.9161f, 0.9631f, 0.7317f, 0.9017f,
+        1.1642f, 1.0315f, 0.7821f, 0.9771f, 0.7819f, 0.7686f, 0.9810f, 1.0263f,
+        1.5079f, 0.9067f, 1.4988f, 1.3770f, 0.7587f, 0.8821f, 1.1724f, 0.9621f,
+        1.4333f, 1.1158f, 0.7924f, 1.2843f, 1.2716f, 0.8633f, 0.6607f, 0.7914f,
+        1.1309f, 1.2749f, 0.6982f, 1.9566f, 1.2151f, 1.0005f, 0.9167f, 0.8114f,
+        0.9714f, 0.5682f, 0.7637f, 1.3276f, 0.5841f, 1.1764f, 0.7116f, 0.5129f,
+        0.8599f, 1.2401f, 1.3779f, 1.0090f, 1.0918f, 1.2655f, 1.1343f, 0.7296f,
+    };
+    static const float RES[] = {
+        1.0045176f, 1.0045176f
+    };
+    const int gateCount = sizeof(POW) / sizeof(float);
+
+    const int pulseCount = 32;
+    const int pulseCapacity = gateCount;
+    const float scale = (float)sqrtf(0.5f);
+
+    RKLog("Allocating buffers ...\n");
+    RKConfigBufferAlloc(&configs, 1);
+    RKPulseBufferAlloc(&pulseBuffer, pulseCapacity, pulseCount);
+    RKMomentScratchAlloc(&space, pulseCapacity, 1, "NoiseEstimate");
+    space->config = &configs[0];
+    space->gateCount = gateCount;
+    space->gateSizeMeters = 250.0f;
+    space->velocityFactor = 25.0f / M_PI;
+
+    RKPulse *pulses[pulseCount];
+
+    // Simulate as DC signal with power POW
+    for (k = 0; k < pulseCount; k++) {
+        RKPulse *pulse = RKGetPulseFromBuffer(pulseBuffer, k);
+        pulse->header.t = k;
+        pulse->header.gateCount = gateCount;
+        pulse->header.downSampledGateCount = gateCount;
+        pulse->header.pulseWidthSampleCount = 1;
+        RKIQZ x = RKGetSplitComplexDataFromPulse(pulse, 0);
+        RKIQZ y = RKGetSplitComplexDataFromPulse(pulse, 1);
+        for (g = 0; g < gateCount; g++) {
+            x.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            x.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            y.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            y.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            // if (k == 0) {
+            //     printf("%d: %f, %f   %f\n", g, x.i[g], x.q[g], x.i[g] * x.i[g] + x.q[g] * x.q[g]);
+            // }
+        }
+        pulses[k] = pulse;
+    }
+
+    // Setup other variables
+    space->noise[0] = 1.0045f;
+    space->noise[1] = 1.0045f;
+
+    int fail = RKRayNoiseEstimator(space, pulses, pulseCount);
+
+    RKLog("Estimated noise = %f, %f\n", space->noise[0], space->noise[1]);
+
+    if (fail) {
+        RKLog("Error. Noise estimation failed.\n");
+    } else {
+        float delta0 = fabsf(space->noise[0] - RES[0]);
+        float delta1 = fabsf(space->noise[1] - RES[1]);
+        RKLog("Output delta = %s%f%s, %s%f%s\n",
+            rkGlobalParameters.showColor ? RKMonokaiYellow : "", delta0, rkGlobalParameters.showColor ? RKNoColor : "",
+            rkGlobalParameters.showColor ? RKMonokaiYellow : "", delta1, rkGlobalParameters.showColor ? RKNoColor : "");
+        RKLog("Noise estimation %s\n",
+            (delta0 < 1.0e-3f && delta1 < 1.0e-3f) ?
+            (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
+            (rkGlobalParameters.showColor ? RKMonokaiRed "failed" RKNoColor : "failed"));
+    }
+
+    RKLog("Deallocating buffers ...\n");
+
+    RKMomentScratchFree(space);
+    RKPulseBufferFree(pulseBuffer);
+    RKConfigBufferFree(configs);
 }
 
 // Compare two filenames

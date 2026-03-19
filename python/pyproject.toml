@@ -11,7 +11,8 @@ authors = [
 description = "RadarKit Python Package"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -22,7 +23,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-keywords = ["radar", "chart"]
+keywords = ["radar", "signal processing", "data analysis", "python"]
 
 [project.urls]
 Repository = "https://github.com/ouradar/radarkit"
