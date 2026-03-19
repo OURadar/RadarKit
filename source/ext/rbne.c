@@ -1,18 +1,43 @@
-//
-//  RKNoiseEstimator.h
-//  RadarKit
-//
-//  Created by Min-Duan Tzeng on 7/26/2023.
-//  Copyright (c) 2023 Min-Duan Tzeng. All rights reserved.
-//
+/*
+ * $Revision: 1.9 $
+ *
+ *  This is originally from Igor Ivic, and has been modified by Boonleng Cheong to fit into RadarKit.
+ *  So, copyright and credits the original author(s)
+ */
 
-#include <RadarKit/RKNoiseEstimator.h>
-#include "ext/rbne.c"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-const uint16_t minSampleCount = 800;
-const uint16_t failureSampleCount = 200;
+// #define DEBUG
+// #define DYNAMIC
+// thr_data.c;
+#define FAIL_CODE 0
+/* Minimal number of consecutive range gate positions that need to be larger
+ than the median in order for those range gates to be discarded */
+#define PNT_NO 10
+#define ARRAY_SIZE 150000//2000
+#define DATA_SIZE 300000//60000
+#define MIN_SAMPLE_SIZE 800
+#define END_MIN_DATA_SIZE 200
+#define MAX_FLAT_DATA_GROUPS 200
+// #define RUN_SUM_LENGTH 500
+// #define RUN_AVG_PERC 4.6932e-003
+// #define RUN_SUM_THR 1.12*RUN_SUM_LENGTH
 
-RKFloat TCN[] = {19997.998978, 243.596101, 56.972570, 27.309237, 17.372310, 12.729620, 10.119393, 8.470525, 7.342833, 6.526113, 5.908569,
+typedef struct {
+   int noise_indices_length;
+   int noise_indices[ARRAY_SIZE];
+   int number_of_steps;
+   int number_of_flat_data_groups;
+   int flat_data_groups_indices[2*MAX_FLAT_DATA_GROUPS];
+} Nind_struct;
+
+void getThresholds(int M, float *TCN, int *K, float *var_THR, float *SNR_THR, float *RUN_SUM_PERC) {
+
+// PFA = 1e-4 OR
+double TCNa[800] = {19997.998978, 243.596101, 56.972570, 27.309237, 17.372310, 12.729620, 10.119393, 8.470525, 7.342833, 6.526113, 5.908569,
 5.425731, 5.038014, 4.719832, 4.453971, 4.228437, 4.034628, 3.866220, 3.718462, 3.587719, 3.471161,
 3.366555, 3.272113, 3.186389, 3.108200, 3.036567, 2.970678, 2.909848, 2.853498, 2.801135, 2.752336,
 2.706737, 2.664023, 2.623917, 2.586180, 2.550599, 2.516987, 2.485179, 2.455026, 2.426399, 2.399179,
@@ -93,7 +118,63 @@ RKFloat TCN[] = {19997.998978, 243.596101, 56.972570, 27.309237, 17.372310, 12.7
 1.217575, 1.217422, 1.217268, 1.217116, 1.216963, 1.216811, 1.216659, 1.216508, 1.216356, 1.216205,
 1.216055, 1.215904, 1.215754, 1.215605, 1.215455, 1.215306, 1.215157, 1.215009, 1.214861};
 
-RKFloat varThreshold[] = {47.697851,17.619590,10.533812,7.477100,5.787265,3.239916,2.731964,2.361351,2.079104,1.857030,1.677762,1.530024,1.406176,1.300862,
+int Ka[800] = {100,100,100,100,100,64,64,64,64,64,64,64,64,64,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
+32,32,32,32,32,32};
+
+// Almost right
+// double var_THRa[200] = {0.0,12.501880,9.066873,6.978578,5.602964,3.184561,2.709687,2.352218,
+// 	2.075309,1.855436,1.677084,1.529734,1.406049,1.300803,0.683347, 0.625970,
+//     0.592077, 0.560521, 0.531522, 0.505351, 0.481602, 0.459942, 0.439551, 0.420858,
+//     0.403674, 0.387825, 0.373164, 0.359562, 0.346910, 0.335113, 0.324087, 0.313760,
+//     0.304067, 0.292595, 0.284680, 0.277142, 0.269806, 0.262747, 0.256040, 0.249657,
+//     0.243574, 0.237771, 0.232228, 0.226885, 0.221765, 0.216871, 0.212188, 0.207704,
+//     0.203405, 0.199281, 0.195321, 0.191515, 0.187856, 0.184334, 0.180942, 0.177673,
+//     0.174515, 0.171464, 0.168519, 0.165675, 0.162927, 0.160270, 0.157700, 0.155213,
+//     0.152805, 0.150471, 0.148210, 0.146016, 0.143889, 0.141824, 0.139819, 0.137871,
+//     0.135979, 0.134139, 0.132349, 0.130609, 0.128915, 0.127265, 0.125659, 0.124094,
+//     0.122569, 0.121083, 0.119633, 0.118219, 0.116839, 0.115493, 0.114178, 0.112894,
+//     0.111640, 0.110415, 0.109218, 0.108047, 0.106903, 0.105783, 0.104688, 0.103617,
+//     0.102568, 0.101542, 0.100537, 0.099552, 0.098588, 0.097644, 0.096718, 0.095811,
+//     0.094921, 0.094049, 0.093194, 0.092355, 0.091059, 0.090263, 0.089482, 0.088715,
+//     0.087962, 0.087223, 0.086497, 0.085783, 0.085083, 0.084394, 0.083718, 0.083053,
+//     0.082399, 0.081757, 0.081125, 0.080504, 0.079893, 0.079292, 0.078700, 0.078119,
+//     0.077546, 0.076983, 0.076428, 0.075882, 0.075345, 0.074816, 0.074295, 0.073781,
+//     0.073276, 0.072778, 0.072287, 0.071804, 0.071327, 0.070858, 0.070395, 0.069939,
+//     0.069489, 0.069046, 0.068609, 0.068178, 0.067753, 0.067334, 0.066920, 0.066512,
+//     0.066110, 0.065713, 0.065321, 0.064934, 0.064553, 0.064176, 0.063804, 0.063437,
+//     0.063075, 0.062717, 0.062364, 0.062015, 0.061671, 0.061331, 0.060995, 0.060663,
+//     0.060335, 0.060011, 0.059691, 0.059375, 0.059063, 0.058754, 0.058449, 0.058148,
+//     0.057850, 0.057555, 0.057262, 0.056972, 0.056686, 0.056403, 0.056123, 0.055846,
+//     0.055573, 0.055302, 0.055034, 0.054770, 0.054508, 0.054249, 0.053993, 0.053740,
+//     0.053489, 0.053241, 0.052996, 0.052753, 0.052513, 0.052276, 0.052040, 0.051808};
+
+double var_THRa[800] = {47.697851,17.619590,10.533812,7.477100,5.787265,3.239916,2.731964,2.361351,2.079104,1.857030,1.677762,1.530024,1.406176,1.300862,
 0.688892,0.643869,0.604365,0.569427,0.538305,0.510407,0.485258,0.462469,0.441724,0.422760,
 0.405357,0.389329,0.374521,0.360797,0.348044,0.336161,0.325062,0.314673,0.304927,0.295767,
 0.287141,0.279004,0.271315,0.264039,0.257142,0.250597,0.244377,0.238457,0.232818,0.227440,
@@ -175,7 +256,7 @@ RKFloat varThreshold[] = {47.697851,17.619590,10.533812,7.477100,5.787265,3.2399
 0.012394,0.012378,0.012362,0.012347,0.012331,0.012316};
 
 // PFA = 1e-3
-RKFloat SNRThreshold[] = {6.907755,4.616707, 3.742957, 3.265560, 2.958830, 2.742458, 2.580234, 2.453272, 2.350689, 2.265737, 2.193997,
+double SNR_THRa[800] = {6.907755,4.616707, 3.742957, 3.265560, 2.958830, 2.742458, 2.580234, 2.453272, 2.350689, 2.265737, 2.193997,
 2.132442, 2.078922, 2.031867, 1.990102, 1.952726, 1.919036, 1.888477, 1.860602, 1.835049, 1.811518,
 1.789762, 1.769572, 1.750774, 1.733216, 1.716772, 1.701330, 1.686795, 1.673083, 1.660121, 1.647843,
 1.636193, 1.625119, 1.614578, 1.604528, 1.594932, 1.585759, 1.576978, 1.568564, 1.560490, 1.552737,
@@ -256,7 +337,18 @@ RKFloat SNRThreshold[] = {6.907755,4.616707, 3.742957, 3.265560, 2.958830, 2.742
 1.114160, 1.114085, 1.114010, 1.113935, 1.113860, 1.113785, 1.113711, 1.113636, 1.113562, 1.113488,
 1.113414, 1.113340, 1.113267, 1.113193, 1.113120, 1.113046, 1.112973, 1.112900, 1.112828};
 
-RKFloat runSumPercentile[] = {4.693166e-03,4.693166e-03, 4.658204e-03, 4.693166e-03, 4.693166e-03, 4.763899e-03, 4.799674e-03, 4.554909e-03, 4.554909e-03, 4.693166e-03, 4.872052e-03,
+// float RUN_AVG_LENGTHa[200] = {0,250,167,125,100,83,71,63,56,50,45,42,38,36,33,31,29,28,26,25,
+// 24,23,22,21,20,19,19,18,17,17,16,16,15,15,14,14,14,13,13,13,
+// 12,12,12,11,11,11,11,10,10,10,10,10,9,9,9,9,9,9,8,8,
+// 8,8,8,8,8,8,7,7,7,7,7,7,7,7,7,7,6,6,6,6,
+// 6,6,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,5,5,5,
+// 5,5,5,5,5,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,
+// 4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+// 4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+// 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+// 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3};
+
+double RUN_SUM_PERCa[800] = {4.693166e-03,4.693166e-03, 4.658204e-03, 4.693166e-03, 4.693166e-03, 4.763899e-03, 4.799674e-03, 4.554909e-03, 4.554909e-03, 4.693166e-03, 4.872052e-03,
 4.554909e-03, 4.908659e-03, 4.554909e-03, 4.872052e-03, 4.835724e-03, 4.945549e-03, 4.554909e-03, 4.908659e-03, 4.693166e-03, 4.554909e-03,
 4.487352e-03, 4.487352e-03, 4.554909e-03, 4.693166e-03, 4.908659e-03, 4.258873e-03, 4.554909e-03, 4.945549e-03, 4.355298e-03, 4.835724e-03,
 4.290769e-03, 4.872052e-03, 4.355298e-03, 5.057931e-03, 4.554909e-03, 4.102991e-03, 4.908659e-03, 4.453959e-03, 4.042284e-03, 4.982722e-03,
@@ -337,323 +429,582 @@ RKFloat runSumPercentile[] = {4.693166e-03,4.693166e-03, 4.658204e-03, 4.693166e
 5.935414e-04, 5.892714e-04, 5.850324e-04, 5.808243e-04, 5.766469e-04, 5.724998e-04, 5.683829e-04, 5.642959e-04, 5.602387e-04, 5.562110e-04,
 5.522126e-04, 5.482432e-04, 5.443027e-04, 5.403909e-04, 5.365075e-04, 5.326523e-04, 5.288251e-04, 5.250257e-04, 5.212540e-04};
 
-RKFloat varf(RKFloat *astart, const uint16_t window) {
-    int k;
-    RKFloat m = 0.0f, v = 0.0f;
-    RKFloat *x = astart;
-    for (k = 0; k < window; k++) {
-        v += *x * *x;
-        m += *x;
-        x++;
-    }
-    m = m / (float)window;
-    return v / (float)window - m * m;
+*TCN = (float) TCNa[M-1];
+
+*K = Ka[M-1];
+*var_THR = (float) var_THRa[M-1];
+*SNR_THR = (float) SNR_THRa[M-1];
+
+*RUN_SUM_PERC = (float) RUN_SUM_PERCa[M-1];
+
 }
 
-void arraySort(RKFloat *array , uint16_t n) {
-    // declare some local variables
-    int i = 0 , j = 0;
-    RKFloat temp = 0;
-    for (i = 0; i < n ; i++) {
-        for (j = 0; j < n - 1; j++) {
-            if (*(array + j) > *(array + j + 1)) {
-                temp              = *(array + j);
-                *(array + j)      = *(array + j + 1);
-                *(array + j + 1)  = temp;
-            }
-        }
-    }
-}
+float noise_estimate(float *pP, int M, int N, Nind_struct *Nind) {
+   /* Noise Estimator function
+ *Inputs:
+ *pP - pointer to an array of power values
+ M - number of pulses in sample time
+ N - length of an array of powers
+ *Nind - pointer to debug structure
+ */
 
-// function to calculate the median of the array
-float medianf(RKFloat *array, uint16_t n) {
-    arraySort(array, n);
-    RKFloat median = 0.0f;
-    // if number of elements are even
-    if (n % 2 == 0)
-        median = (*(array + (n - 1) / 2) + *(array + n / 2)) / 2.0f;
-    // if number of elements are odd
-    else
-        median = *(array + n / 2);
-    return median;
-}
+   float P_log10[ARRAY_SIZE], P[ARRAY_SIZE];
+   int noise_indices[ARRAY_SIZE];
 
-int RKRayNoiseEstimatorV1(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
-    int n, j, k, p;
-    RKFloat f, x;
-    uint16_t u;
-    uint16_t noiseGateCount, runSumThreshold;
-    RKFloat scaleS, varInLog, medianP, powerThreshold;
-    RKPulse *pulse = pulses[0];
-    bool flat;
-    bool failed = false;
-    const uint16_t persist = 10;
-    const uint32_t gateCount = pulse->header.downSampledGateCount;
-    const uint32_t M = pulseCount < 199 ? pulseCount : 199;                                        // M = np.min([pulseCount, len(fTCN)])
-    const uint32_t K = (uint32_t)ceilf(8.0e3f / space->gateSizeMeters);                            // running window of size K in step 2
-    const uint32_t runSumLength = (uint32_t)round(500.f / M);
-    const uint32_t downSampledPulseWidthSampleCount = pulse->header.pulseWidthSampleCount
-                                                    * pulse->header.downSampledGateCount
-                                                    / pulse->header.gateCount;
-    const RKFloat adjustedRunSumLength = 1.12f * (RKFloat)runSumLength;
+   float var_log10, mean_P, sum_P_log10, sum_P2_log10, intermediate_power, run_sum, mean_power;
+   int n, m, k, discarded_bins_counter, last_discarded_bin;
+   int K, noise_indices_length, indicator, group_no, persistence;
+   int group_data_indices[2];
+   float min, max, guess, maxltguess, mingtguess, median;
+   float less, greater, equal;
+   float TCN, var_THR, SNR_THR;
+   int RUN_SUM_LENGTH;
+   float RUN_SUM_PERC, RUN_SUM_THR, Nh;
 
-    // Go through all pulses to calculate average power
-    for (p = 0; p < 2; p++) {
-        RKZeroOutIQZ(&space->R[p][0], space->capacity);
-        RKIQZ *R = &space->R[p][0];
-        n = 0;
-        do {
-            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[n], p);
-            RKSIMD_zcma(&Xn, &Xn, &R[0], gateCount, 1);                                            // R[k] += X[n] * X[n]'
-            n++;
-        } while (n != pulseCount);
-        RKSIMD_izscl(&R[0], 1.0f / ((float)(n)), gateCount);                                        // R[k] /= (n - k)   (unbiased)
-        RKSIMD_zabs(&R[0], space->aR[p][0], gateCount);                                            // aR[k] = abs(R[k])
-    }
+   memcpy(P, (void *) pP, N*sizeof(float));
+   for(n=0; n<N; n++) P_log10[n] = log10f(P[n]);
 
-    // for (k = 0; k < gateCount; k++) {
-    //     RKIQZ *R = &space->R[0][0];
-    //     printf("R[0][%d] = %f, %f   aR[0][%d] = %f\n", k, R->i[k], R->q[k], k, space->aR[0][0][k]);
-    // }
+   getThresholds(M, &TCN, &K, &var_THR, &SNR_THR, &RUN_SUM_PERC);
+   RUN_SUM_LENGTH = (int) (500.0/((float) M)+0.5);
+   RUN_SUM_THR = 1.12*RUN_SUM_LENGTH;
+//     printf("M = %d TCN=%e K =%d var_THR=%e THR_int=%e SNR_THR=%e RUN_SUM_LENGTH=%d RUN_SUM_PERC=%e\n",
+//             M, TCN, K, var_THR, THR_int, SNR_THR, RUN_SUM_LENGTH,RUN_SUM_PERC);
 
-    for (p = 0; p < 2; p++) {
-        x = 0.0f;
-        for (k = downSampledPulseWidthSampleCount + 1; k < gateCount; k++) {
-            x += space->aR[p][0][k];
-        }
-        scaleS = x / (gateCount - downSampledPulseWidthSampleCount - 1);
-        // scaleS = RKSIMD_sum(space->aR[p][0], gateCount) / gateCount;
-        // RKLog("< NoiseEngine > gateCount = %d   downSampledPulseWidthSampleCount = %d\n", gateCount, downSampledPulseWidthSampleCount);
-        // RKLog("< NoiseEngine > dem = %d\n", gateCount - downSampledPulseWidthSampleCount - 1);
-        // RKLog("< NoiseEngine > n = %d   scaleS %f\n", gateCount - sizeof(RKVec) / sizeof(float), scaleS);
-        // RKSIMD_sum is not right looks like memory leak here and lead to catastrophic fail in noise estimator.
+/* Set detections based on the definition for point clutter
+Note that the first 4 and last 2 range bins are excluded
+This is the similar to algorithm used in the WSR-88D */
+   noise_indices_length = 0;
+   for(n=4; n<=(N-3); n++) {
+      if( !(P[n]>TCN*P[n-2] || P[n]>TCN*P[n+2] || P[n] == 0)) {
+         noise_indices[noise_indices_length] = n;
+         noise_indices_length++;
+      }
+   }
 
-        noiseGateCount = 0;
-        for (k = downSampledPulseWidthSampleCount + 1; k < gateCount; k++) {
-            space->S[p][noiseGateCount++] = space->aR[p][0][k] / scaleS;
-            // printf("S[%d][%d] = %f\n", p, k, space->S[p][k]);                      // iq_power
-        }
-        j = noiseGateCount;
-        // RKLog("< NoiseEngine > T0   noiseGateCount = %d\n", noiseGateCount);
-        noiseGateCount = 0;
-        for (k = 2; k < j - 2; k++) {
-            // printf("S[%d][%d] = %f <? %f\n", p, k, space->S[p][k], TCN[M] * space->S[p][k - 2]);
-            if ((space->S[p][k] < TCN[M] * space->S[p][k - 2]) &&
-                (space->S[p][k] < TCN[M] * space->S[p][k + 2])) {
-                space->S[p][noiseGateCount++] = space->S[p][k];                                    // P_noise
-            }
-        }
-        // RKLog("< NoiseEngine > T1   noiseGateCount = %d   K = %d\n", noiseGateCount, K);
+//     *Nh = 0;
+//     for(n=0; n<noise_indices_length; n++) *Nh += P[noise_indices[n]];
+//     *Nh /= noise_indices_length;
+//     printf("Pow after TCN %e\n", *Nh);
+//     return;
 
-        for (k = 0; k < noiseGateCount; k++) {
-            space->Z[p][k] = log10f(space->S[p][k]);                                               // log_P
-            space->mask[k] = 0;
-        }
-        if (noiseGateCount < K) {
-            // this not suppose triggered but can avoid segmentation fault
-            // RKLog("< NoiseEngine > noiseGateCount %d is smaller than K %d, failed to estimate noise.\n", noiseGateCount, K);
-            failed = true;
-            break;
-        }
-        // RKLog("< NoiseEngine > I guess crash here.\n");
-        for (k = 0; k < noiseGateCount - K; k++) {
-            // RKLog("< NoiseEngine > downSampledPulseWidthSampleCount = %d, noiseGateCount = %d\n", downSampledPulseWidthSampleCount, noiseGateCount);
-            // RKLog("< NoiseEngine > k = %d, K = %d\n",k,K);
-            varInLog = varf(&space->Z[p][k], K);                                                   // Var_dB
-            // RKLog("< NoiseEngine > varInLog, %.3f.\n",varInLog);
-            // RKLog("< NoiseEngine > rkvec/float, %d.\n",sizeof(RKVec) / sizeof(float));
-            if (varInLog < varThreshold[M] ) {
-                for (j = 0; j < K; j++) {
-                    space->mask[k + j] = 1;                                                        // flat_P
-                }
-            }
-        }
-        // RKLog("< NoiseEngine > crash 230.\n");
-        f = 99999.0f;
-        flat = false;
-        for (k = 0; k < noiseGateCount - K + 1; k++) {
-            if (space->mask[k] && !flat) {
-                x = space->S[p][k];
-                flat = true;
-                u = 1;
-            } else if (space->mask[k] && flat) {
-                x += space->S[p][k];
-                u++;
-                if (k == (noiseGateCount - K)) {
-                    x = x / u;
-                    flat = false;
-                    if (x < f) {
-                        f = x;
-                    }
-                }
-            } else if (!space->mask[k] && flat) {
-                x /= u;
-                flat = false;
-                if (x < f) {
-                    f = x;
-                    // RKLog("u = %d, f = %f (ADU^2)\n", u, f);
-                }
-            }
-        }
 
-        if (f > 99998.0f) {
-            failed = true;
-            break;
-        }
-        // RKLog("< NoiseEngine > Info. before noiseGateCount = %d\n", noiseGateCount);
-        n = 0;
-        f = SNRThreshold[M] * f;
-        // RKLog("< NoiseEngine > Info. intermediate_power = %f\n", intermediate_power);
-        for (k = 0; k < noiseGateCount; k++) {
-            if (space->S[p][k] < f) {
-                space->V[p][n] = space->S[p][k];
-                space->S[p][n++] = space->S[p][k];                                                 // P_noise = P_noise[P_noise < fSNRThr[M] * intermediate_power]
-            }
-        }
-        noiseGateCount = n;
-        // RKLog("< NoiseEngine > Info. flat noiseGateCount = %d\n", noiseGateCount);
-        // RKLog("< NoiseEngine > crash 275.\n");
-        medianP = medianf(&space->V[p][0], noiseGateCount);
-        // RKLog("I am here noiseGateCount %d, median %f \n", noiseGateCount, median_P);
-        for (k = 0; k < noiseGateCount; k++) {
-            space->mask[k] = 0;
-        }
+   group_no = 0; //flat group counter
+   sum_P_log10 = 0; //current sum of log10 power
+   sum_P2_log10 = 0; //current sum of squared log10 power
 
-        for (k = 0; k < noiseGateCount; k++) {
-            for (j = -persist / 2; j < persist / 2; j++) {
-                if (k + j < 0) {
-                    continue;
-                } else if (k + j >= noiseGateCount) {
-                    break;
-                } else if (space->S[p][k+j] < medianP) {
-                    // RKLog("I am here k %d, k+j %d \n", k, k+j);
-                    space->mask[k] = 1;
-                    break;
-                }
-            }
-        }
-        u = 0;
-        x = 0.0f;
-        for (k = 0; k < noiseGateCount; k++) {
-            if (space->mask[k]) {
-                x += space->S[p][k];
-                space->S[p][u++] = space->S[p][k];                                                 //  P_noise = P_noise[ P_mask ]
-            }
-        }
-        noiseGateCount = u;
-        f = SNRThreshold[M] * x / noiseGateCount;
-        // RKLog("I am here before n, noiseGateCount %d, intermediate_power %f (ADU^2)\n", noiseGateCount, intermediate_power);
-        u = 0;
-        x = 0.0f;
-        for (k = 0; k < noiseGateCount; k++) {
-            if (space->S[p][k] < f) {
-                x += space->S[p][k];
-                space->S[p][u++] = space->S[p][k];                                                 // P_noise = P_noise[ P_noise < fSNRThr[M]*mean_power ]
-            }
-        }
-        noiseGateCount = u;
-        f = x / noiseGateCount;
-        // RKLog("I am here before n, noise %f (ADU^2)\n", intermediate_power * iq_pm);
-        // RKLog("< NoiseEngine > crash 317.\n");
-        for (n = 0; n < 10; n++) {
-            // RKLog("< NoiseEngine > Info. init noiseGateCount = %d\n", noiseGateCount);
-            for (k = 0; k < noiseGateCount; k++) {
-                space->mask[k] = 0;
-            }
-            powerThreshold = f * adjustedRunSumLength;
-            runSumThreshold = 0;
-            x = 0.0f;
-            for (k = 0; k < runSumLength; k++) {
-                x += space->S[p][k];
-            }
-            if (x > powerThreshold) {
-                runSumThreshold++;
-                for (j = 0; j < runSumLength; j++) {
-                    space->mask[j] = 1;
-                }
-            }
-            for (k = 0; k < noiseGateCount - runSumLength; k++) {
-                x += (space->S[p][k + runSumLength] - space->S[p][k]);
-                if (x > powerThreshold) {
-                    runSumThreshold++;
-                    for (j = 1; j < runSumLength + 1; j++) {
-                        space->mask[k + j] = 1;
-                    }
-                }
-            }
-            u = 0;
-            x = 0.0f;
-            for (k = 0; k < noiseGateCount; k++) {
-                if (!space->mask[k]) {
-                    x += space->S[p][k];
-                    space->S[p][u++] = space->S[p][k];
-                }
-            }
-            if (runSumThreshold < runSumPercentile[M] * (noiseGateCount - runSumLength + 1)) {
-                // RKLog("< NoiseEngine > Info. good break. n = %d, noiseGateCount = %d\n", n, noiseGateCount);
-                break;
-            } else if (u * M < minSampleCount) {
-                break;
-            }
-            noiseGateCount = u;
-            f = x / noiseGateCount;
-        }
-        if (noiseGateCount * M < failureSampleCount) {
-            failed = true;
-            space->noise[p] = space->config->noise[p];
-            // RKLog("< NoiseEngine > Skipped a ray/channel %d. failed\n", p);
-        } else {
-            // space->noise[p] = intermediatePower * iq_pm;
-            space->noise[p] = f * scaleS;
-            // RKLog("< NoiseEngine > Info. channel %d. f = %f, scaleS %f \n", p, f, scaleS);
-            // RKLog("< NoiseEngine > Info. channel %d. noiseGateCount*M = %d, noise %f (ADU^2)\n", p, noiseGateCount*M, space->noise[p]);
-        }
-    }
-    if (failed) {
-        RKLog("< NoiseEngine > Info. ray/channel-F.\n");
-        if (space->config != NULL) {
-            space->noise[0] = space->config->noise[0];
-            space->noise[1] = space->config->noise[1];
-        }
-        return RKResultFailedToEstimateNoise;
-    } else {
-        // RKLog("< NoiseEngine > Info. ray/channel-S.\n");
-        return RKResultSuccess;
-    }
-}
+/* Pointer to the location in the noise_indices array which marks the
+ beggining of the current flat profile group, set to -1 to show no current group */
+   group_data_indices[0] = -1;
+/* Pointer to the location in the noise_indices array which marks the
+ beggining of the current flat profile group, set to -1 to show no current group */
+   group_data_indices[1] = -1;
+   intermediate_power = -1;
 
-int RKRayNoiseEstimator(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
-    const int gateCount = pulses[0]->header.downSampledGateCount;
+   // Compute the sums of log10 powers and their squares for the first K(M-1) values
+   for (n=0; n <= (K-1); n++) {
+      #ifdef DEBUG
+      if (noise_indices[n] >= N) {
+         printf("\nPointer out of bounds in 1 %d\n", noise_indices[n]);
+         return(FAIL_CODE);
+      }
+      #endif
+      sum_P_log10 = sum_P_log10 + P_log10[noise_indices[n]];
+      sum_P2_log10 = sum_P2_log10 + P_log10[noise_indices[n]]*P_log10[noise_indices[n]];
+   }
 
-    int k, p;
+   // Counter into the noise_indices array
+   n = 0;
+   Nind->number_of_flat_data_groups = 0;
+   // flat_data_groups_cntr = 0;
+   while(n <= (noise_indices_length-K-1)) {
+      // Compute flat profile indicator
+      var_log10 = sum_P2_log10-sum_P_log10*sum_P_log10/K;
 
-    Nind_struct  Nind;
-    Nind.number_of_steps = 1;
-    Nind.noise_indices_length = 1;
+      // If flat profile indicator is smaller than the threshold and no flat profile group has been indicated
+      if(var_log10 < var_THR && group_data_indices[0] == -1) {
 
-    // Go through all pulses to calculate average power
-    for (p = 0; p < 2; p++) {
-        space->noise[p] = space->config->noise[p];
-        RKZeroOutIQZ(&space->R[p][0], space->capacity);
-        RKIQZ *R = &space->R[p][0];
-        RKFloat *aR = space->aR[p][0];
-        k = 0;
-        do {
-            RKIQZ Xn = RKGetSplitComplexDataFromPulse(pulses[k], p);
-            RKSIMD_zcma(&Xn, &Xn, &R[0], gateCount, 1);                                            // R[k] += X[n] * X[n]'
-            k++;
-        } while (k != pulseCount);
-        RKSIMD_izscl(&R[0], 1.0f / ((float)(pulseCount)), gateCount);                              // R[k] /= (n - k)   (unbiased)
-        RKSIMD_zabs(&R[0], aR, gateCount);                                                         // aR[k] = abs(R[k])
-        space->noise[p] = noise_estimate(aR, pulseCount, gateCount, &Nind);
-    }
-    #if defined(DEBUG_NOISE_ESTIMATOR)
-    p = 0;
-    for (k = 0; k < gateCount; k++) {
-        RKIQZ *R = &space->R[p][0];
-        RKFloat *aR = space->aR[p][0];
-        printf("R[%d][%d] = %f, %f   aR[%d][%d] = %f\n", p, k, R->i[k], R->q[k], p, k, aR[k]);
-    }
-    #endif
-    return RKResultSuccess;
+         // Set the pointer which marks the beginning of the group to n
+         group_data_indices[0] = n;
+         Nind->flat_data_groups_indices[group_no*2] = noise_indices[n];
+         Nind->number_of_flat_data_groups = Nind->number_of_flat_data_groups + 1;
+
+         // Set the pointer which marks the end of the group to -1 since length is unknown
+         group_data_indices[1] = -1;
+
+         #ifdef DEBUG
+         if (noise_indices[n] >= N || noise_indices[n+K] >= N) {
+            printf("\nPointer out of bounds in 2 %d %d\n", noise_indices[n],noise_indices[n+K]);
+            return(FAIL_CODE);
+         }
+         #endif
+
+         // Update the current sums of log10 power and their squares
+         sum_P_log10 = sum_P_log10-P_log10[noise_indices[n]]+P_log10[noise_indices[n+K]];
+         sum_P2_log10 = sum_P2_log10-P_log10[noise_indices[n]]*P_log10[noise_indices[n]]+
+                 P_log10[noise_indices[n+K]]*P_log10[noise_indices[n+K]];
+         n = n+1;
+         // If flat profile indicator is larger than the threshold and a flat profile group has been indicated
+      } else if (var_log10 >= var_THR && group_data_indices[0] > -1) {
+         n = n+K-2; // Update n to the end of the current group
+
+         // Set the pointer which marks the end of the group to the end-of-group index
+         group_data_indices[1] = n;
+         Nind->flat_data_groups_indices[group_no*2+1] = noise_indices[n];
+
+         // printf("\1: n%d %d\n", group_no, noise_indices[n]);
+
+         #ifdef DEBUG
+         if (n >= N) {
+            printf("\nPointer out of bounds in 3 %d\n", n);
+            return(FAIL_CODE);
+         }
+         #endif
+
+         // Calculate the mean power value of the current group
+         mean_P = 0;
+         for(k=group_data_indices[0]; k<=group_data_indices[1]; k++) {
+            mean_P = mean_P + P[noise_indices[k]];
+         }
+         mean_P = mean_P/(group_data_indices[1]-group_data_indices[0]+1);
+
+         // Update the minimum flat profile power
+         if(group_no == 0 || intermediate_power > mean_P) intermediate_power = mean_P;
+
+         group_no = group_no + 1;
+
+         // Update the counter into the noise_indices array
+         n = n+2;
+
+         // Exit loop if counter is too close to the end of the noise_indices array
+         if (n+K-1 > (noise_indices_length-1)) break;
+
+         #ifdef DEBUG
+         if (n+K-1 >= N) {
+            printf("\nPointer out of bounds in 4 %d\n", n+K-1);
+            return(FAIL_CODE);
+         }
+         #endif
+
+         // Calculate new initial sums of log10 power and their squares
+         sum_P_log10 = 0;
+         sum_P2_log10 = 0;
+         for (k=n; k <= (n+K-1); k++) {
+            sum_P_log10 = sum_P_log10 + P_log10[noise_indices[k]];
+            sum_P2_log10 = sum_P2_log10 + P_log10[noise_indices[k]]*P_log10[noise_indices[k]];
+         }
+
+         // Reset pointers into noise_indices array
+         group_data_indices[0] = -1;
+         group_data_indices[1] = -1;
+      } else {
+         #ifdef DEBUG
+         if (noise_indices[n] >= N || noise_indices[n+K] >= N) {
+            printf("\nPointer out of bounds in 5 %d %d\n", noise_indices[n], noise_indices[n+K]);
+            return(FAIL_CODE);
+         }
+         #endif
+         // Update sums of log10 power and their squares
+         sum_P_log10 = sum_P_log10-P_log10[noise_indices[n]]+P_log10[noise_indices[n+K]];
+         sum_P2_log10 = sum_P2_log10-P_log10[noise_indices[n]]*P_log10[noise_indices[n]]+
+                 P_log10[noise_indices[n+K]]*P_log10[noise_indices[n+K]];
+         n = n+1;
+      }
+   }
+
+   // Check the last flat profile indicator value since it is not tested in the loop
+   var_log10 = sum_P2_log10-sum_P_log10*sum_P_log10/K;
+   m = 0; //Indicates whether last value is part of a group
+   if (var_log10 < var_THR && group_data_indices[0] == -1) {
+      #ifdef DEBUG
+      if (n >= N) {
+         printf("\nPointer out of bounds in 6 %d\n", n);
+         return(FAIL_CODE);
+      }
+      #endif
+      group_data_indices[0] = n;// Set the beggining of the group to n
+      group_data_indices[1] = -1;// Reset the end of the group
+
+//       Indicate that the last bin is not part of the group because it makes the
+//       flat indicator be larger than the threshold
+   } else if (var_log10 >= var_THR && group_data_indices[0] > -1) m = 1;
+
+/* If start of the group is valid but the end is not set, set the end of the
+group to be the last valid location in the noise_indices array */
+   if (group_data_indices[1] == -1 && group_data_indices[0] > -1) {
+      // Calculate the mean power value of the last group
+      mean_P = 0;
+      for (k=group_data_indices[0]; k<=(noise_indices_length-1-m); k++) {
+         mean_P = mean_P + P[noise_indices[k]];
+      }
+      mean_P = mean_P/(noise_indices_length-m-group_data_indices[0]);
+
+      // Update the minimum flat profile power
+      if (group_no == 0 || intermediate_power > mean_P)
+         intermediate_power = mean_P;
+
+      Nind->flat_data_groups_indices[group_no*2+1] = noise_indices[k-1];
+      // printf("\n2: %d %d\n", group_no, noise_indices[k-1]);
+      group_no = group_no + 1;
+   }
+   Nind->number_of_steps = 3;
+//    (If no flat areas are found exit and return FAIL_CODE)
+   if (group_no == 0) {
+      return(FAIL_CODE);
+   }
+
+   // printf("\n2: %d %d %d\n", group_no, Nind->flat_data_groups_indices[group_no-1], Nind->flat_data_groups_indices[group_no-1]);
+
+//     *Nh = intermediate_power;
+//     fail_diag[2] = noise_indices_length;
+//     for(n=0; n<noise_indices_length; n++) {
+//         n_ind[n] = noise_indices[n];
+//     }
+//     return;
+
+   #ifdef DEBUG
+   if (noise_indices_length >= N) {
+      printf("\nPointer out of bounds in 7 noise_indices_length = %d\n", noise_indices_length);
+      return(FAIL_CODE);
+   }
+   #endif
+
+   k = 0;
+   for (n=0; n<=(noise_indices_length-1); n++) {
+      #ifdef DEBUG
+      if (noise_indices[n] >= N) {
+         printf("\nPointer out of bounds 8 %d\n", noise_indices[n]);
+         return(FAIL_CODE);
+      }
+      #endif
+      if (P[noise_indices[n]] < SNR_THR*intermediate_power) {
+         noise_indices[k] = noise_indices[n];
+         k = k + 1;
+      }
+   }
+   noise_indices_length = k;
+
+   // If less than MIN_SAMPLE_SIZE samples are left, exit and return FAIL_CODE
+   if (noise_indices_length*M < MIN_SAMPLE_SIZE) return(FAIL_CODE);
+
+
+//     *Nh = 0;
+//     for(n=0; n<noise_indices_length; n++) {
+//         *Nh += P[noise_indices[n]];
+//         n_ind[n] = noise_indices[n];
+//     }
+//     *Nh /= noise_indices_length;
+//     fail_diag[2] = noise_indices_length;
+//     return;
+
+//     Find median
+   min = P[noise_indices[0]];
+   max = min;
+   for (n=1; n<=(noise_indices_length-1); n++) {
+      if (P[noise_indices[n]] < min) min = P[noise_indices[n]];
+      if (P[noise_indices[n]] > max) max = P[noise_indices[n]];
+   }
+
+   while (1) {
+      guess = (min+max)/2;
+      less = 0; greater = 0; equal = 0;
+      maxltguess = min;
+      mingtguess = max;
+      for (n=0; n<noise_indices_length; n++) {
+         #ifdef DEBUG
+         if (noise_indices[n] >= N) {
+            printf("\nPointer out of bounds 9 %d\n", noise_indices[n]);
+            return(FAIL_CODE);
+         }
+         #endif
+         if (P[noise_indices[n]] < guess) {
+            less++;
+            if (P[noise_indices[n]]>maxltguess) maxltguess = P[noise_indices[n]];
+         } else if (P[noise_indices[n]]>guess) {
+            greater++;
+            if (P[noise_indices[n]]<mingtguess) mingtguess = P[noise_indices[n]];
+         } else equal++;
+      }
+      if (less <= ((float) noise_indices_length+1)/2 && greater <= ((float) noise_indices_length+1)/2) break;
+      else if (less>greater) max = maxltguess ;
+      else min = mingtguess;
+   }
+   if (less >= ((float) noise_indices_length+1)/2) median = maxltguess;
+   else if (less+equal >= ((float) noise_indices_length+1)/2) median = guess;
+   else median = mingtguess;
+//
+// //     printf("min %e max %e guess %e maxltguess %e mingtguess %e\n", min,max,guess,maxltguess,mingtguess);
+// //     printf("less %d equal %d noise_indices_length %d\n", less, equal, noise_indices_length);
+//     printf("median %e\n", median);
+
+   // Counter for the number of current consecutive range gate positons larger than the median
+   persistence = 0;
+   // (Apply the persistence filter)
+   for (n = 0; n<=(noise_indices_length-1); n++) {
+      #ifdef DEBUG
+      if (noise_indices[n] >= N) {
+         printf("\nPointer out of bounds 10 %d\n", noise_indices[n]);
+         return(FAIL_CODE);
+      }
+      #endif
+      // Check if at the end of a set of range bins larger than the median
+      if (P[noise_indices[n]] <= median) {
+         // If 10 or more are greater
+         if (persistence >= PNT_NO) {
+            // Mark the indices to be discarded
+            for (k = n-persistence; k<=n-1; k++) noise_indices[k] = -1;
+         }
+         // Reset the persistence
+         persistence = 0;
+      } else
+         // Increments the persistence if the value is greater than the median
+         persistence = persistence + 1;
+   }
+//     printf("n = %d noise_indices_length %d\n",n,noise_indices_length);
+
+// Check the last bins
+   if (persistence >= PNT_NO) {
+      for (k = (n-persistence+1); k<=(noise_indices_length-1); k++)
+         noise_indices[k] = -1;
+   }
+
+   mean_power = 0;
+   k = 0;
+   for (n=0;n<=(noise_indices_length-1);n++) {
+//         out_ind[n] = (double) noise_indices[n];
+      #ifdef DEBUG
+      if (noise_indices[n] >= N) {
+         printf("\nPointer out of bounds 11 %d\n", noise_indices[n]);
+         return(FAIL_CODE);
+      }
+      #endif
+      if (noise_indices[n] != -1) {
+         mean_power = mean_power+P[noise_indices[n]];
+         noise_indices[k] = noise_indices[n];
+         k = k+1;
+      }
+   }
+   noise_indices_length = k;
+   mean_power = mean_power/noise_indices_length;
+
+   #ifdef DEBUG
+   if (noise_indices_length >= N) {
+      printf("\nPointer out of bounds 12 noise_indices_length = %d\n", noise_indices_length);
+      return(FAIL_CODE);
+   }
+   #endif
+
+//     *Nh = mean_power;
+//     return
+
+   k = 0;
+   for (n=0;n<=(noise_indices_length-1);n++) {
+      #ifdef DEBUG
+      if (noise_indices[n] >= N) {
+         printf("\nPointer out of bounds 13 %d\n", noise_indices[n]);
+         return(FAIL_CODE);
+      }
+      #endif
+      if (P[noise_indices[n]] < SNR_THR*mean_power) {
+//             for (m=0;m<=M-1;m++) P_IQ[(k-I)*M+m] = IQ_P(noise_indices[n],m);
+//             memcpy(&P_IQ[k*M],&IQ_P[noise_indices[n]*M],M*sizeof(float));
+         P[k] = P[noise_indices[n]];
+         k = k+1;
+      }
+   }
+   noise_indices_length = k;
+
+   // Return the FAIL_CODE if the number of remaining samples is not sufficient
+   if (noise_indices_length*M < MIN_SAMPLE_SIZE) {
+      return(FAIL_CODE);
+   }
+
+   Nind->noise_indices_length = noise_indices_length;
+   memcpy(Nind->noise_indices, noise_indices, noise_indices_length*sizeof(int));
+   Nind->number_of_steps = 6;
+
+   for (n=0;n<=9;n++) {
+
+   /* Set all noise_indices array positions to value other than zero. This can be done using loop as shown below.
+    If using C/C++ memset command is recommended (e.g., memset(noise_indices,1,noise_indices_length*sizeof(int)))).
+    Note that because memset fills each byte to 1, array is initialized to 16843009. Array noise_indices is used to
+    mark samples for potential disposal */
+      memset((void *) noise_indices, 1, noise_indices_length*sizeof(int));
+
+      // Compute the mean power
+      mean_power = 0;
+      for (k=0;k<=(noise_indices_length-1);k++) {
+         mean_power = mean_power+P[k];
+      }
+      mean_power = mean_power/noise_indices_length;
+
+      // Calculate the first running sum for samples 1 to RUN_SUM_LENGTH
+      run_sum = 0;
+      for (k=0;k<=(RUN_SUM_LENGTH-1);k++) run_sum += P[k];
+      // Initialize the averaged point counter
+      k = 0;
+
+      // Initialize counter of the number of running sum points larger then the threshold
+      m = 0;
+      discarded_bins_counter = 0;
+      last_discarded_bin = 0;
+      if (run_sum > (mean_power*RUN_SUM_THR)) {
+         m = m+1;
+         k++;
+         #ifdef DEBUG
+         if (k >= N || k+RUN_SUM_LENGTH-1 >= N) {
+            printf("\nPointer out of bounds 14 %d %d\n", k, k+RUN_SUM_LENGTH-1);
+            return(FAIL_CODE);
+         }
+         #endif
+         // Update running sum
+         run_sum = run_sum-P[k-1]+P[k+RUN_SUM_LENGTH-1];
+         // Loop while subsequent running sum  points are larger than the mean
+         while (run_sum > (mean_power*RUN_SUM_LENGTH)) {
+            // Update the number of running sum points larger than the threshold
+            if (run_sum > (mean_power*RUN_SUM_THR)) m = m+1;
+            k = k+1;
+            // If too close to the end of data exit
+            if (k > (noise_indices_length-RUN_SUM_LENGTH+1))
+               break;
+            run_sum = run_sum-P[k-1]+P[k+RUN_SUM_LENGTH-1];
+         }
+
+         #ifdef DEBUG
+         if (k >= N || k+RUN_SUM_LENGTH-1 >= N) {
+            printf("\nPointer out of bounds 15 %d %d\n", k, k+RUN_SUM_LENGTH-1);
+            return(FAIL_CODE);
+         }
+         #endif
+         memset(&noise_indices[0], 0, (k-1+RUN_SUM_LENGTH)*sizeof(int));
+         last_discarded_bin = k-1+RUN_SUM_LENGTH-1;
+         discarded_bins_counter = k-1+RUN_SUM_LENGTH;
+         // Initialize value that points to the last running sum with power less than the mean
+         indicator = k;
+         k = k+1;
+      } else if (run_sum > (mean_power*RUN_SUM_LENGTH)) {
+         indicator = -1;
+         k = 1;
+      } else {
+         indicator = 0;
+         k = 1;
+      }
+
+      // This loop performs the running average and sets locations in noise_indices array for samples that are to be discarded
+      while (k<=(noise_indices_length-RUN_SUM_LENGTH)) {
+         #ifdef DEBUG
+         if (k >= N || k+RUN_SUM_LENGTH-1 >= N) {
+            printf("\nPointer out of bounds 16 %d %d\n", k, k+RUN_SUM_LENGTH-1);
+            return(FAIL_CODE);
+         }
+         #endif
+         // Update the running sum by just subtracting and adding edge values
+         run_sum = run_sum-P[k-1]+P[k+RUN_SUM_LENGTH-1];
+         if (run_sum > (mean_power*RUN_SUM_THR)) {
+            // If current running sum point is larger than the threshold do following ...
+            m = m+1;
+            k = k+1;
+            // Update running sum
+            run_sum = run_sum-P[k-1]+P[k+RUN_SUM_LENGTH-1];
+            // Loop while subsequent running sum  points are larger than the mean
+            while (run_sum > (mean_power*RUN_SUM_LENGTH)) {
+               // Update the number of running sum points larger than the threshold
+               if (run_sum > (mean_power*RUN_SUM_THR)) m = m+1;
+               k = k+1;
+               #ifdef DEBUG
+               if (k >= N || k+RUN_SUM_LENGTH-1 >= N) {
+                  printf("\nPointer out of bounds 17 %d %d\n", k, k+RUN_SUM_LENGTH-1);
+                  return(FAIL_CODE);
+               }
+               #endif
+               // If too close to the end of data exit
+               if (k > (noise_indices_length-RUN_SUM_LENGTH)) break;
+               run_sum = run_sum-P[k-1]+P[k+RUN_SUM_LENGTH-1];
+            }
+         /* Set the range of positions in the array to 0 (e.g., using memset command in C/C++ as memset(&noise_indices[indicator+1], 0,
+          (k-1+RUN_SUM_LENGTH-indicator)*sizeof(int)))) */
+            memset(&noise_indices[indicator+1], 0, (k-1+RUN_SUM_LENGTH-indicator-1)*sizeof(int));
+
+            // Update the number of discarded bins. Note: This method keeps track of the discarded bins as they are removed. It may be simpler to count them at the end using a loop
+            if (last_discarded_bin < indicator+1)
+               discarded_bins_counter = discarded_bins_counter+k-1+RUN_SUM_LENGTH-indicator-1;
+            else
+               discarded_bins_counter = discarded_bins_counter+k-1+RUN_SUM_LENGTH-1-last_discarded_bin;
+            // Update the last discarded bin
+            last_discarded_bin = k-1+RUN_SUM_LENGTH-1;
+            indicator = k;
+         } else if (run_sum <= (mean_power*RUN_SUM_LENGTH)) {
+            // If current running sum point does not exceed the threshold, update the location of the last running sum point less than the mean
+            indicator = k;
+         }
+         k = k+1;
+         #ifdef DEBUG
+         if (k >= N || k+RUN_SUM_LENGTH-1 >= N) {
+            printf("\nPointer out of bounds 18 %d %d\n", k, k+RUN_SUM_LENGTH-1);
+            return(FAIL_CODE);
+         }
+         #endif
+      }
+
+      /* If the ratio of number of running sum points larger than the threshold and the total number of running sum points is smaller than the
+       RUN_SUM_PERC or the number of samples after discarding is less than MIN_SAMPLE_SIZE) */
+      if ((noise_indices_length-discarded_bins_counter)*M<MIN_SAMPLE_SIZE || m < RUN_SUM_PERC*(noise_indices_length-RUN_SUM_LENGTH+1)) {
+//             printf("Exiting at step n=%d\n",n+1);
+//             if ((noise_indices_length-discarded_bins_counter)*M<MIN_SAMPLE_SIZE)
+//                 printf("Exiting because not enough data %d discarded %d out of %d\n",
+//                         noise_indices_length-discarded_bins_counter, discarded_bins_counter, noise_indices_length);
+//             fail_diag[0] = n+1;
+         break;
+      }
+
+      // Discard all samples that are tagged with zero and create new data set out of the remaining samples
+      k = 0;
+      m = 0;
+      while (k<noise_indices_length) {
+         if (noise_indices[k] != 0) {
+            indicator = k;
+            k = k+1;
+            while (k<=(noise_indices_length-1) && noise_indices[k] != 0) k++;
+            #ifdef DEBUG
+            if (k >= N) {
+               printf("\nPointer out of bounds 19 %d %d\n", k, N);
+               return(FAIL_CODE);
+            }
+            #endif
+
+//           Copy memory (e.g., using memcpy command in C/C++ as memcpy(&P[m],&P[indicator],(k-indicator)*sizeof(float)) or in MATLAB as P _IQ(m:m+k-indicator-1) = P(indicator:k-1)
+            if (k == (noise_indices_length-1) && noise_indices[k] != 0) {
+               memcpy(&P[m],&P[indicator],(k-indicator+1)*sizeof(float));
+               memcpy(&Nind->noise_indices[m],&Nind->noise_indices[indicator],(k-indicator+1)*sizeof(int));
+               m = m+k-indicator+1;
+            } else {
+               memcpy(&P[m],&P[indicator],(k-indicator)*sizeof(float));
+               memcpy(&Nind->noise_indices[m],&Nind->noise_indices[indicator],(k-indicator)*sizeof(int));
+               m = m+k-indicator;
+            }
+//                 printf("Group %d %d\n",indicator, k);
+         }
+         k = k+1;
+         #ifdef DEBUG
+         if (k >= N) {
+            printf("\nPointer out of bounds 20 %d %d\n", k, N);
+            return(FAIL_CODE);
+         }
+         #endif
+      }
+
+      noise_indices_length = m;
+      Nind->noise_indices_length = m;
+      Nind->number_of_steps = 7;
+   }
+
+   // If there was only one pass through the loop and the threshold is not met or if there are too few bins, exit with a failure
+   if ((n == 0 && !(m < RUN_SUM_PERC*(noise_indices_length-RUN_SUM_LENGTH+1))) ||
+           ((noise_indices_length-discarded_bins_counter)*M<END_MIN_DATA_SIZE)) {
+      Nh = FAIL_CODE;
+   // Otherwise, output the computed mean power as the noise estimate
+   } else
+      Nh = mean_power;
+
+   return(Nh);
+
 }

@@ -699,7 +699,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				CLASSPREFIX = RK;
 				LastUpgradeCheck = 1520;
-				ORGANIZATIONNAME = "Boon Leng Cheong";
+				ORGANIZATIONNAME = "Boonleng Cheong";
 				TargetAttributes = {
 					B5324D4E1AB8A5A000C00517 = {
 						CreatedOnToolsVersion = 6.1;

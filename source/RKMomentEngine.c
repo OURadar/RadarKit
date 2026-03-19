@@ -474,7 +474,7 @@ static void *momentEngineCore(void *in) {
             // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
 
             if (engine->useGmap) {
-                RKGmapRun(space, pulses, path.length);
+                RKGMAPRun(space, pulses, path.length);
             }
 
             // Call the moment processor

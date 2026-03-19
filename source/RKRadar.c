@@ -1167,10 +1167,10 @@ int RKFree(RKRadar *radar) {
         radar->filter = NULL;
     }
     // Make RKConfigAdvance() free up static memories
-    #if defined(__clang__) || (__GNUC__ == 12 && __GNUC_MINOR__ >= 2)
+    #if defined(__clang__) || (__GNUC__ == 12 && __GNUC_MINOR__ >= 2) || (__GNUC__ > 12)
     va_list ignore = {0};
     RKConfigAdvance(NULL, NULL, 0, ignore);
-    #elif __GNUC__ >= 12 || __STDC_VERSION__ >= 201112L
+    #elif __GNUC__ == 12 && __STDC_VERSION__ >= 201112L
     va_list ignore = {{0}};
     RKConfigAdvance(NULL, NULL, 0, ignore);
     #else

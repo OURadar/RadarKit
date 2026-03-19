@@ -17,7 +17,7 @@
 #include <RadarKit/RKSpectralMoment.h>
 #include <RadarKit/RKCalibrator.h>
 #include <RadarKit/RKPulsePairATSR.h>
-#include <RadarKit/RKGmap.h>
+#include <RadarKit/RKGMAP.h>
 
 #define RKMomentDFTPlanCount    16
 
