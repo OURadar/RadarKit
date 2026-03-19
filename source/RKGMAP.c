@@ -1,13 +1,13 @@
 //
-//  RKGmap.c
+//  RKGMAP.c
 //  RadarKit
 //
 //  Created by Skyler Garner in December 2025.
 //  Copyright (c) 2026 Skyler Garner. All rights reserved.
 //
 
-#include <RadarKit/RKGmap.h>
-#include "ext/mexDspGMAP.c"
+#include <RadarKit/RKGMAP.h>
+#include "ext/gmap.c"
 // #include "ext/cosine_window.c"
 
 
@@ -33,7 +33,7 @@ static void fill_fCorDots(float *fCorDots, unsigned int M) {
     }
 }
 
-int RKGmapRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
+int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount) {
 	// in-place application of Gaussian model adaptive processing.
     int k, g, p;
 
@@ -48,7 +48,7 @@ int RKGmapRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
     const unsigned int planSize = space->fftModule->plans[i].size;
 
 	if (lagCount > pulseCount) {
-		RKLog("WARNING. Memory leak in RKGmap.\n");
+		RKLog("WARNING. Memory leak in RKGMAP.\n");
 	}
 
 	// Step 0: Inputs needed: noise power, clutter width
@@ -212,16 +212,16 @@ int RKGmapRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 }
 
 
-RKGmap *RKGMapInit(void) {
-    RKGmap *gmap = (RKGmap *)malloc(sizeof(RKGmap));
-    if (gmap == NULL) {
-        RKLog("Error. Unable to allocate gmap.\n");
-        return NULL;
-    }
-	return NULL;
-}
+// RKGmap *RKGMapInit(void) {
+//     RKGmap *gmap = (RKGmap *)malloc(sizeof(RKGmap));
+//     if (gmap == NULL) {
+//         RKLog("Error. Unable to allocate gmap.\n");
+//         return NULL;
+//     }
+// 	return NULL;
+// }
 
-void RKGmapFree(RKGmap *gmap) {
-	// do we need to check state before we stop? If we multithread...
-    free(gmap);
-}
+// void RKGmapFree(RKGmap *gmap) {
+// 	// do we need to check state before we stop? If we multithread...
+//     free(gmap);
+// }

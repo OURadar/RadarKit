@@ -455,6 +455,12 @@ void RKTestByNumber(const int number, const int argc, const void **args) {
 #pragma region Basic Tests
 
 void RKTestShowTypes(void) {
+    printf("__GNUC__ = %d\n", __GNUC__);
+    printf("__GNUC_MINOR__ = %d\n", __GNUC_MINOR__);
+    printf("__STDC_VERSION__ = %ld\n", __STDC_VERSION__);
+    #if defined(__clang__)
+    printf("defined(__clang__)");
+    #endif
     RKShowTypeSizes();
     printf("\n");
     RKNetworkShowPacketTypeNumbers();
@@ -1890,7 +1896,7 @@ void RKTestGMAP(void) {
     RKPulse *pulses[pulseCount];
 
     // Ready made arrays from MATLAB
-    static const float VAL_REAL_P0[] = {
+    static const float valuePolHReal[] = {
         15.5810,  12.4257,   9.9393,  12.7739,  12.9182,  11.0566,  14.3235,  12.1150,
          8.9662,  13.1453,  15.2864,  11.1427,   6.2095,   8.3350,  11.7218,  10.4426,
          8.4249,   9.1248,  12.8151,  12.6261,   9.1220,  10.3710,  12.7484,   9.5243,
@@ -1901,7 +1907,7 @@ void RKTestGMAP(void) {
         -3.4617,  -4.0623,  -5.3956,  -1.1765,   2.1187,   4.1649,   6.7060,   6.0583
     };
 
-    static const float VAL_IMAG_P0[] = {
+    static const float valuePolHImag[] = {
        -10.2767, -13.4302, -10.7491,  -9.8259, -12.3556, -10.7563, -11.8538, -15.1111,
        -12.6683, -10.5345, -15.5029, -18.6795, -15.5618, -11.0683, -13.1165, -14.8278,
        -13.3994, -10.1060,  -9.6413, -12.6937, -10.7865,  -6.3481,  -7.1894,  -7.0322,
@@ -1912,7 +1918,7 @@ void RKTestGMAP(void) {
         -4.4845,  -5.4836,  -4.5969,  -2.2361,  -5.6209,  -6.4892,  -8.9808, -10.9419
     };
 
-    static const float VAL_REAL_P1[] = {
+    static const float valuePolVReal[] = {
          8.1430,   4.4122,   2.5274,   5.9487,   6.3921,   6.0189,   9.9133,   8.1750,
          5.5625,  10.0777,  12.8926,   9.5438,   5.9020,  10.1345,  13.6810,  11.8749,
         10.2549,  13.5187,  17.4933,  17.0723,  13.9232,  14.7102,  18.5650,  15.9676,
@@ -1923,7 +1929,7 @@ void RKTestGMAP(void) {
          3.8395,   3.5608,   1.7407,   5.1852,   7.6246,   9.1390,  11.8388,  10.5990
     };
 
-    static const float VAL_IMAG_P1[] = {
+    static const float valuePolVImag[] = {
         -0.5341,  -5.4818,  -2.9950,  -2.7696,  -6.4237,  -6.8807,  -8.5830, -13.9270,
        -11.8691, -10.6923, -16.7791, -21.8509, -19.3572, -15.7579, -19.7868, -21.9962,
        -20.5468, -18.2764, -19.7972, -24.7201, -24.4974, -19.9415, -21.1716, -21.9327,
@@ -1934,7 +1940,7 @@ void RKTestGMAP(void) {
         -1.5247,  -2.2879,  -1.2080,   0.5958,  -2.4607,  -3.3097,  -5.7495,  -7.0592
     };
 
-    static const float RES_P0[] = {
+    static const float resultPolH[] = {
         -0.1160, -0.1754, -0.1194, -0.0497, -0.1156, +0.0850, -0.0574, +0.2173,
         -0.0014, +0.2563, -0.0200, +0.3732, +0.2290, +0.3515, +0.1461, +0.0564,
         -0.1795, +0.2562, +0.4671, +0.5822, +1.0595, -0.3841, +0.2350, -1.3737,
@@ -1953,7 +1959,7 @@ void RKTestGMAP(void) {
         +0.0256, -0.2873, -0.0255, -0.3330, -0.0710, -0.3297, -0.1000, -0.2748
     };
 
-    static const float RES_P1[] = {
+    static const float resultPolV[] = {
         -0.2140, -0.1450, -0.2013, -0.0474, -0.1822, +0.0845, -0.1029, +0.2355,
         -0.0264, +0.3031, +0.0235, +0.4149, +0.3203, +0.4464, +0.2657, +0.0887,
         -0.0477, +0.3705, +0.5465, +0.7283, +1.0982, -0.2335, +0.2302, -1.4298,
@@ -1982,11 +1988,11 @@ void RKTestGMAP(void) {
         for (p = 0; p < 2; p++) {
             RKComplex *Y = RKGetComplexDataFromPulse(pulse, p);
             if (p == 0) {
-                Y[0].i = VAL_REAL_P0[k];
-                Y[0].q = VAL_IMAG_P0[k];
+                Y[0].i = valuePolHReal[k];
+                Y[0].q = valuePolHImag[k];
             } else {
-                Y[0].i = VAL_REAL_P1[k];
-                Y[0].q = VAL_IMAG_P1[k];
+                Y[0].i = valuePolVReal[k];
+                Y[0].q = valuePolVImag[k];
             }
         }
         pulses[k] = pulse;
@@ -1997,13 +2003,13 @@ void RKTestGMAP(void) {
     space->noise[1] = 0.1f;
 
     // Pass into GMAP
-    RKGmapRun(space, pulses, pulseCount);
+    RKGMAPRun(space, pulses, pulseCount);
 
     // Validation
     const int count = 2 * pulseCount;
     for (p = 0; p < 2; p++) {
         float *out = (float *)space->inBuffer[p];
-        float *res = (float *)(p == 0 ? RES_P0 : RES_P1);
+        float *res = (float *)(p == 0 ? resultPolH : resultPolV);
         float delta = 0.0f;
         for (k = 0; k < count; k++) {
             delta += fabsf(out[k] - res[k]);
@@ -2026,12 +2032,13 @@ void RKTestGMAP(void) {
 
 void RKTestNoiseEstimator(void) {
     SHOW_FUNCTION_NAME
-    int g, k;
+    int g, k, r;
+    float delta;
     RKConfig *configs;
     RKBuffer pulseBuffer;
     RKMomentScratch *space;
 
-    static const float POW[] = {
+    static const float power[] = {
         0.7437f, 0.5892f, 0.9550f, 0.8199f, 0.9111f, 0.9888f, 1.1308f, 0.7592f,
         1.0921f, 1.4008f, 0.9836f, 1.1795f, 0.9161f, 0.9631f, 0.7317f, 0.9017f,
         1.1642f, 1.0315f, 0.7821f, 0.9771f, 0.7819f, 0.7686f, 0.9810f, 1.0263f,
@@ -2041,12 +2048,22 @@ void RKTestNoiseEstimator(void) {
         0.9714f, 0.5682f, 0.7637f, 1.3276f, 0.5841f, 1.1764f, 0.7116f, 0.5129f,
         0.8599f, 1.2401f, 1.3779f, 1.0090f, 1.0918f, 1.2655f, 1.1343f, 0.7296f,
     };
-    static const float RES[] = {
-        1.0045176f, 1.0045176f
+    static const float noise[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1.0209328f, // count = 15
+        1.0209328f, // count = 16
+        1.0045176f, // count = 17
+        1.0045176f, // count = 18
+        0, 0, 0, 0, 0, 0, 0,
+        1.0045176f, // count = 26
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0.9838640f, // count = 35
+        0.9838640f, // count = 36
+        0.9838640f, // count = 37
+        0.9812807f, // count = 38
     };
-    const int gateCount = sizeof(POW) / sizeof(float);
-
-    const int pulseCount = 32;
+    const int gateCount = sizeof(power) / sizeof(float);
+    const int pulseCount = sizeof(noise) / sizeof(float);
     const int pulseCapacity = gateCount;
     const float scale = (float)sqrtf(0.5f);
 
@@ -2071,10 +2088,10 @@ void RKTestNoiseEstimator(void) {
         RKIQZ x = RKGetSplitComplexDataFromPulse(pulse, 0);
         RKIQZ y = RKGetSplitComplexDataFromPulse(pulse, 1);
         for (g = 0; g < gateCount; g++) {
-            x.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
-            x.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
-            y.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
-            y.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(POW[g]);
+            x.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(power[g]);
+            x.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(power[g]);
+            y.i[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(power[g]);
+            y.q[g] = (float)(rand() % 2 == 0 ? 1 : -1) * scale * sqrtf(power[g]);
             // if (k == 0) {
             //     printf("%d: %f, %f   %f\n", g, x.i[g], x.q[g], x.i[g] * x.i[g] + x.q[g] * x.q[g]);
             // }
@@ -2086,24 +2103,32 @@ void RKTestNoiseEstimator(void) {
     space->noise[0] = 1.0045f;
     space->noise[1] = 1.0045f;
 
-    int fail = RKRayNoiseEstimator(space, pulses, pulseCount);
+    bool allSuccessful = true;
+    for (k = 0; k < pulseCount; k++) {
+        if (noise[k] != 0.0f) {
+            r = RKRayNoiseEstimator(space, pulses, k+1);
+            if (r != RKResultSuccess) {
+                RKLog("Error. Noise estimation failed.\n");
+            } else {
+                delta = fabsf(space->noise[0] - noise[k]);
 
-    RKLog("Estimated noise = %f, %f\n", space->noise[0], space->noise[1]);
-
-    if (fail) {
-        RKLog("Error. Noise estimation failed.\n");
-    } else {
-        float delta0 = fabsf(space->noise[0] - RES[0]);
-        float delta1 = fabsf(space->noise[1] - RES[1]);
-        RKLog("Output delta = %s%f%s, %s%f%s\n",
-            rkGlobalParameters.showColor ? RKMonokaiYellow : "", delta0, rkGlobalParameters.showColor ? RKNoColor : "",
-            rkGlobalParameters.showColor ? RKMonokaiYellow : "", delta1, rkGlobalParameters.showColor ? RKNoColor : "");
-        RKLog("Noise estimation %s\n",
-            (delta0 < 1.0e-3f && delta1 < 1.0e-3f) ?
-            (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
-            (rkGlobalParameters.showColor ? RKMonokaiRed "failed" RKNoColor : "failed"));
+                RKLog("count = %d   %f ==? %s%f %f%s   %s\n",
+                    k + 1, noise[k],
+                    rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                    space->noise[0], space->noise[1],
+                    rkGlobalParameters.showColor ? RKNoColor : "",
+                    delta < 0.1f ?
+                    (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
+                    (rkGlobalParameters.showColor ? RKRedColor "failed" RKNoColor : "failed")
+                );
+            }
+            allSuccessful &= (r == RKResultSuccess);
+        }
     }
-
+    RKLog("Overall noise estimation %s\n",
+        allSuccessful ?
+        (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
+        (rkGlobalParameters.showColor ? RKRedColor "failed" RKNoColor : "failed"));
     RKLog("Deallocating buffers ...\n");
 
     RKMomentScratchFree(space);

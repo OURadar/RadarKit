@@ -73,7 +73,7 @@ OBJS += RKPulseEngine.o RKPulseRingFilter.o
 OBJS += RKRadarRelay.o
 OBJS += RKNetwork.o RKServer.o RKClient.o RKWebSocket.o
 OBJS += RKMomentEngine.o RKPulsePair.o RKPulsePairHop.o RKPulsePairATSR.o RKMultiLag.o RKSpectralMoment.o
-OBJS += RKCalibrator.o RKNoiseEstimator.o
+OBJS += RKCalibrator.o RKNoiseEstimator.o RKGMAP.o
 OBJS += RKHealthRelayTweeta.o RKHealthRelayNaveen.o RKPedestalPedzy.o
 OBJS += RKRawDataRecorder.o RKSweepEngine.o RKSweepFile.o RKProduct.o RKProductFile.o RKHealthLogger.o
 

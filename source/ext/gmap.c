@@ -20,8 +20,10 @@
 #define round(x) ((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
 #define min(x,y) (x<y)? x : y
 #define max(x,y) (x>y)? x : y
+#define clip(x, minVal, maxVal) (x<minVal)? minVal : ((x>maxVal)? maxVal : x)
 
 #define MAXSIZE 100 // This seems low...
+#define MAX_SPEC_SIZE 65536
 
 // Windows
 #define WIN_RECT 0
@@ -90,7 +92,8 @@ float angle(float y, float x) {
 
 void dspGMAPinitCM(float fClutterWidth_a,tDftConf *dftConf_a,tWGCM *WGCM_a) {
 
-    int iSpecSize, iSpecHalf, N, iOutPts, iOff;
+    int iSpecSize, iSpecHalf;
+    int N, iOutPts, iOff;
     int n, m, ii, ij;
     float *cSpec_r, *cSpec_i, w, wr, wi;
     const float *cSamp;
@@ -101,8 +104,9 @@ void dspGMAPinitCM(float fClutterWidth_a,tDftConf *dftConf_a,tWGCM *WGCM_a) {
     WGCM_a->iWinType = dftConf_a->iWinType;
     WGCM_a->fClutterWidth = fClutterWidth_a;
 
-    iSpecSize = dftConf_a->iSpecSize;
-    iSpecHalf = (int) floor((dftConf_a->iSpecSize) / 2);
+    iSpecSize = min(max(dftConf_a->iSpecSize, 1), MAX_SPEC_SIZE);
+    // iSpecHalf = (int) floor((iSpecSize / 2));
+    iSpecHalf = iSpecSize / 2;
 
     // cSamp = mxGetPr(mxGetCell(dftConf_a->window, *WGCM_a->iWinType));
     cSamp = dftConf_a->window;
@@ -150,7 +154,8 @@ void dspGMAPinitCM(float fClutterWidth_a,tDftConf *dftConf_a,tWGCM *WGCM_a) {
     // fGaussian = (float *) mxMalloc(iSpecSize*sizeof(float));
     fGaussian = (float *) malloc(iSpecSize * sizeof(float));
     for(ii = 0; ii<iSpecSize; ii++) fGaussian[ii] = 0;
-    for(ii = 0; ii<floor((iSpecSize+1)/2); ii++) {
+    // for(ii = 0; ii<floor((iSpecSize+1)/2); ii++) {
+    for(ii = 0; ii<iSpecSize/2; ii++) {
         fPowerD = exp(fQuadCoef*ii*ii);
         fGaussian[(iSpecHalf + ii)%iSpecSize] = fPowerD;
         fGaussian[(iSpecHalf - ii)%iSpecSize] = fPowerD;
@@ -158,7 +163,7 @@ void dspGMAPinitCM(float fClutterWidth_a,tDftConf *dftConf_a,tWGCM *WGCM_a) {
 
     // convolve window with gaussian to create model. Convolving because we are windowing in time domain.
     // fNetSpec = (float *) mxMalloc((2*iSpecSize-1)*sizeof(float));
-    fNetSpec = (float *) malloc((2 * iSpecSize -1 ) * sizeof(float));
+    fNetSpec = (float *) malloc(2 * iSpecSize * sizeof(float));
     for(ii = 0; ii < (2*iSpecSize-1); ii++) {
         fNetSpec[ii] = 0;                       // set to zero before sum
         n = (ii<iSpecSize) ? (ii+1):iSpecSize;
@@ -248,7 +253,7 @@ void dspGMAP(float *fSpecLin_a, float fClutterWidth_a, float fNoisePower_a,
     float fVOff, fModel, fR1ArgLast, fR0Last, fSpecSum, fPolySum, pTerm,
             fNewVal, fPowRemoved;
 
-    iSpecSize = dftConf_a->iSpecSize;
+    iSpecSize = clip(dftConf_a->iSpecSize, 1, MAX_SPEC_SIZE);
     if(fNoisePower_a > 0) lNoiseGiven = 1;
     else lNoiseGiven = 0;
 
@@ -323,6 +328,7 @@ void dspGMAP(float *fSpecLin_a, float fClutterWidth_a, float fNoisePower_a,
         iSignalPoints = 0; // bin count for normalization
 
         // loop outside of clutter gap (data region)
+        fTerm = 0.0f;
         for(ii = iGapOneSide;  ii<(iSpecSize - iGapOneSide+1); ii++) {
             // sum data outside of clutter gap
             fTerm = fSpecLin_a[ii];
