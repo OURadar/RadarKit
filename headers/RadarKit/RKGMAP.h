@@ -11,33 +11,10 @@
 
 #include <RadarKit/RKFoundation.h>
 #include <RadarKit/RKScratch.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
-
-// typedef struct rk_gmap RKGmap;
-
-
-int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount);
-// RKGmap *RKGMapInit(void);
-// void RKGmapFree(RKGmap *gmap);
-// float *make_fCorDots(int M);
-// void cosine_window(float * w, unsigned n, const float * coeff, unsigned ncoeff, bool sflag);
-
 
 typedef struct tWGCM    tWGCM;
 typedef struct tDftConf tDftConf;
 
-struct rk_gmap {
-    // User set variables
-    // interp
-
-    // Program set variables
-    tWGCM                           *wgcm;
-    tDftConf                        *dftConf;
-
-    // Status / health
-};
+int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCount);
 
 #endif /* defined(__RadarKit_RKGMAP__) */

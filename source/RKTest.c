@@ -1883,9 +1883,10 @@ void RKTestGMAP(void) {
     const int pulseCount = 64;
     const int pulseCapacity = 64;
 
-    RKLog("Allocating buffers ...\n");
+    // RKSetUseDailyLog(true);
+    RKLog("Allocating buffers ... %s\n", rkGlobalParameters.logTimeOnly ? "true" : "false");
 
-    RKMomentScratchAlloc(&space, pulseCapacity, 1, "GMAP");
+    RKMomentScratchAlloc(&space, pulseCapacity, 1, "TestGMAP");
     fftModule = RKFFTModuleInit(pulseCapacity, 1);
     space->fftModule = fftModule;
     space->gateCount = gateCount;
@@ -2015,12 +2016,14 @@ void RKTestGMAP(void) {
             delta += fabsf(out[k] - res[k]);
         }
         delta /= count;
-        RKShowVecComplex("Output:\n", (RKComplex *)out, pulseCount);
-        RKShowVecComplex("Reference:\n", (RKComplex *)res, pulseCount);
         RKLog("Mean absolute difference = %f %s\n", delta,
             delta < 0.1f ?
             (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
             (rkGlobalParameters.showColor ? RKRedColor "failed" RKNoColor : "failed") );
+        // Just interpret the array as 8 x 8 for better visualization
+        RKShowComplexArray((RKComplex *)out, "Xo", 8, 8);
+        printf("\n");
+        RKShowComplexArray((RKComplex *)res, "Xr", 8, 8);
     }
 
     RKLog("Deallocating buffers ...\n");

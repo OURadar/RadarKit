@@ -12,10 +12,7 @@ RUN pip install -U pip
 
 # System packages (add more only if needed)
 RUN apt update && \
-    apt install -y bc git libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev && \
-    git clone https://git.arrc.ou.edu/radar/radarkit.git /tmp/radarkit && \
-    cd /tmp/radarkit && \
-    git checkout dev0
+    apt install -y bc git libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
 
 RUN if [ "$(uname -m)" == "aarch64" ] && [ ! -f /workspace/data/radarkit-fft-wisdom ] ; then \
         echo "Downloading DFT wisdom from ARRC server..." ; \

@@ -97,7 +97,7 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
     // This is used in GMAP, but we want to init it outside of the loop.
 	// wgcm is set in the function and will keep it's values as long as iSpecSize, iWinType, and fClutterWidth are not changed.
 	tWGCM wgcm = {
-		.iWinType = 0,
+		.iWinType = WIN_BLACKMAN,
 		.iSpecSize = planSize,
 		.fClutterWidth = 0,
 		.iMainLobePts = 0,
@@ -110,16 +110,13 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 		.iSpecSize = planSize,
 		.iWinType = WIN_BLACKMAN,
 		.window = space->user2,
-		.fCorDots = space->user3
+		.fCorDots = (float *)malloc(4 * planSize * sizeof(float)),
+		.cSpec_r = (float *)malloc(OVERSAMP * planSize * sizeof(float)),
+		.cSpec_i = (float *)malloc(OVERSAMP * planSize * sizeof(float)),
+		.fWinResp = (float *)malloc(planSize * sizeof(float)),
+		.fGaussian = (float *)malloc(planSize * sizeof(float)),
+		.fNetSpec = (float *)malloc(2 * planSize * sizeof(float))
 	};
-	// const RKFloat coeff[3] = {0.42, -0.5, 0.08};
-	// cosine_window(dftConf.window, pulseCount, coeff, 3, true);
-
-	// TODO: Could use a better way of setting which window to use.
-	// hamming window
-	// dftConf.iWinType = (int) WIN_HAMMING;
-	// float coeff[2] = {0.54, -0.46};
-
 	RKWindowMake(dftConf.window, RKWindowTypeBlackman, pulseCount);
 	fill_fCorDots(dftConf.fCorDots, planSize);
 
@@ -170,7 +167,8 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 
 			// Show input spectrum for testing
 			if (space->verbose && gateCount == 1) {
-				RKShowVecFloat("GMAP Input Spectrum:\n", freqPower, planSize);
+				// RKShowVecFloat("GMAP Input Spectrum:\n", freqPower, planSize);
+				RKShowArray(freqPower, "Si", 4, planSize / 4);
 			}
 
 			// Step 2: Determine noise power: We do this before! Done.
@@ -179,7 +177,8 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 			// Show output spectrum for testing
 			if (space->verbose && gateCount == 1) {
 				RKLog("GMAP: Power removed: %.4f, Gap points: %.1f\n", powerRemoved, gapPoints);
-				RKShowVecFloat("GMAP Output Spectrum:\n", freqPower, planSize);
+				// RKShowVecFloat("GMAP Output Spectrum:\n", freqPower, planSize);
+				RKShowArray(freqPower, "So", 8, planSize / 8);
 			}
 
 			// Recover the amplitude of the spectrum after GMAP, and save it back to the input buffer for IFFT.
@@ -207,21 +206,13 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 		RKPulseDuplicateSplitComplex(pulses[k]);
 	}
 
+	free(dftConf.fCorDots);
+	free(dftConf.cSpec_r);
+	free(dftConf.cSpec_i);
+	free(dftConf.fWinResp);
+	free(dftConf.fGaussian);
+	free(dftConf.fNetSpec);
+
     return pulseCount;
 
 }
-
-
-// RKGmap *RKGMapInit(void) {
-//     RKGmap *gmap = (RKGmap *)malloc(sizeof(RKGmap));
-//     if (gmap == NULL) {
-//         RKLog("Error. Unable to allocate gmap.\n");
-//         return NULL;
-//     }
-// 	return NULL;
-// }
-
-// void RKGmapFree(RKGmap *gmap) {
-// 	// do we need to check state before we stop? If we multithread...
-//     free(gmap);
-// }

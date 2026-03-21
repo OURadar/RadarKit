@@ -156,6 +156,7 @@ void RKShowVecFloat(const char *name, const float *p, const int n);
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n);
 void RKShowVecComplex(const char *name, const RKComplex *p, const int n);
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height);
+void RKShowComplexArray(const RKComplex *data, const char *letter, const int width, const int height);
 char *RKStringFromValue(const void *value, RKValueType type);
 char *RKVariableInString(const char *name, const void *value, RKValueType type);
 size_t RKPrettyStringSizeEstimate(const char *);

@@ -896,26 +896,76 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
 }
 
 void RKShowArray(const RKFloat *data, const char *letter, const int width, const int height) {
-    int j, k = 0, n = MAX(1, (int)strlen(letter) - 8);
+    int j;
+    int k = 0;
+    int w = MAX((int)strlen(letter), 8);
+    int i = (rkGlobalParameters.logTimeOnly ? 12 : 19) - w + strlen(letter) + 1;
     char text[1024];
-    char pad[n + 1];
-    memset(pad, ' ', n);
-    pad[n] = '\0';
-    k = sprintf(text, "      %s%8s%s = [ %s ]\n",
-                rkGlobalParameters.showColor ? RKYellowColor : "", letter,
+    char ii[i + 1], ww[i + w + 1];
+    memset(ii, ' ', i); ii[i] = '\0';
+    memset(ww, ' ', i + w); ww[i + w] = '\0';
+
+    k = sprintf(text, "%s%s%8s%s = [ %s ]\n",
+                ii,
+                rkGlobalParameters.showColor ? RKYellowColor : "",
+                letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
     if (height > 1) {
-        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + width, width));
+        k += sprintf(text + k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + width, width));
     }
     if (height > 2) {
-        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + 2 * width, width));
+        k += sprintf(text + k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + 2 * width, width));
     }
     if (height > 6) {
-        k += sprintf(text + k, "              %s  [     ...\n", pad);
+        k += sprintf(text + k, "%s   [     ...\n", ww);
     }
     for (j = MAX(3, height - 3); j < height; j++) {
-        k += sprintf(text + k, "              %s  [ %s ]\n", pad, arrayHeadTailElementsInString(data + j * width, width));
+        k += sprintf(text + k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + j * width, width));
+    }
+    printf("%s", text);
+}
+
+static char *complexArrayHeadTailElementsInString(const RKComplex *d, const int length) {
+    int c, k = 0;
+    static char line[1024];
+    for (c = 0; c < 3; c++) {
+        k += sprintf(line + k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
+    }
+    k += sprintf(line + k, " ...");
+    for (c = length - 3; c < length; c++) {
+        k += sprintf(line + k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
+    }
+    return line;
+}
+
+void RKShowComplexArray(const RKComplex *data, const char *letter, const int width, const int height) {
+    int j;
+    int k = 0;
+    int w = MAX((int)strlen(letter), 8);
+    int i = (rkGlobalParameters.logTimeOnly ? 12 : 19) - w + strlen(letter) + 1;
+    char text[1024];
+    char ii[i + 1], ww[i + w + 1];
+    memset(ii, ' ', i); ii[i] = '\0';
+    memset(ww, ' ', i + w); ww[i + w] = '\0';
+
+    k = sprintf(text, "%s%s%8s%s = [ %s ]\n",
+                ii,
+                rkGlobalParameters.showColor ? RKYellowColor : "",
+                letter,
+                rkGlobalParameters.showColor ? RKNoColor : "",
+                complexArrayHeadTailElementsInString(data, width));
+    if (height > 1) {
+        k += sprintf(text + k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + width, width));
+    }
+    if (height > 2) {
+        k += sprintf(text + k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + 2 * width, width));
+    }
+    if (height > 6) {
+        k += sprintf(text + k, "%s   [     ...\n", ww);
+    }
+    for (j = MAX(3, height - 3); j < height; j++) {
+        k += sprintf(text + k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
 }
