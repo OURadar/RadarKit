@@ -888,8 +888,10 @@ static char *arrayHeadTailElementsInString(const float *d, const int length) {
     for (c = 0; c < 3; c++) {
         k += sprintf(line + k, " %6.2f", *(d + c));
     }
-    k += sprintf(line + k, " ...");
-    for (c = length - 3; c < length; c++) {
+    if (length > 6) {
+        k += sprintf(line + k, " ...");
+    }
+    for (c = MAX(3, length - 3); c < length; c++) {
         k += sprintf(line + k, " %6.2f", *(d + c));
     }
     return line;
@@ -932,8 +934,10 @@ static char *complexArrayHeadTailElementsInString(const RKComplex *d, const int 
     for (c = 0; c < 3; c++) {
         k += sprintf(line + k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
     }
-    k += sprintf(line + k, " ...");
-    for (c = length - 3; c < length; c++) {
+    if (length > 6) {
+        k += sprintf(line + k, " ...");
+    }
+    for (c = MAX(3, length - 3); c < length; c++) {
         k += sprintf(line + k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
     }
     return line;

@@ -218,7 +218,6 @@ static int RKWebSocketConnect(RKWebSocket *W) {
         SSL_set_fd(W->ssl, W->sd);
         SSL_connect(W->ssl);
     }
-
     char *buf = (char *)W->frame;
     strcpy(W->secret, "RadarHub123456789abcde");
     FILE *fid = fopen("radarkit-radarhub-secret", "r");
@@ -245,7 +244,7 @@ static int RKWebSocketConnect(RKWebSocket *W) {
         W->path,
         W->host,
         W->secret);
-    if (W->verbose > 2) {
+    if (W->verbose > 1) {
         printf("%s", buf);
     }
     r = RKSocketWrite(W, strlen(buf));
@@ -642,11 +641,23 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     // Establish the SSL context if necessary
     if (W->useSSL) {
         #if OPENSSL_VERSION_NUMBER < 0x10100000L
+        // RKLog("%s Initializing SSL context with SSLv23_client_method() ...\n", W->name);
+        SSL_library_init();
+        SSL_load_error_strings();
         W->sslContext = SSL_CTX_new(SSLv23_client_method());
+        SSL_CTX_set_options(W->sslContext, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1);
         #else
+        // RKLog("%s Initializing SSL context with TLS_client_method() ...\n", W->name);
         W->sslContext = SSL_CTX_new(TLS_client_method());
+        SSL_CTX_set_min_proto_version(W->sslContext, TLS1_2_VERSION);
         #endif
+        SSL_CTX_set_verify(W->sslContext, SSL_VERIFY_PEER, NULL);
+        SSL_CTX_set_default_verify_paths(W->sslContext);
         W->ssl = SSL_new(W->sslContext);
+        if (W->ssl == NULL) {
+            RKLog("%s Error. Failed to create SSL structure.\n", W->name);
+            return NULL;
+        }
     }
     W->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
     RKWebSocketSetPingInterval(W, RKWebSocketTimeoutThresholdSeconds);

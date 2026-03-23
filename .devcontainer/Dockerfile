@@ -12,12 +12,12 @@ RUN pip install -U pip
 
 # System packages (add more only if needed)
 RUN apt update && \
-    apt install -y bc git libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
+    apt install -y bc git libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev iputils-ping telnet
 
-RUN if [ "$(uname -m)" == "aarch64" ] && [ ! -f /workspace/data/radarkit-fft-wisdom ] ; then \
-        echo "Downloading DFT wisdom from ARRC server..." ; \
-        curl -o /workspace/data/radarkit-fft-wisdom https://arrc.ou.edu/share/radarkit-fft-wisdom-aarch64 ; \
-    fi
+# RUN if [ "$(uname -m)" == "aarch64" ] && [ ! -f /workspace/data/radarkit-fft-wisdom ] ; then \
+#         echo "Downloading DFT wisdom from ARRC server..." ; \
+#         curl -o /workspace/data/radarkit-fft-wisdom https://arrc.ou.edu/share/radarkit-fft-wisdom-aarch64 ; \
+#     fi
 
 WORKDIR /workspace
 

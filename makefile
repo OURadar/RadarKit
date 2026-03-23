@@ -52,12 +52,12 @@ endif
 CFLAGS += -Iheaders -Iheaders/RadarKit
 CFLAGS += -I/usr/include
 CFLAGS += -I${PREFIX}/include
-CFLAGS += -I${PREFIX}/opt/openssl@1.1/include
+CFLAGS += -I${PREFIX}/opt/openssl@3/include
 CFLAGS += -I${PREFIX}/opt/libarchive/include
 
 LDFLAGS = -L/usr/lib
 LDFLAGS += -L${PREFIX}/lib
-LDFLAGS += -L${PREFIX}/opt/openssl@1.1/lib
+LDFLAGS += -L${PREFIX}/opt/openssl@3/lib
 LDFLAGS += -L${PREFIX}/opt/libarchive/lib
 
 OBJS = RadarKit.o RKRadar.o RKCommandCenter.o RKReporter.o RKTest.o
