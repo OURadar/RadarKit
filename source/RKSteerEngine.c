@@ -633,7 +633,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->value[1] = 0.0f;
                     V->tic = 0;
                     if (verbose) {
-                        RKLog("%s Info. Ready for RHI sweep %d - AZ %.2f° @ crossover EL %.2f°\n", engine->name,
+                        RKLog("%s Ready for RHI sweep %d - AZ %.2f° @ crossover EL %.2f°\n", engine->name,
                             V->i, scan->azimuthStart, scan->elevationEnd);
                     }
                     V->progress ^= RKScanProgressSetup;
@@ -652,7 +652,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->value[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     }
                     if (verbose) {
-                        RKLog("%s Info. E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f", engine->name,
+                        RKLog("%s E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f\n", engine->name,
                             pos->elevationDegrees, scan->elevationStart, pos->elevationVelocityDegreesPerSecond,
                             pos->azimuthDegrees, scan->azimuthStart, pos->azimuthVelocityDegreesPerSecond,
                             V->i, del, a, action->value[a]);
@@ -663,7 +663,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[a] = 0.0f;
                     if (verbose) {
-                        RKLog("%s Info. E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f", engine->name,
+                        RKLog("%s E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f\n", engine->name,
                             pos->elevationDegrees, scan->elevationStart, pos->elevationVelocityDegreesPerSecond,
                             pos->azimuthDegrees, scan->azimuthStart, pos->azimuthVelocityDegreesPerSecond,
                             V->i, del, a, action->value[a]);
@@ -833,7 +833,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 }
                 break;
             case RKScanModePoint:
-                RKLog("%s Info. Point should not pass here.\n", engine->name);
+                RKLog("%s Warning. Point should not pass here.\n", engine->name);
                 V->progress ^= RKScanProgressMiddle;
                 V->progress |= RKScanProgressEnd;
             default:

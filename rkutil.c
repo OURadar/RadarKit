@@ -17,6 +17,7 @@ typedef struct user_params {
     RKName                   pedzyHost;
     RKName                   tweetaHost;
     RKName                   radarHubHost;
+    RKName                   radarHubPathway;
     RKName                   userDevices[RKHealthNodeCount];
     RKName                   relayHost;
     RKName                   ringFilter;
@@ -151,7 +152,7 @@ static void showHelp(void) {
            "          p - Pulse engine\n"
            "          r - Ring filter engine\n"
            "          s - Sweep engine\n"
-           "          w - RadarHub WebSocket Reporter\n"
+           "          w - WebSocket Reporter (RadarHub)\n"
            "\n",
            name);
     printf("  -T (--test) " UNDERLINE("value") "\n"
@@ -348,6 +349,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHost",        user->radarHubHost,         RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubPathway",     user->radarHubPathway,      RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -914,7 +916,7 @@ int main(int argc, const char **argv) {
     } else {
         int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
         RKReporterSetVerbose(reporter, v);
-        RKReporterSetRadar(reporter, myRadar);
+        RKReporterSetRadar(reporter, myRadar, systemPreferences->radarHubPathway);
         RKReporterStart(reporter);
     }
 

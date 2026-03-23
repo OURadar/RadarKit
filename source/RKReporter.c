@@ -433,19 +433,28 @@ void RKReporterFree(RKReporter *engine) {
 void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
     if (engine->ws) {
-        RKWebSocketSetVerbose(engine->ws, verbose - 1);
+        // RKWebSocketSetVerbose(engine->ws, verbose - 1);
+        RKWebSocketSetVerbose(engine->ws, 3);
     }
 }
 
-void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
+void RKReporterSetRadar(RKReporter *engine, RKRadar *radar, const char *pathway) {
     engine->radar = radar;
-    strcpy(engine->pathway, radar->desc.name);
+    strcpy(engine->pathway, pathway);
     RKStringLower(engine->pathway);
     snprintf(engine->address, sizeof(engine->address), "/ws/radar/%s/", engine->pathway);
     if (engine->verbose > 1) {
-        RKLog("%s Setting up radar %s (%s @ %s)\n", engine->name, radar->desc.name, engine->host, engine->address);
+        RKLog("%s Setting up '%s' (%s%s%s%s%s)\n",
+            engine->name, radar->desc.name,
+            rkGlobalParameters.showColor ? RKMonokaiGreen : "",
+            engine->host, engine->address,
+            rkGlobalParameters.showColor ? RKNoColor : "");
     }
     engine->ws = RKWebSocketInit(engine->host, engine->address);
+    if (engine->ws == NULL) {
+        RKLog("%s Error. Failed to initialize RKWebSocket.\n", engine->name);
+        return;
+    }
     RKWebSocketSetOpenHandler(engine->ws, &handleOpen);
     RKWebSocketSetCloseHandler(engine->ws, &handleClose);
     RKWebSocketSetMessageHandler(engine->ws, &handleMessage);
@@ -456,15 +465,15 @@ void RKReporterSetRadar(RKReporter *engine, RKRadar *radar) {
 #pragma region Interactions
 
 void RKReporterStart(RKReporter *engine) {
+    if (engine->ws == NULL) {
+        RKLog("%s Error. RKWebSocket is not initialized.\n", engine->name);
+        return;
+    }
     RKLog("%s Starting ...\n", engine->name);
     if (!strcmp(engine->host, "nohost")) {
         RKLog(">%s Not running until it is official\n", engine->name);
         return;
     }
-    RKLog(">%s host = %s%s:%d%s%s\n", engine->name,
-          rkGlobalParameters.showColor ? (engine->ws->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
-          engine->ws->host, engine->ws->port, engine->ws->path,
-          rkGlobalParameters.showColor ? RKNoColor : "");
     RKWebSocketStart(engine->ws);
     engine->state |= RKEngineStateWantActive;
     if (pthread_create(&engine->ticWorker, NULL, reporter, engine)) {
@@ -477,6 +486,12 @@ void RKReporterStart(RKReporter *engine) {
 }
 
 void RKReporterStop(RKReporter *engine) {
+    if (engine->state & RKEngineStateActive) {
+        RKLog("%s Stopping ...\n", engine->name);
+    } else {
+        RKLog("%s Not active. No need to stop.\n", engine->name);
+        return;
+    }
     if (engine->verbose) {
         RKLog("%s Stopping ...\n", engine->name);
     }

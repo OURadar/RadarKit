@@ -165,19 +165,15 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 				in[k][1] /= s;
 			}
 
-			// Show input spectrum for testing
-			if (space->verbose && gateCount == 1) {
-				// RKShowVecFloat("GMAP Input Spectrum:\n", freqPower, planSize);
-				RKShowArray(freqPower, "Si", 4, planSize / 4);
-			}
-
 			// Step 2: Determine noise power: We do this before! Done.
 			dspGMAP(freqPower, clutterWidth, space->noise[p], &dftConf, &wgcm, 1, &powerRemoved, &gapPoints);
 
-			// Show output spectrum for testing
+			// Show input & output spectrum for testing
 			if (space->verbose && gateCount == 1) {
 				RKLog("GMAP: Power removed: %.4f, Gap points: %.1f\n", powerRemoved, gapPoints);
-				// RKShowVecFloat("GMAP Output Spectrum:\n", freqPower, planSize);
+				// Just interpret the array as 8 x 8 for better visualization
+				RKShowArray(freqPower, "Si", 8, planSize / 8);
+				printf("\n");
 				RKShowArray(freqPower, "So", 8, planSize / 8);
 			}
 

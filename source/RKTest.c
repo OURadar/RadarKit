@@ -1883,7 +1883,6 @@ void RKTestGMAP(void) {
     const int pulseCount = 64;
     const int pulseCapacity = 64;
 
-    // RKSetUseDailyLog(true);
     RKLog("Allocating buffers ... %s\n", rkGlobalParameters.logTimeOnly ? "true" : "false");
 
     RKMomentScratchAlloc(&space, pulseCapacity, 1, "TestGMAP");
@@ -2007,15 +2006,15 @@ void RKTestGMAP(void) {
     RKGMAPRun(space, pulses, pulseCount);
 
     // Validation
-    const int count = 2 * pulseCount;
+    bool allSuccessful = true;
     for (p = 0; p < 2; p++) {
         float *out = (float *)space->inBuffer[p];
         float *res = (float *)(p == 0 ? resultPolH : resultPolV);
         float delta = 0.0f;
-        for (k = 0; k < count; k++) {
+        for (k = 0; k < 2 * pulseCount; k++) {
             delta += fabsf(out[k] - res[k]);
         }
-        delta /= count;
+        delta /= (float)(2 * pulseCount);
         RKLog("Mean absolute difference = %f %s\n", delta,
             delta < 0.1f ?
             (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
@@ -2024,8 +2023,12 @@ void RKTestGMAP(void) {
         RKShowComplexArray((RKComplex *)out, "Xo", 8, 8);
         printf("\n");
         RKShowComplexArray((RKComplex *)res, "Xr", 8, 8);
+        allSuccessful = allSuccessful && delta < 0.1f;
     }
-
+    RKLog("Overall test %s\n",
+        allSuccessful ?
+        (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
+        (rkGlobalParameters.showColor ? RKRedColor "failed" RKNoColor : "failed"));
     RKLog("Deallocating buffers ...\n");
 
     RKMomentScratchFree(space);
