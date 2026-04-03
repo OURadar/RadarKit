@@ -25,7 +25,7 @@ static int healthRelayTweetaRead(RKClient *client) {
         }
 
         // Get a vacant slot for health from Radar, copy over the data, then set it ready
-        RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
+        RKHealth *health = RKGetVacantHealth(radar, me->node);
         if (health == NULL) {
             RKLog("%s failed to get a vacant health.\n", client->name);
             return RKResultFailedToGetVacantHealth;
@@ -34,16 +34,21 @@ static int healthRelayTweetaRead(RKClient *client) {
         RKStripTail(health->string);
 
         // Handle a special event from a push button
-        if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL && !strcasecmp(stringValue, "short")) {
-            RKLog("%s event %s\n", client->name, stringValue);
-            RKPerformMasterTaskInBackground(radar, "b");
+        if ((stringValue = RKGetValueOfKey(health->string, "event")) != NULL) {
+            if (!strcasecmp(stringValue, "short")) {
+                RKLog("%s event %s\n", client->name, stringValue);
+                RKPerformMasterTaskInBackground(radar, "b");
+            } else if (!strcasecmp(stringValue, "long")) {
+                RKLog("%s event %s\n", client->name, stringValue);
+                // RKPerformMasterTaskInBackground(radar, "B");
+            }
         }
 
         RKSetHealthReady(radar, health);
     } else {
         // This the command acknowledgement, queue it up to feedback
         if (!strncmp(string, "pong", 4)) {
-            // Just a beacon response.
+            // Just a beacon response, do nothing
         } else {
             strncpy(me->responses[me->responseIndex], client->userPayload, RKMaximumStringLength - 1);
             me->responseIndex = RKNextModuloS(me->responseIndex, RKHealthRelayTweetaFeedbackDepth);
@@ -62,7 +67,9 @@ static int healthRelayTweetaGreet(RKClient *client) {
     if (s < 0) {
         return (int)-s;
     }
-    RKLog("%s Tweeta @ %s:%d connected.\n", client->name, client->hostIP, client->port);
+    RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
+    RKLog("%s Tweeta @ %s:%d connected.   node = %s\n", client->name, client->hostIP, client->port, RKHealthNodeString(me->node));
+    RKLog("%s client->state %d %s\n", client->name, client->state, client->state & RKClientStateConnected ? "connected" : "not connected");
     return RKResultSuccess;
 }
 
@@ -82,9 +89,17 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     // Tweeta uses a TCP socket server at port 9556. The payload is always a line string terminated by \r\n
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.name, "%s<TweetaAutoRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    if (radar->healthRelay == NULL) {
+        me->node = RKHealthNodeTweeta;
+        sprintf(desc.name, "%s<TweetaAutoRelay>%s",
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
+                rkGlobalParameters.showColor ? RKNoColor : "");
+    } else {
+        me->node = RKHealthNodeUser0 + radar->userDeviceCount;
+        sprintf(desc.name, "%s<TweetaAutoRelay>%s",
+                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayUser1 + radar->userDeviceCount) : "",
+                rkGlobalParameters.showColor ? RKNoColor : "");
+    }
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {

@@ -108,22 +108,23 @@ void dspGMAPinitCM(float fClutterWidth_a, tDftConf *dftConf_a, tWGCM *WGCM_a) {
     WGCM_a->fClutterWidth = fClutterWidth_a;
 
     iSpecSize = min(max(dftConf_a->iSpecSize, 1), MAX_SPEC_SIZE);
-    // iSpecHalf = (int) floor((iSpecSize / 2));
     iSpecHalf = iSpecSize / 2;
 
-    // cSamp = mxGetPr(mxGetCell(dftConf_a->window, *WGCM_a->iWinType));
     cSamp = dftConf_a->window;
 
-    // cSpec_r = (float *) malloc(iSpecSize * OVERSAMP * sizeof(float));
-    // cSpec_i = (float *) malloc(iSpecSize * OVERSAMP * sizeof(float));
-    // fWinResp = (float *) malloc(iSpecSize * sizeof(float));
-    // fGaussian = (float *) malloc(iSpecSize * sizeof(float));
-    // fNetSpec = (float *) malloc(2 * iSpecSize * sizeof(float));
+    #if defined(GMAP_LOCAL_MEMORY)
+    cSpec_r = (float *) malloc(iSpecSize * OVERSAMP * sizeof(float));
+    cSpec_i = (float *) malloc(iSpecSize * OVERSAMP * sizeof(float));
+    fWinResp = (float *) malloc(iSpecSize * sizeof(float));
+    fGaussian = (float *) malloc(iSpecSize * sizeof(float));
+    fNetSpec = (float *) malloc(2 * iSpecSize * sizeof(float));
+    #else
     cSpec_r = dftConf_a->cSpec_r;
     cSpec_i = dftConf_a->cSpec_i;
     fWinResp = dftConf_a->fWinResp;
     fGaussian = dftConf_a->fGaussian;
     fNetSpec = dftConf_a->fNetSpec;
+    #endif
 
     if (!cSpec_r || !cSpec_i || !fWinResp || !fGaussian || !fNetSpec) {
         // TODO: Do we want to check all of them?
@@ -205,11 +206,13 @@ void dspGMAPinitCM(float fClutterWidth_a, tDftConf *dftConf_a, tWGCM *WGCM_a) {
     }
     WGCM_a->iMainLobePts = ii + LOBEWIDTHMORE;
 
-    // free(cSpec_r);
-    // free(cSpec_i);
-    // free(fWinResp);
-    // free(fGaussian);
-    // free(fNetSpec);
+    #if defined(GMAP_LOCAL_MEMORY)
+    free(cSpec_r);
+    free(cSpec_i);
+    free(fWinResp);
+    free(fGaussian);
+    free(fNetSpec);
+    #endif
 }
 
 // Note - data is windowed, ffted, and powered before coming in.
@@ -236,7 +239,6 @@ void dspGMAP(float *fSpecLin_a, float fClutterWidth_a, float fNoisePower_a,
     // float interp - interpolate or not. set to 1.
     // float *pfPowRemoved - scalar value output, init 5
     // float *piGapPoints  - scalar value output, init 3
-
 
     // I am concerned, the output of this is not IQ data that
     // could be sent to the product generator. Does it need IQ or just the spectrum power?

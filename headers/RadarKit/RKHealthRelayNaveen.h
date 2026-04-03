@@ -22,6 +22,7 @@
 #define RKHealthRelayNaveenFeedbackDepth   8
 
 typedef struct rk_naveen {
+    RKHealthNode           node;
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKHealthRelayNaveenFeedbackDepth][RKMaximumStringLength];

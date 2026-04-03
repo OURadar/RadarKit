@@ -17,6 +17,7 @@
 #define RKHealthRelayTweetaFeedbackDepth   8
 
 typedef struct rk_tweeta {
+    RKHealthNode           node;
     RKClient               *client;
     uint32_t               responseIndex;
     char                   responses[RKHealthRelayTweetaFeedbackDepth][RKMaximumStringLength];

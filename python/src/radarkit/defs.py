@@ -49,6 +49,16 @@ RKMarkerDict = {
     "RKMarkerMemoryManagement": RKMarkerMemoryManagement,
 }
 
+# RKWindowTypeHann,
+# RKWindowTypeHamming,
+# RKWindowTypeBlackman,
+# RKWindowTypeBlackmanHarris,
+# RKWindowTypeNuttall,
+# RKWindowTypeFlattop,
+# RKWindowTypeKaiser,
+# RKWindowTypeTukey,
+# RKWindowTypeTrapezoid
+
 
 def show_flag(RKstatus, sdict=RKPulseStatusDict):
     s = "-"

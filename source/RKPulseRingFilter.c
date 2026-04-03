@@ -257,7 +257,7 @@ static void *ringFilterCore(void *_in) {
 
         pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i0);
 		if (!(pulse->header.s & RKPulseStatusRingInspected)) {
-			RKLog("%s Warning. Pulse has not been inspected.   i0 = %d\n", me->name, i0);
+			RKLog("%s Warning. Pulse has not been inspected.   i0 = %d   0x%x\n", me->name, i0, pulse->header.s);
 		}
 
         // Now we do the work

@@ -44,7 +44,8 @@ char *RKGetBackgroundColorOfIndex(const int i) {
          70,  28,  22,  24,  30,
          31,  38,  39,  33,  27,
          99,  57,  90, 162, 241,
-        236
+        238, 136,  33, 167, 164,
+         35,  22,  24,  30,   5
     };
     static int k = 3;
     static char str[4][32];
@@ -258,9 +259,10 @@ char *RKGetValueOfKey(const char *string, const char *key) {
                 e++;
             }
             len = e - s + 1;
-            if (len > 0) {
-                strncpy(valueString, s, len);
-                valueString[len] = '\0';
+            if (len > 2) {
+                //strncpy(valueString, s, len);
+                strncpy(valueString, s + 1, len - 2);
+                valueString[len - 2] = '\0';
             } else {
                 valueString[0] = '\0';
             }
@@ -272,9 +274,9 @@ char *RKGetValueOfKey(const char *string, const char *key) {
                 e++;
             }
             len = e - s + 1;
-            if (len > 0) {
-                strncpy(valueString, s, len);
-                valueString[len] = '\0';
+            if (len > 2) {
+                strncpy(valueString, s + 1, len - 2);
+                valueString[len - 2] = '\0';
             } else {
                 valueString[0] = '\0';
             }

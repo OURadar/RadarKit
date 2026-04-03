@@ -24,7 +24,7 @@ typedef struct rk_reporter {
     char                             welcome[RKMaximumStringLength];
     char                             control[RKMaximumStringLength];
     char                             message[RKMaximumStringLength];
-    char                             scratch[RKMaximumStringLength];
+    char                             scratch[RKMaximumStringLength - 256];
     char                             payload[4 + PAYLOAD_DEPTH][PAYLOAD_CAPACITY];
     int                              verbose;
     RKRadar                          *radar;
@@ -51,13 +51,12 @@ typedef struct rk_reporter {
 
 } RKReporter;
 
-RKReporter *RKReporterInitWithHost(const char *);
-RKReporter *RKReporterInitForRadarHub(void);
-RKReporter *RKReporterInitForLocal(void);
+RKReporter *RKReporterInitWithRadarAndHostPathway(RKRadar *, const char *);
+RKReporter *RKReporterInitForRadarHub(RKRadar *);
+RKReporter *RKReporterInitForLocal(RKRadar *);
 RKReporter *RKReporterInit(void);
 void RKReporterFree(RKReporter *);
 
-void RKReporterSetRadar(RKReporter *, RKRadar *, const char *);
 void RKReporterSetVerbose(RKReporter *, const int);
 
 void RKReporterStart(RKReporter *);

@@ -2029,8 +2029,21 @@ void RKTestGMAP(void) {
         allSuccessful ?
         (rkGlobalParameters.showColor ? RKGreenColor "success" RKNoColor : "success") :
         (rkGlobalParameters.showColor ? RKRedColor "failed" RKNoColor : "failed"));
-    RKLog("Deallocating buffers ...\n");
 
+
+    // Set gateCount > 1 to suppress printing
+    pulses[0]->header.downSampledGateCount = 32;
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+    for (k = 0; k < 10000; k++) {
+        RKGMAPRun(space, pulses, pulseCount);
+    }
+    gettimeofday(&end, NULL);
+    double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1.0e6;
+    RKLog("Average execution time for RKGMAPRun = %.4f us per range gate\n",
+        elapsed * 1.0e6  / k / pulses[0]->header.downSampledGateCount);
+
+    RKLog("Deallocating buffers ...\n");
     RKMomentScratchFree(space);
     RKFFTModuleFree(fftModule);
     RKPulseBufferFree(pulseBuffer);
@@ -2341,9 +2354,11 @@ void RKTestHostMonitor(void) {
         return;
     }
     RKHostMonitorSetVerbose(o, 2);
+    RKHostMonitorAddHost(o, "www.chatgpt.com");
     RKHostMonitorAddHost(o, "www.amazon.com");
+    RKHostMonitorAddHost(o, "www.tesla.com");
     RKHostMonitorStart(o);
-    sleep(RKHostMonitorPingInterval * 3 + RKHostMonitorPingInterval - 1);
+    sleep(RKHostMonitorPingInterval * 10 + RKHostMonitorPingInterval - 1);
     RKHostMonitorFree(o);
 }
 
@@ -4603,16 +4618,16 @@ void RKTestMomentProcessorSpeed(void) {
         X = RKGetComplexDataFromPulse(pulse, 0);
         Y = RKGetSplitComplexDataFromPulse(pulse, 0);
         for (j = 0; j < pulseCapacity; j++) {
-            X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
-            X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+            X[j].i = (RKFloat)rand() / (RKFloat)((int)RAND_MAX) - 0.5f;
+            X[j].q = (RKFloat)rand() / (RKFloat)((int)RAND_MAX) - 0.5f;
             Y.i[j] = X[j].i;
             Y.q[j] = X[j].q;
         }
         X = RKGetComplexDataFromPulse(pulse, 1);
         Y = RKGetSplitComplexDataFromPulse(pulse, 1);
         for (j = 0; j < pulseCapacity; j++) {
-            X[j].i = (RKFloat)rand() / RAND_MAX - 0.5f;
-            X[j].q = (RKFloat)rand() / RAND_MAX - 0.5f;
+            X[j].i = (RKFloat)rand() / (RKFloat)((int)RAND_MAX) - 0.5f;
+            X[j].q = (RKFloat)rand() / (RKFloat)((int)RAND_MAX) - 0.5f;
             Y.i[j] = X[j].i;
             Y.q[j] = X[j].q;
         }
@@ -5110,7 +5125,7 @@ void *RKTestTransceiverRunLoop(void *input) {
                      + 0.5f);
         a *= (1000.0 / r) * fabsf(1.0f - (float)g / 50000.0f);
         ra[g] = a;
-        rn[g] = (int16_t)(5.0f * ((float)rand() / RAND_MAX - 0.5f));
+        rn[g] = (int16_t)(5.0f * ((float)rand() / (float)((int)RAND_MAX) - 0.5f));
     }
 
     float dphi = transceiver->gateSizeMeters * 0.1531995963856f;
@@ -5335,9 +5350,9 @@ void *RKTestTransceiverRunLoop(void *input) {
         if (dt > 0.1) {
             t2 = t0;
             nn = rand();
-            temp = 1.0f * nn / RAND_MAX + 79.5f;
-            volt = 1.0f * nn / RAND_MAX + 11.5f;
-            room = 1.0f * nn / RAND_MAX + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
+            temp = 1.0f * nn / (float)((int)RAND_MAX) + 69.5f;
+            volt = 1.0f * nn / (float)((int)RAND_MAX) + 11.5f;
+            room = 1.0f * nn / (float)((int)RAND_MAX) + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
             health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
             if (health) {
                 sprintf(health->string,
@@ -6108,11 +6123,11 @@ void *RKTestHealthRelayRunLoop(void *input) {
     healthRelay->state |= RKEngineStateActive;
 
     while (healthRelay->state & RKEngineStateWantActive) {
-        powerH = (float)rand() / RAND_MAX - 0.5f;
-        powerV = (float)rand() / RAND_MAX - 0.5f;
-        latitude = (double)rand() * 8.0e-6f / RAND_MAX + 35.181251;
-        longitude = (double)rand() * 8.0e-6f / RAND_MAX - 97.4349928;
-        heading = (double)rand() * 0.2 / RAND_MAX + 45.0;
+        powerH = (float)rand() / (float)((int)RAND_MAX) - 0.5f;
+        powerV = (float)rand() / (float)((int)RAND_MAX) - 0.5f;
+        latitude = (double)rand() * 8.0e-6 / (double)((int)RAND_MAX) + 35.181251;
+        longitude = (double)rand() * 8.0e-6 / (double)((int)RAND_MAX) - 97.4349928;
+        heading = (double)rand() * 0.2 / (double)((int)RAND_MAX) + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         if (health) {
             sprintf(health->string, "{"

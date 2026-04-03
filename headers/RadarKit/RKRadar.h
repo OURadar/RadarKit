@@ -78,6 +78,7 @@ typedef struct rk_user_device RKUserDevice;
 // Simple device that reports health only
 //
 struct rk_user_device {
+    RKHealthNode         node;
     RKHealthRelay        device;
     RKHealthRelay        (*init)(RKRadar *, void *);
     int                  (*exec)(RKHealthRelay, const char *, char *);
@@ -110,7 +111,6 @@ struct rk_radar {
     RKPosition                       *positions;
     RKBuffer                         pulses;
     RKBuffer                         rays;
-    // RKProduct                        *products;
     //
     // Anchor indices of the buffers
     //
@@ -182,7 +182,8 @@ struct rk_radar {
     RKMasterController               masterController;
     int                              (*masterControllerExec)(RKMasterController, const char *, char *);
     //
-    RKUserDevice                     userDevices[RKHealthNodeCount];
+    RKUserDevice                     userDevices[RKHealthNodeCount - RKHealthNodeUser0];
+    int                              userDeviceCount;
     //
     // Waveform calibrations
     //
@@ -240,12 +241,12 @@ int RKSetHealthRelay(RKRadar *,
                      int (*freeRoutine)(RKHealthRelay));
 
 // Set other simple devices that report health. Pass in function pointers init, exec, and free
-int RKSeUserDevice(RKRadar *,
-                   const RKHealthNode,
-                   void *,
-                   RKHealthRelay (*initRoutine)(RKRadar *, void *),
-                   int (*execRoutine)(RKHealthRelay, const char *, char *),
-                   int (*freeRoutine)(RKHealthRelay));
+int RKSetUserDevice(RKRadar *,
+                    const int,
+                    void *,
+                    RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                    int (*execRoutine)(RKHealthRelay, const char *, char *),
+                    int (*freeRoutine)(RKHealthRelay));
 
 //
 // Properties

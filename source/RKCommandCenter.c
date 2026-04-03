@@ -138,14 +138,14 @@ int socketCommandHandler(RKOperator *O) {
             if (*commandString >= '!' && *commandString <= 'z') {
                 RKLog("%s %s Received command '%s%s%s' (%p)\n",
                       engine->name, O->name,
-                      rkGlobalParameters.showColor ? RKGreenColor : "",
+                      rkGlobalParameters.showColor ? RKMonokaiYellow : "",
                       commandString,
                       rkGlobalParameters.showColor ? RKNoColor : "",
                       commandStringEnd);
             } else {
                 RKLog("%s %s Received command in hex: %s%02d %02d%s\n",
                       engine->name, O->name,
-                      rkGlobalParameters.showColor ? RKGreenColor : "",
+                      rkGlobalParameters.showColor ? RKMonokaiYellow : "",
                       commandString[0], commandString[1],
                       rkGlobalParameters.showColor ? RKNoColor : "");
             }
@@ -442,7 +442,7 @@ int socketStreamHandler(RKOperator *O) {
     };
     if (user->radar->desc.initFlags & RKInitFlagSignalProcessor && time - user->timeLastOut >= 0.08) {
         // Signal processor only - showing the latest summary text view
-        #pragma mark Summary Text
+        #pragma region Summary Text
         k = user->streams & user->access & RKStreamStatusMask;
         if (k == RKStreamStatusPositions) {
             // Stream "0" - Positions
@@ -651,6 +651,10 @@ int socketStreamHandler(RKOperator *O) {
             // Stream "7" - Health Overview
             if ((user->streamsInProgress & RKStreamStatusMask) != RKStreamASCIIArtHealth) {
                 user->streamsInProgress = RKStreamASCIIArtHealth;
+            } else if (time - user->timeLastOut < 0.5) {
+                // Don't update too frequently since health doesn't change that fast
+                pthread_mutex_unlock(&user->mutex);
+                return 0;
             }
             health = RKGetLatestHealth(user->radar);
             k = RKHealthOverview(user->string, health->string, user->textPreferences | RKTextPreferencesDrawBackground);
@@ -703,7 +707,7 @@ int socketStreamHandler(RKOperator *O) {
 
             j += snprintf(user->string + j, RKMaximumPacketSize - j, "\"Controls\": [");
             // j += snprintf(user->string + j, RKMaximumPacketSize - j, "%s", user->scratch);
-            if(strlen(user->scratch) > RKMaximumPacketSize - j - 18) {
+            if (strlen(user->scratch) > RKMaximumPacketSize - j - 18) {
                 user->scratch[RKMaximumPacketSize - j - 18] = '\0';
             }
             strcpy(user->string + j, user->scratch);
@@ -764,8 +768,8 @@ int socketStreamHandler(RKOperator *O) {
         }
     }
 
-    // Health Status
-    #pragma mark Health Status
+    // Health Status - no skipping
+    #pragma region Health
     if (user->streams & user->access & RKStreamHealthInJSON) {
         endIndex = RKPreviousModuloS(user->radar->healthIndex, user->radar->desc.healthBufferDepth);
         if (!(user->streamsInProgress & RKStreamHealthInJSON)) {
@@ -778,13 +782,13 @@ int socketStreamHandler(RKOperator *O) {
             user->healthIndex = endIndex;
         }
         s = 0;
-        while (user->radar->healths[user->healthIndex].flag != RKHealthFlagReady && engine->server->state == RKServerStateActive && s++ < 20) {
+        while (!(user->radar->healths[user->healthIndex].flag & RKHealthFlagReady) && engine->server->state == RKServerStateActive && s++ < 20) {
             if (s % 10 == 0 && engine->verbose > 1) {
                 RKLog("%s %s sleep 0/%.1f s  RKHealth\n", engine->name, O->name, s * 0.1f);
             }
             usleep(50000);
         }
-        if (user->radar->healths[user->healthIndex].flag == RKHealthFlagReady && engine->server->state == RKServerStateActive) {
+        if (user->radar->healths[user->healthIndex].flag & RKHealthFlagReady && engine->server->state == RKServerStateActive) {
             j = 0;
             k = 0;
             while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
@@ -806,8 +810,8 @@ int socketStreamHandler(RKOperator *O) {
     }
 
     // Product or display streams - no skipping (deprecating)
+    #pragma region Product / Display
     if (user->streams & user->access & RKStreamProductAll) {
-        #pragma mark Product Streams
         // Product streams - assume no display as display data can be derived later
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
@@ -933,7 +937,6 @@ int socketStreamHandler(RKOperator *O) {
             }
         }
     } else if (user->streams & user->access & RKStreamDisplayZVWDPRKS) {
-        #pragma mark Display Streams
         // Display streams - no skipping
         if (user->radar->desc.initFlags & RKInitFlagSignalProcessor) {
             endIndex = RKPreviousNModuloS(user->radar->rayIndex, 2 * user->radar->momentEngine->coreCount, user->radar->desc.rayBufferDepth);
@@ -1069,7 +1072,7 @@ int socketStreamHandler(RKOperator *O) {
     } // else if if (user->streams & user->access & RKStreamDisplayZVWDPRKS) ...
 
     // Sweep (deprecating ...)
-    #pragma mark Sweep
+    #pragma region Sweep
     if (user->streams & user->access & RKStreamSweepAll) {
         // Sweep streams - no skipping
         if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) {
@@ -1310,8 +1313,8 @@ int socketStreamHandler(RKOperator *O) {
         } // if (user->scratchSpaceIndex != user->radar->sweepEngine->scratchSpaceIndex) ...
     } // if (user->streams & user->access & RKStreamSweepZVWDPRKS) ...
 
-    // IQ
-    #pragma mark IQ
+    // IQ data
+    #pragma region IQ
     if (user->streams & user->access & RKStreamProductIQ) {
         // If I/Q data is sent, there is no need to send another subset of it.
         endIndex = RKPreviousModuloS(user->radar->pulseIndex, user->radar->desc.pulseBufferDepth);

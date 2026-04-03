@@ -34,7 +34,8 @@ RKWaveform *RKWaveformInitAsFrequencyHoppingChirp(const double fs, const double 
 RKWaveform *RKWaveformInitFromString(const char *);
 
 RKResult RKWaveformAppendWaveform(RKWaveform *, const RKWaveform *appendix, const uint32_t transitionSamples);
-RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ...);
+RKResult RKWaveformApplyWindowWithFactor(RKWaveform *, const RKWindowType, const double);
+RKResult RKWaveformApplyWindow(RKWaveform *, const RKWindowType, ...);
 
 void RKWaveformOnes(RKWaveform *);
 void RKWaveformSingleTone(RKWaveform *, const double fs, const double fc);

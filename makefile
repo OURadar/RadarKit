@@ -168,6 +168,7 @@ ctypes: $(SHARED_LIB) | $(CTYPES_OUT_PATH)
 	headers/RadarKit/RKPulsePairATSR.h \
 	headers/RadarKit/RKSpectralMoment.h \
 	headers/RadarKit/RKWaveform.h \
+	headers/RadarKit/RKWindow.h \
 	headers/RadarKit/RKProduct.h \
 	headers/RadarKit/RKProductFile.h \
 	headers/RadarKit/RKTest.h

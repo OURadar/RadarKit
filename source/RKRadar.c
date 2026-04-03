@@ -254,40 +254,40 @@ static void *systemInspectorRunLoop(void *in) {
         }
 
         // Only do this if the radar has a pulse position combiner
-        if (radar->positions && radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
-            pedestalOkay = positionRate == 0.0f ? false : true;
-            if (!pedestalOkay) {
-                pedestalEnum = RKStatusEnumInvalid;
-            } else {
-                // Position active / standby
-                health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
-                if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
-                    RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
-                    pedestalEnum = RKStatusEnumStandby;
-                } else {
-                    if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
-                        RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
-                        pedestalEnum = RKStatusEnumActive;
-                    } else {
-                        pedestalEnum = RKStatusEnumStandby;
-                    }
-                }
-            }
-        } else {
-            pedestalEnum = RKStatusEnumInvalid;
-        }
+        // if (radar->positions && radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
+        //     pedestalOkay = positionRate == 0.0f ? false : true;
+        //     if (!pedestalOkay) {
+        //         pedestalEnum = RKStatusEnumInvalid;
+        //     } else {
+        //         // Position active / standby
+        //         health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+        //         if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+        //             RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+        //             pedestalEnum = RKStatusEnumStandby;
+        //         } else {
+        //             if (RKGetMinorSectorInDegrees(position0->azimuthDegrees, position1->azimuthDegrees) > 0.1f ||
+        //                 RKGetMinorSectorInDegrees(position0->elevationDegrees, position1->elevationDegrees) > 0.1f) {
+        //                 pedestalEnum = RKStatusEnumActive;
+        //             } else {
+        //                 pedestalEnum = RKStatusEnumStandby;
+        //             }
+        //         }
+        //     }
+        // } else {
+        //     pedestalEnum = RKStatusEnumInvalid;
+        // }
 
         // Only do this if the radar is a signal processor
         if (radar->desc.initFlags & RKInitFlagSignalProcessor) {
             // General Health
-            transceiverOkay = pulseRate == 0.0f ? false : true;
-            pedestalOkay = true;
+            transceiverOkay = pulseRate < 0.1f ? false : true;
+            pedestalOkay = positionRate < 0.1f ? false : true;
             healthOkay = radar->healthRelay ? (tweetaIndex == radar->healthNodes[RKHealthNodeTweeta].index ? false : true) : false;
             networkOkay = radar->hostMonitor->allReachable ? true : false;
             networkEnum =
             radar->hostMonitor->allReachable ? RKStatusEnumNormal :
             (radar->hostMonitor->anyReachable ? RKStatusEnumStandby :
-             (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumUnknown));
+             (radar->hostMonitor->allKnown ? RKStatusEnumFault : RKStatusEnumNotWired));
 
             // Transceiver health
             health = RKGetLatestHealthOfNode(radar, RKHealthNodeTransceiver);
@@ -296,6 +296,15 @@ static void *systemInspectorRunLoop(void *in) {
                 transceiverEnum = RKStatusEnumStandby;
             } else {
                 transceiverEnum = RKStatusEnumNormal;
+            }
+
+            // Positioner health
+            health = RKGetLatestHealthOfNode(radar, RKHealthNodePedestal);
+            if (RKFindCondition(health->string, RKStatusEnumTooHigh, false, NULL, NULL) ||
+                RKFindCondition(health->string, RKStatusEnumHigh, false, NULL, NULL)) {
+                pedestalEnum = RKStatusEnumStandby;
+            } else {
+                pedestalEnum = RKStatusEnumNormal;
             }
 
             // Tweeta health
@@ -1143,10 +1152,11 @@ int RKFree(RKRadar *radar) {
     if (radar->healthRelay) {
         radar->healthRelayFree(radar->healthRelay);
         radar->healthRelay = NULL;
-        for (k = 0; k < RKHealthNodeCount; k++) {
-            if (radar->userDevices[k].device) {
-                radar->userDevices[k].free(radar->userDevices[k].device);
-                radar->userDevices[k].device = NULL;
+        for (k = 0; k < RKHealthNodeCount - RKHealthNodeUser0; k++) {
+            RKUserDevice *device = &radar->userDevices[k];
+            if (device->device) {
+                device->free(device->device);
+                device->device = NULL;
             }
         }
     }
@@ -1255,6 +1265,7 @@ int RKSetHealthRelay(RKRadar *radar,
                      RKHealthRelay (*initRoutine)(RKRadar *, void *),
                      int (*execRoutine)(RKHealthRelay, const char *, char *),
                      int (*freeRoutine)(RKHealthRelay)) {
+    RKLog("Setting health relay %p ...\n", radar->healthRelayInit);
     radar->healthRelayInitInput = initInput;
     radar->healthRelayInit = initRoutine;
     radar->healthRelayExec = execRoutine;
@@ -1262,16 +1273,22 @@ int RKSetHealthRelay(RKRadar *radar,
     return RKResultSuccess;
 }
 
-int RKSeUserDevice(RKRadar *radar,
-                   const RKHealthNode i,
-                   void *initInput,
-                   RKHealthRelay (*initRoutine)(RKRadar *, void *),
-                   int (*execRoutine)(RKHealthRelay, const char *, char *),
-                   int (*freeRoutine)(RKHealthRelay)) {
-    radar->userDevices[i].initInput = initInput;
-    radar->userDevices[i].init = initRoutine;
-    radar->userDevices[i].exec = execRoutine;
-    radar->userDevices[i].free = freeRoutine;
+int RKSetUserDevice(RKRadar *radar,
+                    const int k,
+                    void *initInput,
+                    RKHealthRelay (*initRoutine)(RKRadar *, void *),
+                    int (*execRoutine)(RKHealthRelay, const char *, char *),
+                    int (*freeRoutine)(RKHealthRelay)) {
+    if (k < 0 || k >= RKHealthNodeCount - RKHealthNodeUser0) {
+        RKLog("Error. User device index %d out of range [0, %d)\n", k, RKHealthNodeCount - RKHealthNodeUser0);
+        return RKResultInvalidUserDeviceIndex;
+    }
+    RKUserDevice *device = &radar->userDevices[k];
+    device->initInput = initInput;
+    device->init = initRoutine;
+    device->exec = execRoutine;
+    device->free = freeRoutine;
+    device->node = RKHealthNodeUser0 + k;
     return RKResultSuccess;
 }
 
@@ -1781,7 +1798,7 @@ int RKGoLive(RKRadar *radar) {
     } else {
         RKRadarRelayStart(radar->radarRelay);
     }
-    if (!(radar->desc.initFlags & RKInitFlagStartRawDataRecorder)) {
+    if ((radar->desc.initFlags & RKInitFlagStartRawDataRecorder)) {
         RKRawDataRecorderStart(radar->rawDataRecorder);
     } else {
         RKLog("Info. Raw data recorder is not activated.\n");
@@ -1809,27 +1826,6 @@ int RKGoLive(RKRadar *radar) {
 
     // Now we declare the radar is live
     radar->state |= RKRadarStateLive;
-
-    // User devices
-    for (k = 0; k < RKHealthNodeCount; k++) {
-        if (radar->userDevices[k].init != NULL) {
-            RKLog("Initializing user device %d ...\n", k);
-            if (radar->userDevices[k].exec == NULL || radar->userDevices[k].free == NULL) {
-                RKLog("Error. User device %d incomplete.\n", k);
-                pthread_mutex_unlock(&radar->mutex);
-                RKStop(radar);
-                return RKResultIncompleteHealthRelay;
-            }
-            radar->userDevices[k].device = radar->userDevices[k].init(radar, radar->userDevices[k].initInput);
-            if (radar->userDevices[k].device == NULL) {
-                RKLog("Error. Unable to start user device %d.\n", k);
-                pthread_mutex_unlock(&radar->mutex);
-                RKStop(radar);
-                return RKResultFailedToStartHealthRelay;
-            }
-            radar->state |= RKRadarStateHealthRelayInitialized;
-        }
-    }
 
     // Health relay
     if (radar->healthRelayInit != NULL) {
@@ -1893,6 +1889,31 @@ int RKGoLive(RKRadar *radar) {
             return RKResultFailedToStartTransceiver;
         }
         radar->state |= RKRadarStateTransceiverInitialized;
+    }
+
+    // User devices
+    for (k = 0; k < RKHealthNodeCount - RKHealthNodeUser0; k++) {
+        RKUserDevice *device = &radar->userDevices[k];
+        if (device->init != NULL) {
+            if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
+                RKLog("Initializing user device %d ...\n", k);
+            }
+            if (device->exec == NULL || device->free == NULL) {
+                RKLog("Error. User device %d incomplete.\n", k);
+                pthread_mutex_unlock(&radar->mutex);
+                RKStop(radar);
+                return RKResultIncompleteHealthRelay;
+            }
+            device->device = device->init(radar, device->initInput);
+            if (device->device == NULL) {
+                RKLog("Error. Unable to start user device %d.\n", k);
+                pthread_mutex_unlock(&radar->mutex);
+                RKStop(radar);
+                return RKResultFailedToStartHealthRelay;
+            }
+            radar->state |= RKRadarStateHealthRelayInitialized;
+            radar->userDeviceCount++;
+        }
     }
 
     // For now, the transceiver is the master controller
@@ -2021,12 +2042,13 @@ int RKStop(RKRadar *radar) {
             }
             radar->healthRelayExec(radar->healthRelay, "disconnect", radar->healthRelayResponse);
         }
-        for (k = 0; k < RKHealthNodeCount; k++) {
-            if (radar->userDevices[k].device != NULL) {
+        for (k = 0; k < RKHealthNodeCount - RKHealthNodeUser0; k++) {
+            RKUserDevice *device = &radar->userDevices[k];
+            if (device->device != NULL) {
                 if (radar->desc.initFlags & RKInitFlagVeryVerbose) {
                     RKLog("Sending 'disconnect' to user device %d ...\n", k);
                 }
-                radar->userDevices[k].exec(radar->userDevices[k].device, "disconnect", radar->userDevices[k].response);
+                device->exec(device->device, "disconnect", device->response);
             }
         }
         radar->state ^= RKRadarStateHealthRelayInitialized;
@@ -2603,6 +2625,22 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 }
                 break;
 
+            case 'u':  // User devices
+                k = commandString[1] - '0';
+                if (k >= 0 && k < radar->userDeviceCount && radar->userDevices[k].exec) {
+                    RKUserDevice *device = &radar->userDevices[k];
+                    RKLog("Executing command '%s' at user device %d node %d ...\n", commandString, k, device->node);
+                    k = 1;
+                    do {
+                        k++;
+                    } while (commandString[k] == ' ');
+                    RKLog("Command to execute at user device %d: '%s'\n", device->node, commandString + k);
+                    device->exec(device->device, commandString + k, string == NULL ? message : string);
+                } else {
+                    RKLog("Invalid user device index %d   command = %s   exec @ %p\n", k, commandString, (void *)radar->userDevices[k].exec);
+                }
+                break;
+
             case 'v':  // VCP stuff
                 k = 0;
                 do {
@@ -2784,7 +2822,7 @@ RKConfig *RKGetLatestConfig(RKRadar *radar) {
 //     An RKHealthNode to identifity that node
 //
 RKHealthNode RKRequestHealthNode(RKRadar *radar) {
-    RKHealthNode node = RKHealthNodeUser1 + radar->healthNodeCount;
+    RKHealthNode node = RKHealthNodeUser0 + radar->healthNodeCount;
     if (node == RKHealthNodeCount) {
         RKLog("Error. No more health node available.\n");
         node = (RKHealthNode)-1;
@@ -3322,10 +3360,10 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                          (k == RKHealthNodeTransceiver ? "TRX" :
                           (k == RKHealthNodePedestal ? "PED" :
                            (k == RKHealthNodeTweeta ? "TWT" :
-                            (k == RKHealthNodeUser1 ? "US1" :
-                             (k == RKHealthNodeUser2 ? "US2" :
-                              (k == RKHealthNodeUser3 ? "US3" :
-                               (k == RKHealthNodeUser1 ? "US4" : "UNK"))))))),
+                            (k == RKHealthNodeUser0 ? "US0" :
+                             (k == RKHealthNodeUser1 ? "US1" :
+                              (k == RKHealthNodeUser2 ? "US2" :
+                               (k == RKHealthNodeUser3 ? "US3" : "UNK"))))))),
                          radar->desc.healthBufferDepth);
             n++;
         }
@@ -3333,10 +3371,10 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         for (; k < MIN(8, RKHealthNodeCount); k++) {
             m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col - 2 * w - 2 - radar->desc.healthBufferDepth / healthStride);
             m += sprintf(text + m, "%3s: 0-%d\n",
-                            k == RKHealthNodeUser1 ? "US1" :
-                             (k == RKHealthNodeUser2 ? "US2" :
-                              (k == RKHealthNodeUser3 ? "US3" :
-                               (k == RKHealthNodeUser1 ? "US4" : "UNK"))),
+                            k == RKHealthNodeUser0 ? "US0" :
+                             (k == RKHealthNodeUser1 ? "US1" :
+                              (k == RKHealthNodeUser2 ? "US2" :
+                               (k == RKHealthNodeUser3 ? "US3" : "UNK"))),
                          radar->desc.healthBufferDepth);
             n++;
         }
@@ -3624,17 +3662,15 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
                         strcpy(prefix, RKGreenColor);
                         break;
                     case RKStatusEnumStandby:
-                    case RKStatusEnumLow:
                         strcpy(prefix, RKLightOrangeColor);
                         break;
                     case RKStatusEnumFault:
-                    case RKStatusEnumTooLow:
                         strcpy(prefix, RKRedColor);
                         break;
                     case RKStatusEnumCritical:
                         strcpy(prefix, RKHotPinkColor);
                         break;
-                    case RKStatusEnumUnknown:
+                    case RKStatusEnumOld:
                         strcpy(prefix, RKGrayColor);
                         break;
                     default:
@@ -3651,15 +3687,16 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
                     if (isLabel) {
                         switch (u) {
                             case RKStatusEnumStandby:
-                            case RKStatusEnumLow:
                                 sprintf(posfix, " *");
                                 break;
                             case RKStatusEnumFault:
-                            case RKStatusEnumTooLow:
                                 strcpy(posfix, " **");
                                 break;
                             case RKStatusEnumCritical:
                                 strcpy(posfix, " ***");
+                                break;
+                            case RKStatusEnumNotWired:
+                                strcpy(posfix, " ---");
                                 break;
                             default:
                                 break;
