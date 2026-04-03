@@ -144,20 +144,27 @@ static void *healthConsolidator(void *_in) {
         }
 
         if (engine->verbose > 1) {
-            i = sprintf(string, "indices = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
+            i = sprintf(string, "indices = [%03d", engine->healthNodes[0].active ? indices[0] : -1);
             for (j = 1; j < desc->healthNodeCount; j++) {
-                i += sprintf(string + i,  " %02d", engine->healthNodes[j].active ? indices[j] : -1);
-            }
-            sprintf(string + i, "]");
-            RKLog("%s %s   k = %d\n", engine->name, string, k);
-            n = indices[0];
-            i = sprintf(string, "flags   = [%02x", engine->healthNodes[0].healths[n].flag);
-            for (j = 1; j < desc->healthNodeCount; j++) {
-                n = indices[j];
-                i += sprintf(string + i,  " %02x", engine->healthNodes[j].healths[n].flag);
+                i += sprintf(string + i,  " %03d", engine->healthNodes[j].active ? indices[j] : -1);
             }
             sprintf(string + i, "]");
             RKLog("%s %s   k = %d   s = %d\n", engine->name, string, k, s);
+            n = indices[0];
+            i = sprintf(string, "flags   = [%03x", engine->healthNodes[0].healths[n].flag);
+            for (j = 1; j < desc->healthNodeCount; j++) {
+                n = indices[j];
+                i += sprintf(string + i,  " %03x", engine->healthNodes[j].healths[n].flag);
+            }
+            sprintf(string + i, "]");
+            RKLog("%s %s\n", engine->name, string);
+            i = sprintf(string, "strlen  = [%3zu", strlen(engine->healthNodes[0].healths[indices[0]].string));
+            for (j = 1; j < desc->healthNodeCount; j++) {
+                n = indices[j];
+                i += sprintf(string + i,  " %3zu", strlen(engine->healthNodes[j].healths[n].string));
+            }
+            sprintf(string + i, "]");
+            RKLog("%s %s\n", engine->name, string);
         }
 
         // Combine all the active JSON strings
@@ -181,7 +188,6 @@ static void *healthConsolidator(void *_in) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                //heading = (float)atof(stringValue);
                 if (*stringValue == '"') {
                     sscanf(stringValue, "\"%f\"", &heading);
                 } else {
@@ -193,7 +199,6 @@ static void *healthConsolidator(void *_in) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                //latitude = atof(stringValue);
                 if (*stringValue == '"') {
                     sscanf(stringValue, "\"%lf\"", &latitude);
                 } else {
@@ -205,7 +210,6 @@ static void *healthConsolidator(void *_in) {
             stringValue = RKGetValueOfKey(stringObject, "value");
             stringEnum = RKGetValueOfKey(stringObject, "enum");
             if (stringValue != NULL && stringEnum != NULL && atoi(stringEnum) == RKStatusEnumNormal) {
-                //longitude = atof(stringValue);
                 if (*stringValue == '"') {
                     sscanf(stringValue, "\"%lf\"", &longitude);
                 } else {

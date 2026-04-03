@@ -16,8 +16,7 @@ typedef struct user_params {
     RKRadarDesc              desc;
     RKName                   pedzyHost;
     RKName                   tweetaHost;
-    RKName                   radarHubHost;
-    RKName                   radarHubPathway;
+    RKName                   radarHubHostPathway;
     RKName                   userDevices[RKHealthNodeCount];
     RKName                   relayHost;
     RKName                   ringFilter;
@@ -348,8 +347,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "DataPath",            user->desc.dataPath,        RKParameterTypeString, RKMaximumPathLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "PedzyHost",           user->pedzyHost,            RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "TweetaHost",          user->tweetaHost,           RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHost",        user->radarHubHost,         RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubPathway",     user->radarHubPathway,      RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHostPathway", user->radarHubHostPathway,  RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
@@ -372,7 +370,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
 
     // User devices
     k = 0;
-    memset(user->userDevices, 0, RKHealthNodeCount * sizeof(RKNameLength));
+    memset(user->userDevices, 0, (RKHealthNodeCount - RKHealthNodeUser0) * sizeof(RKNameLength));
     do {
         s = RKPreferenceGetValueOfKeyword(userPreferences, verb, "UserDevice", user->userDevices[k++], RKParameterTypeString, RKNameLength);
     } while (s == RKResultSuccess);
@@ -541,7 +539,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 RKGenerateDFTWisdom(k);
                 RKExit(EXIT_SUCCESS);
             case 'H':
-                strncpy(user->radarHubHost, optarg, sizeof(user->radarHubHost) - 1);
+                strncpy(user->radarHubHostPathway, optarg, sizeof(user->radarHubHostPathway) - 1);
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'P':
@@ -622,8 +620,8 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
                 user->pedzyHost[sizeof(user->pedzyHost) - 1] = '\0';
                 break;
             case 'r':
-                strncpy(user->radarHubHost, optarg, sizeof(user->radarHubHost));
-                user->radarHubHost[sizeof(user->radarHubHost) - 1] = '\0';
+                strncpy(user->radarHubHostPathway, optarg, sizeof(user->radarHubHostPathway) - 1);
+                user->radarHubHostPathway[sizeof(user->radarHubHostPathway) - 1] = '\0';
                 break;
             case 's':
                 if (strlen(user->relayHost)) {
@@ -910,13 +908,12 @@ int main(int argc, const char **argv) {
     RKCommandCenterAddRadar(center, myRadar);
 
     // Make a reporter and have it call a RadarHub
-    RKReporter *reporter = RKReporterInitWithHost(systemPreferences->radarHubHost);
+    RKReporter *reporter = RKReporterInitWithRadarAndHostPathway(myRadar, systemPreferences->radarHubHostPathway);
     if (reporter == NULL) {
         RKLog("Error. Unable to initiate reporter\n");
     } else {
         int v = MAX(systemPreferences->verbose, systemPreferences->engineVerbose['w']);
         RKReporterSetVerbose(reporter, v);
-        RKReporterSetRadar(reporter, myRadar, systemPreferences->radarHubPathway);
         RKReporterStart(reporter);
     }
 
@@ -985,13 +982,13 @@ int main(int argc, const char **argv) {
                              RKTestHealthRelayFree);
         }
 
-        for (k = 0; k < RKHealthNodeCount; k++) {
+        for (k = 0; k < RKHealthNodeCount - RKHealthNodeUser0; k++) {
             if (strlen(systemPreferences->userDevices[k])) {
-                RKSeUserDevice(myRadar, k,
-                               (void *)systemPreferences->userDevices[k],
-                               RKHealthRelayNaveenInit,
-                               RKHealthRelayNaveenExec,
-                               RKHealthRelayNaveenFree);
+                RKSetUserDevice(myRadar, k,
+                                (void *)systemPreferences->userDevices[k],
+                                RKHealthRelayNaveenInit,
+                                RKHealthRelayNaveenExec,
+                                RKHealthRelayNaveenFree);
             }
         }
 

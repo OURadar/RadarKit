@@ -912,6 +912,8 @@ RKSteerCommand RKSteerCommandFromString(const char *string) {
         type = RKSteerCommandScanStop;
     } else if (!strcmp(token, "next")) {
         type = RKSteerCommandScanNext;
+    } else if (!strcmp(token, "clear")) {
+        type = RKSteerCommandClear;
     }
     return type;
 }
@@ -966,6 +968,11 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
         case RKSteerCommandScanNext:
             RKSteerEngineNextHitter(engine);
             sprintf(response, "ACK. Volume advanced." RKEOL);
+            return RKResultSuccess;
+            break;
+        case RKSteerCommandClear:
+            RKSteerEngineClearSweeps(engine);
+            sprintf(response, "ACK. Sweeps cleared." RKEOL);
             return RKResultSuccess;
             break;
         case RKSteerCommandNone:

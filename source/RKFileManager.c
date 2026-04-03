@@ -741,13 +741,15 @@ int RKFileManagerStop(RKFileManager *engine) {
         }
         return RKResultEngineDeactivatedMultipleTimes;
     }
-    pthread_mutex_lock(&engine->mutex);
     RKLog("%s Stopping ...\n", engine->name);
+    pthread_mutex_lock(&engine->mutex);
     engine->state |= RKEngineStateDeactivating;
     engine->state ^= RKEngineStateWantActive;
+    pthread_mutex_unlock(&engine->mutex);
     pthread_join(engine->tidFileWatcher, NULL);
-    engine->state ^= RKEngineStateDeactivating;
     RKLog("%s Stopped.\n", engine->name);
+    pthread_mutex_lock(&engine->mutex);
+    engine->state ^= RKEngineStateDeactivating;
     if (engine->state != (RKEngineStateAllocated | RKEngineStateProperlyWired)) {
         RKLog("%s Inconsistent state 0x%04x\n", engine->name, engine->state);
     }

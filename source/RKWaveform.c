@@ -387,6 +387,10 @@ RKResult RKWaveformApplyWindow(RKWaveform *waveform, const RKWindowType type, ..
     return RKResultSuccess;
 }
 
+RKResult RKWaveformApplyWindowWithFactor(RKWaveform *waveform, const RKWindowType type, const double factor) {
+    return RKWaveformApplyWindow(waveform, type, factor);
+}
+
 #pragma mark - Waveforms
 
 void RKWaveformOnes(RKWaveform *waveform) {

@@ -237,7 +237,11 @@ static void *pulseRecorder(void *in) {
                 i = RKPreviousModuloS(i, engine->radarDescription->pulseBufferDepth);
                 pulse = RKGetPulseFromBuffer(engine->pulseBuffer, i);
                 if (pulse->header.s != RKPulseStatusVacant) {
-                    pulse->header.s |= RKPulseStatusInspected | RKPulseStatusRecorded;
+                    if (!(pulse->header.s & RKPulseStatusRingInspected)) {
+                        RKLog("%s Warning. Pulse has not been inspected.   i = %d   0x%x\n", engine->name, i, pulse->header.s);
+                    }
+                    pulse->header.s |= RKPulseStatusRecorded;
+                    // pulse->header.s |= RKPulseStatusInspected | RKPulseStatusRingInspected | RKPulseStatusRecorded;
                 }
             }
         }
@@ -429,7 +433,7 @@ int RKRawDataRecorderCloseFileVerbose(RKRawDataRecorder *engine, int verbose) {
         engine->fd = 0;
     }
     if (verbose) {
-        bool filenameTooLong = strlen(engine->filename) > 44;
+        bool filenameTooLong = strlen(engine->filename) > 46;
         RKLog("%s %sRecorded %s%s%s%s (%s pulses, %s B) w%d\n",
                 engine->name,
                 rkGlobalParameters.showColor ? RKGreenColor : "",

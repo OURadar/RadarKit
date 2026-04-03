@@ -1699,7 +1699,38 @@ RKRay *RKGetVacantRayFromBuffer(RKBuffer rays, uint32_t *index, const uint32_t d
     return ray;
 }
 
-#pragma mark - File Monitor
+#pragma region Health
+
+char *RKHealthNodeString(const RKHealthNode node) {
+    switch (node) {
+        case RKHealthNodeRadarKit:
+            return "RKHealthNodeRadarKit";
+        case RKHealthNodePedestal:
+            return "RKHealthNodePedestal";
+        case RKHealthNodeTweeta:
+            return "RKHealthNodeTweeta";
+        case RKHealthNodeUser0:
+            return "RKHealthNodeUser0";
+        case RKHealthNodeUser1:
+            return "RKHealthNodeUser1";
+        case RKHealthNodeUser2:
+            return "RKHealthNodeUser2";
+        case RKHealthNodeUser3:
+            return "RKHealthNodeUser3";
+        case RKHealthNodeUser4:
+            return "RKHealthNodeUser4";
+        case RKHealthNodeUser5:
+            return "RKHealthNodeUser5";
+        case RKHealthNodeUser6:
+            return "RKHealthNodeUser6";
+        case RKHealthNodeUser7:
+            return "RKHealthNodeUser7";
+        default:
+            return "RKHealthNodeUnknown";
+    }
+}
+
+#pragma region File Monitor
 
 static void *fileMonitorRunLoop(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
@@ -2496,38 +2527,26 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
 }
 
 // RKStatusEnum zones:
-//              x <= tooLow        --> RKStatusEnumCritical
-// tooLow     < x <= low           --> RKStatusEnumTooLow
-// low        < x <= normalLow     --> RKStatusEnumLow
-// normalLow  < x <= normalHigh    --> RKStatusEnumNormal
-// normalHigh < x <= high          --> RKStatusEnumHigh
-// high       < x <= tooHigh       --> RKStatusEnumTooHigh
-// tooHigh    < x                  --> RKStatusEnumCritical
-
-RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi) {
-    RKStatusEnum status = !isfinite(value) ? RKStatusEnumUnknown :
-    (value <= tlo ? RKStatusEnumCritical :
-     (value <= lo ? RKStatusEnumTooLow :
-      (value <= nlo ? RKStatusEnumLow :
-       (value <= nhi ? RKStatusEnumNormal :
-        (value <= hi ? RKStatusEnumHigh :
-         (value <= thi ? RKStatusEnumTooHigh : RKStatusEnumCritical))))));
+RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst hi, RKConst thi) {
+    RKStatusEnum status = !isfinite(value) ? RKStatusEnumBeyondCritical :
+    ((value <= tlo || value >= thi) ? RKStatusEnumCritical :
+     ((value <= lo || value >= hi) ? RKStatusEnumStandby : RKStatusEnumNormal));
     return status;
 }
 
 // Typical commercial electronics operates 0 to 70 C
 RKStatusEnum RKStatusFromTemperatureForCE(RKConst value) {
-    return RKValueToEnum(value, -20.0f, -10.0, 0.0f, 70.0f, 80.0f, 90.0f);
+    return RKValueToEnum(value, -20.0f, -10.0, 70.0f, 80.0f);
 }
 
 // Typical industrial electronics operates -40 to 85 C
 RKStatusEnum RKStatusFromTemperatureForIE(RKConst value) {
-    return RKValueToEnum(value, -60.0f, -50.0, -40.0f, 85.0f, 95.0f, 105.0f);
+    return RKValueToEnum(value, -20.0f, -10.0f, 85.0f, 95.0f);
 }
 
 // Typical computers operates 0 to 25 C
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value) {
-    return RKValueToEnum(value, -20.0f, -10.0, 0.0f, 25.0f, 26.0f, 27.0f);
+    return RKValueToEnum(value, -10.0, 0.0f, 25.0f, 30.0f);
 }
 
 //

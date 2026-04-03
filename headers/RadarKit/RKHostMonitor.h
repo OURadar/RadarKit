@@ -11,37 +11,29 @@
 
 #include <RadarKit/RKFoundation.h>
 
-typedef struct rk_unit_monitor RKUnitMonitor;
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+typedef struct rk_host_target RKHostTarget;
 typedef struct rk_host_monitor RKHostMonitor;
-
-//typedef char RKHostAddress[RKNameLength];
-
-struct rk_unit_monitor {
-    RKShortName                      name;
-    int                              id;
-    pthread_t                        tid;                                      // Thread ID
-    RKHostMonitor                    *parent;                                  // Parent engine reference
-
-    uint64_t                         tic;
-    uint16_t                         pingIntervalInSeconds;
-    uint16_t                         sequenceNumber;
-    uint16_t                         identifier;
-    struct timeval                   latestTime;
-    RKHostStatus                     hostStatus;
+struct rk_host_target {
+    RKName                           name;
+    int                              port;
+    bool                             known;
+    bool                             reachable;
 };
 
 struct rk_host_monitor {
     // User set variables
     RKName                           name;
     uint8_t                          verbose;                                  // Verbosity level
-    RKName                           *hosts;                                   // List of names (hostnames)
-    
+    RKHostTarget                     *hosts;                                   // List of hosts
+
     // Program set variables
     uint64_t                         tic;
-    int                              workerCount;
-    RKUnitMonitor                    *workers;
+    uint8_t                          hostCount;
     pthread_t                        tidHostWatcher;
-    pthread_mutex_t                  mutex;
     bool                             allKnown;
     bool                             allReachable;
     bool                             anyReachable;

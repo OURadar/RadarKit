@@ -48,6 +48,7 @@ void *theClient(void *in) {
     }
 
     char ping[] = "ping" RKEOL;
+    char temp[256];
 
     // Here comes the infinite loop until being stopped
     while (C->state < RKClientStateDisconnecting) {
@@ -312,8 +313,10 @@ void *theClient(void *in) {
                             readOkay = true;
                             break;
                         } else if (C->netDelimiter.size > RKMaximumPacketSize) {
-                            RKLog("%s Error. Payload size = %s (type %d) is more than what I can handle.\n",
-                                  C->name, RKIntegerToCommaStyleString(C->netDelimiter.size), C->netDelimiter.type);
+                            RKLog("%s Error. Payload size = %s (type %d / %c) is more than what I can handle.\n",
+                                  C->name, RKIntegerToCommaStyleString(C->netDelimiter.size), C->netDelimiter.type, C->netDelimiter.type);
+                            RKBinaryString(temp, (char *)C->netDelimiter.bytes, sizeof(RKNetDelimiter));
+                            RKLog("%s %s\n", C->name, temp);
                             readOkay = false;
                             break;
                         }
@@ -368,7 +371,7 @@ void *theClient(void *in) {
 
                     case RKNetworkMessageFormatNewLine:
                     default:
-                        
+
                         if (fid == NULL) {
                             fid = fdopen(C->sd, "r");
                             if (fid < 0) {

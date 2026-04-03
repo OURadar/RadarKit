@@ -407,6 +407,7 @@ N(RKResultFileManagerInconsistentFolder) \
 N(RKResultFailedToExpandWaveform) \
 N(RKResultFailedToOpenFileForWriting) \
 N(RKResultFailedToStandardizeProduct) \
+N(RKResultInvalidUserDeviceIndex) \
 N(RKResultRadarNotLive) \
 N(RKResultRawDataTypeUndefined) \
 N(RKResultNothingToRead) \
@@ -446,6 +447,14 @@ enum RKEngineColor {
     RKEngineColorPedestalRelayPedzy = 15,
     RKEngineColorHealthRelayTweeta = 0,
     RKEngineColorHealthRelayNaveen = 11,
+    RKEngineColorHealthRelayUser1 = 21,
+    RKEngineColorHealthRelayUser2 = 22,
+    RKEngineColorHealthRelayUser3 = 24,
+    RKEngineColorHealthRelayUser4 = 25,
+    RKEngineColorHealthRelayUser5 = 26,
+    RKEngineColorHealthRelayUser6 = 27,
+    RKEngineColorHealthRelayUser7 = 28,
+    RKEngineColorHealthRelayUser8 = 29,
     RKEngineColorRadarRelay = 17,
     RKEngineColorHostMonitor = 16,
     RKEngineColorClock = 19,
@@ -608,6 +617,7 @@ enum {
     RKPulseStatusVacant                          = 0,
     RKPulseStatusHasIQData                       = 1,                          // 0x01
     RKPulseStatusHasPosition                     = (1 << 1),                   // 0x02
+    RKPulseStatusHasConfigIndex                  = RKPulseStatusHasPosition,
     RKPulseStatusInspected                       = (1 << 2),                   // 0x04
     RKPulseStatusCompressed                      = (1 << 3),                   // 0x08
     RKPulseStatusSkipped                         = (1 << 4),                   // 0x10
@@ -618,6 +628,8 @@ enum {
     RKPulseStatusRingSkipped                     = (1 << 9),                   // 0x200
     RKPulseStatusRingProcessed                   = (1 << 10),                  // 0x400
     RKPulseStatusReadyForMomentEngine            = (RKPulseStatusRingProcessed
+                                                 | RKPulseStatusRingInspected
+                                                 | RKPulseStatusDownSampled
                                                  | RKPulseStatusProcessed
                                                  | RKPulseStatusHasPosition
                                                  | RKPulseStatusHasIQData),
@@ -637,7 +649,7 @@ enum {
                                                  | RKPulseStatusUsedForMoments),
     RKPulseStatusRecorded                        = (1 << 12),
     RKPulseStatusStreamed                        = (1 << 13),
-    RKPulseStatusConsumed                        = (1 << 14)                   // RKPulseStatusConsumed for bring consumed by RKPulseEngineGetProcessedPulse()
+    RKPulseStatusConsumed                        = (1 << 14)                   // RKPulseStatusConsumed after RKPulseEngineGetProcessedPulse()
 };
 
 typedef uint32_t RKRayStatus;
@@ -682,6 +694,8 @@ enum {
     RKInitFlagIQPlayback                         = 0x00047701,                 // 37F00(All) - 800(Pos) - 100000(PPC)
     RKInitFlagAllocEverything                    = 0x00077F01,
     RKInitFlagAllocEverythingQuiet               = 0x00077F00,
+    RKInitFlagAllocStartEverything               = 0x00F77F01,
+    RKInitFlagAllocStartEverythingQuiet          = 0x00F77F00
 };
 
 // The old RKBaseMomentList is now RKProductList; see below  -boonleng 6/30/2021
@@ -881,6 +895,7 @@ enum {
     RKHealthNodeTransceiver,
     RKHealthNodePedestal,
     RKHealthNodeTweeta,
+    RKHealthNodeUser0,
     RKHealthNodeUser1,
     RKHealthNodeUser2,
     RKHealthNodeUser3,
@@ -888,7 +903,6 @@ enum {
     RKHealthNodeUser5,
     RKHealthNodeUser6,
     RKHealthNodeUser7,
-    RKHealthNodeUser8,
     RKHealthNodeCount,
     RKHealthNodeInvalid = (RKHealthNode) - 1
 };
@@ -960,11 +974,11 @@ enum {
 
 typedef uint32_t RKStatusEnum;
 enum {
-    RKStatusEnumUnknown                          = -3,                         //
-    RKStatusEnumOld                              = -3,                         //
-    RKStatusEnumInvalid                          = -2,                         //
-    RKStatusEnumTooLow                           = -2,                         //
-    RKStatusEnumLow                              = -1,                         //
+    // RKStatusEnumUnknown                          = -3,                         //
+    // RKStatusEnumOld                              = -3,                         //
+    // RKStatusEnumInvalid                          = -2,                         //
+    // RKStatusEnumTooLow                           = -2,                         //
+    // RKStatusEnumLow                              = -1,                         //
     RKStatusEnumNormal                           =  0,                         //
     RKStatusEnumActive                           =  0,                         //
     RKStatusEnumHigh                             =  1,                         //
@@ -975,8 +989,12 @@ enum {
     RKStatusEnumNotOperational                   =  2,                         //
     RKStatusEnumOff                              =  2,                         //
     RKStatusEnumFault                            =  2,                         //
-    RKStatusEnumNotWired                         =  3,                         //
-    RKStatusEnumCritical                         =  4                          // This would the status we may shutdown the radar. Co-incidently, red = 0x4
+    RKStatusEnumWarning                          =  2,                         //
+    RKStatusEnumCritical                         =  3,                         //
+    RKStatusEnumInvalid                          =  4,                         //
+    RKStatusEnumBeyondCritical                   =  4,                         // This would the status we may shutdown the radar. Co-incidently, red = 0x4
+    RKStatusEnumNotWired                         =  5,                         //
+    RKStatusEnumOld                              =  5
 };
 
 typedef uint32_t RKFileType;
@@ -991,6 +1009,7 @@ enum {
 typedef uint64_t RKStream;
 enum {
     RKStreamNull                                 = 0,                          //
+    RKStreamNone                                 = 0,
     RKStreamStatusMask                           = 0x0F,                       // Values 0-15 in the lowest 4 bits (exclusive mode)
     RKStreamStatusPositions                      = 1,                          //
     RKStreamStatusPulses                         = 2,                          //
@@ -1194,6 +1213,20 @@ enum {
     RKMomentMethodMultiLag4,                                                   // Multi-lag 4
     RKMomentMethodSpectralMoment,                                              // Spectral moment
     RKMomentMethodUserDefined                                                  // User defined
+};
+
+typedef int RKWindowType;
+enum {
+    RKWindowTypeBoxCar,
+    RKWindowTypeHann,
+    RKWindowTypeHamming,
+    RKWindowTypeBlackman,
+    RKWindowTypeBlackmanHarris,
+    RKWindowTypeNuttall,
+    RKWindowTypeFlattop,
+    RKWindowTypeKaiser,
+    RKWindowTypeTukey,
+    RKWindowTypeTrapezoid
 };
 
 typedef union rk_radarhub_ray_header {

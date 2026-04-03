@@ -28,12 +28,12 @@ static int healthRelayNaveenRead(RKClient *client) {
     printf("valid = %d   utc_time = %f   (%.6f, %.6f) @ %.2f\n", nmea.valid, nmea.utc_time, nmea.longitude, nmea.latitude, nmea.heading);
     #endif
     // Get a vacant slot for health from Radar, copy over the data, then set it ready
-    RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeUser1);
+    RKHealth *health = RKGetVacantHealth(radar, me->node);
     if (health == NULL) {
         RKLog("%s failed to get a vacant health.\n", client->name);
         return RKResultFailedToGetVacantHealth;
     }
-    RKStatusEnum e = nmea.valid ? RKStatusEnumNormal : RKStatusEnumInvalid;
+    RKStatusEnum e = nmea.valid ? RKStatusEnumNormal : RKStatusEnumNotWired;
     snprintf(health->string, RKMaximumStringLength, "{"
         "\"GPS Valid\": {\"Value\":%s,\"Enum\":%d}, "
         "\"GPS Heading\": {\"Value\":%.1f,\"Enum\":%d}, "
@@ -56,7 +56,8 @@ static int healthRelayNaveenGreet(RKClient *client) {
     if (s < 0) {
         return (int)-s;
     }
-    RKLog("%s Naveen @ %s:%d connected.\n", client->name, client->hostIP, client->port);
+    RKHealthRelayNaveen *me = (RKHealthRelayNaveen *)client->userResource;
+    RKLog("%s Naveen @ %s:%d connected.   node = %s\n", client->name, client->hostIP, client->port, RKHealthNodeString(me->node));
     return RKResultSuccess;
 }
 
@@ -71,12 +72,12 @@ RKHealthRelay RKHealthRelayNaveenInit(RKRadar *radar, void *input) {
     }
     memset(me, 0, sizeof(RKHealthRelayNaveen));
     me->radar = radar;
-
     // What the server is uses a TCP socket at default port 9557. The payload is aywas a line string terminated by \r\n
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
+    me->node = RKHealthNodeUser0 + radar->userDeviceCount;
     sprintf(desc.name, "%s<NaveenAutoRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayNaveen) : "",
+            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayUser1 + radar->userDeviceCount) : "",
             rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
@@ -122,30 +123,32 @@ int RKHealthRelayNaveenExec(RKHealthRelay input, const char * command, char _Nul
         if (client->verbose) {
             RKLog("%s Current client->state = 0x%08x   command = '%s'", client->name, client->state, command);
         }
-        if (client->state != RKClientStateConnected) {
-            RKLog("%s Health Relay not connected for command '%s'.\n", client->name, command);
-            sprintf(response, "NAK. Health Relay not connected." RKEOL);
-            return RKResultClientNotConnected;
-        }
-        int s = 0;
-        uint32_t responseIndex = me->responseIndex;
-        size_t size = snprintf(me->latestCommand, RKMaximumCommandLength, "%s" RKEOL, command);
-        RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
-        while (responseIndex == me->responseIndex) {
-            usleep(10000);
-            if (++s % 100 == 0) {
-                RKLog("%s Waited %.2f s for response to '%s'.\n", client->name, (float)s * 0.01f, command);
-            }
-            if ((float)s * 0.01f >= 3.0f) {
-                RKLog("%s should time out.\n", client->name);
-                break;
-            }
-        }
-        if (responseIndex == me->responseIndex) {
-            sprintf(response, "NAK. Timeout." RKEOL);
-            return RKResultTimeout;
-        }
-        strcpy(response, me->responses[responseIndex]);
+        RKLog("%s No command execution implemented for '%s'.\n", client->name, command);
+        return RKResultSuccess;
+        // if (client->state != RKClientStateConnected) {
+        //     RKLog("%s Health Relay not connected for command '%s'.\n", client->name, command);
+        //     sprintf(response, "NAK. Health Relay not connected." RKEOL);
+        //     return RKResultClientNotConnected;
+        // }
+        // int s = 0;
+        // uint32_t responseIndex = me->responseIndex;
+        // size_t size = snprintf(me->latestCommand, RKMaximumCommandLength, "%s" RKEOL, command);
+        // RKNetworkSendPackets(client->sd, me->latestCommand, size, NULL);
+        // while (responseIndex == me->responseIndex) {
+        //     usleep(10000);
+        //     if (++s % 100 == 0) {
+        //         RKLog("%s Waited %.2f s for response to '%s'.\n", client->name, (float)s * 0.01f, command);
+        //     }
+        //     if ((float)s * 0.01f >= 3.0f) {
+        //         RKLog("%s should time out.\n", client->name);
+        //         break;
+        //     }
+        // }
+        // if (responseIndex == me->responseIndex) {
+        //     sprintf(response, "NAK. Timeout." RKEOL);
+        //     return RKResultTimeout;
+        // }
+        // strcpy(response, me->responses[responseIndex]);
     }
     return RKResultSuccess;
 }

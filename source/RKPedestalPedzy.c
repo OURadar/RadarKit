@@ -126,8 +126,8 @@ static void *pedestalPedzyHealth(void *in) {
     RKPedestalPedzy *me = (RKPedestal)in;
     RKRadar *radar = me->radar;
     RKSteerEngine *steerer = radar->steerEngine;
-    RKStatusEnum azInterlockStatus = RKStatusEnumInvalid;
-    RKStatusEnum elInterlockStatus = RKStatusEnumInvalid;
+    RKStatusEnum azInterlockStatus = RKStatusEnumNotWired;
+    RKStatusEnum elInterlockStatus = RKStatusEnumNotWired;
     RKStatusEnum vcpStatusEnum;
     char azPosition[16];
     char elPosition[16];
@@ -135,13 +135,13 @@ static void *pedestalPedzyHealth(void *in) {
     RKStatusEnum elEnum;
     while (me->client->state < RKClientStateDisconnecting) {
         if (me->client->state < RKClientStateConnected) {
-            azInterlockStatus = RKStatusEnumInvalid;
-            elInterlockStatus = RKStatusEnumInvalid;
-            vcpStatusEnum = RKStatusEnumInvalid;
+            azInterlockStatus = RKStatusEnumNotWired;
+            elInterlockStatus = RKStatusEnumNotWired;
+            vcpStatusEnum = RKStatusEnumNotWired;
             sprintf(elPosition, "--.-- deg");
             sprintf(azPosition, "--.-- deg");
-            azEnum = RKStatusEnumInvalid;
-            elEnum = RKStatusEnumInvalid;
+            azEnum = RKStatusEnumNotWired;
+            elEnum = RKStatusEnumNotWired;
         } else {
             RKPosition *position = RKGetLatestPosition(radar);
             azInterlockStatus = position->flag & RKPositionFlagAzimuthSafety ? RKStatusEnumNotOperational : RKStatusEnumNormal;
@@ -163,8 +163,8 @@ static void *pedestalPedzyHealth(void *in) {
         if (health) {
             double rate = RKGetPositionUpdateRate(radar);
             sprintf(health->string, "{"
-                    "\"Pedestal AZ Interlock\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Pedestal EL Interlock\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Interlock AZ\":{\"Value\":%s,\"Enum\":%d}, "
+                    "\"Interlock EL\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
                     "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
                     "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "

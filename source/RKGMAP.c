@@ -110,12 +110,12 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 		.iSpecSize = planSize,
 		.iWinType = WIN_BLACKMAN,
 		.window = space->user2,
-		.fCorDots = (float *)malloc(4 * planSize * sizeof(float)),
-		.cSpec_r = (float *)malloc(OVERSAMP * planSize * sizeof(float)),
-		.cSpec_i = (float *)malloc(OVERSAMP * planSize * sizeof(float)),
-		.fWinResp = (float *)malloc(planSize * sizeof(float)),
-		.fGaussian = (float *)malloc(planSize * sizeof(float)),
-		.fNetSpec = (float *)malloc(2 * planSize * sizeof(float))
+		.fCorDots = space->cosineTable,
+		.cSpec_r = space->spectrumI,
+		.cSpec_i = space->spectrumQ,
+		.fWinResp = space->winResp,
+		.fGaussian = space->gaussian,
+		.fNetSpec = space->netSpectrum
 	};
 	RKWindowMake(dftConf.window, RKWindowTypeBlackman, pulseCount);
 	fill_fCorDots(dftConf.fCorDots, planSize);
@@ -201,13 +201,6 @@ int RKGMAPRun(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCoun
 	for(k = 0; k < pulseCount; k++){
 		RKPulseDuplicateSplitComplex(pulses[k]);
 	}
-
-	free(dftConf.fCorDots);
-	free(dftConf.cSpec_r);
-	free(dftConf.cSpec_i);
-	free(dftConf.fWinResp);
-	free(dftConf.fGaussian);
-	free(dftConf.fNetSpec);
 
     return pulseCount;
 

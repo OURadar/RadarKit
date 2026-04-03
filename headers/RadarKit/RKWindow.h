@@ -11,20 +11,6 @@
 
 #include <RadarKit/RKFoundation.h>
 
-typedef int RKWindowType;
-enum {
-    RKWindowTypeBoxCar,
-    RKWindowTypeHann,
-    RKWindowTypeHamming,
-    RKWindowTypeBlackman,
-    RKWindowTypeBlackmanHarris,
-    RKWindowTypeNuttall,
-    RKWindowTypeFlattop,
-    RKWindowTypeKaiser,
-    RKWindowTypeTukey,
-    RKWindowTypeTrapezoid
-};
-
 void RKWindowMake(RKFloat *buffer, RKWindowType type, const int length, ...);
 
 #endif /* defined(__RadarKit_Window__) */

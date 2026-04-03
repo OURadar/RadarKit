@@ -127,7 +127,7 @@ int RKFileSeek(FILE *, long);
 size_t RKFileWrite(const void *, size_t, size_t, FILE *);
 size_t RKFileRead(void *, size_t, size_t, FILE *);
 
-// Variables in rkGlobalVariable / Presentation
+// Variables in rkGlobalParameters / Presentation
 void RKSetStatusColor(const bool);
 void RKSetWantColor(const bool);
 void RKSetWantScreenOutput(const bool);
@@ -191,6 +191,9 @@ float *RKGetFloatDataFromRay(RKRay *, const RKProductIndex);
 int RKClearRayBuffer(RKBuffer buffer, const uint32_t);
 RKRay *RKGetVacantRayFromBuffer(RKBuffer, uint32_t *, const uint32_t);
 
+// Health
+char *RKHealthNodeString(const RKHealthNode);
+
 // Standalone file monitor (one file per thread)
 RKFileMonitor *RKFileMonitorInit(const char *filename, void (*)(void *), void *);
 int RKFileMonitorFree(RKFileMonitor *);
@@ -207,7 +210,8 @@ size_t RKParseCommaDelimitedValues(void *, RKValueType , const size_t, const cha
 size_t RKParseNumericArray(void *, RKValueType, const size_t, const char *);
 void RKParseQuotedStrings(const char *source, ...);
 void RKMakeJSONStringFromControls(char *, RKControl *, uint32_t count);
-RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
+// RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst nlo, RKConst nhi, RKConst hi, RKConst thi);
+RKStatusEnum RKValueToEnum(RKConst value, RKConst tlo, RKConst lo, RKConst hi, RKConst thi);
 RKStatusEnum RKStatusFromTemperatureForCE(RKConst value);
 RKStatusEnum RKStatusFromTemperatureForIE(RKConst value);
 RKStatusEnum  RKStatusFromTemperatureForComputers(RKConst value);

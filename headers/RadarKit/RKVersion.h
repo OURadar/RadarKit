@@ -12,4 +12,5 @@
 #define _RKVersionBranch_ ""
 #endif
 
-#define __RKVersion__ "6.4" _RKVersionBranch_
+#define __RKVersion__ "6.5" _RKVersionBranch_
+#define __RKVersionNumber__ 60500

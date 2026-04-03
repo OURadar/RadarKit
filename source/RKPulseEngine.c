@@ -533,8 +533,12 @@ static void *pulseEngineCore(void *_in) {
         me->lag = RKModuloLag(*engine->pulseIndex, i0, engine->radarDescription->pulseBufferDepth) / (float)engine->radarDescription->pulseBufferDepth;
 
         pulse->header.s |= RKPulseStatusProcessed;
+        skipRingFilter = !(engine->radarDescription->initFlags & RKInitFlagStartRingFilterEngine);
         if (skipRingFilter) {
-            pulse->header.s |= RKPulseStatusRingSkipped | RKPulseStatusRingProcessed;
+            if (pulse->header.i % 1000 == 0) {
+                RKLog("%s Ring filter skipped. header->i = %d\n", me->name, pulse->header.i);
+            }
+            pulse->header.s |= RKPulseStatusRingInspected | RKPulseStatusRingSkipped | RKPulseStatusRingProcessed;
         }
 
         // Done processing, get the time

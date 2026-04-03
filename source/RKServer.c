@@ -595,6 +595,8 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
 
     const int blockLength = 4;
 
+    char temp[1024];
+
     switch (format) {
 
         case RKNetworkMessageFormatHeaderDefinedSize:
@@ -637,8 +639,10 @@ ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessage
                 readOkay = true;
                 break;
             } else if (delimiter->size > RKMaximumPacketSize) {
-                RKLog("%s Error. Payload size = %s (type %d) is more than what I can handle.\n",
-                      M->name, RKIntegerToCommaStyleString(delimiter->size), delimiter->type);
+                RKLog("%s Error. Payload size = %s (type %d / %c) is more than what I can handle.\n",
+                      M->name, RKIntegerToCommaStyleString(delimiter->size), delimiter->type, delimiter->type);
+                RKBinaryString(temp, (char *)delimiter->bytes, sizeof(RKNetDelimiter));
+                RKLog("%s %s\n", M->name, temp);
                 readOkay = false;
                 break;
             }

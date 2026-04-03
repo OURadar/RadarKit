@@ -211,11 +211,17 @@ size_t RKMomentScratchAlloc(RKMomentScratch **buffer, const uint32_t capacity, c
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->inBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->outBuffer[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
         POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->fC[j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
-        for (k = 0; k < 2; k++) {
-            POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->fS[k][j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
-        }
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->fS[0][j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
+        POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->fS[1][j], RKMemoryAlignSize, nfft * sizeof(fftwf_complex)));
     }
     bytes += scratch->capacity * 5 * nfft * sizeof(fftwf_complex);
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->cosineTable, RKMemoryAlignSize, 4 * nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->spectrumI, RKMemoryAlignSize, 2 * nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->spectrumQ, RKMemoryAlignSize, 2 * nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->winResp, RKMemoryAlignSize, nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->gaussian, RKMemoryAlignSize, nfft * sizeof(RKFloat)));
+    POSIX_MEMALIGN_CHECK(posix_memalign((void **)&scratch->netSpectrum, RKMemoryAlignSize, 2 * nfft * sizeof(RKFloat)));
+    bytes += 12 * nfft * sizeof(RKFloat);
     scratch->calculatedProducts = RKProductListFloatZVWDPRKSQ | RKProductListUInt8ZVWDPRKSQ;
     return bytes;
 }
@@ -232,10 +238,10 @@ void RKMomentScratchFree(RKMomentScratch *scratch) {
         free(scratch->V[k]);
         free(scratch->W[k]);
         free(scratch->Q[k]);
-        free(scratch->SNR[k]);
         free(scratch->L[k]);
         free(scratch->RhoXP[k]);
         free(scratch->PhiXP[k]);
+        free(scratch->SNR[k]);
         free(scratch->S2Z[k]);
         for (j = 0; j < RKMaximumLagCount; j++) {
             free(scratch->R[k][j].i);
@@ -272,12 +278,24 @@ void RKMomentScratchFree(RKMomentScratch *scratch) {
     }
     free(scratch->gC);
     free(scratch->mask);
-    for (k = 0; k < scratch->capacity; k++) {
-        free(scratch->inBuffer[k]);
-        free(scratch->outBuffer[k]);
+    for (j = 0; j < scratch->capacity; j++) {
+        free(scratch->inBuffer[j]);
+        free(scratch->outBuffer[j]);
+        free(scratch->fC[j]);
+        free(scratch->fS[0][j]);
+        free(scratch->fS[1][j]);
     }
     free(scratch->inBuffer);
     free(scratch->outBuffer);
+    free(scratch->fS[0]);
+    free(scratch->fS[1]);
+    free(scratch->fC);
+    free(scratch->cosineTable);
+    free(scratch->spectrumI);
+    free(scratch->spectrumQ);
+    free(scratch->winResp);
+    free(scratch->gaussian);
+    free(scratch->netSpectrum);
     free(scratch);
 }
 
