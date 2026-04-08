@@ -1,6 +1,6 @@
 #include <RadarKit/RKMisc.h>
 
-#pragma mark - Colors
+#pragma region Colors
 
 char *RKGetColor(void) {
     static int c = 0;
@@ -92,7 +92,7 @@ char *RKGetBackgroundColorOfCubeIndex(const int c) {
     return str[s];
 }
 
-#pragma mark - JSON / Dictionary / Parsing
+#pragma region JSON / Dictionary / Parsing
 
 // ks = start of a keyword, should begin with quote or space
 char *RKExtractJSON(char *ks, uint8_t *type, char *key, char *value) {
@@ -206,10 +206,10 @@ char *RKGetValueOfKey(const char *string, const char *key) {
     char *s, *e;
     size_t len;
     char quotedKey[256];
-    sprintf(quotedKey, "\"%s\"", key);
+    snprintf(quotedKey, sizeof(quotedKey), "\"%s\"", key);
     char *keyPosition = strcasestr(string, quotedKey);
     if (keyPosition == NULL) {
-        sprintf(quotedKey, "'%s'", key);
+        snprintf(quotedKey, sizeof(quotedKey), "'%s'", key);
         keyPosition = strcasestr(string, quotedKey);
     }
 
@@ -322,9 +322,9 @@ void RKReplaceAllValuesOfKey(char *string, const char *key, int value) {
             return;
         }
         // Now value should be in between s & e
-        k = sprintf(valueString, "%d", value);
+        k = snprintf(valueString, sizeof(valueString), "%d", value);
         if (k < 0) {
-            fprintf(stderr, "RKReplaceAllValuesOfKey() encountered an expected results from sprintf().\n");
+            fprintf(stderr, "RKReplaceAllValuesOfKey() encountered an expected results from snprintf().\n");
             return;
         }
         if (e - s < k) {
@@ -370,9 +370,9 @@ void RKReplaceEnumOfKey(char *string, const char *key, int value) {
         return;
     }
     // Now value should be in between s & e
-    k = sprintf(valueString, "%d", value);
+    k = snprintf(valueString, sizeof(valueString), "%d", value);
     if (k < 0) {
-        fprintf(stderr, "RKReplaceEnumOfKey() encountered an expected results from sprintf().\n");
+        fprintf(stderr, "RKReplaceEnumOfKey() encountered an expected results from snprintf().\n");
     }
     //printf("s = %p   e = %p   valueString = %s   k = %d ==? %d\n", s, e, valueString, (int)(e - s), k);
     if (e - s < k) {
@@ -388,14 +388,14 @@ void RKReviseLogicalValues(char *string) {
     char *token;
     token = strcasestr(string, "\"true\"");
     while (token) {
-        sprintf(token, "true");
+        snprintf(token, 5, "true");
         memmove(token + 4, token + 6, strlen(token + 6));
         memset(token + 4 + strlen(token + 6), '\0', 2 * sizeof(char));
         token = strcasestr(token + 6, "\"true\"");
     }
     token = strcasestr(string, "\"false\"");
     while (token) {
-        sprintf(token, "false");
+        snprintf(token, 6, "false");
         memmove(token + 5, token + 7, strlen(token + 7));
         memset(token + 5 + strlen(token + 7), '\0', 2 * sizeof(char));
         token = strcasestr(token + 7, "\"false\"");
@@ -487,20 +487,20 @@ char *RKJSONScanPassed(char *destination, const char *source, const char delimit
         }
 
         #if defined(DEBUG_GET_NEXT_ELEMENT)
-        k = sprintf(str, "\033[48;5;238;38;5;15m");
+        k = snprintf(str, sizeof(str), "\033[48;5;238;38;5;15m");
         switch (*c) {
             case '\r':
-                k += sprintf(str + k, "\\r");
+                k += snprintf(str + k, sizeof(str) - k, "\\r");
                 break;
             case '\n':
-                k += sprintf(str + k, "\\n");
+                k += snprintf(str + k, sizeof(str) - k, "\\n");
                 break;
             default:
-                k += sprintf(str + k, "%c", *c);
+                k += snprintf(str + k, sizeof(str) - k, "%c", *c);
                 break;
         }
         *(d + 1) = '\0';
-        sprintf(str + k, "\033[m%s", k == 20 ? " " : "");
+        snprintf(str + k, sizeof(str) - k, "\033[m%s", k == 20 ? " " : "");
         printf("%s '%d \"%d {%d (%d [%d \\%d s%d \033[48;5;238m%s\033[m \n",
             str, singleQuote, doubleQuote, curly, round, square, slash, space, destination);
         #endif
@@ -549,7 +549,7 @@ char *RKJSONGetValueOfKey(char *keyValue, char *key, char *value, const char *na
     return c;
 }
 
-#pragma mark -
+#pragma region
 
 ////////////////////////////////////////////////
 //
@@ -574,7 +574,7 @@ char *RKUIntegerToCommaStyleString(const unsigned long long num) {
     ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
-    i = sprintf(string, "%llu", num);
+    i = snprintf(string, 32, "%llu", num);
     if (i <= 3) {
         return string;
     }
@@ -615,7 +615,7 @@ char *RKIntegerToCommaStyleString(const long long num) {
     ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
-    i = sprintf(string, "%lld", num);
+    i = snprintf(string, 32, "%lld", num);
     if (i <= 3) {
         return string;
     }
@@ -655,7 +655,7 @@ char *RKIntegerToHexStyleString(const long long num) {
     ibuf = ibuf == 31 ? 0 : ibuf + 1;
     pthread_mutex_unlock(&lock);
 
-    sprintf(string, "0x%04llx", num);
+    snprintf(string, 32, "0x%04llx", num);
 
     return string;
 }
@@ -684,9 +684,9 @@ char *RKFloatToCommaStyleStringAndDecimals(const double num, const int decimals)
     pthread_mutex_unlock(&lock);
 
     if (decimals <= 0) {
-        i = sprintf(string, "%.0f", num);
+        i = snprintf(string, 32, "%.0f", num);
     } else {
-        i = sprintf(string, "%.*f", decimals, num);
+        i = snprintf(string, 32, "%.*f", decimals, num);
     }
     if ((num < 0 && i - decimals <= 4) || (num >= 0 && i - decimals <= 3) || !isfinite(num)) {
         return string;
@@ -715,7 +715,7 @@ char *RKFloatToCommaStyleString(const double num) {
     return RKFloatToCommaStyleStringAndDecimals(num, 3);
 }
 
-#pragma mark - Time
+#pragma region Time
 
 char *RKNow(void) {
     static char timestr[32];
@@ -839,7 +839,7 @@ char *RKTimeDoubleToString(const double time, const int format, const bool isUTC
     return RKTimevalToString(t, format, isUTC);
 }
 
-#pragma mark - File / Path
+#pragma region File / Path
 
 bool RKFilenameExists(const char *filename) {
     if (access(filename, R_OK | W_OK) == 0) {
@@ -1012,56 +1012,56 @@ void RKReplaceFileExtension(char *filename, const char *pattern, const char *rep
     }
 }
 
-#pragma mark - Enum to String
+#pragma region Enum to String
 
 char *RKSignalString(const int signal) {
     static char string[32];
     switch (signal) {
-        case SIGHUP:    sprintf(string, "SIGHUP"); break;
-        case SIGINT:    sprintf(string, "SIGINT"); break;
-        case SIGQUIT:   sprintf(string, "SIGQUIT"); break;
-        case SIGILL:    sprintf(string, "SIGILL"); break;
-        case SIGTRAP:   sprintf(string, "SIGTRAP"); break;
-        case SIGABRT:   sprintf(string, "SIGABRT = SIGIOT"); break;
-#if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
-        case SIGPOLL:   sprintf(string, "SIGPOLL"); break;
-#else	/* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
-        case SIGEMT:    sprintf(string, "SIGEMT"); break;
-#endif	/* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
-        case SIGFPE:    sprintf(string, "SIGFPE"); break;
-        case SIGKILL:   sprintf(string, "SIGKILL"); break;
-        case SIGBUS:    sprintf(string, "SIGBUS"); break;
-        case SIGSEGV:   sprintf(string, "SIGSEGV"); break;
-        case SIGSYS:    sprintf(string, "SIGSYS"); break;
-        case SIGPIPE:   sprintf(string, "SIGPIPE"); break;
-        case SIGALRM:   sprintf(string, "SIGALRM"); break;
-        case SIGTERM:   sprintf(string, "SIGTERM"); break;
-        case SIGURG:    sprintf(string, "SIGURG"); break;
-        case SIGSTOP:   sprintf(string, "SIGSTOP"); break;
-        case SIGTSTP:   sprintf(string, "SIGTSTP"); break;
-        case SIGCONT:   sprintf(string, "SIGCONT"); break;
-        case SIGCHLD:   sprintf(string, "SIGCHLD"); break;
-        case SIGTTIN:   sprintf(string, "SIGTTIN"); break;
-        case SIGTTOU:   sprintf(string, "SIGTTOU"); break;
-#if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
-        case SIGIO: sprintf(string, "SIGIO"); break;
-#endif
-        case SIGXCPU:   sprintf(string, "SIGXCPU"); break;
-        case SIGXFSZ:   sprintf(string, "SIGXFSZ"); break;
-        case SIGVTALRM: sprintf(string, "SIGVTALRM"); break;
-        case SIGPROF:   sprintf(string, "SIGPROF"); break;
-#if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
-        case SIGWINCH:  sprintf(string, "SIGWINCH"); break;
-        case SIGINFO:   sprintf(string, "SIGINFO"); break;
-#endif
-        case SIGUSR1:   sprintf(string, "SIGUSR1"); break;
-        case SIGUSR2:   sprintf(string, "SIGUSR2"); break;
-        default: sprintf(string, "SIGUNKNOWN"); break;
+        case SIGHUP:    snprintf(string, sizeof(string), "SIGHUP"); break;
+        case SIGINT:    snprintf(string, sizeof(string), "SIGINT"); break;
+        case SIGQUIT:   snprintf(string, sizeof(string), "SIGQUIT"); break;
+        case SIGILL:    snprintf(string, sizeof(string), "SIGILL"); break;
+        case SIGTRAP:   snprintf(string, sizeof(string), "SIGTRAP"); break;
+        case SIGABRT:   snprintf(string, sizeof(string), "SIGABRT = SIGIOT"); break;
+        #if  (defined(_POSIX_C_SOURCE) && !defined(_DARWIN_C_SOURCE))
+        case SIGPOLL:   snprintf(string, sizeof(string), "SIGPOLL"); break;
+        #else	/* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+        case SIGEMT:    snprintf(string, sizeof(string), "SIGEMT"); break;
+        #endif	/* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+        case SIGFPE:    snprintf(string, sizeof(string), "SIGFPE"); break;
+        case SIGKILL:   snprintf(string, sizeof(string), "SIGKILL"); break;
+        case SIGBUS:    snprintf(string, sizeof(string), "SIGBUS"); break;
+        case SIGSEGV:   snprintf(string, sizeof(string), "SIGSEGV"); break;
+        case SIGSYS:    snprintf(string, sizeof(string), "SIGSYS"); break;
+        case SIGPIPE:   snprintf(string, sizeof(string), "SIGPIPE"); break;
+        case SIGALRM:   snprintf(string, sizeof(string), "SIGALRM"); break;
+        case SIGTERM:   snprintf(string, sizeof(string), "SIGTERM"); break;
+        case SIGURG:    snprintf(string, sizeof(string), "SIGURG"); break;
+        case SIGSTOP:   snprintf(string, sizeof(string), "SIGSTOP"); break;
+        case SIGTSTP:   snprintf(string, sizeof(string), "SIGTSTP"); break;
+        case SIGCONT:   snprintf(string, sizeof(string), "SIGCONT"); break;
+        case SIGCHLD:   snprintf(string, sizeof(string), "SIGCHLD"); break;
+        case SIGTTIN:   snprintf(string, sizeof(string), "SIGTTIN"); break;
+        case SIGTTOU:   snprintf(string, sizeof(string), "SIGTTOU"); break;
+        #if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
+        case SIGIO: snprintf(string, sizeof(string), "SIGIO"); break;
+        #endif
+        case SIGXCPU:   snprintf(string, sizeof(string), "SIGXCPU"); break;
+        case SIGXFSZ:   snprintf(string, sizeof(string), "SIGXFSZ"); break;
+        case SIGVTALRM: snprintf(string, sizeof(string), "SIGVTALRM"); break;
+        case SIGPROF:   snprintf(string, sizeof(string), "SIGPROF"); break;
+        #if  (!defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE))
+        case SIGWINCH:  snprintf(string, sizeof(string), "SIGWINCH"); break;
+        case SIGINFO:   snprintf(string, sizeof(string), "SIGINFO"); break;
+        #endif
+        case SIGUSR1:   snprintf(string, sizeof(string), "SIGUSR1"); break;
+        case SIGUSR2:   snprintf(string, sizeof(string), "SIGUSR2"); break;
+        default: snprintf(string, sizeof(string), "SIGUNKNOWN"); break;
     }
     return string;
 }
 
-#pragma mark - String
+#pragma region String
 
 // Strip out \r, \n, white space, \10 (BS), etc.
 int RKStripTail(char *string) {
@@ -1090,7 +1090,7 @@ int RKIndentCopy(char *dst, char *src, const int width) {
     int k = 0;
     char *e, *s = src;
     if (width == 0) {
-        k = sprintf(dst, "%s", src);
+        k = snprintf(dst, RKMiscStringLength, "%s", src);
         return k;
     }
     size_t w;
@@ -1108,7 +1108,7 @@ int RKIndentCopy(char *dst, char *src, const int width) {
     char indent[width + 1];
     memset(indent, ' ', width);
     indent[width] = '\0';
-    k += sprintf(dst + k, "%s%s", indent, s);
+    k += snprintf(dst + k, RKMiscStringLength - k, "%s%s", indent, s);
     return k;
 }
 
@@ -1191,7 +1191,7 @@ char *RKStripEscapeSequence(const char *line) {
     return string;
 }
 
-#pragma mark - Math
+#pragma region Math
 
 float RKMinDiff(const float m, const float s) {
     float d = m - s;
@@ -1228,7 +1228,7 @@ bool RKAngularCrossOver(const float a1, const float a2, const float crossover) {
     return false;
 }
 
-#pragma mark - CPU / Performance
+#pragma region CPU / Performance
 
 #if defined(__APPLE__)
 
@@ -1650,7 +1650,7 @@ int RKMergeColumns(char *text, const char *left, const char *right, const int in
     char format[indent + 4];
     char *plain;
     memset(format, ' ', indent);
-    sprintf(format + indent, "%%s");
+    snprintf(format + indent, 4, "%%s");
     //printf("%s--\n", right);
     while (ls != NULL || rs != NULL) {
         if (ls != NULL && (le = strchr(ls, '\n')) != NULL) {
@@ -1658,7 +1658,7 @@ int RKMergeColumns(char *text, const char *left, const char *right, const int in
             plain = RKStripEscapeSequence(ls);
             n = (int)strlen(plain);
             //printf("%s (%d) -> %s (%d)\n", ls, (int)(le - ls), plain, n);
-            m += sprintf(text + m, format, ls);
+            m += snprintf(text + m, RKMiscStringLength - m, format, ls);
             memset(text + m, ' ', u - n);
             m += (u - n);
             ls = le + 1;
@@ -1677,7 +1677,7 @@ int RKMergeColumns(char *text, const char *left, const char *right, const int in
             n = (int)strlen(plain);
             w = MAX(w, n);
             //printf("%s (%d) -> %s (%d) |%c|\n", rs, (int)(re - rs), plain, n, *(re + 1));
-            m += sprintf(text + m, "%s", rs);
+            m += snprintf(text + m, RKMiscStringLength - m, "%s", rs);
             memset(text + m, ' ', v - n);
             m += (v - n);
             rs = re + 1;
@@ -1688,7 +1688,7 @@ int RKMergeColumns(char *text, const char *left, const char *right, const int in
             memset(text + m, ' ', v);
             m += v;
         }
-        m += sprintf(text + m, "\n");
+        m += snprintf(text + m, RKMiscStringLength - m, "\n");
     }
     w += u + indent;
     return w;
@@ -1705,7 +1705,7 @@ char *RKBinaryString(char *dst, void *src, const size_t count) {
             }
             *dst++ = *c++;
         } else {
-            dst += sprintf(dst, "\\x%02x", *c++);
+            dst += snprintf(dst, 5, "\\x%02x", *c++);
         }
     }
     *dst++ = '\'';
@@ -1727,7 +1727,7 @@ char *RKBytesInHex(char *dst, void *src, const size_t count) {
     uint8_t *c = (uint8_t *)src;
     *dst++ = '[';
     for (i = 0; i < count; i++) {
-        dst += sprintf(dst, ".%02x", *c++);
+        dst += snprintf(dst, 4, ".%02x", *c++);
     }
     *dst++ = ']';
     *dst = '\0';
@@ -1736,12 +1736,12 @@ char *RKBytesInHex(char *dst, void *src, const size_t count) {
 
 void RKHeadTailBytesInHex(char *dst, void *src, const size_t count) {
     char *dummy = RKBytesInHex(dst, src, 7);
-    RKBytesInHex(dummy + sprintf(dummy, " ... "), src + count - 3, 3);
+    RKBytesInHex(dummy + snprintf(dummy, 6, " ... "), src + count - 3, 3);
 }
 
 void RKHeadTailBinaryString(char *dst, void *src, const size_t count) {
     char *tail = RKBinaryString(dst, src, 25);
-    RKBinaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
+    RKBinaryString(tail + snprintf(tail, 6, " ... "), src + count - 5, 5);
 }
 
 void RKRadarHubPayloadString(char *dst, void *src, const size_t count) {
@@ -1759,7 +1759,7 @@ void RKRadarHubPayloadString(char *dst, void *src, const size_t count) {
         RKHeadTailBinaryString(dst, src, count);
     } else {
         c = (uint8_t *)src;
-        r = sprintf(dst, "b'\\x%02x'", *c++);
+        r = snprintf(dst, 8, "b'\\x%02x'", *c++);
         RKHeadTailBytesInHex(dst + r, c, count - 1);
     }
 }

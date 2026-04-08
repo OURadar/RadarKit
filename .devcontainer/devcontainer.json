@@ -1,7 +1,7 @@
 {
   "name": "RadarKit Dev Container",
   "build": {
-    "dockerfile": "Dockerfile",
+    "dockerfile": "Dockerfile.gcc",
     "context": ".."
   },
   "workspaceFolder": "/workspace",

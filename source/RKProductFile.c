@@ -1036,11 +1036,11 @@ static RKProductCollection *read_ncid_as_cf1(const int ncid) {
         nc_get_att_float(ncid, varid, "add_offset", &product->desc.cfOffset);
         nc_get_var_short(ncid, varid, i16Array);
         if (product->desc.cfOffset != 0.0f) {
-            sprintf(scaleOffsetDesc, "f = s * %.4f + %.4f", product->desc.cfScale, product->desc.cfOffset);
+            snprintf(scaleOffsetDesc, sizeof(scaleOffsetDesc), "f = s * %.4f + %.4f", product->desc.cfScale, product->desc.cfOffset);
             i16_masked_to_rkfloat_scale_offset(product->data, i16Array, product->desc.cfScale, product->desc.cfOffset, rayCount * gateCount);
         } else {
             i16_masked_to_rkfloat_scale(product->data, i16Array, product->desc.cfScale, rayCount * gateCount);
-            sprintf(scaleOffsetDesc, "f = s * %.4f", product->desc.cfScale);
+            snprintf(scaleOffsetDesc, sizeof(scaleOffsetDesc), "f = s * %.4f", product->desc.cfScale);
         }
     }
     #if defined(DEBUG_PRODUCT_READER)
@@ -1259,9 +1259,9 @@ static RKProductCollection *read_tar(const char *filename) {
         }
         // Open the file, pass a hint in the forms of MEMORY-YYYYMMDD-HHMMSS-P.nc for RKGetSymbolFromFilename()
         if (RKIsFilenameStandard(basename)) {
-            sprintf(hint, "MEMORY%s", strchr(basename, '-'));
+            snprintf(hint, sizeof(hint), "MEMORY%s", strchr(basename, '-'));
         } else {
-            sprintf(hint, "MEMORY");
+            snprintf(hint, sizeof(hint), "MEMORY");
         }
         if ((r = nc_open_mem(hint, NC_NOWRITE, buffer_size, buffer, &ncid))) {
             RKLog("%s Error. %s\n", myname, nc_strerror(r));
@@ -1395,9 +1395,9 @@ int RKProductCollectionFileWriterCF(RKProductCollection *collection, const char 
     }
     // Define the dimensions
     strftime(stringValue, RKNameLength, "%FT%X", gmtime(&timeCreated));
-    sprintf(startTimeString, "%sZ", RKTimeDoubleToString(product->header.startTime, 1180, false));
-    sprintf(endTimeString, "%sZ", RKTimeDoubleToString(product->header.endTime, 1180, false));
-    sprintf(refTimeString, "seconds since %s", startTimeString);
+    snprintf(startTimeString, sizeof(startTimeString), "%sZ", RKTimeDoubleToString(product->header.startTime, 1180, false));
+    snprintf(endTimeString, sizeof(endTimeString), "%sZ", RKTimeDoubleToString(product->header.endTime, 1180, false));
+    snprintf(refTimeString, sizeof(refTimeString), "seconds since %s", startTimeString);
     // Define the global attributes
     put_global_text_att(ncid, "Conventions", "CF-1.7");
     put_global_text_att(ncid, "Sub_conventions", "CF-Radial instrument_parameters radar_calibration");
@@ -1738,43 +1738,43 @@ int RKProductCollectionStandardizeForCFRadial(RKProductCollection *collection) {
     const uint32_t rayCount = product->header.rayCount;
     const uint32_t gateCount = product->header.gateCount;
     for (p = 0; p < collection->count; p++) {
-        s = sprintf(summary, "Standardizing %s%s%s (%s%s%s) -> ",
-            rkGlobalParameters.showColor ? RKYellowColor : "",
-            product->desc.symbol,
-            rkGlobalParameters.showColor ? RKNoColor : "",
-            rkGlobalParameters.showColor ? RKSalmonColor : "",
-            product->desc.name,
-            rkGlobalParameters.showColor ? RKNoColor : "");
+        s = snprintf(summary, sizeof(summary), "Standardizing %s%s%s (%s%s%s) -> ",
+                     rkGlobalParameters.showColor ? RKYellowColor : "",
+                     product->desc.symbol,
+                     rkGlobalParameters.showColor ? RKNoColor : "",
+                     rkGlobalParameters.showColor ? RKSalmonColor : "",
+                     product->desc.name,
+                     rkGlobalParameters.showColor ? RKNoColor : "");
         switch (product->desc.index) {
             case RKProductIndexZ:
-                sprintf(product->desc.description, "equivalent_reflectivity_factor");
-                sprintf(product->desc.name, "reflectivity");
-                sprintf(product->desc.unit, "dBZ");
-                sprintf(product->desc.symbol, "DBZ");
+                snprintf(product->desc.description, sizeof(product->desc.description), "equivalent_reflectivity_factor");
+                snprintf(product->desc.name, sizeof(product->desc.name), "reflectivity");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "dBZ");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "DBZ");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexV:
-                sprintf(product->desc.description, "radial_velocity_of_scatterers_away_from_instrument");
-                sprintf(product->desc.name, "doppler_velocity");
-                sprintf(product->desc.unit, "m/s");
-                sprintf(product->desc.symbol, "VEL");
+                snprintf(product->desc.description, sizeof(product->desc.description), "radial_velocity_of_scatterers_away_from_instrument");
+                snprintf(product->desc.name, sizeof(product->desc.name), "doppler_velocity");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "m/s");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "VEL");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexW:
-                sprintf(product->desc.description, "doppler_spectrum_width");
-                sprintf(product->desc.name, "spectrum_width");
-                sprintf(product->desc.unit, "m/s");
-                sprintf(product->desc.symbol, "WIDTH");
+                snprintf(product->desc.description, sizeof(product->desc.description), "doppler_spectrum_width");
+                snprintf(product->desc.name, sizeof(product->desc.name), "spectrum_width");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "m/s");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "WIDTH");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexD:
-                sprintf(product->desc.description, "log_differential_reflectivity_hv");
-                sprintf(product->desc.name, "differential_reflectivity");
-                sprintf(product->desc.unit, "dB");
-                sprintf(product->desc.symbol, "ZDR");
+                snprintf(product->desc.description, sizeof(product->desc.description), "log_differential_reflectivity_hv");
+                snprintf(product->desc.name, sizeof(product->desc.name), "differential_reflectivity");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "dB");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "ZDR");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
@@ -1793,66 +1793,66 @@ int RKProductCollectionStandardizeForCFRadial(RKProductCollection *collection) {
                     #endif
                     RKSIMD_iscl(x, 180.0f / M_PI, rayCount * gateCount);
                 }
-                sprintf(product->desc.description, "differential_phase_hv");
-                sprintf(product->desc.name, "differential_phase");
-                sprintf(product->desc.unit, "degrees");
-                sprintf(product->desc.symbol, "PHIDP");
+                snprintf(product->desc.description, sizeof(product->desc.description), "differential_phase_hv");
+                snprintf(product->desc.name, sizeof(product->desc.name), "differential_phase");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "degrees");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "PHIDP");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexR:
-                sprintf(product->desc.description, "cross_correlation_ratio_hv");
-                sprintf(product->desc.name, "cross_correlation_ratio");
-                sprintf(product->desc.unit, "unitless");
-                sprintf(product->desc.symbol, "RHOHV");
+                snprintf(product->desc.description, sizeof(product->desc.description), "cross_correlation_ratio_hv");
+                snprintf(product->desc.name, sizeof(product->desc.name), "cross_correlation_ratio");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "unitless");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "RHOHV");
                 product->desc.cfScale = 0.001f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexLh:
-                sprintf(product->desc.description, "linear_depolarization_ratio_h");
-                sprintf(product->desc.name, "linear_depolarization_ratio_h");
-                sprintf(product->desc.unit, "dB");
-                sprintf(product->desc.symbol, "LDRH");
+                snprintf(product->desc.description, sizeof(product->desc.description), "linear_depolarization_ratio_h");
+                snprintf(product->desc.name, sizeof(product->desc.name), "linear_depolarization_ratio_h");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "dB");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "LDRH");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexLv:
-                sprintf(product->desc.description, "linear_depolarization_ratio_v");
-                sprintf(product->desc.name, "linear_depolarization_ratio_v");
-                sprintf(product->desc.unit, "dB");
-                sprintf(product->desc.symbol, "LDRV");
+                snprintf(product->desc.description, sizeof(product->desc.description), "linear_depolarization_ratio_v");
+                snprintf(product->desc.name, sizeof(product->desc.name), "linear_depolarization_ratio_v");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "dB");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "LDRV");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexPXh:
-                sprintf(product->desc.description, "differential_phase_copolar_h_crosspolar_v");
-                sprintf(product->desc.name, "differential_phase_copolar_h_crosspolar_v");
-                sprintf(product->desc.unit, "degrees");
-                sprintf(product->desc.symbol, "PHIXH");
+                snprintf(product->desc.description, sizeof(product->desc.description), "differential_phase_copolar_h_crosspolar_v");
+                snprintf(product->desc.name, sizeof(product->desc.name), "differential_phase_copolar_h_crosspolar_v");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "degrees");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "PHIXH");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexPXv:
-                sprintf(product->desc.description, "differential_phase_copolar_v_crosspolar_h");
-                sprintf(product->desc.name, "differential_phase_copolar_v_crosspolar_h");
-                sprintf(product->desc.unit, "degrees");
-                sprintf(product->desc.symbol, "PHIXV");
+                snprintf(product->desc.description, sizeof(product->desc.description), "differential_phase_copolar_v_crosspolar_h");
+                snprintf(product->desc.name, sizeof(product->desc.name), "differential_phase_copolar_v_crosspolar_h");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "degrees");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "PHIXV");
                 product->desc.cfScale = 0.01f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexRXh:
-                sprintf(product->desc.description, "correlation_coefficient_copolar_h_crospolar_v");
-                sprintf(product->desc.name, "correlation_coefficient_copolar_h_crospolar_v");
-                sprintf(product->desc.unit, "unitless");
-                sprintf(product->desc.symbol, "RHOXH");
+                snprintf(product->desc.description, sizeof(product->desc.description), "correlation_coefficient_copolar_h_crospolar_v");
+                snprintf(product->desc.name, sizeof(product->desc.name), "correlation_coefficient_copolar_h_crospolar_v");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "unitless");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "RHOXH");
                 product->desc.cfScale = 0.001f;
                 product->desc.cfOffset = 0.0f;
                 break;
             case RKProductIndexRXv:
-                sprintf(product->desc.description, "correlation_coefficient_copolar_v_crospolar_h");
-                sprintf(product->desc.name, "correlation_coefficient_copolar_v_crospolar_h");
-                sprintf(product->desc.unit, "unitless");
-                sprintf(product->desc.symbol, "RHOXV");
+                snprintf(product->desc.description, sizeof(product->desc.description), "correlation_coefficient_copolar_v_crospolar_h");
+                snprintf(product->desc.name, sizeof(product->desc.name), "correlation_coefficient_copolar_v_crospolar_h");
+                snprintf(product->desc.unit, sizeof(product->desc.unit), "unitless");
+                snprintf(product->desc.symbol, sizeof(product->desc.symbol), "RHOXV");
                 product->desc.cfScale = 0.001f;
                 product->desc.cfOffset = 0.0f;
                 break;
@@ -1861,13 +1861,13 @@ int RKProductCollectionStandardizeForCFRadial(RKProductCollection *collection) {
                 return RKResultFailedToStandardizeProduct;
                 break;
         }
-        s += sprintf(summary + s, "%s%s%s (%s%s%s)\n",
-            rkGlobalParameters.showColor ? RKYellowColor : "",
-            product->desc.symbol,
-            rkGlobalParameters.showColor ? RKNoColor : "",
-            rkGlobalParameters.showColor ? RKSalmonColor : "",
-            product->desc.name,
-            rkGlobalParameters.showColor ? RKNoColor : "");
+        s += snprintf(summary + s, sizeof(summary) - s, "%s%s%s (%s%s%s)\n",
+                      rkGlobalParameters.showColor ? RKYellowColor : "",
+                      product->desc.symbol,
+                      rkGlobalParameters.showColor ? RKNoColor : "",
+                      rkGlobalParameters.showColor ? RKSalmonColor : "",
+                      product->desc.name,
+                      rkGlobalParameters.showColor ? RKNoColor : "");
         RKLog(summary);
         product++;
     }

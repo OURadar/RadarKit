@@ -292,18 +292,18 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 			 gC = exp(wd * sum(wn(:) .* log(abs(C))))
 
 			 */
-			j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
+			j = snprintf(line, RKMaximumStringLength, "  X%s = [", p == 0 ? "h" : "v");
 			for (k = 0; k < gateCount; k++) {
 				for (n = 0; n < pulseCount; n++) {
-					j += sprintf(line + j, " %.0f%+.0fj,", X[n].i[k], X[n].q[k]);
+					j += snprintf(line + j, RKMaximumStringLength - j, " %.0f%+.0fj,", X[n].i[k], X[n].q[k]);
 				}
-				j += sprintf(line + j - 1, ";...\n") - 1;
+				j += snprintf(line + j - 1, RKMaximumStringLength - j + 1, ";...\n") - 1;
 			}
-			sprintf(line + j - 5, "]\n");
+			snprintf(line + j - 5, RKMaximumStringLength - j + 5, "]\n");
 			printf("%s\n", line);
 
 			for (n = 0; n < pulseCount; n++) {
-				sprintf(variable, "  X[%d] = ", n);
+				snprintf(variable, sizeof(variable), "  X[%d] = ", n);
 				RKShowVecIQZ(variable, &X[n], gateShown);
 			}
 			printf(RKEOL);
@@ -311,12 +311,12 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 			RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                              // var(X, 1) in MATLAB
 			printf(RKEOL);
 			for (k = 0; k < lagCount; k++) {
-				sprintf(variable, "  R[%d] = ", k);
+				snprintf(variable, sizeof(variable), "  R[%d] = ", k);
 				RKShowVecIQZ(variable, &space->R[p][k], gateShown);
 			}
 			printf(RKEOL);
 			for (k = 0; k < lagCount; k++) {
-				sprintf(variable, " aR[%d] = ", k);
+				snprintf(variable, sizeof(variable), " aR[%d] = ", k);
 				RKShowVecFloat(variable, space->aR[p][k], gateShown);
 			}
 			printf(RKEOL);
@@ -324,7 +324,7 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 		printf(rkGlobalParameters.showColor ? UNDERLINE("Cross-channel:") "\n" : "Cross-channel:\n");
 		for (j = 0; j < 2 * lagCount - 1; j++) {
 			k = j - lagCount + 1;
-			sprintf(variable, " C[%2d] = ", k);
+			snprintf(variable, sizeof(variable), " C[%2d] = ", k);
 			RKShowVecIQZ(variable, &space->C[j], gateShown);                                 // xcorr(Xh, Xv, 'unbiased') in MATLAB
 		}
 		printf(RKEOL);
@@ -332,11 +332,11 @@ int RKMultiLag(RKMomentScratch *space, RKPulse **pulses, const uint16_t pulseCou
 		printf(RKEOL);
 
 		for (p = 0; p < 2; p++) {
-			sprintf(variable, "    S%s = ", p == 0 ? "h" : "v");
+			snprintf(variable, sizeof(variable), "    S%s = ", p == 0 ? "h" : "v");
 			RKShowVecFloat(variable, space->S[p], gateShown);
-			sprintf(variable, "    V%s = ", p == 0 ? "h" : "v");
+			snprintf(variable, sizeof(variable), "    V%s = ", p == 0 ? "h" : "v");
 			RKShowVecFloat(variable, space->V[p], gateShown);
-			sprintf(variable, "    W%s = ", p == 0 ? "h" : "v");
+			snprintf(variable, sizeof(variable), "    W%s = ", p == 0 ? "h" : "v");
 			RKShowVecFloat(variable, space->W[p], gateShown);
 		}
 

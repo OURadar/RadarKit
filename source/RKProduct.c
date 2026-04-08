@@ -147,28 +147,28 @@ int RKProductInitFromSweep(RKProduct *product, const RKSweep *sweep) {
     memcpy(product->header.waveformName, sweep->header.config.waveformName, sizeof(RKName));
     switch (sweep->header.config.momentMethod) {
         case RKMomentMethodPulsePair:
-            sprintf(product->header.momentMethod, "pulse_pair");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "pulse_pair");
             break;
         case RKMomentMethodPulsePairHop:
-            sprintf(product->header.momentMethod, "pulse_pair_hop");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "pulse_pair_hop");
             break;
         case RKMomentMethodPulsePairATSR:
-            sprintf(product->header.momentMethod, "pulse_pair_atsr");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "pulse_pair_atsr");
             break;
         case RKMomentMethodMultiLag2:
-            sprintf(product->header.momentMethod, "multilag_2");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "multilag_2");
             break;
         case RKMomentMethodMultiLag3:
-            sprintf(product->header.momentMethod, "multilag_3");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "multilag_3");
             break;
         case RKMomentMethodMultiLag4:
-            sprintf(product->header.momentMethod, "multilag_4");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "multilag_4");
             break;
         case RKMomentMethodSpectralMoment:
-            sprintf(product->header.momentMethod, "spectral_moment");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "spectral_moment");
             break;
         default:
-            sprintf(product->header.momentMethod, "user_defined");
+            snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "user_defined");
             break;
     }
     memcpy(product->header.vcpDefinition, sweep->header.config.vcpDefinition, sizeof(RKMaximumCommandLength));

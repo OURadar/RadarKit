@@ -62,7 +62,7 @@ void *exitAfterAWhile(void *s) {
     exit(EXIT_SUCCESS);
 }
 
-#pragma mark - Local Functions
+#pragma region Local Functions
 
 static void showHelp(void) {
     char name[] = __FILE__;
@@ -208,7 +208,7 @@ static void setSystemLevel(UserParams *user, const int level) {
             user->desc.rayBufferDepth = 400;
             user->desc.pulseToRayRatio = 2;
             user->prf = 10;
-            sprintf(user->momentMethod, "PulsePair");
+            snprintf(user->momentMethod, sizeof(user->momentMethod), "PulsePair");
             break;
         case 1:
             // Minimum: 5-MHz
@@ -291,7 +291,7 @@ static void handleSignals(int signal) {
     }
 }
 
-#pragma mark - User Parameters
+#pragma region User Parameters
 
 UserParams *systemPreferencesInit(void) {
     // A structure unit that encapsulates command line user parameters, Zero out everything and set some default parameters
@@ -707,7 +707,7 @@ static void updateSystemPreferencesFromCommandLine(UserParams *user, int argc, c
     user->desc.pulseCapacity = user->gateCount;
 }
 
-#pragma mark - Radar Parameters
+#pragma region Radar Parameters
 
 static void updateRadarParameters(UserParams *systemPreferences) {
 
@@ -834,7 +834,7 @@ static void handlePreferenceFileUpdate(void *in) {
     updateRadarParameters(user);
 }
 
-#pragma mark - Main
+#pragma region Main
 
 //
 //
@@ -923,20 +923,20 @@ int main(int argc, const char **argv) {
         // Build a series of options for transceiver, only pass down the relevant parameters
         k = 0;
         if (systemPreferences->fs) {
-            k += sprintf(cmd + k, " F %.0f", systemPreferences->fs);
+            k += snprintf(cmd + k, sizeof(cmd) - k, " F %.0f", systemPreferences->fs);
         }
         if (systemPreferences->prf) {
             if (systemPreferences->sprt > 1) {
-                k += sprintf(cmd + k, " f %.0f,%d", systemPreferences->prf, systemPreferences->sprt);
+                k += snprintf(cmd + k, sizeof(cmd) - k, " f %.0f,%d", systemPreferences->prf, systemPreferences->sprt);
             } else {
-                k += sprintf(cmd + k, " f %.0f", systemPreferences->prf);
+                k += snprintf(cmd + k, sizeof(cmd) - k, " f %.0f", systemPreferences->prf);
             }
         }
         if (systemPreferences->gateCount) {
-            k += sprintf(cmd + k, " g %d", systemPreferences->gateCount);
+            k += snprintf(cmd + k, sizeof(cmd) - k, " g %d", systemPreferences->gateCount);
         }
         if (systemPreferences->sleepInterval) {
-            k += sprintf(cmd + k, " z %d", systemPreferences->sleepInterval);
+            k += snprintf(cmd + k, sizeof(cmd) - k, " z %d", systemPreferences->sleepInterval);
         }
         if (systemPreferences->verbose > 1) {
             RKLog("Transceiver input = '%s' (%d / %s)", cmd + 1, k, RKIntegerToCommaStyleString(RKMaximumStringLength));

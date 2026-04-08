@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKWebSocket.h>
 
-#pragma mark - Static Methods
+#pragma region Static Methods
 
 static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     static char argument[80] = {0};
@@ -233,7 +233,7 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     } else if (W->verbose) {
         RKLog("%s Using default secret %s ...\n", W->name, W->secret);
     }
-    sprintf(buf,
+    snprintf(buf, sizeof(W->frame),
         "GET %s HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
@@ -311,7 +311,7 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     return 0;
 }
 
-#pragma mark - Internal run loops
+#pragma region Internal run loops
 
 void *transporter(void *in) {
     RKWebSocket *W = (RKWebSocket *)in;
@@ -584,7 +584,7 @@ void *transporter(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     char *c, *n;
@@ -592,9 +592,9 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
 
     RKWebSocket *W = (RKWebSocket *)malloc(sizeof(RKWebSocket));
     memset(W, 0, sizeof(RKWebSocket));
-    sprintf(W->name, "%s<  RKWebSocket  >%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorWebSocket) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(W->name, sizeof(W->name), "%s<  RKWebSocket  >%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorWebSocket) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     pthread_attr_init(&W->threadAttributes);
     pthread_mutex_init(&W->lock, NULL);
 
@@ -626,7 +626,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
             strncpy(W->host, c, len);
             W->host[len] = '\0';
         } else {
-            sprintf(W->host, "localhost");
+            snprintf(W->host, sizeof(W->host), "localhost");
         }
         if (W->useSSL == false && W->port == 443) {
             W->useSSL = true;
@@ -634,7 +634,7 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path) {
     }
     // Look for pathway
     if (path == NULL || strlen(path) == 0) {
-        sprintf(W->path, "/");
+        snprintf(W->path, sizeof(W->path), "/");
     } else {
         strcpy(W->path, path);
     }
@@ -671,7 +671,7 @@ void RKWebSocketFree(RKWebSocket *W) {
     free(W);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKWebSocketSetPath(RKWebSocket *W, const char *path) {
     strcpy(W->path, path);
@@ -705,7 +705,7 @@ void RKWebSocketSetErrorHandler(RKWebSocket *W, void (*routine)(RKWebSocket *)) 
     W->onError = routine;
 }
 
-#pragma mark - Methods
+#pragma region Methods
 
 void RKWebSocketStart(RKWebSocket *W) {
     if (W->verbose) {

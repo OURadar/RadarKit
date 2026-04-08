@@ -11,7 +11,7 @@
 
 #include <RadarKit/RKSteerEngine.h>
 
-#pragma mark - Internal Functions
+#pragma region Internal Functions
 
 static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
     char *string;
@@ -29,7 +29,7 @@ static void RKSteerEngineUpdateStatusString(RKSteerEngine *engine) {
 
     RKScanAction *action = &engine->actions[engine->actionIndex];
 
-    sprintf(string, "%s%s%s %08d   %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f @ %+5.1f°/s [%6.2f]   %s%s%s   %s%s%s",
+    snprintf(string, RKStatusStringLength, "%s%s%s %08d   %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f @ %+5.1f°/s [%6.2f]   %s%s%s   %s%s%s",
         V->progress & RKScanProgressSetup  ? (rkGlobalParameters.showColor ? RKMonokaiOrange "S" RKNoColor : "S") : ".",
         V->progress & RKScanProgressMiddle ? "m" : ".",
         V->progress & RKScanProgressEnd    ? (rkGlobalParameters.showColor ? RKMonokaiGreen "E" RKNoColor : "E") : ".",
@@ -183,7 +183,7 @@ int RKSteerEngineAddPPISet(RKSteerEngine *engine, const char *string, const bool
     }
 
     if (n < 2) {
-        sprintf(response, "NAK. Ill-defined PPI array.   n = %d" RKEOL, n);
+        snprintf(response, RKStatusStringLength, "NAK. Ill-defined PPI array.   n = %d" RKEOL, n);
         return RKResultIncompleteScanDescription;
     }
 
@@ -207,7 +207,7 @@ int RKSteerEngineAddPPISet(RKSteerEngine *engine, const char *string, const bool
     while (token != NULL && k++ < 100) {
         const int m = sscanf(token, "%f", &elevationStart);
         if (m == 0) {
-            sprintf(response, "NAK. Ill-defined PPI component.   m = %d" RKEOL, m);
+            snprintf(response, RKStatusStringLength, "NAK. Ill-defined PPI component.   m = %d" RKEOL, m);
             return RKResultIncompleteScanDescription;
         }
         elevationEnd = elevationStart;
@@ -236,7 +236,7 @@ int RKSteerEngineAddRHISet(RKSteerEngine *engine, const char *string, const bool
     }
 
     if (n < 2) {
-        sprintf(response, "NAK. Ill-defined RHI array.   n = %d" RKEOL, n);
+        snprintf(response, RKStatusStringLength, "NAK. Ill-defined RHI array.   n = %d" RKEOL, n);
         return RKResultIncompleteScanDescription;
     }
 
@@ -251,7 +251,7 @@ int RKSteerEngineAddRHISet(RKSteerEngine *engine, const char *string, const bool
 
     int m = sscanf(elevations, "%f,%f", &elevationStart, &elevationEnd);
     if (m < 2) {
-        sprintf(response, "NAK. Ill-defined RHI component.   m = %d" RKEOL, m);
+        snprintf(response, RKStatusStringLength, "NAK. Ill-defined RHI component.   m = %d" RKEOL, m);
         return RKResultIncompleteScanDescription;
     }
 
@@ -262,7 +262,7 @@ int RKSteerEngineAddRHISet(RKSteerEngine *engine, const char *string, const bool
     while (token != NULL && k++ < 180) {
         const int o = sscanf(token, "%f", &azimuthStart);
         if (o == 0) {
-            sprintf(response, "NAK. Ill-defined RHI component.   o = %d" RKEOL, m);
+            snprintf(response, RKStatusStringLength, "NAK. Ill-defined RHI component.   o = %d" RKEOL, m);
             return RKResultIncompleteScanDescription;
             break;
         }
@@ -283,7 +283,7 @@ int RKSteerEngineAddRHISet(RKSteerEngine *engine, const char *string, const bool
     return RKResultSuccess;
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *steerer(void *_in) {
     RKSteerEngine *engine = (RKSteerEngine *)_in;
@@ -379,15 +379,15 @@ static void *steerer(void *_in) {
 
 // Implementations
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKSteerEngine *RKSteerEngineInit(void) {
     RKSteerEngine *engine = (RKSteerEngine *)malloc(sizeof(RKSteerEngine));
     memset(engine, 0, sizeof(RKSteerEngine));
-    sprintf(engine->name, "%s<PositionSteerer>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSteerEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
-    sprintf(engine->vcpHandle.name, "VCP");
+    snprintf(engine->name, sizeof(engine->name), "%s<PositionSteerer>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSteerEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->vcpHandle.name, sizeof(engine->vcpHandle.name), "VCP");
     engine->vcpHandle.option = RKScanOptionRepeat;
     engine->vcpHandle.active = false;
     engine->vcpHandle.toc = 3;
@@ -400,7 +400,7 @@ void RKSteerEngineFree(RKSteerEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKSteerEngineSetVerbose(RKSteerEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -430,7 +430,7 @@ void RKSteerEngineSetScanRepeat(RKSteerEngine *engine, const bool value) {
     }
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKSteerEngineStart(RKSteerEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
@@ -944,9 +944,9 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
     switch (motion) {
         case RKSteerCommandSummary:
-            s = sprintf(response, "ACK. Volume summary retrieved.\n\n");
+            s = snprintf(response, RKMaximumStringLength, "ACK. Volume summary retrieved.\n\n");
             s += RKSteerEngineScanSummary(engine, response + s);
-            sprintf(response + s, "%s   %s   %s   %s" RKEOL,
+            snprintf(response + s, RKMaximumStringLength - s, "%s   %s   %s   %s" RKEOL,
                 RKVariableInString("active", &engine->vcpHandle.active, RKValueTypeBool),
                 RKVariableInString("sweepCount", &engine->vcpHandle.sweepCount, RKValueTypeUInt16),
                 RKVariableInString("onDeckCount", &engine->vcpHandle.onDeckCount, RKValueTypeUInt16),
@@ -955,28 +955,28 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
             break;
         case RKSteerCommandScanStart:
             RKSteerEngineArmSweeps(engine, RKScanRepeatForever);
-            s = sprintf(response, "ACK. Volume starts.\n\n");
+            s = snprintf(response, RKMaximumStringLength, "ACK. Volume starts.\n\n");
             s += RKSteerEngineScanSummary(engine, response + s);
-            sprintf(response + s - 1, RKEOL);
+            snprintf(response + s - 1, RKMaximumStringLength - s + 1, RKEOL);
             return RKResultSuccess;
             break;
         case RKSteerCommandScanStop:
             RKSteerEngineStopSweeps(engine);
-            sprintf(response, "ACK. Volume stopped." RKEOL);
+            snprintf(response, RKMaximumStringLength, "ACK. Volume stopped." RKEOL);
             return RKResultSuccess;
             break;
         case RKSteerCommandScanNext:
             RKSteerEngineNextHitter(engine);
-            sprintf(response, "ACK. Volume advanced." RKEOL);
+            snprintf(response, RKMaximumStringLength, "ACK. Volume advanced." RKEOL);
             return RKResultSuccess;
             break;
         case RKSteerCommandClear:
             RKSteerEngineClearSweeps(engine);
-            sprintf(response, "ACK. Sweeps cleared." RKEOL);
+            snprintf(response, RKMaximumStringLength, "ACK. Sweeps cleared." RKEOL);
             return RKResultSuccess;
             break;
         case RKSteerCommandNone:
-            sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
+            snprintf(response, RKMaximumStringLength, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
             return RKResultFailedToExecuteCommand;
             break;
         default:
@@ -991,7 +991,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
             RKSteerEngineSetScanRepeat(engine, true);
         }
     } else {
-        sprintf(response, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
+        snprintf(response, RKMaximumStringLength, "NAK. Command '%s' not understood. Ask my father." RKEOL, string);
         RKLog("%s Non-motion commands should not be here.\n", engine->name);
         return RKResultFailedToExecuteCommand;
     }
@@ -1043,7 +1043,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
             // parse in the usual way
             const int m = sscanf(token, "%3s %255s %255s %255s", symbol, args[0], args[1], args[2]);
             if (m < 2) {
-                sprintf(response, "NAK. Ill-defined volume component.   m = %d" RKEOL, m);
+                snprintf(response, RKMaximumStringLength, "NAK. Ill-defined volume component.   m = %d" RKEOL, m);
                 valid = false;
                 break;
             }
@@ -1063,7 +1063,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
                 }
                 const int o = sscanf(args[0], "%f,%f", &elevationStart, &elevationEnd);
                 if (o < 1) {
-                    sprintf(response, "NAK. Ill-defined volume component.   o = %d" RKEOL, o);
+                    snprintf(response, RKMaximumStringLength, "NAK. Ill-defined volume component.   o = %d" RKEOL, o);
                     valid = false;
                     break;
                 } else if (o == 1) {
@@ -1071,7 +1071,7 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
                 }
                 const int p = sscanf(args[1], "%f,%f", &azimuthStart, &azimuthEnd);
                 if (p < 1) {
-                    sprintf(response, "NAK. Ill-defined volume component.   p = %d" RKEOL, o);
+                    snprintf(response, RKMaximumStringLength, "NAK. Ill-defined volume component.   p = %d" RKEOL, o);
                     valid = false;
                     break;
                 } else if (p == 1) {
@@ -1119,13 +1119,13 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
 
     } else {
 
-        sprintf(response, "NAK. Nothing. Ask my father." RKEOL);
+        snprintf(response, RKMaximumStringLength, "NAK. Nothing. Ask my father." RKEOL);
         return RKResultFailedToSetVCP;
 
     }
 
     if (valid) {
-        size_t s = sprintf(response, "ACK. Volume created.\n\n");
+        size_t s = snprintf(response, RKMaximumStringLength, "ACK. Volume created.\n\n");
 
         char *summary = response + s;
 
@@ -1135,15 +1135,15 @@ int RKSteerEngineExecuteString(RKSteerEngine *engine, const char *string, char _
             RKSteerEngineNextHitter(engine);
         }
 
-        int k = sprintf(engine->dump, "New volume\n");
+        int k = snprintf(engine->dump, RKMaximumStringLength, "New volume\n");
         RKIndentCopy(engine->dump + k, summary, 31);
         RKStripTail(engine->dump + k);
         RKLog("%s %s\n", engine->name, engine->dump);
 
         if (immediatelyDo) {
-            sprintf(response + s, "ACK. Volume in effect." RKEOL);
+            snprintf(response + s, RKMaximumStringLength - s, "ACK. Volume in effect." RKEOL);
         } else {
-            sprintf(response + s, "ACK. Volume in queue." RKEOL);
+            snprintf(response + s, RKMaximumStringLength - s, "ACK. Volume in queue." RKEOL);
         }
     } else {
         return RKResultFailedToSetVCP;
@@ -1195,7 +1195,7 @@ static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int co
     int av = 0;
     const int n = 1;
     for (int i = 0; i < count; i++) {
-        // int w1 = sprintf(format, "%.1f", scanPaths[i].azimuthSlew);
+        // int w1 = snprintf(format, sizeof(format), "%.1f", scanPaths[i].azimuthSlew);
         // int w2 = RKDigitWidth(scanPaths[i].azimuthSlew, 1);
         // printf("w1 = %d   w2 = %d\n", w1, w2);
         es = MAX(es, RKDigitWidth(scanPaths[i].elevationStart, n));
@@ -1208,47 +1208,47 @@ static size_t makeSweepMessage(RKScanPath *scanPaths, char *string, const int co
 
     // Second pass, actually print it out using the consitent column width
     for (int i = 0; i < count; i++) {
-        k += sprintf(string + k, "%-7s %d : %s%s%s",
-                     prefix,
-                     i,
-                     rkGlobalParameters.statusColor ? RKMonokaiPink : "",
-                     scanModeString(scanPaths[i].mode),
-                     rkGlobalParameters.statusColor ? RKNoColor : "");
+        k += snprintf(string + k, RKMaximumStringLength - k, "%-7s %d : %s%s%s",
+                      prefix,
+                      i,
+                      rkGlobalParameters.statusColor ? RKMonokaiPink : "",
+                      scanModeString(scanPaths[i].mode),
+                      rkGlobalParameters.statusColor ? RKNoColor : "");
         switch (scanPaths[i].mode) {
             case RKScanModePPI:
-                sprintf(format, " EL %%%d.1f°   AZ %%%d.1f°   @ %%%d.1f°/s\n", es, ae, av);
-                k += sprintf(string + k, format,
-                             scanPaths[i].elevationStart,
-                             scanPaths[i].azimuthEnd,
-                             scanPaths[i].azimuthSlew);
+                snprintf(format, sizeof(format), " EL %%%d.1f°   AZ %%%d.1f°   @ %%%d.1f°/s\n", es, ae, av);
+                k += snprintf(string + k, RKMaximumStringLength - k, format,
+                              scanPaths[i].elevationStart,
+                              scanPaths[i].azimuthEnd,
+                              scanPaths[i].azimuthSlew);
                 break;
             case RKScanModeRHI:
-                sprintf(format, " AZ %%%d.1f°   EZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", as, es, ee, ev);
-                k += sprintf(string + k, format,
-                             scanPaths[i].azimuthStart,
-                             scanPaths[i].elevationStart,
-                             scanPaths[i].elevationEnd,
-                             scanPaths[i].elevationSlew);
+                snprintf(format, sizeof(format), " AZ %%%d.1f°   EZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", as, es, ee, ev);
+                k += snprintf(string + k, RKMaximumStringLength - k, format,
+                              scanPaths[i].azimuthStart,
+                              scanPaths[i].elevationStart,
+                              scanPaths[i].elevationEnd,
+                              scanPaths[i].elevationSlew);
                 break;
             case RKScanModeSector:
-                sprintf(format, " EL %%%d.1f°   AZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", es, as, ae, av);
-                k += sprintf(string + k, format,
-                             scanPaths[i].elevationStart,
-                             scanPaths[i].azimuthStart,
-                             scanPaths[i].azimuthEnd,
-                             scanPaths[i].azimuthSlew);
+                snprintf(format, sizeof(format), " EL %%%d.1f°   AZ %%%d.1f°-%%%d.1f°   @ %%%d.1f°/s\n", es, as, ae, av);
+                k += snprintf(string + k, RKMaximumStringLength - k, format,
+                              scanPaths[i].elevationStart,
+                              scanPaths[i].azimuthStart,
+                              scanPaths[i].azimuthEnd,
+                              scanPaths[i].azimuthSlew);
                 break;
             case RKScanModePoint:
-                k += sprintf(string + k, " EL %.1f°   AZ %.1f°\n",
-                             scanPaths[i].elevationStart,
-                             scanPaths[i].azimuthStart);
+                k += snprintf(string + k, RKMaximumStringLength - k, " EL %.1f°   AZ %.1f°\n",
+                              scanPaths[i].elevationStart,
+                              scanPaths[i].azimuthStart);
                 break;
             default:
-                k += sprintf(string + k, " EL %.1f° / %.1f°   AZ %.1f° / %.1f°\n",
-                             scanPaths[i].elevationStart,
-                             scanPaths[i].elevationEnd,
-                             scanPaths[i].azimuthStart,
-                             scanPaths[i].azimuthEnd);
+                k += snprintf(string + k, RKMaximumStringLength - k, " EL %.1f° / %.1f°   AZ %.1f° / %.1f°\n",
+                              scanPaths[i].elevationStart,
+                              scanPaths[i].elevationEnd,
+                              scanPaths[i].azimuthStart,
+                              scanPaths[i].azimuthEnd);
                 break;
         }
     }
@@ -1266,7 +1266,7 @@ size_t RKSteerEngineScanSummary(RKSteerEngine *engine, char *string) {
         s += makeSweepMessage(V->inTheHoleScans, string + s, V->inTheHoleCount, RKScanLine);
     }
     if (V->sweepCount == 0 && V->onDeckCount == 0 && V->inTheHoleCount == 0) {
-        s = sprintf(string, "(empty)\n");
+        s = snprintf(string, 9, "(empty)\n");
     }
     return s;
 }

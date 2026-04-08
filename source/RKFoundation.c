@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKFoundation.h>
 
-#pragma mark - Basic Arithmetics
+#pragma region Basic Arithmetics
 
 RKComplex RKComplexAdd(const RKComplex a, const RKComplex b) {
     return (RKComplex){a.i + b.i, a.q + b.q};
@@ -88,7 +88,7 @@ RKComplex RKComplexArraySum(RKComplex *src, const int count) {
     return sum;
 }
 
-#pragma mark - Logger
+#pragma region Logger
 
 int RKLog(const char *whatever, ...) {
     if (rkGlobalParameters.stream == NULL && rkGlobalParameters.logfile[0] == 0) {
@@ -103,15 +103,21 @@ int RKLog(const char *whatever, ...) {
     // Local memory
     static char *msg = NULL;
     static char *filename = NULL;
+    static char *colored_whatever = NULL;
     static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
     pthread_mutex_lock(&lock);
 
-    if (msg == NULL || filename == NULL) {
+    if (msg == NULL || filename == NULL || colored_whatever == NULL) {
         msg = (char *)malloc(RKMaximumStringLength * sizeof(char));
         filename = (char *)malloc(RKMaximumPathLength * sizeof(char));
-        if (msg == NULL || filename == NULL) {
+        colored_whatever = (char *)malloc(2 * RKMaximumStringLength * sizeof(char));
+        if (msg == NULL || filename == NULL || colored_whatever == NULL) {
             fprintf(stderr, "Error allocating memory in RKLog().\n");
+            if (colored_whatever) {
+                free(colored_whatever);
+                colored_whatever = NULL;
+            }
             if (filename) {
                 free(filename);
                 filename = NULL;
@@ -132,10 +138,18 @@ int RKLog(const char *whatever, ...) {
             #if defined(DEBUG_MUTEX_DESTROY)
             fprintf(stderr, "Deallocating RKLog's internal stuff ...\n");
             #endif
-            free(msg);
-            msg = NULL;
-            free(filename);
-            filename = NULL;
+            if (msg) {
+                free(msg);
+                msg = NULL;
+            }
+            if (filename) {
+                free(filename);
+                filename = NULL;
+            }
+            if (colored_whatever) {
+                free(colored_whatever);
+                colored_whatever = NULL;
+            }
         }
         va_end(args);
         pthread_mutex_unlock(&lock);
@@ -155,14 +169,14 @@ int RKLog(const char *whatever, ...) {
     }
     if (rkGlobalParameters.logTimeOnly) {
         if (whatever[0] == '>') {
-            i += sprintf(msg, "             ");
+            i += snprintf(msg, RKMaximumStringLength, "             ");
         } else {
             i += strftime(msg, 16, "%T", &tm);
-            i += sprintf(msg + i, ".%03d ", (int)utc.tv_usec / 1000);
+            i += snprintf(msg + i, RKMaximumStringLength - i, ".%03d ", (int)utc.tv_usec / 1000);
         }
     } else {
         if (whatever[0] == '>') {
-            i += sprintf(msg, "                    ");
+            i += snprintf(msg, RKMaximumStringLength, "                    ");
         } else {
             i += strftime(msg, 32, "%Y/%m/%d %T ", &tm);
         }
@@ -179,8 +193,6 @@ int RKLog(const char *whatever, ...) {
     char *anchor = (char *)whatever + (whatever[0] == '>' ? 1 : 0);
 
     if (has_ok || has_info || has_error || has_warning) {
-        char *colored_whatever = (char *)malloc(RKMaximumPacketSize * sizeof(char));
-
         if (has_ok) {
             len = (size_t)(okay_str - anchor);
         } else if (has_info) {
@@ -201,29 +213,28 @@ int RKLog(const char *whatever, ...) {
 
         if (rkGlobalParameters.showColor) {
             if (has_ok) {
-                len += sprintf(colored_whatever + len, RKGreenColor);
+                len += snprintf(colored_whatever + len, RKMaximumStringLength - len, RKGreenColor);
             } else if (has_info) {
-                len += sprintf(colored_whatever + len, RKSkyBlueColor);
+                len += snprintf(colored_whatever + len, RKMaximumStringLength - len, RKSkyBlueColor);
             } else if (has_error) {
-                len += sprintf(colored_whatever + len, RKRedColor);
+                len += snprintf(colored_whatever + len, RKMaximumStringLength - len, RKRedColor);
             } else if (has_warning) {
-                len += sprintf(colored_whatever + len, RKYellowColor);
+                len += snprintf(colored_whatever + len, RKMaximumStringLength - len, RKYellowColor);
             }
         }
         strncpy(colored_whatever + len, anchor, RKMaximumStringLength - len);
 
-        i += vsprintf(msg + i, colored_whatever, args);
+        i += vsnprintf(msg + i, RKMaximumStringLength - i, colored_whatever, args);
 
         if (rkGlobalParameters.showColor) {
             if (msg[i - 1] == '\n') {
                 i--;
             }
-            sprintf(msg + i, RKNoColor "\n");
+            snprintf(msg + i, RKMaximumStringLength - i, RKNoColor "\n");
         }
 
-        free(colored_whatever);
     } else {
-        vsprintf(msg + i, anchor, args);
+        vsnprintf(msg + i, RKMaximumStringLength - i, anchor, args);
     }
 
     if (whatever[strlen(whatever) - 1] != '\n') {
@@ -239,20 +250,19 @@ int RKLog(const char *whatever, ...) {
     FILE *logFileID = NULL;
     if (rkGlobalParameters.dailyLog) {
         if (strlen(rkGlobalParameters.logFolder)) {
-            i = sprintf(filename, "%s/%s-", rkGlobalParameters.logFolder, rkGlobalParameters.program);
+            i = snprintf(filename, RKMaximumPathLength, "%s/%s-", rkGlobalParameters.logFolder, rkGlobalParameters.program);
         } else if (strlen(rkGlobalParameters.rootDataFolder)) {
-            i = sprintf(filename, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
+            i = snprintf(filename, RKMaximumPathLength, "%s/log/%s-", rkGlobalParameters.rootDataFolder, rkGlobalParameters.program);
         } else {
             i = 0;
         }
-        strftime(filename + i, RKNameLength - i, "%Y%m%d.log", &tm);
+        strftime(filename + i, RKMaximumPathLength - i, "%Y%m%d.log", &tm);
         if (i) {
             RKPreparePath(filename);
         }
         logFileID = fopen(filename, "a");
     } else if (strlen(rkGlobalParameters.logfile)) {
         if (strlen(rkGlobalParameters.logFolder)) {
-            //sprintf(filename, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
             i = snprintf(filename, RKMaximumPathLength, "%s/%s", rkGlobalParameters.logFolder, rkGlobalParameters.logfile);
             if (i < 0) {
                 fprintf(stderr, "Failed to generate filename.\n");
@@ -320,7 +330,7 @@ size_t RKFileGetSize(FILE *fid) {
     return size;
 }
 
-#pragma mark - Global Preferences
+#pragma region Global Preferences
 
 void RKSetStatusColor(const bool color) {
     rkGlobalParameters.statusColor = color;
@@ -361,7 +371,7 @@ int RKSetRootDataFolder(const char *folder) {
     if (strlen(folder) > RKMaximumPathLength - 64) {
         fprintf(stderr, "WARNING. Very long root folder.\n");
     }
-    sprintf(rkGlobalParameters.rootDataFolder, "%s", folder);
+    snprintf(rkGlobalParameters.rootDataFolder, sizeof(rkGlobalParameters.rootDataFolder), "%s", folder);
     size_t len = strlen(rkGlobalParameters.rootDataFolder);
     while (rkGlobalParameters.rootDataFolder[len - 1] == '/') {
         len--;
@@ -394,7 +404,7 @@ int RKSetLogfileToDefault(void) {
 
 char *RKVersionString(void) {
     static char versionString[16];
-    sprintf(versionString, "%s", __RKVersion__);
+    snprintf(versionString, sizeof(versionString), "%s", __RKVersion__);
     return versionString;
 }
 
@@ -421,7 +431,7 @@ RKValueType RKGuessValueType(const char *source) {
     return type;
 }
 
-#pragma mark - Filename / String
+#pragma region Filename / String
 
 int RKIsFilenameStandard(const char *filename) {
     // Check if filename is something like [prefix]-[datetime]-[scan]-[symbol]
@@ -610,9 +620,9 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
         if (strstr(ent->d_name, prefix) && strstr(ent->d_name, ext)) {
             // printf("  -> %s/%s\n", path, ent->d_name);
             if (strcmp(".", path)) {
-                sprintf(list[k++], "%s/%s", path, ent->d_name);
+                snprintf(list[k++], sizeof(list[k++]), "%s/%s", path, ent->d_name);
             } else {
-                sprintf(list[k++], "%s", ent->d_name);
+                snprintf(list[k++], sizeof(list[k++]), "%s", ent->d_name);
             }
         }
     }
@@ -651,7 +661,7 @@ int RKListFilesWithSamePrefix(const char *filename, char list[][RKMaximumPathLen
     return valid;
 }
 
-#pragma mark - Screen Output
+#pragma region Screen Output
 
 void RKShowBanner(const char *title, const char *color) {
     int k;
@@ -666,23 +676,23 @@ void RKShowBanner(const char *title, const char *color) {
     char padding[terminalSize.ws_col + 32];
 
     if (rkGlobalParameters.showColor) {
-        k = sprintf(padding, "%s", color);
+        k = snprintf(padding, sizeof(padding), "%s", color);
     } else {
         k = 0;
     }
     k += RKStringCenterized(padding + k, "", terminalSize.ws_col);
     if (rkGlobalParameters.showColor) {
-        sprintf(padding + k, RKNoColor);
+        snprintf(padding + k, sizeof(padding) - k, RKNoColor);
     }
 
     if (rkGlobalParameters.showColor) {
-        k = sprintf(message, "%s", color);
+        k = snprintf(message, sizeof(message), "%s", color);
     } else {
         k = 0;
     }
     k += RKStringCenterized(message + k, title, terminalSize.ws_col);
     if (rkGlobalParameters.showColor) {
-        sprintf(message + k, RKNoColor);
+        snprintf(message + k, sizeof(message) - k, RKNoColor);
     }
 
     printf("%s\n", padding);
@@ -826,10 +836,10 @@ void RKShowVecFloatLowPrecision(const char *name, const float *p, const int n) {
     int i = 0;
     int k = 0;
     char str[RKMaximumStringLength];
-    k = sprintf(str, "%s[", name);
+    k = snprintf(str, RKMaximumStringLength, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20)
-        k += sprintf(str + k, "%6.2f ", p[i++]);
-    sprintf(str + k, "]");
+        k += snprintf(str + k, RKMaximumStringLength - k, "%6.2f ", p[i++]);
+    snprintf(str + k, RKMaximumStringLength - k, "]");
     printf("%s\n", str);
 }
 
@@ -837,62 +847,52 @@ void RKShowVecFloat(const char *name, const float *p, const int n) {
     int i = 0;
     int k = 0;
     char str[RKMaximumStringLength];
-    k = sprintf(str, "%s[", name);
+    k = snprintf(str, RKMaximumStringLength, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20)
-        k += sprintf(str + k, "%+9.4f           ", p[i++]);
-    sprintf(str + k, "]");
+        k += snprintf(str + k, RKMaximumStringLength - k, "%+9.4f           ", p[i++]);
+    snprintf(str + k, RKMaximumStringLength - k, "]");
     printf("%s\n", str);
 }
 
 void RKShowVecIQZ(const char *name, const RKIQZ *p, const int n) {
     int i = 0;
     int k = 0;
-    char *str = (char *)malloc(RKMaximumStringLength);
-    if (str == NULL) {
-        fprintf(stderr, "Error allocating string buffer.\n");
-        return;
-    }
-    k = sprintf(str, "%s[", name);
+    char str[RKMaximumStringLength];
+    k = snprintf(str, RKMaximumStringLength, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20) {
-        k += sprintf(str + k, "%+9.4f%+9.4fi ", p->i[i], p->q[i]);
+        k += snprintf(str + k, RKMaximumStringLength - k, "%+9.4f%+9.4fi ", p->i[i], p->q[i]);
         i++;
     }
-    sprintf(str + k, "]");
+    snprintf(str + k, RKMaximumStringLength - k, "]");
     printf("%s\n", str);
     fflush(stdout);
-    free(str);
 }
 
 void RKShowVecComplex(const char *name, const RKComplex *p, const int n) {
     int i = 0;
     int k = 0;
-    char *str = (char *)malloc(RKMaximumStringLength);
-    if (str == NULL) {
-        fprintf(stderr, "Error allocating string buffer.\n");
-        return;
-    }
-    k = sprintf(str, "%s[", name);
+    char str[RKMaximumStringLength];
+    k = snprintf(str, RKMaximumStringLength, "%s[", name);
     while (i < n && k < RKMaximumStringLength - 20) {
-        k += sprintf(str + k, "%+9.4f%+9.4fi ", p[i].i, p[i].q);
+        k += snprintf(str + k, RKMaximumStringLength - k, "%+9.4f%+9.4fi ", p[i].i, p[i].q);
         i++;
     }
-    sprintf(str + k, "]");
+    snprintf(str + k, RKMaximumStringLength - k, "]");
     printf("%s\n", str);
     fflush(stdout);
-    free(str);
 }
 
 static char *arrayHeadTailElementsInString(const float *d, const int length) {
     int c, k = 0;
     static char line[1024];
     for (c = 0; c < 3; c++) {
-        k += sprintf(line + k, " %6.2f", *(d + c));
+        k += snprintf(line + k, RKMaximumStringLength - k, " %6.2f", *(d + c));
     }
     if (length > 6) {
-        k += sprintf(line + k, " ...");
+        k += snprintf(line + k, RKMaximumStringLength - k, " ...");
     }
     for (c = MAX(3, length - 3); c < length; c++) {
-        k += sprintf(line + k, " %6.2f", *(d + c));
+        k += snprintf(line + k, RKMaximumStringLength - k, " %6.2f", *(d + c));
     }
     return line;
 }
@@ -907,23 +907,23 @@ void RKShowArray(const RKFloat *data, const char *letter, const int width, const
     memset(ii, ' ', i); ii[i] = '\0';
     memset(ww, ' ', i + w); ww[i + w] = '\0';
 
-    k = sprintf(text, "%s%s%8s%s = [ %s ]\n",
+    k = snprintf(text, sizeof(text), "%s%s%8s%s = [ %s ]\n",
                 ii,
                 rkGlobalParameters.showColor ? RKYellowColor : "",
                 letter,
                 rkGlobalParameters.showColor ? RKNoColor : "",
                 arrayHeadTailElementsInString(data, width));
     if (height > 1) {
-        k += sprintf(text + k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + width, width));
+        k += snprintf(text + k, sizeof(text) - k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + width, width));
     }
     if (height > 2) {
-        k += sprintf(text + k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + 2 * width, width));
+        k += snprintf(text + k, sizeof(text) - k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + 2 * width, width));
     }
     if (height > 6) {
-        k += sprintf(text + k, "%s   [     ...\n", ww);
+        k += snprintf(text + k, sizeof(text) - k, "%s   [     ...\n", ww);
     }
     for (j = MAX(3, height - 3); j < height; j++) {
-        k += sprintf(text + k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + j * width, width));
+        k += snprintf(text + k, sizeof(text) - k, "%s   [ %s ]\n", ww, arrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
 }
@@ -932,13 +932,13 @@ static char *complexArrayHeadTailElementsInString(const RKComplex *d, const int 
     int c, k = 0;
     static char line[1024];
     for (c = 0; c < 3; c++) {
-        k += sprintf(line + k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
+        k += snprintf(line + k, sizeof(line) - k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
     }
     if (length > 6) {
-        k += sprintf(line + k, " ...");
+        k += snprintf(line + k, sizeof(line) - k, " ...");
     }
     for (c = MAX(3, length - 3); c < length; c++) {
-        k += sprintf(line + k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
+        k += snprintf(line + k, sizeof(line) - k, " %+6.2f%+6.2fi", d[c].i, d[c].q);
     }
     return line;
 }
@@ -953,23 +953,23 @@ void RKShowComplexArray(const RKComplex *data, const char *letter, const int wid
     memset(ii, ' ', i); ii[i] = '\0';
     memset(ww, ' ', i + w); ww[i + w] = '\0';
 
-    k = sprintf(text, "%s%s%8s%s = [ %s ]\n",
-                ii,
-                rkGlobalParameters.showColor ? RKYellowColor : "",
-                letter,
-                rkGlobalParameters.showColor ? RKNoColor : "",
-                complexArrayHeadTailElementsInString(data, width));
+    k = snprintf(text, sizeof(text), "%s%s%8s%s = [ %s ]\n",
+                 ii,
+                 rkGlobalParameters.showColor ? RKYellowColor : "",
+                 letter,
+                 rkGlobalParameters.showColor ? RKNoColor : "",
+                 complexArrayHeadTailElementsInString(data, width));
     if (height > 1) {
-        k += sprintf(text + k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + width, width));
+        k += snprintf(text + k, sizeof(text) - k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + width, width));
     }
     if (height > 2) {
-        k += sprintf(text + k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + 2 * width, width));
+        k += snprintf(text + k, sizeof(text) - k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + 2 * width, width));
     }
     if (height > 6) {
-        k += sprintf(text + k, "%s   [     ...\n", ww);
+        k += snprintf(text + k, sizeof(text) - k, "%s   [     ...\n", ww);
     }
     for (j = MAX(3, height - 3); j < height; j++) {
-        k += sprintf(text + k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + j * width, width));
+        k += snprintf(text + k, sizeof(text) - k, "%s   [ %s ]\n", ww, complexArrayHeadTailElementsInString(data + j * width, width));
     }
     printf("%s", text);
 }
@@ -1177,12 +1177,16 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
         *destination = '\0';
         return 0;
     }
+    if (strlen(source) > RKNameLength - 16) {
+        RKLog("Warning. RKPrettyStringFromValueString() source is too long.");
+        return snprintf(destination, RKNameLength, "%s", source);
+    }
     RKValueType type = RKGuessValueType(source);
     if (type == RKValueTypeNull) {
         if (rkGlobalParameters.showColor) {
-            return sprintf(destination, RKMonokaiGreen "null" RKNoColor);
+            return snprintf(destination, RKNameLength, RKMonokaiGreen "null" RKNoColor);
         }
-        return sprintf(destination, "null");
+        return snprintf(destination, RKNameLength, "null");
     }
     if (type == RKValueTypeDictionary) {
         return RKPrettyStringFromKeyValueString(destination, source);
@@ -1192,23 +1196,23 @@ size_t RKPrettyStringFromValueString(char *destination, const char *source) {
     }
     if (type == RKValueTypeBool || type == RKValueTypeInt || type == RKValueTypeFloat) {
         if (rkGlobalParameters.showColor) {
-            return sprintf(destination, RKMonokaiPurple "%s" RKNoColor, source);
+            return snprintf(destination, RKNameLength, RKMonokaiPurple "%s" RKNoColor, source);
         }
-        return sprintf(destination, "%s", source);
+        return snprintf(destination, RKNameLength, "%s", source);
     }
     if (type == RKValueTypeString) {
         if (rkGlobalParameters.showColor) {
-            return sprintf(destination, RKMonokaiYellow "%s" RKNoColor, source);
+            return snprintf(destination, RKNameLength, RKMonokaiYellow "%s" RKNoColor, source);
         }
-        return sprintf(destination, "%s", source);
+        return snprintf(destination, RKNameLength, "%s", source);
     }
     if (type == RKValueTypeVariable) {
         if (rkGlobalParameters.showColor) {
-            return sprintf(destination, RKMonokaiOrange "%s" RKNoColor, source);
+            return snprintf(destination, RKNameLength, RKMonokaiOrange "%s" RKNoColor, source);
         }
-        return sprintf(destination, "%s", source);
+        return snprintf(destination, RKNameLength, "%s", source);
     }
-    return sprintf(destination, "%s", source);
+    return snprintf(destination, RKNameLength, "%s", source);
 }
 
 size_t RKPrettyStringSizeEstimate(const char *source) {
@@ -1233,6 +1237,10 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
         *destination = '\0';
         return 0;
     }
+    if (strlen(source) > RKMaximumStringLength - 256) {
+        RKLog("Warning. RKPrettyStringFromKeyValueString() source is too long.");
+        return snprintf(destination, RKMaximumStringLength, "%s", source);
+    }
     size_t s = RKPrettyStringSizeEstimate(source);
 
     char *c = (char *)source;
@@ -1243,11 +1251,11 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     if (b == '{' || b == '[') {
         c++;
         char *element = malloc(s);
-        size = sprintf(destination, (b == '{') ? "{" : "[");
+        size = snprintf(destination, RKMaximumStringLength, (b == '{') ? "{" : "[");
         do {
             c = RKJSONGetElement(element, c);
             if (size > 1) {
-                size += sprintf(destination + size, ", ");
+                size += snprintf(destination + size, RKMaximumStringLength - size, ", ");
             }
             if (b == '{') {
                 size += RKPrettyStringFromKeyValueString(destination + size, element);
@@ -1255,7 +1263,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
                 size += RKPrettyStringFromValueString(destination + size, element);
             }
         } while (strlen(element) > 0 && strlen(c) > 1);
-        size += sprintf(destination + size, (b == '{') ? "}" : "]");
+        size += snprintf(destination + size, RKMaximumStringLength - size, (b == '{') ? "}" : "]");
         #ifdef _SHOW_PRETTY_STRING_MEMORY
         printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
                (int)size, (int)s,
@@ -1279,9 +1287,9 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     RKPrettyStringFromValueString(value, t);
 
     if (rkGlobalParameters.showColor) {
-        size = sprintf(destination, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
+        size = snprintf(destination, RKMaximumStringLength, "%s " RKMonokaiPink "=" RKNoColor " %s", key, value);
     } else {
-        size = sprintf(destination, "%s = %s", key, value);
+        size = snprintf(destination, RKMaximumStringLength, "%s = %s", key, value);
     }
     #ifdef _SHOW_PRETTY_STRING_MEMORY
     printf(RKMonokaiGreen "RKPrettyStringFromKeyValueString()" RKNoColor " size = %d / %d / %s %s\n",
@@ -1297,7 +1305,7 @@ size_t RKPrettyStringFromKeyValueString(char *destination, const char *source) {
     return size;
 }
 
-#pragma mark - Buffer
+#pragma region Buffer
 
 void *RKMalloc(const uint32_t capacity) {
     void *mem = NULL;
@@ -1330,7 +1338,7 @@ void RKZeroTailIQZ(RKIQZ *data, const uint32_t capacity, const uint32_t origin) 
     memset(&data->q[origin], 0, (capacity - origin) * sizeof(RKFloat));
 }
 
-#pragma mark - Pulse
+#pragma region Pulse
 
 //
 // Each slot should have a structure as follows
@@ -1603,7 +1611,7 @@ void RKPulseDuplicateSplitComplex(RKPulse *pulse) {
     }
 }
 
-#pragma mark - Ray
+#pragma region Ray
 
 //
 // Each slot should have a structure as follows
@@ -1777,9 +1785,9 @@ RKFileMonitor *RKFileMonitorInit(const char *filename, void (*routine)(void *), 
         return NULL;
     }
     memset(engine, 0, sizeof(RKFileMonitor));
-    sprintf(engine->name, "%s<UserFileMonitor>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMisc) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<UserFileMonitor>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMisc) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated | RKEngineStateProperlyWired | RKEngineStateActivating;
     engine->memoryUsage = sizeof(RKFileMonitor);
     strncpy(engine->filename, filename, RKMaximumPathLength);
@@ -1802,7 +1810,7 @@ int RKFileMonitorFree(RKFileMonitor *engine) {
     return RKSimpleEngineFree((RKSimpleEngine *)engine);
 }
 
-#pragma mark - Moment Stuff
+#pragma region Moment Stuff
 
 // Convert string description from command string to a number of uint64_t type
 RKStream RKStreamFromString(const char * string) {
@@ -1954,52 +1962,52 @@ int RKStringFromStream(char *string, RKStream stream) {
     int j = 0;
     // Exclusive part from RKStreamStatusMask
     if (stream & RKStreamStatusPulses) {
-        j += sprintf(string + j, "1");
+        j += snprintf(string + j, RKMaximumStringLength - j, "1");
     } else if (stream & RKStreamStatusRays) {
-        j += sprintf(string + j, "2");
+        j += snprintf(string + j, RKMaximumStringLength - j, "2");
     } else if (stream & RKStreamStatusPositions) {
-        j += sprintf(string + j, "3");
+        j += snprintf(string + j, RKMaximumStringLength - j, "3");
     } else if (stream & RKStreamStatusEngines) {
-        j += sprintf(string + j, "4");
+        j += snprintf(string + j, RKMaximumStringLength - j, "4");
     } else if (stream & RKStreamStatusBuffers) {
-        j += sprintf(string + j, "5");
+        j += snprintf(string + j, RKMaximumStringLength - j, "5");
     } else if (stream & RKStreamASCIIArtZ) {
-        j += sprintf(string + j, "6");
+        j += snprintf(string + j, RKMaximumStringLength - j, "6");
     } else if (stream & RKStreamASCIIArtHealth) {
-        j += sprintf(string + j, "7");
+        j += snprintf(string + j, RKMaximumStringLength - j, "7");
     }
-    if (stream & RKStreamStatusProcessorStatus) { j += sprintf(string + j, "!"); }
-    if (stream & RKStreamHealthInJSON)          { j += sprintf(string + j, "h"); }
-    if (stream & RKStreamDisplayZ)              { j += sprintf(string + j, "z"); }
-    if (stream & RKStreamProductZ)              { j += sprintf(string + j, "Z"); }
-    if (stream & RKStreamDisplayV)              { j += sprintf(string + j, "v"); }
-    if (stream & RKStreamProductV)              { j += sprintf(string + j, "V"); }
-    if (stream & RKStreamDisplayW)              { j += sprintf(string + j, "w"); }
-    if (stream & RKStreamProductW)              { j += sprintf(string + j, "W"); }
-    if (stream & RKStreamDisplayD)              { j += sprintf(string + j, "d"); }
-    if (stream & RKStreamProductD)              { j += sprintf(string + j, "D"); }
-    if (stream & RKStreamDisplayP)              { j += sprintf(string + j, "p"); }
-    if (stream & RKStreamProductP)              { j += sprintf(string + j, "P"); }
-    if (stream & RKStreamDisplayR)              { j += sprintf(string + j, "r"); }
-    if (stream & RKStreamProductR)              { j += sprintf(string + j, "R"); }
-    if (stream & RKStreamDisplayK)              { j += sprintf(string + j, "k"); }
-    if (stream & RKStreamProductK)              { j += sprintf(string + j, "K"); }
-    if (stream & RKStreamDisplaySh)             { j += sprintf(string + j, "s"); }
-    if (stream & RKStreamProductSh)             { j += sprintf(string + j, "S"); }
-    if (stream & RKStreamDisplaySv)             { j += sprintf(string + j, "t"); }
-    if (stream & RKStreamProductSv)             { j += sprintf(string + j, "T"); }
-    if (stream & RKStreamDisplayIQ)             { j += sprintf(string + j, "i"); }
-    if (stream & RKStreamProductIQ)             { j += sprintf(string + j, "I"); }
-    if (stream & RKStreamSweepZ)                { j += sprintf(string + j, "Y"); }
-    if (stream & RKStreamSweepV)                { j += sprintf(string + j, "U"); }
-    if (stream & RKStreamSweepW)                { j += sprintf(string + j, "X"); }
-    if (stream & RKStreamSweepD)                { j += sprintf(string + j, "C"); }
-    if (stream & RKStreamSweepP)                { j += sprintf(string + j, "O"); }
-    if (stream & RKStreamSweepR)                { j += sprintf(string + j, "Q"); }
-    if (stream & RKStreamSweepK)                { j += sprintf(string + j, "J"); }
-    if (stream & RKStreamSweepQ)                { j += sprintf(string + j, "H"); }
-    if (stream & RKStreamSweepSh)               { j += sprintf(string + j, "A"); }
-    if (stream & RKStreamSweepSv)               { j += sprintf(string + j, "B"); }
+    if (stream & RKStreamStatusProcessorStatus) { j += snprintf(string + j, RKMaximumStringLength - j, "!"); }
+    if (stream & RKStreamHealthInJSON)          { j += snprintf(string + j, RKMaximumStringLength - j, "h"); }
+    if (stream & RKStreamDisplayZ)              { j += snprintf(string + j, RKMaximumStringLength - j, "z"); }
+    if (stream & RKStreamProductZ)              { j += snprintf(string + j, RKMaximumStringLength - j, "Z"); }
+    if (stream & RKStreamDisplayV)              { j += snprintf(string + j, RKMaximumStringLength - j, "v"); }
+    if (stream & RKStreamProductV)              { j += snprintf(string + j, RKMaximumStringLength - j, "V"); }
+    if (stream & RKStreamDisplayW)              { j += snprintf(string + j, RKMaximumStringLength - j, "w"); }
+    if (stream & RKStreamProductW)              { j += snprintf(string + j, RKMaximumStringLength - j, "W"); }
+    if (stream & RKStreamDisplayD)              { j += snprintf(string + j, RKMaximumStringLength - j, "d"); }
+    if (stream & RKStreamProductD)              { j += snprintf(string + j, RKMaximumStringLength - j, "D"); }
+    if (stream & RKStreamDisplayP)              { j += snprintf(string + j, RKMaximumStringLength - j, "p"); }
+    if (stream & RKStreamProductP)              { j += snprintf(string + j, RKMaximumStringLength - j, "P"); }
+    if (stream & RKStreamDisplayR)              { j += snprintf(string + j, RKMaximumStringLength - j, "r"); }
+    if (stream & RKStreamProductR)              { j += snprintf(string + j, RKMaximumStringLength - j, "R"); }
+    if (stream & RKStreamDisplayK)              { j += snprintf(string + j, RKMaximumStringLength - j, "k"); }
+    if (stream & RKStreamProductK)              { j += snprintf(string + j, RKMaximumStringLength - j, "K"); }
+    if (stream & RKStreamDisplaySh)             { j += snprintf(string + j, RKMaximumStringLength - j, "s"); }
+    if (stream & RKStreamProductSh)             { j += snprintf(string + j, RKMaximumStringLength - j, "S"); }
+    if (stream & RKStreamDisplaySv)             { j += snprintf(string + j, RKMaximumStringLength - j, "t"); }
+    if (stream & RKStreamProductSv)             { j += snprintf(string + j, RKMaximumStringLength - j, "T"); }
+    if (stream & RKStreamDisplayIQ)             { j += snprintf(string + j, RKMaximumStringLength - j, "i"); }
+    if (stream & RKStreamProductIQ)             { j += snprintf(string + j, RKMaximumStringLength - j, "I"); }
+    if (stream & RKStreamSweepZ)                { j += snprintf(string + j, RKMaximumStringLength - j, "Y"); }
+    if (stream & RKStreamSweepV)                { j += snprintf(string + j, RKMaximumStringLength - j, "U"); }
+    if (stream & RKStreamSweepW)                { j += snprintf(string + j, RKMaximumStringLength - j, "X"); }
+    if (stream & RKStreamSweepD)                { j += snprintf(string + j, RKMaximumStringLength - j, "C"); }
+    if (stream & RKStreamSweepP)                { j += snprintf(string + j, RKMaximumStringLength - j, "O"); }
+    if (stream & RKStreamSweepR)                { j += snprintf(string + j, RKMaximumStringLength - j, "Q"); }
+    if (stream & RKStreamSweepK)                { j += snprintf(string + j, RKMaximumStringLength - j, "J"); }
+    if (stream & RKStreamSweepQ)                { j += snprintf(string + j, RKMaximumStringLength - j, "H"); }
+    if (stream & RKStreamSweepSh)               { j += snprintf(string + j, RKMaximumStringLength - j, "A"); }
+    if (stream & RKStreamSweepSv)               { j += snprintf(string + j, RKMaximumStringLength - j, "B"); }
     string[j] = '\0';
     return j;
 }
@@ -2404,7 +2412,7 @@ RKProductDesc RKGetNextProductDescription(RKProductList *list) {
     return desc;
 }
 
-#pragma mark - JSON Stuff
+#pragma region JSON Stuff
 
 size_t RKParseCommaDelimitedValues(void *valueStorage, RKValueType type, const size_t size, const char *valueString) {
     float *fv = (float *)valueStorage;
@@ -2516,7 +2524,7 @@ void RKMakeJSONStringFromControls(char *string, RKControl *controls, uint32_t co
         if (control->label[0] == '\0') {
             break;
         }
-        j += sprintf(string + j, "{\"Label\": \"%s\", \"Command\": \"%s\"}, ", control->label, control->command);
+        j += snprintf(string + j, RKMaximumStringLength - j, "{\"Label\": \"%s\", \"Command\": \"%s\"}, ", control->label, control->command);
         control++;
     }
     if (j > 2) {
@@ -2767,7 +2775,7 @@ RKIdentifier RKIdentifierFromString(const char *string) {
     return (RKIdentifier)strtouq(string, NULL, 10);
 }
 
-#pragma mark - Simple Engine Free
+#pragma region Simple Engine Free
 
 int RKSimpleEngineFree(RKSimpleEngine *engine) {
     if (engine->state & RKEngineStateDeactivating) {
@@ -2795,7 +2803,7 @@ int RKSimpleEngineFree(RKSimpleEngine *engine) {
     return RKResultSuccess;
 }
 
-#pragma mark - Command Queue
+#pragma region Command Queue
 
 RKCommandQueue *RKCommandQueueInit(const uint16_t depth, const bool nonblocking) {
     RKCommandQueue *queue = (RKCommandQueue *)malloc(sizeof(RKCommandQueue));
@@ -2859,11 +2867,11 @@ char *RKPedestalActionString(const RKScanAction *action) {
     for (i = 0; i < 2; i++) {
         if (RKInstructIsNone(action->mode[i])) {
             if (i == 0) {
-                sprintf(string, "(none)");
+                snprintf(string, sizeof(string), "(none)");
             }
         } else {
             if (length) {
-                length += sprintf(string + length, "   ");
+                length += snprintf(string + length, sizeof(string) - length, "   ");
             }
             length += snprintf(string + length, sizeof(string) - length, "%s", RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
             length += snprintf(string + length, sizeof(string) - length, " %s",

@@ -17,7 +17,7 @@
 // static void *pulseEngineCore(void *);
 // static void *pulseWatcher(void *);
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 static void RKPulseEngineUpdateStatusString(RKPulseEngine *engine) {
     int i, c;
@@ -143,7 +143,7 @@ static void RKEngineShowBuffer(fftwf_complex *in, const int n) {
 
 #endif
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 // void RKBuiltInConfigChangeCallback(RKCompressionScratch *scratch) {
 //     RKWaveform *waveform = scratch->config->waveform;
@@ -314,12 +314,12 @@ static void *pulseEngineCore(void *_in) {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "P%02d", c);
+        k += snprintf(name + k, sizeof(name) - k, "P%02d", c);
     } else {
-        k += sprintf(name + k, "P%d", c);
+        k += snprintf(name + k, sizeof(name) - k, "P%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        snprintf(name + k, sizeof(name) - k, RKNoColor);
     }
     snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
@@ -971,7 +971,7 @@ static void *pulseWatcherV1(void *_in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKPulseEngine *RKPulseEngineInit(void) {
     RKPulseEngine *engine = (RKPulseEngine *)malloc(sizeof(RKPulseEngine));
@@ -980,9 +980,9 @@ RKPulseEngine *RKPulseEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKPulseEngine));
-    sprintf(engine->name, "%s<PulseCompressor>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseCompressionEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<PulseCompressor>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseCompressionEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     // engine->configChangeCallback = &RKBuiltInConfigChangeCallback;
@@ -1010,7 +1010,7 @@ void RKPulseEngineFree(RKPulseEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKPulseEngineSetVerbose(RKPulseEngine *engine, const int verb) {
     engine->verbose = verb;
@@ -1302,7 +1302,7 @@ int RKPulseEngineSetFilterTo11(RKPulseEngine *engine) {
     return RKPulseEngineSetFilter(engine, filter, anchor);
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKPulseEngineStart(RKPulseEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
@@ -1500,15 +1500,15 @@ void RKPulseEngineFilterSummary(RKPulseEngine *engine) {
         w1 += (w1 / 3);
         w2 += (w2 / 3);
         w3 += (w3 / 3);
-        sprintf(format, ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   g:%%s%%+5.2f dB%%s, i:%%%ds, o:%%%ds, d:%%%ds\n",
-                (int)log10f((float)engine->filterGroupCount) + 1,
-                (int)log10f((float)engine->filterCounts[i]) + 1,
-                (int)log10f((float)engine->filterCounts[i]) + 1,
-                w0 + 1,
-                (int)log10f(nfft) + 1,
-                w1 + 1,
-                w2 + 1,
-                w3 + 1);
+        snprintf(format, sizeof(format), ">%%s - Filter[%%%dd][%%%dd/%%%dd] @ (%%%ds / %%%ds)   g:%%s%%+5.2f dB%%s, i:%%%ds, o:%%%ds, d:%%%ds\n",
+                 (int)log10f((float)engine->filterGroupCount) + 1,
+                 (int)log10f((float)engine->filterCounts[i]) + 1,
+                 (int)log10f((float)engine->filterCounts[i]) + 1,
+                 w0 + 1,
+                 (int)log10f(nfft) + 1,
+                 w1 + 1,
+                 w2 + 1,
+                 w3 + 1);
         for (j = 0; j < engine->filterCounts[i]; j++) {
             RKLog(format,
                   engine->name, i, j, engine->filterCounts[i],

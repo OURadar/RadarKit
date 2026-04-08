@@ -283,7 +283,7 @@ static void tukey(double *w, const int n, const double r) {
     }
 }
 
-#pragma mark - Methods
+#pragma region Methods
 
 //
 // RKWindowMake(buffer, RKWindowTypeHann, 20) creates a Hann window of length 20

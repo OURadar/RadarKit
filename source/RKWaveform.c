@@ -59,7 +59,7 @@ static void RKWaveformCalculateGain(RKWaveform *waveform, RKWaveformGain gainCal
     }
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKWaveform *RKWaveformInitWithCountAndDepth(const uint8_t count, const uint32_t depth) {
     int k;
@@ -105,7 +105,7 @@ RKWaveform *RKWaveformInitFromSampleArrays(const RKComplex **samples, const uint
     waveform->fs = 1.0f;
     waveform->type = RKWaveformTypeIsComplex;
     if (name == NULL) {
-        sprintf(waveform->name, "custom");
+        snprintf(waveform->name, RKNameLength, "custom");
     } else {
         snprintf(waveform->name, RKNameLength, "%s", name);
     }
@@ -201,7 +201,7 @@ RKWaveform *RKWaveformInitAsFakeTimeFrequencyMultiplexing(void) {
 
     waveform->fs = 80.0e6;
     waveform->type = RKWaveformTypeIsComplex | RKWaveformTypeTimeFrequencyMultiplexing;
-    sprintf(waveform->name, "tfm-fake");
+    snprintf(waveform->name, RKNameLength, "tfm-fake");
 
     // Two filters per waveform
     waveform->filterCounts[0] = 2;
@@ -258,7 +258,7 @@ RKWaveform *RKWaveformInitAsTimeFrequencyMultiplexing(const double fs, const dou
     RKWaveformAppendWaveform(waveform, fill, 10);
     RKWaveformFree(fill);
     // Modify the name and properties
-    sprintf(waveform->name, "tfm");
+    snprintf(waveform->name, RKNameLength, "tfm");
     waveform->fc = fc;
     return waveform;
 }
@@ -277,7 +277,7 @@ RKWaveform *RKWaveformInitFromString(const char *string) {
     return NULL;
 }
 
-#pragma mark - Tile / Concatenate / Repeat
+#pragma region Tile / Concatenate / Repeat
 
 RKResult RKWaveformAppendWaveform(RKWaveform *waveform, const RKWaveform *appendix, const uint32_t transitionSamples) {
 
@@ -391,7 +391,7 @@ RKResult RKWaveformApplyWindowWithFactor(RKWaveform *waveform, const RKWindowTyp
     return RKWaveformApplyWindow(waveform, type, factor);
 }
 
-#pragma mark - Waveforms
+#pragma region Waveforms
 
 void RKWaveformOnes(RKWaveform *waveform) {
     int i, k;
@@ -430,22 +430,22 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     waveform->type = RKWaveformTypeIsComplex;
     if (bandwidth > 0.0) {
         waveform->type |= RKWaveformTypeLinearFrequencyModulation;
-        k = sprintf(waveform->name, "q%02.0f", 1.0e-6 * bandwidth);
+        k = snprintf(waveform->name, RKNameLength, "q%02.0f", 1.0e-6 * bandwidth);
     } else {
         waveform->type |= RKWaveformTypeSingleTone;
         if (fc > 0.0) {
-            k = sprintf(waveform->name, "t%02.0f", 1.0e-6 * fc);
+            k = snprintf(waveform->name, RKNameLength, "t%02.0f", 1.0e-6 * fc);
         } else {
-            k = sprintf(waveform->name, "s");
+            k = snprintf(waveform->name, RKNameLength, "s");
         }
     }
     const double pulsewidth = waveform->depth / waveform->fs;
     if (pulsewidth < 1.0e-6) {
-        sprintf(waveform->name + k, ".%.0f", round(10.0e6 * pulsewidth));
+        snprintf(waveform->name + k, RKNameLength - k, ".%.0f", round(10.0e6 * pulsewidth));
     } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
-        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
+        snprintf(waveform->name + k, RKNameLength - k, "%02.0f", 1.0e6 * pulsewidth);
     } else {
-        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
+        snprintf(waveform->name + k, RKNameLength - k, "%04.1f", 1.0e6 * pulsewidth);
     }
     waveform->filterCounts[0] = 1;
 
@@ -495,14 +495,14 @@ void RKWaveformFrequencyHops(RKWaveform *waveform, const double fs, const double
     // h200501   = 20 MHz,  5 hops, 1.0us
     // h200501.5 = 20 MHz,  5 hops, 1.5us
     // h200502   = 20 MHz,  5 hops, 2.0us
-    k = sprintf(waveform->name, "h%02.0f%02d", 1.0e-6 * bandwidth, count);
+    k = snprintf(waveform->name, RKNameLength, "h%02.0f%02d", 1.0e-6 * bandwidth, count);
     const double pulsewidth = waveform->depth / waveform->fs;
     if (pulsewidth < 1.0e-6) {
-        sprintf(waveform->name + k, ".%.0f", round(10.0e6 * pulsewidth));
+        snprintf(waveform->name + k, RKNameLength - k, ".%.0f", round(10.0e6 * pulsewidth));
     } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
-        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
+        snprintf(waveform->name + k, RKNameLength - k, "%02.0f", 1.0e6 * pulsewidth);
     } else {
-        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
+        snprintf(waveform->name + k, RKNameLength - k, "%04.1f", 1.0e6 * pulsewidth);
     }
 
     const double delta = waveform->count <= 2 ? 0.0 : bandwidth / (double)((waveform->count / 2) - 1);
@@ -559,14 +559,14 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
     // k200501   = 20 MHz,  5 hops, 1.0us
     // k200501.5 = 20 MHz,  5 hops, 1.5us
     // k200502   = 20 MHz,  5 hops, 2.0us
-    k = sprintf(waveform->name, "k%02.0f%02d", 1.0e-6 * bandwidth, count);
+    k = snprintf(waveform->name, RKNameLength, "k%02.0f%02d", 1.0e-6 * bandwidth, count);
     const double pulsewidth = waveform->depth / fs;
     if (pulsewidth < 1.0e-6) {
-        sprintf(waveform->name + k, ".%.1f", round(10.0e6 * pulsewidth));
+        snprintf(waveform->name + k, RKNameLength - k, ".%.1f", round(10.0e6 * pulsewidth));
     } else if (fmod(1.0e6 * pulsewidth, 1.0) < 0.1) {
-        sprintf(waveform->name + k, "%02.0f", 1.0e6 * pulsewidth);
+        snprintf(waveform->name + k, RKNameLength - k, "%02.0f", 1.0e6 * pulsewidth);
     } else {
-        sprintf(waveform->name + k, "%04.1f", 1.0e6 * pulsewidth);
+        snprintf(waveform->name + k, RKNameLength - k, "%04.1f", 1.0e6 * pulsewidth);
     }
 
     const double sub = bandwidth / (double)count;
@@ -618,7 +618,7 @@ void RKWaveformFrequencyHoppingChirp(RKWaveform *waveform, const double fs, cons
     RKWaveformNormalizeNoiseGain(waveform);
 }
 
-#pragma mark - Generic Manipulation
+#pragma region Generic Manipulation
 
 void RKWaveformConjugate(RKWaveform *waveform) {
     int i, k;
@@ -784,7 +784,7 @@ void RKWaveformDownConvert(RKWaveform *waveform) {
     free(s);
 }
 
-#pragma mark - Others
+#pragma region Others
 
 void RKWaveformNormalizeNoiseGain(RKWaveform *waveform) {
     int i, j, k;
@@ -855,27 +855,27 @@ void RKWaveformSummary(RKWaveform *waveform) {
     w2 += (w2 / 3);
     w3 += (w3 / 3);
     if (waveform->type & RKWaveformTypeFrequencyHoppingChirp) {
-        sprintf(format, ">Chirp[%%%dd] Filter[%%%dd/%%%dd] n:%%d l:%%%ds i:%%%ds, o:%%%ds, d:%%%ds, g:%%+.1f dB, s:%%+%d.2f dB  [ %%+%d.1f - %%+%d.1f ] MHz\n",
-                waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
-                waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0]) + 1,
-                (int)log10f((float)waveform->filterCounts[0]) + 1,
-                w0 + 1,
-                w1 + 1,
-                w2 + 1,
-                w3 + 1,
-                w4 + 5,
-                w5 + 4,
-                w5 + 4);
+        snprintf(format, sizeof(format), ">Chirp[%%%dd] Filter[%%%dd/%%%dd] n:%%d l:%%%ds i:%%%ds, o:%%%ds, d:%%%ds, g:%%+.1f dB, s:%%+%d.2f dB  [ %%+%d.1f - %%+%d.1f ] MHz\n",
+                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
+                 waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0]) + 1,
+                 (int)log10f((float)waveform->filterCounts[0]) + 1,
+                 w0 + 1,
+                 w1 + 1,
+                 w2 + 1,
+                 w3 + 1,
+                 w4 + 5,
+                 w5 + 4,
+                 w5 + 4);
     } else {
-        sprintf(format, ">Tone[%%%dd] Filter[%%%dd/%%%dd] l:%%%ds, i:%%%ds, o:%%%ds, d:%%%ds, g:%%+.1f dB, s:%%+%d.1f dB, f:%%+6.3f rad/sam\n",
-                waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
-                waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
-                (int)log10f((float)waveform->filterCounts[0]) + 1,
-                w0 + 1,
-                w1 + 1,
-                w2 + 1,
-                w3 + 1,
-                w4 + 5);
+        snprintf(format, sizeof(format), ">Tone[%%%dd] Filter[%%%dd/%%%dd] l:%%%ds, i:%%%ds, o:%%%ds, d:%%%ds, g:%%+.1f dB, s:%%+%d.1f dB, f:%%+6.3f rad/sam\n",
+                 waveform->count == 1 ? 1 : (int)log10f((float)waveform->count - 1) + 1,
+                 waveform->filterCounts[0] == 1 ? 1 : (int)log10f((float)waveform->filterCounts[0] - 1) + 1,
+                 (int)log10f((float)waveform->filterCounts[0]) + 1,
+                 w0 + 1,
+                 w1 + 1,
+                 w2 + 1,
+                 w3 + 1,
+                 w4 + 5);
     }
     // Now we show the summary
     RKLog("Waveform '%s' (%s)   depth = %d x %s   fc = %s MHz   fs = %s MHz   pw = %s us\n",
@@ -887,7 +887,6 @@ void RKWaveformSummary(RKWaveform *waveform) {
           RKFloatToCommaStyleString(1.0e-6 * waveform->fs),
           RKFloatToCommaStyleString(1.0e6 * waveform->depth / waveform->fs));
     // Go through the tones
-//    RKFloat vi, vq;
     for (k = 0; k < waveform->count; k++) {
         for (j = 0; j < waveform->filterCounts[k]; j++) {
             RKFloat g = 0.0f;
@@ -948,7 +947,7 @@ void RKWaveformSummary(RKWaveform *waveform) {
     }
 }
 
-#pragma mark - File
+#pragma region File
 
 // ----
 //  RKWaveFileGlobalHeader

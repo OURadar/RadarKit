@@ -13,7 +13,7 @@
 static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *);
 static void *pulseRecorder(void *);
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     int i;
@@ -39,7 +39,7 @@ static void RKRawDataRecorderUpdateStatusString(RKRawDataRecorder *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *pulseRecorder(void *in) {
     RKRawDataRecorder *engine = (RKRawDataRecorder *)in;
@@ -61,7 +61,7 @@ static void *pulseRecorder(void *in) {
     char *filename = engine->filename;
 
     RKFileHeader *fileHeader = RKFileHeaderInit();
-    sprintf(fileHeader->preface, "RadarKit/IQ");
+    snprintf(fileHeader->preface, sizeof(fileHeader->preface), "RadarKit/IQ");
     fileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
     memcpy(&fileHeader->desc, engine->radarDescription, sizeof(RKRadarDesc));
     fileHeader->bytes[sizeof(RKFileHeader) - 3] = 'E';
@@ -157,14 +157,14 @@ static void *pulseRecorder(void *in) {
             }
 
             // New file as .../[DATA_PATH]/20170119/PX-20170119-012345.123.rk[rc]
-            i = sprintf(filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
-            i += sprintf(filename + i, "%s/", RKTimevalToString(pulse->header.time, 800, false));
-            i += sprintf(filename + i, "%s-", engine->radarDescription->filePrefix);
-            i += sprintf(filename + i, "%s", RKTimevalToString(pulse->header.time, 863, false));
+            i = snprintf(filename, RKMaximumPathLength, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderIQ);
+            i += snprintf(filename + i, RKMaximumPathLength - i, "%s/", RKTimevalToString(pulse->header.time, 800, false));
+            i += snprintf(filename + i, RKMaximumPathLength - i, "%s-", engine->radarDescription->filePrefix);
+            i += snprintf(filename + i, RKMaximumPathLength - i, "%s", RKTimevalToString(pulse->header.time, 863, false));
             if (engine->rawDataType == RKRawDataTypeFromTransceiver) {
-                sprintf(filename + i, ".rkr");
+                snprintf(filename + i, RKMaximumPathLength - i, ".rkr");
             } else {
-                sprintf(filename + i, ".rkc");
+                snprintf(filename + i, RKMaximumPathLength - i, ".rkc");
             }
             fileHeader->dataType = engine->rawDataType;
 
@@ -280,7 +280,7 @@ static void *pulseRecorder(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKRawDataRecorder *RKRawDataRecorderInit(void) {
     RKRawDataRecorder *engine = (RKRawDataRecorder *)malloc(sizeof(RKRawDataRecorder));
@@ -289,8 +289,8 @@ RKRawDataRecorder *RKRawDataRecorderInit(void) {
         exit(EXIT_FAILURE);
     }
     memset(engine, 0, sizeof(RKRawDataRecorder));
-    sprintf(engine->name, "%s<RawDataRecorder>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorDataRecorder) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<RawDataRecorder>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorDataRecorder) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     RKRawDataRecorderSetCacheSize(engine, RKRawDataRecorderDefaultCacheSize);
     engine->state = RKEngineStateAllocated;
     engine->rawDataType = RKRawDataTypeAfterMatchedFilter;
@@ -307,7 +307,7 @@ void RKRawDataRecorderFree(RKRawDataRecorder *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKRawDataRecorderSetVerbose(RKRawDataRecorder *engine, const int verbose) {
     engine->verbose = verbose;
@@ -353,7 +353,7 @@ void RKRawDataRecorderSetCacheSize(RKRawDataRecorder *engine, uint32_t size) {
     engine->memoryUsage += engine->cacheSize;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKRawDataRecorderStart(RKRawDataRecorder *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

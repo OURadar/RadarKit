@@ -34,7 +34,7 @@
 
 #define rk_str(s) #s
 #define RADAR_VARIABLE_OFFSET(STRING, NAME) \
-sprintf(STRING, "                    radar->" rk_str(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
+snprintf(STRING, RKStatusStringLength, "                    radar->" rk_str(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
 typedef uint32_t RKRadarState;
 enum {

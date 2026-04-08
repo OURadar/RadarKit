@@ -61,7 +61,7 @@ static int healthRelayNaveenGreet(RKClient *client) {
     return RKResultSuccess;
 }
 
-#pragma mark - Protocol Implementations
+#pragma region Protocol Implementations
 
 // Implementations
 RKHealthRelay RKHealthRelayNaveenInit(RKRadar *radar, void *input) {
@@ -76,9 +76,9 @@ RKHealthRelay RKHealthRelayNaveenInit(RKRadar *radar, void *input) {
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
     me->node = RKHealthNodeUser0 + radar->userDeviceCount;
-    sprintf(desc.name, "%s<NaveenAutoRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayUser1 + radar->userDeviceCount) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(desc.name, RKNameLength, "%s<NaveenAutoRelay>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayUser1 + radar->userDeviceCount) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
@@ -127,7 +127,7 @@ int RKHealthRelayNaveenExec(RKHealthRelay input, const char * command, char _Nul
         return RKResultSuccess;
         // if (client->state != RKClientStateConnected) {
         //     RKLog("%s Health Relay not connected for command '%s'.\n", client->name, command);
-        //     sprintf(response, "NAK. Health Relay not connected." RKEOL);
+        //     snprintf(response, RKMaximumResponseLength, "NAK. Health Relay not connected." RKEOL);
         //     return RKResultClientNotConnected;
         // }
         // int s = 0;
@@ -145,7 +145,7 @@ int RKHealthRelayNaveenExec(RKHealthRelay input, const char * command, char _Nul
         //     }
         // }
         // if (responseIndex == me->responseIndex) {
-        //     sprintf(response, "NAK. Timeout." RKEOL);
+        //     snprintf(response, RKMaximumResponseLength, "NAK. Timeout." RKEOL);
         //     return RKResultTimeout;
         // }
         // strcpy(response, me->responses[responseIndex]);

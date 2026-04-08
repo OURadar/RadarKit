@@ -538,13 +538,13 @@ int main(int argc, const char **argv) {
                 arg->compressedOutput = true;
                 break;
             case 'd':
-                strcpy(arg->directory, optarg);
+                snprintf(arg->directory, sizeof(arg->directory), "%s", optarg);
                 break;
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
             case 'm':
-                strncpy(arg->momentMethod, optarg, 7);
+                snprintf(arg->momentMethod, sizeof(arg->momentMethod), "%s", optarg);
                 break;
             case 'n':
                 arg->output = false;
@@ -598,7 +598,7 @@ int main(int argc, const char **argv) {
             *c = '\0';
         }
     } else {
-        sprintf(arg->directory, "data");
+        snprintf(arg->directory, sizeof(arg->directory), "data");
     }
 
     if (arg->verbose > 1) {

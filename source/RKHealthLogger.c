@@ -8,9 +8,9 @@
 
 #include <RadarKit/RKHealthLogger.h>
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *healthLogger(void *in) {
     RKHealthLogger *engine = (RKHealthLogger *)in;
@@ -110,9 +110,9 @@ static void *healthLogger(void *in) {
                         filename);
                 }
             }
-            i = sprintf(filename, "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
+            i = snprintf(filename, sizeof(filename), "%s%s%s/", desc->dataPath, desc->dataPath[0] == '\0' ? "" : "/", RKDataFolderHealth);
             i += strftime(filename + i, 10, "%Y%m%d", gmtime(&unixTime));
-            i += sprintf(filename + i, "/%s-", desc->filePrefix);
+            i += snprintf(filename + i, sizeof(filename) - i, "/%s-", desc->filePrefix);
             strftime(filename + i, 22, "%Y%m%d-%H%M%S.json", gmtime(&unixTime));
             if (engine->record) {
                 RKPreparePath(filename);
@@ -148,14 +148,14 @@ static void *healthLogger(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKHealthLogger *RKHealthLoggerInit(void) {
     RKHealthLogger *engine = (RKHealthLogger *)malloc(sizeof(RKHealthLogger));
     memset(engine, 0, sizeof(RKHealthLogger));
-    sprintf(engine->name, "%s<HealthLogWriter>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthLogger) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<HealthLogWriter>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthLogger) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthLogger);
     engine->state = RKEngineStateAllocated;
     return engine;
@@ -168,7 +168,7 @@ void RKHealthLoggerFree(RKHealthLogger *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKHealthLoggerSetVerbose(RKHealthLogger *engine, const int verbose) {
     engine->verbose = verbose;
@@ -187,7 +187,7 @@ void RKHealthLoggerSetRecord(RKHealthLogger *engine, const bool value) {
     engine->record = value;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKHealthLoggerStart(RKHealthLogger *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

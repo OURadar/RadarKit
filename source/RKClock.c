@@ -27,7 +27,7 @@ RKClock *RKClockInitWithSize(const uint32_t size, const uint32_t stride) {
     clock->stride = stride;
     clock->autoSync = true;
     clock->highPrecision = true;
-    sprintf(clock->name, "<RKClock %p>", clock);
+    snprintf(clock->name, sizeof(clock->name), "<RKClock %p>", clock);
     clock->tBuffer = (struct timeval *)malloc(clock->size * sizeof(struct timeval));
     clock->xBuffer = (double *)malloc(clock->size * sizeof(double));
     clock->uBuffer = (double *)malloc(clock->size * sizeof(double));
@@ -57,19 +57,19 @@ RKClock *RKClockInit(void) {
 }
 
 void RKClockFree(RKClock *clock) {
-#if defined(CLOCK_CSV)
+    #if defined(CLOCK_CSV)
     char *c, filename[64];
     c = strstr(clock->name, "<");
-    sprintf(filename, "%s", c + 1);
+    snprintf(filename, sizeof(filename), "%s", c + 1);
     c = strstr(filename, ">");
-    sprintf(c, ".csv");
+    snprintf(c, sizeof(filename) - (c - filename), ".csv");
     RKLog("%s Dumping buffers ... j = %d  %s\n", clock->name, clock->index, filename);
     FILE *fid = fopen(filename, "w");
     for (int i = 0; i < clock->size; i++) {
         fprintf(fid, "%.9f, %.9f, %.9f, %.9f\n", clock->xBuffer[i], clock->yBuffer[i], clock->uBuffer[i], clock->zBuffer[i]);
     }
     fclose(fid);
-#endif
+    #endif
     free(clock->tBuffer);
     free(clock->xBuffer);
     free(clock->uBuffer);
@@ -78,11 +78,10 @@ void RKClockFree(RKClock *clock) {
     free(clock);
 }
 
-#pragma mark -
-#pragma mark Properties
+#pragma region Properties
 
 void RKClockSetName(RKClock *clock, const char *name) {
-    strncpy(clock->name, name, RKNameLength - 1);
+    snprintf(clock->name, sizeof(clock->name), "%s", name);
 }
 
 void RKClockSetVerbose(RKClock *clock, const int verbose) {
@@ -261,8 +260,7 @@ double RKClockGetTime(RKClock *clock, const double u, struct timeval *timeval) {
     return y + clock->offsetSeconds;
 }
 
-#pragma mark -
-#pragma mark Interactions
+#pragma region Interactions
 
 void RKClockReset(RKClock *clock) {
     if (clock->count == 0) {

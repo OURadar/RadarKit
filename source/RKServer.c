@@ -22,7 +22,7 @@ int RKDefaultTerminateHandler(RKOperator *);
 
 // Implementation
 
-#pragma mark -
+#pragma region
 #pragma mark Private functions
 
 void *RKServerRoutine(void *in) {
@@ -431,7 +431,7 @@ int RKDefaultWelcomeHandler(RKOperator *O) {
     int nlines = 2;
     char line_array[nlines][RKMaximumStringLength];
     snprintf(line_array[0], ii, "%s", c);
-    sprintf(line_array[1], __RKVersion__);
+    snprintf(line_array[1], sizeof(line_array[1]), "%s", __RKVersion__);
     size_t max_len = 0, len;
     for (ii = 0; ii < nlines; ii++) {
         len = strlen(line_array[ii]);
@@ -444,14 +444,14 @@ int RKDefaultWelcomeHandler(RKOperator *O) {
     memset(border, '-', max_len); border[max_len] = 0;
 
     // Compose the banner
-    sprintf(msg, "+---%s---+\n", border);
+    snprintf(msg, sizeof(msg), "+---%s---+\n", border);
     for (ii=0; ii<nlines; ii++) {
         memset(padded_line, ' ', max_len);
         len = strlen(line_array[ii]);
         memcpy(padded_line + (max_len - len) / 2, line_array[ii], len);
-        sprintf(msg + strlen(msg), "|   %s   |\n", padded_line);
+        snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), "|   %s   |\n", padded_line);
     }
-    sprintf(msg + strlen(msg),
+    snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg),
             "+---%s---+\n"
             "Hello there, my name is %s.\n"
             "What can I do for you?" RKEOL,
@@ -468,7 +468,7 @@ int RKDefaultTerminateHandler(RKOperator *O) {
     return 0;
 }
 
-#pragma mark -
+#pragma region
 #pragma mark Life Cycle
 
 RKServer *RKServerInit(void) {
@@ -499,7 +499,7 @@ void RKServerFree(RKServer *M) {
     free(M);
 }
 
-#pragma mark -
+#pragma region
 #pragma mark Delegate functions
 
 void RKServerSetName(RKServer *M, const char *name) {
@@ -543,7 +543,7 @@ void RKServerSetSharedResource(RKServer *M, void *resource) {
     M->userResource = resource;
 }
 
-#pragma mark - Server actions
+#pragma region Server actions
 
 void RKServerStart(RKServer *M) {
     M->state = RKServerStateOpening;
@@ -574,7 +574,7 @@ void RKServerStop(RKServer *M) {
     pthread_mutex_unlock(&M->lock);
 }
 
-#pragma mark - Miscellaneous functions
+#pragma region Miscellaneous functions
 
 ssize_t RKServerReceiveUserPayload(RKOperator *O, void *buffer, RKNetworkMessageFormat format) {
     int k = 0;

@@ -10,10 +10,10 @@
 
 static char *coloredBoolean(const bool value) {
     static char string[256];
-    sprintf(string, "%s%s%s",
-        rkGlobalParameters.showColor ? (value ? RKGreenColor : RKMonokaiRed) : "",
-        value ? "True" : "False",
-        rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(string, sizeof(string), "%s%s%s",
+             rkGlobalParameters.showColor ? (value ? RKGreenColor : RKMonokaiRed) : "",
+             value ? "True" : "False",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     return string;
 }
 
@@ -138,7 +138,7 @@ static void *hostWatcher(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKHostMonitor *RKHostMonitorInit(void) {
     RKHostMonitor *engine = (RKHostMonitor *)malloc(sizeof(RKHostMonitor));
@@ -147,9 +147,9 @@ RKHostMonitor *RKHostMonitorInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKHostMonitor));
-    sprintf(engine->name, "%s<InternetMonitor>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHostMonitor) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<InternetMonitor>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHostMonitor) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     RKHostMonitorAddHost(engine, "www.x.com");
     RKHostMonitorAddHost(engine, "www.ou.edu");
@@ -171,7 +171,7 @@ void RKHostMonitorFree(RKHostMonitor *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKHostMonitorSetVerbose(RKHostMonitor *engine, const int verbose) {
     engine->verbose = verbose;
@@ -191,15 +191,14 @@ void RKHostMonitorAddHost(RKHostMonitor *engine, const char *hostname) {
     }
     k = engine->hostCount++;
     engine->hosts = realloc(engine->hosts, engine->hostCount * sizeof(RKHostTarget));
-    strncpy(engine->hosts[k].name, hostname, RKNameLength - 1);
-    engine->hosts[k].name[RKNameLength - 1] = '\0';
+    snprintf(engine->hosts[k].name, RKNameLength, "%s", hostname);
     engine->hosts[k].known = true;
     engine->hosts[k].reachable = true;
     engine->memoryUsage = sizeof(RKHostMonitor) + engine->hostCount * sizeof(RKHostTarget);
     engine->state |= RKEngineStateProperlyWired;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKHostMonitorStart(RKHostMonitor *engine) {
     //RKLog("%s %d %s", engine->name, engine->workerCount, engine->hosts[0]);
