@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKHealthRelayTweeta.h>
 
-#pragma mark - Internal Functions
+#pragma region Internal Functions
 
 static int healthRelayTweetaRead(RKClient *client) {
     // The shared user resource pointer
@@ -69,11 +69,10 @@ static int healthRelayTweetaGreet(RKClient *client) {
     }
     RKHealthRelayTweeta *me = (RKHealthRelayTweeta *)client->userResource;
     RKLog("%s Tweeta @ %s:%d connected.   node = %s\n", client->name, client->hostIP, client->port, RKHealthNodeString(me->node));
-    RKLog("%s client->state %d %s\n", client->name, client->state, client->state & RKClientStateConnected ? "connected" : "not connected");
     return RKResultSuccess;
 }
 
-#pragma mark - Protocol Implementations
+#pragma region Protocol Implementations
 
 // Implementations
 
@@ -91,14 +90,14 @@ RKHealthRelay RKHealthRelayTweetaInit(RKRadar *radar, void *input) {
     memset(&desc, 0, sizeof(RKClientDesc));
     if (radar->healthRelay == NULL) {
         me->node = RKHealthNodeTweeta;
-        sprintf(desc.name, "%s<TweetaAutoRelay>%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
-                rkGlobalParameters.showColor ? RKNoColor : "");
+        snprintf(desc.name, RKNameLength, "%s<TweetaAutoRelay>%s",
+                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
+                 rkGlobalParameters.showColor ? RKNoColor : "");
     } else {
         me->node = RKHealthNodeUser0 + radar->userDeviceCount;
-        sprintf(desc.name, "%s<TweetaAutoRelay>%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayUser1 + radar->userDeviceCount) : "",
-                rkGlobalParameters.showColor ? RKNoColor : "");
+        snprintf(desc.name, RKNameLength, "%s<TweetaAutoRelay>%s",
+                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayUser1 + radar->userDeviceCount) : "",
+                 rkGlobalParameters.showColor ? RKNoColor : "");
     }
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
@@ -142,11 +141,11 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char _Null
         RKClientStop(client);
     } else {
         if (client->verbose) {
-            RKLog("%s Current client->state = 0x%08x   command = '%s'", client->name, client->state, command);
+            RKLog("%s Current client->state = %d   command = '%s'", client->name, client->state, command);
         }
         if (client->state != RKClientStateConnected) {
             RKLog("%s Health Relay not connected for command '%s'.\n", client->name, command);
-            sprintf(response, "NAK. Health Relay not connected." RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Health Relay not connected." RKEOL);
             return RKResultClientNotConnected;
         }
         int s = 0;
@@ -164,7 +163,7 @@ int RKHealthRelayTweetaExec(RKHealthRelay input, const char *command, char _Null
             }
         }
         if (responseIndex == me->responseIndex) {
-            sprintf(response, "NAK. Timeout." RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Timeout." RKEOL);
             return RKResultTimeout;
         }
         strcpy(response, me->responses[responseIndex]);

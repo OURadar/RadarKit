@@ -10,7 +10,7 @@
 
 #include <RadarKit/RKRadarRelay.h>
 
-#pragma mark - Internal Functions
+#pragma region Internal Functions
 
 static int RKRadarRelayGreet(RKClient *client) {
     // The shared user resource pointer
@@ -20,7 +20,7 @@ static int RKRadarRelayGreet(RKClient *client) {
 
     pthread_mutex_lock(&engine->client->lock);
 
-    uint32_t size = sprintf(command, "a RKRadarRelay nopassword" RKEOL);
+    uint32_t size = snprintf(command, RKMaximumCommandLength, "a RKRadarRelay nopassword" RKEOL);
     ssize_t sentSize = RKNetworkSendPackets(engine->client->sd, command, size, NULL);
     if (sentSize < 0) {
         pthread_mutex_unlock(&engine->client->lock);
@@ -30,9 +30,9 @@ static int RKRadarRelayGreet(RKClient *client) {
         if (engine->verbose) {
             RKLog("%s Resuming stream ...\n", engine->name);
         }
-        size = sprintf(command, "s");
+        size = snprintf(command, RKMaximumCommandLength, "s");
         size += RKStringFromStream(command + size, engine->streams);
-        size += sprintf(command + size, RKEOL);
+        size += snprintf(command + size, RKMaximumCommandLength - size, RKEOL);
         RKNetworkSendPackets(engine->client->sd, command, size, NULL);
     }
 
@@ -249,7 +249,7 @@ static int RKRadarRelayRead(RKClient *client) {
     return RKResultSuccess;
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *radarRelay(void *in) {
     RKRadarRelay *engine = (RKRadarRelay *)in;
@@ -302,7 +302,7 @@ static void *radarRelay(void *in) {
     return (void *)NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKRadarRelay *RKRadarRelayInit(void) {
     RKRadarRelay *engine = (RKRadarRelay *)malloc(sizeof(RKRadarRelay));
@@ -313,9 +313,9 @@ RKRadarRelay *RKRadarRelayInit(void) {
     memset(engine, 0, sizeof(RKRadarRelay));
 
     // TCP socket server over port 10000.
-    sprintf(engine->name, "%s<SmartRadarRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarRelay) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, RKNameLength, "%s<SmartRadarRelay>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarRelay) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage += sizeof(RKRadarRelay);
     engine->state = RKEngineStateAllocated;
 
@@ -326,7 +326,7 @@ void RKRadarRelayFree(RKRadarRelay *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKRadarRelaySetVerbose(RKRadarRelay *engine, const int verbose) {
     engine->verbose = verbose;
@@ -357,7 +357,7 @@ void RKRadarRelaySetHost(RKRadarRelay *engine, const char *hostname) {
     strncpy(engine->host, hostname, RKNameLength - 1);
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKRadarRelayStart(RKRadarRelay *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
@@ -416,7 +416,7 @@ int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) 
     } else {
         if (client->state < RKClientStateConnected) {
             if (response != NULL) {
-                sprintf(response, "NAK. Radar Relay not connected." RKEOL);
+                snprintf(response, RKStatusStringLength, "NAK. Radar Relay not connected." RKEOL);
             }
             return RKResultIncompleteReceive;
         }
@@ -436,12 +436,12 @@ int RKRadarRelayExec(RKRadarRelay *engine, const char *command, char *response) 
         }
         if (responseIndex == engine->responseIndex) {
             if (response != NULL) {
-                sprintf(response, "NAK. Timeout." RKEOL);
+                snprintf(response, RKStatusStringLength, "NAK. Timeout." RKEOL);
             }
             return RKResultTimeout;
         }
         if (response != NULL) {
-            strcpy(response, engine->responses[responseIndex]);
+            snprintf(response, RKStatusStringLength, "%s", engine->responses[responseIndex]);
         }
     }
     return RKResultSuccess;
@@ -451,7 +451,7 @@ int RKRadarRelayUpdateStreams(RKRadarRelay *engine, RKStream newStream) {
     char command[RKMaximumStringLength];
     if (engine->streams != newStream) {
         engine->streams = newStream;
-        sprintf(command, "s%s", RKStringOfStream(newStream));
+        snprintf(command, RKMaximumCommandLength, "s%s", RKStringOfStream(newStream));
         RKRadarRelayExec(engine, command, NULL);
     }
     return RKResultSuccess;

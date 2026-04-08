@@ -14,7 +14,7 @@ typedef struct user_params {
     float SQIThreshold;
 } UserParams;
 
-#pragma mark - Functions
+#pragma region Functions
 
 static void showHelp() {
     char name[] = __FILE__;
@@ -192,10 +192,10 @@ void proc(UserParams *arg) {
         RKFileHeaderSummary(fileHeader);
     }
 
-    char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
+    char sweepMarkerHead[20] = "S", sweepMarkerTail[20] = "E";
     if (rkGlobalParameters.showColor) {
-        sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
-        sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
+        snprintf(sweepMarkerHead, sizeof(sweepMarkerHead), "%sS%s", RKGetColorOfIndex(3), RKNoColor);
+        snprintf(sweepMarkerTail, sizeof(sweepMarkerTail), "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
 
     // Override some parameters with user supplied values
@@ -325,14 +325,14 @@ void proc(UserParams *arg) {
         strcpy(outputFilename, arg->filename);
         c = strrchr(outputFilename, '.');
         if (c) {
-            sprintf(c, ".rkc");
+            snprintf(c, 5, ".rkc");
         } else {
             strcat(outputFilename, ".rkc");
         }
         RKLog("Output: \033[38;5;82m%s\033[m\n", outputFilename);
         outfid = fopen(outputFilename, "w");
 
-        sprintf(outputFileHeader->preface, "RadarKit/IQ");
+        snprintf(outputFileHeader->preface, RKNameLength, "RadarKit/IQ");
         outputFileHeader->dataType = RKRawDataTypeAfterMatchedFilter;
         outputFileHeader->format = RKRawDataFormat;
         memcpy(&outputFileHeader->desc, &fileHeader->desc, sizeof(RKRadarDesc));
@@ -543,8 +543,8 @@ void proc(UserParams *arg) {
                            p,
                            RKIntegerToCommaStyleString(space->gateCount),
                            ray->header.marker,
-                           ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
-                           ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ");
+                           ray->header.marker & RKMarkerSweepBegin ? sweepMarkerHead : " ",
+                           ray->header.marker & RKMarkerSweepEnd ? sweepMarkerTail : " ");
                 } else if (arg->verbose > 2) {
                     // Show with some data
                     RKComplex *cdata = RKGetComplexDataFromPulse(pulse, 0);
@@ -559,8 +559,8 @@ void proc(UserParams *arg) {
                            p,
                            RKIntegerToCommaStyleString(space->gateCount),
                            ray->header.marker,
-                           ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : " ",
-                           ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : " ",
+                           ray->header.marker & RKMarkerSweepBegin ? sweepMarkerHead : " ",
+                           ray->header.marker & RKMarkerSweepEnd ? sweepMarkerTail : " ",
                            data[0], data[10], data[100], data[250], data[500],
                            cdata[0].i, cdata[10].i, cdata[100].i, cdata[250].i, cdata[500].i);
                 }
@@ -703,10 +703,10 @@ void proc(UserParams *arg) {
         memcpy(&sweep->header.config, config, sizeof(RKConfig));
         memcpy(sweep->rays, rays + k, r * sizeof(RKRay *));
         // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
-        k = sprintf(sweep->header.filename, "%s/", arg->directory);
-        k += sprintf(sweep->header.filename + k, "%s/", RKTimeDoubleToString(sweep->header.startTime, 800, false));
-        k += sprintf(sweep->header.filename + k, "%s-", fileHeader->desc.filePrefix);
-        k += sprintf(sweep->header.filename + k, "%s-", RKTimeDoubleToString(sweep->header.startTime, 860, false));
+        k = snprintf(sweep->header.filename, RKMaximumPathLength - 80, "%s/", arg->directory);
+        k += snprintf(sweep->header.filename + k, RKMaximumPathLength - 80 - k, "%s/", RKTimeDoubleToString(sweep->header.startTime, 800, false));
+        k += snprintf(sweep->header.filename + k, RKMaximumPathLength - 80 - k, "%s-", fileHeader->desc.filePrefix);
+        k += snprintf(sweep->header.filename + k, RKMaximumPathLength - 80 - k, "%s-", RKTimeDoubleToString(sweep->header.startTime, 860, false));
         if (sweep->header.isPPI) {
             k += snprintf(sweep->header.filename + k, 6, "E%.1f", sweep->header.config.sweepElevation);
         } else if (sweep->header.isRHI) {
@@ -731,7 +731,7 @@ void proc(UserParams *arg) {
         for (p = 0; p < productCount; p++) {
             product->desc = RKGetNextProductDescription(&list);
             RKProductInitFromSweep(product, sweep);
-            sprintf(product->header.suggestedFilename, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
+            snprintf(product->header.suggestedFilename, RKMaximumPathLength, "%s-%s.nc", sweep->header.filename, product->desc.symbol);
             if (arg->output) {
                 RKProductFileWriterNC(product, product->header.suggestedFilename);
             }
@@ -765,7 +765,7 @@ void proc(UserParams *arg) {
     return;
 }
 
-#pragma mark - Main
+#pragma region Main
 
 //
 //
@@ -832,7 +832,7 @@ int main(int argc, const char **argv) {
                 arg->compressedOutput = true;
                 break;
             case 'd':
-                strcpy(arg->directory, optarg);
+                snprintf(arg->directory, RKMaximumFolderPathLength, "%s", optarg);
                 break;
             case 'h':
                 showHelp();
@@ -861,7 +861,7 @@ int main(int argc, const char **argv) {
             *c = '\0';
         }
     } else {
-        sprintf(arg->directory, "data/moment");
+        snprintf(arg->directory, RKMaximumFolderPathLength, "data/moment");
     }
 
     if (arg->verbose > 1) {

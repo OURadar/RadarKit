@@ -11,10 +11,10 @@
 
 #include <RadarKit/RKPedestalPedzy.h>
 
-#pragma mark - Internal Functions
+#pragma region Internal Functions
 
 static ssize_t pedestalPedzySendAction(int sd, char *ship, RKScanAction *act) {
-    sprintf(ship, "%c", 0x0f);
+    snprintf(ship, 2, "%c", 0x0f);
     memcpy(ship + 1, act, sizeof(RKScanAction));
     strncpy(ship + 1 + sizeof(RKScanAction), RKEOL, 3);
     return RKNetworkSendPackets(sd, ship, sizeof(RKScanAction) + 3, NULL);
@@ -138,8 +138,8 @@ static void *pedestalPedzyHealth(void *in) {
             azInterlockStatus = RKStatusEnumNotWired;
             elInterlockStatus = RKStatusEnumNotWired;
             vcpStatusEnum = RKStatusEnumNotWired;
-            sprintf(elPosition, "--.-- deg");
-            sprintf(azPosition, "--.-- deg");
+            snprintf(elPosition, sizeof(elPosition), "--.-- deg");
+            snprintf(azPosition, sizeof(azPosition), "--.-- deg");
             azEnum = RKStatusEnumNotWired;
             elEnum = RKStatusEnumNotWired;
         } else {
@@ -153,8 +153,8 @@ static void *pedestalPedzyHealth(void *in) {
             } else {
                 vcpStatusEnum = RKStatusEnumStandby;
             }
-            sprintf(elPosition, "%.2f deg", position->elevationDegrees);
-            sprintf(azPosition, "%.2f deg", position->azimuthDegrees);
+            snprintf(elPosition, sizeof(elPosition), "%.2f deg", position->elevationDegrees);
+            snprintf(azPosition, sizeof(azPosition), "%.2f deg", position->azimuthDegrees);
             azEnum = RKStatusEnumNormal;
             elEnum = RKStatusEnumNormal;
         }
@@ -162,21 +162,21 @@ static void *pedestalPedzyHealth(void *in) {
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
         if (health) {
             double rate = RKGetPositionUpdateRate(radar);
-            sprintf(health->string, "{"
-                    "\"Interlock AZ\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Interlock EL\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
-                    "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
-                    "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
-                    "\"Pedestal Update\":\"%.3f Hz\", "
-                    "\"PedestalHealthEnd\":0"
-                    "}",
-                    azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
-                    elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
-                    vcpStatusEnum == RKStatusEnumActive ? "true" : "false", vcpStatusEnum,
-                    azPosition, azEnum,
-                    elPosition, elEnum,
-                    rate);
+            snprintf(health->string, sizeof(health->string), "{"
+                     "\"Interlock AZ\":{\"Value\":%s,\"Enum\":%d}, "
+                     "\"Interlock EL\":{\"Value\":%s,\"Enum\":%d}, "
+                     "\"VCP Active\":{\"Value\":%s,\"Enum\":%d}, "
+                     "\"Pedestal AZ\":{\"Value\":\"%s\",\"Enum\":%d}, "
+                     "\"Pedestal EL\":{\"Value\":\"%s\",\"Enum\":%d}, "
+                     "\"Pedestal Update\":\"%.3f Hz\", "
+                     "\"PedestalHealthEnd\":0"
+                     "}",
+                     azInterlockStatus == RKStatusEnumActive ? "true" : "false", azInterlockStatus,
+                     elInterlockStatus == RKStatusEnumActive ? "true" : "false", elInterlockStatus,
+                     vcpStatusEnum == RKStatusEnumActive ? "true" : "false", vcpStatusEnum,
+                     azPosition, azEnum,
+                     elPosition, elEnum,
+                     rate);
             RKSetHealthReady(radar, health);
         }
         usleep(200000);
@@ -184,7 +184,7 @@ static void *pedestalPedzyHealth(void *in) {
     return (void *)NULL;
 }
 
-#pragma mark - Protocol Implementations
+#pragma region Protocol Implementations
 
 RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     RKPedestalPedzy *me = (RKPedestalPedzy *)malloc(sizeof(RKPedestalPedzy));
@@ -198,9 +198,9 @@ RKPedestal RKPedestalPedzyInit(RKRadar *radar, void *input) {
     // Pedzy uses a TCP socket server at port 9000.
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.name, "%s<PedzySmartRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(desc.name, RKNameLength, "%s<PedzySmartRelay>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     strncpy(desc.hostname, (char *)input, RKNameLength - 1);
     char *colon = strstr(desc.hostname, ":");
     if (colon != NULL) {
@@ -252,7 +252,7 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
         }
         if (client->state != RKClientStateConnected) {
             RKLog("%s Pedestal not connected for command '%s'.\n", client->name, command);
-            sprintf(response, "NAK. Pedestal not connected." RKEOL);
+            snprintf(response, RKMaximumStringLength, "NAK. Pedestal not connected." RKEOL);
             return RKResultClientNotConnected;
         }
         int s = 0;
@@ -270,10 +270,10 @@ int RKPedestalPedzyExec(RKPedestal input, const char *command, char _Nullable *r
             }
         }
         if (responseIndex == me->responseIndex) {
-            sprintf(response, "NAK. Timeout." RKEOL);
+            snprintf(response, RKMaximumStringLength, "NAK. Timeout." RKEOL);
             return RKResultTimeout;
         }
-        strcpy(response, me->responses[responseIndex]);
+        snprintf(response, RKMaximumStringLength, "%s", me->responses[responseIndex]);
     }
     return RKResultSuccess;
 }

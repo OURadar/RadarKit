@@ -49,7 +49,7 @@ static void _rcos(double *r, const int n) {
     }
 }
 
-#pragma mark - Methods
+#pragma region Methods
 
 //
 // RKRampMake(buffer, RKRampTypeLinear, 20) creates a linear ramp of length 20
@@ -59,27 +59,27 @@ void RKRampMake(RKFloat *buffer, RKRampType type, const int length, ...) {
     int k;
     double param;
     va_list args;
-    
+
     if (length == 0) {
         return;
     }
-    
+
     double *ramp = (double *)malloc(length * sizeof(double));
     memset(ramp, 0, length * sizeof(double));
 
     va_start(args, length);
 
     switch (type) {
-        
+
         case RKRampTypeOnes:
             _ones(ramp, length);
             break;
-        
+
         case RKRampTypeStep:
             param = va_arg(args, double);
             _step(ramp, length, param);
             break;
-        
+
         case RKRampTypeLinear:
             _linear(ramp, length);
             break;
@@ -92,13 +92,13 @@ void RKRampMake(RKFloat *buffer, RKRampType type, const int length, ...) {
         default:
             break;
     }
-    
+
     va_end(args);
-    
+
     // Copy to RadarKit buffer
     for (k = 0; k < length; k++) {
         buffer[k] = (RKFloat)ramp[k];
     }
-    
+
     free(ramp);
 }

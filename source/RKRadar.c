@@ -31,7 +31,7 @@ typedef struct rk_old_source {
     uint64_t      targetConfigId;
 } RKOldUserModule;
 
-#pragma mark - Static Functions
+#pragma region Static Functions
 
 static uint32_t getUID(UIDType type) {
     static uint32_t uidControl = 0;
@@ -75,7 +75,7 @@ void *freeUserModuleDelayed(void *input) {
 void RKUpdateWaveformCalibration(RKRadar *, const uint8_t, const RKWaveformCalibration *);
 void RKUpdateControl(RKRadar *, const uint8_t, const RKControl *);
 
-#pragma mark - Engine Monitor
+#pragma region Engine Monitor
 
 static size_t RKGetRadarMemoryUsage(RKRadar *radar) {
     size_t size;
@@ -185,18 +185,18 @@ static void *systemInspectorRunLoop(void *in) {
         if (radar->configIndex == 6) {
             if (!shown) {
                 long mem = RKGetMemoryUsage();
-                k = snprintf(string, sizeof(string), "%s B   %s B\n",
+                k = snprintf(string, RKMaximumStringLength, "%s B   %s B\n",
                     RKVariableInString("memoryUsage", &radar->memoryUsage, RKValueTypeSize),
                     RKVariableInString("rusage", &mem, RKValueTypeLong));
                 if (radar->desc.initFlags & RKInitFlagPulsePositionCombiner) {
                     dxduPosition = 1.0 / radar->positionClock->dx;
                     dxduPulse = 1.0 / radar->pulseClock->dx;
-                    k += snprintf(string + k, sizeof(string) - k, "%31s%s   %s\n",
+                    k += snprintf(string + k, RKMaximumStringLength - k, "%31s%s   %s\n",
                         "",
                         RKVariableInString("dxduPosition", &dxduPosition, RKValueTypeDouble),
                         RKVariableInString("dxduPulse", &dxduPulse, RKValueTypeDouble));
                 }
-                k += snprintf(string + k, sizeof(string) - k, "%31s%s Hz   %s Hz   %s Hz",
+                k += snprintf(string + k, RKMaximumStringLength - k, "%31s%s Hz   %s Hz   %s Hz",
                     "",
                     RKVariableInString("positionRate", &positionRate, RKValueTypeDoubleWithOneDecimals),
                     RKVariableInString("pulseRate", &pulseRate, RKValueTypeDoubleWithOneDecimals),
@@ -319,43 +319,43 @@ static void *systemInspectorRunLoop(void *in) {
             // Report a health status
             health = RKGetVacantHealth(radar, RKHealthNodeRadarKit);
             if (health) {
-                k = sprintf(FFTPlanUsage, "{");
+                k = snprintf(FFTPlanUsage, sizeof(FFTPlanUsage), "{");
                 for (j = 0; j < radar->fftModule->count; j++) {
-                    k += sprintf(FFTPlanUsage + k, "%s\"%d\":%d", j > 0 ? "," : "",
+                    k += snprintf(FFTPlanUsage + k, sizeof(FFTPlanUsage) - k, "%s\"%d\":%d", j > 0 ? "," : "",
                                  radar->fftModule->plans[j].size,
                                  radar->fftModule->plans[j].count);
                 }
-                k += sprintf(FFTPlanUsage + k, "}");
+                k += snprintf(FFTPlanUsage + k, sizeof(FFTPlanUsage) - k, "}");
                 if (k > RKStatusStringLength * 3 / 4) {
                     RKLog("Warning. Too little head room in FFTPlanUsage (%d / %d).\n", k, RKStatusStringLength);
                 }
                 config = RKGetLatestConfig(radar);
-                sprintf(health->string, "{"
-                        "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
-                        "\"Processors\":{\"Value\":true,\"Enum\":0}, "
-                        "\"Measured PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
-                        "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
-                        "\"Noise\":[%.3f,%.3f], "
-                        "\"rayRate\":%.3f, "
-                        "\"FFTPlanUsage\":%s"
-                        "}",
-                        transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
-                        pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
-                        healthOkay ? "true" : "false", radar->healthRelay ? (healthOkay ? healthEnum : RKStatusEnumFault) : RKStatusEnumNotWired,
-                        networkOkay ? "true" : "false", networkEnum,
-                        radar->rawDataRecorder->record ? "true" : "false", radar->rawDataRecorder->record ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - 1.0f / config->prt[0]) * config->prt[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        RKIntegerToCommaStyleString((long)round(positionRate)),
-                        config->noise[0], config->noise[1],
-                        rayRate,
-                        FFTPlanUsage
-                        );
+                snprintf(health->string, sizeof(health->string), "{"
+                         "\"Transceiver\":{\"Value\":%s,\"Enum\":%d}, "
+                         "\"Pedestal\":{\"Value\":%s,\"Enum\":%d}, "
+                         "\"Health Relay\":{\"Value\":%s,\"Enum\":%d}, "
+                         "\"Internet\":{\"Value\":%s,\"Enum\":%d}, "
+                         "\"Recorder\":{\"Value\":%s,\"Enum\":%d}, "
+                         "\"Ring Filter\":{\"Value\":%s,\"Enum\":%d}, "
+                         "\"Processors\":{\"Value\":true,\"Enum\":0}, "
+                         "\"Measured PRF\":{\"Value\":\"%s Hz\",\"Enum\":%d}, "
+                         "\"Position Rate\":{\"Value\":\"%s Hz\",\"Enum\":0}, "
+                         "\"Noise\":[%.3f,%.3f], "
+                         "\"rayRate\":%.3f, "
+                         "\"FFTPlanUsage\":%s"
+                         "}",
+                         transceiverOkay ? "true" : "false", transceiverOkay ? transceiverEnum : RKStatusEnumFault,
+                         pedestalOkay ? "true" : "false", pedestalOkay ? pedestalEnum : RKStatusEnumFault,
+                         healthOkay ? "true" : "false", radar->healthRelay ? (healthOkay ? healthEnum : RKStatusEnumFault) : RKStatusEnumNotWired,
+                         networkOkay ? "true" : "false", networkEnum,
+                         radar->rawDataRecorder->record ? "true" : "false", radar->rawDataRecorder->record ? RKStatusEnumNormal : RKStatusEnumStandby,
+                         radar->pulseRingFilterEngine->useFilter ? "true" : "false", radar->pulseRingFilterEngine->useFilter ? RKStatusEnumNormal : RKStatusEnumStandby,
+                         RKIntegerToCommaStyleString((long)round(pulseRate)), fabs(pulseRate - 1.0f / config->prt[0]) * config->prt[0] < 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                         RKIntegerToCommaStyleString((long)round(positionRate)),
+                         config->noise[0], config->noise[1],
+                         rayRate,
+                         FFTPlanUsage
+                         );
                 RKSetHealthReady(radar, health);
             }
 
@@ -399,9 +399,9 @@ RKSimpleEngine *RKSystemInspector(RKRadar *radar) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKSimpleEngine));
-    sprintf(engine->name, "%s<SystemInspector>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorEngineMonitor) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<SystemInspector>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorEngineMonitor) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated | RKEngineStateProperlyWired | RKEngineStateActivating;
     engine->verbose = radar->desc.initFlags & RKInitFlagVerbose ? 1 : 0;
     engine->memoryUsage = sizeof(RKSimpleEngine);
@@ -418,7 +418,7 @@ RKSimpleEngine *RKSystemInspector(RKRadar *radar) {
     return engine;
 }
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 void *radarCoPilot(void *in) {
     RKRadar *radar = (RKRadar *)in;
@@ -450,7 +450,7 @@ void *masterControllerExecuteInBackground(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 //
 // Initialize a radar object
@@ -496,8 +496,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
     }
 
     // Set some non-zero variables
-    sprintf(radar->name, "%s<MasterController>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(13) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(radar->name, RKNameLength, "%s<MasterController>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(13) : "", rkGlobalParameters.showColor ? RKNoColor : "");
     radar->memoryUsage += bytes;
 
     // Copy over the input flags and constaint the capacity and depth to hard-coded limits
@@ -578,14 +578,14 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
 
     // Read in preference file here, override some values
     if (!strlen(radar->desc.name)) {
-        sprintf(radar->desc.name, "Radar");
+        snprintf(radar->desc.name, sizeof(radar->desc.name), "Radar");
     }
     if (!strlen(radar->desc.filePrefix)) {
-        sprintf(radar->desc.filePrefix, "RK");
+        snprintf(radar->desc.filePrefix, sizeof(radar->desc.filePrefix), "RK");
     }
     RKLog("Radar name = '%s'  prefix = '%s'", radar->desc.name, radar->desc.filePrefix);
     if (strlen(desc.dataPath) == 0) {
-        sprintf(radar->desc.dataPath, RKDefaultDataPath);
+        snprintf(radar->desc.dataPath, sizeof(radar->desc.dataPath), RKDefaultDataPath);
     }
 
     // -------------------------------------------------- Buffers --------------------------------------------------
@@ -831,8 +831,8 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.positionTicsPerSecond > 0) {
             RKClockSetDuDx(radar->positionClock, (double)radar->desc.positionTicsPerSecond);
         }
-        sprintf(clockName, "%s< PositionClock >%s",
-                rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
+        snprintf(clockName, RKNameLength, "%s< PositionClock >%s",
+                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "", rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->positionClock, clockName);
         RKClockSetOffset(radar->positionClock, -radar->desc.positionLatency);
         RKLog("Position latency = %.3e s\n", radar->desc.positionLatency);
@@ -870,7 +870,7 @@ RKRadar *RKInitWithDesc(const RKRadarDesc desc) {
         if (radar->desc.pulseTicsPerSecond > 0) {
             RKClockSetDuDx(radar->pulseClock, (double)radar->desc.pulseTicsPerSecond);
         }
-        sprintf(clockName, "%s<   PulseClock  >%s",
+        snprintf(clockName, RKNameLength, "%s<   PulseClock  >%s",
                 rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorClock) : "",
                 rkGlobalParameters.showColor ? RKNoColor : "");
         RKClockSetName(radar->pulseClock, clockName);
@@ -1222,7 +1222,7 @@ int RKFree(RKRadar *radar) {
     return RKResultSuccess;
 }
 
-#pragma mark - Hardware Hooks
+#pragma region Hardware Hooks
 
 //
 // The three major compenents: Digital transceiver, pedestal and general health relay
@@ -1292,7 +1292,7 @@ int RKSetUserDevice(RKRadar *radar,
     return RKResultSuccess;
 }
 
-#pragma mark - Before-Live Properties
+#pragma region Before-Live Properties
 
 int RKSetProcessingCoreCounts(RKRadar *radar,
                               const uint8_t pulseEngineCoreCount,
@@ -1310,7 +1310,7 @@ int RKSetProcessingCoreCounts(RKRadar *radar,
     return RKResultSuccess;
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 //
 // Property setters are self-explanatory so minimal descriptions are provided here
@@ -1745,7 +1745,7 @@ int RKSetPulseRingFilter(RKRadar *radar, RKIIRFilter *filter, const uint32_t gat
     return RKResultSuccess;
 }
 
-#pragma mark - Interaction / State Change
+#pragma region Interaction / State Change
 
 //
 // Set the radar to go live. All the engines will be ignited with this function, going into infinite
@@ -2240,7 +2240,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         RKClearPulseBuffer(radar->pulses, radar->desc.pulseBufferDepth);
                         RKClearRayBuffer(radar->rays, radar->desc.rayBufferDepth);
                         if (string) {
-                            sprintf(string, "ACK. Buffers cleared." RKEOL);
+                            snprintf(string, RKMaximumStringLength, "ACK. Buffers cleared." RKEOL);
                         }
                         break;
                     case 'f':
@@ -2251,25 +2251,25 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             RKLog("type = %u   u32 = %u\n", filterType, u32);
                             RKSetPulseRingFilterByType(radar, filterType, u32);
                             if (string) {
-                                sprintf(string, "ACK. Ring filter %u gateCount %s." RKEOL, filterType, RKIntegerToCommaStyleString(u32));
+                                snprintf(string, RKMaximumStringLength, "ACK. Ring filter %u gateCount %s." RKEOL, filterType, RKIntegerToCommaStyleString(u32));
                             }
                         } else if (k == 1) {
                             filterType = ival;
                             if ((RKFilterType)filterType == RKFilterTypeNull) {
                                 RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
                                 if (string) {
-                                    sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                                    snprintf(string, RKMaximumStringLength, "ACK. Ring filter disabled." RKEOL);
                                 }
                             } else {
                                 RKSetPulseRingFilterByType(radar, filterType, 0);
                                 if (string) {
-                                    sprintf(string, "ACK. Ring filter %u." RKEOL, filterType);
+                                    snprintf(string, RKMaximumStringLength, "ACK. Ring filter %u." RKEOL, filterType);
                                 }
                             }
                         } else {
                             RKPulseRingFilterEngineDisableFilter(radar->pulseRingFilterEngine);
                             if (string) {
-                                sprintf(string, "ACK. Ring filter disabled." RKEOL);
+                                snprintf(string, RKMaximumStringLength, "ACK. Ring filter disabled." RKEOL);
                             }
                         }
                         break;
@@ -2281,42 +2281,42 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 case 1:
                                     RKSetMomentProcessorToPulsePairHop(radar);
                                     if (string) {
-                                        sprintf(string, "ACK. Moment processor set to PulsePairHop." RKEOL);
+                                        snprintf(string, RKMaximumStringLength, "ACK. Moment processor set to PulsePairHop." RKEOL);
                                     }
                                     break;
                                 case 2:
                                     RKSetMomentProcessorToMultiLag(radar, 2);
                                     if (string) {
-                                        sprintf(string, "ACK. Moment processor set to MultiLag-2." RKEOL);
+                                        snprintf(string, RKMaximumStringLength, "ACK. Moment processor set to MultiLag-2." RKEOL);
                                     }
                                     break;
                                 case 3:
                                     RKSetMomentProcessorToMultiLag(radar, 3);
                                     if (string) {
-                                        sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                        snprintf(string, RKMaximumStringLength, "ACK. Moment processor set to MultiLag-3." RKEOL);
                                     }
                                     break;
                                 case 4:
                                     RKSetMomentProcessorToMultiLag(radar, 4);
                                     if (string) {
-                                        sprintf(string, "ACK. Moment processor set to MultiLag-3." RKEOL);
+                                        snprintf(string, RKMaximumStringLength, "ACK. Moment processor set to MultiLag-4." RKEOL);
                                     }
                                     break;
                                 case 5:
                                     RKSetMomentProcessorToSpectralMoment(radar);
                                     if (string) {
-                                        sprintf(string, "ACK. Moment processor set to SpectralMoment." RKEOL);
+                                        snprintf(string, RKMaximumStringLength, "ACK. Moment processor set to SpectralMoment." RKEOL);
                                     }
                                     break;
                                 default:
                                     RKSetMomentProcessorToPulsePair(radar);
                                     if (string) {
-                                        sprintf(string, "ACK. Moment processor set to PulsePair." RKEOL);
+                                        snprintf(string, RKMaximumStringLength, "ACK. Moment processor set to PulsePair." RKEOL);
                                     }
                                     break;
                             }
                         } else if (string) {
-                            sprintf(string, "ACK. Current moment processor is %s" RKEOL,
+                            snprintf(string, RKMaximumStringLength, "ACK. Current moment processor is %s" RKEOL,
                                     radar->momentEngine->momentProcessor == &RKPulsePair ? "PulsePair" :
                                     (radar->momentEngine->momentProcessor == &RKPulsePairHop ? "PulsePairHop" :
                                      (radar->momentEngine->momentProcessor == &RKMultiLag && radar->momentEngine->userLagChoice == 2 ? "MultiLag-2" :
@@ -2331,12 +2331,12 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         if (k == 2) {
                             RKAddConfig(radar, RKConfigKeySystemNoise, fval1, fval2, RKConfigKeyNull);
                             if (string) {
-                                sprintf(string, "ACK. Noise set to %.4f, %.4f" RKEOL, fval1, fval2);
+                                snprintf(string, RKMaximumStringLength, "ACK. Noise set to %.4f, %.4f" RKEOL, fval1, fval2);
                             }
                         } else if (k == -1 && string) {
-                            sprintf(string, "ACK. Current noise is %.4f %.4f" RKEOL, config->noise[0], config->noise[1]);
+                            snprintf(string, RKMaximumStringLength, "ACK. Current noise is %.4f %.4f" RKEOL, config->noise[0], config->noise[1]);
                         } else if (string) {
-                            sprintf(string, "NAK. Must have two paramters  (k = %d)." RKEOL, k);
+                            snprintf(string, RKMaximumStringLength, "NAK. Must have two paramters  (k = %d)." RKEOL, k);
                         }
                         break;
                     case 'N':
@@ -2346,7 +2346,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         // 'dr' - Restart DSP engines
                         RKSoftRestart(radar);
                         if (string) {
-                            sprintf(string, "ACK. Soft restart executed." RKEOL);
+                            snprintf(string, RKMaximumStringLength, "ACK. Soft restart executed." RKEOL);
                         }
                         break;
                     case 'q':
@@ -2354,10 +2354,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         if (k == 1) {
                             RKAddConfig(radar, RKConfigKeySQIThreshold, fval1, RKConfigKeyNull);
                             if (string) {
-                                sprintf(string, "ACK. SQI threshold set to %.2f" RKEOL, fval1);
+                                snprintf(string, RKMaximumStringLength, "ACK. SQI threshold set to %.2f" RKEOL, fval1);
                             }
                         } else if (string) {
-                            sprintf(string, "ACK. Current SQI threshold is %.2f" RKEOL, config->SQIThreshold);
+                            snprintf(string, RKMaximumStringLength, "ACK. Current SQI threshold is %.2f" RKEOL, config->SQIThreshold);
                         }
                         break;
                     case 's':
@@ -2368,10 +2368,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         if (k == 1) {
                             RKAddConfig(radar, RKConfigKeySNRThreshold, fval1, RKConfigKeyNull);
                             if (string) {
-                                sprintf(string, "ACK. SNR threshold set to %.2f dB" RKEOL, fval1);
+                                snprintf(string, RKMaximumStringLength, "ACK. SNR threshold set to %.2f dB" RKEOL, fval1);
                             }
                         } else if (string) {
-                            sprintf(string, "ACK. Current SNR threshold is %.2f dB" RKEOL, config->SNRThreshold);
+                            snprintf(string, RKMaximumStringLength, "ACK. Current SNR threshold is %.2f dB" RKEOL, config->SNRThreshold);
                         }
                         break;
                     default:
@@ -2385,7 +2385,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                         RKLog("Trying to get help without providing string? Tell my father.\n");
                         break;
                     }
-                    k = sprintf(string,
+                    k = snprintf(string, RKMaximumStringLength,
                                 "Help\n"
                                 "====\n"
                                 "\n"
@@ -2452,43 +2452,43 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                 "        s zvwd - streams Z, V, W and D\n"
                                 "\n");
 
-                    k += sprintf(string + k,
-                                 HIGHLIGHT("t") " - " UNDERLINE_ITALIC("Transceiver") " commands, everything that starts with 't' goes to the transceiver\n"
-                                 "    module in a concatenated form, e.g., 't help' -> 'help' to the transceiver.\n\n");
+                    k += snprintf(string + k, RKMaximumStringLength - k,
+                                  HIGHLIGHT("t") " - " UNDERLINE_ITALIC("Transceiver") " commands, everything that starts with 't' goes to the transceiver\n"
+                                  "    module in a concatenated form, e.g., 't help' -> 'help' to the transceiver.\n\n");
                     if (radar->transceiver) {
                         radar->transceiverExec(radar->transceiver, "help", sval1);
                         RKStripTail(sval1);
                         k += RKIndentCopy(string + k, sval1, 5);
-                        k += sprintf(string + k, "\n\n");
+                        k += snprintf(string + k, RKMaximumStringLength - k, "\n\n");
                     } else {
-                        k += sprintf(string + k, "    INFO: Transceiver not set.\n");
+                        k += snprintf(string + k, RKMaximumStringLength - k, "    INFO: Transceiver not set.\n");
                     }
 
-                    k += sprintf(string + k,
-                                 HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with 'p' goes to the pedestal module\n"
-                                 "    in a concatenated form, e.g., 'p help' -> 'help' to the pedestal.\n\n");
+                    k += snprintf(string + k, RKMaximumStringLength - k,
+                                  HIGHLIGHT("p") " - " UNDERLINE_ITALIC ("Pedestal") " commands, everything that starts with 'p' goes to the pedestal module\n"
+                                  "    in a concatenated form, e.g., 'p help' -> 'help' to the pedestal.\n\n");
                     if (radar->pedestal) {
                         radar->pedestalExec(radar->pedestal, "help", sval1);
                         RKStripTail(sval1);
                         k += RKIndentCopy(string + k, sval1, 5);
-                        k += sprintf(string + k, "\n\n");
+                        k += snprintf(string + k, RKMaximumStringLength - k, "\n\n");
                     } else {
-                        k += sprintf(string + k, "    INFO: Pedestal not set.\n");
+                        k += snprintf(string + k, RKMaximumStringLength - k, "    INFO: Pedestal not set.\n");
                     }
 
-                    k += sprintf(string + k,
-                                 HIGHLIGHT("h") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with 'h' goes to the health relay\n"
-                                 "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
+                    k += snprintf(string + k, RKMaximumStringLength - k,
+                                  HIGHLIGHT("h") " - " UNDERLINE_ITALIC ("Health Relay") " commands, everything that starts with 'h' goes to the health relay\n"
+                                  "    module in a concatenated form, e.g., 'p help' -> 'help' to the health relay.\n\n");
                     if (radar->healthRelay) {
                         radar->healthRelayExec(radar->healthRelay, "help", sval1);
                         RKStripTail(sval1);
                         k += RKIndentCopy(string + k, sval1, 5);
-                        k += sprintf(string + k, "\n\n");
+                        k += snprintf(string + k, RKMaximumStringLength - k, "\n\n");
                     } else {
-                        k += sprintf(string + k, "    INFO: Health Relay not set.\n");
+                        k += snprintf(string + k, RKMaximumStringLength - k, "    INFO: Health Relay not set.\n");
                     }
 
-                    k += sprintf(string + k,
+                    k += snprintf(string + k, RKMaximumStringLength - k,
                                  HIGHLIGHT("v") " [COMMAND] [PARAMETER] - Sets a VCP. Most command PARAMETER values are arranged in the\n"
                                  "                          order of elevation (range/set), azimuth (range/set), rate. The COMMAND value\n"
                                  "                          can be 'pp', 'rr', or 'vol' and more details are in the following:\n"
@@ -2549,16 +2549,15 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                  "RadarKit " __RKVersion__ " / " __VERSION__ "\n"
                                  "\n");
 
-                    sprintf(string + k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
+                    snprintf(string + k, RKMaximumStringLength - k, "\n== (%s) ==" RKEOL, RKIntegerToCommaStyleString(k));
 
                 } else {
 
                     // Forward to health relay
                     if (strlen(commandString) < 2) {
                         if (string) {
-                            sprintf(string, "NAK. Empty command to health relay. Ignoring ..." RKEOL);
+                            snprintf(string, RKMaximumStringLength, "NAK. Empty command to health relay. Ignoring ..." RKEOL);
                         }
-                        //RKOperatorSendCommandResponse(O, string);
                         break;
                     }
                     k = 0;
@@ -2573,7 +2572,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 // Pass everything to pedestal
                 if (strlen(commandString) < 2) {
                     if (string) {
-                        sprintf(string, "NAK. Empty command to pedestal. Ignoring ..." RKEOL);
+                        snprintf(string, RKMaximumStringLength, "NAK. Empty command to pedestal. Ignoring ..." RKEOL);
                     }
                     break;
                 }
@@ -2588,7 +2587,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 // Pass everything to transceiver
                 if (strlen(commandString) < 2) {
                     if (string) {
-                        sprintf(string, "NAK. Empty command to transceiver. Ignoring ..." RKEOL);
+                        snprintf(string, RKMaximumStringLength, "NAK. Empty command to transceiver. Ignoring ..." RKEOL);
                     }
                     break;
                 }
@@ -2618,10 +2617,10 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     }
                 }
                 if (string) {
-                    sprintf(string, "ACK. Recorder is %s." RKEOL,
-                            radar->rawDataRecorder->record == false ? "set to standby" :
-                            (radar->rawDataRecorder->rawDataType == RKRawDataTypeFromTransceiver ? "recording raw I/Q" :
-                             (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording I/Q" : "in unknown state")));
+                    snprintf(string, RKMaximumStringLength, "ACK. Recorder is %s." RKEOL,
+                        radar->rawDataRecorder->record == false ? "set to standby" :
+                        (radar->rawDataRecorder->rawDataType == RKRawDataTypeFromTransceiver ? "recording raw I/Q" :
+                        (radar->rawDataRecorder->rawDataType == RKRawDataTypeAfterMatchedFilter ? "recording I/Q" : "in unknown state")));
                 }
                 break;
 
@@ -2629,7 +2628,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 k = commandString[1] - '0';
                 if (k >= 0 && k < radar->userDeviceCount && radar->userDevices[k].exec) {
                     RKUserDevice *device = &radar->userDevices[k];
-                    RKLog("Executing command '%s' at user device %d node %d ...\n", commandString, k, device->node);
+                    RKLog("Executing command '%s' at userDevices[%d] node %d ...\n", commandString, k, device->node);
                     k = 1;
                     do {
                         k++;
@@ -2655,7 +2654,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                 // Passed to the master controller
                 if (radar->masterController == NULL) {
                     if (string) {
-                        sprintf(string, "NAK. Not ready." RKEOL);
+                        snprintf(string, RKMaximumStringLength, "NAK. Not ready." RKEOL);
                     }
                 } else {
                     radar->masterControllerExec(radar->masterController, commandString, string);
@@ -2750,7 +2749,7 @@ void RKSetSNRThreshold(RKRadar *radar, const RKFloat threshold) {
     RKAddConfig(radar, RKConfigKeySNRThreshold, threshold, RKConfigKeyNull);
 }
 
-#pragma mark - Status
+#pragma region Status
 
 //
 // Get a vacant slot to fill in system status
@@ -2780,7 +2779,7 @@ void RKSetStatusReady(RKRadar *radar, RKStatus *status) {
     }
 }
 
-#pragma mark - Configs
+#pragma region Configs
 
 //
 // Add a configuration to change the operational setting.
@@ -2812,7 +2811,7 @@ RKConfig *RKGetLatestConfig(RKRadar *radar) {
     return &radar->configs[RKPreviousModuloS(radar->configIndex, radar->desc.configBufferDepth)];
 }
 
-#pragma mark - Healths
+#pragma region Healths
 
 //
 // Request a health reporting node.
@@ -2892,7 +2891,7 @@ RKStatusEnum RKGetEnumFromLatestHealth(RKRadar *radar, const char *keyword) {
     return RKStatusEnumInvalid;
 }
 
-#pragma mark - Positions
+#pragma region Positions
 
 //
 // Get a vacant slot to fill in position data from the pedestal.
@@ -2958,7 +2957,7 @@ RKScanAction *RKGetScanAction(RKRadar *radar, RKPosition *position) {
     return RKSteerEngineGetAction(radar->steerEngine, position);
 }
 
-#pragma mark - Pulses
+#pragma region Pulses
 
 //
 // Get a vacant slot to fill in pulse data from the digital transceiver.
@@ -3022,7 +3021,7 @@ RKPulse *RKGetLatestPulse(RKRadar *radar) {
     return pulse;
 }
 
-#pragma mark - Rays
+#pragma region Rays
 
 //
 // Get a vacant slot to fill in ray data.
@@ -3072,7 +3071,7 @@ RKRay *RKGetLatestRayIndex(RKRadar *radar, uint32_t *index) {
     return ray;
 }
 
-#pragma mark - Waveform Calibrations
+#pragma region Waveform Calibrations
 
 void RKUpdateWaveformCalibration(RKRadar *radar, const uint8_t index, const RKWaveformCalibration *calibration) {
     if (index >= radar->desc.waveformCalibrationCapacity) {
@@ -3104,7 +3103,7 @@ void RKConcludeWaveformCalibrations(RKRadar *radar) {
     }
 }
 
-#pragma mark - Controls
+#pragma region Controls
 
 void RKUpdateControl(RKRadar *radar, const uint8_t index, const RKControl *control) {
     if (index >= radar->desc.controlCapacity) {
@@ -3158,7 +3157,7 @@ void RKConcludeControls(RKRadar *radar) {
     }
 }
 
-#pragma mark - Developer Access
+#pragma region Developer Access
 
 void RKGetRegisterValue(RKRadar *radar, void *value, const unsigned long registerOffset, size_t size) {
     memcpy(value, (void *)radar + registerOffset, size);
@@ -3217,7 +3216,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     if (flag & RKTextPreferencesDrawBackground) {
         // General address format goes like this: [color reset] [new line] %04d-%04d
         char format[64];
-        sprintf(format, "%%0%dd-%%0%dd\n", w, w);
+        snprintf(format, sizeof(format), "%%0%dd-%%0%dd\n", w, w);
 
         // Check the terminal width
         switch (flag & RKTextPreferencesWindowSizeMask) {
@@ -3269,27 +3268,27 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         }
 
         // Clear screen, go to the origin
-        m = sprintf(text, "\033[1;1H\033[2J");
+        m = snprintf(text, RKMaximumStringLength, "\033[1;1H\033[2J");
 
         // Position
         if (radar->positions) {
             c = RKIntegerToCommaStyleString(radar->desc.positionBufferSize);
             s = strlen(c);
             if (terminalSize.ws_row > 25) {
-                m += sprintf(text + m, "Position Buffer (%s B)\n", c);
+                m += snprintf(text + m, RKMaximumStringLength - m, "Position Buffer (%s B)\n", c);
                 memset(text + m, '-', s + 20);
                 m += s + 20;
                 *(text + m++) = '\n';
                 n += 4;
             } else {
-                m += sprintf(text + m, "\033[4mPosition Buffer (%s B)\033[24m\n", c);
+                m += snprintf(text + m, RKMaximumStringLength - m, "\033[4mPosition Buffer (%s B)\033[24m\n", c);
                 n += 3;
             }
             k = slice * MAX(1, (terminalSize.ws_row - 16) / 8);
             positionStride = MAX(1, (radar->desc.positionBufferDepth + k - 1) / k);
             //RKLog("%s", RKVariableInString("positionStride", &positionStride, RKValueTypeInt));
             for (j = 0, k = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
-                m += sprintf(text + m, format, k, MIN(k + positionStride * slice, radar->desc.positionBufferDepth));
+                m += snprintf(text + m, RKMaximumStringLength - m, format, k, MIN(k + positionStride * slice, radar->desc.positionBufferDepth));
                 k += positionStride * slice;
                 n++;
             }
@@ -3301,19 +3300,19 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         c = RKIntegerToCommaStyleString(radar->desc.pulseBufferSize);
         s = strlen(c);
         if (terminalSize.ws_row > 25) {
-            m += sprintf(text + m, "\033[%d;1HPulse Buffer (%s B)\n", n, c);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;1HPulse Buffer (%s B)\n", n, c);
             memset(text + m, '-', s + 17);
             m += s + 17;
             *(text + m++) = '\n';
             n += 3;
         } else {
-            m += sprintf(text + m, "\033[%d;1H\033[4mPulse Buffer (%s B)\033[24m\n", n, c);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;1H\033[4mPulse Buffer (%s B)\033[24m\n", n, c);
             n += 2;
         }
         k = slice * (terminalSize.ws_row - 16) / 2;
         pulseStride = MAX(1, (radar->desc.pulseBufferDepth + k - 1) / k);
         for (j = 0, k = 0; j < 30 && k < radar->desc.pulseBufferDepth; j++) {
-            m += sprintf(text + m, format, k, MIN(k + pulseStride * slice, radar->desc.pulseBufferDepth));
+            m += snprintf(text + m, RKMaximumStringLength - m, format, k, MIN(k + pulseStride * slice, radar->desc.pulseBufferDepth));
             k += pulseStride * slice;
             n++;
         }
@@ -3322,19 +3321,19 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         c = RKIntegerToCommaStyleString(radar->desc.rayBufferSize);
         s = strlen(c);
         if (terminalSize.ws_row > 25) {
-            m += sprintf(text + m, "\033[%d;1HRay Buffer (%s B)\n", n, c);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;1HRay Buffer (%s B)\n", n, c);
             memset(text + m, '-', s + 15);
             m += s + 15;
             *(text + m++) = '\n';
             n += 3;
         } else {
-            m += sprintf(text + m, "\033[%d;1H\033[4mRay Buffer (%s B)\033[24m\n", n, c);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;1H\033[4mRay Buffer (%s B)\033[24m\n", n, c);
             n += 2;
         }
         k = slice * (terminalSize.ws_row - 16) / 2;
         rayStride = MAX(1, (radar->desc.rayBufferDepth + k - 1) / k);
         for (j = 0, k = 0; j < 30 && k < radar->desc.rayBufferDepth; j++) {
-            m += sprintf(text + m, format, k, MIN(k + rayStride * slice, radar->desc.rayBufferDepth));
+            m += snprintf(text + m, RKMaximumStringLength - m, format, k, MIN(k + rayStride * slice, radar->desc.rayBufferDepth));
             k += rayStride * slice;
             n++;
         }
@@ -3343,19 +3342,19 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         c = RKIntegerToCommaStyleString(radar->desc.healthNodeBufferSize);
         s = strlen(c);
         if (terminalSize.ws_row > 25) {
-            m += sprintf(text + m, "\033[%d;1HHealth Buffers (%s B)\n", n, c);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;1HHealth Buffers (%s B)\n", n, c);
             memset(text + m, '-', s + 19);
             m += s + 19;
             *(text + m++) = '\n';
             n += 3;
         } else {
-            m += sprintf(text + m, "\033[%d;1H\033[4mHealth Buffers (%s B)\033[24m\n", n, c);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;1H\033[4mHealth Buffers (%s B)\033[24m\n", n, c);
             n += 2;
         }
         k = (terminalSize.ws_col / 2 - 2 * w - 6 + 4) / 5 * 5;
         healthStride = MAX(1, (radar->desc.healthBufferDepth + k - 1) / k);
         for (k = 0; k < MIN(4, RKHealthNodeCount); k++) {
-            m += sprintf(text + m, "%3s: 0-%d\n",
+            m += snprintf(text + m, RKMaximumStringLength - m, "%3s: 0-%d\n",
                          k == RKHealthNodeRadarKit ? "RKI" :
                          (k == RKHealthNodeTransceiver ? "TRX" :
                           (k == RKHealthNodePedestal ? "PED" :
@@ -3369,8 +3368,8 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         }
         n = n - k - 1;
         for (; k < MIN(8, RKHealthNodeCount); k++) {
-            m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col - 2 * w - 2 - radar->desc.healthBufferDepth / healthStride);
-            m += sprintf(text + m, "%3s: 0-%d\n",
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;%dH", n, terminalSize.ws_col - 2 * w - 2 - radar->desc.healthBufferDepth / healthStride);
+            m += snprintf(text + m, RKMaximumStringLength - m, "%3s: 0-%d\n",
                             k == RKHealthNodeUser0 ? "US0" :
                              (k == RKHealthNodeUser1 ? "US1" :
                               (k == RKHealthNodeUser2 ? "US2" :
@@ -3381,14 +3380,14 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         n++;
 
         if (flag & RKTextPreferencesShowColor) {
-            m += sprintf(text + m,
-                         "\033[%d;%dH"
-                         "%s%c" RKNoColor " Vacant    %s%c" RKNoColor " Has Data    %s%c" RKNoColor " Shared    %s%c" RKNoColor " Used\n",
-                         n, 2 * w + 3 + MAX(0, (terminalSize.ws_col - 80) / 2), c0, m0, c1, m1, c2, m2, c3, m3);
+            m += snprintf(text + m, RKMaximumStringLength - m,
+                          "\033[%d;%dH"
+                          "%s%c" RKNoColor " Vacant    %s%c" RKNoColor " Has Data    %s%c" RKNoColor " Shared    %s%c" RKNoColor " Used\n",
+                          n, 2 * w + 3 + MAX(0, (terminalSize.ws_col - 80) / 2), c0, m0, c1, m1, c2, m2, c3, m3);
         } else {
-            m += sprintf(text + m,
-                         "\033[%d;%dH%c Vacant    %c Has Data    %c Shared    %c Used\n",
-                         n, 2 * w + 3 + MAX(0, (terminalSize.ws_col - 80) / 2), m0, m1, m2, m3);
+            m += snprintf(text + m, RKMaximumStringLength - m,
+                          "\033[%d;%dH%c Vacant    %c Has Data    %c Shared    %c Used\n",
+                          n, 2 * w + 3 + MAX(0, (terminalSize.ws_col - 80) / 2), m0, m1, m2, m3);
         }
     }
 
@@ -3404,7 +3403,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         k = 0;
         for (j = 0; j < 30 && k < radar->desc.positionBufferDepth; j++) {
             // Move the cursor
-            m += sprintf(text + m, "\033[%d;%dH", n, w);
+            m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;%dH", n, w);
             s1 = (uint32_t)-1;
             for (i = 0; i < slice && k < radar->desc.positionBufferDepth; i++, k += positionStride) {
                 position = &radar->positions[k];
@@ -3414,19 +3413,19 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                         if (s0 == s1) {
                             *(text + m++) = m3;
                         } else {
-                            m += sprintf(text + m, "%s%c", c3, m3);
+                            m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c3, m3);
                         }
                     } else if (s0 & RKPositionFlagReady) {
                         if (s0 == s1) {
                             *(text + m++) = m1;
                         } else {
-                            m += sprintf(text + m, "%s%c", c1, m1);
+                            m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c1, m1);
                         }
                     } else {
                         if (s0 == s1) {
                             *(text + m++) = m0;
                         } else {
-                            m += sprintf(text + m, "%s%c", c0, m0);
+                            m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c0, m0);
                         }
                     }
                     s1 = s0;
@@ -3447,7 +3446,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     k = 0;
     for (j = 0; j < 30 && k < radar->desc.pulseBufferDepth; j++) {
         // Move the cursor
-        m += sprintf(text + m, "\033[%d;%dH", n, w);
+        m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.pulseBufferDepth; i++, k += pulseStride) {
             pulse = RKGetPulseFromBuffer(radar->pulses, k);
@@ -3457,31 +3456,31 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                     if (s0 == s1) {
                         *(text + m++) = m4;
                     } else {
-                        m += sprintf(text + m, "%s%c", c4, m4);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c4, m4);
                     }
                 } else if (s0 & RKPulseStatusUsedForMoments) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
                     } else {
-                        m += sprintf(text + m, "%s%c", c3, m3);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c3, m3);
                     }
                 } else if (s0 & RKPulseStatusRingProcessed) {
                     if (pulse->header.s == s1) {
                         *(text + m++) = m2;
                     } else {
-                        m += sprintf(text + m, "%s%c", c2, m2);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c2, m2);
                     }
                 } else if (s0 & RKPulseStatusHasIQData) {
                     if (pulse->header.s == s1) {
                         *(text + m++) = m1;
                     } else {
-                        m += sprintf(text + m, "%s%c", c1, m1);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c1, m1);
                     }
                 } else {
                     if (s0 == s1) {
                         *(text + m++) = m0;
                     } else {
-                        m += sprintf(text + m, "%s%c", c0, m0);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c0, m0);
                     }
                 }
                 s1 = s0;
@@ -3498,7 +3497,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     }
     k = 0;
     for (j = 0; j < 30 && k < radar->desc.rayBufferDepth; j++) {
-        m += sprintf(text + m, "\033[%d;%dH", n, w);
+        m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0; i < slice && k < radar->desc.rayBufferDepth; i++, k += rayStride) {
             ray = RKGetRayFromBuffer(radar->rays, k);
@@ -3508,25 +3507,25 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
                     } else {
-                        m += sprintf(text + m, "%s%c", c3, m3);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c3, m3);
                     }
                 } else if (s0 & RKRayStatusStreamed) {
                     if (ray->header.s == s1) {
                         *(text + m++) = m2;
                     } else {
-                        m += sprintf(text + m, "%s%c", c2, m2);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c2, m2);
                     }
                 } else if (s0 & RKRayStatusReady) {
                     if (ray->header.s == s1) {
                         *(text + m++) = m1;
                     } else {
-                        m += sprintf(text + m, "%s%c", c1, m1);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c1, m1);
                     }
                 } else {
                     if (s0 == s1) {
                         *(text + m++) = m0;
                     } else {
-                        m += sprintf(text + m, "%s%c", c0, m0);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c0, m0);
                     }
                 }
             } else {
@@ -3542,7 +3541,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
         n++;
     }
     for (j = 0; j < MIN(4, RKHealthNodeCount); j++) {
-        m += sprintf(text + m, "\033[%d;%dH", n, w);
+        m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;%dH", n, w);
         s1 = (uint32_t)-1;
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
             RKHealth *health = &radar->healthNodes[j].healths[k];
@@ -3552,19 +3551,19 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
                     } else {
-                        m += sprintf(text + m, "%s%c", c3, m3);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c3, m3);
                     }
                 } else if (s0 & RKHealthFlagReady) {
                     if (s0 == s1) {
                         *(text + m++) = m1;
                     } else {
-                        m += sprintf(text + m, "%s%c", c1, m1);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c1, m1);
                     }
                 } else {
                     if (s0 == s1) {
                         *(text + m++) = m0;
                     } else {
-                        m += sprintf(text + m, "%s%c", c0, m0);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c0, m0);
                     }
                 }
             } else {
@@ -3576,7 +3575,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     }
     n -= j;
     for (; j < MIN(8, RKHealthNodeCount); j++) {
-        m += sprintf(text + m, "\033[%d;%dH", n, terminalSize.ws_col - radar->desc.healthBufferDepth / healthStride + 1);
+        m += snprintf(text + m, RKMaximumStringLength - m, "\033[%d;%dH", n, terminalSize.ws_col - radar->desc.healthBufferDepth / healthStride + 1);
         s1 = (uint32_t)-1;
         for (i = 0, k = 0; i < slice && k < radar->desc.healthBufferDepth; i++, k += healthStride) {
             RKHealth *health = &radar->healthNodes[j].healths[k];
@@ -3586,19 +3585,19 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
                     if (s0 == s1) {
                         *(text + m++) = m3;
                     } else {
-                        m += sprintf(text + m, "%s%c", c3, m3);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c3, m3);
                     }
                 } else if (s0 & RKHealthFlagReady) {
                     if (s0 == s1) {
                         *(text + m++) = m1;
                     } else {
-                        m += sprintf(text + m, "%s%c", c1, m1);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c1, m1);
                     }
                 } else {
                     if (s0 == s1) {
                         *(text + m++) = m0;
                     } else {
-                        m += sprintf(text + m, "%s%c", c0, m0);
+                        m += snprintf(text + m, RKMaximumStringLength - m, "%s%c", c0, m0);
                     }
                 }
             } else {
@@ -3612,7 +3611,7 @@ int RKBufferOverview(char *text, RKRadar *radar, const RKTextPreferences flag) {
     n++;
     c = RKIntegerToCommaStyleString(m);
     s = strlen(c);
-    m += sprintf(text + m, "\033[m\033[%d;%dH== (%s) ==" RKEOL, n, (int)(terminalSize.ws_col - s - 7), c);
+    m += snprintf(text + m, RKMaximumStringLength - m, "\033[m\033[%d;%dH== (%s) ==" RKEOL, n, (int)(terminalSize.ws_col - s - 7), c);
     *(text + m) = '\0';
     return m;
 }
@@ -3687,16 +3686,16 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
                     if (isLabel) {
                         switch (u) {
                             case RKStatusEnumStandby:
-                                sprintf(posfix, " *");
+                                snprintf(posfix, sizeof(posfix), " *");
                                 break;
                             case RKStatusEnumFault:
-                                strcpy(posfix, " **");
+                                snprintf(posfix, sizeof(posfix), " **");
                                 break;
                             case RKStatusEnumCritical:
-                                strcpy(posfix, " ***");
+                                snprintf(posfix, sizeof(posfix), " ***");
                                 break;
                             case RKStatusEnumNotWired:
-                                strcpy(posfix, " ---");
+                                snprintf(posfix, sizeof(posfix), " ---");
                                 break;
                             default:
                                 break;
@@ -3712,16 +3711,16 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
                 } else {
                     s = value;
                 }
-                nl += sprintf(labels + nl, "%22s %s%s%s\n", key, prefix, s, posfix);
+                nl += snprintf(labels + nl, sizeof(labels) - nl, "%22s %s%s%s\n", key, prefix, s, posfix);
             } else {
-                nd += sprintf(dots + nd, "%s%s%s %s\n", prefix, symbol, posfix, key);
+                nd += snprintf(dots + nd, sizeof(dots) - nd, "%s%s%s %s\n", prefix, symbol, posfix, key);
             }
         }
     }
 
     #if defined(DEBUG_HEALTH_OVERVIEW)
-    m = sprintf(text, "%s\n\n", dots);
-    m += sprintf(text + m, "%s\n", labels);
+    m = snprintf(text, RKMaximumPacketSize, "%s\n\n", dots);
+    m += snprintf(text + m, RKMaximumPacketSize - m, "%s\n", labels);
     printf("%s", text);
     #endif
 
@@ -3733,7 +3732,7 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
 
         d = text;
         // Clear screen, go to the origin
-        m = sprintf(text, "\033[1;1H\033[2J");
+        m = snprintf(text, RKMaximumPacketSize, "\033[1;1H\033[2J");
         // Top border
         *(d + m++) = '+';
         memset(d + m, '-', w - 2); m += (w - 2);
@@ -3743,7 +3742,7 @@ int RKHealthOverview(char *text, const char *json, const RKTextPreferences flag)
         s = temp;
         while (*s != '\0' && (e = strchr(s, '\n')) != NULL) {
             *e = '\0';
-            m += sprintf(d + m, "|%s|\n", s);
+            m += snprintf(d + m, RKMaximumPacketSize - m, "|%s|\n", s);
             s = e + 1;
         }
         // Bottom border

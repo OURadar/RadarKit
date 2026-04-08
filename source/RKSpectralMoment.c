@@ -224,18 +224,18 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
              for g = 1:6, C(g) = xcorr(Xh(g, :), Xv(g, :), 0, 'unbiased'); end; disp(C)
 
              */
-            j = sprintf(line, "  X%s = [", p == 0 ? "h" : "v");
+            j = snprintf(line, sizeof(line), "  X%s = [", p == 0 ? "h" : "v");
             for (g = 0; g < space->gateCount; g++) {
                 for (k = 0; k < pulseCount; k++) {
-                    j += sprintf(line + j, " %.0f%+.0fj,", X[g].i[k], X[g].q[k]);
+                    j += snprintf(line + j, sizeof(line) - j, " %.0f%+.0fj,", X[g].i[k], X[g].q[k]);
                 }
-                j += sprintf(line + j - 1, ";...\n") - 1;
+                j += snprintf(line + j - 1, sizeof(line) - j + 1, ";...\n") - 1;
             }
-            sprintf(line + j - 5, "]\n");
+            snprintf(line + j - 5, sizeof(line) - j + 5, "]\n");
             printf("%s\n", line);
 
             // for (k = 0; k < pulseCount; k++) {
-            //     sprintf(variable, "  X[%d] = ", k);
+            //     snprintf(variable, sizeof(variable), "  X[%d] = ", k);
             //     RKShowVecIQZ(variable, &X[k], gateShown);
             // }
             // printf(RKEOL);
@@ -243,19 +243,19 @@ int RKSpectralMoment(RKMomentScratch *space, RKPulse **pulses, const uint16_t pu
             // RKShowVecIQZ("    vX = ", &space->vX[p], gateShown);                                                 // var(X, 1) in MATLAB
             // printf(RKEOL);
             // for (k = 0; k < 3; k++) {
-            //     sprintf(variable, "  R[%d] = ", k);
+            //     snprintf(variable, sizeof(variable), "  R[%d] = ", k);
             //     RKShowVecIQZ(variable, &space->R[p][k], gateShown);
             // }
             // printf(RKEOL);
             // for (k = 0; k < 3; k++) {
-            //     sprintf(variable, " aR[%d] = ", k);
+            //     snprintf(variable, sizeof(variable), " aR[%d] = ", k);
             //     RKShowVecFloat(variable, space->aR[p][k], gateShown);
             // }
             // printf(RKEOL);
-            sprintf(variable, "  S2Z = ");
+            snprintf(variable, sizeof(variable), "  S2Z = ");
             RKShowVecFloat(variable, space->S2Z[p], gateShown);
             printf(RKEOL);
-            sprintf(variable, "    Z%s = ", p == 0 ? "h" : "v");
+            snprintf(variable, sizeof(variable), "    Z%s = ", p == 0 ? "h" : "v");
             RKShowVecFloat(variable, space->Z[p], gateShown);
             printf(RKEOL);
         }

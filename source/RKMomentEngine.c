@@ -19,7 +19,7 @@
 
 int downSamplePulses(RKPulse **pulses, const uint16_t count, const int stride);
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 static void RKMomentEngineUpdateStatusString(RKMomentEngine *engine) {
     int i, c;
@@ -164,7 +164,7 @@ int RKNoiseFromConfig(RKMomentScratch *space, RKPulse **pulses, const uint16_t p
     return RKResultSuccess;
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *momentEngineCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
@@ -193,12 +193,12 @@ static void *momentEngineCore(void *in) {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "M%02d", c);
+        k += snprintf(name + k, 4, "M%02d", c);
     } else {
-        k += sprintf(name + k, "M%d", c);
+        k += snprintf(name + k, 4, "M%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        snprintf(name + k, 5, RKNoColor);
     }
     snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
@@ -300,10 +300,10 @@ static void *momentEngineCore(void *in) {
     float deltaAzimuth, deltaElevation;
     char *string;
 
-    char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
+    char sweepMarkerHead[20] = "S", sweepMarkerTail[20] = "E";
     if (rkGlobalParameters.showColor) {
-        sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
-        sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
+        snprintf(sweepMarkerHead, sizeof(sweepMarkerHead), "%sS%s", RKGetColorOfIndex(3), RKNoColor);
+        snprintf(sweepMarkerTail, sizeof(sweepMarkerTail), "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
 
     while (engine->state & RKEngineStateWantActive) {
@@ -696,8 +696,8 @@ static void *momentEngineCore(void *in) {
                  RKIntegerToCommaStyleString(ray->header.gateCount),
                  ray->header.marker,
                  RKIntegerToCommaStyleString(ray->header.fftOrder),
-                 ray->header.marker & RKMarkerSweepBegin ? sweepBeginMarker : "",
-                 ray->header.marker & RKMarkerSweepEnd ? sweepEndMarker : "");
+                 ray->header.marker & RKMarkerSweepBegin ? sweepMarkerHead : "",
+                 ray->header.marker & RKMarkerSweepEnd ? sweepMarkerTail : "");
 
         // Update processed index
         me->pid = ie;
@@ -1303,7 +1303,7 @@ static void *pulseGathererV1(void *_in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKMomentEngine *RKMomentEngineInit(void) {
     RKMomentEngine *engine = (RKMomentEngine *)malloc(sizeof(RKMomentEngine));
@@ -1312,9 +1312,9 @@ RKMomentEngine *RKMomentEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKMomentEngine));
-    sprintf(engine->name, "%s<MomentGenerator>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMomentEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<MomentGenerator>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorMomentEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->useGmap = false; // TODO: Does Boonleng want this on by default?
@@ -1340,7 +1340,7 @@ void RKMomentEngineFree(RKMomentEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKMomentEngineSetVerbose(RKMomentEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -1459,7 +1459,7 @@ void RKMomentEngineSetMomentProcessorToSpectral(RKMomentEngine *engine) {
     engine->momentProcessor = RKSpectralMoment;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKMomentEngineStart(RKMomentEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

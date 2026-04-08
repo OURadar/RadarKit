@@ -8,11 +8,11 @@
 
 #include <RadarKit/RKPreference.h>
 
-#pragma mark - Internal Functions
+#pragma region Internal Functions
 
-#pragma mark - Implementation
+#pragma region Implementation
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKPreference *RKPreferenceInitWithFile(const char *filename) {
     RKPreference *preference = (RKPreference *)malloc(sizeof(RKPreference));
@@ -35,9 +35,9 @@ void RKPreferenceFree(RKPreference *object) {
     free(object);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKPreferenceUpdate(RKPreference *preference) {
     FILE *fid = fopen(preference->filename, "r");

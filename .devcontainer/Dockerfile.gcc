@@ -1,0 +1,18 @@
+FROM gcc:4.9
+
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+# Install Python dependencies early for layer caching
+COPY .devcontainer/sh-root-bashrc /root/.bashrc
+
+# System packages (add more only if needed)
+RUN printf "deb http://archive.debian.org/debian jessie main contrib non-free\n\
+    deb http://archive.debian.org/debian-security jessie/updates main contrib non-free\n" \
+    > /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid && \
+    apt update && \
+    apt install -y --force-yes bc git libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
+
+WORKDIR /workspace
+
+RUN ls > /tmp/contents.txt

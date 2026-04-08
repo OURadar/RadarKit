@@ -16,7 +16,7 @@ void *theClient(void *in);
 
 // Implementations
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 void *theClient(void *in) {
     RKClient *C = (RKClient *)in;
@@ -471,9 +471,9 @@ void *theClient(void *in) {
     return NULL;
 }
 
-#pragma mark - Threads
+#pragma region Threads
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKClient *RKClientInitWithDesc(RKClientDesc desc) {
     if (desc.format == RKNetworkMessageFormatConstantSize && desc.blockLength == 0) {
@@ -504,7 +504,7 @@ RKClient *RKClientInitWithDesc(RKClientDesc desc) {
 RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    strncpy(desc.hostname, hostname, RKNameLength - 1);
+    snprintf(desc.hostname, sizeof(desc.hostname), "%s", hostname);
     desc.port = port;
     desc.type = RKNetworkSocketTypeTCP;
     desc.blocking = true;
@@ -516,7 +516,7 @@ RKClient *RKClientInitWithHostnamePort(const char *hostname, const int port) {
 RKClient *RKClientInit(void) {
     RKClientDesc desc;
     memset(&desc, 0, sizeof(RKClientDesc));
-    sprintf(desc.hostname, "localhost");
+    snprintf(desc.hostname, sizeof(desc.hostname), "localhost");
     desc.port = 9000;
     desc.type = RKNetworkSocketTypeTCP;
     desc.blocking = true;
@@ -531,7 +531,7 @@ void RKClientFree(RKClient *C) {
     return;
 }
 
-#pragma mark -
+#pragma region
 #pragma mark Properties
 
 
@@ -551,7 +551,7 @@ void RKClientSetCloseHandler(RKClient *C, int (*routine)(RKClient *)) {
     C->exit = routine;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 void RKClientStart(RKClient *C, const bool waitForConnection) {
     pthread_mutex_init(&C->lock, NULL);

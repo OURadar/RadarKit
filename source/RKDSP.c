@@ -412,13 +412,13 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
     memset(a, 0, RKMaximumIIRFilterTaps * sizeof(RKComplex));
     switch (type) {
         case RKFilterTypeNull:
-            sprintf(filter->name, "Null");
+            snprintf(filter->name, sizeof(filter->name), "Null");
             filter->bLength = 0;
             filter->aLength = 0;
             break;
         case RKFilterTypeElliptical1:
             //  0.1 radians / sample
-            sprintf(filter->name, "Elliptical-0.1");
+            snprintf(filter->name, sizeof(filter->name), "Elliptical-0.1");
             filter->bLength = 6;
             filter->aLength = 6;
             b++->i = +0.852417f; b++->i = -4.259192f; b++->i = +8.515492f; b++->i = -8.515492f; b++->i = +4.259192f; b->i = -0.852417f;
@@ -426,7 +426,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
         case RKFilterTypeElliptical2:
             //  0.2 radians / sample
-            sprintf(filter->name, "Elliptical-0.2");
+            snprintf(filter->name, sizeof(filter->name), "Elliptical-0.2");
             filter->bLength = 6;
             filter->aLength = 6;
             b++->i = +0.708621f; b++->i = -3.533447f; b++->i = +7.057262f; b++->i = -7.057262f; b++->i = +3.533447f; b->i = -0.708621f;
@@ -434,7 +434,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
         case RKFilterTypeElliptical3:
             //  0.3 radians / sample
-            sprintf(filter->name, "Elliptical-0.3");
+            snprintf(filter->name, sizeof(filter->name), "Elliptical-0.3");
             filter->bLength = 6;
             filter->aLength = 6;
             b++->i = +0.590096f; b++->i = -2.932276f; b++->i = +5.846463f; b++->i = -5.846463f; b++->i = +2.932276f; b->i = -0.590096f;
@@ -442,21 +442,21 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
             break;
         case RKFilterTypeElliptical4:
             //  0.4 radians / sample
-            sprintf(filter->name, "Elliptical-0.4");
+            snprintf(filter->name, sizeof(filter->name), "Elliptical-0.4");
             filter->bLength = 6;
             filter->aLength = 6;
             b++->i = +0.491560f; b++->i = -2.430619f; b++->i = +4.834367f; b++->i = -4.834367f; b++->i = +2.430619f; b->i = -0.491560f;
             a++->i = +1.000000f; a++->i = -3.520292f; a++->i = +5.139254f; a++->i = -3.808225f; a++->i = +1.409268f; a->i = -0.195916f;
             break;
         case RKFilterTypeImpulse:
-            sprintf(filter->name, "Impulse");
+            snprintf(filter->name, sizeof(filter->name), "Impulse");
             filter->bLength = 1;
             filter->aLength = 1;
             b->i = 1.0f;
             a->i = 1.0f;
             break;
         case RKFilterTypeTest1:
-            sprintf(filter->name, "Test1");
+            snprintf(filter->name, sizeof(filter->name), "Test1");
             filter->bLength = 2;
             filter->aLength = 3;
             b++->i = 0.5f; b->i = 1.0f;
@@ -468,7 +468,7 @@ void RKGetFilterCoefficients(RKIIRFilter *filter, const RKFilterType type) {
     }
 }
 
-#pragma mark - Common DFT
+#pragma region Common DFT
 
 RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
     int k;
@@ -479,9 +479,9 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
         exit(EXIT_FAILURE);
     }
     memset(module, 0, sizeof(RKFFTModule));
-    sprintf(module->name, "%s<CommonFFTModule>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFFTModule) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(module->name, sizeof(module->name), "%s<CommonFFTModule>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFFTModule) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     module->verbose = verbose;
 
     // Compute the plan count
@@ -495,7 +495,7 @@ RKFFTModule *RKFFTModuleInit(const uint32_t capacity, const int verbose) {
 
     // DFT Wisdom
     char *wisdom = (char *)malloc(1024 * 1024);
-    sprintf(module->wisdomFile, "%s/%s", rkGlobalParameters.rootDataFolder, RKFFTWisdomFile);
+    snprintf(module->wisdomFile, sizeof(module->wisdomFile), "%s/%s", rkGlobalParameters.rootDataFolder, RKFFTWisdomFile);
     RKPreparePath(module->wisdomFile);
     if (RKFilenameExists(module->wisdomFile)) {
         RKLog("%s Loading FFT wisdom %s ...\n", module->name, module->wisdomFile);
@@ -573,7 +573,7 @@ void RKFFTModuleFree(RKFFTModule *module) {
     free(module);
 }
 
-#pragma mark - SGFit
+#pragma region SGFit
 
 // Always assume the x-axis is in [0, 2 * M_PI) across count points
 RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
@@ -601,7 +601,7 @@ RKGaussian RKSGFit(RKFloat *x, RKComplex *y, const int count) {
     return gauss;
 }
 
-#pragma mark - Half / Single / Double Conversion
+#pragma region Half / Single / Double Conversion
 
 //
 // Inspired by https://github.com/ramenhut/half

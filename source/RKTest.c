@@ -16,11 +16,11 @@
 #define RKSIMD_TEST_TIME_FORMAT             "%0.4f"
 
 #define RKSIMD_TEST_DESC_4(str, desc, f, e) \
-    sprintf(str, desc " [ %5.2f %5.2f %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], e)
+    snprintf(str, sizeof(str), desc " [ %5.2f %5.2f %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], e)
 #define RKSIMD_TEST_DESC_8(str, desc, f, e) \
-    sprintf(str, desc " [ %5.2f %5.2f %5.2f %5.2f  %5.2f %5.2f %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
+    snprintf(str, sizeof(str), desc " [ %5.2f %5.2f %5.2f %5.2f  %5.2f %5.2f %5.2f %5.2f ] (%.4f)", f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], e)
 #define RKSIMD_TEST_DESC_16(str, desc, f, e) \
-    sprintf(str, desc " [ %5.2f %5.2f %5.2f %5.2f  %5.2f %5.2f %5.2f %5.2f  ...  %5.2f %5.2f %5.2f %5.2f ] (%.4f)", \
+    snprintf(str, sizeof(str), desc " [ %5.2f %5.2f %5.2f %5.2f  %5.2f %5.2f %5.2f %5.2f  ...  %5.2f %5.2f %5.2f %5.2f ] (%.4f)", \
             f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[12], f[13], f[14], f[15], e)
 #define RKSIMD_TEST_DESC(str, desc, f, e) sizeof(RKVec) / sizeof(float) == 16 \
     ? RKSIMD_TEST_DESC_16(str, desc, f, e) : (sizeof(RKVec) / sizeof(float) == 8 \
@@ -57,7 +57,7 @@ typedef struct rk_spline {
     float left;
 } RKSpline;
 
-#pragma mark - Static Functions
+#pragma region Static Functions
 
 static void RKTestCallback(void *in) {
     RKFileMonitor *engine = (RKFileMonitor *)in;
@@ -110,7 +110,7 @@ static void *pushLoop(void *in) {
     RKCommand command;
     RKLog("%s Started.   queue @ %p\n", name, queue);
     for (int k = 0; k < 10; k++) {
-        sprintf(command, "t %d", k);
+        snprintf(command, sizeof(command), "t %d", k);
         RKCommandQueuePush(queue, &command);
         RKLog("%s Command '%s' pushed.\n", name, command);
         usleep(200000);
@@ -135,7 +135,7 @@ static void *popLoop(void *in) {
     return NULL;
 }
 
-#pragma mark - Test Wrapper and Help Text
+#pragma region Test Wrapper and Help Text
 
 char *RKTestByNumberDescription(const int indent) {
     static char text[8192];
@@ -455,12 +455,14 @@ void RKTestByNumber(const int number, const int argc, const void **args) {
 #pragma region Basic Tests
 
 void RKTestShowTypes(void) {
+    SHOW_FUNCTION_NAME
     printf("__GNUC__ = %d\n", __GNUC__);
     printf("__GNUC_MINOR__ = %d\n", __GNUC_MINOR__);
     printf("__STDC_VERSION__ = %ld\n", __STDC_VERSION__);
     #if defined(__clang__)
-    printf("defined(__clang__)");
+    printf("defined(__clang__)\n");
     #endif
+    printf("\n");
     RKShowTypeSizes();
     printf("\n");
     RKNetworkShowPacketTypeNumbers();
@@ -511,6 +513,12 @@ void RKTestPrettyStrings(void) {
     int32_t i32 = 100; printf("%s\n", RKVariableInString("i32", &i32, RKValueTypeInt32));
     uint64_t i64 = 1234567;
     c = RKVariableInString("u64", RKIntegerToCommaStyleString(i64), RKValueTypeNumericString);
+    printf("%s (len = %zu)\n", c, strlen(c));
+    double f64 = 69.123456;
+    c = RKVariableInString("f64", &f64, RKValueTypeDouble);
+    printf("%s (len = %zu)\n", c, strlen(c));
+    f64 = 989176.629286;
+    c = RKVariableInString("f64", &f64, RKValueTypeDouble);
     printf("%s (len = %zu)\n", c, strlen(c));
     char name[] = "RadarKit";
     c = RKVariableInString("name", name, RKValueTypeString);
@@ -735,7 +743,7 @@ void RKTestParseJSONString(void) {
     size_t s;
     const int N = 8;
     float *nums = (float *)malloc(N * sizeof(float));
-    sprintf(string, "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
+    snprintf(string, sizeof(string), "{'name':'U', 'PieceCount': 1, 'b':-32, 'w':[0.5, 0.6]}");
     printf("%s (%d characters)\n\n", string, (int)strlen(string));
 
     stringObject = RKGetValueOfKey(string, "name");
@@ -765,12 +773,12 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
 
-    sprintf(string, "{"
-            "\"Health\":{\"Value\":true,\"Enum\":1}, "
-            "\"Transceiver\":{\"Value\":true,\"Enum\":1}, "
-            "\"GPS Latitude\":{\"Value\":\"+35.0 deg\",\"Enum\":1}, "
-            "\"GPS Longitude\":{\"Value\":\"-97.0 deg\",\"Enum\":1}, "
-            "}");
+    snprintf(string, sizeof(string), "{"
+             "\"Health\":{\"Value\":true,\"Enum\":1}, "
+             "\"Transceiver\":{\"Value\":true,\"Enum\":1}, "
+             "\"GPS Latitude\":{\"Value\":\"+35.0 deg\",\"Enum\":1}, "
+             "\"GPS Longitude\":{\"Value\":\"-97.0 deg\",\"Enum\":1}, "
+             "}");
     printf("string = %s\n", string);
     RKReplaceEnumOfKey(string, "Health", RKStatusEnumOld);
     printf("string = %s\n", string);
@@ -778,10 +786,10 @@ void RKTestParseJSONString(void) {
     printf("string = %s\n", string);
 
     printf("\n===\n\n");
-    sprintf(string, "{"
-            "\"Health\":{\"Value\":\"true\",\"Enum\":1}, "
-            "\"Transceiver\":{\"Value\":\"False\",\"Enum\":1}, "
-            "}");
+    snprintf(string, sizeof(string), "{"
+             "\"Health\":{\"Value\":\"true\",\"Enum\":1}, "
+             "\"Transceiver\":{\"Value\":\"False\",\"Enum\":1}, "
+             "}");
     printf("string = %s\n", string);
     RKReviseLogicalValues(string);
     printf("string = %s\n", string);
@@ -800,7 +808,7 @@ void RKTestParseJSONString(void) {
     memset(element, 0, elementDepth);
 
     // An array of dictionaries from multiple sources, each has multiple key-value pairs
-    sprintf(jsonString,
+    snprintf(jsonString, 32 * elementDepth,
         "[\n"
         "    {\n"
         "        \"name\": \"thing-0-0-0-SoCd\",\n"
@@ -953,22 +961,22 @@ void RKTestParseJSONString(void) {
 
     printf("\n===\n\n");
 
-    sprintf(jsonString,
-            "{\n"
-            "    \"name\": \"stargate\",\n"
-            "    \"id\": 3535738166,\n"
-            "    \"hostname\": \"mother\",\n"
-            "    \"advertises\": \"[\\\"encouragement\\\"]\",\n"
-            "    \"controlling\": \"{}\",\n"
-            "    \"controlling_connected\": \"{}\",\n"
-            "    \"controlled_by\": null,\n"
-            "    \"control_requested\": null,\n"
-            "    \"connected\": true,\n"
-            "    \"interested_in_logs\": true,\n"
-            "    \"interested_in_systemchanged\": false,\n"
-            "    \"controllable\": true\n"
-            "},\n"
-            "");
+    snprintf(jsonString, 32 * elementDepth,
+        "{\n"
+        "    \"name\": \"stargate\",\n"
+        "    \"id\": 3535738166,\n"
+        "    \"hostname\": \"mother\",\n"
+        "    \"advertises\": \"[\\\"encouragement\\\"]\",\n"
+        "    \"controlling\": \"{}\",\n"
+        "    \"controlling_connected\": \"{}\",\n"
+        "    \"controlled_by\": null,\n"
+        "    \"control_requested\": null,\n"
+        "    \"connected\": true,\n"
+        "    \"interested_in_logs\": true,\n"
+        "    \"interested_in_systemchanged\": false,\n"
+        "    \"controllable\": true\n"
+        "},\n"
+        "");
 
     printf("jsonString =\n%s\n", jsonString);
 
@@ -1005,23 +1013,23 @@ void RKTestParseJSONString(void) {
                (int)strlen(thingy) - (int)strlen(element));
     } while (strlen(element) > 0);
 
-    sprintf(jsonString,
-            "{\n"
-            "    \"string\": \"I am a string\", \n"
-            "    \"number\": 12345, \n"
-            "    \"float\": 32.56, \n"
-            "    \"logic\": True, \n"
-            "    \"array\": [1, 2, 3], \n"
-            "    \"dictionary\": {\"label\": \"PRF\", \"value\": \"12 Hz\", \"enum\": 0, }, \n"
-            "    \"arrayOfDict\": \n"
-            "    [\n"
-            "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0},\n"
-            "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1},\n"
-            "    ],\n"
-            "    \"emoji\": \"\U0001F44D\",\n"
-            "    \"emojiArray\": [\"\U0001F4AA\", \"\U0001F525\", \"\U0001F680\"]\n"
-            "}"
-            );
+    snprintf(jsonString, 32 * elementDepth,
+        "{\n"
+        "    \"string\": \"I am a string\", \n"
+        "    \"number\": 12345, \n"
+        "    \"float\": 32.56, \n"
+        "    \"logic\": True, \n"
+        "    \"array\": [1, 2, 3], \n"
+        "    \"dictionary\": {\"label\": \"PRF\", \"value\": \"12 Hz\", \"enum\": 0, }, \n"
+        "    \"arrayOfDict\": \n"
+        "    [\n"
+        "        {\"label\": \"Current\", \"value\": \"108 A\", \"enum\": 0},\n"
+        "        {\"label\": \"Voltage\", \"value\": \"120 V\", \"enum\": 1},\n"
+        "    ],\n"
+        "    \"emoji\": \"\U0001F44D\",\n"
+        "    \"emojiArray\": [\"\U0001F4AA\", \"\U0001F525\", \"\U0001F680\"]\n"
+        "}"
+        );
 
     printf("jsonString =\n%s (%d)\n\n", jsonString, (int)strlen(jsonString));
 
@@ -1157,7 +1165,7 @@ void RKTestHealthOverviewText(const char *options) {
     "\"Event\":\"none\", \"Log Time\":1493410480"
     "}";
     printf("%s\n", jsonString);
-    char *destiny = (char *)malloc(8192);
+    char *destiny = (char *)malloc(RKMaximumPacketSize);
     RKTextPreferences textPreferences = RKTextPreferencesShowColor | RKTextPreferencesDrawBackground | RKTextPreferencesWindowSize80x40;
     if (options) {
         textPreferences = (RKTextPreferences)strtol(options, NULL, 16);
@@ -1248,7 +1256,7 @@ void RKTestPreparePath(void) {
     for (k = 0; k < 30; k++) {
         strftime(daystr, 31, "%Y%m%d", localtime(&tt));
         strftime(timestr, 31, "%H%M%S", localtime(&tt));
-        sprintf(filename, "data/iq/%s/PX-%s-%s-E1.0-Z.nc", daystr, daystr, timestr);
+        snprintf(filename, sizeof(filename), "data/iq/%s/PX-%s-%s-E1.0-Z.nc", daystr, daystr, timestr);
         printf("tt = %lu  -->  %s %s -->  %s\n", tt, daystr, timestr, filename);
         RKPreparePath(filename);
         tt += 86400;
@@ -1364,10 +1372,10 @@ void RKTestIQRead(const char *filename) {
         RKIntegerToCommaStyleString(RKMaximumPulsesPerRay),
         RKIntegerToCommaStyleString(pulseCapacity));
 
-    char sweepBeginMarker[20] = "S", sweepEndMarker[20] = "E";
+    char sweepMarkerHead[20] = "S", sweepMarkerTail[20] = "E";
     if (rkGlobalParameters.showColor) {
-        sprintf(sweepBeginMarker, "%sS%s", RKGetColorOfIndex(3), RKNoColor);
-        sprintf(sweepEndMarker, "%sE%s", RKGetColorOfIndex(2), RKNoColor);
+        snprintf(sweepMarkerHead, sizeof(sweepMarkerHead), "%sS%s", RKGetColorOfIndex(3), RKNoColor);
+        snprintf(sweepMarkerTail, sizeof(sweepMarkerTail), "%sE%s", RKGetColorOfIndex(2), RKNoColor);
     }
 
     for (k = 0; k < RKRawDataRecorderDefaultMaximumRecorderDepth; k++) {
@@ -1379,7 +1387,7 @@ void RKTestIQRead(const char *filename) {
         if (k % 100 == 0) {
             startTime = pulse->header.time.tv_sec;
             tr = strftime(timestr, 24, "%F %T", gmtime(&startTime));
-            tr += sprintf(timestr + tr, ".%06d", (int)pulse->header.time.tv_usec);
+            tr += snprintf(timestr + tr, sizeof(timestr) - tr, ".%06d", (int)pulse->header.time.tv_usec);
             if (tr > 30) {
                 fprintf(stderr, "Warning. Time string is getting long at %zu.\n", tr);
             }
@@ -1459,10 +1467,10 @@ void RKTestProductWrite(void) {
 
     product = &products[0];
     product->desc.type = RKProductTypePPI;
-    sprintf(product->desc.name, "Reflectivity");
-    sprintf(product->desc.unit, "dBZ");
-    sprintf(product->desc.colormap, "Reflectivity");
-    sprintf(product->header.radarName, "DemoRadar");
+    snprintf(product->desc.name, sizeof(product->desc.name), "Reflectivity");
+    snprintf(product->desc.unit, sizeof(product->desc.unit), "dBZ");
+    snprintf(product->desc.colormap, sizeof(product->desc.colormap), "Reflectivity");
+    snprintf(product->header.radarName, sizeof(product->header.radarName), "DemoRadar");
     product->header.latitude = 35.23682;
     product->header.longitude = -97.46381;
     product->header.altitude = 350.0;
@@ -1535,7 +1543,7 @@ void RKTestProductWriteFromPlainToSweep(void) {
 
     if (!RKFilenameExists(filename)) {
         RKLog("Downloading test file ...\n");
-        sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
+        snprintf(command, sizeof(command), "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
         j = system(command);
         if (j) {
             RKLog("Error. Unable to download the test file.\n");
@@ -1682,7 +1690,7 @@ void RKTestProductWriteFromPlainToSweep(void) {
                 break;
         }
         RKProductInitFromSweep(product, sweep);
-        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
+        snprintf(filename, sizeof(filename), "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
         printf("Output: %s\n", filename);
         RKProductFileWriterNC(product, filename);
     }
@@ -1702,7 +1710,7 @@ void RKTestProductWriteFromPlainToProduct(void) {
 
     if (!RKFilenameExists(filename)) {
         RKLog("Downloading test file ...\n");
-        sprintf(command, "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
+        snprintf(command, sizeof(command), "curl -o %s https://radarhub.arrc.ou.edu/static/data/scan-collector-sweep-ref.bin", filename);
         j = system(command);
         if (j) {
             RKLog("Error. Unable to download the test file.\n");
@@ -1814,13 +1822,13 @@ void RKTestProductWriteFromPlainToProduct(void) {
         }
         memcpy(product->data, src, rayCount * gateCount * sizeof(float));
 
-        sprintf(filename, "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
+        snprintf(filename, sizeof(filename), "data/RK-%s-A%.1f-%s.nc", datestring, product->header.sweepAzimuth, product->desc.symbol);
         RKPreparePath(filename);
         printf("filename = '%s'\n", filename);
         RKProductFileWriterNC(product, filename);
     }
 
-    sprintf(filename, "data/RK-%s-A%.1f.nc", datestring, collection->products[0].header.sweepAzimuth);
+    snprintf(filename, sizeof(filename), "data/RK-%s-A%.1f.nc", datestring, collection->products[0].header.sweepAzimuth);
     RKPreparePath(filename);
     printf("filename = '%s'\n", filename);
     RKProductCollectionFileWriterCF(collection, filename, RKWriterOptionNone);
@@ -1849,7 +1857,7 @@ void RKTestProductWriteFromWDSS2ToProduct(const char *source, const int mode) {
     for (int k = 0; k < product->header.rayCount; k++) {
         product->startTime[k] = product->header.startTime + k / 360.0 * 20.0;
     }
-    sprintf(product->header.momentMethod, "multilag_3");
+    snprintf(product->header.momentMethod, sizeof(product->header.momentMethod), "multilag_3");
 
     // printf("pulseWidth = %f us\n", 1.0e6 * product->header.pw[0]);
     // printf("momentMethod = %s\n", product->header.momentMethod);
@@ -1862,10 +1870,10 @@ void RKTestProductWriteFromWDSS2ToProduct(const char *source, const int mode) {
     char filename[256];
     strcpy(filename, source);
     if (mode == 0) {
-        strcpy(strstr(filename, "-Z.nc"), ".nc");
+        snprintf(strstr(filename, "-Z.nc"), sizeof(filename) - (strstr(filename, "-Z.nc") - filename), ".nc");
         RKProductCollectionFileWriterCF(collection, filename, 0);
     } else if (mode == 1) {
-        strcpy(strstr(filename, "-Z.nc"), ".cnc");
+        snprintf(strstr(filename, "-Z.nc"), sizeof(filename) - (strstr(filename, "-Z.nc") - filename), ".cnc");
         // RKProductCollectionFileWriterCF(collection, filename, RKWriterOptionPackPosition);
         RKProductCollectionFileWriterCF(collection, filename, RKWriterOptionDeflateFields);
     }
@@ -2177,12 +2185,12 @@ void RKTestListFiles(const char *path) {
         RKLog("Error. Unable to open directory %s\n", path);
         return;
     }
-    char parent[RKNameLength];
+    char parent[RKMaximumPathLength];
     if (path == NULL) {
         strcpy(parent, ".");
     } else {
-        strncpy(parent, path, RKNameLength - 1);
-        parent[RKNameLength - 1] = '\0';
+        strncpy(parent, path, RKMaximumPathLength - 1);
+        parent[RKMaximumPathLength - 1] = '\0';
         if (parent[strlen(parent) - 1] != '/') {
             strcat(parent, "/");
         }
@@ -2194,9 +2202,9 @@ void RKTestListFiles(const char *path) {
             continue;
         }
         if (parent[0] != '.') {
-            sprintf(files[j++], "%s%s", parent, entry->d_name);
+            snprintf(files[j++], RKMaximumPathLength, "%s%s", parent, entry->d_name);
         } else {
-            sprintf(files[j++], "%s", entry->d_name);
+            snprintf(files[j++], RKMaximumPathLength, "%s", entry->d_name);
         }
         if (j >= 1024) {
             RKLog("Warning. Too many files in the directory, only first 1024 will be shown.\n");
@@ -2207,7 +2215,7 @@ void RKTestListFiles(const char *path) {
     qsort(files, j, sizeof(RKName), string_cmp_lexical);
 
     printf("Found %d files:\n", j);
-    char info[RKNameLength];
+    char info[RKMaximumPathLength];
     for (int k = 0; k < j; k++) {
         char *ext = strrchr(files[k], '.');
         if (!strcmp(ext, ".rkr") || !strcmp(ext, ".rkc")) {
@@ -2219,7 +2227,7 @@ void RKTestListFiles(const char *path) {
             fseek(fid, 0L, SEEK_END);
             long fsize = ftell(fid);
             if (fsize < sizeof(RKFileHeader)) {
-                sprintf(info, "(file size %s B)", RKIntegerToCommaStyleString(fsize));
+                snprintf(info, sizeof(info), "(file size %s B)", RKIntegerToCommaStyleString(fsize));
             } else {
                 rewind(fid);
                 RKFileHeader *header = RKFileHeaderInitFromFid(fid);
@@ -2235,7 +2243,7 @@ void RKTestListFiles(const char *path) {
                 } else {
                     pulseCount = 0;
                 }
-                sprintf(info, "%s%s%s   %s %6.2f°   %s   %s pulses",
+                snprintf(info, sizeof(info), "%s%s%s   %s %6.2f°   %s   %s pulses",
                     rkGlobalParameters.showColor ? RKDeepPinkColor : "",
                     RKMarkerScanTypeString(config->startMarker),
                     rkGlobalParameters.showColor ? RKNoColor : "",
@@ -2247,7 +2255,7 @@ void RKTestListFiles(const char *path) {
             }
             fclose(fid);
         } else if (!strcmp(ext, ".nc")) {
-            sprintf(info, "To be implemented ...");
+            snprintf(info, sizeof(info), "To be implemented ...");
         } else {
             info[0] = '\0';
         }
@@ -2303,14 +2311,14 @@ void RKTestFileManager(void) {
     e = 0;
     for (j = 0; j < 50; j++) {
         startTime += 3000;
-        k = sprintf(filename, "%s/%s/", dataPath, RKDataFolderMoment);
+        k = snprintf(filename, sizeof(filename), "%s/%s/", dataPath, RKDataFolderMoment);
         k += strftime(filename + k, 9, "%Y%m%d", gmtime(&startTime));
-        k += sprintf(filename + k, "/RK-");
+        k += snprintf(filename + k, sizeof(filename) - k, "/RK-");
         k += strftime(filename + k, 16, "%Y%m%d-%H%M%S", gmtime(&startTime));
-        k += sprintf(filename + k, "-E%.1f", es[e]);
+        k += snprintf(filename + k, sizeof(filename) - k, "-E%.1f", es[e]);
 
         for (s = 0; s < ns; s++) {
-            sprintf(filename + k, "-%s.nc", ss[s]);
+            snprintf(filename + k, sizeof(filename) - k, "-%s.nc", ss[s]);
 
             RKPreparePath(filename);
 
@@ -2337,7 +2345,7 @@ void RKTestFileMonitor(void) {
     RKFileMonitor *mon = RKFileMonitorInit(file, &RKTestCallback, NULL);
     RKLog("Touching file %s ...\n", file);
     char command[strlen(file) + 10];
-    sprintf(command, "touch %s", file);
+    snprintf(command, sizeof(command), "touch %s", file);
     int k = system(command);
     if (k) {
         RKLog("Error. Failed using system() -> %d   errno = %d\n", k, errno);
@@ -2373,7 +2381,7 @@ static void _webSocketHandleOpen(RKWebSocket *w) {
     char show[160];
     char message[80];
     // I know, magic packet here. First byte value = 1 means handshake in RadarHub
-    int r = sprintf(message, "%c{\"radar\":\"radarkit\", \"command\":\"radarConnect\"}", 1);
+    int r = snprintf(message, sizeof(message), "%c{\"radar\":\"radarkit\", \"command\":\"radarConnect\"}", 1);
     RKBinaryString(show, message, r);
     RKLog("_webSocketHandleOpen() %s\n", show);
     RKWebSocketSend(w, message, r);
@@ -3460,9 +3468,9 @@ void RKTestWaveformLoading(const int argc, const void ** argv) {
     }
     char *path = NULL;
     char paths[3][256];
-    sprintf(paths[0], "%s/waveforms", home);
-    sprintf(paths[1], "%s/data/waveforms", home);
-    sprintf(paths[2], "%s/Downloads/waveforms", home);
+    snprintf(paths[0], sizeof(paths[0]), "%s/waveforms", home);
+    snprintf(paths[1], sizeof(paths[1]), "%s/data/waveforms", home);
+    snprintf(paths[2], sizeof(paths[2]), "%s/Downloads/waveforms", home);
     for (int i = 0; i < 3; i++) {
         if (RKFilenameExists((const char *)paths[i])) {
             path = (char *)paths[i];
@@ -3482,7 +3490,7 @@ void RKTestWaveformLoading(const int argc, const void ** argv) {
     // Check if all waveforms exist
     bool allExists = true;
     for (int i = 0; i < count; i++) {
-        sprintf(wavefile, "%s/%s.rkwav", path, argc == 0 ? defaultWaveforms[i] : (const char *)argv[i]);
+        snprintf(wavefile, sizeof(wavefile), "%s/%s.rkwav", path, argc == 0 ? defaultWaveforms[i] : (const char *)argv[i]);
         if (!RKFilenameExists(wavefile)) {
             RKLog("Error. Waveform '%s' not found\n", wavefile);
             allExists = false;
@@ -3501,7 +3509,7 @@ void RKTestWaveformLoading(const int argc, const void ** argv) {
     memset(waveGlobalHeader, 0, sizeof(RKWaveFileGlobalHeader));
 
     for (int i = 0; i < count; i++) {
-        sprintf(wavefile, "%s/%s.rkwav", path, argc == 0 ? defaultWaveforms[i] : (const char *)argv[i]);
+        snprintf(wavefile, sizeof(wavefile), "%s/%s.rkwav", path, argc == 0 ? defaultWaveforms[i] : (const char *)argv[i]);
         RKLog("Loading waveform file '%s' ...\n", wavefile);
 
         waveform = RKWaveformInitFromFile(wavefile);
@@ -3676,17 +3684,17 @@ void RKTestRingFilterShowCoefficients(void) {
     for (type = RKFilterTypeNull; type < RKFilterTypeCount; type++) {
         RKGetFilterCoefficients(filter, type);
         RKLog("%s:\n", filter->name);
-        i = sprintf(string, "b = [");
+        i = snprintf(string, 32 * filter->bLength, "b = [");
         for (k = 0; k < filter->bLength; k++) {
-            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->B[k].i);
+            i += snprintf(string + i, 32 * filter->bLength - i, "%s%.4f", k > 0 ? ", " : "", filter->B[k].i);
         }
-        sprintf(string + i, "]");
+        snprintf(string + i, 32 * filter->bLength - i, "]");
         RKLog(">%s", string);
-        i = sprintf(string, "a = [");
+        i = snprintf(string, 32 * filter->aLength, "a = [");
         for (k = 0; k < filter->aLength; k++) {
-            i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", filter->A[k].i);
+            i += snprintf(string + i, 32 * filter->aLength - i, "%s%.4f", k > 0 ? ", " : "", filter->A[k].i);
         }
-        sprintf(string + i, "]");
+        snprintf(string + i, 32 * filter->aLength - i, "]");
         RKLog(">%s", string);
     }
     free(string);
@@ -4220,7 +4228,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         err += D[row][k] - space->ZDR[k];
     }
     err /= (RKFloat)gateCount;
-    sprintf(str, "Delta ZDR = %+.4e", err);
+    snprintf(str, sizeof(str), "Delta ZDR = %+.4e", err);
     TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     // Error of PhiDP
@@ -4229,7 +4237,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         err += P[row][k] - space->PhiDP[k];
     }
     err /= (RKFloat)gateCount;
-    sprintf(str, "Delta PhiDP = %+.4e", err);
+    snprintf(str, sizeof(str), "Delta PhiDP = %+.4e", err);
     TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     // Error of RhoHV
@@ -4238,7 +4246,7 @@ void RKTestOneRay(int method(RKMomentScratch *, RKPulse **, const uint16_t), con
         err += R[row][k] - space->RhoHV[k];
     }
     err /= (RKFloat)gateCount;
-    sprintf(str, "Delta RhoHV = %+.4e", err);
+    snprintf(str, sizeof(str), "Delta RhoHV = %+.4e", err);
     TEST_RESULT(rkGlobalParameters.showColor, str, fabsf(err) < 1.0e-3);
 
     RKLog("Deallocating buffers ...\n");
@@ -5355,29 +5363,29 @@ void *RKTestTransceiverRunLoop(void *input) {
             room = 1.0f * nn / (float)((int)RAND_MAX) + 21.5f + (transceiver->simFault && transceiver->transmitting ? 10.0f : 0.0f);
             health = RKGetVacantHealth(radar, RKHealthNodeTransceiver);
             if (health) {
-                sprintf(health->string,
-                        "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
-                        "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
-                        "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
-                        "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                        "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
-                        "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
-                        "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                        "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
-                        "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
-                        "\"TransceiverCounter\": %ld}",
-                        RKStatusEnumActive,
-                        RKStatusEnumNormal,
-                        RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
-                        temp, RKStatusFromTemperatureForCE(temp),
-                        volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
-                        room, RKStatusFromTemperatureForComputers(room),
-                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
-                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                        transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
-                        transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
-                        transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
-                        transceiver->counter);
+                snprintf(health->string, sizeof(health->string),
+                    "{\"Trigger\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"PLL Clock\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"Target PRF\":{\"Value\":\"%s Hz\", \"Enum\":0}, "
+                    "\"FPGA Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                    "\"XMC Voltage\":{\"Value\":\"%.1f V\",\"Enum\":%d}, "
+                    "\"Ambient Temp\":{\"Value\":\"%.1fdegC\",\"Enum\":%d}, "
+                    "\"Transmit H\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                    "\"Transmit V\":{\"Value\":\"%s dBm\", \"Enum\":%d}, "
+                    "\"Waveform\":{\"Value\":\"%s\", \"Enum\":0}, "
+                    "\"TransceiverCounter\": %ld}",
+                    RKStatusEnumActive,
+                    RKStatusEnumNormal,
+                    RKIntegerToCommaStyleString((long)(1.0 / transceiver->prt)),
+                    temp, RKStatusFromTemperatureForCE(temp),
+                    volt, volt > 12.2f ? RKStatusEnumHigh : RKStatusEnumNormal,
+                    room, RKStatusFromTemperatureForComputers(room),
+                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 111) & 0x3ff)) : "-inf",
+                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                    transceiver->transmitting ? RKFloatToCommaStyleString((float)50.0f + 0.001f * ((nn + 222) & 0x3ff)) : "-inf",
+                    transceiver->transmitting ? RKStatusEnumActive : RKStatusEnumOff,
+                    transceiver->waveformCache[transceiver->waveformCacheIndex]->name,
+                    transceiver->counter);
                 RKSetHealthReady(radar, health);
             }
         }
@@ -5411,9 +5419,9 @@ RKTransceiver RKTestTransceiverInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(transceiver, 0, sizeof(RKTestTransceiver));
-    sprintf(transceiver->name, "%s< SimTransceiver>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(transceiver->name, sizeof(transceiver->name), "%s< SimTransceiver>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorTransceiver) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     transceiver->state = RKEngineStateAllocated;
     transceiver->radar = radar;
     transceiver->memoryUsage = sizeof(RKTestTransceiver);
@@ -5544,7 +5552,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         if (transceiver->verbose) {
             RKLog("%s Warning. No I/Q processors for '%s'.", transceiver->name, command);
         }
-        sprintf(response, "NAK. No I/Q processors yet." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "NAK. No I/Q processors yet." RKEOL);
         return RKResultFailedToExecuteCommand;
     }
 
@@ -5569,38 +5577,38 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 transceiver->state |= RKEngineStateDeactivating;
                 pthread_join(transceiver->tidRunLoop, NULL);
                 transceiver->state ^= RKEngineStateDeactivating;
-                sprintf(response, "ACK. Transceiver stopped." RKEOL);
+                snprintf(response, RKMaximumCommandLength, "ACK. Transceiver stopped." RKEOL);
                 if (radar->desc.initFlags & RKInitFlagVerbose) {
                     RKLog("%s Stopped.\n", transceiver->name);
                 }
             }
             break;
         case 'h':
-            sprintf(response,
-                    "Commands:\n"
-                    UNDERLINE("help") " - Help list.\n"
-                    UNDERLINE("prt") " [value] - PRT set to value\n"
-                    UNDERLINE("y") " Starts a built-in mode.\n"
-                    UNDERLINE("z") " Stops everything.\n"
-                    );
+            snprintf(response, RKMaximumCommandLength,
+                "Commands:\n"
+                UNDERLINE("help") " - Help list.\n"
+                UNDERLINE("prt") " [value] - PRT set to value\n"
+                UNDERLINE("y") " Starts a built-in mode.\n"
+                UNDERLINE("z") " Stops everything.\n"
+                );
             break;
         case 'p':
             if (!strncmp(command, "prt", 3)) {
                 k = sscanf(command, "%s %lf", string, &value);
                 if (k == 2) {
                     transceiver->prt = value;
-                    sprintf(response, "ACK. New PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                    snprintf(response, RKMaximumCommandLength, "ACK. New PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
                 } else {
-                    sprintf(response, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
+                    snprintf(response, RKMaximumCommandLength, "ACK. Current PRT = %.3f ms" RKEOL, 1.0e3 * transceiver->prt);
                     break;
                 }
             } else if (!strncmp(command, "prf", 3)) {
                 k = sscanf(command, "%s %lf", string, &value);
                 if (k == 2) {
                     transceiver->prt = 1.0 / value;
-                    sprintf(response, "ACK. New PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
+                    snprintf(response, RKMaximumCommandLength, "ACK. New PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
                 } else {
-                    sprintf(response, "ACK. Current PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
+                    snprintf(response, RKMaximumCommandLength, "ACK. Current PRF = %.0f Hz" RKEOL, 1.0 / transceiver->prt);
                     break;
                 }
             }
@@ -5624,7 +5632,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         case 's':
             if (!strcmp(command, "stop")) {
                 RKLog("%s Stop transmitting.\n", transceiver->name);
-                sprintf(response, "ACK. Transmitter Off." RKEOL);
+                snprintf(response, RKMaximumCommandLength, "ACK. Transmitter Off." RKEOL);
                 break;
             }
             transceiver->sleepInterval = atoi(command + 1);
@@ -5633,7 +5641,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
         case 't':
             // Pretend a slow command
             RKPerformMasterTaskInBackground(radar, "w");
-            sprintf(response, "ACK. Command executed." RKEOL);
+            snprintf(response, RKMaximumCommandLength, "ACK. Command executed." RKEOL);
             break;
         case 'w':
             // Waveform
@@ -5700,7 +5708,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             }
             if (waveformFromFile) {
                 // Load from a file
-                sprintf(string, "%s%s%s/%s.rkwav", radar->desc.dataPath, radar->desc.dataPath[0] == '\0' ? "" : "/", RKWaveformFolder, c);
+                snprintf(string, sizeof(string), "%s%s%s/%s.rkwav", radar->desc.dataPath, radar->desc.dataPath[0] == '\0' ? "" : "/", RKWaveformFolder, c);
                 RKLog("%s Waveform path '%s'...\n", transceiver->name, string);
                 if (RKFilenameExists(string)) {
                     RKLog("Loading waveform from file '%s'...\n", string);
@@ -5717,7 +5725,7 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                         RKWaveformDecimate(waveform, k);
                     }
                 } else {
-                    sprintf(response, "NAK. Waveform '%s' not found." RKEOL, string);
+                    snprintf(response, RKMaximumCommandLength, "NAK. Waveform '%s' not found." RKEOL, string);
                     return RKResultFailedToSetWaveform;
                 }
             }
@@ -5729,8 +5737,8 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
                 RKLog("%s Warning. Waveform '%s' with %s samples not allowed (capacity = %s).\n", transceiver->name, string,
                       RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                 RKLog("%s Warning. Waveform not changed.\n", transceiver->name);
-                sprintf(response, "NAK. Waveform '%s' with %s samples not allowed (capacity = %s)." RKEOL, string,
-                        RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
+                snprintf(response, RKMaximumCommandLength, "NAK. Waveform '%s' with %s samples not allowed (capacity = %s)." RKEOL, string,
+                    RKIntegerToCommaStyleString(waveform->depth), RKIntegerToCommaStyleString(radar->desc.pulseCapacity));
                 return RKResultFailedToSetWaveform;
             }
             // Next cache index
@@ -5742,31 +5750,31 @@ int RKTestTransceiverExec(RKTransceiver transceiverReference, const char *comman
             transceiver->waveformCache[j] = waveform;
             transceiver->waveformCacheIndex = j;
             RKWaveformSummary(waveform);
-            sprintf(response, "ACK. Waveform '%s' loaded." RKEOL, c);
+            snprintf(response, RKMaximumCommandLength, "ACK. Waveform '%s' loaded." RKEOL, c);
             RKSetWaveform(radar, waveform);
             transceiver->transmitting = true;
             break;
         case 'x':
             // Simulate critical temperature
             transceiver->simFault = !transceiver->simFault;
-            sprintf(response, "ACK. simFault -> %d" RKEOL, transceiver->simFault);
+            snprintf(response, RKMaximumCommandLength, "ACK. simFault -> %d" RKEOL, transceiver->simFault);
             break;
         case 'y':
             // Everything goes
             RKSteerEngineExecuteString(radar->steerEngine, "ipp 2,4,6,8,10,12 0 18", response);
             if (strstr(response, "ACK")) {
-                sprintf(response, "ACK. Supposed to be everything goes" RKEOL);
+                snprintf(response, RKMaximumCommandLength, "ACK. Supposed to be everything goes" RKEOL);
             }
             break;
         case 'z':
             transceiver->transmitting = false;
             RKSteerEngineExecuteString(radar->steerEngine, "stop", response);
             if (strstr(response, "ACK")) {
-                sprintf(response, "ACK. Everything stopped." RKEOL);
+                snprintf(response, RKMaximumCommandLength, "ACK. Everything stopped." RKEOL);
             }
             break;
         default:
-            sprintf(response, "NAK. Command not understood." RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Command not understood." RKEOL);
             break;
     }
     return RKResultSuccess;
@@ -5789,7 +5797,7 @@ int RKTestTransceiverFree(RKTransceiver transceiverReference) {
 
 #pragma endregion
 
-#pragma mark - Pedestal Emulator
+#pragma region Pedestal Emulator
 #pragma region Pedestal Emulator
 
 #define RKSplineDefault   { .left = 0.0 }
@@ -5872,11 +5880,11 @@ void *RKTestPedestalRunLoop(void *input) {
                 axis = 'a';
             }
             if (RKInstructIsSlew(instruct)) {
-                sprintf(string, "%cslew %.1f", axis, value);
+                snprintf(string, sizeof(string), "%cslew %.1f", axis, value);
             } else if (RKInstructIsPoint(instruct)) {
-                sprintf(string, "%cpoint %.1f", axis, value);
+                snprintf(string, sizeof(string), "%cpoint %.1f", axis, value);
             } else if (RKInstructIsStandby(instruct)) {
-                sprintf(string, "%cstop", axis);
+                snprintf(string, sizeof(string), "%cstop", axis);
             }
             RKTestPedestalExec(pedestal, string, response);
         }
@@ -5887,20 +5895,20 @@ void *RKTestPedestalRunLoop(void *input) {
         if (tic % healthTicCount == 0) {
             RKHealth *health = RKGetVacantHealth(radar, RKHealthNodePedestal);
             if (health) {
-                sprintf(health->string, "{"
-                        "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                        "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                        "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
-                        "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
-                        "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
-                        "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
-                        "}",
-                        position->azimuthDegrees, RKStatusEnumNormal,
-                        position->elevationDegrees, RKStatusEnumNormal,
-                        RKStatusEnumNormal,
-                        RKStatusEnumNormal,
-                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
-                        position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
+                snprintf(health->string, sizeof(health->string), "{"
+                    "\"Pedestal AZ\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal EL\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                    "\"Pedestal AZ Safety\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"Pedestal EL Safety\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"VCP Active\":{\"Value\":true,\"Enum\":%d}, "
+                    "\"Pedestal Operate\":{\"Value\":true,\"Enum\":%d}"
+                    "}",
+                    position->azimuthDegrees, RKStatusEnumNormal,
+                    position->elevationDegrees, RKStatusEnumNormal,
+                    RKStatusEnumNormal,
+                    RKStatusEnumNormal,
+                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby,
+                    position->elevationVelocityDegreesPerSecond > 0.1f || position->azimuthVelocityDegreesPerSecond > 0.1f ? RKStatusEnumNormal : RKStatusEnumStandby);
                 RKSetHealthReady(radar, health);
             }
         }
@@ -5957,9 +5965,9 @@ RKPedestal RKTestPedestalInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(pedestal, 0, sizeof(RKTestPedestal));
-    sprintf(pedestal->name, "%s<  SimPedestal  >%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(pedestal->name, sizeof(pedestal->name), "%s<  SimPedestal  >%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPedestalRelayPedzy) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     pedestal->memoryUsage = sizeof(RKTestPedestal);
     pedestal->radar = radar;
     pedestal->state = RKEngineStateAllocated;
@@ -6010,81 +6018,81 @@ int RKTestPedestalExec(RKPedestal pedestalReference, const char *command, char *
         pedestal->state |= RKEngineStateDeactivating;
         pthread_join(pedestal->tidRunLoop, NULL);
         pedestal->state ^= RKEngineStateDeactivating;
-        sprintf(response, "ACK. Pedestal stopped." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "ACK. Pedestal stopped." RKEOL);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", pedestal->name);
         }
     } else if (!strncmp(command, "state", 5)) {
         if (fabsf(pedestal->speedAzimuth) > 0.1f || fabsf(pedestal->speedElevation) > 0.1f) {
-            sprintf(response, "1" RKEOL);
+            snprintf(response, RKMaximumCommandLength, "1" RKEOL);
         } else {
-            sprintf(response, "0" RKEOL);
+            snprintf(response, RKMaximumCommandLength, "0" RKEOL);
         }
     } else if (!strncmp(command, "stop", 4)) {
         pedestal->actionElevation = RKAxisActionStop;
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedElevation = 0.0f;
         pedestal->targetSpeedAzimuth = 0.0f;
-        sprintf(response, "ACK. Pedestal stopped." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "ACK. Pedestal stopped." RKEOL);
     } else if (!strncmp(command, "astop", 5)) {
         pedestal->actionAzimuth = RKAxisActionStop;
         pedestal->targetSpeedAzimuth = 0.0f;
-        sprintf(response, "ACK. Azimuth stopped." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "ACK. Azimuth stopped." RKEOL);
     } else if (!strncmp(command, "estop", 5)) {
         pedestal->actionElevation = RKAxisActionStop;
         pedestal->targetSpeedElevation = 0.0f;
-        sprintf(response, "ACK. Elevation stopped." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "ACK. Elevation stopped." RKEOL);
     } else if (!strncmp(command, "bad", 3)) {
-        sprintf(response, "ACK. Simulating bad pedestal" RKEOL);
+        snprintf(response, RKMaximumCommandLength, "ACK. Simulating bad pedestal" RKEOL);
     } else if (!strncmp(command, "slew", 4) || !strncmp(command, "aslew", 5)) {
         if (n == 0) {
-            sprintf(response, "NAK. Use as 'aslew [AZ_RATE]" RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Use as 'aslew [AZ_RATE]" RKEOL);
             return RKResultFailedToExecuteCommand;
         }
         pedestal->actionAzimuth = RKAxisActionSpeed;
         pedestal->targetSpeedAzimuth = atof(args[0]);
-        sprintf(response, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->targetSpeedAzimuth);
+        snprintf(response, RKMaximumCommandLength, "ACK. Azimuth speed to %.1f" RKEOL, pedestal->targetSpeedAzimuth);
     } else if (!strncmp(command, "eslew", 5)) {
         if (n == 0) {
-            sprintf(response, "NAK. Use as 'eslew [AZ_RATE]" RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Use as 'eslew [AZ_RATE]" RKEOL);
             return RKResultFailedToExecuteCommand;
         }
         pedestal->actionElevation = RKAxisActionSpeed;
         pedestal->targetSpeedElevation = atof(args[0]);
-        sprintf(response, "ACK. Elevation speed to %.1f" RKEOL, pedestal->targetSpeedElevation);
+        snprintf(response, RKMaximumCommandLength, "ACK. Elevation speed to %.1f" RKEOL, pedestal->targetSpeedElevation);
     } else if (!strncmp("azi", command, 3) || !strncmp("apos", command, 4) || !strncmp("apoint", command, 6)) {
         if (n == 0) {
-            sprintf(response, "NAK. Use as 'azi/apos/apoint [AZ_POSITION]" RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Use as 'azi/apos/apoint [AZ_POSITION]" RKEOL);
             return RKResultFailedToExecuteCommand;
         }
         pedestal->actionAzimuth = RKAxisActionPosition;
         pedestal->targetAzimuth = atof(args[0]);
-        sprintf(response, "ACK. Azimuth to %.1f" RKEOL, pedestal->targetAzimuth);
+        snprintf(response, RKMaximumCommandLength, "ACK. Azimuth to %.1f" RKEOL, pedestal->targetAzimuth);
     } else if (!strncmp("ele", command, 3) || !strncmp("epos", command, 4) || !strncmp("epoint", command, 6)) {
         if (n == 0) {
-            sprintf(response, "NAK. Use as 'ele/epos/epoint [EL_POSITION]" RKEOL);
+            snprintf(response, RKMaximumCommandLength, "NAK. Use as 'ele/epos/epoint [EL_POSITION]" RKEOL);
             return RKResultFailedToExecuteCommand;
         }
         pedestal->actionElevation = RKAxisActionPosition;
         pedestal->targetElevation = atof(args[0]);
-        sprintf(response, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
+        snprintf(response, RKMaximumCommandLength, "ACK. Elevation to %.1f" RKEOL, pedestal->targetElevation);
     } else if (RKSteerEngineIsExecutable(command)) {
-        size_t s = sprintf(response,
-                           RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
-                           "    Use the 'v' command for RadarKit VCP engine\n");
+        size_t s = snprintf(response, RKMaximumCommandLength,
+            RKOrangeColor "DEPRECATION WARNING" RKNoColor "\n"
+            "    Use the 'v' command for RadarKit VCP engine\n");
         return RKSteerEngineExecuteString(steeven, command, response + s);
     } else if (!strcmp(command, "help")) {
-        sprintf(response,
-                "Commands:\n"
-                UNDERLINE("help") " - Help list\n"
-                UNDERLINE("aslew") " [VAZ] - Azimuth slew at VAZ °/s\n"
-                UNDERLINE("eslew") " [VEL] - Azimuth slew at VEL °/s\n"
-                UNDERLINE("astop") " - Azimuth stops\n"
-                UNDERLINE("estop") " - Elevation stops\n"
-                UNDERLINE("stop") " - Both axes stop\n"
-                RKEOL);
+        snprintf(response, RKMaximumCommandLength,
+            "Commands:\n"
+            UNDERLINE("help") " - Help list\n"
+            UNDERLINE("aslew") " [VAZ] - Azimuth slew at VAZ °/s\n"
+            UNDERLINE("eslew") " [VEL] - Azimuth slew at VEL °/s\n"
+            UNDERLINE("astop") " - Azimuth stops\n"
+            UNDERLINE("estop") " - Elevation stops\n"
+            UNDERLINE("stop") " - Both axes stop\n"
+            RKEOL);
     } else if (response != NULL) {
-        sprintf(response, "NAK. Command not understood." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "NAK. Command not understood." RKEOL);
     }
     return RKResultSuccess;
 }
@@ -6097,7 +6105,7 @@ int RKTestPedestalFree(RKPedestal pedestalReference) {
 
 #pragma endregion
 
-#pragma mark - Health Relay Emulator
+#pragma region Health Relay Emulator
 #pragma region Health Relay Emulator
 
 void *RKTestHealthRelayRunLoop(void *input) {
@@ -6130,23 +6138,23 @@ void *RKTestHealthRelayRunLoop(void *input) {
         heading = (double)rand() * 0.2 / (double)((int)RAND_MAX) + 45.0;
         RKHealth *health = RKGetVacantHealth(radar, RKHealthNodeTweeta);
         if (health) {
-            sprintf(health->string, "{"
-                    "\"PSU H\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"PSU V\":{\"Value\":true,\"Enum\":%d}, "
-                    "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
-                    "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                    "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                    "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
-                    "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
-                    "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
-                    "}",
-                    RKStatusEnumNormal,
-                    RKStatusEnumNormal,
-                    latitude,
-                    longitude,
-                    heading,
-                    powerH, RKStatusEnumNormal,
-                    powerV, RKStatusEnumNormal);
+            snprintf(health->string, sizeof(health->string), "{"
+                "\"PSU H\":{\"Value\":true,\"Enum\":%d}, "
+                "\"PSU V\":{\"Value\":true,\"Enum\":%d}, "
+                "\"GPS Valid\":{\"Value\":true,\"Enum\":0}, "
+                "\"GPS Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                "\"GPS Heading\":{\"Value\":\"%.1f deg\",\"Enum\":0}, "
+                "\"Platform Pitch\":{\"Value\":\"%.2f deg\",\"Enum\":%d}, "
+                "\"Platform Roll\":{\"Value\":\"%.2f deg\",\"Enum\":%d}"
+                "}",
+                RKStatusEnumNormal,
+                RKStatusEnumNormal,
+                latitude,
+                longitude,
+                heading,
+                powerH, RKStatusEnumNormal,
+                powerV, RKStatusEnumNormal);
             RKSetHealthReady(radar, health);
         }
 
@@ -6170,9 +6178,9 @@ RKHealthRelay RKTestHealthRelayInit(RKRadar *radar, void *input) {
         exit(EXIT_FAILURE);
     }
     memset(healthRelay, 0, sizeof(RKHealthRelay));
-    sprintf(healthRelay->name, "%s< SimHealthRelay>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(healthRelay->name, sizeof(healthRelay->name), "%s< SimHealthRelay>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthRelayTweeta) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     healthRelay->memoryUsage = sizeof(RKTestPedestal);
     healthRelay->radar = radar;
     healthRelay->state = RKEngineStateAllocated;
@@ -6214,17 +6222,17 @@ int RKTestHealthRelayExec(RKHealthRelay healthRelayReference, const char *comman
         healthRelay->state |= RKEngineStateDeactivating;
         pthread_join(healthRelay->tidRunLoop, NULL);
         healthRelay->state ^= RKEngineStateDeactivating;
-        sprintf(response, "ACK. Transceiver stopped." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "ACK. Transceiver stopped." RKEOL);
         if (radar->desc.initFlags & RKInitFlagVerbose) {
             RKLog("%s Stopped.\n", healthRelay->name);
         }
     } else if (!strcmp(command, "help")) {
-        sprintf(response,
-                "Commands:\n"
-                UNDERLINE("help") " - Help list\n"
-                );
+        snprintf(response, RKMaximumCommandLength,
+            "Commands:\n"
+            UNDERLINE("help") " - Help list\n"
+            );
     } else {
-        sprintf(response, "NAK. Command not understood." RKEOL);
+        snprintf(response, RKMaximumCommandLength, "NAK. Command not understood." RKEOL);
     }
 
     return RKResultSuccess;
@@ -6238,7 +6246,7 @@ int RKTestHealthRelayFree(RKHealthRelay healthRelayReference) {
 
 #pragma endregion
 
-#pragma mark - Others
+#pragma region Others
 
 void RKTestSingleCommand(void) {
     SHOW_FUNCTION_NAME
@@ -6266,7 +6274,7 @@ void RKTestMakePositionStatusString(void) {
 
     memset(string, '.', RKStatusBarWidth);
     string[i] = '#';
-    i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", positionIndex);
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, RKStatusStringLength - RKStatusBarWidth, " %04d |", positionIndex);
 
     i += snprintf(string + i, RKStatusStringLength - i, " %010lu  %sAZ%s %6.2f° @ %+7.2f°/s [%6.2f°]   %sEL%s %6.2f° @ %+6.2f°/s [%6.2f°]   %08x",
             (unsigned long)position->i,
@@ -6286,7 +6294,7 @@ void RKTestMakePositionStatusString(void) {
     free(position);
 }
 
-#pragma mark -
+#pragma region
 
 static void cosine_window(float *w, unsigned n, const float * coeff, unsigned ncoeff, bool sflag)
 {

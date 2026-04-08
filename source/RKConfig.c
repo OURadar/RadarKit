@@ -89,52 +89,52 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 break;
             case RKConfigKeyPositionMarker:
                 newConfig->startMarker = va_arg(args, RKMarker);
-				sprintf(stringBuffer[0], "New sweep   EL %.2f°   AZ %.2f°   %s%s%s   %s",
-                        newConfig->sweepElevation,
-                        newConfig->sweepAzimuth,
-                        rkGlobalParameters.showColor ? RKDeepPinkColor : "",
-                        RKMarkerScanTypeString(newConfig->startMarker),
-                        rkGlobalParameters.showColor ? RKNoColor : "",
-                        RKVariableInString("filterCount", &newConfig->waveform->count, RKValueTypeUInt8));
+				snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "New sweep   EL %.2f°   AZ %.2f°   %s%s%s   %s",
+                         newConfig->sweepElevation,
+                         newConfig->sweepAzimuth,
+                         rkGlobalParameters.showColor ? RKDeepPinkColor : "",
+                         RKMarkerScanTypeString(newConfig->startMarker),
+                         rkGlobalParameters.showColor ? RKNoColor : "",
+                         RKVariableInString("filterCount", &newConfig->waveform->count, RKValueTypeUInt8));
                 break;
             case RKConfigKeyPRT:
                 newConfig->prt[0] = (RKFloat)va_arg(args, double);
                 printf("=== args = %.6f --> %.6f\n", newConfig->prt[0], 1.0 / (double)newConfig->prt[0]);
                 if (newConfig->prt[0] != oldConfig->prt[0]) {
-                    sprintf(stringBuffer[0], "PRT = %s ms", RKFloatToCommaStyleString(1.0e3f * newConfig->prt[0]));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "PRT = %s ms", RKFloatToCommaStyleString(1.0e3f * newConfig->prt[0]));
                 }
                 break;
             case RKConfigKeyPRF:
                 newConfig->prt[0] = (RKFloat)(1.0 / va_arg(args, double));
                 if (newConfig->prt[0] != oldConfig->prt[0]) {
-                    sprintf(stringBuffer[0], "PRF = %s Hz", RKIntegerToCommaStyleString((int)roundf(1.0f / newConfig->prt[0])));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "PRF = %s Hz", RKIntegerToCommaStyleString((int)roundf(1.0f / newConfig->prt[0])));
                 }
                 break;
             case RKConfigKeyDualPRF:
                 newConfig->prt[0] = (RKFloat)(1.0 / va_arg(args, double));
                 newConfig->prt[1] = (RKFloat)(1.0 / va_arg(args, double));
                 if (newConfig->prt[0] != oldConfig->prt[0] || newConfig->prt[1] != oldConfig->prt[1]) {
-                    sprintf(stringBuffer[0], "Dual PRF = %s / %s Hz", RKFloatToCommaStyleString(newConfig->prt[0]), RKFloatToCommaStyleString(newConfig->prt[1]));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "Dual PRF = %s / %s Hz", RKFloatToCommaStyleString(newConfig->prt[0]), RKFloatToCommaStyleString(newConfig->prt[1]));
                 }
                 break;
             case RKConfigKeyPulseGateCount:
                 newConfig->pulseGateCount = va_arg(args, uint32_t);
                 if (newConfig->pulseGateCount != oldConfig->pulseGateCount) {
-                    sprintf(stringBuffer[0], "PulseGateCount = %s", RKIntegerToCommaStyleString(newConfig->pulseGateCount));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "PulseGateCount = %s", RKIntegerToCommaStyleString(newConfig->pulseGateCount));
                 }
                 break;
             case RKConfigKeyPulseGateSize:
                 newConfig->pulseGateSize = (RKFloat)va_arg(args, double);
                 if (newConfig->pulseGateSize != oldConfig->pulseGateSize) {
-                    sprintf(stringBuffer[0], "PulseGateSize = %s m", RKFloatToCommaStyleString(newConfig->pulseGateSize));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "PulseGateSize = %s m", RKFloatToCommaStyleString(newConfig->pulseGateSize));
                 }
                 break;
             case RKConfigKeyVCPDefinition:
                 string = va_arg(args, char *);
                 if (string == NULL) {
-                    sprintf(stringBuffer[0], "VCP = (NULL)\n");
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "VCP = (NULL)\n");
                 } else {
-                    sprintf(stringBuffer[0], "VCP = %s\n", string);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "VCP = %s\n", string);
                     strncpy(newConfig->vcpDefinition, string, sizeof(newConfig->vcpDefinition) - 1);
                 }
                 break;
@@ -142,26 +142,26 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->noise[0] = (RKFloat)va_arg(args, double);
                 newConfig->noise[1] = (RKFloat)va_arg(args, double);
                 if (newConfig->noise[0] != oldConfig->noise[0] || newConfig->noise[1] != oldConfig->noise[1]) {
-                    sprintf(stringBuffer[0], "SystemNoise = %.2f %.2f ADU^2", newConfig->noise[0], newConfig->noise[1]);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "SystemNoise = %.2f %.2f ADU^2", newConfig->noise[0], newConfig->noise[1]);
                 }
                 break;
             case RKConfigKeySystemZCal:
                 newConfig->systemZCal[0] = (RKFloat)va_arg(args, double);
                 newConfig->systemZCal[1] = (RKFloat)va_arg(args, double);
                 if (newConfig->systemZCal[0] != oldConfig->systemZCal[0] || newConfig->systemZCal[1] != oldConfig->systemZCal[1]) {
-                    sprintf(stringBuffer[0], "SystemZCal = %.2f %.2f dB", newConfig->systemZCal[0], newConfig->systemZCal[1]);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "SystemZCal = %.2f %.2f dB", newConfig->systemZCal[0], newConfig->systemZCal[1]);
                 }
                 break;
 			case RKConfigKeySystemDCal:
 				newConfig->systemDCal = (RKFloat)va_arg(args, double);
                 if (newConfig->systemDCal != oldConfig->systemDCal) {
-                    sprintf(stringBuffer[0], "SystemDCal = %.2f dB", newConfig->systemDCal);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "SystemDCal = %.2f dB", newConfig->systemDCal);
                 }
 				break;
             case RKConfigKeySystemPCal:
                 newConfig->systemPCal = (RKFloat)va_arg(args, double);
                 if (newConfig->systemPCal != oldConfig->systemPCal) {
-                    sprintf(stringBuffer[0], "SystemPCal = %.2f rad", newConfig->systemPCal);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "SystemPCal = %.2f rad", newConfig->systemPCal);
                 }
                 break;
             case RKConfigKeyWaveform:
@@ -173,7 +173,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                 newConfig->waveform = waveform;
                 snprintf(newConfig->waveformName, RKNameLength, "%s", waveform->name) < 0 ? abort() : (void)0;
                 if (newConfig->waveform != oldConfig->waveform) {
-                    sprintf(stringBuffer[0], "Waveform = '%s' @ %p", waveform->name, waveform);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "Waveform = '%s' @ %p", waveform->name, waveform);
                 }
                 break;
             case RKConfigKeyWaveformDecimate:
@@ -183,18 +183,18 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     return;
                 }
                 newConfig->waveformDecimate = waveform;
-                sprintf(stringBuffer[0], "WaveformDecimate = '%s' @ %p", waveform->name, waveform);
+                snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "WaveformDecimate = '%s' @ %p", waveform->name, waveform);
                 break;
             case RKConfigKeyPulseWidth:
                 newConfig->pw[0] = (RKFloat)va_arg(args, double);
                 for (j = 1; j < RKMaximumFilterCount; j++) {
                     newConfig->pw[j] = newConfig->pw[0];
                 }
-                sprintf(stringBuffer[0], "PulseWidth = %s us", RKFloatToCommaStyleString(1.0e6 * newConfig->pw[0]));
+                snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "PulseWidth = %s us", RKFloatToCommaStyleString(1.0e6 * newConfig->pw[0]));
                 break;
             case RKConfigKeyWaveformName:
                 strncpy(newConfig->waveformName, va_arg(args, char *), RKNameLength - 1);
-                sprintf(stringBuffer[0], "WaveformName = '%s'", newConfig->waveformName);
+                snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "WaveformName = '%s'", newConfig->waveformName);
                 break;
             case RKConfigKeyWaveformCalibration:
                 // Calibration constants in [filterIndex][H/V] specified as N, ZCal[0][H], ZCal[0][V], ZCal[1][H], ZCal[1][V], ..., ZCal[N-1][H], ZCal[N-1][V]
@@ -207,7 +207,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                             newConfig->ZCal[j][1] = 0.0f;
                             newConfig->DCal[j] = 0.0f;
                             newConfig->PCal[j] = 0.0f;
-                            sprintf(stringBuffer[j], "WavCal[0/1] @ all zeroes");
+                            snprintf(stringBuffer[j], sizeof(stringBuffer[j]), "WavCal[0/1] @ all zeroes");
                         }
                     } else {
                         for (j = 0; j < RKMaximumFilterCount; j++) {
@@ -215,7 +215,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                             newConfig->ZCal[j][1] = 0.0f;
                             newConfig->DCal[j] = 0.0f;
                             newConfig->PCal[j] = 0.0f;
-                            sprintf(stringBuffer[j], "WavCal[0/1] @ all zeroes");
+                            snprintf(stringBuffer[j], sizeof(stringBuffer[j]), "WavCal[0/1] @ all zeroes");
                         }
                     }
                     break;
@@ -229,7 +229,7 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     w1 = MAX(w1, (int)log10f(waveformCal->DCal[j]));
                     w2 = MAX(w1, (int)log10f(waveformCal->PCal[j]));
                 }
-                sprintf(format, "WavCal[%%%dd/%%%dd] @ Z = %%+%d.2f, %%+%d.2f dB   D = %%+%d.2f dB   P = %%+%d.2f rad",
+                snprintf(format, sizeof(format), "WavCal[%%%dd/%%%dd] @ Z = %%+%d.2f, %%+%d.2f dB   D = %%+%d.2f dB   P = %%+%d.2f rad",
                         (int)log10f((float)waveformCal->count) + 1,
                         (int)log10f((float)waveformCal->count) + 1,
                         w0 + 5,
@@ -241,44 +241,44 @@ void RKConfigAdvance(RKConfig *configs, uint32_t *configIndex, uint32_t configBu
                     newConfig->ZCal[j][1] = waveformCal->ZCal[j][1];
                     newConfig->DCal[j] = waveformCal->DCal[j];
                     newConfig->PCal[j] = waveformCal->PCal[j];
-                    sprintf(stringBuffer[j], format, j, waveformCal->count, newConfig->ZCal[j][0], newConfig->ZCal[j][1], newConfig->DCal[j], newConfig->PCal[j]);
+                    snprintf(stringBuffer[j], sizeof(stringBuffer[j]), format, j, waveformCal->count, newConfig->ZCal[j][0], newConfig->ZCal[j][1], newConfig->DCal[j], newConfig->PCal[j]);
                 }
                 break;
             case RKConfigKeySNRThreshold:
                 newConfig->SNRThreshold = (RKFloat)va_arg(args, double);
                 if (newConfig->SNRThreshold != oldConfig->SNRThreshold) {
-                    sprintf(stringBuffer[0], "SNRThreshold = %.2f dB", newConfig->SNRThreshold);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "SNRThreshold = %.2f dB", newConfig->SNRThreshold);
                 }
                 break;
             case RKConfigKeySQIThreshold:
                 newConfig->SQIThreshold = (RKFloat)va_arg(args, double);
                 if (newConfig->SQIThreshold != oldConfig->SQIThreshold) {
-                    sprintf(stringBuffer[0], "SQIThreshold = %.2f", newConfig->SQIThreshold);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "SQIThreshold = %.2f", newConfig->SQIThreshold);
                 }
                 break;
             case RKConfigKeyRingFilterGateCount:
                 newConfig->ringFilterGateCount = va_arg(args, uint32_t);
                 if (newConfig->ringFilterGateCount != oldConfig->ringFilterGateCount) {
-                    sprintf(stringBuffer[0], "RingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->ringFilterGateCount));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "RingFilterGateCount = %s", RKIntegerToCommaStyleString(newConfig->ringFilterGateCount));
                 }
                 break;
             case RKConfigKeyTransitionGateCount:
                 newConfig->transitionGateCount = va_arg(args, uint32_t);
                 if (newConfig->transitionGateCount != oldConfig->transitionGateCount) {
-                    sprintf(stringBuffer[0], "TransitionGateCount = %s", RKIntegerToCommaStyleString(newConfig->transitionGateCount));
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "TransitionGateCount = %s", RKIntegerToCommaStyleString(newConfig->transitionGateCount));
                 }
                 break;
             case RKConfigKeyUserResource:
                 newConfig->userResource = (RKUserResource)va_arg(args, void *);
                 if (newConfig->userResource != oldConfig->userResource) {
-                    sprintf(stringBuffer[0], "UserResource @ %p", newConfig->userResource);
+                    snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "UserResource @ %p", newConfig->userResource);
                 }
                 break;
             case RKConfigKeyMomentMethod:
                 newConfig->momentMethod = (RKMomentMethod)va_arg(args, int);
                 break;
             default:
-                sprintf(stringBuffer[0], "Key %d not understood.", key);
+                snprintf(stringBuffer[0], sizeof(stringBuffer[0]), "Key %d not understood.", key);
                 break;
         }
         for (k = 0; k < RKMaximumFilterCount; k++) {

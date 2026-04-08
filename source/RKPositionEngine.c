@@ -10,14 +10,14 @@
 
 // Internal functions
 
-static void RKPositionnEngineUpdateStatusString(RKPositionEngine *);
+static void RKPositionEngineUpdateStatusString(RKPositionEngine *);
 static void *pulseTagger(void *);
 
 // Implementations
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
-static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
+static void RKPositionEngineUpdateStatusString(RKPositionEngine *engine) {
     int i;
     char *string;
 
@@ -50,7 +50,7 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     i = *engine->positionIndex * RKStatusBarWidth / engine->radarDescription->positionBufferDepth;
     memset(string, '.', RKStatusBarWidth);
     string[i] = '#';
-    i = RKStatusBarWidth + sprintf(string + RKStatusBarWidth, " %04d |", *engine->positionIndex);
+    i = RKStatusBarWidth + snprintf(string + RKStatusBarWidth, 8, " %04d |", *engine->positionIndex);
     RKPosition *position = &engine->positionBuffer[RKPreviousModuloS(*engine->positionIndex, engine->radarDescription->positionBufferDepth)];
     snprintf(string + i, RKStatusStringLength - i, " %010lu  %sEL%s %6.2f° @ %+5.1f°/s [%6.2f°]   %sAZ%s %6.2f° @ %+6.1f°/s [%6.2f°]   V%u-S%u  %08x",
              (unsigned long)position->i,
@@ -91,7 +91,7 @@ static void RKPositionnEngineUpdateStatusString(RKPositionEngine *engine) {
     engine->statusBufferIndex = RKNextModuloS(engine->statusBufferIndex, RKBufferSSlotCount);
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *pulseTagger(void *_in) {
     RKPositionEngine *engine = (RKPositionEngine *)_in;
@@ -310,7 +310,7 @@ static void *pulseTagger(void *_in) {
         if (RKTimevalDiff(t0, t1) > 0.05) {
             t1 = t0;
             engine->processedPulseIndex = k;
-            RKPositionnEngineUpdateStatusString(engine);
+            RKPositionEngineUpdateStatusString(engine);
         }
 
         if (engine->verbose > 2) {
@@ -349,14 +349,14 @@ static void *pulseTagger(void *_in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKPositionEngine *RKPositionEngineInit(void) {
     RKPositionEngine *engine = (RKPositionEngine *)malloc(sizeof(RKPositionEngine));
     memset(engine, 0, sizeof(RKPositionEngine));
-    sprintf(engine->name, "%s<PulsePositioner>%s",
-        rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionEngine) : "",
-        rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<PulsePositioner>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPositionEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKPositionEngine);
     engine->state = RKEngineStateAllocated;
     return engine;
@@ -366,7 +366,7 @@ void RKPositionEngineFree(RKPositionEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKPositionEngineSetVerbose(RKPositionEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -394,7 +394,7 @@ void RKPositionEngineSetEssentials(RKPositionEngine *engine, const RKRadarDesc *
     engine->state |= RKEngineStateProperlyWired;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKPositionEngineStart(RKPositionEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

@@ -12,7 +12,7 @@
 
 static void RKSweepEngineUpdateStatusString(RKSweepEngine *);
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 static void RKSweepEngineUpdateStatusString(RKSweepEngine *engine) {
     int i;
@@ -208,7 +208,8 @@ static void *sweepManagerV1(void *in) {
             // RKShowArray(product->data, product->desc.symbol, product->header.gateCount, product->header.rayCount);
         }
         // Full filename with symbol and extension
-        sprintf(product->header.suggestedFilename, "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
+        snprintf(product->header.suggestedFilename, sizeof(product->header.suggestedFilename),
+            "%s-%s.%s", sweep->header.filename, product->desc.symbol, engine->productFileExtension);
         strncpy(filename, product->header.suggestedFilename, RKMaximumPathLength);
 
         // Keep concatenating the filename into filelist
@@ -238,18 +239,19 @@ static void *sweepManagerV1(void *in) {
         // Make a summary for logging
         if (p == 0) {
             bool filenameTooLong = strlen(sweep->header.filename) > 48;
-            summarySize = sprintf(summary, "%s%s%s %s%s-%s%s%s.%s",
-                                  rkGlobalParameters.showColor ? (record ? RKGreenColor : RKLightOrangeColor) : "",
-                                  record ? "Recorded": "Skipped",
-                                  rkGlobalParameters.showColor ? RKNoColor : "",
-                                  filenameTooLong ? "..." : "",
-                                  filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
-                                  rkGlobalParameters.showColor ? RKYellowColor : "",
-                                  product->desc.symbol,
-                                  rkGlobalParameters.showColor ? RKNoColor : "",
-                                  engine->productFileExtension);
+            summarySize = snprintf(summary, RKMaximumStringLength, "%s%s%s %s%s-%s%s%s.%s",
+                                   rkGlobalParameters.showColor ? (record ? RKGreenColor : RKLightOrangeColor) : "",
+                                   record ? "Recorded": "Skipped",
+                                   rkGlobalParameters.showColor ? RKNoColor : "",
+                                   filenameTooLong ? "..." : "",
+                                   filenameTooLong ? RKLastTwoPartsOfPath(sweep->header.filename) : sweep->header.filename,
+                                   rkGlobalParameters.showColor ? RKYellowColor : "",
+                                   product->desc.symbol,
+                                   rkGlobalParameters.showColor ? RKNoColor : "",
+                                   engine->productFileExtension);
         } else {
-            summarySize += sprintf(summary + summarySize, rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
+            summarySize += snprintf(summary + summarySize, RKMaximumStringLength - summarySize,
+                rkGlobalParameters.showColor ? ", " RKYellowColor "%s" RKNoColor : ", %s", product->desc.symbol);
         }
     }
 
@@ -424,17 +426,17 @@ static void *sweepManager(void *in) {
     int summarySize = 0;
     char filename[RKMaximumPathLength];
 
-    sprintf(filename, "%s.%s", sweep->header.filename, engine->productFileExtension);
+    snprintf(filename, sizeof(filename), "%s.%s", sweep->header.filename, engine->productFileExtension);
 
     // Go through the products once for some final touches
     bool filenameTooLong = strlen(filename) > 48;
-    summarySize = sprintf(summary, "%s%s %s%s%s%s\n",
-                          rkGlobalParameters.showColor ? (record ? RKGreenColor : RKLightOrangeColor) : "",
-                          record ? "Recorded": "Skipped",
-                          rkGlobalParameters.showColor ? RKMonokaiYellow : "",
-                          filenameTooLong ? "..." : "",
-                          filenameTooLong ? RKLastTwoPartsOfPath(filename) : filename,
-                          rkGlobalParameters.showColor ? RKNoColor : "");
+    summarySize = snprintf(summary, RKMaximumStringLength, "%s%s %s%s%s%s\n",
+                           rkGlobalParameters.showColor ? (record ? RKGreenColor : RKLightOrangeColor) : "",
+                           record ? "Recorded": "Skipped",
+                           rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                           filenameTooLong ? "..." : "",
+                           filenameTooLong ? RKLastTwoPartsOfPath(filename) : filename,
+                           rkGlobalParameters.showColor ? RKNoColor : "");
 
     // Concatenate the filename into filelist
     size_t filelistLength = strlen(filelist);
@@ -454,11 +456,11 @@ static void *sweepManager(void *in) {
             if (engine->fileManager && !(engine->fileHandlingScriptProperties & RKScriptPropertyRemoveNCFiles)) {
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
                 if (engine->verbose > 1) {
-                    summarySize += sprintf(summary + summarySize, "%31sMonitor +%s%s%s\n",
-                                           "",
-                                           rkGlobalParameters.showColor ? RKMonokaiYellow : "",
-                                           filename,
-                                           rkGlobalParameters.showColor ? RKNoColor : "");
+                    summarySize += snprintf(summary + summarySize, RKMaximumStringLength - summarySize, "%31sMonitor +%s%s%s\n",
+                                            "",
+                                            rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                                            filename,
+                                            rkGlobalParameters.showColor ? RKNoColor : "");
                 }
             }
         } else {
@@ -503,11 +505,11 @@ static void *sweepManager(void *in) {
                 RKReplaceFileExtension(filename, "__", "zip");
             }
             if (engine->verbose > 1) {
-                sprintf(summary + summarySize, "%31sMonitor +%s%s%s\n",
-                        "",
-                        rkGlobalParameters.showColor ? RKGoldColor : "",
-                        filename,
-                        rkGlobalParameters.showColor ? RKNoColor : "");
+                snprintf(summary + summarySize, RKMaximumStringLength - summarySize, "%31sMonitor +%s%s%s\n",
+                         "",
+                         rkGlobalParameters.showColor ? RKGoldColor : "",
+                         filename,
+                         rkGlobalParameters.showColor ? RKNoColor : "");
             }
             if (engine->fileManager && RKFilenameExists(filename)) {
                 RKFileManagerAddFile(engine->fileManager, filename, RKFileTypeMoment);
@@ -526,7 +528,7 @@ static void *sweepManager(void *in) {
     return NULL;
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *rayGatherer(void *in) {
     RKSweepEngine *engine = (RKSweepEngine *)in;
@@ -723,7 +725,7 @@ static void *rayGatherer(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKSweepEngine *RKSweepEngineInit(void) {
     RKSweepEngine *engine = (RKSweepEngine *)malloc(sizeof(RKSweepEngine));
@@ -732,9 +734,9 @@ RKSweepEngine *RKSweepEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKSweepEngine));
-    sprintf(engine->name, "%s<ProductRecorder>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSweepEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<ProductRecorder>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorSweepEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     snprintf(engine->productFileExtension, RKMaximumFileExtensionLength, "nc");
     engine->state = RKEngineStateAllocated;
     engine->productBufferDepth = RKMaximumProductBufferDepth;
@@ -761,7 +763,7 @@ void RKSweepEngineFree(RKSweepEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKSweepEngineSetVerbose(RKSweepEngine *engine, const int verbose) {
     engine->verbose = verbose;
@@ -851,7 +853,7 @@ void RKSweepEngineFlush(RKSweepEngine *engine) {
     }
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKSweepEngineStart(RKSweepEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
@@ -1003,7 +1005,7 @@ void RKSweepEngineWaitWhileBusy(RKSweepEngine *engine) {
     }
 }
 
-#pragma mark - RKSweep
+#pragma region RKSweep
 
 RKSweep *RKSweepInitFromScratchSpace(RKSweepEngine *engine, const uint8_t scratchSpaceIndex) {
     MAKE_FUNCTION_NAME(name)
@@ -1142,10 +1144,10 @@ RKSweep *RKSweepInitFromScratchSpace(RKSweepEngine *engine, const uint8_t scratc
     memcpy(&sweep->header.config, config, sizeof(RKConfig));
     memcpy(sweep->rays, rays + k, n * sizeof(RKRay *));
     // Make a suggested filename as .../[DATA_PATH]/20170119/PX10k-20170119-012345-E1.0 (no symbol and extension)
-    k = sprintf(sweep->header.filename, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
-    k += sprintf(sweep->header.filename + k, "%s/", RKTimeDoubleToString(sweep->header.startTime, 800, false));
-    k += sprintf(sweep->header.filename + k, "%s-", engine->radarDescription->filePrefix);
-    k += sprintf(sweep->header.filename + k, "%s-", RKTimeDoubleToString(sweep->header.startTime, 860, false));
+    k = snprintf(sweep->header.filename, RKMaximumPathLength - 80, "%s%s%s/", engine->radarDescription->dataPath, engine->radarDescription->dataPath[0] == '\0' ? "" : "/", RKDataFolderMoment);
+    k += snprintf(sweep->header.filename + k, RKMaximumPathLength - 80 - k, "%s/", RKTimeDoubleToString(sweep->header.startTime, 800, false));
+    k += snprintf(sweep->header.filename + k, RKMaximumPathLength - 80 - k, "%s-", engine->radarDescription->filePrefix);
+    k += snprintf(sweep->header.filename + k, RKMaximumPathLength - 80 - k, "%s-", RKTimeDoubleToString(sweep->header.startTime, 860, false));
     if (sweep->header.isPPI) {
         k += snprintf(sweep->header.filename + k, 6, "E%.1f", sweep->header.config.sweepElevation);
     } else if (sweep->header.isRHI) {

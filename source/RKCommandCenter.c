@@ -15,7 +15,7 @@ int socketStreamHandler(RKOperator *);
 int socketInitialHandler(RKOperator *);
 int socketTerminateHandler(RKOperator *);
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 static void consolidateStreams(RKCommandCenter *engine) {
 
@@ -69,7 +69,7 @@ static void copyRayHeader(RKRayHeaderF1 *destination, RKRayHeader *source) {
     destination->reserved3       = source->reserved3;
 }
 
-#pragma mark - Handlers
+#pragma region Handlers
 
 int socketCommandHandler(RKOperator *O) {
     RKCommandCenter *engine = O->userResource;
@@ -175,7 +175,7 @@ int socketCommandHandler(RKOperator *O) {
                 case 'c':
                     user->textPreferences ^= RKTextPreferencesShowColor;
                     if (!(user->streamsInProgress & RKStreamStatusMask)) {
-                        sprintf(user->commandResponse, "ACK. Buffer overview in %s." RKEOL, user->textPreferences & RKTextPreferencesShowColor ? "Color" : "Gray");
+                        snprintf(user->commandResponse, sizeof(user->commandResponse), "ACK. Buffer overview in %s." RKEOL, user->textPreferences & RKTextPreferencesShowColor ? "Color" : "Gray");
                         RKOperatorSendCommandResponse(O, user->commandResponse);
                     }
                     user->streamsInProgress &= ~RKStreamStatusMask;
@@ -231,7 +231,7 @@ int socketCommandHandler(RKOperator *O) {
                     break;
 
                 case 'q':
-                    sprintf(user->commandResponse, "Bye." RKEOL);
+                    snprintf(user->commandResponse, sizeof(user->commandResponse), "Bye." RKEOL);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     RKOperatorHangUp(O);
                     break;
@@ -279,7 +279,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->scratchSpaceIndex = user->radar->sweepEngine->scratchSpaceIndex;
                     user->ticForStatusStream = 0;
                     pthread_mutex_unlock(&user->mutex);
-                    sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%016lx, \"streams\": 0x%lx, \"indices\": [%d, %d]}" RKEOL,
+                    snprintf(user->commandResponse, sizeof(user->commandResponse), "{\"type\": \"init\", \"access\": 0x%016lx, \"streams\": 0x%lx, \"indices\": [%d, %d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -289,7 +289,7 @@ int socketCommandHandler(RKOperator *O) {
                     RKLog("%s %s AScope mode %d : %s\n", engine->name, O->name, user->ascopeMode,
                           user->ascopeMode == 2 ? "Raw I/Q + Filter + Output" :
                           (user->ascopeMode == 1 ? "Down-sampled twice from RKComplex buffer" : "Down-sampled once from RKInt16C buffer"));
-                    sprintf(user->commandResponse, "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
+                    snprintf(user->commandResponse, sizeof(user->commandResponse), "ACK. AScope mode to %d" RKEOL, user->ascopeMode);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
 
@@ -311,7 +311,7 @@ int socketCommandHandler(RKOperator *O) {
                     // Change radar
                     sscanf("%s", commandString + 1, sval1);
                     RKLog(">%s %s Selected radar %s\n", engine->name, O->name, sval1);
-                    snprintf(user->commandResponse, RKMaximumPacketSize, "ACK. %s selected." RKEOL, sval1);
+                    snprintf(user->commandResponse, sizeof(user->commandResponse), "ACK. %s selected." RKEOL, sval1);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
 
@@ -326,7 +326,7 @@ int socketCommandHandler(RKOperator *O) {
                     user->streamsInProgress = RKStreamNull;
                     pthread_mutex_unlock(&user->mutex);
                     RKLog(">%s %s Reset progress.\n", engine->name, O->name);
-                    sprintf(user->commandResponse, "{\"type\": \"init\", \"access\": 0x%016lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
+                    snprintf(user->commandResponse, sizeof(user->commandResponse), "{\"type\": \"init\", \"access\": 0x%016lx, \"streams\": 0x%lx, \"indices\":[%d,%d]}" RKEOL,
                             (unsigned long)user->access, (unsigned long)user->streams, k, user->rayIndex);
                     RKOperatorSendCommandResponse(O, user->commandResponse);
                     break;
@@ -476,13 +476,13 @@ int socketStreamHandler(RKOperator *O) {
             endIndex = RKPreviousModuloS(user->radar->momentEngine->rayStatusBufferIndex, RKBufferSSlotCount);
             while (user->rayStatusIndex != endIndex && k < RKMaximumPacketSize - 200) {
                 c = user->radar->momentEngine->rayStatusBuffer[user->rayStatusIndex];
-                k += sprintf(user->string + k, "%s\n", c);
+                k += snprintf(user->string + k, sizeof(user->string) - k, "%s\n", c);
                 user->rayStatusIndex = RKNextModuloS(user->rayStatusIndex, RKBufferSSlotCount);
                 j++;
             }
             if (j) {
                 // Take out the last '\n', replace it with somethign else + EOL
-                snprintf(user->string + k - 1, RKMaximumPacketSize - k - 1, "" RKEOL);
+                snprintf(user->string + k - 1, sizeof(user->string) - k - 1, "" RKEOL);
                 O->delimTx.type = RKNetworkPacketTypePlainText;
                 O->delimTx.size = k + 1;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -492,7 +492,7 @@ int socketStreamHandler(RKOperator *O) {
         } else if (k == RKStreamStatusIngest) {
             // Stream "3" - Overall status
             user->streamsInProgress = RKStreamStatusIngest;
-            k = snprintf(user->string, RKMaximumPacketSize, "%s %s %s %s %s" RKEOL,
+            k = snprintf(user->string, sizeof(user->string), "%s %s %s %s %s" RKEOL,
                          RKPulseEngineStatusString(user->radar->pulseEngine),
                          RKPulseRingFilterEngineStatusString(user->radar->pulseRingFilterEngine),
                          RKPositionEngineStatusString(user->radar->positionEngine),
@@ -508,10 +508,10 @@ int socketStreamHandler(RKOperator *O) {
             user->streamsInProgress = RKStreamStatusEngines;
             if (user->ticForStatusStream % 20 == 0) {
                 char spacer[64];
-                sprintf(spacer, "%s | %s",
+                snprintf(spacer, sizeof(spacer), "%s | %s",
                         rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(15) : "",
                         rkGlobalParameters.showColor ? RKNoColor : "");
-                k = snprintf(user->string, RKMaximumPacketSize, "%9s%s%9s%s%9s%s%9s%s%9s%s%9s\n",
+                k = snprintf(user->string, sizeof(user->string), "%9s%s%9s%s%9s%s%9s%s%9s%s%9s\n",
                              user->radar->positionEngine->name, spacer,
                              user->radar->pulseEngine->name, spacer,
                              user->radar->momentEngine->name, spacer,
@@ -521,7 +521,7 @@ int socketStreamHandler(RKOperator *O) {
             } else {
                 k = 0;
             }
-            k += snprintf(user->string + k, RKMaximumPacketSize - k,
+            k += snprintf(user->string + k, sizeof(user->string) - k,
                           "%04x - %04d       | "
                           "%04x - %05d [%d]  | "
                           "%04x - %04d [%d]   | "
@@ -585,7 +585,7 @@ int socketStreamHandler(RKOperator *O) {
                         usleep(10000);
                         continue;
                     }
-                    k += sprintf(user->string + k, "%04d %5.2f %6.2f ", (int)(ray->header.i % 1000), ray->header.startElevation, ray->header.startAzimuth);
+                    k += snprintf(user->string + k, sizeof(user->string) - k, "%04d %5.2f %6.2f ", (int)(ray->header.i % 1000), ray->header.startElevation, ray->header.startAzimuth);
                     // Now we paint the ASCII art
                     u8Data = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
                     j = -1;
@@ -597,14 +597,14 @@ int socketStreamHandler(RKOperator *O) {
                         u8Data += user->asciiArtStride;
                         if (j != i) {
                             j = i;
-                            k += sprintf(user->string + k, "%s ", colormap[i]);
-                            //k += sprintf(user->string + k, "%s%x", colormap[i], i);
+                            k += snprintf(user->string + k, sizeof(user->string) - k, "%s ", colormap[i]);
+                            //k += snprintf(user->string + k, sizeof(user->string) - k, "%s%x", colormap[i], i);
                         } else {
                             *(user->string + k++) = ' ';
-                            //k += sprintf(user->string + k, "%x", i);
+                            //k += snprintf(user->string + k, sizeof(user->string) - k, "%x", i);
                         }
                     }
-                    k += sprintf(user->string + k, "%s" RKEOL, RKNoColor);
+                    k += snprintf(user->string + k, sizeof(user->string) - k, "%s" RKEOL, RKNoColor);
                     user->rayIndex = RKNextModuloS(user->rayIndex, user->radar->desc.rayBufferDepth);
                 }
                 O->delimTx.type = RKNetworkPacketTypePlainText;
@@ -669,15 +669,15 @@ int socketStreamHandler(RKOperator *O) {
             j = 0;
             k = 0;
             endIndex = RKPreviousModuloS(user->radar->steerEngine->statusBufferIndex, RKBufferSSlotCount);
-            while (user->steerStatusIndex != endIndex && k < RKMaximumPacketSize - 200) {
+            while (user->steerStatusIndex != endIndex && k < sizeof(user->string) - 200) {
                 c = user->radar->steerEngine->statusBuffer[user->steerStatusIndex];
-                k += sprintf(user->string + k, "%s\n", c);
+                k += snprintf(user->string + k, sizeof(user->string) - k, "%s\n", c);
                 user->steerStatusIndex = RKNextModuloS(user->steerStatusIndex, RKBufferSSlotCount);
                 j++;
             }
             if (j) {
                 // Take out the last '\n', replace it with somethign else + EOL
-                snprintf(user->string + k - 1, RKMaximumPacketSize - k, "" RKEOL);
+                snprintf(user->string + k - 1, sizeof(user->string) - k, "" RKEOL);
                 O->delimTx.type = RKNetworkPacketTypePlainText;
                 O->delimTx.size = k + 1;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -702,11 +702,8 @@ int socketStreamHandler(RKOperator *O) {
             }
             // Should only send the controls if the user has been authenticated
             RKMakeJSONStringFromControls(user->scratch, user->radar->controls, user->radar->controlCount);
-            // j += sprintf(user->string + j, "\"Controls\": [%s]}" RKEOL, user->scratch);
-            // j += snprintf(user->string + j, RKMaximumPacketSize - j - 18, "\"Controls\": [%s]}" RKEOL, user->scratch);
 
             j += snprintf(user->string + j, RKMaximumPacketSize - j, "\"Controls\": [");
-            // j += snprintf(user->string + j, RKMaximumPacketSize - j, "%s", user->scratch);
             if (strlen(user->scratch) > RKMaximumPacketSize - j - 18) {
                 user->scratch[RKMaximumPacketSize - j - 18] = '\0';
             }
@@ -791,15 +788,15 @@ int socketStreamHandler(RKOperator *O) {
         if (user->radar->healths[user->healthIndex].flag & RKHealthFlagReady && engine->server->state == RKServerStateActive) {
             j = 0;
             k = 0;
-            while (user->healthIndex != endIndex && k < RKMaximumStringLength - 200) {
+            while (user->healthIndex != endIndex && k < sizeof(user->string) - 200) {
                 c = user->radar->healths[user->healthIndex].string;
-                k += sprintf(user->string + k, "%s\n", c);
+                k += snprintf(user->string + k, sizeof(user->string) - k, "%s\n", c);
                 user->healthIndex = RKNextModuloS(user->healthIndex, user->radar->desc.healthBufferDepth);
                 j++;
             }
             if (j) {
                 // Take out the last '\n', replace it with somethign else + EOL
-                snprintf(user->string + k - 1, RKMaximumStringLength - k, "" RKEOL);
+                snprintf(user->string + k - 1, sizeof(user->string) - k, "" RKEOL);
                 O->delimTx.type = RKNetworkPacketTypeHealth;
                 O->delimTx.size = k;
                 RKOperatorSendPackets(O, &O->delimTx, sizeof(RKNetDelimiter), user->string, O->delimTx.size, NULL);
@@ -1100,81 +1097,81 @@ int socketStreamHandler(RKOperator *O) {
                 if ((user->streams & RKStreamSweepZ) && (productList & RKProductListFloatZ)) {
                     sweepHeader.productList |= RKProductListFloatZ;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "Z" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "Z" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " Z,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " Z,");
                     }
                 }
                 if ((user->streams & RKStreamSweepV) && (productList & RKProductListFloatV)) {
                     sweepHeader.productList |= RKProductListFloatV;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "V" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "V" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " V,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " V,");
                     }
                 }
                 if ((user->streams & RKStreamSweepW) && (productList & RKProductListFloatW)) {
                     sweepHeader.productList |= RKProductListFloatW;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "W" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "W" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " W,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " W,");
                     }
                 }
                 if ((user->streams & RKStreamSweepD) && (productList & RKProductListFloatD)) {
                     sweepHeader.productList |= RKProductListFloatD;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "D" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "D" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " D,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " D,");
                     }
                 }
                 if ((user->streams & RKStreamSweepP) && (productList & RKProductListFloatP)) {
                     sweepHeader.productList |= RKProductListFloatP;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "P" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "P" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " P,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " P,");
                     }
                 }
                 if ((user->streams & RKStreamSweepR) && (productList & RKProductListFloatR)) {
                     sweepHeader.productList |= RKProductListFloatR;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "R" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "R" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " R,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " R,");
                     }
                 }
                 if ((user->streams & RKStreamSweepK) && (productList & RKProductListFloatK)) {
                     sweepHeader.productList |= RKProductListFloatK;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "K" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "K" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " K,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " K,");
                     }
                 }
                 if ((user->streams & RKStreamSweepQ) && (productList & RKProductListFloatQ)) {
                     sweepHeader.productList |= RKProductListFloatQ;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "Q" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "Q" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " Q,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " Q,");
                     }
                 }
                 if ((user->streams & RKStreamSweepSh) && (productList & RKProductListFloatSh)) {
                     sweepHeader.productList |= RKProductListFloatSh;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "Sh" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "Sh" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " Sh,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " Sh,");
                     }
                 }
                 if ((user->streams & RKStreamSweepSv) && (productList & RKProductListFloatSv)) {
                     sweepHeader.productList |= RKProductListFloatSv;
                     if (rkGlobalParameters.showColor) {
-                        i += sprintf(user->scratch + i, " " RKYellowColor "Sv" RKNoColor ",");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " " RKYellowColor "Sv" RKNoColor ",");
                     } else {
-                        i += sprintf(user->scratch + i, " Sv,");
+                        i += snprintf(user->scratch + i, sizeof(user->scratch) - i, " Sv,");
                     }
                 }
                 // Remove the last ','
@@ -1568,7 +1565,7 @@ int socketTerminateHandler(RKOperator *O) {
     return RKResultSuccess;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKCommandCenter *RKCommandCenterInit(void) {
     RKCommandCenter *engine = (RKCommandCenter *)malloc(sizeof(RKCommandCenter));
@@ -1577,9 +1574,9 @@ RKCommandCenter *RKCommandCenterInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKCommandCenter));
-    sprintf(engine->name, "%s<OperationCenter>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorCommandCenter) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<OperationCenter>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorCommandCenter) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->verbose = 3;
     engine->memoryUsage = sizeof(RKCommandCenter);
     engine->server = RKServerInit();
@@ -1600,7 +1597,7 @@ void RKCommandCenterFree(RKCommandCenter *engine) {
     return;
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKCommandCenterSetVerbose(RKCommandCenter *engine, const int verbose) {
     RKServer *server = engine->server;
@@ -1661,7 +1658,7 @@ void RKCommandCenterRemoveRadar(RKCommandCenter *engine, RKRadar *radar) {
     engine->suspendHandler = false;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 void RKCommandCenterStart(RKCommandCenter *center) {
     RKLog("%s Starting ...\n", center->name);

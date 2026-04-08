@@ -14,9 +14,9 @@
 
 #include <RadarKit/RKScratch.h>
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
-#pragma mark - Scratch Space
+#pragma region Scratch Space
 
 // Allocate a scratch space for pulse compression
 size_t RKCompressionScratchAlloc(RKCompressionScratch **buffer, const uint32_t capacity, const uint8_t verbose, const char * _Nullable name) {
@@ -299,7 +299,7 @@ void RKMomentScratchFree(RKMomentScratch *scratch) {
     free(scratch);
 }
 
-#pragma mark -
+#pragma region
 
 int prepareScratch(RKMomentScratch *scratch) {
     scratch->calculatedProducts = RKProductListFloatZVWDPRKSQ | RKProductListUInt8ZVWDPRKSQ;

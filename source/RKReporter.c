@@ -31,22 +31,26 @@ void *reporter(void *in) {
     RKReporter *engine = (RKReporter *)in;
     RKRadar *radar = engine->radar;
 
+    const double scopeRefreshPeriod = 1.0 / 20.0;
+
+    int k;
+    int count;
     int d = 0;
     int h = 0;
     int p = 0;
     int r = 0;
 
     uint32_t controlUID = (uint32_t)-1;
-    size_t payloadSize;
-    int count;
-    int k;
+    uint16_t rayConfigIndex = (uint16_t)-1;
+    size_t payloadSize = 0, cummulativePayloadSize = 0;
     double t0, t1 = 0.0;
+    double n0, n1 = 0.0;
+    float rate = 0.0f;
 
     char *message = engine->message;
     void *payload = NULL;
 
     int16_t *y;
-
     uint8_t *z;
 
     RKConfig *config;
@@ -70,11 +74,13 @@ void *reporter(void *in) {
 
     gettimeofday(&tv, NULL);
     t1 = (double)tv.tv_sec + 1.0e-6 * (double)tv.tv_usec;
+    n1 = t1;
 
     while (engine->state & RKEngineStateWantActive) {
         if (engine->ws->connected) {
 
             // Controls
+            #pragma region Controls
             if (controlUID != radar->controls[0].uid) {
                 RKLog("%s Control UID changed from %u to %u (%d)\n", engine->name, controlUID, radar->controls[0].uid, radar->controlCount);
                 controlUID = radar->controls[0].uid;
@@ -120,6 +126,7 @@ void *reporter(void *in) {
                             RKLog("%s H%04d %s (%zu)", engine->name, h, message, payloadSize);
                         }
                         RKWebSocketSend(engine->ws, payload, payloadSize);
+                        cummulativePayloadSize += payloadSize;
                     }
                     health->flag |= RKHealthFlagUsed;
                     h = RKNextModuloS(h, radar->desc.healthBufferDepth);
@@ -142,7 +149,7 @@ void *reporter(void *in) {
                 if (pulse->header.s & RKPulseStatusHasConfigIndex) {
                     gettimeofday(&tv, NULL);
                     t0 = (double)tv.tv_sec + 1.0e-6 * (double)tv.tv_usec;
-                    if (p % engine->pulseStride || (t0 - t1) < 0.05) {
+                    if (p % engine->pulseStride || (t0 - t1) < scopeRefreshPeriod) {
                         usleep(1);
                     } else {
                         // Use payload 1 as target
@@ -174,6 +181,7 @@ void *reporter(void *in) {
                             RKLog("%s P%04d %s (%zu)\n", engine->name, p, message, payloadSize);
                         }
                         RKWebSocketSend(engine->ws, payload, payloadSize);
+                        cummulativePayloadSize += payloadSize;
                         t1 = t0;
                     }
                     // The following line causes a raise condition. Avoid mutex for pulses
@@ -190,7 +198,8 @@ void *reporter(void *in) {
             #pragma region Product Display
             payload = engine->payload[4 + d];
             if (engine->streams & RKStreamDisplayAll) {
-                if ((engine->streamsInProgress & RKStreamDisplayAll) != (engine->streams & RKStreamDisplayAll)) {
+                if (rayConfigIndex != radar->configIndex || (engine->streamsInProgress & RKStreamDisplayAll) != (engine->streams & RKStreamDisplayAll)) {
+                    rayConfigIndex = radar->configIndex;
                     engine->streamsInProgress |= (engine->streams & RKStreamDisplayAll);
                     r = radar->rayIndex;
                     if (engine->verbose) {
@@ -224,11 +233,22 @@ void *reporter(void *in) {
                             RKLog("%s R%04d %s (%zu)\n", engine->name, r, message, payloadSize);
                         }
                         RKWebSocketSend(engine->ws, payload, payloadSize);
+                        cummulativePayloadSize += payloadSize;
                     }
                     ray->header.s |= RKRayStatusStreamed;
                     r = RKNextModuloS(r, radar->desc.rayBufferDepth);
                     d = RKNextModuloS(d, PAYLOAD_DEPTH);
                 }
+            }
+
+            // Report streaming rate periodically
+            gettimeofday(&tv, NULL);
+            n0 = (double)tv.tv_sec + 1.0e-6 *(double)tv.tv_usec;
+            if ((n0 - n1) > 60.0) {
+                rate = cummulativePayloadSize / 1024.0 / (n0 - n1);
+                RKLog("%s Streaming at %.1f KB/s\n", engine->name, rate);
+                cummulativePayloadSize = 0;
+                n1 = n0;
             }
 
         } else {
@@ -248,7 +268,7 @@ void *reporter(void *in) {
     return NULL;
 }
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 //
 // There are two types of control:
@@ -267,7 +287,7 @@ void handleOpen(RKWebSocket *W) {
     RKRadar *radar = engine->radar;
     int r;
 
-    r = sprintf(engine->welcome,
+    r = snprintf(engine->welcome, sizeof(engine->welcome),
         "%c{"
             "\"command\":\"radarGreet\", "
             "\"pathway\":\"%s\", "
@@ -350,7 +370,7 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
             RKLog("%s Overidding streams for local network\n", engine->name);
             engine->streams = RKStreamHealthInJSON | RKStreamScopeStuff | RKStreamDisplayZ;
         }
-        int r = sprintf(engine->message, "%cACK. Streams -> 0x%08lX", RKRadarHubTypeResponse, (unsigned long)engine->streams);
+        int r = snprintf(engine->message, sizeof(engine->message), "%cACK. Streams -> 0x%08lX", RKRadarHubTypeResponse, (unsigned long)engine->streams);
         RKLog("%s %s%s%s\n", engine->name, rkGlobalParameters.showColor ? RKMonokaiGreen : "", engine->message, rkGlobalParameters.showColor ? RKNoColor : "");
         RKWebSocketSend(W, engine->message, r);
         return;
@@ -365,7 +385,7 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
 
     RKExecuteCommand(radar, message, engine->scratch);
 
-    int r = sprintf(engine->message, "%c%s", RKRadarHubTypeResponse, engine->scratch);
+    int r = snprintf(engine->message, sizeof(engine->message), "%c%s", RKRadarHubTypeResponse, engine->scratch);
     RKStripTail(engine->scratch);
     char c = engine->scratch[0];
     RKLog("%s Response '%s%s%s'\n", engine->name,
@@ -386,9 +406,9 @@ RKReporter *RKReporterInitWithRadarAndHostPathway(RKRadar *radar, const char *ho
     }
     memset(engine, 0, sizeof(RKReporter));
     engine->radar = radar;
-    sprintf(engine->name, "%s<RadarHubConnect>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<RadarHubConnect>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorRadarHubReporter) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->healthStride = 2;
     engine->pulseStride = 5;
     engine->rayStride = 1;

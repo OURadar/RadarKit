@@ -8,9 +8,9 @@
 
 #include <RadarKit/RKHealthEngine.h>
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *healthConsolidator(void *_in) {
     RKHealthEngine *engine = (RKHealthEngine *)_in;
@@ -83,11 +83,11 @@ static void *healthConsolidator(void *_in) {
             if (allTrue) {
                 usleep(100000);
                 if (++s % 20 == 0 && engine->verbose) {
-                    i = sprintf(string, "indices = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
+                    i = snprintf(string, RKMaximumStringLength, "indices = [%02d", engine->healthNodes[0].active ? indices[0] : -1);
                     for (j = 1; j < desc->healthNodeCount; j++) {
-                        i += sprintf(string + i,  " %02d", engine->healthNodes[j].active ? indices[j] : -1);
+                        i += snprintf(string + i, RKMaximumStringLength - i, " %02d", engine->healthNodes[j].active ? indices[j] : -1);
                     }
-                    sprintf(string + i, "]");
+                    snprintf(string + i, RKMaximumStringLength - i, "]");
                     RKLog("%s sleep 0/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                 }
             }
@@ -126,12 +126,12 @@ static void *healthConsolidator(void *_in) {
                     }
                     if (engine->verbose > 1) {
                         n = indices[0];
-                        i = sprintf(string, "ready = [%x", engine->healthNodes[0].healths[n].flag);
+                        i = snprintf(string, RKMaximumStringLength, "ready = [%x", engine->healthNodes[0].healths[n].flag);
                         for (j = 1; j < desc->healthNodeCount; j++) {
                             n = indices[j];
-                            i += sprintf(string + i,  " %s", engine->healthNodes[j].active ? (engine->healthNodes[j].healths[n].flag ? "1" : "0") : "-");
+                            i += snprintf(string + i, RKMaximumStringLength - i, " %s", engine->healthNodes[j].active ? (engine->healthNodes[j].healths[n].flag ? "1" : "0") : "-");
                         }
-                        sprintf(string + i, "]");
+                        snprintf(string + i, RKMaximumStringLength - i, "]");
                         RKLog("%s sleep 1/%.1f s   %s   k = %d\n", engine->name, (float)s * 0.1f, string, k);
                     }
                 }
@@ -144,38 +144,38 @@ static void *healthConsolidator(void *_in) {
         }
 
         if (engine->verbose > 1) {
-            i = sprintf(string, "indices = [%03d", engine->healthNodes[0].active ? indices[0] : -1);
+            i = snprintf(string, RKMaximumStringLength, "indices = [%03d", engine->healthNodes[0].active ? indices[0] : -1);
             for (j = 1; j < desc->healthNodeCount; j++) {
-                i += sprintf(string + i,  " %03d", engine->healthNodes[j].active ? indices[j] : -1);
+                i += snprintf(string + i, RKMaximumStringLength - i, " %03d", engine->healthNodes[j].active ? indices[j] : -1);
             }
-            sprintf(string + i, "]");
+            snprintf(string + i, RKMaximumStringLength - i, "]");
             RKLog("%s %s   k = %d   s = %d\n", engine->name, string, k, s);
             n = indices[0];
-            i = sprintf(string, "flags   = [%03x", engine->healthNodes[0].healths[n].flag);
+            i = snprintf(string, RKMaximumStringLength, "flags   = [%03x", engine->healthNodes[0].healths[n].flag);
             for (j = 1; j < desc->healthNodeCount; j++) {
                 n = indices[j];
-                i += sprintf(string + i,  " %03x", engine->healthNodes[j].healths[n].flag);
+                i += snprintf(string + i, RKMaximumStringLength - i, " %03x", engine->healthNodes[j].healths[n].flag);
             }
-            sprintf(string + i, "]");
+            snprintf(string + i, RKMaximumStringLength - i, "]");
             RKLog("%s %s\n", engine->name, string);
-            i = sprintf(string, "strlen  = [%3zu", strlen(engine->healthNodes[0].healths[indices[0]].string));
+            i = snprintf(string, RKMaximumStringLength, "strlen  = [%3zu", strlen(engine->healthNodes[0].healths[indices[0]].string));
             for (j = 1; j < desc->healthNodeCount; j++) {
                 n = indices[j];
-                i += sprintf(string + i,  " %3zu", strlen(engine->healthNodes[j].healths[n].string));
+                i += snprintf(string + i, RKMaximumStringLength - i, " %3zu", strlen(engine->healthNodes[j].healths[n].string));
             }
-            sprintf(string + i, "]");
+            snprintf(string + i, RKMaximumStringLength - i, "]");
             RKLog("%s %s\n", engine->name, string);
         }
 
         // Combine all the active JSON strings
-        i = sprintf(string, "{");
+        i = snprintf(string, RKMaximumStringLength, "{");
         for (j = 0; j < desc->healthNodeCount; j++) {
             n = indices[j];
             if (engine->healthNodes[j].active && strlen(engine->healthNodes[j].healths[n].string) > 6) {   // {"k":0} is at least 7 chars
-                i += sprintf(string + i, "%s", engine->healthNodes[j].healths[n].string + 1);              // Ignore the first "{"
+                i += snprintf(string + i, RKMaximumStringLength - i, "%s", engine->healthNodes[j].healths[n].string + 1);              // Ignore the first "{"
                 i -= RKStripTail(string);                                                                  // Strip away white spaces
                 i--;                                                                                       // Ignore the last "}"
-                i += sprintf(string + i, ", ");                                                            // Get ready to concatenante
+                i += snprintf(string + i, RKMaximumStringLength - i, ", ");                                                            // Get ready to concatenante
                 engine->healthNodes[j].healths[n].flag |= RKHealthFlagUsed;
             }
         }
@@ -221,7 +221,7 @@ static void *healthConsolidator(void *_in) {
             // If there is also supplied GPS, replace the enum of the GPS readings to not wired
             RKReplaceEnumOfKey(string, "heading", RKStatusEnumNotWired);
             // Concatenate with heading values if GPS values are not reported
-            i += sprintf(string + i,
+            i += snprintf(string + i, RKMaximumStringLength - i,
                          "\"Heading Override\":{\"Value\":true,\"Enum\":0}, "
                          "\"Sys Heading\":{\"Value\":\"%.2f deg\",\"Enum\":0}, ",
                          desc->heading);
@@ -233,7 +233,7 @@ static void *healthConsolidator(void *_in) {
             if (fabsf(desc->heading - heading) > 1.0f) {
                 if (headingChangeCount++ > 3) {
                     desc->heading = heading;
-                    RKLog("%s Heading update   heading = %.2f degree\n", engine->name, desc->heading);
+                    RKLog("%s Heading update.   heading = %.2f\n", engine->name, desc->heading);
                     headingChangeCount = 0;
                 }
             } else {
@@ -245,13 +245,13 @@ static void *healthConsolidator(void *_in) {
             RKReplaceEnumOfKey(string, "latitude", RKStatusEnumNotWired);
             RKReplaceEnumOfKey(string, "longitude", RKStatusEnumNotWired);
             // Concatenate with latitude, longitude and heading values if GPS values are not reported
-            i += sprintf(string + i,
-                         "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
-                         "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                         "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
-                         "\"LocationFromDescriptor\":true, ",
-                         desc->latitude,
-                         desc->longitude);
+            i += snprintf(string + i, RKMaximumStringLength - i,
+                          "\"GPS Override\":{\"Value\":true,\"Enum\":0}, "
+                          "\"Sys Latitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                          "\"Sys Longitude\":{\"Value\":\"%.7f\",\"Enum\":0}, "
+                          "\"LocationFromDescriptor\":true, ",
+                          desc->latitude,
+                          desc->longitude);
         } else {
             if (engine->verbose > 1) {
                 RKLog("%s GPS:  latitude = %.7f   longitude = %.7f\n", engine->name, latitude, longitude);
@@ -261,7 +261,7 @@ static void *healthConsolidator(void *_in) {
                 if (locationChangeCount++ > 3) {
                     desc->latitude = latitude;
                     desc->longitude = longitude;
-                    RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f\n", engine->name, desc->latitude, desc->longitude);
+                    RKLog("%s GPS update.   latitude = %.7f   longitude = %.7f   heading = %.2f\n", engine->name, desc->latitude, desc->longitude, desc->heading);
                     locationChangeCount = 0;
                 }
             } else {
@@ -269,7 +269,7 @@ static void *healthConsolidator(void *_in) {
             }
         }
         // Add the log time as the last object
-        i += sprintf(string + i, "\"Log Time\":%zu}", t0.tv_sec);
+        i += snprintf(string + i, RKMaximumStringLength - i, "\"Log Time\":%zu}", t0.tv_sec);
 
         // Replace some quoted logical values, e.g., "TRUE", "True", "true", etc. -> true
         RKReviseLogicalValues(string);
@@ -296,14 +296,14 @@ static void *healthConsolidator(void *_in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKHealthEngine *RKHealthEngineInit(void) {
     RKHealthEngine *engine = (RKHealthEngine *)malloc(sizeof(RKHealthEngine));
     memset(engine, 0, sizeof(RKHealthEngine));
-    sprintf(engine->name, "%s<HealthCollector>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<HealthCollector>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorHealthEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->memoryUsage = sizeof(RKHealthEngine);
     engine->state = RKEngineStateAllocated;
     return engine;
@@ -313,15 +313,14 @@ void RKHealthEngineFree(RKHealthEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKHealthEngineSetVerbose(RKHealthEngine *engine, const int verbose) {
     engine->verbose = verbose;
 }
 
 void RKHealthEngineSetEssentials(RKHealthEngine *engine, const RKRadarDesc *desc,
-                                RKNodalHealth *healthNodes,
-                                RKHealth *healthBuffer, uint32_t *healthIndex) {
+                                 RKNodalHealth *healthNodes, RKHealth *healthBuffer, uint32_t *healthIndex) {
     engine->radarDescription  = (RKRadarDesc *)desc;
     engine->healthNodes       = healthNodes;
     engine->healthBuffer      = healthBuffer;
@@ -329,7 +328,7 @@ void RKHealthEngineSetEssentials(RKHealthEngine *engine, const RKRadarDesc *desc
     engine->state |= RKEngineStateProperlyWired;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKHealthEngineStart(RKHealthEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {

@@ -29,7 +29,7 @@ typedef struct _rk_indexed_stat {
     size_t   size;
 } RKIndexedStat;
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 // Compare two unix time in RKIndexedStat
 static int struct_cmp_by_time(const void *a, const void *b) {
@@ -84,10 +84,9 @@ static int listElementsInFolder(RKPathname *list, const int maximumCapacity, con
     char pathname[RKMaximumPathLength];
     while ((dir = readdir(did)) != NULL && k < maximumCapacity) {
         if (dir->d_type == DT_UNKNOWN && dir->d_name[0] != '.') {
-            //sprintf(pathname, "%s/%s", path, dir->d_name);
-            int r = sprintf(pathname, "%s/", path);
-            strncpy(pathname + r, dir->d_name, RKMaximumPathLength - r - 1);
-            pathname[RKMaximumPathLength - 1] = '\0';
+            int r = snprintf(pathname, sizeof(pathname), "%s/", path);
+            strncpy(pathname + r, dir->d_name, sizeof(pathname) - r - 1);
+            pathname[sizeof(pathname) - 1] = '\0';
             lstat(pathname, &status);
             if ((type == DT_REG && S_ISREG(status.st_mode)) ||
                 (type == DT_DIR && S_ISDIR(status.st_mode))) {
@@ -207,7 +206,7 @@ static void refreshFileList(RKFileRemover *me) {
             return;
         }
         for (; j < me->count; j++) {
-            sprintf(string, "%s/%s/%s", me->path, folders[k], filenames[j]);
+            snprintf(string, sizeof(string), "%s/%s/%s", me->path, folders[k], filenames[j]);
             stat(string, &fileStat);
             indexedStats[j].index = j;
             indexedStats[j].folderId = k;
@@ -243,14 +242,14 @@ static void refreshFileList(RKFileRemover *me) {
         me->usage = 0;
         for (k = 0; k < folderCount; k++) {
             struct dirent *dir;
-            sprintf(string, "%s/%s/%s", me->path, folders[k], filenames[j]);
+            snprintf(string, sizeof(string), "%s/%s/%s", me->path, folders[k], filenames[j]);
             DIR *did = opendir(string);
             if (did == NULL) {
                 fprintf(stderr, "Unable to list folder '%s'\n", string);
                 continue;
             }
             while ((dir = readdir(did)) != NULL) {
-                sprintf(string, "%s/%s/%s", me->path, folders[k], dir->d_name);
+                snprintf(string, sizeof(string), "%s/%s/%s", me->path, folders[k], dir->d_name);
                 stat(string, &fileStat);
                 me->usage += fileStat.st_size;
             }
@@ -260,7 +259,7 @@ static void refreshFileList(RKFileRemover *me) {
     }
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *fileRemover(void *in) {
     RKFileRemover *me = (RKFileRemover *)in;
@@ -285,12 +284,12 @@ static void *fileRemover(void *in) {
         k = 0;
     }
     if (engine->workerCount > 9) {
-        k += sprintf(name + k, "F%02d", c);
+        k += snprintf(name + k, sizeof(name) - k, "F%02d", c);
     } else {
-        k += sprintf(name + k, "F%d", c);
+        k += snprintf(name + k, sizeof(name) - k, "F%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        snprintf(name + k, sizeof(name) - k, RKNoColor);
     }
     snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
@@ -381,7 +380,7 @@ static void *fileRemover(void *in) {
         // Removing files
         while (me->usage > me->limit) {
             // Build the complete path from various components
-            sprintf(path, "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
+            snprintf(path, sizeof(path), "%s/%s/%s", me->path, folders[indexedStats[me->index].folderId], filenames[indexedStats[me->index].index]);
             if (engine->verbose) {
 				if (indexedStats[me->index].size > 1.0e9) {
 					RKLog("%s Removing %s (%s GB) ...\n", me->name, path, RKFloatToCommaStyleString(1.0e-9f * (float)indexedStats[me->index].size));
@@ -405,7 +404,7 @@ static void *fileRemover(void *in) {
 
             // Get the parent folder, if it is different than before, check if it is empty, and remove it if so.
             if (strcmp(parentFolder, folders[indexedStats[me->index].folderId])) {
-                sprintf(path, "%s/%s", me->path, parentFolder);
+                snprintf(path, sizeof(path), "%s/%s", me->path, parentFolder);
                 if (isFolderEmpty(path)) {
                     RKLog("%s Removing folder %s that is empty ...\n", me->name, path);
                     k = snprintf(command, RKMaximumCommandLength, "rm -rf %s", path);
@@ -623,7 +622,7 @@ static void *folderWatcher(void *in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKFileManager *RKFileManagerInit(void) {
     RKFileManager *engine = (RKFileManager *)malloc(sizeof(RKFileManager));
@@ -632,9 +631,9 @@ RKFileManager *RKFileManagerInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKFileManager));
-    sprintf(engine->name, "%s<DataFileManager>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFileManager) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<DataFileManager>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorFileManager) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->maximumLogAgeInDays = RKFileManagerDefaultLogAgeInDays;
     engine->memoryUsage = sizeof(RKFileManager);
@@ -650,7 +649,7 @@ void RKFileManagerFree(RKFileManager *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKFileManagerSetVerbose(RKFileManager *engine, const int verbose) {
     engine->verbose = verbose;
@@ -704,7 +703,7 @@ void RKFileManagerSetHealthDataLimit(RKFileManager *engine, const size_t limit) 
     engine->userHealthDataUsageLimit = limit;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKFileManagerStart(RKFileManager *engine) {
     // File manager is always assumed wired, dataPath may be empty

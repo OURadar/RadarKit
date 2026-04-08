@@ -8,7 +8,7 @@
 
 #include <RadarKit/RKPulseRingFilter.h>
 
-#pragma mark - Helper Functions
+#pragma region Helper Functions
 
 static void RKPulseRingFilterUpdateStatusString(RKPulseRingFilterEngine *engine) {
     int i, c;
@@ -105,7 +105,7 @@ static void RKPulseRingFilterEngineUpdateMinMaxWorkerLag(RKPulseRingFilterEngine
     engine->maxWorkerLag = maxWorkerLag;
 }
 
-#pragma mark - Delegate Workers
+#pragma region Delegate Workers
 
 static void *ringFilterCore(void *_in) {
     RKPulseRingFilterWorker *me = (RKPulseRingFilterWorker *)_in;
@@ -134,12 +134,12 @@ static void *ringFilterCore(void *_in) {
         k = 0;
     }
     if (engine->coreCount > 9) {
-        k += sprintf(name + k, "C%02d", c);
+        k += snprintf(name + k, RKShortNameLength - k, "C%02d", c);
     } else {
-        k += sprintf(name + k, "C%d", c);
+        k += snprintf(name + k, RKShortNameLength - k, "C%d", c);
     }
     if (rkGlobalParameters.showColor) {
-        sprintf(name + k, RKNoColor);
+        snprintf(name + k, RKShortNameLength - k, RKNoColor);
     }
     snprintf(me->name, RKChildNameLength, "%s %s", engine->name, name);
 
@@ -952,7 +952,7 @@ static void *pulseRingWatcherV1(void *_in) {
     return NULL;
 }
 
-#pragma mark - Life Cycle
+#pragma region Life Cycle
 
 RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
     RKPulseRingFilterEngine *engine = (RKPulseRingFilterEngine *)malloc(sizeof(RKPulseRingFilterEngine));
@@ -961,9 +961,9 @@ RKPulseRingFilterEngine *RKPulseRingFilterEngineInit(void) {
         return NULL;
     }
     memset(engine, 0, sizeof(RKPulseRingFilterEngine));
-    sprintf(engine->name, "%s<PulseRingFilter>%s",
-            rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
-            rkGlobalParameters.showColor ? RKNoColor : "");
+    snprintf(engine->name, sizeof(engine->name), "%s<PulseRingFilter>%s",
+             rkGlobalParameters.showColor ? RKGetBackgroundColorOfIndex(RKEngineColorPulseRingFilterEngine) : "",
+             rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
     engine->memoryUsage = sizeof(RKPulseRingFilterEngine);
@@ -981,7 +981,7 @@ void RKPulseRingFilterEngineFree(RKPulseRingFilterEngine *engine) {
     free(engine);
 }
 
-#pragma mark - Properties
+#pragma region Properties
 
 void RKPulseRingFilterEngineSetVerbose(RKPulseRingFilterEngine *engine, const int verb) {
     engine->verbose = verb;
@@ -1036,7 +1036,7 @@ int RKPulseRingFilterEngineSetFilter(RKPulseRingFilterEngine *engine, RKIIRFilte
     return RKResultSuccess;
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 
 int RKPulseRingFilterEngineStart(RKPulseRingFilterEngine *engine) {
     if (!(engine->state & RKEngineStateProperlyWired)) {
@@ -1112,20 +1112,20 @@ char *RKPulseRingFilterEngineStatusString(RKPulseRingFilterEngine *engine) {
 void RKPulseRingFilterEngineShowFilterSummary(RKPulseRingFilterEngine *engine) {
     int i, k;
     char *string = (char *)malloc(1024);
-    i = sprintf(string, "b = [");
+    i = snprintf(string, 1024, "b = [");
     for (k = 0; k < engine->filter.bLength; k++) {
-        i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", engine->filter.B[k].i);
+        i += snprintf(string + i, 1024 - i, "%s%.4f", k > 0 ? ", " : "", engine->filter.B[k].i);
     }
-    sprintf(string + i, "]");
+    snprintf(string + i, 1024 - i, "]");
     RKLog(">%s %s", engine->name, string);
-    i = sprintf(string, "a = [");
+    i = snprintf(string, 1024, "a = [");
     for (k = 0; k < engine->filter.aLength; k++) {
-        i += sprintf(string + i, "%s%.4f", k > 0 ? ", " : "", engine->filter.A[k].i);
+        i += snprintf(string + i, 1024 - i, "%s%.4f", k > 0 ? ", " : "", engine->filter.A[k].i);
     }
-    sprintf(string + i, "]");
+    snprintf(string + i, 1024 - i, "]");
     RKLog(">%s %s", engine->name, string);
     free(string);
 }
 
-#pragma mark - Interactions
+#pragma region Interactions
 

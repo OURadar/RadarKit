@@ -13,14 +13,16 @@ variables:
   FAIL_STRING: "\e[38;5;214mFailed\e[m"
   PASS_STRING: "\e[38;5;46mAll tests passed\e[m"
 
-before_script:
-  - export TERM=xterm-256color
-  - export LS_COLORS="rs=0:di=38;5;45:ln=38;5;51:mh=44;38;5;15:pi=40;38;5;11:so=38;5;13:do=38;5;5:bd=48;5;232;38;5;11:cd=48;5;232;38;5;3:or=48;5;232;38;5;9:mi=05;48;5;232;38;5;15:su=48;5;196;38;5;15:sg=48;5;11;38;5;16:ca=48;5;196;38;5;226:tw=48;5;10;38;5;16:ow=48;5;57;38;5;11:st=48;5;21;38;5;15:ex=38;5;82:*.py=38;5;228:*.c=38;5;220:*.cpp=38;5;220:*.js=38;5;227:*.mjs=38;5;227:*.jsx=38;5;31:*.h=38;5;208:*.hpp=38;5;208:*makefile=38;5;208:*.html=38;5;208:*.tar=38;5;178:*.tgz=38;5;178:*.txz=38;5;178:*.zip=38;5;178:*.z=38;5;178:*.Z=38;5;178:*.gz=38;5;178:*.xz=38;5;178:*.bz2=38;5;178:*.bz=38;5;178:*.rar=38;5;9:*.jpg=38;5;13:*.jpeg=38;5;13:*.gif=38;5;13:*.bmp=38;5;13:*.tif=38;5;13:*.tiff=38;5;13:*.png=38;5;13:*.svg=38;5;13:*.svgz=38;5;13:*.mp4=38;5;135:*.m4v=38;5;135:*.mkv=38;5;135:*.mov=38;5;135:*.mpg=38;5;135:*.mpeg=38;5;135:*.vob=38;5;135:*.qt=38;5;135:*.mp3=38;5;105:*.aac=38;5;105:*.mka=38;5;105:*.ogg=38;5;105:*.wav=38;5;105:*.flac=38;5;105"
-  - apt update && apt install -y bc libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
+default:
+  before_script:
+    - export TERM=xterm-256color
+    - export LS_COLORS="rs=0:di=38;5;45:ln=38;5;51:mh=44;38;5;15:pi=40;38;5;11:so=38;5;13:do=38;5;5:bd=48;5;232;38;5;11:cd=48;5;232;38;5;3:or=48;5;232;38;5;9:mi=05;48;5;232;38;5;15:su=48;5;196;38;5;15:sg=48;5;11;38;5;16:ca=48;5;196;38;5;226:tw=48;5;10;38;5;16:ow=48;5;57;38;5;11:st=48;5;21;38;5;15:ex=38;5;82:*.py=38;5;228:*.c=38;5;220:*.cpp=38;5;220:*.js=38;5;227:*.mjs=38;5;227:*.jsx=38;5;31:*.h=38;5;208:*.hpp=38;5;208:*makefile=38;5;208:*.html=38;5;208:*.tar=38;5;178:*.tgz=38;5;178:*.txz=38;5;178:*.zip=38;5;178:*.z=38;5;178:*.Z=38;5;178:*.gz=38;5;178:*.xz=38;5;178:*.bz2=38;5;178:*.bz=38;5;178:*.rar=38;5;9:*.jpg=38;5;13:*.jpeg=38;5;13:*.gif=38;5;13:*.bmp=38;5;13:*.tif=38;5;13:*.tiff=38;5;13:*.png=38;5;13:*.svg=38;5;13:*.svgz=38;5;13:*.mp4=38;5;135:*.m4v=38;5;135:*.mkv=38;5;135:*.mov=38;5;135:*.mpg=38;5;135:*.mpeg=38;5;135:*.vob=38;5;135:*.qt=38;5;135:*.mp3=38;5;105:*.aac=38;5;105:*.mka=38;5;105:*.ogg=38;5;105:*.wav=38;5;105:*.flac=38;5;105"
+    - apt update && apt install -y bc libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
 
 make_ctypes:
   tags:
-    - linux, x86_64
+    - linux
+    - x86_64
   stage: build
   image: python
   script:
@@ -35,9 +37,46 @@ make_ctypes:
     paths:
       - python/src/radarkit/_ctypes_.py
 
+# CentOS is what we use on PX-1000 and RaXPol
+build_legacy_linux_x86:
+  tags:
+    - linux
+    - x86_64
+  stage: build
+  image: centos:7
+  before_script:
+    - rm -f /etc/yum.repos.d/*.repo
+    - |
+      cat > /etc/yum.repos.d/CentOS-Vault.repo <<'EOF'
+      [base]
+      name=CentOS-7 - Base
+      baseurl=http://vault.centos.org/7.9.2009/os/x86_64/
+      enabled=1
+      gpgcheck=0
+
+      [updates]
+      name=CentOS-7 - Updates
+      baseurl=http://vault.centos.org/7.9.2009/updates/x86_64/
+      enabled=1
+      gpgcheck=0
+
+      [extras]
+      name=CentOS-7 - Extras
+      baseurl=http://vault.centos.org/7.9.2009/extras/x86_64/
+      enabled=1
+      gpgcheck=0
+      EOF
+    - yum clean all
+    - yum makecache
+    - yum install -y epel-release
+    - yum install -y bc gcc git make fftw-devel netcdf-devel openssl-devel libarchive-devel
+  script:
+    - make
+
 build_linux_x86:
   tags:
-    - linux, x86_64
+    - linux
+    - x86_64
   stage: build
   image: gcc
   script:
@@ -51,7 +90,8 @@ build_linux_x86:
 
 build_linux_arm:
   tags:
-    - linux, arm64
+    - linux
+    - arm64
   stage: build
   image: gcc
   script:
@@ -59,7 +99,8 @@ build_linux_arm:
 
 basic:
   tags:
-    - linux, x86_64
+    - linux
+    - x86_64
   stage: test
   image: gcc
   needs:
@@ -78,7 +119,8 @@ basic:
 
 numeric:
   tags:
-    - linux, x86_64
+    - linux
+    - x86_64
   stage: test
   image: gcc
   needs:
@@ -98,7 +140,8 @@ numeric:
 
 performance:
   tags:
-    - linux, x86_64
+    - linux
+    - x86_64
   stage: test
   image: gcc
   needs:
