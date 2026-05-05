@@ -170,8 +170,10 @@ static void *momentEngineCore(void *in) {
     RKMomentWorker *me = (RKMomentWorker *)in;
     RKMomentEngine *engine = me->parent;
 
-    int i, k, p;
+    int i, j, k, p, count;
     struct timeval t0, t1, t2;
+
+    float r;
 
     // My ID that is suppose to be constant
     const int c = me->id;
@@ -400,42 +402,59 @@ static void *momentEngineCore(void *in) {
             space->widthFactor = engine->radarDescription->wavelength / config->prt[0] / (2.0f * sqrtf(2.0f) * M_PI);
             space->KDPFactor = 1.0f / S->header.gateSizeMeters;
             space->config = config;
+            memcpy(previousConfig, config, sizeof(RKConfig));
+            // Call the calibrator to derive range calibration, ZCal and DCal
+            engine->calibrator(engine->userModule, space);
             // Show the info only if config has changed
             if (engine->verbose && configHasChanged) {
                 pthread_mutex_lock(&rkGlobalParameters.lock);
 
-                RKFilterAnchor *filterAnchors = config->waveform->filterAnchors[0];
+                RKFilterAnchor *filterAnchors = config->waveformDecimate->filterAnchors[0];
                 RKLog("%s systemZCal = %.2f   ZCal = %.2f  sensiGain[0] = %.2f   samplingAdj = %.2f\n",
                       me->name,
                       config->systemZCal[0], config->ZCal[0][0], filterAnchors[0].sensitivityGain, space->samplingAdjustment);
                 RKLog(">%s RCor @ filterCount = %d   capacity = %s   C%02d\n",
                       me->name,
-                      config->waveform->count,
+                      config->waveform->filterCounts[0],
                       RKIntegerToCommaStyleString(ray->header.capacity),
                       ic);
                 RKLog(">%s PRF = %s Hz -> Va = %.2f m/s/rad\n",
                       me->name,
                       RKFloatToCommaStyleString(1.0f / config->prt[0]), space->velocityFactor);
                 if (engine->verbose > 1) {
-                    for (p = 0; p < 2; p++) {
-                        for (k = 0; k < config->waveform->count; k++) {
-                            RKLog(">%s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ %d ..< %d\n",
-                                  me->name, k,
-                                  p == 0 ? "H" : (p == 1 ? "V" : "-"),
-                                  config->systemZCal[p],
-                                  config->ZCal[k][p],
-                                  filterAnchors[k].sensitivityGain,
-                                  space->samplingAdjustment,
-                                  config->ZCal[k][p] + config->systemZCal[p] - filterAnchors[k].sensitivityGain - space->samplingAdjustment,
-                                  filterAnchors[k].outputOrigin, filterAnchors[k].outputOrigin + filterAnchors[k].maxDataLength);
+                    r = 0.0f;
+                    for (k = 0; k < space->gateCount; k++) {
+                        r = (float)k * space->gateSizeMeters;
+                        if (r >= 1000.0f) {
+                            break;
                         }
                     }
+                    count = config->waveform->type & RKWaveformTypeTimeFrequencyMultiplexing ? config->waveformDecimate->filterCounts[0] : 1;
+                    for (j = 0; j < count; j++) {
+                        for (p = 0; p < 2; p++) {
+                            RKLog(">%s ZCal[%d][%s] = %.2f + %.2f - %.2f - %.2f = %.2f dB @ [%d ..< %d]   %s%.2f dB @ %.2f km%s (k = %d)\n",
+                                    me->name,
+                                    j,
+                                    p == 0 ? "H" : (p == 1 ? "V" : "-"),
+                                    config->systemZCal[p],
+                                    config->ZCal[j][p],
+                                    filterAnchors[j].sensitivityGain,
+                                    space->samplingAdjustment,
+                                    config->systemZCal[p] + config->ZCal[j][p] - filterAnchors[j].sensitivityGain - space->samplingAdjustment,
+                                    filterAnchors[j].outputOrigin, filterAnchors[j].outputOrigin + filterAnchors[j].maxDataLength,
+                                    rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                                    space->S2Z[p][k] - 60.0f,
+                                    1.0e-3 * r,
+                                    rkGlobalParameters.showColor ? RKNoColor : "",
+                                    k);
+                        }
+                        RKLog(">%s DCal[%d] = %.2f + %.2f = %.2f dB\n",
+                                me->name, j, config->systemDCal, config->DCal[j], space->dcal[j]);
+                    }
+                    // }
                 }
                 pthread_mutex_unlock(&rkGlobalParameters.lock);
             }
-            memcpy(previousConfig, config, sizeof(RKConfig));
-            // Call the calibrator to derive range calibration, ZCal and DCal
-            engine->calibrator(engine->userModule, space);
         }
 
         // Consolidate the pulse marker into ray marker
@@ -473,7 +492,7 @@ static void *momentEngineCore(void *in) {
             }
             // RKLog("%s noise = %.4f %.4f \n", me->name, space->noise[0], space->noise[1]);
 
-            if (engine->useGmap) {
+            if (engine->useGMAP) {
                 RKGMAPRun(space, pulses, path.length);
             }
 
@@ -754,9 +773,9 @@ static void *pulseGatherer(void *_in) {
     uint32_t i1 = (uint32_t)-1;
     uint16_t count = 0;
 
+    RKConfig *config;
     RKPulse *pulse;
     RKRay *ray;
-    RKMarker marker;
 
     // Show the selected noise estimator & moment processor
     if (engine->verbose) {
@@ -887,15 +906,16 @@ static void *pulseGatherer(void *_in) {
         } else {
             // Gather the start and end pulses and post a worker to process for a ray
             if (pulse->header.positionIndex == (uint32_t)-1) {
-                marker = engine->configBuffer[pulse->header.configIndex].startMarker;
-                // marker = pulse->header.marker;
-                if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
+                config = &engine->configBuffer[pulse->header.configIndex];
+                if (pulse->header.marker & RKMarkerSweepMiddle && (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypePPI) {
                     pulse->header.positionIndex = (uint32_t)floorf(pulse->header.azimuthDegrees);
-                } else if ((marker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
+                } else if (pulse->header.marker & RKMarkerSweepMiddle && (config->startMarker & RKMarkerScanTypeMask) == RKMarkerScanTypeRHI) {
                     pulse->header.positionIndex = (uint32_t)floorf(pulse->header.elevationDegrees);
                 } else {
-                    pulse->header.positionIndex = (uint32_t)floorf(pulse->header.elevationDegrees) * 360
-                                                + (uint32_t)floorf(pulse->header.azimuthDegrees);
+                    i = (int)(0.1f / config->prt[0]);
+                    pulse->header.positionIndex = (uint32_t)floorf(pulse->header.elevationDegrees) * 3600
+                                                + (uint32_t)floorf(pulse->header.azimuthDegrees) * 10
+                                                + (uint32_t)(pulse->header.i / i);
                 }
             }
             i0 = pulse->header.positionIndex;
@@ -1317,7 +1337,7 @@ RKMomentEngine *RKMomentEngineInit(void) {
              rkGlobalParameters.showColor ? RKNoColor : "");
     engine->state = RKEngineStateAllocated;
     engine->useSemaphore = true;
-    engine->useGmap = false; // TODO: Does Boonleng want this on by default?
+    engine->useGMAP = false; // TODO: Does Boonleng want this on by default?
     engine->noiseEstimator = RKNoiseFromConfig;
     // engine->momentProcessor = RKPulsePairHop;
     engine->momentProcessor = RKMultiLag;

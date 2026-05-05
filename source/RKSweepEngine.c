@@ -519,7 +519,9 @@ static void *sweepManager(void *in) {
     RKStripTail(summary + summarySize);
 
     // Show a summary of all the files created
-    RKLog("%s %s", engine->name, summary);
+    if (record || engine->verbose > 1) {
+        RKLog("%s %s", engine->name, summary);
+    }
 
     pthread_mutex_lock(&engine->productMutex);
     engine->business--;
@@ -1110,7 +1112,7 @@ RKSweep *RKSweepInitFromScratchSpace(RKSweepEngine *engine, const uint8_t scratc
     S = rays[k];
     T = rays[k + 1];
     E = rays[k + n - 1];
-    if (S->header.configIndex != T->header.configIndex) {
+    if (S->header.configIndex != T->header.configIndex && n > 5) {
         RKLog("%s Info. Inconsistent configIndex S -> %d vs T -> %d\n", engine->name, S->header.configIndex, T->header.configIndex);
     }
 

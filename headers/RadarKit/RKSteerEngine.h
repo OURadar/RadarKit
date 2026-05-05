@@ -16,10 +16,11 @@
 #include <RadarKit/RKConfig.h>
 #include <RadarKit/RKDSP.h>
 
-#define RKPedestalPositionTolerance    0.1f
-#define RKPedestalVelocityTolerance    0.25f
-#define RKPedestalPointTimeOut         1500
-#define RKPedestalActionPeriod         0.05
+#define RKPedestalPositionTolerance        0.1f
+#define RKPedestalVelocityTolerance        0.25f
+#define RKPedestalVelocityRatioTolerance   0.1f
+#define RKPedestalPointTimeOut             1500
+#define RKPedestalActionPeriod             0.1f
 
 #define RKScanModeString(x) x == RKScanModeRHI ? "RHI" : ( \
 x == RKScanModePPI ? "PPI" : ( \
@@ -48,12 +49,20 @@ enum {
     RKScanProgressStopPedestal                   = 1 << 4                      // Stop pedestal
 };
 
-typedef uint8_t RKScanOption;
+typedef uint16_t RKScanOption;
 enum {
     RKScanOptionNone                             = 0,
     RKScanOptionRepeat                           = 1,
     RKScanOptionVerbose                          = 1 << 1,
-    RKScanOptionUsePoint                         = 1 << 2
+    RKScanOptionAzimuthUsePoint                  = 1 << 2,
+    RKScanOptionUsePointForElevationForPPI       = 1 << 3,
+    RKScanOptionUsePointForElevationForRHI       = 1 << 4,
+    RKScanOptionUsePointForElevationForSector    = 1 << 5,
+    RKScanOptionUsePointForElevationForPoint     = 1 << 6,
+    RKScanOptionUsePointForAzimuthForPPI         = 1 << 7,
+    RKScanOptionUsePointForAzimuthForRHI         = 1 << 8,
+    RKScanOptionUsePointForAzimuthForSector      = 1 << 9,
+    RKScanOptionUsePointForAzimuthForPoint       = 1 << 10
 };
 
 typedef uint8_t RKScanMode;
@@ -80,6 +89,7 @@ enum {
     RKSteerCommandPoint,
     RKSteerCommandPPISet,
     RKSteerCommandRHISet,
+    RKSteerCommandSectorSet,
     RKSteerCommandVolume,
     RKSteerCommandMotionCount,
     RKSteerCommandSummary,
@@ -144,10 +154,12 @@ struct rk_position_steer_engine {
 
     // Program set variables
     RKScanObject           vcpHandle;
-    RKScanAction           actions[RKPedestalActionBufferDepth];
-    uint32_t               actionIndex;
     uint32_t               volumeIndex;
     uint32_t               sweepIndex;
+    uint32_t               actionIndex;
+    uint32_t               lastAzimuthActionIndex;
+    uint32_t               lastElevationActionIndex;
+    RKScanAction           actions[RKPedestalActionBufferDepth];
     char                   scanString[RKMaximumStringLength];
     char                   response[RKMaximumStringLength];
     char                   dump[RKMaximumStringLength];
@@ -170,6 +182,15 @@ void RKSteerEngineSetEssentials(RKSteerEngine *, const RKRadarDesc *,
                                 RKPosition *, uint32_t *,
                                 RKConfig *,   uint32_t *);
 void RKSteerEngineSetScanRepeat(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForAzimuthForPPI(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForAzimuthForRHI(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForAzimuthForSector(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForAzimuthForPoint(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForElevationForPPI(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForElevationForRHI(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForElevationForSector(RKSteerEngine *, const bool);
+void RKSteerEngineSetUsePointForElevationForPoint(RKSteerEngine *, const bool);
+
 
 int RKSteerEngineStart(RKSteerEngine *);
 int RKSteerEngineStop(RKSteerEngine *);
@@ -191,11 +212,10 @@ int RKSteerEngineAddPinchSweep(RKSteerEngine *, const RKScanPath);
 
 // void RKSteerEngineUpdatePositionFlags(RKSteerEngine *, RKPosition *);
 
-RKScanAction *RKSteerEngineGetActionV1(RKSteerEngine *, RKPosition *);
 RKScanAction *RKSteerEngineGetAction(RKSteerEngine *, RKPosition *);
 
 bool RKSteerEngineIsExecutable(const char *);
-int RKSteerEngineExecuteString(RKSteerEngine *, const char *, char *);
+int RKSteerEngineExecuteString(RKSteerEngine *, const char *, char _Nullable *);
 
 size_t RKSteerEngineScanSummary(RKSteerEngine *, char *);
 

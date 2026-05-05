@@ -36,6 +36,21 @@
 #define RADAR_VARIABLE_OFFSET(STRING, NAME) \
 snprintf(STRING, RKStatusStringLength, "                    radar->" rk_str(NAME) " @ %ld -> %p\n", (unsigned long)((void *)&radar->NAME - (void *)radar), (unsigned int *)&radar->NAME)
 
+#define ENGINE_VERBOSE_HELP_STRING \
+"  -V (--engine-verbose) " UNDERLINE("value") "\n" \
+"         Increases verbosity level of specific engines.\n" \
+"          0 - Clock of position\n" \
+"          1 - Clock of transceiver\n" \
+"          a - Position engine\n" \
+"          d - Data recorder\n" \
+"          m - Moment engine\n" \
+"          p - Pulse engine\n" \
+"          r - Ring filter engine\n" \
+"          s - Sweep engine\n" \
+"          v - Steer engine (VCP)\n" \
+"          w - WebSocket Reporter (RadarHub)\n" \
+"\n"
+
 typedef uint32_t RKRadarState;
 enum {
     RKRadarStateRayBufferAllocated                   = (1 << 0),   // Data buffers
@@ -200,6 +215,8 @@ struct rk_radar {
     RKUserModule                     userModule;
     RKUserModule                     (*userModuleInit)(RKWaveform *);
     void                             (*userModuleFree)(RKUserModule);
+    //
+    uint32_t                         developerMode;
 };
 
 //

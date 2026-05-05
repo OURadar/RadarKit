@@ -250,6 +250,7 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     r = RKSocketWrite(W, strlen(buf));
     if (r <= 0) {
         fprintf(stderr, "Error during handshake  (r = %d).\n", r);
+        fprintf(stderr, "%s", buf);
         return -1;
     }
     buf[0] = '\0';
@@ -281,19 +282,19 @@ static int RKWebSocketConnect(RKWebSocket *W) {
     // This block is now hardcoded for default secret key, should replace ...
     if (strcmp(W->secret, "RadarHub123456789abcde") == 0 &&
         strcmp(W->digest, "O9QKgAZPEwFaLSqyFPYMHcGBp5g=")) {
-        fprintf(stderr, "Error. W->digest = %s\n", W->digest);
+        fprintf(stderr, "Error. W->digest = '%s'\n", W->digest);
         fprintf(stderr, "Error. Unexpected digest.\n");
         return -1;
     }
 
     if (strcasecmp(W->upgrade, "WebSocket")) {
-        fprintf(stderr, "Error. W->upgrade = %s\n", W->upgrade);
+        fprintf(stderr, "Error. W->upgrade = '%s'\n", W->upgrade);
         fprintf(stderr, "Error. Connection is not websocket.\n");
         return -1;
     }
 
     if (strcasecmp(W->connection, "upgrade")) {
-        fprintf(stderr, "Error. W->connection = %s\n", W->connection);
+        fprintf(stderr, "Error. W->connection = '%s'\n", W->connection);
         fprintf(stderr, "Error. Connection did not get upgraded.\n");
         return -1;
     }
@@ -710,10 +711,10 @@ void RKWebSocketSetErrorHandler(RKWebSocket *W, void (*routine)(RKWebSocket *)) 
 void RKWebSocketStart(RKWebSocket *W) {
     if (W->verbose) {
         RKLog("%s RKWebSocketStart() %s%s%s:%d%s%s\n", W->name,
-              rkGlobalParameters.showColor ? (W->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
-              W->useSSL ? "https://" : "http://",
-              W->host, W->port, W->path,
-              rkGlobalParameters.showColor ? RKNoColor : "");
+                rkGlobalParameters.showColor ? (W->useSSL ? RKMonokaiGreen : RKMonokaiYellow) : "",
+                W->useSSL ? "https://" : "http://",
+                W->host, W->port, W->path,
+                rkGlobalParameters.showColor ? RKNoColor : "");
     }
     pthread_mutex_lock(&W->lock);
     W->wantActive = true;

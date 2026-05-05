@@ -2654,11 +2654,11 @@ RKStatusEnumWarning = 2# RKTypes.h: 976
 
 RKStatusEnumCritical = 3# RKTypes.h: 976
 
-RKStatusEnumNotWired = 4# RKTypes.h: 976
-
 RKStatusEnumInvalid = 4# RKTypes.h: 976
 
 RKStatusEnumBeyondCritical = 4# RKTypes.h: 976
+
+RKStatusEnumNotWired = 5# RKTypes.h: 976
 
 RKStatusEnumOld = 5# RKTypes.h: 976
 
@@ -7999,13 +7999,13 @@ struct_rk_position_engine._fields_ = [
     ('vcpSweepCount', c_int),
 ]
 
-RKScanProgress = uint8_t# headers/RadarKit/RKSteerEngine.h: 41
+RKScanProgress = uint8_t# headers/RadarKit/RKSteerEngine.h: 42
 
-RKScanOption = uint8_t# headers/RadarKit/RKSteerEngine.h: 51
+RKScanOption = uint16_t# headers/RadarKit/RKSteerEngine.h: 52
 
-RKScanMode = uint8_t# headers/RadarKit/RKSteerEngine.h: 59
+RKScanMode = uint8_t# headers/RadarKit/RKSteerEngine.h: 66
 
-# headers/RadarKit/RKSteerEngine.h: 112
+# headers/RadarKit/RKSteerEngine.h: 120
 class struct_rk_scan_path(Structure):
     pass
 
@@ -8030,9 +8030,9 @@ struct_rk_scan_path._fields_ = [
     ('elevationSlew', c_float),
 ]
 
-RKScanPath = struct_rk_scan_path# headers/RadarKit/RKSteerEngine.h: 112
+RKScanPath = struct_rk_scan_path# headers/RadarKit/RKSteerEngine.h: 120
 
-# headers/RadarKit/RKSteerEngine.h: 131
+# headers/RadarKit/RKSteerEngine.h: 139
 class struct_rk_scan_object(Structure):
     pass
 
@@ -8073,13 +8073,13 @@ struct_rk_scan_object._fields_ = [
     ('lastAction', RKScanAction),
 ]
 
-RKScanObject = struct_rk_scan_object# headers/RadarKit/RKSteerEngine.h: 131
+RKScanObject = struct_rk_scan_object# headers/RadarKit/RKSteerEngine.h: 139
 
-# headers/RadarKit/RKSteerEngine.h: 135
+# headers/RadarKit/RKSteerEngine.h: 143
 class struct_rk_position_steer_engine(Structure):
     pass
 
-RKSteerEngine = struct_rk_position_steer_engine# headers/RadarKit/RKSteerEngine.h: 133
+RKSteerEngine = struct_rk_position_steer_engine# headers/RadarKit/RKSteerEngine.h: 141
 
 struct_rk_position_steer_engine.__slots__ = [
     'name',
@@ -8090,10 +8090,12 @@ struct_rk_position_steer_engine.__slots__ = [
     'configIndex',
     'verbose',
     'vcpHandle',
-    'actions',
-    'actionIndex',
     'volumeIndex',
     'sweepIndex',
+    'actionIndex',
+    'lastAzimuthActionIndex',
+    'lastElevationActionIndex',
+    'actions',
     'scanString',
     'response',
     'dump',
@@ -8114,10 +8116,12 @@ struct_rk_position_steer_engine._fields_ = [
     ('configIndex', POINTER(uint32_t)),
     ('verbose', uint8_t),
     ('vcpHandle', RKScanObject),
-    ('actions', RKScanAction * int(8)),
-    ('actionIndex', uint32_t),
     ('volumeIndex', uint32_t),
     ('sweepIndex', uint32_t),
+    ('actionIndex', uint32_t),
+    ('lastAzimuthActionIndex', uint32_t),
+    ('lastElevationActionIndex', uint32_t),
+    ('actions', RKScanAction * int(128)),
     ('scanString', c_char * int(4096)),
     ('response', c_char * int(4096)),
     ('dump', c_char * int(4096)),
@@ -9421,7 +9425,7 @@ except:
 
 # RKTypes.h: 99
 try:
-    RKPedestalActionBufferDepth = 8
+    RKPedestalActionBufferDepth = 128
 except:
     pass
 
@@ -9813,7 +9817,7 @@ def CLAMP(x, lo, hi):
 
 # RKMisc.h: 111
 try:
-    RKMiscStringLength = 1024
+    RKMiscStringLength = 4096
 except:
     pass
 

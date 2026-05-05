@@ -1,4 +1,6 @@
-[![Latest Release](https://git.arrc.ou.edu/radar/radarkit/-/badges/release.svg)](https://git.arrc.ou.edu/radar/radarkit/-/releases) [![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)](https://git.arrc.ou.edu/radar/radarkit/-/commits/master)
+[![][version-shield]][release-link]
+[![][license-shield]][license-link]
+[![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)](https://git.arrc.ou.edu/radar/radarkit/-/commits/master)
 
 # RadarKit
 
@@ -311,8 +313,8 @@ Follow these steps to get the project
             position->azimuthVelocityDegreesPerSecond = 25.0f;    // Optional.
             position->elevationVelocityDegreesPerSecond = 0.0f;   // Optional.
             position->flag = RKPositionFlagScanActive
-                            | RKPositionFlagAzimuthEnabled
-                            | RKPositionFlagElevationEnabled;      // Required.
+                           | RKPositionFlagAzimuthEnabled
+                           | RKPositionFlagElevationEnabled;      // Required.
             RKSetPositionReady(radar, position);
         }
         return 0;
@@ -669,3 +671,9 @@ RKTestMomentProcessorSpeed
 ## Future Capabilities
 
 - Replace / Add RKSIMD to straight C compute
+
+<!-- Link Definitions -->
+[version-shield]: https://img.shields.io/github/v/release/ouradar/radarkit
+[release-link]: https://github.com/ouradar/radarkit/releases
+[license-shield]: https://img.shields.io/badge/license-MIT-red
+[license-link]: https://github.com/ouradar/radarkit/blob/master/LICENSE

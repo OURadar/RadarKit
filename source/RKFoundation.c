@@ -2860,21 +2860,30 @@ int RKCommandQueueFree(RKCommandQueue *queue) {
 }
 
 char *RKPedestalActionString(const RKScanAction *action) {
-    static char string[1024];
-    size_t length = 0;
     int i;
+    size_t length = 0;
+
+    static int ibuf = 0;
+    static char buf[4][1024];
+    static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&lock);
+    char *string = buf[ibuf++ % 4];
+    pthread_mutex_unlock(&lock);
+
     memset(string, 0, 1024);
+
     for (i = 0; i < 2; i++) {
         if (RKInstructIsNone(action->mode[i])) {
             if (i == 0) {
-                snprintf(string, sizeof(string), "(none)");
+                snprintf(string, sizeof(buf[0]), "(none)");
             }
         } else {
             if (length) {
-                length += snprintf(string + length, sizeof(string) - length, "   ");
+                length += snprintf(string + length, 1024 - length, "   ");
             }
-            length += snprintf(string + length, sizeof(string) - length, "%s", RKInstructIsAzimuth(action->mode[i]) ? "AZ" : "EL");
-            length += snprintf(string + length, sizeof(string) - length, " %s",
+            length += snprintf(string + length, 1024 - length, "%s", RKInstructIsElevation(action->mode[i]) ? "EL" : "AZ");
+            length += snprintf(string + length, 1024 - length, " %s",
                     RKInstructIsStandby(action->mode[i]) ? "standby" : (
                     RKInstructIsPoint(action->mode[i])   ? "point"   : (
                     RKInstructIsSlew(action->mode[i])    ? "slew"    : (
@@ -2882,7 +2891,7 @@ char *RKPedestalActionString(const RKScanAction *action) {
                     RKInstructIsDisable(action->mode[i]) ? "disable" : ""))))
                 );
             if (RKInstructIsPoint(action->mode[i]) || RKInstructIsSlew(action->mode[i])) {
-                length += snprintf(string + length, sizeof(string) - length, " %.1f", action->value[i]);
+                length += snprintf(string + length, 1024 - length, " %.1f", action->value[i]);
             }
         }
     }
