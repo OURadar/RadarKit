@@ -1404,6 +1404,10 @@ int RKSetVerbosityUsingArray(RKRadar *radar, const uint8_t *array) {
             case 's':
                 RKSweepEngineSetVerbose(radar->sweepEngine, verbose);
                 break;
+            case 'v':
+                RKLog("Setting steer engine verbose level to %d ...\n", verbose);
+                RKSteerEngineSetVerbose(radar->steerEngine, verbose);
+                break;
             default:
                 break;
         }
@@ -1479,22 +1483,9 @@ int RKSetWaveform(RKRadar *radar, RKWaveform *waveform) {
     radar->waveform = RKWaveformCopy(waveform);
     radar->waveformDecimate = RKWaveformCopy(waveform);
     RKWaveformDecimate(radar->waveformDecimate, radar->desc.pulseToRayRatio);
-    int j, k, r;
-    RKPulseEngineResetFilters(radar->pulseEngine);
-    for (k = 0; k < waveform->count; k++) {
-        for (j = 0; j < waveform->filterCounts[k]; j++) {
-            RKComplex *filter = waveform->samples[k] + waveform->filterAnchors[k][j].origin;
-            r = RKPulseEngineSetGroupFilter(radar->pulseEngine,
-                                       filter,
-                                       waveform->filterAnchors[k][j],
-                                       k,
-                                       j);
-            if (r != RKResultSuccess) {
-                return RKResultFailedToSetWaveform;
-            }
-        }
-    }
+    RKPulseEngineSetFilterByWaveform(radar->pulseEngine, waveform);
     // Search for the waveform calibration for this waveform
+    int k;
     RKWaveformCalibration *waveformCalibration = NULL;
     for (k = 0; k < radar->waveformCalibrationCount; k++) {
         if (!strcmp(radar->waveformCalibrations[k].name, waveform->name)) {
@@ -2374,7 +2365,17 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                             snprintf(string, RKMaximumStringLength, "ACK. Current SNR threshold is %.2f dB" RKEOL, config->SNRThreshold);
                         }
                         break;
+                    case 'x':
+                        // 'dx' - Show compression template
+                        radar->developerMode = !radar->developerMode;
+                        if (string) {
+                            snprintf(string, RKMaximumStringLength, "ACK. Showing compression template" RKEOL);
+                        }
+                        break;
                     default:
+                        if (string) {
+                            snprintf(string, RKMaximumStringLength, "NAK. Unknown DSP command." RKEOL);
+                        }
                         break;
                 }
                 break;
@@ -2491,7 +2492,7 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                     k += snprintf(string + k, RKMaximumStringLength - k,
                                  HIGHLIGHT("v") " [COMMAND] [PARAMETER] - Sets a VCP. Most command PARAMETER values are arranged in the\n"
                                  "                          order of elevation (range/set), azimuth (range/set), rate. The COMMAND value\n"
-                                 "                          can be 'pp', 'rr', or 'vol' and more details are in the following:\n"
+                                 "                          can be 'pp', 'rr', 'ss', or 'vol' and more details are in the following:\n"
                                  "\n"
                                  "    pp [EL_SET] [AZ] [AZ_VEL] - adds PPIs at EL_SET, transition at AZ, slew at AZ_VEL\n"
                                  "                              - if AZ is not provided, the default is 0°\n"
@@ -2499,40 +2500,40 @@ int RKExecuteCommand(RKRadar *radar, const char *commandString, char * _Nullable
                                  "        e.g.,\n"
                                  "            v pp 2,4,6,8,10          - a set of PPI scans at elevations 2°, 4°, 6°, 8°, and 10°\n"
                                  "            v pp 2,4,6,8,10 40       - same as above but with AZ transition at 40°\n"
-                                 "            v pp 2,4,6,8,10 40 18    - same as above but with AZ speed at 18°/s\n"
+                                 "            v pp 2,4,6,8,10 40 30    - same as above but with AZ speed at 30°/s\n"
                                  "\n"
                                  "    ipp [EL_SET] [AZ] [AZ_VEL] - similar to 'pp' but the VCP is immediately being replaced\n"
-                                 "        e.g.,\n"
-                                 "            v ipp 2,4,6,8,10          - same as above but immediate\n"
-                                 "            v ipp 2,4,6,8,10 40       - same as above but immediate\n"
-                                 "            v ipp 2,4,6,8,10 40 18    - same as above but immediate\n"
                                  "\n"
                                  "    opp [EL_SET] [AZ] [AZ_VEL] - similar to 'pp' but only done once and the VCP does not change\n"
                                  "        e.g.,\n"
-                                 "            v opp 2,4,6,8,10          - same as above but once\n"
-                                 "            v opp 2,4,6,8,10 40       - same as above but once\n"
-                                 "            v opp 2,4,6,8,10 40 18    - same as above but once\n"
-                                 "            v opp 90,90 40 18         - adds two once-PPI scans at EL 90°. No change in volume. This\n"
-                                 "                                        is the recommended way insert bird-bath scans with minimal\n"
-                                 "                                        interruption to the operations. Two scans are inserted here as the\n"
-                                 "                                        first one contains a significant amount of EL transition radials.\n"
+                                 "            v opp 90,90 40 30       - adds two once-PPI scans at EL 90°. No change in volume. This\n"
+                                 "                                      is the recommended way insert bird-bath scans with minimal\n"
+                                 "                                      interruption to the operations. Two scans are inserted here as the\n"
+                                 "                                      first one contains a significant amount of EL transition radials.\n"
                                  "\n"
                                  "    rr [EL_RANGE] [AZ_SET] [EL_VEL] - adds RHIs at EL_RANGE, azimuths AZ_SET, slew at EL_VEL\n"
                                  "                                    - if EL_VEL is not provided, the default is 18°/s\n"
+                                 "                                    - subsequent scans automatically use opposite velocity, +30, -30, +30, -30, ...\n"
+                                 "                                    - recommend adding rr in even number of azimuths\n"
                                  "        e.g.,\n"
-                                 "            v rr 0,30 10,20,30,40        - a set of RHI scans for EL 0-30°, AZ 10°, 20°, 30°, and 40°\n"
-                                 "            v rr 0,30 10,20,30,40 18     - same as above, at EL speed 18°/s\n"
+                                 "            v rr 0,30 10,20,30,40    - a set of RHI scans for EL 0-30°, AZ 10°, 20°, 30°, and 40°\n"
+                                 "            v rr 0,30 10,20,30,40 30 - same as above, at EL speed 30°/s\n"
                                  "\n"
                                  "    irr [EL_RANGE] [AZ_SET] [EL_VEL] - similar to 'rr' but the VCP is immediately being replaced\n"
-                                 "        e.g.,\n"
-                                 "            v irr 0,30 10,20,30,40       - same as above but immediate\n"
-                                 "            v irr 0,30 10,20,30,40 18    - same as above but immediate\n"
                                  "\n"
                                  "    orr [EL_RANGE] [AZ_SET] [EL_VEL] - similar to 'rr' only done once and the VCP does not change\n"
+                                 "\n"
+                                 "    ss [EL_SET] [AZ_RANGE] [AZ_VEL] - adds SECs at EL_SET, azimuth AZ_RANGE, slew at AZ_VEL\n"
+                                 "                                    - if AZ_VEL is not provided, the default is 18°/s\n"
+                                 "                                    - subsequent scans automatically use opposite velocity, +30, -30, +30, -30, ...\n"
+                                 "                                    - recommend adding rr in even number of elevations\n"
                                  "        e.g.,\n"
-                                 "            v orr 0,30 10,20,30,40       - same as above but once\n"
-                                 "            v orr 0,30 10,20,30,40 18    - same as above but once\n"
-                                 "            v orr 0,60 10 18             - adds one RHI scans at EL 0-60°, AZ 10°\n"
+                                 "            v ss 10,20,30,40 330,30    - a set of SEC scans for EL 10°, 20°, 30°, and 40°, AZ 330-30°\n"
+                                 "            v ss 10,20,30,40 330,30 30 - same as above, at AZ speed 30°/s\n"
+                                 "\n"
+                                 "    iss [EL_SET] [AZ_RANGE] [AZ_VEL] - similar to 'ss' but the VCP is immediately being replaced\n"
+                                 "\n"
+                                 "    oss [EL_SET] [AZ_RANGE] [AZ_VEL] - similar to 'ss' only done once and the VCP does not change\n"
                                  "\n"
                                  "    vol [VOL_SPECIFIER] - adds a volume of sweeps (rarely applicable)\n"
                                  "        where VOL_SPECIFIER is a /-delimited list of the following commands\n"
@@ -2717,9 +2718,10 @@ void RKMeasureNoise(RKRadar *radar) {
     for (k = 0; k < radar->pulseEngine->filterCounts[0]; k++) {
         origin += radar->pulseEngine->filterAnchors[0][k].length;
     }
+    origin /= radar->desc.pulseToRayRatio;
     // Add another tail (~5 us) to avoid the transient effects
     RKConfig *config = RKGetLatestConfig(radar);
-    if (config->waveform == NULL || config->waveform->fs == 1.0e-6) {
+    if (config->waveformDecimate == NULL || config->waveformDecimate->fs == 1.0e-6) {
         // For 5-MHz fs, 5 us is 25 samples
         origin += 25;
     } else {
@@ -2737,10 +2739,10 @@ void RKMeasureNoise(RKRadar *radar) {
     noiseAverage[0] /= (RKFloat)k;
     noiseAverage[1] /= (RKFloat)k;
     if (!isfinite(noiseAverage[0])) {
-        noiseAverage[0] = 0.001f;
+        noiseAverage[0] = 0.1f;
     }
     if (!isfinite(noiseAverage[1])) {
-        noiseAverage[1] = 0.001f;
+        noiseAverage[1] = 0.1f;
     }
     RKAddConfig(radar, RKConfigKeySystemNoise, noiseAverage[0], noiseAverage[1], RKConfigKeyNull);
 }

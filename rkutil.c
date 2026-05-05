@@ -140,20 +140,9 @@ static void showHelp(void) {
            "\n"
            "  -v (--verbose)\n"
            "         Increases verbosity level, which can be specified multiple times.\n"
-           "\n"
-           "  -V (--engine-verbose) " UNDERLINE("value") "\n"
-           "         Increases verbosity level of specific engines.\n"
-           "          0 - Clock of position\n"
-           "          1 - Clock of transceiver\n"
-           "          a - Position engine\n"
-           "          d - Data recorder\n"
-           "          m - Moment engine\n"
-           "          p - Pulse engine\n"
-           "          r - Ring filter engine\n"
-           "          s - Sweep engine\n"
-           "          w - WebSocket Reporter (RadarHub)\n"
            "\n",
            name);
+    printf(ENGINE_VERBOSE_HELP_STRING);
     printf("  -T (--test) " UNDERLINE("value") "\n"
            "         Tests a specific component of the RadarKit framework.\n"
            "\n"

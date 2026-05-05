@@ -50,9 +50,9 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin) {
         RKLog("Noise measurement timed out.  k = %d  pulse.header.s = %04x\n", k, pulse->header.s);
         return RKResultTimeout;
     }
-    if (pulse->header.gateCount < 2 * origin) {
+    if (pulse->header.downSampledGateCount < origin + 10) {
         RKLog("Error. Unable to measure noise at origin %s with %s gates.\n",
-              RKIntegerToCommaStyleString(origin), RKIntegerToCommaStyleString(pulse->header.gateCount));
+              RKIntegerToCommaStyleString(origin), RKIntegerToCommaStyleString(pulse->header.downSampledGateCount));
         return RKResultTooBig;
     }
     RKComplex *x;
@@ -61,7 +61,7 @@ int RKMeasureNoiseFromPulse(RKFloat *noise, RKPulse *pulse, const int origin) {
         // Add and subtract a few gates to avoid transcient efftects
         x += origin;
         noise[p] = 0.0f;
-        for (j = 0; j < pulse->header.gateCount - 2 * origin; j++) {
+        for (j = 0; j < MIN(32, pulse->header.downSampledGateCount - origin); j++) {
             noise[p] += x->i * x->i + x->q * x->q;
             x++;
         }

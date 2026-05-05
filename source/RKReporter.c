@@ -33,8 +33,9 @@ void *reporter(void *in) {
 
     const double scopeRefreshPeriod = 1.0 / 20.0;
 
-    int k;
+    int j, k;
     int count;
+    int stride;
     int d = 0;
     int h = 0;
     int p = 0;
@@ -162,11 +163,25 @@ void *reporter(void *in) {
                         xh = RKGetInt16CDataFromPulse(pulse, 0);
                         xv = RKGetInt16CDataFromPulse(pulse, 1);
                         y = (int16_t *)(payload + 1);
+                        RKWaveform *waveform = config->waveform;
+                        float scale = 2500.0f * sqrtf((float)waveform->depth);
+                        int gid = pulse->header.i % waveform->count;
+                        if (gid < 0 || gid >= waveform->count) {
+                            RKLog("%s Unexpected gid = %d with filter count %d\n",
+                                engine->name, gid, waveform->count);
+                            gid = 0;
+                        }
+                        RKComplex *c = waveform->samples[gid];
                         for (k = 0; k < count - 1; k++) {
                             *(y            ) = xh->i;
                             *(y + count    ) = xh->q;
-                            *(y + count * 2) = xv->i;
-                            *(y + count * 3) = xv->q;
+                            if (k < waveform->depth && engine->radar->developerMode) {
+                                *(y + count * 2) = (int16_t)(scale * c[k].i);
+                                *(y + count * 3) = (int16_t)(scale * c[k].q);
+                            } else {
+                                *(y + count * 2) = xv->i;
+                                *(y + count * 3) = xv->q;
+                            }
                             xh++;
                             xv++;
                             y++;
@@ -215,6 +230,9 @@ void *reporter(void *in) {
                     } else {
                         // Put together the ray for RadarHub
                         display = (RKRadarHubRay *)payload;
+
+                        stride = (int)ceilf((float)ray->header.gateCount / 512.0f);
+
                         // T, C, Es, Ee, As, Ae, N, Z0, Z1, Z2, ...
                         display->header.type = RKRadarHubTypeRadialZ;
                         display->header.counter = (uint8_t)((ray->header.i & 0x3F) | ((ray->header.configIndex & 0x03) << 6));
@@ -223,11 +241,16 @@ void *reporter(void *in) {
                         display->header.startAzimuth = (uint16_t)(ray->header.startAzimuth * 32768.0f / 180.0f);
                         display->header.endAzimuth = (uint16_t)(ray->header.endAzimuth * 32768.0f / 180.0f);
                         display->header.rangeStart = 0;
-                        display->header.rangeDelta = ray->header.gateSizeMeters * 10;
-                        display->header.gateCount = MIN(512, ray->header.gateCount);
+                        display->header.rangeDelta = (uint16_t)(ray->header.gateSizeMeters * stride * 10);
+                        display->header.gateCount = ray->header.gateCount / stride;
                         payloadSize = sizeof(RKRadarHubRayHeader) + display->header.gateCount * sizeof(RKByte);
                         z = RKGetUInt8DataFromRay(ray, RKProductIndexZ);
-                        memcpy(display->data, z, display->header.gateCount * sizeof(RKByte));
+                        for (j = 0, k = 0; j < display->header.gateCount; j++, k += stride) {
+                            display->data[j] = z[k];
+                        }
+                        if (j > 512) {
+                            RKLog("%s Unexpected display gate count: %d\n", engine->name, j);
+                        }
                         if (engine->verbose > 1) {
                             RKRadarHubPayloadString(message, payload, payloadSize);
                             RKLog("%s R%04d %s (%zu)\n", engine->name, r, message, payloadSize);
@@ -383,17 +406,65 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
             rkGlobalParameters.showColor ? RKNoColor : "");
     }
 
-    RKExecuteCommand(radar, message, engine->scratch);
+    char *c;
+    char *commandString = message;
+    char *commandStringEnd = NULL;
 
+    size_t origin = 0;
+
+    while (commandString) {
+        commandStringEnd = strchr(commandString, ';');
+        if (commandStringEnd) {
+            *commandStringEnd = '\0';
+        }
+        RKLog("%s Executing '%s%s%s'\n", engine->name,
+            rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+            commandString,
+            rkGlobalParameters.showColor ? RKNoColor : "");
+
+        RKExecuteCommand(radar, commandString, engine->scratch + origin);
+
+        if (strlen(engine->scratch + origin) == 0) {
+            RKLog("%s Warning. No response for command '%s%s%s'\n", engine->name,
+                rkGlobalParameters.showColor ? RKMonokaiYellow : "",
+                commandString,
+                rkGlobalParameters.showColor ? RKNoColor : "");
+            snprintf(engine->scratch + origin, sizeof(engine->scratch) - origin, "NAK. No response for command '%s'", commandString);
+        } else {
+            // Only keep the first line of the response. The rest is for terminal display.
+            c = strstr(engine->scratch + origin, "\n");
+            while (c && c > engine->scratch + origin && (*c == '\n' || *c == '\r')) {
+                *c-- = '\0';
+            }
+            if (*c == '.' || *c == ' ' || *c == '\t') {
+                *c++ = ';';
+                *c++ = ' ';
+                *c = '\0';
+            }
+        }
+
+        origin += strlen(engine->scratch + origin);
+
+        if (commandStringEnd) {
+            commandString = commandStringEnd + 1;
+            while (*commandString == ' ' || *commandString == '\t') {
+                commandString++;
+            }
+        } else {
+            commandString = NULL;
+        }
+    }
+    // TODO: Need to consolidate the responses. For now, only return the last one.
     int r = snprintf(engine->message, sizeof(engine->message), "%c%s", RKRadarHubTypeResponse, engine->scratch);
     RKStripTail(engine->scratch);
-    char c = engine->scratch[0];
+    char b = engine->scratch[0];
     RKLog("%s Response '%s%s%s'\n", engine->name,
-          rkGlobalParameters.showColor ? (c == 'A' ? RKMonokaiYellow : RKMonokaiOrange) : "",
-          engine->scratch,
-          rkGlobalParameters.showColor ? RKNoColor : "");
+        rkGlobalParameters.showColor ? (b == 'A' ? RKMonokaiYellow : RKMonokaiOrange) : "",
+        engine->scratch,
+        rkGlobalParameters.showColor ? RKNoColor : "");
 
     RKWebSocketSend(W, engine->message, r);
+
 }
 
 #pragma region Life Cycle
@@ -477,7 +548,6 @@ void RKReporterSetVerbose(RKReporter *engine, const int verbose) {
     engine->verbose = verbose;
     if (engine->ws) {
         RKWebSocketSetVerbose(engine->ws, verbose - 1);
-        // RKWebSocketSetVerbose(engine->ws, 3);
     }
 }
 
@@ -505,10 +575,6 @@ void RKReporterStart(RKReporter *engine) {
 }
 
 void RKReporterStop(RKReporter *engine) {
-    if (!(engine->state & RKEngineStateActive)) {
-        RKLog("%s Not active. No need to stop.\n", engine->name);
-        return;
-    }
     RKLog("%s Stopping ...\n", engine->name);
     if (engine->state & RKEngineStateWantActive) {
         engine->state ^= RKEngineStateWantActive;

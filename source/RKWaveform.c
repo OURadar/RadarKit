@@ -428,9 +428,9 @@ void RKWaveformLinearFrequencyModulation(RKWaveform *waveform, const double fs, 
     waveform->fc = fc;
     waveform->fs = fs;
     waveform->type = RKWaveformTypeIsComplex;
-    if (bandwidth > 0.0) {
+    if (fabs(bandwidth) > 1.0e-6) {
         waveform->type |= RKWaveformTypeLinearFrequencyModulation;
-        k = snprintf(waveform->name, RKNameLength, "q%02.0f", 1.0e-6 * bandwidth);
+        k = snprintf(waveform->name, RKNameLength, "q%02.0f", 1.0e-6 * fabs(bandwidth));
     } else {
         waveform->type |= RKWaveformTypeSingleTone;
         if (fc > 0.0) {

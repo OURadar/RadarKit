@@ -535,9 +535,11 @@ static void *pulseEngineCore(void *_in) {
         pulse->header.s |= RKPulseStatusProcessed;
         skipRingFilter = !(engine->radarDescription->initFlags & RKInitFlagStartRingFilterEngine);
         if (skipRingFilter) {
+            #if defined(DEBUG_PULSE_COMPRESSION_ENGINE_RING_FILTER_SKIP)
             if (pulse->header.i % 1000 == 0) {
                 RKLog("%s Ring filter skipped. header->i = %d\n", me->name, pulse->header.i);
             }
+            #endif
             pulse->header.s |= RKPulseStatusRingInspected | RKPulseStatusRingSkipped | RKPulseStatusRingProcessed;
         }
 

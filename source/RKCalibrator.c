@@ -9,11 +9,12 @@
 #include <RadarKit/RKCalibrator.h>
 
 void RKCalibratorSimple(RKUserResource _Nullable ignore, RKMomentScratch *space) {
-    int i, k, p;
+    int i, k, p, count;
     RKFloat r = 0.0f;
     RKConfig *config = space->config;
     RKFilterAnchor *filterAnchors = config->waveformDecimate->filterAnchors[0];
-    for (k = 0; k < config->waveformDecimate->count; k++) {
+    count = config->waveform->type & RKWaveformTypeTimeFrequencyMultiplexing ? config->waveformDecimate->filterCounts[0] : 1;
+    for (k = 0; k < count; k++) {
         //RKLog("RKCalibratorSimple: k=%d: %d ... %d\n", k, filterAnchors[k].outputOrigin, MIN(filterAnchors[k].outputOrigin + filterAnchors[k].maxDataLength, space->gateCount));
         for (i = filterAnchors[k].inputOrigin; i < MIN(filterAnchors[k].outputOrigin + filterAnchors[k].maxDataLength, space->gateCount); i++) {
             r = (RKFloat)i * space->gateSizeMeters;

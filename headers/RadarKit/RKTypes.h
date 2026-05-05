@@ -84,7 +84,7 @@
 #define RKDutyCyleRedThreshold               0.9                               //
 #define RKDutyCyleOrangeThreshold            0.8                               //
 #define RKStatusBarWidth                     6                                 //
-#define RKPulseCountForNoiseMeasurement      200                               //
+#define RKPulseCountForNoiseMeasurement      128                               //
 #define RKProcessorStatusPulseCoreCount      16                                //
 #define RKProcessorStatusRingCoreCount       16                                //
 #define RKProcessorStatusRayCoreCount        16                                //
@@ -96,7 +96,7 @@
 #define RKMaximumFileExtensionLength         8                                 // String length includes the terminating character!
 #define RKUserParameterCount                 8                                 //
 #define RKMaximumScanCount                   256                               //
-#define RKPedestalActionBufferDepth          8                                 //
+#define RKPedestalActionBufferDepth          128                               //
 #define RKDefaultScanSpeed                   18.0                              //
 
 #define RKDefaultDataPath                    "data"
@@ -1238,7 +1238,7 @@ typedef union rk_radarhub_ray_header {
         uint16_t               startAzimuth;                                   // Start of scan azimuth
         uint16_t               endAzimuth;                                     // End of scan azimuth
         uint16_t               rangeStart;                                     // Start of range
-        uint16_t               rangeDelta;                                     // Spacing of range
+        uint16_t               rangeDelta;                                     // Spacing of range in 0.1 km
         uint16_t               gateCount;                                      //
     };
     RKByte                 bytes[16];                                          //
