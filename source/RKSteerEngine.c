@@ -639,8 +639,8 @@ void RKSteerEngineUpdatePositionFlags(RKSteerEngine *engine, RKPosition *positio
 }
 
 RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
-    RKScanAction *lastElevationAction = &engine->actions[engine->lastElevationActionIndex];
-    RKScanAction *lastAzimuthAction = &engine->actions[engine->lastAzimuthActionIndex];
+    RKScanAction *lastElevationAction = &engine->lastElevationAction;
+    RKScanAction *lastAzimuthAction = &engine->lastAzimuthAction;
     RKScanAction *action = &engine->actions[engine->actionIndex];
     memset(action, 0, sizeof(RKScanAction));
 
@@ -695,7 +695,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
     //     ... note: one position payload is used
     // } else if (V->progress == RKScanProgressSetup) {
     //     ... do some logic to determine:
-    //     ... V->progress = RKScanProgressMiddle;
+    //     ... V->progress |= RKScanProgressMiddle;
     // }
     //
     // if (V->progress & RKScanProgressMiddle) {
@@ -735,20 +735,20 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                         action->value[a] = RKSteerEngineGetRate(del, RKPedestalAxisElevation);
                     }
                     if (verbose) {
-                        RKLog("%s Info. E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f\n", engine->name,
+                        RKLog("%s Info. E %.1f° -> [%.1f°] @ %.1f°/s   A %.1f° -> [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   (p)\n", engine->name,
                             pos->elevationDegrees, scan->elevationStart, pos->elevationVelocityDegreesPerSecond,
                             pos->azimuthDegrees, scan->azimuthStart, pos->azimuthVelocityDegreesPerSecond,
-                            V->i, del, a, action->value[a]);
+                            V->i, del);
                     }
                     a++;
                 } else if (fabs(pos->elevationVelocityDegreesPerSecond) >= RKPedestalVelocityTolerance) {
                     action->mode[a] = RKPedestalInstructTypeModeStandby | RKPedestalInstructTypeAxisElevation;
                     action->value[a] = 0.0f;
                     if (verbose) {
-                        RKLog("%s Info. E %.1f° [%.1f°] @ %.1f°/s   A %.1f° [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   a->v[%d] = %.1f\n", engine->name,
+                        RKLog("%s Info. E %.1f° -> [%.1f°] @ %.1f°/s   A %.1f° -> [%.1f°] @ %.1f°/s   V->i = %d   del = %.1f   (s)\n", engine->name,
                             pos->elevationDegrees, scan->elevationStart, pos->elevationVelocityDegreesPerSecond,
                             pos->azimuthDegrees, scan->azimuthStart, pos->azimuthVelocityDegreesPerSecond,
-                            V->i, del, a, action->value[a]);
+                            V->i, del);
                     }
                     a++;
                 }
@@ -929,7 +929,7 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                 if (cross) {
                     V->progress |= RKScanProgressEnd;
                     if (verbose) {
-                        RKLog("%s Info. End crossover detected @ AZ %.2f° [%.2f° -> %.2f°]   V->tic = %zu\n", engine->name,
+                        RKLog("%s Info. End crossover @ AZ %.2f° [%.2f° -> %.2f°]   V->tic = %zu   PPI\n", engine->name,
                             scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees, V->tic);
                     }
                 }
@@ -944,8 +944,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     V->progress ^= RKScanProgressMiddle;
                     V->progress |= RKScanProgressEnd;
                     if (verbose) {
-                        RKLog("%s Info. End crossover detected @ EL %.2f° [%.2f° -> %.2f°]\n", engine->name,
-                            scan->elevationEnd, V->elevationPrevious, pos->elevationDegrees);
+                        RKLog("%s Info. End crossover @ EL %.2f° [%.2f° -> %.2f°]   V->tic = %zu   RHI\n", engine->name,
+                            scan->elevationEnd, V->elevationPrevious, pos->elevationDegrees, V->tic);
                     }
                 }
                 break;
@@ -959,8 +959,8 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
                     V->progress ^= RKScanProgressMiddle;
                     V->progress |= RKScanProgressEnd;
                     if (verbose) {
-                        RKLog("%s Info. End crossover detected @ AZ %.2f° [%.2f° -> %.2f°]\n", engine->name,
-                            scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees);
+                        RKLog("%s Info. End crossover @ AZ %.2f° [%.2f° -> %.2f°]   V->tic = %zu   SEC\n", engine->name,
+                            scan->azimuthEnd, V->azimuthPrevious, pos->azimuthDegrees, V->tic);
                     }
                 }
                 break;
@@ -975,29 +975,38 @@ RKScanAction *RKSteerEngineGetAction(RKSteerEngine *engine, RKPosition *pos) {
 
     // Second pass logic: if the same action was just sent, do not resend to avoid flooding the pedestal command buffer
     if (action->mode[0] & RKPedestalInstructTypeAxisElevation && (action->mode[0] & RKPedestalInstructTypeModeMask) != RKPedestalInstructTypeNone) {
-        if ((lastElevationAction->mode[0] == action->mode[0] && fabsf(lastElevationAction->value[0] - action->value[0]) < 1.0e-2f) ||
-            (lastElevationAction->mode[1] == action->mode[0] && fabsf(lastElevationAction->value[1] - action->value[0]) < 1.0e-2f)) {
+        if ((lastElevationAction->mode[0] == action->mode[0] && fabsf(lastElevationAction->value[0] - action->value[0]) < 0.01f) ||
+            (lastElevationAction->mode[1] == action->mode[0] && fabsf(lastElevationAction->value[1] - action->value[0]) < 0.01f)) {
+            if (verbose) {
+                RKLog("%s Info. Suppressing duplicate %s\n", engine->name, RKPedestalActionString(action));
+            }
             action->mode[0] = RKPedestalInstructTypeNone;
             action->value[0] = 0.0f;
         } else {
-            engine->lastElevationActionIndex = engine->actionIndex;
+            memcpy(lastElevationAction, action, sizeof(RKScanAction));
         }
         if (action->mode[1] & RKPedestalInstructTypeAxisAzimuth && (action->mode[1] & RKPedestalInstructTypeModeMask) != RKPedestalInstructTypeNone) {
-            if ((lastAzimuthAction->mode[0] == action->mode[1] && fabsf(lastAzimuthAction->value[0] - action->value[1]) < 1.0e-2f) ||
-                (lastAzimuthAction->mode[1] == action->mode[1] && fabsf(lastAzimuthAction->value[1] - action->value[1]) < 1.0e-2f)) {
+            if ((lastAzimuthAction->mode[0] == action->mode[1] && fabsf(lastAzimuthAction->value[0] - action->value[1]) < 0.01f) ||
+                (lastAzimuthAction->mode[1] == action->mode[1] && fabsf(lastAzimuthAction->value[1] - action->value[1]) < 0.01f)) {
+                if (verbose) {
+                    RKLog("%s Info. Suppressing duplicate %s\n", engine->name, RKPedestalActionString(action));
+                }
                 action->mode[1] = RKPedestalInstructTypeNone;
                 action->value[1] = 0.0f;
             } else {
-                engine->lastAzimuthActionIndex = engine->actionIndex;
+                memcpy(lastAzimuthAction, action, sizeof(RKScanAction));
             }
         }
     } else if (action->mode[0] & RKPedestalInstructTypeAxisAzimuth && (action->mode[0] & RKPedestalInstructTypeModeMask) != RKPedestalInstructTypeNone) {
-        if ((lastAzimuthAction->mode[0] == action->mode[0] && fabsf(lastAzimuthAction->value[0] - action->value[0]) < 1.0e-2f) ||
-            (lastAzimuthAction->mode[1] == action->mode[0] && fabsf(lastAzimuthAction->value[1] - action->value[0]) < 1.0e-2f)) {
+        if ((lastAzimuthAction->mode[0] == action->mode[0] && fabsf(lastAzimuthAction->value[0] - action->value[0]) < 0.01f) ||
+            (lastAzimuthAction->mode[1] == action->mode[0] && fabsf(lastAzimuthAction->value[1] - action->value[0]) < 0.01f)) {
+            if (verbose) {
+                RKLog("%s Info. Suppressing duplicate %s\n", engine->name, RKPedestalActionString(action));
+            }
             action->mode[0] = RKPedestalInstructTypeNone;
             action->value[0] = 0.0f;
         } else {
-            engine->lastAzimuthActionIndex = engine->actionIndex;
+            memcpy(lastAzimuthAction, action, sizeof(RKScanAction));
         }
     }
 

@@ -157,8 +157,8 @@ struct rk_position_steer_engine {
     uint32_t               volumeIndex;
     uint32_t               sweepIndex;
     uint32_t               actionIndex;
-    uint32_t               lastAzimuthActionIndex;
-    uint32_t               lastElevationActionIndex;
+    RKScanAction           lastAzimuthAction;
+    RKScanAction           lastElevationAction;
     RKScanAction           actions[RKPedestalActionBufferDepth];
     char                   scanString[RKMaximumStringLength];
     char                   response[RKMaximumStringLength];
