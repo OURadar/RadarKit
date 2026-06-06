@@ -176,8 +176,9 @@ void *reporter(void *in) {
                             *(y            ) = xh->i;
                             *(y + count    ) = xh->q;
                             if (k < waveform->depth && engine->radar->developerMode) {
+                                // Showing the conjugate for easier visualization of the phase
                                 *(y + count * 2) = (int16_t)(scale * c[k].i);
-                                *(y + count * 3) = (int16_t)(scale * c[k].q);
+                                *(y + count * 3) = (int16_t)(-scale * c[k].q);
                             } else {
                                 *(y + count * 2) = xv->i;
                                 *(y + count * 3) = xv->q;

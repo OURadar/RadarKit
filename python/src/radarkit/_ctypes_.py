@@ -6913,17 +6913,17 @@ if _libs["radarkit"].has("RKPulsePairATSR", "cdecl"):
     RKPulsePairATSR.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
     RKPulsePairATSR.restype = c_int
 
-# RKMomentEngine.h: 27
+# RKMomentEngine.h: 25
 class struct_rk_moment_worker(Structure):
     pass
 
-RKMomentWorker = struct_rk_moment_worker# RKMomentEngine.h: 24
+RKMomentWorker = struct_rk_moment_worker# RKMomentEngine.h: 22
 
-# RKMomentEngine.h: 42
+# RKMomentEngine.h: 40
 class struct_rk_moment_engine(Structure):
     pass
 
-RKMomentEngine = struct_rk_moment_engine# RKMomentEngine.h: 25
+RKMomentEngine = struct_rk_moment_engine# RKMomentEngine.h: 23
 
 struct_rk_moment_worker.__slots__ = [
     'name',
@@ -6970,7 +6970,7 @@ struct_rk_moment_engine.__slots__ = [
     'coreOrigin',
     'useOldCodes',
     'useSemaphore',
-    'useGmap',
+    'useGMAP',
     'excludeBoundaryPulses',
     'noiseEstimator',
     'momentProcessor',
@@ -7014,7 +7014,7 @@ struct_rk_moment_engine._fields_ = [
     ('coreOrigin', uint8_t),
     ('useOldCodes', c_bool),
     ('useSemaphore', c_bool),
-    ('useGmap', c_bool),
+    ('useGMAP', c_bool),
     ('excludeBoundaryPulses', c_bool),
     ('noiseEstimator', CFUNCTYPE(UNCHECKED(c_int), POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t)),
     ('momentProcessor', CFUNCTYPE(UNCHECKED(c_int), POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t)),
@@ -7041,157 +7041,157 @@ struct_rk_moment_engine._fields_ = [
     ('memoryUsage', c_size_t),
 ]
 
-# RKMomentEngine.h: 92
+# RKMomentEngine.h: 90
 if _libs["radarkit"].has("RKMomentEngineInit", "cdecl"):
     RKMomentEngineInit = _libs["radarkit"].get("RKMomentEngineInit", "cdecl")
     RKMomentEngineInit.argtypes = []
     RKMomentEngineInit.restype = POINTER(RKMomentEngine)
 
-# RKMomentEngine.h: 93
+# RKMomentEngine.h: 91
 if _libs["radarkit"].has("RKMomentEngineFree", "cdecl"):
     RKMomentEngineFree = _libs["radarkit"].get("RKMomentEngineFree", "cdecl")
     RKMomentEngineFree.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineFree.restype = None
 
-# RKMomentEngine.h: 95
+# RKMomentEngine.h: 93
 if _libs["radarkit"].has("RKMomentEngineSetVerbose", "cdecl"):
     RKMomentEngineSetVerbose = _libs["radarkit"].get("RKMomentEngineSetVerbose", "cdecl")
     RKMomentEngineSetVerbose.argtypes = [POINTER(RKMomentEngine), c_int]
     RKMomentEngineSetVerbose.restype = None
 
-# RKMomentEngine.h: 96
+# RKMomentEngine.h: 94
 if _libs["radarkit"].has("RKMomentEngineSetEssentials", "cdecl"):
     RKMomentEngineSetEssentials = _libs["radarkit"].get("RKMomentEngineSetEssentials", "cdecl")
     RKMomentEngineSetEssentials.argtypes = [POINTER(RKMomentEngine), POINTER(RKRadarDesc), POINTER(RKFFTModule), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
     RKMomentEngineSetEssentials.restype = None
 
-# RKMomentEngine.h: 100
+# RKMomentEngine.h: 98
 if _libs["radarkit"].has("RKMomentEngineSetInputOutputBuffers", "cdecl"):
     RKMomentEngineSetInputOutputBuffers = _libs["radarkit"].get("RKMomentEngineSetInputOutputBuffers", "cdecl")
     RKMomentEngineSetInputOutputBuffers.argtypes = [POINTER(RKMomentEngine), POINTER(RKRadarDesc), POINTER(RKConfig), POINTER(uint32_t), RKBuffer, POINTER(uint32_t), RKBuffer, POINTER(uint32_t)]
     RKMomentEngineSetInputOutputBuffers.restype = None
 
-# RKMomentEngine.h: 105
+# RKMomentEngine.h: 103
 if _libs["radarkit"].has("RKMomentEngineSetFFTModule", "cdecl"):
     RKMomentEngineSetFFTModule = _libs["radarkit"].get("RKMomentEngineSetFFTModule", "cdecl")
     RKMomentEngineSetFFTModule.argtypes = [POINTER(RKMomentEngine), POINTER(RKFFTModule)]
     RKMomentEngineSetFFTModule.restype = None
 
-# RKMomentEngine.h: 106
+# RKMomentEngine.h: 104
 if _libs["radarkit"].has("RKMomentEngineSetCalibrator", "cdecl"):
     RKMomentEngineSetCalibrator = _libs["radarkit"].get("RKMomentEngineSetCalibrator", "cdecl")
     RKMomentEngineSetCalibrator.argtypes = [POINTER(RKMomentEngine), CFUNCTYPE(UNCHECKED(None), RKUserModule, POINTER(RKMomentScratch)), RKUserModule]
     RKMomentEngineSetCalibrator.restype = None
 
-# RKMomentEngine.h: 107
+# RKMomentEngine.h: 105
 if _libs["radarkit"].has("RKMomentEngineUnsetCalibrator", "cdecl"):
     RKMomentEngineUnsetCalibrator = _libs["radarkit"].get("RKMomentEngineUnsetCalibrator", "cdecl")
     RKMomentEngineUnsetCalibrator.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineUnsetCalibrator.restype = None
 
-# RKMomentEngine.h: 108
+# RKMomentEngine.h: 106
 if _libs["radarkit"].has("RKMomentEngineSetCoreCount", "cdecl"):
     RKMomentEngineSetCoreCount = _libs["radarkit"].get("RKMomentEngineSetCoreCount", "cdecl")
     RKMomentEngineSetCoreCount.argtypes = [POINTER(RKMomentEngine), uint8_t]
     RKMomentEngineSetCoreCount.restype = None
 
-# RKMomentEngine.h: 109
+# RKMomentEngine.h: 107
 if _libs["radarkit"].has("RKMomentEngineSetCoreOrigin", "cdecl"):
     RKMomentEngineSetCoreOrigin = _libs["radarkit"].get("RKMomentEngineSetCoreOrigin", "cdecl")
     RKMomentEngineSetCoreOrigin.argtypes = [POINTER(RKMomentEngine), uint8_t]
     RKMomentEngineSetCoreOrigin.restype = None
 
-# RKMomentEngine.h: 110
+# RKMomentEngine.h: 108
 if _libs["radarkit"].has("RKMomentEngineSetExcludeBoundaryPulses", "cdecl"):
     RKMomentEngineSetExcludeBoundaryPulses = _libs["radarkit"].get("RKMomentEngineSetExcludeBoundaryPulses", "cdecl")
     RKMomentEngineSetExcludeBoundaryPulses.argtypes = [POINTER(RKMomentEngine), c_bool]
     RKMomentEngineSetExcludeBoundaryPulses.restype = None
 
-# RKMomentEngine.h: 111
+# RKMomentEngine.h: 109
 if _libs["radarkit"].has("RKMomentEngineSetNoiseEstimator", "cdecl"):
     RKMomentEngineSetNoiseEstimator = _libs["radarkit"].get("RKMomentEngineSetNoiseEstimator", "cdecl")
     RKMomentEngineSetNoiseEstimator.argtypes = [POINTER(RKMomentEngine), CFUNCTYPE(UNCHECKED(c_int), POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t)]
     RKMomentEngineSetNoiseEstimator.restype = None
 
-# RKMomentEngine.h: 112
+# RKMomentEngine.h: 110
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessor", "cdecl"):
     RKMomentEngineSetMomentProcessor = _libs["radarkit"].get("RKMomentEngineSetMomentProcessor", "cdecl")
     RKMomentEngineSetMomentProcessor.argtypes = [POINTER(RKMomentEngine), CFUNCTYPE(UNCHECKED(c_int), POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t)]
     RKMomentEngineSetMomentProcessor.restype = None
 
-# RKMomentEngine.h: 113
+# RKMomentEngine.h: 111
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToPulsePair", "cdecl"):
     RKMomentEngineSetMomentProcessorToPulsePair = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToPulsePair", "cdecl")
     RKMomentEngineSetMomentProcessorToPulsePair.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToPulsePair.restype = None
 
-# RKMomentEngine.h: 114
+# RKMomentEngine.h: 112
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToPulsePairHop", "cdecl"):
     RKMomentEngineSetMomentProcessorToPulsePairHop = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToPulsePairHop", "cdecl")
     RKMomentEngineSetMomentProcessorToPulsePairHop.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToPulsePairHop.restype = None
 
-# RKMomentEngine.h: 115
+# RKMomentEngine.h: 113
 if _libs["radarkit"].has("RKMomentEngineSetMomentPRocessorToPulsePairATSR", "cdecl"):
     RKMomentEngineSetMomentPRocessorToPulsePairATSR = _libs["radarkit"].get("RKMomentEngineSetMomentPRocessorToPulsePairATSR", "cdecl")
     RKMomentEngineSetMomentPRocessorToPulsePairATSR.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentPRocessorToPulsePairATSR.restype = None
 
-# RKMomentEngine.h: 116
+# RKMomentEngine.h: 114
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToMultiLag2", "cdecl"):
     RKMomentEngineSetMomentProcessorToMultiLag2 = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToMultiLag2", "cdecl")
     RKMomentEngineSetMomentProcessorToMultiLag2.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToMultiLag2.restype = None
 
-# RKMomentEngine.h: 117
+# RKMomentEngine.h: 115
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToMultiLag3", "cdecl"):
     RKMomentEngineSetMomentProcessorToMultiLag3 = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToMultiLag3", "cdecl")
     RKMomentEngineSetMomentProcessorToMultiLag3.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToMultiLag3.restype = None
 
-# RKMomentEngine.h: 118
+# RKMomentEngine.h: 116
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToMultiLag4", "cdecl"):
     RKMomentEngineSetMomentProcessorToMultiLag4 = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToMultiLag4", "cdecl")
     RKMomentEngineSetMomentProcessorToMultiLag4.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToMultiLag4.restype = None
 
-# RKMomentEngine.h: 119
+# RKMomentEngine.h: 117
 if _libs["radarkit"].has("RKMomentEngineSetMomentProcessorToSpectral", "cdecl"):
     RKMomentEngineSetMomentProcessorToSpectral = _libs["radarkit"].get("RKMomentEngineSetMomentProcessorToSpectral", "cdecl")
     RKMomentEngineSetMomentProcessorToSpectral.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineSetMomentProcessorToSpectral.restype = None
 
-# RKMomentEngine.h: 121
+# RKMomentEngine.h: 119
 if _libs["radarkit"].has("RKMomentEngineStart", "cdecl"):
     RKMomentEngineStart = _libs["radarkit"].get("RKMomentEngineStart", "cdecl")
     RKMomentEngineStart.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineStart.restype = c_int
 
-# RKMomentEngine.h: 122
+# RKMomentEngine.h: 120
 if _libs["radarkit"].has("RKMomentEngineStop", "cdecl"):
     RKMomentEngineStop = _libs["radarkit"].get("RKMomentEngineStop", "cdecl")
     RKMomentEngineStop.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineStop.restype = c_int
 
-# RKMomentEngine.h: 124
+# RKMomentEngine.h: 122
 if _libs["radarkit"].has("RKMomentEngineGetProcessedRay", "cdecl"):
     RKMomentEngineGetProcessedRay = _libs["radarkit"].get("RKMomentEngineGetProcessedRay", "cdecl")
     RKMomentEngineGetProcessedRay.argtypes = [POINTER(RKMomentEngine), c_bool]
     RKMomentEngineGetProcessedRay.restype = POINTER(RKRay)
 
-# RKMomentEngine.h: 125
+# RKMomentEngine.h: 123
 if _libs["radarkit"].has("RKMomentEngineFlush", "cdecl"):
     RKMomentEngineFlush = _libs["radarkit"].get("RKMomentEngineFlush", "cdecl")
     RKMomentEngineFlush.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineFlush.restype = None
 
-# RKMomentEngine.h: 126
+# RKMomentEngine.h: 124
 if _libs["radarkit"].has("RKMomentEngineWaitWhileBusy", "cdecl"):
     RKMomentEngineWaitWhileBusy = _libs["radarkit"].get("RKMomentEngineWaitWhileBusy", "cdecl")
     RKMomentEngineWaitWhileBusy.argtypes = [POINTER(RKMomentEngine)]
     RKMomentEngineWaitWhileBusy.restype = None
 
-# RKMomentEngine.h: 128
+# RKMomentEngine.h: 126
 if _libs["radarkit"].has("RKMomentEngineStatusString", "cdecl"):
     RKMomentEngineStatusString = _libs["radarkit"].get("RKMomentEngineStatusString", "cdecl")
     RKMomentEngineStatusString.argtypes = [POINTER(RKMomentEngine)]
@@ -7201,7 +7201,7 @@ if _libs["radarkit"].has("RKMomentEngineStatusString", "cdecl"):
         RKMomentEngineStatusString.restype = String
         RKMomentEngineStatusString.errcheck = ReturnString
 
-# RKMomentEngine.h: 130
+# RKMomentEngine.h: 128
 if _libs["radarkit"].has("RKNoiseFromConfig", "cdecl"):
     RKNoiseFromConfig = _libs["radarkit"].get("RKNoiseFromConfig", "cdecl")
     RKNoiseFromConfig.argtypes = [POINTER(RKMomentScratch), POINTER(POINTER(RKPulse)), uint16_t]
@@ -8003,9 +8003,9 @@ RKScanProgress = uint8_t# headers/RadarKit/RKSteerEngine.h: 42
 
 RKScanOption = uint16_t# headers/RadarKit/RKSteerEngine.h: 52
 
-RKScanMode = uint8_t# headers/RadarKit/RKSteerEngine.h: 66
+RKScanMode = uint8_t# headers/RadarKit/RKSteerEngine.h: 68
 
-# headers/RadarKit/RKSteerEngine.h: 120
+# headers/RadarKit/RKSteerEngine.h: 122
 class struct_rk_scan_path(Structure):
     pass
 
@@ -8030,9 +8030,9 @@ struct_rk_scan_path._fields_ = [
     ('elevationSlew', c_float),
 ]
 
-RKScanPath = struct_rk_scan_path# headers/RadarKit/RKSteerEngine.h: 120
+RKScanPath = struct_rk_scan_path# headers/RadarKit/RKSteerEngine.h: 122
 
-# headers/RadarKit/RKSteerEngine.h: 139
+# headers/RadarKit/RKSteerEngine.h: 141
 class struct_rk_scan_object(Structure):
     pass
 
@@ -8073,13 +8073,13 @@ struct_rk_scan_object._fields_ = [
     ('lastAction', RKScanAction),
 ]
 
-RKScanObject = struct_rk_scan_object# headers/RadarKit/RKSteerEngine.h: 139
+RKScanObject = struct_rk_scan_object# headers/RadarKit/RKSteerEngine.h: 141
 
-# headers/RadarKit/RKSteerEngine.h: 143
+# headers/RadarKit/RKSteerEngine.h: 145
 class struct_rk_position_steer_engine(Structure):
     pass
 
-RKSteerEngine = struct_rk_position_steer_engine# headers/RadarKit/RKSteerEngine.h: 141
+RKSteerEngine = struct_rk_position_steer_engine# headers/RadarKit/RKSteerEngine.h: 143
 
 struct_rk_position_steer_engine.__slots__ = [
     'name',
@@ -8093,8 +8093,8 @@ struct_rk_position_steer_engine.__slots__ = [
     'volumeIndex',
     'sweepIndex',
     'actionIndex',
-    'lastAzimuthActionIndex',
-    'lastElevationActionIndex',
+    'lastAzimuthAction',
+    'lastElevationAction',
     'actions',
     'scanString',
     'response',
@@ -8119,8 +8119,8 @@ struct_rk_position_steer_engine._fields_ = [
     ('volumeIndex', uint32_t),
     ('sweepIndex', uint32_t),
     ('actionIndex', uint32_t),
-    ('lastAzimuthActionIndex', uint32_t),
-    ('lastElevationActionIndex', uint32_t),
+    ('lastAzimuthAction', RKScanAction),
+    ('lastElevationAction', RKScanAction),
     ('actions', RKScanAction * int(128)),
     ('scanString', c_char * int(4096)),
     ('response', c_char * int(4096)),
@@ -8306,19 +8306,19 @@ struct_rk_host_monitor._fields_ = [
     ('memoryUsage', uint32_t),
 ]
 
-RKRadarState = uint32_t# headers/RadarKit/RKRadar.h: 39
+RKRadarState = uint32_t# headers/RadarKit/RKRadar.h: 54
 
-# headers/RadarKit/RKRadar.h: 93
+# headers/RadarKit/RKRadar.h: 108
 class struct_rk_radar(Structure):
     pass
 
-RKRadar = struct_rk_radar# headers/RadarKit/RKRadar.h: 75
+RKRadar = struct_rk_radar# headers/RadarKit/RKRadar.h: 90
 
-# headers/RadarKit/RKRadar.h: 80
+# headers/RadarKit/RKRadar.h: 95
 class struct_rk_user_device(Structure):
     pass
 
-RKUserDevice = struct_rk_user_device# headers/RadarKit/RKRadar.h: 76
+RKUserDevice = struct_rk_user_device# headers/RadarKit/RKRadar.h: 91
 
 struct_rk_user_device.__slots__ = [
     'node',
@@ -8411,6 +8411,7 @@ struct_rk_radar.__slots__ = [
     'userModule',
     'userModuleInit',
     'userModuleFree',
+    'developerMode',
 ]
 struct_rk_radar._fields_ = [
     ('name', RKName),
@@ -8484,6 +8485,7 @@ struct_rk_radar._fields_ = [
     ('userModule', RKUserModule),
     ('userModuleInit', CFUNCTYPE(UNCHECKED(RKUserModule), POINTER(RKWaveform))),
     ('userModuleFree', CFUNCTYPE(UNCHECKED(None), RKUserModule)),
+    ('developerMode', uint32_t),
 ]
 
 RKTestFlag = uint8_t# RKTest.h: 18
@@ -9353,7 +9355,7 @@ except:
 
 # RKTypes.h: 87
 try:
-    RKPulseCountForNoiseMeasurement = 200
+    RKPulseCountForNoiseMeasurement = 128
 except:
     pass
 
@@ -9921,12 +9923,6 @@ try:
 except:
     pass
 
-# RKMomentEngine.h: 22
-try:
-    RKMomentDFTPlanCount = 16
-except:
-    pass
-
 # RKSweepEngine.h: 12
 try:
     RKSweepScratchSpaceDepth = 6
@@ -10075,9 +10071,9 @@ rk_pulse_engine = struct_rk_pulse_engine# RKPulseEngine.h: 40
 
 rk_data_recorder = struct_rk_data_recorder# RKRawDataRecorder.h: 21
 
-rk_moment_worker = struct_rk_moment_worker# RKMomentEngine.h: 27
+rk_moment_worker = struct_rk_moment_worker# RKMomentEngine.h: 25
 
-rk_moment_engine = struct_rk_moment_engine# RKMomentEngine.h: 42
+rk_moment_engine = struct_rk_moment_engine# RKMomentEngine.h: 40
 
 rk_sweep_scratch = struct_rk_sweep_scratch# RKSweepEngine.h: 27
 
