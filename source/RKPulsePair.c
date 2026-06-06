@@ -20,7 +20,6 @@ void RKUpdateRadarProductsInScratchSpace(RKMomentScratch *space, const int gateC
     const RKVec ten_pf = _rk_mm_set1(ten);
     const RKVec one_pf = _rk_mm_set1(one);
     const RKVec zero_pf = _rk_mm_set1(zero);
-    //const RKVec dcal_pf = _rk_mm_set1(space->dcal);
     RKFloat n;
     RKVec n_pf;
     RKFloat *s;
@@ -113,7 +112,6 @@ void RKUpdateRadarProductsInScratchSpace(RKMomentScratch *space, const int gateC
     d_pf = (RKVec *)space->dcal;
     for (k = 0; k < K; k++) {
         // D: Zh - Zv + DCal
-        //*z_pf = _rk_mm_add(_rk_mm_sub(*a_pf, *w_pf), dcal_pf);
         *z_pf = _rk_mm_add(_rk_mm_sub(*a_pf, *w_pf), *d_pf);
         // R: |C[0]| * sqrt((1 + 1 / SNR-h) * (1 + 1 / SNR-v))
         *r_pf = _rk_mm_mul(_rk_mm_add(one_pf, _rk_mm_rcp(*h_pf)), _rk_mm_add(one_pf, _rk_mm_rcp(*v_pf)));

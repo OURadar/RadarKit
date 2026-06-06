@@ -342,22 +342,30 @@ int makeRayFromScratch(RKMomentScratch *scratch, RKRay *ray) {
     SQIThreshold = scratch->config->SQIThreshold;
     mask = scratch->mask;
     // Masking based on SNR and SQI
+    uint32_t maskCountSQI = 0;
     for (k = 0; k < MIN(scratch->capacity, scratch->gateCount); k++) {
         *SHo++ = 10.0f * log10f(*SHi++) - 80.0f;                    // An offset of 80-dB makes dB-ADU in nice range
         *SVo++ = 10.0f * log10f(*SVi++) - 80.0f;                    // Going from dB-ADU to dBm needs calibration (not done here)
         *QHo++ = *QHi;
         *mask = RKCellMaskNull;
-        if (*SNRh > SNRThreshold && *QHi > SQIThreshold) {
+        if (*SNRh > SNRThreshold && *QHi >= SQIThreshold) {
             *mask |= RKCellMaskKeepH;
+        } else if (*QHi < SQIThreshold) {
+            maskCountSQI++;
         }
-        if (*SNRv > SNRThreshold && *QVi > SQIThreshold) {
+        if (*SNRv > SNRThreshold && *QVi >= SQIThreshold) {
             *mask |= RKCellMaskKeepV;
+        } else if (*QVi < SQIThreshold) {
+            maskCountSQI++;
         }
         SNRh++;
         SNRv++;
         QHi++;
         QVi++;
         mask++;
+    }
+    if (maskCountSQI > 0) {
+        RKLog("%s Info. %d out of %d gates have SQI below threshold.\n", scratch->name, maskCountSQI, k);
     }
 
     // Simple despeckling: censor the current cell if the next cell is censored

@@ -86,15 +86,15 @@ def passthrough(x):
 class Workspace(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ("configs", ctypes.POINTER(RKConfig)),
+        ("configs", RKConfig),
         ("pulses", RKBuffer),
         ("rays", RKBuffer),
-        ("fftModule", ctypes.POINTER(RKFFTModule)),
-        ("pulseMachine", ctypes.POINTER(RKPulseEngine)),
-        ("momentMachine", ctypes.POINTER(RKMomentEngine)),
-        ("sweepMachine", ctypes.POINTER(RKSweepEngine)),
-        ("recorder", ctypes.POINTER(RKRawDataRecorder)),
-        ("ringMachine", ctypes.POINTER(RKPulseRingFilterEngine)),
+        ("fftModule", RKFFTModule),
+        ("pulseMachine", RKPulseEngine),
+        ("momentMachine", RKMomentEngine),
+        ("sweepMachine", RKSweepEngine),
+        ("recorder", RKRawDataRecorder),
+        ("ringMachine", RKPulseRingFilterEngine),
         ("userModule", RKUserModule),
         ("userModuleFree", ctypes.CFUNCTYPE(UNCHECKED(None), RKUserModule)),
         ("configIndex", pyRKuint32),
@@ -239,6 +239,7 @@ class Workspace(ctypes.Structure):
         RKMomentEngineSetCoreCount(self.momentMachine, 2)
         RKMomentEngineSetMomentProcessorToMultiLag3(self.momentMachine)
         RKMomentEngineStart(self.momentMachine)
+        print(f"MomentEngineInit() done   .business = {self.momentMachine.contents.business}")
 
         self.sweepMachine = RKSweepEngineInit()
         RKSweepEngineSetVerbose(self.sweepMachine, verbose)
@@ -247,6 +248,7 @@ class Workspace(ctypes.Structure):
         )
         RKSweepEngineSetRecord(self.sweepMachine, True)
         RKSweepEngineStart(self.sweepMachine)
+        print(f"SweepEngineInit() done   .business = {self.sweepMachine.contents.business}")
 
         self.recorder = RKRawDataRecorderInit()
         RKRawDataRecorderSetEssentials(
@@ -334,10 +336,10 @@ class Workspace(ctypes.Structure):
             self.momentMachine.contents.userLagChoice = int(method[-1])
             method = "mx"
         self.momentMachine.contents.momentProcessor = {
+            "mx": ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
             "pp": ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
             "pph": ctypes.cast(RKPulsePairHop, type(self.momentMachine.contents.momentProcessor)),
             "ppa": ctypes.cast(RKPulsePairATSR, type(self.momentMachine.contents.momentProcessor)),
-            "mx": ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
             "spec": ctypes.cast(RKSpectralMoment, type(self.momentMachine.contents.momentProcessor)),
         }[method]
 
@@ -371,23 +373,23 @@ class Workspace(ctypes.Structure):
         pulse.contents.header.configIndex = self.configIndex.value
         # Estimate the number of pulses
         pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
+        gateCount = pulse.contents.header.downSampledGateCount
+        downSampledGateCount = pulse.contents.header.downSampledGateCount
         if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
             pulse.contents.header.s |= RKPulseStatusCompleteForMoments
-            gateCount = pulse.contents.header.downSampledGateCount
             pulseCount = (self.filesize - pos) // (
-                ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKComplex)
+                ctypes.sizeof(RKPulseHeader) + 2 * downSampledGateCount * ctypes.sizeof(RKComplex)
             )
         else:
-            gateCount = pulse.contents.header.gateCount
             pulseCount = (self.filesize - pos) // (
                 ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C)
             )
         # Read the first pulse, which should be the same as the one above but use get_done_pulse() for pulseEngine->doneIndex
-        pulse = None
-        while pulse is None:
-            time.sleep(0.05)
-            pulse = self.get_done_pulse()
-        downSampledGateCount = pulse.contents.header.downSampledGateCount
+        if self.header.dataType == RKRawDataTypeFromTransceiver:
+            pulse = None
+            while pulse is None:
+                time.sleep(0.05)
+                pulse = self.get_done_pulse()
         print(
             f"Estimated pulseCount = {pulseCount:,d}"
             + f"   gateCount = {gateCount:,d}"
@@ -412,7 +414,7 @@ class Workspace(ctypes.Structure):
 
         with tqdm.tqdm(total=pulseCount, ncols=90, bar_format="{l_bar}{bar}|{elapsed}<{remaining}") as pbar:
             ic = 0
-            bz = 1
+            bz = 0
             for ip in range(1, pulseCount):
                 pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
 
@@ -426,12 +428,6 @@ class Workspace(ctypes.Structure):
                         s = z * 0.01
                         m = self.pulseMachine.contents.maxWorkerLag
                         print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f}\n")
-                    pulse = self.get_done_pulse()
-                    while pulse is not None:
-                        ic += 1
-                        bz -= 1
-                        ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
-                        pulse = self.get_done_pulse()
                     z = z + 1
 
                 r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
@@ -451,20 +447,20 @@ class Workspace(ctypes.Structure):
                 if self.header.dataType == RKRawDataTypeFromTransceiver:
                     riq[ip, :, :] = read_RKInt16C_from_pulse(pulse, gateCount)
 
-                pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
-                if not (self.desc.initFlags & RKInitFlagStartRingFilterEngine):
-                    pulse.contents.header.s |= RKPulseStatusRingProcessed
-                if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
-                    pulse.contents.header.s |= RKPulseStatusCompleteForMoments
+                    pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
+                    if not (self.desc.initFlags & RKInitFlagStartRingFilterEngine):
+                        pulse.contents.header.s |= RKPulseStatusRingProcessed
 
-                bz += 1
-
-                pulse = self.get_done_pulse()
-                while pulse is not None:
-                    ic += 1
-                    bz -= 1
-                    ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
+                    bz += 1
                     pulse = self.get_done_pulse()
+                    while pulse is not None:
+                        ic += 1
+                        bz -= 1
+                        ciq[ic, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
+                        pulse = self.get_done_pulse()
+                else:
+                    pulse.contents.header.s |= RKPulseStatusCompleteForMoments
+                    ciq[ip, :, :] = read_RKComplex_from_pulse(pulse, downSampledGateCount)
 
                 # Yield to other threads to process the pulses. RKPulseEngineUpdateMinMaxWorkerLag() could take up to 50us
                 time.sleep(50.0e-6)

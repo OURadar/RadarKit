@@ -180,6 +180,8 @@ static void *pulseRecorder(void *in) {
                 memcpy(&fileHeader->config, config, sizeof(RKConfig));
                 fileHeader->config.waveform = NULL;
                 RKRawDataRecorderNewFile(engine, filename);
+                // Update file header with the latest radar description in case it has been changed since the last file (latitude, longitude, etc.)
+                memcpy(&fileHeader->desc, engine->radarDescription, sizeof(RKRadarDesc) - 3);
                 len = RKRawDataRecorderCacheWrite(engine, fileHeader, sizeof(RKFileHeader));
                 // 512-B wave header
                 strcpy(waveGlobalHeader->name, waveform->name);
