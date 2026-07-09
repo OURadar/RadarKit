@@ -21,7 +21,9 @@ enum RKParameterType {
     RKParameterTypeDouble,
     RKParameterTypeString,
     RKParameterTypeControl,
-    RKParameterTypeWaveformCalibration
+    RKParameterTypeWaveformCalibration,
+    RKParameterTypeMask = 0x0FFF,
+    RKParameterOptional = 0x1000
 };
 
 typedef struct rk_preference {
@@ -32,7 +34,7 @@ typedef struct rk_preference {
     // Internal variables
     uint32_t              previousIndex;
     char                  previousKeyword[RKNameLength];
-    
+
     // These may not be committed
     char                  filename[RKMaximumStringLength];
     char                  waveform[RKNameLength];

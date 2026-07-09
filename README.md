@@ -1,8 +1,8 @@
-[![][version-shield]][release-link]
-[![][license-shield]][license-link]
-[![pipeline status](https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg)](https://git.arrc.ou.edu/radar/radarkit/-/commits/master)
-
 # RadarKit
+
+[![x][version-icon]][release-link]
+[![x][license-icon]][license-link]
+[![x][pipeline-icon]][pipeline-link]
 
 First of all, many thanks for your interest in the framework! :smile: :thumbsup: :punch:
 
@@ -36,19 +36,19 @@ Follow these steps to get the project
    - [OpenSSL]
    - [libarchive]
 
-   ##### Debian / Ubuntu
+   ### Debian / Ubuntu
 
    ```shell
    apt install libfftw3-dev libnetcdf-dev libssl-dev libarchive-dev
    ```
 
-   ##### CentOS
+   ### CentOS
 
    ```shell
    yum install libfftw3-devel libnetcdf-devel libssl-devel libarchive-devel
    ```
 
-   ##### macOS
+   ### macOS
 
    I use [Homebrew] as my package manager for macOS. I highly recommend it.
 
@@ -56,7 +56,7 @@ Follow these steps to get the project
    brew install fftw netcdf openssl@1.1 libarchive
    ```
 
-   ##### Special Notes About NetCDF Shared Library
+   ### Special Notes About NetCDF Shared Library
 
    Not always, but some operating systems require the following line in your shell profile for the netcdf shared library to be found.
 
@@ -84,7 +84,7 @@ Follow these steps to get the project
 
    (CentOS 7)
 
-   ```
+   ```conf
    net.ipv4.ping_group_range = 0 0
    ```
 
@@ -92,7 +92,7 @@ Follow these steps to get the project
 
    (CentOS 6 / Ubuntu 18)
 
-   ```
+   ```conf
    net.ipv4.ping_group_range = 0 2147483647
    ```
 
@@ -331,7 +331,7 @@ Follow these steps to get the project
 
 This example is extremely simple. The actual radar will be more complex but this short example illustrates the simplicity of using RadarKit to abstract all the DSP and non-hardware related tasks.
 
-# Design Philosophy
+## Design Philosophy
 
 The three major hardware components of a radar: (i) a **digital transceiver**, (ii) a **pedestal**, and (iii) a **health relay** (_auxiliary controller_) are not tightly coupled with the RadarKit framework. Only a set of protocol functions are defined so that the RadarKit framework can be interfaced with other libraries, which are usually specific to the hardware and/or vendor design. It is the user responsibility to implement the appropriate interface routines to bridge the data transport and control commands. There are three functions needed for each hardware: _init_, _exec_ and _free_, which are routines to allocate an object--akin to an object in object-oriented programming, althought RadarKit is a straight C framework, interact with the object and deallocate the object, respectively. The _exec_ routine has the form of accepting text command and producing text feedback. Some keywords for the command are already defined in the framework so user should not use them. They are intercepted prior to passing down to the _exec_ routine. Detailed usage on these functions will be discussed in detail later.
 
@@ -343,16 +343,15 @@ The **pedestal** is the hardware that is usually low speed, typically on the ord
 
 The **health relay** is the hardware that is also low speed, typically on the orders of 1 KBps. This is also the hardware that can be called an _auxiliary controller_, where everything else is interfaced through this relay and the health information is routinely probed through this controller. A RadarKit health structure `RKHealth` is defined in the framework. Multiple health node can be implemented. They provide health information using JSON strings through TCP/IP socket connections. If the interface software [tweeta] or [tweeto] is used, RadarKit can readily ingest auxiliary hardware health data through a TCP/IP network connection. Otherwise, an `RKHealthRelayTweeta` replacement can be implemented to provide same functionality. The RadarKit framework does not restrict this definition.
 
-Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [iRadar].
+Base radar moments are generated on a ray-by-ray basis. Each ray is of type `RKRay`. Once a sweep is complete, a Level-II data file in NetCDF format will be generated. Live streams and can be view through a desktop application [RadarHub].
 
 [pedzy]: https://git.arrc.ou.edu/cheo4524/pedzy
 [tweeta]: https://git.arrc.ou.edu/dstarchman/tweeta
 [tweeto]: https://git.arrc.ou.edu/cheo4524/tweeto.git
-[iRadar]: https://arrc.ou.edu/tools
 [OpenSSL]: https://www.openssl.org
 [RadarHub]: https://git.arrc.ou.edu/radar/RadarHub.git
 
-# Radar Struct
+## Radar Struct
 
 This is about the only structure you need to worry about. A radar structure represents an object-like structure where everything is encapsulated.
 
@@ -556,7 +555,7 @@ RKSetProductRecorder(RKRadar *, int (*)(RKProduct *, char *));
 
 A struct of `RKProduct`, which contains a complete sweep of a product, is supplied to the routine and RadarKit expects it to populate the supplied string with filenames. This filename is used in the subsequent events such as archiving multiple product files into a single tgz file and queueing the tgz file to the LDM (local data manager). Upon a successful completion, the routine should return `RKSuccess`.
 
-# Hardware Routines
+## Hardware Routines
 
 As mentioend previously, the initialization, execution and deallocation routines of the _transceiver_, _pedestal_, and _health relay_ must have a strict form, as follows. The intialization of the hardware must be in the form of
 
@@ -607,27 +606,27 @@ int execRoutine(RKTransceiver userTransceiver, const char *command, char *respon
 
 ### Reserved Keywords for Commands
 
-##### `disconnect`
+#### `disconnect`
 
 This is a command the master controller issues when everything should stop.
 
-##### `state`
+#### `state`
 
 This is a command the master controller issues for checking if the component wants to report opereate (1) or standby (0)
 
-# RadarKit Utility Program
+## RadarKit Utility Program
 
 A test program is provided to assess if everything can run properly with your system. Call it with a _help_ option to show all the available options.
 
-```
+```shell
 rkutil --help
 ```
 
-### RadarKit Performance Test
+## RadarKit Performance Test
 
 Some performance tests are implemented to get an idea of the number of workers to use. Here's an example output from the RaXPol main host:
 
-```
+```text
 marina:~/radarkit root$ rkutil -T51
 ===========================
 RKTestPulseCompressionSpeed
@@ -673,7 +672,9 @@ RKTestMomentProcessorSpeed
 - Replace / Add RKSIMD to straight C compute
 
 <!-- Link Definitions -->
-[version-shield]: https://img.shields.io/github/v/release/ouradar/radarkit
+[version-icon]: https://img.shields.io/github/v/release/ouradar/radarkit
 [release-link]: https://github.com/ouradar/radarkit/releases
-[license-shield]: https://img.shields.io/badge/license-MIT-red
+[license-icon]: https://img.shields.io/badge/license-MIT-red
 [license-link]: https://github.com/ouradar/radarkit/blob/master/LICENSE
+[pipeline-icon]: https://git.arrc.ou.edu/radar/radarkit/badges/master/pipeline.svg
+[pipeline-link]: https://git.arrc.ou.edu/radar/radarkit/-/commits/master
