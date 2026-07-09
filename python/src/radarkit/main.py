@@ -384,6 +384,7 @@ class Workspace(ctypes.Structure):
             pulseCount = (self.filesize - pos) // (
                 ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C)
             )
+            print(f"Info. filesize = {self.filesize:,d}   gateCount = {gateCount:,d}   pulseCount = {pulseCount:,d}")
         # Read the first pulse, which should be the same as the one above but use get_done_pulse() for pulseEngine->doneIndex
         if self.header.dataType == RKRawDataTypeFromTransceiver:
             pulse = None
@@ -490,6 +491,9 @@ class Workspace(ctypes.Structure):
         while self.sweepMachine.contents.lastRecordedScratchSpaceIndex == targetScratchSpaceIndex and s < 50:
             time.sleep(0.1)
             s += 1
+
+        # Keep a copy of the last pulse for later use.
+        self.pulse = pulse
 
         return {"riq": riq, "ciq": ciq, "el": el, "az": az}
 
@@ -624,7 +628,7 @@ def read_RKComplex_from_pulse(pulse, count):
 
 
 def place_RKComplex_array(dst, src):
-    np.conj(src, out=src)
+    # np.conj(src, out=src)
     ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_float)), src.flatten().ctypes.data, src.nbytes)
 
 

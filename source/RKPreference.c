@@ -170,21 +170,55 @@ int RKPreferenceGetKeywordCount(RKPreference *preference, const char *keyword) {
 }
 
 int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, const char *keyword, void *target, const int type, const int count) {
-    int i;
+    int i, k;
+    char string[RKMaximumStringLength];
     RKPreferenceObject *object = RKPreferenceFindKeyword(preference, keyword);
     if (object == NULL) {
+        k = snprintf(string, RKMaximumStringLength, "%s", keyword);
+        for (i = 0; i < count; i++) {
+            switch (type & RKParameterTypeMask) {
+                case RKParameterTypeInt:
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %u", ((int *)target)[i]);
+                    break;
+                case RKParameterTypeUInt:
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %u", ((unsigned int *)target)[i]);
+                    break;
+                case RKParameterTypeBool:
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %s", ((bool *)target)[i] ? "true" : "false");
+                    break;
+                case RKParameterTypeFloat:
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %.4f", ((float *)target)[i]);
+                    break;
+                case RKParameterTypeDouble:
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %.7f", ((double *)target)[i]);
+                    break;
+                case RKParameterTypeString:
+                    // For string type, count is used as the maximum length, i = count ensure there is only 1 iteration
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %s", strlen(target) == 0 ? "(None)" : (char *)target);
+                    i = count;
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (verb && (type & RKParameterOptional) == 0) {
+            RKLog(">%s  %s(not found, required)%s\n",
+                string,
+                rkGlobalParameters.showColor ? RKYellowColor : "",
+                rkGlobalParameters.showColor ? RKNoColor : ""
+            );
+        }
         return RKResultPreferenceKeywordNotFound;
     }
-    //printf("value = '%s'\n", object->valueString);
-    char string[RKMaximumStringLength];
-    int k = snprintf(string, RKMaximumStringLength, "%s", keyword);
-    if (type == RKParameterTypeControl) {
+    // printf("value = '%s'\n", object->valueString);
+    k = snprintf(string, RKMaximumStringLength, "%s", keyword);
+    if ((type & RKParameterTypeMask) == RKParameterTypeControl) {
         RKControl *control = (RKControl *)target;
         if (RKControlFromPreferenceObject(control, object)) {
             return RKResultIncompleteControl;
         }
         k += snprintf(string + k, RKMaximumStringLength - k, " '%s' '%s'", control->label, control->command);
-    } else if (type == RKParameterTypeWaveformCalibration) {
+    } else if ((type & RKParameterTypeMask) == RKParameterTypeWaveformCalibration) {
         RKWaveformCalibration *calibration = (RKWaveformCalibration *)target;
         if (RWaveformCalibrationFromPreferenceObject(calibration, object)) {
             return RKResultIncompleteWaveformCalibration;
@@ -199,10 +233,10 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
         }
     } else {
         for (i = 0; i < count; i++) {
-            switch (type) {
+            switch (type & RKParameterTypeMask) {
                 case RKParameterTypeInt:
                     ((int *)target)[i] =  (int)MIN(MAX(object->doubleValues[i], -1.0e9), 1.0e9);
-                    k += snprintf(string + k, RKMaximumStringLength - k, " %u", ((int *)target)[i]);
+                    k += snprintf(string + k, RKMaximumStringLength - k, " %d", ((int *)target)[i]);
                     break;
                 case RKParameterTypeUInt:
                     ((unsigned int *)target)[i] =  (unsigned int)MIN(MAX(object->doubleValues[i], 0.0), 1.0e9);
@@ -232,7 +266,7 @@ int RKPreferenceGetValueOfKeyword(RKPreference *preference, const int verb, cons
         }
     }
     if (verb) {
-        RKLog(">%s  (k = %d / %d / %d)\n", string, k, count, RKMaximumStringLength);
+        RKLog(">%s  (k = %d / %d / %d)  %s\n", string, k, count, RKMaximumStringLength, type & RKParameterOptional ? "optional" : "required");
     }
     return RKResultSuccess;
 }

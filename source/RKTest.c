@@ -1291,27 +1291,28 @@ void RKTestPreferenceReading(void) {
     RKWaveformCalibration cali;
     RKPreference *preference = RKPreferenceInit();;
     RKPreferenceObject *object = NULL;
-    object = RKPreferenceFindKeyword(preference, "PedzyHost");
-    if (object) {
-        printf("pedzy host = %s\n", object->valueString);
-    }
-    object = RKPreferenceFindKeyword(preference, "TweetaHost");
-    if (object) {
-        printf("tweeta host = %s\n", object->valueString);
-    }
     RKPreferenceGetValueOfKeyword(preference, 1, "Name", name, RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(preference, 1, "FilePrefix", name, RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(preference, 1, "IgnoreGPS", (bool *)numbers, RKParameterOptional | RKParameterTypeBool, 1);
     RKPreferenceGetValueOfKeyword(preference, 1, "Latitude", numbers, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(preference, 1, "Longitude", numbers, RKParameterTypeDouble, 1);
     RKPreferenceGetValueOfKeyword(preference, 1, "SystemZCal", numbers, RKParameterTypeDouble, 2);
     RKPreferenceGetValueOfKeyword(preference, 1, "SystemDCal", numbers, RKParameterTypeDouble, 1);
+    object = RKPreferenceFindKeyword(preference, "PedzyHost");
+    if (object) {
+        RKLog(">PedzyHost %s\n", object->valueString);
+    }
+    object = RKPreferenceFindKeyword(preference, "TweetaHost");
+    if (object) {
+        RKLog(">TweetaHost %s\n", object->valueString);
+    }
     k = 0;
-    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterTypeControl, 0) == RKResultSuccess) {
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "Shortcut", &control, RKParameterOptional | RKParameterTypeControl, 0) == RKResultSuccess) {
         k++;
     }
     RKLog(">Preference.Shortcut count = %d\n", k);
     k = 0;
-    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
+    while (RKPreferenceGetValueOfKeyword(preference, 1, "WaveformCal", &cali, RKParameterOptional | RKParameterTypeWaveformCalibration, 0) == RKResultSuccess) {
         k++;
     }
     RKLog(">Preference.WaveformCal count = %d\n", k);
@@ -2218,6 +2219,9 @@ void RKTestListFiles(const char *path) {
     char info[RKMaximumPathLength];
     for (int k = 0; k < j; k++) {
         char *ext = strrchr(files[k], '.');
+        if (ext == NULL) {
+            continue;
+        }
         if (!strcmp(ext, ".rkr") || !strcmp(ext, ".rkc")) {
             FILE *fid = fopen(files[k], "r");
             if (fid == NULL) {
@@ -2234,16 +2238,17 @@ void RKTestListFiles(const char *path) {
                 const RKConfig *config = &header->config;
                 const bool isPPI = (config->startMarker & RKMarkerScanTypePPI) != 0;
                 const bool isRHI = (config->startMarker & RKMarkerScanTypeRHI) != 0;
-                const long size = fsize - ftell(fid);
+                const long size = fsize - sizeof(RKFileHeader);
                 uint32_t pulseCount;
                 if (header->dataType == RKRawDataTypeFromTransceiver) {
-                    pulseCount = size / (config->pulseGateCount * sizeof(RKInt16C));
+                    pulseCount = size / (sizeof(RKPulseHeader) + 2 * config->pulseGateCount * sizeof(RKInt16C));
                 } else if (header->dataType == RKRawDataTypeAfterMatchedFilter) {
-                    pulseCount = size / (config->pulseGateCount / header->desc.pulseToRayRatio * sizeof(RKComplex));
+                    pulseCount = size / (sizeof(RKPulseHeader) + 2 * config->pulseGateCount / header->desc.pulseToRayRatio * sizeof(RKComplex));
                 } else {
                     pulseCount = 0;
                 }
-                snprintf(info, sizeof(info), "%s%s%s   %s %6.2f°   %s   %s pulses",
+                snprintf(info, sizeof(info), "%13s   %s%s%s   %s %6.2f°   %s   %s pulses",
+                    RKIntegerToCommaStyleString(fsize),
                     rkGlobalParameters.showColor ? RKDeepPinkColor : "",
                     RKMarkerScanTypeString(config->startMarker),
                     rkGlobalParameters.showColor ? RKNoColor : "",

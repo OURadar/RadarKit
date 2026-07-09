@@ -306,12 +306,17 @@ UserParams *systemPreferencesInit(void) {
     user->recordLevel = 1;
     strcpy(user->desc.dataPath, RKDefaultDataPath);
 
+    // Add default values for user parameters
+    strcpy(user->momentMethod,    "MultiLag3");
+    // strcpy(user->ringFilter,      "Elliptical1");
+
     return user;
 }
 
 void systemPreferencesFree(UserParams *user) {
     free(user);
 }
+
 
 static void updateSystemPreferencesFromControlFile(UserParams *user) {
     int k, s;
@@ -320,6 +325,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     // Read in preference configuration file
     RKPreference *userPreferences = RKPreferenceInitWithFile(PREFERENCE_FILE);
     if (userPreferences->count == 0) {
+        RKLog("Warning. '%s' not found. Using built-in defaults.\n", PREFERENCE_FILE);
         RKPreferenceFree(userPreferences);
         return;
     }
@@ -339,29 +345,29 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHubHostPathway", user->radarHubHostPathway,  RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "MomentMethod",        user->momentMethod,         RKParameterTypeString, RKNameLength);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilter",          user->ringFilter,           RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",           &user->desc.longitude,      RKParameterTypeDouble, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHeight",         &user->desc.radarHeight,    RKParameterTypeFloat,  1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",             &user->desc.heading,        RKParameterTypeFloat,  1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilterGateCount", &user->ringFilterGateCount, RKParameterTypeUInt,   1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TransitionGateCount", &user->transitionGateCount, RKParameterTypeUInt,   1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Latitude",            &user->desc.latitude,       RKParameterOptional | RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Longitude",           &user->desc.longitude,      RKParameterOptional | RKParameterTypeDouble, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RadarHeight",         &user->desc.radarHeight,    RKParameterOptional | RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "Heading",             &user->desc.heading,        RKParameterOptional | RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "RingFilterGateCount", &user->ringFilterGateCount, RKParameterOptional | RKParameterTypeUInt,   1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "TransitionGateCount", &user->transitionGateCount, RKParameterOptional | RKParameterTypeUInt,   1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemZCal",          user->systemZCal,           RKParameterTypeFloat,  2);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemDCal",          &user->systemDCal,          RKParameterTypeFloat,  1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SystemPCal",          &user->systemPCal,          RKParameterTypeFloat,  1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "Noise",               user->noise,                RKParameterTypeFloat,  2);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SNRThreshold",        &user->SNRThreshold,        RKParameterTypeFloat,  1);
     RKPreferenceGetValueOfKeyword(userPreferences, verb, "SQIThreshold",        &user->SQIThreshold,        RKParameterTypeFloat,  1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DiskUsageLimitGB",    &user->diskUsageLimitGB,    RKParameterTypeUInt,   1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",           &user->goCommand,           RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterTypeString, RKNameLength);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterTypeBool, 1);
-    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterTypeFloat, 1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DiskUsageLimitGB",    &user->diskUsageLimitGB,    RKParameterOptional | RKParameterTypeUInt,   1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "IgnoreGPS",           &user->ignoreGPS,           RKParameterOptional | RKParameterTypeBool,   1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "DefaultPRF",          &user->prf,                 RKParameterOptional | RKParameterTypeFloat,  1);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "GoCommand",           &user->goCommand,           RKParameterOptional | RKParameterTypeString, RKNameLength);
+    RKPreferenceGetValueOfKeyword(userPreferences, verb, "StopCommand",         &user->stopCommand,         RKParameterOptional | RKParameterTypeString, RKNameLength);
 
     // User devices
     k = 0;
     memset(user->userDevices, 0, (RKHealthNodeCount - RKHealthNodeUser0) * sizeof(RKNameLength));
     do {
-        s = RKPreferenceGetValueOfKeyword(userPreferences, verb, "UserDevice", user->userDevices[k++], RKParameterTypeString, RKNameLength);
+        s = RKPreferenceGetValueOfKeyword(userPreferences, verb, "UserDevice", user->userDevices[k++], RKParameterOptional | RKParameterTypeString, RKNameLength);
     } while (s == RKResultSuccess);
 
     // Revise some parameters
@@ -411,6 +417,7 @@ static void updateSystemPreferencesFromControlFile(UserParams *user) {
     if (verb) {
         RKLog(">WavformCal count = %d\n", k);
     }
+
     RKPreferenceFree(userPreferences);
 }
 
