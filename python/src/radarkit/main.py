@@ -1,8 +1,6 @@
 import time
 import tqdm
-import ctypes
 import contextlib
-
 import numpy as np
 
 from ._ctypes_ import *
@@ -37,20 +35,20 @@ class RKEngineError(Exception):
         return f"RKEngineError: {self.message}"
 
 
-class pyRKuint32(ctypes.c_uint32):
+class pyRKuint32(c_uint32):
     pass
 
 
 class UserParams(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ("directory", ctypes.c_char * RKMaximumFolderPathLength),
-        ("filename", ctypes.c_char * RKNameLength),
-        ("verbose", ctypes.c_int),
-        ("output", ctypes.c_bool),
-        ("compressedOutput", ctypes.c_bool),
-        ("SNRThreshold", ctypes.c_float),
-        ("SQIThreshold", ctypes.c_float),
+        ("directory", c_char * RKMaximumFolderPathLength),
+        ("filename", c_char * RKNameLength),
+        ("verbose", c_int),
+        ("output", c_bool),
+        ("compressedOutput", c_bool),
+        ("SNRThreshold", c_float),
+        ("SQIThreshold", c_float),
     ]
 
 
@@ -83,20 +81,20 @@ def passthrough(x):
     return x
 
 
-class Workspace(ctypes.Structure):
+class Workspace(Structure):
     _pack_ = 1
     _fields_ = [
-        ("configs", RKConfig),
+        ("configs", POINTER(RKConfig)),
         ("pulses", RKBuffer),
         ("rays", RKBuffer),
-        ("fftModule", RKFFTModule),
-        ("pulseMachine", RKPulseEngine),
-        ("momentMachine", RKMomentEngine),
-        ("sweepMachine", RKSweepEngine),
-        ("recorder", RKRawDataRecorder),
-        ("ringMachine", RKPulseRingFilterEngine),
+        ("fftModule", POINTER(RKFFTModule)),
+        ("pulseMachine", POINTER(RKPulseEngine)),
+        ("momentMachine", POINTER(RKMomentEngine)),
+        ("sweepMachine", POINTER(RKSweepEngine)),
+        ("recorder", POINTER(RKRawDataRecorder)),
+        ("ringMachine", POINTER(RKPulseRingFilterEngine)),
         ("userModule", RKUserModule),
-        ("userModuleFree", ctypes.CFUNCTYPE(UNCHECKED(None), RKUserModule)),
+        ("userModuleFree", CFUNCTYPE(UNCHECKED(None), RKUserModule)),
         ("configIndex", pyRKuint32),
         ("pulseIndex", pyRKuint32),
         ("rayIndex", pyRKuint32),
@@ -177,7 +175,7 @@ class Workspace(ctypes.Structure):
 
         k = next_modulo_s(self.configIndex.value, self.desc.configBufferDepth)
         config = self.configs[k]
-        ctypes.memmove(ctypes.byref(config), ctypes.byref(self.header.config), ctypes.sizeof(RKConfig))
+        memmove(byref(config), byref(self.header.config), sizeof(RKConfig))
         config.waveform = self.header.config.waveform
         config.waveformDecimate = self.header.config.waveformDecimate
         self.configIndex.value = k
@@ -193,16 +191,16 @@ class Workspace(ctypes.Structure):
 
         self.fftModule = RKFFTModuleInit(desc.pulseCapacity, verbose)
 
-        desc.configBufferSize = RKConfigBufferAlloc(ctypes.byref(self.configs), desc.configBufferDepth)
-        desc.pulseBufferSize = RKPulseBufferAlloc(ctypes.byref(self.pulses), desc.pulseCapacity, desc.pulseBufferDepth)
+        desc.configBufferSize = RKConfigBufferAlloc(byref(self.configs), desc.configBufferDepth)
+        desc.pulseBufferSize = RKPulseBufferAlloc(byref(self.pulses), desc.pulseCapacity, desc.pulseBufferDepth)
         desc.rayBufferSize = RKRayBufferAlloc(
-            ctypes.byref(self.rays), desc.pulseCapacity // desc.pulseToRayRatio, desc.rayBufferDepth
+            byref(self.rays), desc.pulseCapacity // desc.pulseToRayRatio, desc.rayBufferDepth
         )
 
-        configIndexPtr = ctypes.byref(self.configIndex)
-        pulseIndexPtr = ctypes.byref(self.pulseIndex)
-        rayIndexPtr = ctypes.byref(self.rayIndex)
-        descPtr = ctypes.byref(desc)
+        configIndexPtr = byref(self.configIndex)
+        pulseIndexPtr = byref(self.pulseIndex)
+        rayIndexPtr = byref(self.rayIndex)
+        descPtr = byref(desc)
 
         self.pulseMachine = RKPulseEngineInit()
         RKPulseEngineSetVerbose(self.pulseMachine, verbose)
@@ -336,18 +334,18 @@ class Workspace(ctypes.Structure):
             self.momentMachine.contents.userLagChoice = int(method[-1])
             method = "mx"
         self.momentMachine.contents.momentProcessor = {
-            "mx": ctypes.cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
-            "pp": ctypes.cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
-            "pph": ctypes.cast(RKPulsePairHop, type(self.momentMachine.contents.momentProcessor)),
-            "ppa": ctypes.cast(RKPulsePairATSR, type(self.momentMachine.contents.momentProcessor)),
-            "spec": ctypes.cast(RKSpectralMoment, type(self.momentMachine.contents.momentProcessor)),
+            "pp": cast(RKPulsePair, type(self.momentMachine.contents.momentProcessor)),
+            "pph": cast(RKPulsePairHop, type(self.momentMachine.contents.momentProcessor)),
+            "ppa": cast(RKPulsePairATSR, type(self.momentMachine.contents.momentProcessor)),
+            "mx": cast(RKMultiLag, type(self.momentMachine.contents.momentProcessor)),
+            "spec": cast(RKSpectralMoment, type(self.momentMachine.contents.momentProcessor)),
         }[method]
 
     def unset_user_module(self):
         if self.userModule is not None:
             self.userModuleFree(self.userModule)
         self.userModule = None
-        self.userModuleFree = ctypes.cast(None, type(self.userModuleFree))
+        self.userModuleFree = cast(None, type(self.userModuleFree))
         RKPulseEngineUnsetCompressor(self.pulseMachine)
         RKMomentEngineUnsetCalibrator(self.momentMachine)
 
@@ -366,31 +364,31 @@ class Workspace(ctypes.Structure):
 
         # Read the first pulse to gather some intels
         pulse = RKPulseEngineGetVacantPulse(self.pulseMachine, RKPulseStatusCompressed)
-        r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
+        r = RKReadPulseFromFileReference(pulse, byref(self.header), self.fid)
         if r != RKResultSuccess:
             self.pulseIndex.value = previous_modulo_s(self.pulseIndex.value, self.desc.pulseBufferDepth)
             raise RKEngineError("Failed to read the first pulse.")
         pulse.contents.header.configIndex = self.configIndex.value
         # Estimate the number of pulses
         pulse.contents.header.s |= RKPulseStatusHasIQData | RKPulseStatusHasPosition
-        gateCount = pulse.contents.header.downSampledGateCount
-        downSampledGateCount = pulse.contents.header.downSampledGateCount
+
         if self.header.dataType == RKRawDataTypeAfterMatchedFilter:
             pulse.contents.header.s |= RKPulseStatusCompleteForMoments
-            pulseCount = (self.filesize - pos) // (
-                ctypes.sizeof(RKPulseHeader) + 2 * downSampledGateCount * ctypes.sizeof(RKComplex)
-            )
+            gateCount = pulse.contents.header.downSampledGateCount
+            pulseCount = (self.filesize - pos) // (sizeof(RKPulseHeader) + 2 * gateCount * sizeof(RKComplex))
         else:
-            pulseCount = (self.filesize - pos) // (
-                ctypes.sizeof(RKPulseHeader) + 2 * gateCount * ctypes.sizeof(RKInt16C)
-            )
-            print(f"Info. filesize = {self.filesize:,d}   gateCount = {gateCount:,d}   pulseCount = {pulseCount:,d}")
+            gateCount = pulse.contents.header.gateCount
+            pulseCount = (self.filesize - pos) // (sizeof(RKPulseHeader) + 2 * gateCount * sizeof(RKInt16C))
         # Read the first pulse, which should be the same as the one above but use get_done_pulse() for pulseEngine->doneIndex
         if self.header.dataType == RKRawDataTypeFromTransceiver:
             pulse = None
             while pulse is None:
                 time.sleep(0.05)
                 pulse = self.get_done_pulse()
+        if pulse is None:
+            raise RKEngineError("Failed to read the first pulse.")
+        # gateCount = pulse.contents.header.downSampledGateCount
+        downSampledGateCount = pulse.contents.header.downSampledGateCount
         print(
             f"Estimated pulseCount = {pulseCount:,d}"
             + f"   gateCount = {gateCount:,d}"
@@ -431,7 +429,7 @@ class Workspace(ctypes.Structure):
                         print(f"Waiting for workers ...  z = {z:d} / {s:.1f}s   {m:.1f}\n")
                     z = z + 1
 
-                r = RKReadPulseFromFileReference(pulse, ctypes.byref(self.header), self.fid)
+                r = RKReadPulseFromFileReference(pulse, byref(self.header), self.fid)
                 if r != RKResultSuccess:
                     self.pulseIndex.value = previous_modulo_s(self.pulseIndex.value, self.desc.pulseBufferDepth)
                     self.print("No more data to read.")
@@ -584,23 +582,23 @@ def next_modulo_s(i, S):
 
 
 def read_RKFloat_array(rkpos, count):
-    return np.ctypeslib.as_array(ctypes.cast(rkpos, ctypes.POINTER(RKFloat)), (count,))
+    return np.ctypeslib.as_array(cast(rkpos, POINTER(RKFloat)), (count,))
 
 
 def read_RKInt16C_array(rkpos, count):
-    bufiq = np.ctypeslib.as_array(ctypes.cast(rkpos, ctypes.POINTER(ctypes.c_int16)), (count, 2))
+    bufiq = np.ctypeslib.as_array(cast(rkpos, POINTER(c_int16)), (count, 2))
     return bufiq[:, 0] + 1j * bufiq[:, 1]
 
 
 def read_RKComplex_array(rkpos, count):
-    bufiq = np.ctypeslib.as_array(ctypes.cast(rkpos, ctypes.POINTER(ctypes.c_float)), (count, 2))
+    bufiq = np.ctypeslib.as_array(cast(rkpos, POINTER(c_float)), (count, 2))
     return bufiq[:, 0] + 1j * bufiq[:, 1]
 
 
 def read_RKInt16C_from_pulse(pulse, count):
-    h = ctypes.cast(RKGetInt16CDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_int16))
+    h = cast(RKGetInt16CDataFromPulse(pulse, 0), POINTER(c_int16))
     h = np.ctypeslib.as_array(h, (count * 2,)).astype(np.float32).view(np.complex64)
-    v = ctypes.cast(RKGetInt16CDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_int16))
+    v = cast(RKGetInt16CDataFromPulse(pulse, 1), POINTER(c_int16))
     v = np.ctypeslib.as_array(v, (count * 2,)).astype(np.float32).view(np.complex64)
     x = np.vstack((h, v))
     np.conj(x, out=x)
@@ -608,9 +606,9 @@ def read_RKInt16C_from_pulse(pulse, count):
 
 
 def read_RKComplex_from_pulse_v1(pulse, count):
-    h = ctypes.cast(RKGetComplexDataFromPulse(pulse, 0), ctypes.POINTER(ctypes.c_float))
+    h = cast(RKGetComplexDataFromPulse(pulse, 0), POINTER(c_float))
     h = np.ctypeslib.as_array(h, (count * 2,)).view(np.complex64)
-    v = ctypes.cast(RKGetComplexDataFromPulse(pulse, 1), ctypes.POINTER(ctypes.c_float))
+    v = cast(RKGetComplexDataFromPulse(pulse, 1), POINTER(c_float))
     v = np.ctypeslib.as_array(v, (count * 2,)).view(np.complex64)
     x = np.vstack((h, v))
     np.conj(x, out=x)
@@ -618,8 +616,8 @@ def read_RKComplex_from_pulse_v1(pulse, count):
 
 
 def read_RKComplex_from_pulse(pulse, count):
-    _from_mem = ctypes.pythonapi.PyMemoryView_FromMemory
-    _from_mem.restype = ctypes.py_object
+    _from_mem = pythonapi.PyMemoryView_FromMemory
+    _from_mem.restype = py_object
     h = np.frombuffer(_from_mem(RKGetComplexDataFromPulse(pulse, 0), 8 * count), dtype=np.complex64)
     v = np.frombuffer(_from_mem(RKGetComplexDataFromPulse(pulse, 1), 8 * count), dtype=np.complex64)
     x = np.vstack((h, v))
@@ -628,15 +626,15 @@ def read_RKComplex_from_pulse(pulse, count):
 
 
 def place_RKComplex_array(dst, src):
-    # np.conj(src, out=src)
-    ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_float)), src.flatten().ctypes.data, src.nbytes)
+    np.conj(src, out=src)
+    memmove(cast(dst, POINTER(c_float)), src.flatten().ctypes.data, src.nbytes)
 
 
 def place_RKInt16C_array_v1(dst, src):
     buf = np.zeros((src.size * 2), dtype=np.int16)
     buf[::2] = src.real.astype(np.int16)
     buf[1::2] = -src.imag.astype(np.int16)
-    ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), buf.ctypes.data, buf.nbytes)
+    memmove(cast(dst, POINTER(c_int16)), buf.ctypes.data, buf.nbytes)
 
 
 def place_RKInt16C_to_pulse(pulse, src):
@@ -645,10 +643,10 @@ def place_RKInt16C_to_pulse(pulse, src):
         dst = RKGetInt16CDataFromPulse(pulse, p)
         buf[::2] = src.real[p, :].astype(np.int16)
         buf[1::2] = -src.imag[p, :].astype(np.int16)
-        ctypes.memmove(ctypes.cast(dst, ctypes.POINTER(ctypes.c_int16)), buf.ctypes.data, buf.nbytes)
+        memmove(cast(dst, POINTER(c_int16)), buf.ctypes.data, buf.nbytes)
 
 
 def read_RKComplex_from_waveform(waveform, index=0):
-    _from_mem = ctypes.pythonapi.PyMemoryView_FromMemory
-    _from_mem.restype = ctypes.py_object
+    _from_mem = pythonapi.PyMemoryView_FromMemory
+    _from_mem.restype = py_object
     return np.frombuffer(_from_mem(waveform.contents.samples[index], 8 * waveform.contents.depth), dtype=np.complex64)
